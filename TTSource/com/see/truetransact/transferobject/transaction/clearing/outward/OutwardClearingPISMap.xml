@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : OutwardClearingPISMap.xml
+    Created on : January 12, 2004, 4:32 PM
+    Author     : Hemant
+    Description:
+        Purpose of the document follows.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OutwardClearingPISMap">
+
+	<!-- Use OutwardClearingPISTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOutwardClearingPISTO" inline-parameters="true">
+        INSERT INTO PAY_IN_SLIP
+        (BATCH_ID, PAY_IN_SLIP_ID, PAY_IN_SLIP_DT, PROD_ID, ACCT_NO, AMOUNT, REMARKS, 
+        STATUS, CONVERT_AMT, AC_HD_ID, STATUS_BY, BRANCH_ID, STATUS_DT, AUTHORIZE_BY, 
+        AUTHORIZE_DT, AUTHORIZE_STATUS, AUTHORIZE_REMARKS, PROD_TYPE
+        ) VALUES (
+        #batchId:VARCHAR#, #payInSlipId:VARCHAR#, #payInSlipDt:DATE#, #prodId:VARCHAR#, 
+        #acctNo:VARCHAR#, #amount:NUMERIC#, #remarks:VARCHAR#, #status:VARCHAR#, 
+        #convertAmt:NUMERIC#, #acHdId:VARCHAR#, #statusBy:VARCHAR#, #branchId:VARCHAR#, 
+        #statusDt:DATE#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #authorizeStatus:VARCHAR#, 
+        #authorizeRemarks:VARCHAR#, #prodType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use OutwardClearingPISTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->        
+    <mapped-statement name="deleteStatusOutwardClearingPISTOStatus" inline-parameters="true">
+        UPDATE PAY_IN_SLIP SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE BATCH_ID = #batchId:VARCHAR#
+        and STATUS!='DELETED' and 
+        (AUTHORIZE_STATUS!='AUTHORIZED' or AUTHORIZE_STATUS is null)
+        and BRANCH_ID = #branchId:VARCHAR#
+        and PAY_IN_SLIP_DT = #payInSlipDt:DATE#
+    </mapped-statement>
+        
+
+	<!-- Use OutwardClearingPISTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+        <!--
+	<mapped-statement name="deleteOutwardClearingPISTO" inline-parameters="true">
+		DELETE FROM PAY_IN_SLIP 
+		WHERE BATCH_ID = #batchId#
+	</mapped-statement>
+        -->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OutwardClearingPISTO object (JavaBean) properties -->
+    <result-map name="getOutwardClearingPISTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingPISTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="payInSlipId" column="PAY_IN_SLIP_ID"/>
+        <property name="payInSlipDt" column="PAY_IN_SLIP_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="convertAmt" column="CONVERT_AMT"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="prodType" column="PROD_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectOutwardClearingPISTO" result-map="getOutwardClearingPISTOResult" >
+        SELECT * FROM PAY_IN_SLIP 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR#
+        and status!='DELETED' and 
+        (AUTHORIZE_STATUS!='AUTHORIZED' or AUTHORIZE_STATUS is null)
+        and BRANCH_ID = #BRANCH_ID:VARCHAR#
+        and PAY_IN_SLIP_DT = #PAY_IN_SLIP_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getShadowCredit" result-class="java.util.LinkedHashMap">
+        SELECT 'Cash' as "Type", PROD_ID AS "Product",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        INSTRUMENT_NO1 || ' '|| INSTRUMENT_NO2 as "Instrument",
+        INST_DT as "Instrument Dt",
+        AMOUNT as "Amount"
+        FROM CASH_TRANS WHERE
+        ACT_NUM = #ACCT_NO:VARCHAR# AND TRANS_TYPE='CREDIT' AND
+        (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED')) AND STATUS!='DELETED'
+        UNION ALL
+        SELECT 'Transfer' as "Type", PROD_ID AS "Product",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        INSTRUMENT_NO1 || ' '|| INSTRUMENT_NO2 as "Instrument",
+        INST_DT as "Instrument Dt",
+        AMOUNT as "Amount"
+        FROM TRANSFER_TRANS WHERE
+        ACT_NUM = #ACCT_NO:VARCHAR# AND TRANS_TYPE='CREDIT' AND
+        STATUS !='DELETED'  AND (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED'))
+<!--            UNION ALL
+            SELECT 'Clearing' as "Type", PROD_ID AS "Product",
+            TO_CHAR(PAY_IN_SLIP_DT, 'MM/DD/YYYY') as "Date",
+            AMOUNT as "Amount"
+            FROM PAY_IN_SLIP WHERE ACCT_NO = #ACCT_NO#
+            AND (AUTHORIZE_STATUS
+            NOT IN ('REJECTED', 'REALIZED') OR AUTHORIZE_STATUS IS NULL)
+            AND STATUS!='DELETED' -->
+    </mapped-statement>
+        
+    <mapped-statement name="getShadowCreditGL" result-class="java.util.LinkedHashMap">
+        <!--SELECT 'Cash' as "Type", PARTICULARS AS "Particulars",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM CASH_TRANS WHERE
+        AC_HD_ID = #ACCT_NO# AND ACT_NUM IS NULL AND TRANS_TYPE='CREDIT' AND
+        (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED')) AND STATUS!='DELETED'
+        UNION ALL
+        SELECT 'Transfer' as "Type", PARTICULARS AS "Product",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM TRANSFER_TRANS WHERE
+        AC_HD_ID = #ACCT_NO# AND ACT_NUM IS NULL AND TRANS_TYPE='CREDIT' AND
+        STATUS !='DELETED'  AND (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED'))-->
+        <!--commented by Ajay Sharma for clubing the Cr/Dr/Ub Trans Details-->
+<!--            UNION ALL
+        SELECT 'Clearing' as "Type", REMARKS AS "Product",
+        TO_CHAR(PAY_IN_SLIP_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM PAY_IN_SLIP WHERE AC_HD_ID = #ACCT_NO#
+        AND ACCT_NO IS NULL AND (BATCH_ID NOT IN (SELECT BATCH_ID FROM
+        OUTWARD_CLEARING WHERE (AUTHORIZE_STATUS
+        NOT IN ('AUTHORIZED','REJECTED', 'REALIZED') OR AUTHORIZE_STATUS IS NULL)
+        AND STATUS!='DELETED')) -->
+        SELECT 'Cash' AS "Trans Type",PROD_ID AS "Product", <!--For Fetching Credit / Debit Transaction details-->
+        TO_CHAR (TRANS_DT, 'MM/DD/YYYY') AS "Date",
+        INSTRUMENT_NO1 || ' ' || INSTRUMENT_NO2 AS "Instrument",
+        INST_DT AS "Instrument Dt",
+        AMOUNT AS "Amount",
+        DECODE (TRANS_TYPE,  'CREDIT', 'Shadow Cr',  'DEBIT', 'Shadow Dr') AS "Balance Type"
+        FROM CASH_TRANS
+        WHERE NVL (ACT_NUM, AC_HD_ID) = #ACCT_NO#
+        AND (AUTHORIZE_STATUS IS NULL
+                OR AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))
+        AND STATUS != 'DELETED'
+        UNION ALL
+        SELECT 'Transfer' AS "Trans Type",
+        PROD_ID AS "Product",
+        TO_CHAR (TRANS_DT, 'MM/DD/YYYY') AS "Date",
+        INSTRUMENT_NO1 || ' ' || INSTRUMENT_NO2 AS "Instrument",
+        INST_DT AS "Instrument Dt",
+        AMOUNT AS "Amount",
+        DECODE (TRANS_TYPE,  'CREDIT', 'Shadow Cr',  'DEBIT', 'Shadow Dr')
+            AS "Balance Type"
+        FROM TRANSFER_TRANS
+        WHERE NVL (ACT_NUM, AC_HD_ID) = #ACCT_NO#
+        AND STATUS != 'DELETED'
+        AND (   AUTHORIZE_STATUS IS NULL
+                OR AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))
+        UNION ALL
+        SELECT 'In Clg' AS "Trans Type",
+        PROD_ID AS "Product",
+        TO_CHAR (CLEARING_DT, 'MM/DD/YYYY') AS "Date",
+        INSTRUMENT_NO1 || ' ' || INSTRUMENT_NO2 AS "Instrument",
+        INSTRUMENT_DT AS "Instrument Dt",
+        AMOUNT AS "Amount",
+        'Un Clear' AS "Balance Type"
+        FROM INWARD_CLEARING
+        WHERE NVL (ACCT_NO, AC_HD_ID) = #ACCT_NO#
+        AND (   AUTHORIZE_STATUS IS NULL
+                OR AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))
+        AND STATUS != 'DELETED'
+      UNION ALL
+        SELECT 'Out Clg' AS "Trans Type",
+        PROD_ID AS "Product", <!--For Fetching Unclear Balance Transaction details-->
+        TO_CHAR (PAY_IN_SLIP_DT, 'MM/DD/YYYY') AS "Date",
+        INSTRUMENT_NO1 || ' ' || INSTRUMENT_NO2 AS "Instrument",
+        INSTRUMENT_DT AS "Instrument Dt",
+        DECODE (t.table_name,
+                'OUTWARD_CLEARING', oc.amount,
+                (pis.amount + NVL (pis.convert_amt, 0)))
+            AS "Amount",
+        'Un Clear' AS "Balance Type"
+        FROM outward_clearing oc,
+        pay_in_slip pis,
+        outward_tally ot,
+        (  SELECT batch_id,
+                    outward_dt,
+                    schedule_no,
+                    DECODE (COUNT (*), 1, 'PAY_IN_SLIP', 'OUTWARD_CLEARING')
+                        AS table_name
+                FROM outward_clearing
+            GROUP BY batch_id, outward_dt, schedule_no) t
+        WHERE     NVL (ACCT_NO, AC_HD_ID) = #ACCT_NO#
+        AND oc.batch_id = t.batch_id
+        AND oc.batch_id = pis.batch_id
+        AND pis.batch_id = oc.batch_id
+        AND ot.schedule_no = oc.schedule_no
+        AND oc.authorize_status = 'AUTHORIZED'
+        AND oc.schedule_no = pis.schedule_no
+        AND oc.batch_id = pis.batch_id
+        AND oc.outward_dt = pis.pay_in_slip_dt
+        AND oc.outward_dt = t.outward_dt
+        AND oc.schedule_no = t.schedule_no
+ 	</mapped-statement>
+        
+    <mapped-statement name="getUnclearBalance" result-class="java.util.LinkedHashMap">
+        SELECT 'Clearing' as "Type", PROD_ID AS "Product",
+        TO_CHAR(PAY_IN_SLIP_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM PAY_IN_SLIP WHERE ACCT_NO = #ACCT_NO:VARCHAR#
+        AND (AUTHORIZE_STATUS = 'AUTHORIZED')
+        AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getUnclearBalanceGL" result-class="java.util.LinkedHashMap">
+          <!--  SELECT 'Clearing' as "Type", REMARKS AS "Product",
+            TO_CHAR(PAY_IN_SLIP_DT, 'MM/DD/YYYY') as "Date",
+            AMOUNT as "Amount"
+            FROM PAY_IN_SLIP WHERE AC_HD_ID = #ACCT_NO#
+            AND ACCT_NO IS NULL AND (BATCH_ID NOT IN (SELECT BATCH_ID FROM
+            OUTWARD_CLEARING WHERE (AUTHORIZE_STATUS = 'AUTHORIZED')
+            AND STATUS!='DELETED')) -->
+        SELECT 'Clearing' as "Type", REMARKS AS "Product",
+        TO_CHAR(PAY_IN_SLIP_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM PAY_IN_SLIP WHERE AC_HD_ID = #ACCT_NO:VARCHAR#
+        AND ACCT_NO IS NULL AND ( NOT EXISTS (SELECT BATCH_ID FROM
+        OUTWARD_CLEARING WHERE (AUTHORIZE_STATUS = 'AUTHORIZED')
+        AND STATUS!='DELETED' AND BATCH_ID=PAY_IN_SLIP.BATCH_ID and OUTWARD_DT = #TRANS_DT:DATE#
+        AND INITIATED_BRANCH = #BRANCH_ID:VARCHAR#))
+    </mapped-statement>
+        
+    <mapped-statement name="getMaxPayInSlipID" result-class="java.lang.Integer" >
+        SELECT count(*) FROM PAY_IN_SLIP
+        WHERE BATCH_ID = #batchId:VARCHAR#
+        and BRANCH_ID = #branchId:DATE#
+        and PAY_IN_SLIP_DT = #payInSlipDt:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="updateOutwardClearingPISTO" inline-parameters="true">
+        UPDATE PAY_IN_SLIP SET 	
+        PROD_TYPE = #prodType:VARCHAR#,			
+        PROD_ID = #prodId:VARCHAR#,
+        ACCT_NO = #acctNo:VARCHAR#,
+        AMOUNT = #amount:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        CONVERT_AMT = #convertAmt:NUMERIC#,
+        AC_HD_ID = #acHdId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,		
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#	
+        WHERE BATCH_ID = #batchId:VARCHAR# and PAY_IN_SLIP_ID=#payInSlipId:VARCHAR#
+        and PAY_IN_SLIP_DT = #payInSlipDt:DATE#
+        and BRANCH_ID = #branchId:DATE#
+    </mapped-statement>                 
+        <!--
+        <result-map name="getDeletedTOListResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingPISTO">
+		<property name="batchId" column="BATCH_ID"/>
+		<property name="payInSlipId" column="PAY_IN_SLIP_ID"/>
+		<property name="payInSlipDt" column="PAY_IN_SLIP_DT"/>
+		<property name="prodId" column="PROD_ID"/>
+		<property name="acctNo" column="ACCT_NO"/>
+		<property name="amount" column="AMOUNT"/>
+		<property name="remarks" column="REMARKS"/>
+		<property name="status" column="STATUS"/>
+		<property name="convertAmt" column="CONVERT_AMT"/>
+		<property name="acHdId" column="AC_HD_ID"/>
+		<property name="statusBy" column="STATUS_BY"/>
+		<property name="branchId" column="BRANCH_ID"/>
+		<property name="statusDt" column="STATUS_DT"/>
+		<property name="authorizeBy" column="AUTHORIZE_BY"/>
+		<property name="authorizeDt" column="AUTHORIZE_DT"/>
+		<property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+		<property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+	</result-map>
+	<mapped-statement name="getDeletedTOList" result-map="getDeletedTOListResult">
+		SELECT * FROM PAY_IN_SLIP 
+		WHERE BATCH_ID = #batchId:VARCHAR# and status='DELETED'
+	</mapped-statement>    
+        -->
+       
+    <result-map name="getListAuthorizeOutwardClearingPISTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingPISTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="payInSlipId" column="PAY_IN_SLIP_ID"/>
+        <property name="payInSlipDt" column="PAY_IN_SLIP_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="convertAmt" column="CONVERT_AMT"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="prodType" column="PROD_TYPE"/>
+    </result-map>
+    <dynamic-mapped-statement name="getListAuthorizeOutwardClearingPISTO" result-map="getListAuthorizeOutwardClearingPISTOResult" >
+        SELECT * FROM PAY_IN_SLIP 
+        WHERE BATCH_ID = #BID:VARCHAR# and (STATUS!='DELETED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "REALIZESTATUS">
+                    AUTHORIZE_STATUS NOT IN('REJECTED','REALIZED')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                <!-- and 
+                AUTHORIZE_STATUS='REALIZED') or (AUTHORIZE_STATUS='REJECTED')) -->
+        and PAY_IN_SLIP_DT = #PAY_IN_SLIP_DT:DATE#
+        and BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </dynamic-mapped-statement>
+       
+    <mapped-statement name="getListAuthorizePISBalanceTO" result-map="getListAuthorizeOutwardClearingPISTOResult" >
+        SELECT * FROM PAY_IN_SLIP PS
+        WHERE   PS.STATUS != 'DELETED'  AND 
+        PS.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        PS.BATCH_ID IN 
+        (SELECT DISTINCT BATCH_ID 
+        FROM OUTWARD_CLEARING OC
+        WHERE OC.STATUS != 'DELETED' AND
+        OC.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        OC.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountNoCount" result-class="java.util.HashMap" >
+        SELECT MAX(OUTWARD_ID) AS "COUNT" FROM OUTWARD_CLEARING WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' 
+        AND BATCH_ID=#value:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="getOutwardChargeHead" result-class="java.util.HashMap" >
+        SELECT OUTWARD_INSTRUMENT_CHARGES,OUTWARD_INSTRUMENT_CHARGES_HD,CHK_INSTRUMENT_CHARGES FROM CLEARING_BANK_PARAM  WHERE STATUS!='DELETED' AND 
+        AUTHORIZE_STATUS='AUTHORIZED' AND CLEARING_TYPE IN (SELECT CLEARING_TYPE FROM OUTWARD_CLEARING WHERE BATCH_ID=#value:VARCHAR#)
+    </mapped-statement>
+       
+    <mapped-statement name="authorizePayInSlip" result-class="java.util.HashMap">
+        UPDATE PAY_IN_SLIP SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #TODAY_DT:DATE#,
+        AUTHORIZE_REMARKS = #REMARKS:VARCHAR#
+        WHERE BATCH_ID = #BID:VARCHAR# and 
+        ((status!='DELETED' and 
+        (AUTHORIZE_STATUS in ('AUTHORIZED','EXCEPTION') or 
+        AUTHORIZE_STATUS is null)) 
+        or (status='DELETED' and 
+        (AUTHORIZE_STATUS is null or 
+        AUTHORIZE_STATUS in ('EXCEPTION'))))
+        and PAY_IN_SLIP_DT = #OUTWARD_DT:DATE#
+        and BRANCH_ID = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>     
+
+    <mapped-statement name="countPayInSlip" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS CNT, AUTHORIZE_STATUS FROM PAY_IN_SLIP
+        WHERE BATCH_ID = #BID:VARCHAR# AND 
+        STATUS !='DELETED'
+        GROUP BY AUTHORIZE_STATUS
+    </mapped-statement>
+
+    <mapped-statement name="rejectPayInSlipTO" inline-parameters="true">
+        UPDATE PAY_IN_SLIP SET 
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = null,
+        AUTHORIZE_DT = null,                
+        AUTHORIZE_REMARKS = null
+        WHERE BATCH_ID = #batchId:VARCHAR# and PAY_IN_SLIP_ID=#payInSlipId:VARCHAR# 
+        and BRANCH_ID = #branchId:VARCHAR#
+        and PAY_IN_SLIP_ID = #payInSlipDt:DATE#               
+    </mapped-statement>       
+        
+    <result-map name="getAuthorizeOutwardClearingPISTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingPISTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="payInSlipId" column="PAY_IN_SLIP_ID"/>
+        <property name="payInSlipDt" column="PAY_IN_SLIP_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="convertAmt" column="CONVERT_AMT"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="prodType" column="PROD_TYPE"/>
+    </result-map>
+    <mapped-statement name="getAuthorizeSelectOutwardClearingPISTO" result-map="getAuthorizeOutwardClearingPISTOResult" >
+        SELECT * FROM PAY_IN_SLIP 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# and 
+        ((status!='DELETED' and 
+        (AUTHORIZE_STATUS!='AUTHORIZED' or AUTHORIZE_STATUS is null)) 
+        or (status='DELETED' and (AUTHORIZE_STATUS is null or AUTHORIZE_STATUS in ('EXCEPTION'))))
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND PAY_IN_SLIP_DT = #PAY_IN_SLIP_DT:DATE#
+    </mapped-statement>
+                
+    <result-map name="getRealizeOutwardClearingPISTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingPISTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="payInSlipId" column="PAY_IN_SLIP_ID"/>
+        <property name="payInSlipDt" column="PAY_IN_SLIP_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="convertAmt" column="CONVERT_AMT"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="prodType" column="PROD_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectRealizeOutwardClearingPISTO" result-map="getRealizeOutwardClearingPISTOResult" >
+        SELECT * FROM PAY_IN_SLIP 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR#
+        and (status!='DELETED' and
+        AUTHORIZE_STATUS='AUTHORIZED')
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND PAY_IN_SLIP_DT = #PAY_IN_SLIP_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getViewfoPayinslip" result-map="getRealizeOutwardClearingPISTOResult" >
+		<!--SELECT * FROM PAY_IN_SLIP 
+		WHERE BATCH_ID = #value#-->
+        select BATCH_ID,PAY_IN_SLIP_ID,PAY_IN_SLIP_DT,PROD_ID,ACCT_NO,
+        (nvl(amount,0)+nvl(convert_amt,0)) as AMOUNT,
+        REMARKS,  STATUS,CONVERT_AMT,AC_HD_ID,STATUS_BY,BRANCH_ID,STATUS_DT,
+        AUTHORIZE_BY,AUTHORIZE_DT,AUTHORIZE_STATUS,AUTHORIZE_REMARKS,
+        PROD_TYPE
+        from pay_in_slip
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# and
+        BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND PAY_IN_SLIP_DT = #PAY_IN_SLIP_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="BouncingAdjustment" result-class="java.util.HashMap">
+        SELECT NVL(SUM(AMOUNT), 0) as AMOUNT, CBP.CLEARING_HD, CBP.CLEARING_SUSPENSE_HD, IB.BRANCH_ID
+        FROM INWARD_BOUNCING IB, CLEARING_BANK_PARAM CBP
+        WHERE IB.SCHEDULE_NO = #value:VARCHAR#
+        AND IB.CLEARING_TYPE = CBP.CLEARING_TYPE
+        AND IB.STATUS != 'DELETED'
+        AND IB.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND CBP.STATUS != 'DELETED'
+        AND CBP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        GROUP BY CBP.CLEARING_HD, CBP.CLEARING_SUSPENSE_HD, IB.BRANCH_ID
+    </mapped-statement>
+</sql-map>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeOprativeMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmployeeOprativeTO" inline-parameters="true">
+        INSERT INTO employee_oprative
+        (OPERATIVE_ID,SYS_ID, prod_id,act_num,branch_id,STATUS,STATUS_BY,STATUS_DT
+        ) VALUES (
+        #operativeId:VARCHAR#,#sysId:VARCHAR#, #cboOprativePordId:VARCHAR#, #txtOPAcNo:VARCHAR#,#cboOpACBranch:VARCHAR# , #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#
+        )
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateEmployeeOprativeTO" inline-parameters="true">
+        UPDATE employee_oprative SET 
+        PROD_ID = #cboOprativePordId:VARCHAR# ,
+        ACT_NUM=#txtOPAcNo:VARCHAR#,
+        BRANCH_ID=#cboOpACBranch:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE  SYS_ID = #sysId:VARCHAR# AND  STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="deleteEmployeeOprativeTO" inline-parameters="true">
+        UPDATE employee_oprative SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SYS_ID = #sysId:VARCHAR# 
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getEmployeeOprativeTOResult" class="com.see.truetransact.transferobject.employee.EmployeeOprativeTO">
+        <property name="sysId" column="SYS_ID"/>
+        <property name="cboOprativePordId" column="PROD_ID"/>
+        <property name="txtOPAcNo" column="ACT_NUM"/>	
+        <property name="cboOpACBranch" column="BRANCH_ID"/>	
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="operativeId" column="OPERATIVE_ID"/>
+    </result-map>
+    <mapped-statement name="getEmployeeAcntNo" result-class="java.util.HashMap">
+        SELECT  SYS_EMPID AS SYS_ID,AM.PROD_ID AS PROD_ID ,AM.ACT_NUM AS ACT_NUM,AM.BRANCH_CODE AS BRANCH_ID
+        ,AM.STATUS AS STATUS,AM.STATUS_BY  AS STATUS_BY ,AM.STATUS_DT AS STATUS_DT 
+        FROM                    
+        ACT_MASTER AM, 
+        CUSTOMER C,
+        EMPLOYEE_MASTER EM
+        WHERE C.CUST_ID = AM.CUST_ID  
+        AND AM.ACT_STATUS_ID !='CLOSED' AND 
+        EM.EMPLOYEEID = C.STAFF_ID
+        AND  EM.SYS_EMPID = #SYS_EMPID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectEmployeeOprativeTO" result-map="getEmployeeOprativeTOResult" >
+        SELECT *
+        FROM employee_oprative  erw
+        WHERE   SYS_ID=#SYS_EMPID:VARCHAR# AND STATUS != 'DELETED'
+                <!-- SELECT  SYS_EMPID AS SYS_ID,AM.PROD_ID AS PROD_ID ,AM.ACT_NUM AS ACT_NUM,AM.BRANCH_CODE AS BRANCH_ID
+                   ,AM.STATUS AS STATUS,AM.STATUS_BY  AS STATUS_BY ,AM.STATUS_DT AS STATUS_DT 
+                    FROM                    
+                   ACT_MASTER AM, 
+                   CUSTOMER C,
+                   EMPLOYEE_MASTER EM
+                   WHERE C.CUST_ID = AM.CUST_ID  
+                   AND AM.ACT_STATUS_ID !='CLOSED' AND 
+                   EM.EMPLOYEEID = C.STAFF_ID
+	<dynamic>
+                    <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                        (EM.STATUS NOT IN ('DELETED')
+                    </isNotPropertyAvailable>
+                    <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                       ( EM.STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                    <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                        EM.STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                   )
+        </dynamic> -->
+                 
+    </dynamic-mapped-statement>
+</sql-map>        

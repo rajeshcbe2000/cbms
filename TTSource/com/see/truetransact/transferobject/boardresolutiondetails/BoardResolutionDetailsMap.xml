@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BoardResolutionDetailsMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+         
+    <mapped-statement name="insertBoardResolutionTO" inline-parameters="true">
+        INSERT INTO BOARD_RESOLUTION_DETAILS
+        (RESOLUTION_DATE,RESOLUTION_ID,
+        REMARKS,
+        STATUS,CREATED_BY,CREATED_DT) VALUES (
+        #odate:DATE#,                
+        #referenceNo:VARCHAR#, 
+        #remarks:VARCHAR#,
+        #status:VARCHAR#,#createdBy:VARCHAR#,#createdDt:TIMESTAMP#)
+
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardRegisterTO object (JavaBean) properties -->
+    <result-map name="getBoardResolutionTOResult" class="com.see.truetransact.transferobject.boardresolutiondetails.BoardResolutionDetailsTO">
+		
+        <property name="odate" column="RESOLUTION_DATE"/>
+        <property name="referenceNo" column="RESOLUTION_ID"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getBoardResolutionEdit" result-class="java.util.LinkedHashMap">
+        SELECT RESOLUTION_DATE,
+        RESOLUTION_ID FROM BOARD_RESOLUTION_DETAILS
+        WHERE STATUS!='DELETED'
+    </mapped-statement>
+    <dynamic-mapped-statement name="getBoardResolutionAuth" result-class="java.util.LinkedHashMap">
+        SELECT RESOLUTION_DATE,
+        RESOLUTION_ID FROM BOARD_RESOLUTION_DETAILS
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+         <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="RESOLUTION_DATE">
+                    UPPER(RESOLUTION_DATE) LIKE UPPER('%$RESOLUTION_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="RESOLUTION_ID">
+                    UPPER(RESOLUTION_ID) LIKE UPPER('%$RESOLUTION_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getSelectBoardResolutionTO" result-map="getBoardResolutionTOResult" >
+        SELECT * FROM BOARD_RESOLUTION_DETAILS  
+        WHERE RESOLUTION_ID = #RESOLUTION_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <dynamic-mapped-statement name="getBoardResolutionAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT RESOLUTION_DATE,RESOLUTION_ID,STATUS FROM BOARD_RESOLUTION_DETAILS TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+         <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZEDSTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZEDSTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZED_STATUS IS NULL OR 
+                AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  RESOLUTION_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeBoardResolution" result-class="java.util.HashMap">
+        UPDATE BOARD_RESOLUTION_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE RESOLUTION_ID = #RESOLUTION_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getBoardResolutionID" result-class="java.util.HashMap">
+        SELECT * FROM BOARD_RESOLUTION_DETAILS  
+        WHERE RESOLUTION_ID = #TEMPID:VARCHAR#
+    </mapped-statement>
+
+
+        
+    <mapped-statement name="updateBoardResolutionTO" inline-parameters="true">
+        UPDATE BOARD_RESOLUTION_DETAILS   SET 
+        RESOLUTION_DATE = #odate:DATE#,      
+        RESOLUTION_ID = #referenceNo:VARCHAR#, 
+        REMARKS =  #remarks:VARCHAR#,
+        STATUS =#status:VARCHAR#
+        WHERE  RESOLUTION_ID = #referenceNo:VARCHAR#         
+    </mapped-statement>
+    <mapped-statement name="deleteBoardResolutionTO" inline-parameters="true">
+        UPDATE BOARD_RESOLUTION_DETAILS  SET 
+        STATUS = #status:VARCHAR#
+        WHERE RESOLUTION_ID = #referenceNo:VARCHAR#      
+    </mapped-statement>
+
+
+
+</sql-map>

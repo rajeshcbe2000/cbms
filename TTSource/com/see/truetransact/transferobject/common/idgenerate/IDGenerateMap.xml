@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="IDGenerateMap">
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to
+    be auto-mapped results to IDGenerate object (JavaBean) properties -->
+    <!-- IDGenerate from IDGenerate Table -->
+    <dynamic-mapped-statement name="getCurrentID" result-class="java.util.HashMap" >
+        SELECT PREFIX, CURR_VALUE, ID_LENGTH FROM ID_GENERATION WHERE ID_KEY = #ID_KEY:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="updateIDGenerated" result-class="java.util.HashMap" >
+        UPDATE ID_GENERATION SET 
+        CURR_VALUE = 1 + CURR_VALUE WHERE ID_KEY = #ID_KEY:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getUpdatedCurrID" result-class="java.lang.String" >
+        select get_curr_id(#ID_KEY:VARCHAR#,#BRANCH_CODE:VARCHAR#) AS CURR_VALUE from dual
+    </mapped-statement>    
+<!--
+'com.see.truetransact.ui.transaction.cash.CashTransactionUI'
+
+-->
+    <mapped-statement name="getScreenConfig" result-class="java.util.LinkedHashMap" >
+        SELECT FM.FIELD_NAME, PD.PROPERTY_ID, PD.PROPERTY_VALUE
+        FROM PROPERTY_DETAIL PD,
+        FIELD_MASTER FM, SCREEN_MASTER SM
+        WHERE
+        SM.SCREEN_CLASS = #SCREEN:VARCHAR# AND
+        FM.SCREEN_ID = SM.SCREEN_ID AND
+        PD.FIELD_ID = FM.FIELD_ID AND
+        PD.GROUP_ID = #GROUP:VARCHAR# AND
+        PD.ROLE_ID = #ROLE:VARCHAR# 
+        ORDER BY FIELD_NAME, PROPERTY_ID
+    </mapped-statement>
+</sql-map>

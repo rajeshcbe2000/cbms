@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MisecllaniousDeductionMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name = "insertHaltingAllowanceTO" inline-parameters = "true">
+        INSERT INTO HALTING_ALLOWANCE(HALTING_SL_NO,HALTING_GRADE,HALTING_FROM_DATE,HALTING_TO_DATE,
+        HALTING_ALLOWANCE_TYPE,HALTING_PARAMETER_BASED,HALTING_SUB_PARAMETER,HALTING_FIXED_TYPE,
+        HALTING_PERCENTAGE_TYPE,HALTING_FIXED_AMT,HALTING_MAXIMUM_AMT,PERCENTAGE_VALUE,STATUS,STATUS_BY,
+        STATUS_DATE,AUTHORIZE_BY,AUTHORIZE_STATUS,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO
+        )VALUES(
+        #halting_sl_no:NUMBER#,#halting_grade:VARCHAR#,#halting_from_date:DATE#,#halting_to_date:DATE#,
+        #halting_allowance_type:VARCHAR#,#halting_parameter_based:VARCHAR#,#halting_sub_parameter:VARCHAR#,
+        #halting_fixed_type:VARCHAR#,#halting_percentage_type:VARCHAR#,#halting_fixed_amt:NUMBER#,
+        #halting_maximum_amt:NUMBER#,#percentageValue:NUMBER#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,
+        #authorizeBy:VARCHAR#,#authorizeStatus:VARCHAR#,#authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER# )
+    </mapped-statement>
+    
+    <mapped-statement name ="updateHaltingAllowanceTO" inline-parameters = "true">
+        UPDATE HALTING_ALLOWANCE SET 
+        HALTING_FIXED_AMT = #halting_fixed_amt:NUMBER#,
+        HALTING_MAXIMUM_AMT = #halting_maximum_amt:NUMBER#, 
+        PERCENTAGE_VALUE = #percentageValue:NUMBER#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE HALTING_SL_NO = #halting_sl_no:NUMBER# AND
+        <!--TEMP_SL_NO = #tempSlNo:NUMBER# AND -->
+        HALTING_GRADE = #halting_grade:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteHaltingAllowanceTO" inline-parameters = "true">
+         <!-- DELETE FROM HALTING_ALLOWANCE WHERE HALTING_SL_NO = #halting_sl_no:NUMBER# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE HALTING_ALLOWANCE SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE HALTING_SL_NO = #halting_sl_no:NUMBER# AND
+        <!--TEMP_SL_NO = #tempSlNo:NUMBER# AND-->
+        HALTING_GRADE = #halting_grade:VARCHAR#
+    </mapped-statement>
+    
+    <result-map name="getHaltingAllowanceTOResult" class="com.see.truetransact.transferobject.common.HaltingAllowanceTO">
+        <property name="halting_sl_no" column="HALTING_SL_NO"/>
+        <property name="halting_grade" column="HALTING_GRADE"/>
+        <property name="halting_from_date" column="HALTING_FROM_DATE"/>
+        <property name="halting_to_date" column="HALTING_TO_DATE"/>
+        <property name="halting_allowance_type" column="HALTING_ALLOWANCE_TYPE"/>
+        <property name="halting_parameter_based" column="HALTING_PARAMETER_BASED"/>
+        <property name="halting_sub_parameter" column="HALTING_SUB_PARAMETER"/>
+        <property name="halting_fixed_type" column="HALTING_FIXED_TYPE"/>
+        <property name="halting_percentage_type" column="HALTING_PERCENTAGE_TYPE"/>
+        <property name="halting_fixed_amt" column="HALTING_FIXED_AMT"/>
+        <property name="halting_maximum_amt" column="HALTING_MAXIMUM_AMT"/>
+        <property name="percentageValue" column ="PERCENTAGE_VALUE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+    </result-map>        
+    
+    <mapped-statement name = "getHaltingAllowanceAuthMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT HALTING_GRADE,HALTING_FROM_DATE,HA.STATUS_BY FROM HALTING_ALLOWANCE HA WHERE HA.BRANCH_CODE = 'MHCB02' AND 
+        (HA.AUTHORIZE_STATUS IS NULL) AND 
+        (HA.STATUS!='DELETED') AND 
+        400 >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = HA.STATUS_BY)
+    </mapped-statement>
+    <mapped-statement name = "getMiscelleniousDeductAuthMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT MD_GRADE,MD_DEDUCTION_TYPE,MD_FROM_DATE FROM MISECLLANIOUS_ALLOWANCE MA 
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        (MA.AUTHORIZE_STATUS IS NULL) AND 
+        (MA.STATUS!='DELETED') AND 
+        400 >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = MA.STATUS_BY)
+    </mapped-statement>
+    <mapped-statement name = "getGratuityAuthMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT GRATUITY_GRADE,GRATUITY_FROM_DATE,STATUS_BY FROM 
+        GRATUITY_ALLOWANCE GA WHERE GA.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        (GA.AUTHORIZE_STATUS IS NULL) AND 
+        (GA.STATUS!='DELETED')AND 
+        400 >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = GA.STATUS_BY)
+    </mapped-statement>
+    <mapped-statement name="getSelectHaltingEditMode" result-class="java.util.LinkedHashMap" >        
+        SELECT DISTINCT HALTING_GRADE,HALTING_FROM_DATE FROM HALTING_ALLOWANCE WHERE 
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>  
+    <mapped-statement name="getSelectMiscDeductionEditMode" result-class="java.util.LinkedHashMap" >        
+        SELECT DISTINCT MD_DEDUCTION_TYPE,MD_GRADE,MD_FROM_DATE FROM MISECLLANIOUS_ALLOWANCE WHERE 
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>    
+    <mapped-statement name="getSelectGratuityEditMode" result-class="java.util.LinkedHashMap" >    
+        SELECT DISTINCT GRATUITY_GRADE,GRATUITY_FROM_DATE,AUTHORIZE_STATUS FROM GRATUITY_ALLOWANCE WHERE 
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getSelectHaltingEditStructureTO" result-map="getHaltingAllowanceTOResult" >
+        SELECT * FROM HALTING_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND HALTING_GRADE = #GRADE:VARCHAR# AND STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY TEMP_SL_NO,HALTING_FROM_DATE,(TO_NUMBER(HALTING_SL_NO))         
+    </mapped-statement>      
+
+    <mapped-statement name = "updateAuthorizeStatusHalting" result-class = "java.util.HashMap">
+        UPDATE HALTING_ALLOWANCE SET 
+        STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE# WHERE HALTING_GRADE = #GRADE:VARCHAR# <!--AND TEMP_SL_NO = #TEMP_SL_NO# -->
+        AND 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectMaxofSlNoHA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(HALTING_SL_NO),0) AS SL_NO FROM HALTING_ALLOWANCE
+    </mapped-statement>
+    
+    <mapped-statement name="getFromAndToDate" result-class = "java.util.HashMap">
+        SELECT DISTINCT GRADE,FROM_DATE,TO_DATE FROM SALARY_STRUCTURE WHERE GRADE = #GRADE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="checkGradeExistsHalting" result-class = "java.util.HashMap">
+        SELECT * FROM HALTING_ALLOWANCE WHERE HALTING_GRADE = #GRADE:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="checkGradeExistsMisDeduction" result-class = "java.util.HashMap">
+        SELECT * FROM MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #GRADE:VARCHAR# AND MD_DEDUCTION_TYPE = #DEDUCTION_TYPE:VARCHAR#
+        AND MD_FROM_DATE = #DEDUCTION_FROM_DATE:DATE# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="getCountOfHaltingParameter" result-class = "java.util.HashMap">
+        SELECT COUNT(*) AS CNT FROM LOOKUP_MASTER WHERE LOOKUP_ID = #LOOKUP_ID:VARCHAR#
+    </mapped-statement>
+
+
+<!-- =================================MisecllaniousAllowance================================================== -->
+    <mapped-statement name = "insertMisecllaniousAllowanceTO" inline-parameters = "true">
+        INSERT INTO MISECLLANIOUS_ALLOWANCE(MD_SL_NO,MD_GRADE,MD_FROM_DATE,MD_TO_DATE,MD_DEDUCTION_TYPE,MD_FIXED_OR_PERCENT,MD_FIXED_AMT,MAXIMUM_AMT,
+        PERCENTAGE,ELIGIBLE_ALLOWANCE,ELIGIBLE_PERCENTAGE,STATUS,STATUS_BY,STATUS_DATE,AUTHORIZE_STATUS,AUTHORIZE_BY,
+        AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO,USING_BASIC,FROM_AMOUNT,TO_AMOUNT
+        )VALUES(
+        #md_sl_no:NUMBER#,#md_grade:VARCHAR#,#md_from_date:DATE#,#md_to_date:DATE#,#md_deduction_type:VARCHAR#,#mdFixedOrPercentage:VARCHAR#,#txtMdFixedAmtValue:NUMBER#,
+        #maximum_amt:NUMBER#,#percentage:NUMBER#,#eligible_allowance:VARCHAR#,#eligible_percentage:NUMBER#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,
+        #authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER#,#rdoUsingBasic:VARCHAR#,#txtFromAmount:NUMBER#,#txtToAmount:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name = "updateMisecllaniousAllowanceTO" inline-parameters = "true">
+        UPDATE MISECLLANIOUS_ALLOWANCE SET
+        MD_FIXED_OR_PERCENT = #mdFixedOrPercentage:VARCHAR#,
+        MD_FIXED_AMT = #txtMdFixedAmtValue:NUMBER#,
+        MAXIMUM_AMT = #maximum_amt:NUMBER#,
+        PERCENTAGE = #percentage:NUMBER#,
+        ELIGIBLE_PERCENTAGE = #eligible_percentage:NUMBER#, 
+        USING_BASIC = #rdoUsingBasic:VARCHAR#,
+        FROM_AMOUNT = #txtFromAmount:NUMBER#,
+        TO_AMOUNT = #txtToAmount:NUMBER#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE MD_SL_NO = #md_sl_no:NUMBER# AND
+        MD_DEDUCTION_TYPE = #md_deduction_type:VARCHAR# AND
+        <!--TEMP_SL_NO = #tempSlNo:NUMBER# AND-->
+        MD_GRADE = #md_grade:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteMisecllaniousAllowanceTO" inline-parameters = "true">
+        <!-- DELETE FROM MISECLLANIOUS_ALLOWANCE WHERE MD_SL_NO = #md_sl_no:NUMBER# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE MISECLLANIOUS_ALLOWANCE SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE MD_SL_NO = #md_sl_no:NUMBER# AND
+        MD_DEDUCTION_TYPE = #md_deduction_type:VARCHAR# AND
+        <!--TEMP_SL_NO = #tempSlNo:NUMBER# AND-->
+        
+        MD_GRADE = #md_grade:VARCHAR#
+    </mapped-statement>
+
+    <result-map name="getMisecllaniousDeductionTOResult" class="com.see.truetransact.transferobject.common.MisecllaniousDeductionTO">
+        <property name="md_sl_no" column="MD_SL_NO"/>
+        <property name="md_grade" column="MD_GRADE"/>
+        <property name="md_from_date" column="MD_FROM_DATE"/>
+        <property name="md_to_date" column="MD_TO_DATE"/>
+        <property name="md_deduction_type" column="MD_DEDUCTION_TYPE"/>
+        <property name="mdFixedOrPercentage" column="MD_FIXED_OR_PERCENT"/>
+        <property name="txtMdFixedAmtValue" column="MD_FIXED_AMT"/>
+        <property name="maximum_amt" column="MAXIMUM_AMT"/>
+        <property name="percentage" column="PERCENTAGE"/>
+        <property name="eligible_allowance" column="ELIGIBLE_ALLOWANCE"/>
+        <property name="eligible_percentage" column="ELIGIBLE_PERCENTAGE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+        <property name="rdoUsingBasic" column="USING_BASIC"/>
+        <property name="txtFromAmount" column="FROM_AMOUNT"/>
+        <property name="txtToAmount" column="TO_AMOUNT"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectMisecllaniousEditStructureTO" result-map="getMisecllaniousDeductionTOResult" >
+        SELECT * FROM MISECLLANIOUS_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND MD_GRADE = #GRADE# AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR# AND STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY (TO_NUMBER(MD_SL_NO)),MD_FROM_DATE      
+    </mapped-statement>      
+    
+    <mapped-statement name = "updateAuthorizeStatusMisecllanious" result-class = "java.util.HashMap">
+        UPDATE MISECLLANIOUS_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE# WHERE MD_GRADE = #GRADE:VARCHAR# <!-- AND TEMP_SL_NO = #TEMP_SL_NO# --> AND 
+        MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR# AND
+        STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectMaxofSlNoMD" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(MD_SL_NO),0) AS SL_NO FROM MISECLLANIOUS_ALLOWANCE
+    </mapped-statement>
+<!-- =================================GratuityAllowance================================================== -->
+    <mapped-statement name = "insertGratuityTO" inline-parameters = "true">
+        INSERT INTO GRATUITY_ALLOWANCE(GRATUITY_SL_NO,GRATUITY_GRADE,GRATUITY_FROM_DATE,GRATUITY_TO_DATE,
+        UPTO_YEAR,UPTO_MONTHS_PAY,MAXIMUM_MONTHS,BEYOND_YEAR,BEYOND_MONTHS_PAY,MAXIMUM_AMOUNT,STATUS,
+        STATUS_BY,STATUS_DATE,AUTHORIZE_BY,AUTHORIZE_STATUS,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO
+        )VALUES(
+        #gratuity_sl_no:NUMBER#,#gratuity_grade:VARCHAR#,#gratuity_from_date:DATE#,#gratuity_to_date:DATE#,
+        #upto_year:NUMBER#,#upto_months_pay:NUMBER#,#maximum_months:NUMBER#,#beyond_year:NUMBER#,#beyond_months_pay:NUMBER#,
+        #maximum_amount:NUMBER#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#authorizeBy:VARCHAR#,
+        #authorizeStatus:VARCHAR#,#authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER# )        
+    </mapped-statement>
+    
+    <mapped-statement name = "updateGratuityTO" inline-parameters = "true">
+        UPDATE GRATUITY_ALLOWANCE SET 
+        UPTO_YEAR = #upto_year:NUMBER#,
+        UPTO_MONTHS_PAY = #upto_months_pay:NUMBER#,
+        MAXIMUM_MONTHS = #maximum_months:NUMBER#,
+        BEYOND_YEAR = #beyond_year:NUMBER#,
+        BEYOND_MONTHS_PAY = #beyond_months_pay:NUMBER#,
+        MAXIMUM_AMOUNT = #maximum_amount:NUMBER#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE GRATUITY_SL_NO = #gratuity_sl_no:NUMBER# AND
+        <!--TEMP_SL_NO = #tempSlNo:NUMBER# AND-->
+        GRATUITY_GRADE = #gratuity_grade:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteGratuityTO" inline-parameters = "true">
+        <!--DELETE FROM GRATUITY_ALLOWANCE WHERE GRATUITY_SL_NO = #gratuity_sl_no:NUMBER# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE GRATUITY_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE GRATUITY_SL_NO = #gratuity_sl_no:NUMBER# AND
+        <!--TEMP_SL_NO = #tempSlNo:NUMBER# AND-->
+        GRATUITY_GRADE = #gratuity_grade:VARCHAR#
+    </mapped-statement>
+    
+    <result-map name="getGratuityTOResult" class="com.see.truetransact.transferobject.common.GratuityTO">
+        <property name="gratuity_sl_no" column="GRATUITY_SL_NO"/>
+        <property name="gratuity_grade" column="GRATUITY_GRADE"/>
+        <property name="gratuity_from_date" column="GRATUITY_FROM_DATE"/>
+        <property name="gratuity_to_date" column="GRATUITY_TO_DATE"/>
+        <property name="upto_year" column="UPTO_YEAR"/>
+        <property name="upto_months_pay" column="UPTO_MONTHS_PAY"/>
+        <property name="maximum_months" column="MAXIMUM_MONTHS"/>
+        <property name="beyond_year" column="BEYOND_YEAR"/>
+        <property name="beyond_months_pay" column="BEYOND_MONTHS_PAY"/>
+        <property name="maximum_amount" column="MAXIMUM_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+    </result-map>
+    
+    <mapped-statement name="getSelectGratuityEditStructureTO" result-map="getGratuityTOResult" >
+        SELECT * FROM GRATUITY_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND GRATUITY_GRADE = #GRADE:VARCHAR# AND STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY TEMP_SL_NO,GRATUITY_FROM_DATE,(TO_NUMBER(GRATUITY_SL_NO))           
+    </mapped-statement>      
+
+    <mapped-statement name = "updateAuthorizeStatusGratuity" result-class = "java.util.HashMap">
+        UPDATE GRATUITY_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE# WHERE GRATUITY_GRADE = #GRADE:VARCHAR# <!--AND TEMP_SL_NO = #TEMP_SL_NO# --> AND 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectMaxofSlNoGA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(GRATUITY_SL_NO),0) AS SL_NO FROM GRATUITY_ALLOWANCE
+    </mapped-statement>
+        
+</sql-map>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="NomineeTOMap">
+
+	<!-- Use NomineeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertNomineeTO" inline-parameters="true">
+        INSERT INTO ACT_NOMINEE_DETAIL
+        (ACT_NUM, NOMINEE_ID, NOMINEE_NAME, RELATIONSHIP, STREET, AREA, CITY, STATE, PIN_CODE, AREA_CODE, PH_NO, SHARE_PER, NOMINEE_STATUS, NOMINEE_DOB, GUARDIAN_NAME, G_STREET, G_AREA, G_CITY, G_STATE, G_PIN_CODE, G_AREA_CODE, G_PH_NO, G_RELATIONSHIP, COUNTRY_CODE, G_COUNTRY_CODE, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #actNum:VARCHAR#, #nomineeId:VARCHAR#, #nomineeName:VARCHAR#, #relationship:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #pinCode:VARCHAR#, #areaCode:VARCHAR#, #phNo:VARCHAR#, #sharePer:NUMERIC#, #nomineeStatus:VARCHAR#, #nomineeDob:DATE#, #guardianName:VARCHAR#, #gStreet:VARCHAR#, #gArea:VARCHAR#, #gCity:VARCHAR#, #gState:VARCHAR#, #gPinCode:VARCHAR#, #gAreaCode:VARCHAR#, #gPhNo:VARCHAR#, #gRelationship:VARCHAR#, #countryCode:VARCHAR#, #gCountryCode:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#
+    </mapped-statement>
+
+	<!-- Use NomineeTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateNomineeTO" inline-parameters="true">
+        UPDATE ACT_NOMINEE_DETAIL SET 
+        ACT_NUM = #actNum:VARCHAR#,
+        NOMINEE_ID = #nomineeId:VARCHAR#,
+        NOMINEE_NAME = #nomineeName:VARCHAR#,
+        RELATIONSHIP = #relationship:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        PIN_CODE = #pinCode:VARCHAR#,
+        AREA_CODE = #areaCode:VARCHAR#,
+        PH_NO = #phNo:VARCHAR#,
+        SHARE_PER = #sharePer:NUMERIC#,
+        NOMINEE_STATUS = #nomineeStatus:VARCHAR#,
+        NOMINEE_DOB = #nomineeDob:DATE#,
+        GUARDIAN_NAME = #guardianName:VARCHAR#,
+        G_STREET = #gStreet:VARCHAR#,
+        G_AREA = #gArea:VARCHAR#,
+        G_CITY = #gCity:VARCHAR#,
+        G_STATE = #gState:VARCHAR#,
+        G_PIN_CODE = #gPinCode:VARCHAR#,
+        G_AREA_CODE = #gAreaCode:VARCHAR#,
+        G_PH_NO = #gPhNo:VARCHAR#,
+        G_RELATIONSHIP = #gRelationship:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        G_COUNTRY_CODE = #gCountryCode:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE 
+    </mapped-statement>
+
+	<!-- Use NomineeTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteNomineeTO" inline-parameters="true">
+        DELETE FROM ACT_NOMINEE_DETAIL 
+        WHERE ACT_NUM = #value:VARCHAR# 
+        and (STATUS ='MODIFIED' OR STATUS = 'CREATED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to NomineeTO object (JavaBean) properties -->
+    <result-map name="getNomineeTOResult" class="com.see.truetransact.transferobject.common.nominee.NomineeTO">
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="nomineeId" column="NOMINEE_ID"/>
+        <property name="nomineeName" column="NOMINEE_NAME"/>
+        <property name="relationship" column="RELATIONSHIP"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pinCode" column="PIN_CODE"/>
+        <property name="areaCode" column="AREA_CODE"/>
+        <property name="phNo" column="PH_NO"/>
+        <property name="sharePer" column="SHARE_PER"/>
+        <property name="nomineeStatus" column="NOMINEE_STATUS"/>
+        <property name="nomineeDob" column="NOMINEE_DOB"/>
+        <property name="guardianName" column="GUARDIAN_NAME"/>
+        <property name="gStreet" column="G_STREET"/>
+        <property name="gArea" column="G_AREA"/>
+        <property name="gCity" column="G_CITY"/>
+        <property name="gState" column="G_STATE"/>
+        <property name="gPinCode" column="G_PIN_CODE"/>
+        <property name="gAreaCode" column="G_AREA_CODE"/>
+        <property name="gPhNo" column="G_PH_NO"/>
+        <property name="gRelationship" column="G_RELATIONSHIP"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="gCountryCode" column="G_COUNTRY_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectNomineeTO" result-map="getNomineeTOResult" >
+        SELECT * FROM ACT_NOMINEE_DETAIL 
+        WHERE ACT_NUM = #value:VARCHAR# AND(STATUS!='DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="Nominee.getCustGuardian" result-class="java.util.HashMap">
+        SELECT C.CUST_ID,C.DOB, CG.RELATIONSHIP,CG.GUARDIAN_NAME,CG.AREA_CODE,
+        CG.PH_NO, CG.STREET, CG.AREA, CG.COUNTRY_CODE,
+        CG.STATE, CG.CITY, CG.PIN_CODE FROM CUST_GUARDIAN CG, CUSTOMER C             
+        WHERE C.CUST_ID = CG.CUST_ID AND C.CUST_ID = #CUSTOMER ID:VARCHAR#
+    </mapped-statement>
+
+</sql-map>

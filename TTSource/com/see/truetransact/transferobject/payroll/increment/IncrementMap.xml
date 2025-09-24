@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="IncrementTOMap">
+
+	<!-- Use IncrementTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->  
+   <result-map name="getEmpDetailsTOResult" class="java.util.LinkedHashMap">
+        <property name="employeeId" column="EMPLOYEEID"/>
+        <property name="name" column="EMPLOYEE_NAME"/>
+        <property name="designation" column="DESIGNATION"/> 
+        <property name="scaleId" column="SCALE_ID"/>
+        <property name="presentBasic" column="PRESENT_BASIC"/>
+        <property name="lastIncrement" column="LAST_INCREAMENT_DATE"/>
+        <property name="nextIncrement" column="NEXT_INCREAMENT_DATE"/>
+        <property name="incrementCount" column="INCREAMENT_COUNT"/>
+        <property name="versionNo" column="VERSION_NO"/>
+    </result-map>
+    
+  <dynamic-mapped-statement name="getEmpDetailsIncrement" result-map = "getEmpDetailsTOResult">
+           SELECT  EP.EMPLOYEEID,EN.EMPLOYEE_NAME,EP.LAST_INCREAMENT_DATE,EP.NEXT_INCREAMENT_DATE,EP.SCALE_ID,EP.VERSION_NO, 
+           EP.PRESENT_BASIC,EP.DESIGNATION,EP.INCREAMENT_COUNT,ep.last_increament_date,ep.next_increament_date,EP.SRL_NO 
+           FROM EMPLOYEE_PRESENT_DETAILS EP
+           JOIN
+           (
+           SELECT  EM.EMPLOYEEID,MAX(EM.SRL_NO) AS SRL_NO FROM EMPLOYEE_PRESENT_DETAILS EM GROUP BY EM.EMPLOYEEID
+           ) P ON P.EMPLOYEEID=EP.EMPLOYEEID 
+           AND P.SRL_NO=EP.SRL_NO            
+           JOIN
+           EMPLOYEE_MASTER EN ON EN.EMPLOYEEID=EP.EMPLOYEEID 
+            <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SRL_NO">
+                    UPPER(EP.SRL_NO) LIKE UPPER('%$SRL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EP.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DESIGNATION">
+                    UPPER(EP.DESIGNATION) LIKE UPPER('%$DESIGNATION$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRESENTBASIC">
+                    UPPER(P.PRESENT_BASIC) LIKE UPPER('%$PRESENTBASIC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(EN.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="LAST_INCREAMENT_DATE">
+                    UPPER(EP.LAST_INCREAMENT_DATE) LIKE UPPER('%$LAST_INCREAMENT_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="NEXT_INCREAMENT_DATE">
+                    UPPER(EP.NEXT_INCREAMENT_DATE) LIKE UPPER('%$NEXT_INCREAMENT_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCALEID">
+                    UPPER(EP.SCALE_ID) LIKE UPPER('%$SCALEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="VERSIONNO">
+                    UPPER(EP.VERSION_NO) LIKE UPPER('%$VERSIONNO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INCREMENTCOUNT">
+                    UPPER(EP.INCREAMENT_COUNT) LIKE UPPER('%$INCREMENTCOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+            ORDER BY P.EMPLOYEEID  
+    </dynamic-mapped-statement>  
+    
+    <mapped-statement name="getSalaryBasic" result-class="java.util.LinkedHashMap">
+            SELECT S.SCALE_END_AMOUNT FROM SCALE_MASTER S WHERE S.DESIGNATION = #DESIG:VARCHAR# AND S.SCALE_ID=cast(#SCALEID# as numeric) AND S.VERSION_NO=cast(#VERSION# as numeric)
+    </mapped-statement>
+    
+    <mapped-statement name="insertPayrollIncrement" inline-parameters="true">
+        INSERT INTO PAYROLL_INCREMENT (INCR_ID, EMPLOYEEID, PRESENT_DESIGNATION, NEW_DESIGNATION, PRESENT_BASIC, NEW_BASIC,
+        LAST_INCR_DATE, NEXT_INCR_DATE, NEW_INCR_DATE, NO_OF_INCREMENTS,INCR_TYPE,STATUS_BY,STATUS,STATUS_DT,CREATED_BY,CREATED_DATE) 
+        VALUES (#incrID:varchar#,#employeeId:varchar#,#designation:varchar# ,#newDesig:varchar# ,cast(#presentBasic# as numeric) ,cast(#newBasicSal# as numeric) ,#lastIncrDate:date#
+        ,#nextIncrDate:date# ,#newIncrDate:date# ,cast(#numOfIncr# as numeric) ,#incrType:varchar#,#statusBy:varchar#,#status:varchar#,(SELECT SYS_DATE() FROM DUAL),#createdBy:varchar#,
+        #createdDt:date#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateEmployeePresentDetails" result-class="java.util.LinkedHashMap">
+           UPDATE EMPLOYEE_PRESENT_DETAILS SET PRESENT_BASIC=#newBasicSal:varchar#,LAST_INCREAMENT_DATE=#lastIncrDate:date#,NEXT_INCREAMENT_DATE=#nextIncrDate:date#,
+           STATUS=#status:varchar# WHERE EMPLOYEEID=#employeeId:varchar#
+    </mapped-statement>
+    
+    <mapped-statement name="updatePaymaster" result-class="java.util.LinkedHashMap">
+           UPDATE PAYMASTER P SET P.AMOUNT=#newBasicSal:varchar# where P.EMPLOYEEID=#employeeId:varchar# and P.PAY_CODE=#payCode#
+    </mapped-statement>    
+       
+    <mapped-statement name="getEmpDetailsIncrementEdit" result-class="java.util.LinkedHashMap">
+           SELECT EM.EMPLOYEE_NAME,EM.EMPLOYEEID,EP.DESIGNATION,EP.INCREAMENT_COUNT,EP.LAST_INCREAMENT_DATE,EP.NEXT_INCREAMENT_DATE,EP.SCALE_ID,MAX(SD.VERSION_NO) AS VERSION_NO,EP.PRESENT_BASIC 
+            FROM  EMPLOYEE_PRESENT_DETAILS EP,EMPLOYEE_MASTER EM,SCALE_MASTER SD WHERE EP.EMPLOYEEID=EM.EMPLOYEEID 
+            AND EP.SCALE_ID=SD.SCALE_ID GROUP BY  EM.EMPLOYEE_NAME,EM.EMPLOYEEID,EP.DESIGNATION,EP.SCALE_ID,EM.SORT_ORDER,
+            EP.PRESENT_BASIC,EP.INCREAMENT_COUNT,ep.last_increament_date,ep.next_increament_date 
+           ORDER BY  EM.SORT_ORDER,EM.EMPLOYEEID
+    </mapped-statement> 
+    
+    <mapped-statement name="getPayCodesMaster" result-class="java.util.LinkedHashMap">
+           SELECT P.PAY_CODE,P.PAY_DESCRI,PS.PAY_CALC_ON,PS.PAY_MAX_AMT,PS.PAY_PERCENT,PS.PAY_FIX_AMT FROM PAYCODES_MASTER P 
+           JOIN PAY_SETTINGS PS ON P.PAY_CODE = PS.PAY_CODE WHERE P.PAY_CALC_TYPE = 'Calculated' AND PS.TO_DATE is null ORDER BY TO_NUMBER(PS.PAYCODE_ID) 
+    </mapped-statement>   
+    
+    <mapped-statement name="getPayCodeBasic" result-class="java.util.LinkedHashMap">
+     SELECT PAY_CODE FROM PAYCODES_MASTER WHERE UPPER(REGEXP_REPLACE(PAY_MODULE_TYPE, '\s*', '')) = 'BASICPAY'
+    </mapped-statement>
+    
+    <mapped-statement name="getPayCodeSetting" result-class="java.util.LinkedHashMap">
+           SELECT * FROM PAY_SETTINGS WHERE PAY_CODE = #PAY_CODE:VARCHAR# AND TO_DATE IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="insertIntoPayMaster" inline-parameters="true">
+           INSERT INTO PAYMASTER (EMPLOYEEID,PAY_CODE,AMOUNT,PROD_TYPE,PROD_ID,ACC_NO,PRINCIPAL,INTEREST,PENALINTEREST,
+           CALC_UPTO,FROM_DATE,TO_DATE,REMARK,STATUS_BY,CREATED_BY,CREATED_DATE,ACTIVE,RECOVERY_MONTHS,STATUS,STATUS_DATE,SRL_NO) 
+           VALUES (#employeeId:varchar#,#payCode:varchar#,#amount:number# ,#prodType:varchar# ,#prodId:varchar# ,#accNo:varchar#
+           ,#principal:number# ,#interest:number# ,#penalInterest:number#,#calcUpto:date#,#newIncrDate:date#,#nextIncrDate:date#,#remarks:varchar#,#statusBy:varchar#,
+           #createdBy:varchar#,#createdDt:date#,#active:varchar#,#recoveryMonths:number#,#status:varchar#,#statusDt:date#,#serialNo:NUMBER#)
+    </mapped-statement>
+    
+     <mapped-statement name="getMaxSerialNoPaymaster" result-class="java.util.LinkedHashMap">
+           SELECT MAX(SRL_NO) AS SLNO FROM PAYMASTER  WHERE EMPLOYEEID = #EMPID:VARCHAR# AND PAY_CODE = #PAY_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getMaxSerialEmpPresDetails" result-class="java.util.LinkedHashMap">
+           SELECT MAX(SRL_NO) AS SLNO FROM EMPLOYEE_PRESENT_DETAILS  WHERE EMPLOYEEID = #EMPID:VARCHAR# 
+    </mapped-statement>
+
+     <mapped-statement name="getDesigBasicSalary" result-class="java.util.LinkedHashMap"> 
+            SELECT SCALE_ID, VERSION_NO, EFF_DATE, SCALE_START_AMOUNT FROM SCALE_MASTER WHERE 
+            DESIGNATION = #DESIG:VARCHAR# AND VERSION_NO = (SELECT MAX(VERSION_NO) FROM SCALE_MASTER 
+            WHERE DESIGNATION = #DESIG:VARCHAR#) 
+     </mapped-statement>
+     
+     <mapped-statement name="insertEmployeePresentDetails" inline-parameters="true">
+            INSERT INTO EMPLOYEE_PRESENT_DETAILS (EMPLOYEEID,EFF_DATE,DESIGNATION,SCALE_ID,PRESENT_BASIC,LAST_INCREAMENT_DATE,NEXT_INCREAMENT_DATE,
+            INCREAMENT_COUNT,STATUS_BY,STATUS,CREATED_BY,CREATED_DATE,AUTHORIZED_BY,AUTHORIZE_STATUS,VERSION_NO,SRL_NO) 
+            VALUES (#employeeId:varchar#,#newIncrDate:date#,#newDesig:varchar#,cast(#scaleId# as numeric),cast(#newBasicSal# as numeric),#lastIncrDate:date#
+            ,#nextIncrDate:date# ,cast(#numOfIncr# as numeric) ,#statusBy:varchar#,#status:varchar#,#createdBy:varchar#,#createdDt:date#,#authorizedBy:varchar#
+            ,#authorizedStatus:varchar#,cast(#versionNo# as numeric),#serialNo:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="getIncrementAmount" result-class="java.util.LinkedHashMap"> 
+            SELECT get_salary_scale(cast(#SCALE_ID# as bigint),cast(#VERSION_NO# as bigint),cast(#INCREMENT_COUNT# as bigint)) AS INCR_AMOUNT FROM DUAL            
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getPayrollIncrementDetailsReject" result-class="java.util.LinkedHashMap"> 
+            SELECT P.INCR_ID,P.EMPLOYEEID,EP.DESIGNATION,P.PRESENT_BASIC AS PRESENTBASIC,EM.EMPLOYEE_NAME AS NAME,
+            EP.LAST_INCREAMENT_DATE AS LASTINCREMENT,EP.NEXT_INCREAMENT_DATE AS NEXTINCREMENT,
+            EP.SCALE_ID AS SCALEID,EP.VERSION_NO AS VERSIONNO,EP.INCREAMENT_COUNT AS INCREMENTCOUNT FROM PAYROLL_INCREMENT P
+            JOIN EMPLOYEE_PRESENT_DETAILS EP  ON P.NEW_INCR_DATE = EP.EFF_DATE AND
+            P.EMPLOYEEID = EP.EMPLOYEEID 
+            AND #CURDATE:DATE#&lt; EP.EFF_DATE
+            JOIN EMPLOYEE_MASTER EM ON EP.EMPLOYEEID = EM.EMPLOYEEID 
+              <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INCR_ID">
+                    UPPER(P.INCR_ID) LIKE UPPER('%$INCR_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(P.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DESIGNATION">
+                    UPPER(EP.DESIGNATION) LIKE UPPER('%$DESIGNATION$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRESENTBASIC">
+                    UPPER(P.PRESENT_BASIC) LIKE UPPER('%$PRESENTBASIC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="NAME">
+                    UPPER(EM.EMPLOYEE_NAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="LASTINCREMENT">
+                    UPPER(EP.LAST_INCREAMENT_DATE) LIKE UPPER('%$LASTINCREMENT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCALEID">
+                    UPPER(EP.SCALE_ID) LIKE UPPER('%$SCALEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="VERSIONNO">
+                    UPPER(EP.VERSION_NO) LIKE UPPER('%$VERSIONNO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INCREMENTCOUNT">
+                    UPPER(EP.INCREAMENT_COUNT) LIKE UPPER('%$INCREMENTCOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="deletePayrollIncrement" result-class="java.util.LinkedHashMap"> 
+            DELETE FROM PAYROLL_INCREMENT P WHERE P.INCR_ID = #INCRID:varchar#          
+    </mapped-statement>
+    
+    <mapped-statement name="deleteFromPayMasterIncr" result-class="java.util.LinkedHashMap"> 
+            DELETE FROM PAYMASTER PM WHERE PM.EMPLOYEEID IN( 
+            SELECT EP.EMPLOYEEID FROM EMPLOYEE_PRESENT_DETAILS EP WHERE EP.EMPLOYEEID IN(
+            SELECT PI.EMPLOYEEID FROM PAYROLL_INCREMENT PI WHERE PI.INCR_ID = #INCRID:varchar# AND PI.NEW_INCR_DATE = EP.EFF_DATE
+            AND PI.LAST_INCR_DATE = EP.LAST_INCREAMENT_DATE AND PI.NEXT_INCR_DATE = EP.NEXT_INCREAMENT_DATE
+            )) AND PM.SRL_NO =(SELECT MAX(SRL_NO) FROM PAYMASTER WHERE EMPLOYEEID = #EMPID:varchar#)          
+    </mapped-statement>
+    
+    <mapped-statement name="deleteEmployeePresentDetailsIncr" result-class="java.util.LinkedHashMap"> 
+            DELETE FROM EMPLOYEE_PRESENT_DETAILS EP
+            WHERE EP.EMPLOYEEID IN(
+            SELECT PI.EMPLOYEEID FROM PAYROLL_INCREMENT PI WHERE PI.INCR_ID = #INCRID:varchar#  AND PI.NEW_INCR_DATE = EP.EFF_DATE
+            AND PI.LAST_INCR_DATE = EP.LAST_INCREAMENT_DATE AND PI.NEXT_INCR_DATE = EP.NEXT_INCREAMENT_DATE 
+            )              
+    </mapped-statement>
+    <mapped-statement name="getNumberOfIncrements" result-class="java.util.LinkedHashMap">            
+            SELECT SUM(P.INCREAMENT_COUNT) AS INCREMENT_COUNT FROM SCALE_DETAILS P
+            JOIN
+            (
+            SELECT S.SCALE_ID,S.VERSION_NO,S.SRL_NO FROM
+            SCALE_DETAILS S WHERE S.SCALE_ID=#SCALE_ID# AND S.VERSION_NO = #VERSION_NO:NUMBER#
+            ORDER BY S.SRL_NO)Y ON P.SCALE_ID = Y.SCALE_ID AND P.VERSION_NO = Y.VERSION_NO AND P.SRL_NO = Y.SRL_NO
+            WHERE P.INCREAMENT_AMOUNT &lt;= #INCR_AMT:NUMBER#
+   </mapped-statement>
+   
+     <mapped-statement name="getAccountDataForEmplyeeByPayCode" result-class="java.util.HashMap">
+     SELECT P.EMPLOYEEID,P.PAY_CODE,P.PROD_TYPE,P.PROD_ID,P.ACC_NO,P.SRL_NO FROM PAYMASTER P WHERE P.EMPLOYEEID = #EMPID:VARCHAR# AND P.PAY_CODE =#PAY_CODE:VARCHAR#
+     AND P.SRL_NO = (SELECT MAX(PM.SRL_NO) FROM PAYMASTER PM WHERE PM.EMPLOYEEID = #EMPID:VARCHAR# AND PM.PAY_CODE =#PAY_CODE:VARCHAR#)
+    </mapped-statement>
+   
+</sql-map>

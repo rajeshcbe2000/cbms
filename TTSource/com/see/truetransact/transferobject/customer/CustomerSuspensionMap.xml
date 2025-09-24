@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerSuspensionMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerSuspensionTO" inline-parameters="true">
+        INSERT INTO CUSTOMER_SUSPENDED
+        (CUST_ID,STATUS,SUSPENDED_FROM,SUSPENDED_BY,REVOKED_BY ,STATUS_DT,REMARKS,REVOKED_DATE
+        ) VALUES (
+        #custId:VARCHAR#,#status:VARCHAR#,#suspendedFromDate:DATE#,#suspendedBy:VARCHAR#,#revokedBy:VARCHAR#,#statusDate:DATE#,#remarks:VARCHAR#,#revokedDate:DATE#)
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateCustomerSuspensionTO" inline-parameters="true">
+        UPDATE CUSTOMER_SUSPENDED SET 
+        STATUS = #status:VARCHAR#,
+        REVOKED_BY = #revokedBy:VARCHAR#,
+        STATUS_DT = #statusDate:DATE#,
+        SUSPENDED_FROM=#suspendedFromDate:DATE#,
+        REVOKED_DATE=#revokedDate:DATE#,
+        REMARKS=#remarks:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getCustomerSuspensionTOResult" class="com.see.truetransact.transferobject.customer.CustomerSuspensionTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="suspendedFromDate" column="SUSPENDED_FROM"/>
+        <property name="suspendedBy" column="SUSPENDED_BY"/>
+        <property name="revokedBy" column="REVOKED_BY"/>
+        <property name="statusDate" column="STATUS_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="revokedDate" column="REVOKED_DATE"/>
+    </result-map>
+    <mapped-statement name="getSelectCustomerSuspensionTO" result-map="getCustomerSuspensionTOResult" >
+        SELECT * FROM CUSTOMER_SUSPENDED WHERE CUST_ID=#CUST_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getSusCnt"  result-class="java.util.HashMap">
+        SELECT COUNT(*) AS CNT FROM CUSTOMER_SUSPENDED
+        WHERE CUST_ID=#CUST_ID:VARCHAR#
+    </mapped-statement>
+</sql-map>        

@@ -1,0 +1,1083 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanNoticeMap">
+
+    <dynamic-mapped-statement name="getProductsForLoanNotice" result-class = "java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT 
+        <dynamic>
+            <isEqual prepend="WHERE" property="PROD_ID" compareValue="GOLD_LOAN">
+                AUTHORIZE_REMARK IS NOT NULL AND AUTHORIZE_REMARK='GOLD_LOAN'
+                    
+            </isEqual>
+            <isEqual prepend="WHERE" property="PROD_ID" compareValue="OTHER_LOAN">
+                    <!--AUTHORIZE_REMARK IS NULL -->
+                AUTHORIZE_REMARK IS NOT NULL AND AUTHORIZE_REMARK='OTHER_LOAN'
+                    
+                    
+            </isEqual>
+            <isEqual prepend="WHERE" property="PROD_ID" compareValue="MDS Loans">
+                AUTHORIZE_REMARK = 'MDS_LOAN'
+            </isEqual>
+             <isParameterPresent>
+                  <isNotNull prepend="AND"  property="BEHAVES_LIKE_SAL">
+                   BEHAVES_LIKE IN ('SI_BEARING','OD')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getProductsForMDSNotice" result-class = "java.util.LinkedHashMap" >
+        SELECT SCHEME_NAME AS PROD_ID, MP_MDS_CODE AS PROD_DESC FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND 
+        AUTHORIZED_STATUS='AUTHORIZED' ORDER BY MP_MDS_CODE 
+    </mapped-statement>
+
+    <mapped-statement name="getProductsForMDSRiskFund" result-class = "java.util.LinkedHashMap" >
+       SELECT SCHEME_NAME AS PROD_ID, SCHEME_NAME||'-'||SCHEME_DESC AS PROD_DESC FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND 
+       AUTHORIZED_STATUS='AUTHORIZED' ORDER BY MP_MDS_CODE
+    </mapped-statement>
+
+    <mapped-statement name="getProductsForMDSNoticeARC" result-class = "java.util.LinkedHashMap" >
+        SELECT SCHEME_NAME AS PROD_ID, SCHEME_DESC AS PROD_DESC FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND 
+        AUTHORIZED_STATUS='AUTHORIZED' ORDER BY MP_MDS_CODE 
+    </mapped-statement>
+    <dynamic-mapped-statement name="getAccountsForLoanNotice" result-class = "java.util.LinkedHashMap" >
+        <!-- This query taken from Membership Liability. For Joint a/cs query can be taken from that only --> 
+        Select ACCT_NUM as ACT_NUM ,LOANS_BORROWER.CUST_ID, membership_no AS MEM_NO, FNAME AS NAME,
+        PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+        NVL(PRINCIPAL,0) as balance , 
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due , DUE_DT,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property="OVER_DUE_DT">
+                    CASE WHEN TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY')) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY')) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="FROM_DUE_DT">
+                    CASE WHEN DUE_DT - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                    ROUND((DUE_DT - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    (NVL (INTEREST_DEMAND, 0)-GET_TL_INT_COLL_NOTICE(ACCT_NUM,REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT)) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'ACT_HOLDER' AS CUST_TYPE
+            From REP_LOAN_NOTICE_TWO left join LOANS_PROD_CHQCHRG on 
+            REP_LOAN_NOTICE_TWO.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID join LOANS_BORROWER on 
+            LOANS_BORROWER.BORROW_NO = REP_LOAN_NOTICE_TWO.BORROW_NO 
+            where  
+            <!--LOANS_BORROWER.BORROW_NO=rep_loan_notice_two.BORROW_NO 
+            AND rep_loan_notice_two.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID(+) AND-->
+            LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR# 
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FULL_DUE">
+                    TO_DT &lt;= #TODAY_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_TYPE">
+                    rep_loan_notice_two.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                    (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DT">
+                    FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DUE_DT">
+                    DUE_DT &gt;= #FROM_DUE_DT:DATE# AND DUE_DT &lt;= #TO_DUE_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= cast(#NO_OF_INSTALLMENTS# as numeric)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                    NO_MONTH_DUE between 1 and 2
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                    NO_MONTH_DUE between 3 and 4
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                    NO_MONTH_DUE &gt; 4
+                </isEqual>
+                <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    Select LOANS_SECURITY_MEMBER.ACCT_NUM as ACT_NUM ,CUSTOMER.CUST_ID, 
+                    <!--CUSTOMER.membership_no AS MEM_NO,-->
+                    LOANS_SECURITY_MEMBER.MEMBER_NO as MEM_NO,
+                    CUSTOMER.FNAME AS NAME,
+                    PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+                    NVL(PRINCIPAL,0) as balance , 
+                    CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+                    THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+                    ELSE 0
+                    END
+                    as principal_due , DUE_DT,
+                    <isParameterPresent>
+                        <isNotNull property="OVER_DUE_DT">
+                            CASE WHEN TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY')) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                            ROUND((TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY')) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                            REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                            ELSE 0 END AS INT_DUE,
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isNotPropertyAvailable property="OVER_DUE_DT">
+                        (NVL (INTEREST_DEMAND, 0)-GET_TL_INT_COLL_NOTICE(LOANS_SECURITY_MEMBER.ACCT_NUM,REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT)) as int_due, 
+                    </isNotPropertyAvailable>
+                    penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'GUARANTOR' AS CUST_TYPE
+                    <!--From REP_LOAN_NOTICE_TWO 
+                    join  LOANS_SECURITY_MEMBER on LOANS_SECURITY_MEMBER.ACCT_NUM = REP_LOAN_NOTICE_TWO.ACCT_NUM 
+                    left join LOANS_PROD_CHQCHRG on REP_LOAN_NOTICE_TWO.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID
+                    join CUSTOMER ON CUSTOMER.MEMBERSHIP_NO = LOANS_SECURITY_MEMBER.MEMBER_NO-->
+                    from
+                    REP_LOAN_NOTICE_TWO
+                    join LOANS_SECURITY_MEMBER on
+                    LOANS_SECURITY_MEMBER.ACCT_NUM = REP_LOAN_NOTICE_TWO.ACCT_NUM
+                    join share_acct sa on sa.share_acct_no = LOANS_SECURITY_MEMBER.MEMBER_NO	
+                    left join LOANS_PROD_CHQCHRG on
+                    REP_LOAN_NOTICE_TWO.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID
+                    join CUSTOMER on
+                    CUSTOMER.cust_id = sa.cust_id
+                    where  
+                    <!--LOANS_SECURITY_MEMBER.ACCT_NUM=rep_loan_notice_two.ACCT_NUM 
+                    AND rep_loan_notice_two.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID(+) AND -->
+                    LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR#
+                    AND rep_loan_notice_two.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                    AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+                    and LOANS_SECURITY_MEMBER.status  not IN ('DELETED')
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_ID">
+                            rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_TYPE">
+                            rep_loan_notice_two.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_DT">
+                            FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                            rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                            rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                            <!--LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT#  -->
+                            (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            NO_MONTH_DUE &gt;= cast(#NO_OF_INSTALLMENTS# as numeric)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                        NO_MONTH_DUE between 1 and 2
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                        NO_MONTH_DUE between 3 and 4
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                        NO_MONTH_DUE &gt; 4
+                    </isEqual>
+                </isNotNull>
+                  <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    Select LOANS_SECURITY_LAND.ACCT_NUM as ACT_NUM ,CUSTOMER.CUST_ID, CUSTOMER.membership_no AS MEM_NO, CUSTOMER.FNAME AS NAME,
+                    PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+                    NVL(PRINCIPAL,0) as balance , 
+                    CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+                    THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+                    ELSE 0
+                    END
+                    as principal_due , DUE_DT,
+                    <isParameterPresent>
+                        <isNotNull property="OVER_DUE_DT">
+                            CASE WHEN TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY')) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                            ROUND((TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY')) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                            REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                            ELSE 0 END AS INT_DUE,
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isNotPropertyAvailable property="OVER_DUE_DT">
+                       (NVL (INTEREST_DEMAND, 0)-GET_TL_INT_COLL_NOTICE(LOANS_SECURITY_LAND.ACCT_NUM,REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT)) as int_due, 
+                    </isNotPropertyAvailable>
+                    penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'GUARANTOR' AS CUST_TYPE
+                    From REP_LOAN_NOTICE_TWO join LOANS_SECURITY_LAND on  
+                    LOANS_SECURITY_LAND.ACCT_NUM = REP_LOAN_NOTICE_TWO.ACCT_NUM left join LOANS_PROD_CHQCHRG on 
+                    REP_LOAN_NOTICE_TWO.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID join GAHAN_JOINT on 
+                    GAHAN_JOINT.DOCUMENT_GEN_ID = LOANS_SECURITY_LAND.DOCUMENT_GEN_ID JOIN CUSTOMER ON
+                    CUSTOMER.CUST_ID = GAHAN_JOINT.CUST_ID 
+                    where  
+                    <!--LOANS_SECURITY_LAND.ACCT_NUM=rep_loan_notice_two.ACCT_NUM 
+                    AND rep_loan_notice_two.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID(+) 
+                    AND GAHAN_JOINT.DOCUMENT_GEN_ID = LOANS_SECURITY_LAND.DOCUMENT_GEN_ID AND-->
+                    GAHAN_JOINT.CUST_ID NOT IN (SELECT CUSTOMER.CUST_ID FROM CUSTOMER WHERE CUSTOMER.MEMBERSHIP_NO =  LOANS_SECURITY_LAND.MEMBER_NO)
+                    <!--AND CUSTOMER.CUST_ID = GAHAN_JOINT.CUST_ID-->
+                    AND LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR#
+                    AND rep_loan_notice_two.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                    AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_ID">
+                            rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_TYPE">
+                            rep_loan_notice_two.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_DT">
+                            FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                            rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                            rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                            <!--LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT#  -->
+                            (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            NO_MONTH_DUE &gt;= cast(#NO_OF_INSTALLMENTS# as numeric)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                        NO_MONTH_DUE between 1 and 2
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                        NO_MONTH_DUE between 3 and 4
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                        NO_MONTH_DUE &gt; 4
+                    </isEqual>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+        ORDER BY 1
+        <!--Select REP_LOAN_NOTICE3.ACCT_NUM as num , membership_no, CUST_ID, BORROW_NO,
+        REP_LOAN_NOTICE3.FNAME as fname , 
+        REP_LOAN_NOTICE3.FROM_DT as from_dt , 
+        REP_LOAN_NOTICE3.TO_DT as todt , 
+        NVL(REP_LOAN_NOTICE3.LIMIT,0) as limit , 
+        NVL(REP_LOAN_NOTICE3.PRINCIPAL,0) as balance , 
+        NVL(REP_LOAN_NOTICE3.DEMAND_CURRENT_PRINCIPAL,0)-REP_LOAN_NOTICE3.TOT_PRINCIPAL_COLLECTED as principal_demand , 
+        NVL(REP_LOAN_NOTICE3.INTEREST_DEMAND,0) as int_demand , 
+        due_dt,
+        REP_LOAN_NOTICE3.NO_OF_MONTHS_DUE
+        From REP_LOAN_NOTICE3, BRANCH_MASTER, BANK   
+        where BRANCH_MASTER.BRANCH_CODE = REP_LOAN_NOTICE3.BRANCH_CODE  and 
+        NVL(REP_LOAN_NOTICE3.DEMAND_CURRENT_PRINCIPAL,0)-REP_LOAN_NOTICE3.TOT_PRINCIPAL_COLLECTED>0 AND
+        REP_LOAN_NOTICE3.BRANCH_CODE = #BRANCH_CODE# and 
+        REP_LOAN_NOTICE3.PRODUCT_ID = #PROD_ID  and 
+        REP_LOAN_NOTICE3.DAY_END_DTT=#TO_DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DATE">
+                    REP_LOAN_NOTICE3.FROM_DT BETWEEN #FROM_DT# AND #TO_DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        order by REP_LOAN_NOTICE3.NO-->
+    </dynamic-mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getAccountsForLoanNoticeAD" result-class = "java.util.LinkedHashMap" >
+        <!-- This query taken from Membership Liability. For Joint a/cs query can be taken from that only --> 
+        Select ACCT_NUM as ACT_NUM ,LOANS_BORROWER.CUST_ID, membership_no AS MEM_NO, FNAME AS NAME,
+        PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+        NVL(PRINCIPAL,0) as balance , 
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due , DUE_DT,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property="OVER_DUE_DT">
+<!--                    CASE WHEN TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,-->
+                              CASE WHEN TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY'))  - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY'))- REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="FROM_DUE_DT">
+                    CASE WHEN DUE_DT - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((DUE_DT - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    NVL(INTEREST_DEMAND,0) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'ACT_HOLDER' AS CUST_TYPE
+            From rep_loan_notice_two_AD left join
+	    LOANS_BORROWER on LOANS_BORROWER.BORROW_NO = rep_loan_notice_two_AD.BORROW_NO join 
+	    LOANS_PROD_CHQCHRG on rep_loan_notice_two_AD.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID
+            where  
+            LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR# 
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two_AD.PROD_ID = #PROD_ID:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FULL_DUE">
+                    TO_DT &lt;= #TODAY_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_TYPE">
+                    rep_loan_notice_two_AD.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two_AD.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two_AD.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                    (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DT">
+                    FROM_DT &gt;= #FROM_DT# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DUE_DT">
+                    DUE_DT &gt;= #FROM_DUE_DT# AND DUE_DT &lt;= #TO_DUE_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                    NO_MONTH_DUE between 1 and 2
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                    NO_MONTH_DUE between 3 and 4
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                    NO_MONTH_DUE &gt; 4
+                </isEqual>
+                <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    Select LOANS_SECURITY_MEMBER.ACCT_NUM as ACT_NUM ,CUSTOMER.CUST_ID, CUSTOMER.membership_no AS MEM_NO, CUSTOMER.FNAME AS NAME,
+                    PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+                    NVL(PRINCIPAL,0) as balance , 
+                    CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+                    THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+                    ELSE 0
+                    END
+                    as principal_due , DUE_DT,
+                    <isParameterPresent>
+                        <isNotNull property="OVER_DUE_DT">
+<!--                            CASE WHEN TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                            ROUND((TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                            REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                            ELSE 0 END AS INT_DUE,-->
+                             CASE WHEN TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY'))  - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY'))- REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isNotPropertyAvailable property="OVER_DUE_DT">
+                        NVL(INTEREST_DEMAND,0) as int_due, 
+                    </isNotPropertyAvailable>
+                    penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'GUARANTOR' AS CUST_TYPE
+                    From rep_loan_notice_two_AD left join
+	            LOANS_SECURITY_MEMBER on LOANS_SECURITY_MEMBER.ACCT_NUM = rep_loan_notice_two_AD.ACCT_NUM 
+	            join CUSTOMER on CUSTOMER.MEMBERSHIP_NO = LOANS_SECURITY_MEMBER.MEMBER_NO join
+	            LOANS_PROD_CHQCHRG on rep_loan_notice_two_AD.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID
+                    where
+                    LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR#
+                    AND CUSTOMER.MEMBERSHIP_NO=LOANS_SECURITY_MEMBER.MEMBER_NO 
+                    AND rep_loan_notice_two_AD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                    AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_ID">
+                            rep_loan_notice_two_AD.PROD_ID = #PROD_ID:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_TYPE">
+                            rep_loan_notice_two_AD.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_DT">
+                            FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                            rep_loan_notice_two_AD.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                            rep_loan_notice_two_AD.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                            <!--LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT#  -->
+                            (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                        NO_MONTH_DUE between 1 and 2
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                        NO_MONTH_DUE between 3 and 4
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                        NO_MONTH_DUE &gt; 4
+                    </isEqual>
+                </isNotNull>
+                <!-- For gahan customer -->
+                <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    SELECT LOANS_SECURITY_LAND.ACCT_NUM AS ACT_NUM,
+                    CUSTOMER.CUST_ID,
+                    CUSTOMER.membership_no AS MEM_NO,
+                    CUSTOMER.FNAME AS NAME,
+                    PROD_DESC AS "TYPE",
+                    FROM_DT,
+                    NVL ("limit", 0) AS "limit",
+                    NVL (PRINCIPAL, 0) AS balance,
+                    CASE
+                    WHEN NVL (PRIN_DEMAND, 0) - NVL (PRIN_PAID, 0) > 0
+                    THEN
+                    NVL (PRIN_DEMAND, 0) - NVL (PRIN_PAID, 0)
+                    ELSE
+                    0
+                    END
+                    AS principal_due,
+                    DUE_DT,
+                    <isParameterPresent>
+                        <isNotNull property="OVER_DUE_DT">
+                            CASE WHEN TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY'))  - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                            ROUND((TO_DATE(TO_CHAR(#OVER_DUE_DT:DATE#,'DD-MON-YYYY'))- REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                            REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                            ELSE 0 END AS INT_DUE,
+                        </isNotNull>
+            </isParameterPresent>
+
+                    <isNotPropertyAvailable property="OVER_DUE_DT">
+                        NVL(INTEREST_DEMAND,0) as int_due, 
+                    </isNotPropertyAvailable>
+                    penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'GUARANTOR' AS CUST_TYPE
+                    FROM rep_loan_notice_two_AD left join
+                    LOANS_SECURITY_LAND on LOANS_SECURITY_LAND.ACCT_NUM = rep_loan_notice_two_AD.ACCT_NUM
+                    join GAHAN_JOINT on GAHAN_JOINT.DOCUMENT_GEN_ID = LOANS_SECURITY_LAND.DOCUMENT_GEN_ID 
+                    join CUSTOMER on CUSTOMER.CUST_ID = GAHAN_JOINT.CUST_ID
+                    join 
+                    LOANS_PROD_CHQCHRG on rep_loan_notice_two_AD.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID
+                    WHERE GAHAN_JOINT.CUST_ID NOT IN
+                    (SELECT CUSTOMER.CUST_ID
+                    FROM CUSTOMER
+                    WHERE CUSTOMER.MEMBERSHIP_NO = LOANS_SECURITY_LAND.MEMBER_NO)
+                    AND CUSTOMER.CUST_ID = GAHAN_JOINT.CUST_ID
+                    AND LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR#
+                    AND rep_loan_notice_two_AD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                    AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_ID">
+                            rep_loan_notice_two_AD.PROD_ID = #PROD_ID:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_TYPE">
+                            rep_loan_notice_two_AD.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_DT">
+                            FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                            rep_loan_notice_two_AD.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                            rep_loan_notice_two_AD.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                            <!--LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT#  -->
+                            (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                        NO_MONTH_DUE between 1 and 2
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                        NO_MONTH_DUE between 3 and 4
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                        NO_MONTH_DUE &gt; 4
+                    </isEqual>
+                </isNotNull>
+                <!-- End - for gahan customer -->
+            </isParameterPresent>
+        </dynamic>        
+        ORDER BY 1
+        <!--Select REP_LOAN_NOTICE3.ACCT_NUM as num , membership_no, CUST_ID, BORROW_NO,
+        REP_LOAN_NOTICE3.FNAME as fname , 
+        REP_LOAN_NOTICE3.FROM_DT as from_dt , 
+        REP_LOAN_NOTICE3.TO_DT as todt , 
+        NVL(REP_LOAN_NOTICE3.LIMIT,0) as limit , 
+        NVL(REP_LOAN_NOTICE3.PRINCIPAL,0) as balance , 
+        NVL(REP_LOAN_NOTICE3.DEMAND_CURRENT_PRINCIPAL,0)-REP_LOAN_NOTICE3.TOT_PRINCIPAL_COLLECTED as principal_demand , 
+        NVL(REP_LOAN_NOTICE3.INTEREST_DEMAND,0) as int_demand , 
+        due_dt,
+        REP_LOAN_NOTICE3.NO_OF_MONTHS_DUE
+        From REP_LOAN_NOTICE3, BRANCH_MASTER, BANK   
+        where BRANCH_MASTER.BRANCH_CODE = REP_LOAN_NOTICE3.BRANCH_CODE  and 
+        NVL(REP_LOAN_NOTICE3.DEMAND_CURRENT_PRINCIPAL,0)-REP_LOAN_NOTICE3.TOT_PRINCIPAL_COLLECTED>0 AND
+        REP_LOAN_NOTICE3.BRANCH_CODE = #BRANCH_CODE# and 
+        REP_LOAN_NOTICE3.PRODUCT_ID = #PROD_ID  and 
+        REP_LOAN_NOTICE3.DAY_END_DTT=#TO_DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DATE">
+                    REP_LOAN_NOTICE3.FROM_DT BETWEEN #FROM_DT# AND #TO_DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        order by REP_LOAN_NOTICE3.NO-->
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getAccountsForLoanDemandNotice" result-class = "java.util.LinkedHashMap" >
+        <!-- This query taken from Membership Liability. For Joint a/cs query can be taken from that only --> 
+        Select ACCT_NUM as ACT_NUM ,LOANS_BORROWER.CUST_ID, membership_no AS MEM_NO, FNAME AS NAME,
+        PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+        NVL(PRINCIPAL,0) as balance , 
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due , DUE_DT,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property="OVER_DUE_DT">
+                    CASE WHEN TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="FROM_DUE_DT">
+                    CASE WHEN DUE_DT - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                    ROUND((DUE_DT - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    NVL(INTEREST_DEMAND,0) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'ACT_HOLDER' AS CUST_TYPE
+            From rep_loan_notice_two, LOANS_BORROWER, LOANS_PROD_CHQCHRG
+            where  
+            LOANS_BORROWER.BORROW_NO=rep_loan_notice_two.BORROW_NO 
+            AND rep_loan_notice_two.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID(+) AND LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE# 
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FULL_DUE">
+                    TO_DT &lt;= #TODAY_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                    (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+            
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DT">
+                    FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DUE_DT">
+                    DUE_DT &gt;= #FROM_DUE_DT:DATE# AND DUE_DT &lt;= #TO_DUE_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                    NO_MONTH_DUE between 1 and 2
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                    NO_MONTH_DUE between 3 and 4
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                    NO_MONTH_DUE &gt; 4
+                </isEqual>
+                <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    Select LOANS_GUARANTOR_DETAILS.ACCT_NUM as ACT_NUM ,CUSTOMER.CUST_ID, CUSTOMER.membership_no AS MEM_NO, CUSTOMER.FNAME AS NAME,
+                    PROD_DESC AS "TYPE", FROM_DT, NVL("limit",0) as "limit" , 
+                    NVL(PRINCIPAL,0) as balance , 
+                    CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+                    THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+                    ELSE 0
+                    END
+                    as principal_due , DUE_DT,
+                    <isParameterPresent>
+                        <isNotNull property="OVER_DUE_DT">
+                            CASE WHEN TO_DATE(#OVER_DUE_DT:DATE#) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                            ROUND((TO_DATE(#OVER_DUE_DT:DATE#) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                            REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                            ELSE 0 END AS INT_DUE,
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isNotPropertyAvailable property="OVER_DUE_DT">
+                        NVL(INTEREST_DEMAND,0) as int_due, 
+                    </isNotPropertyAvailable>
+                    penal, charges, NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) as ApplicableCharges, 'GUARANTOR' AS CUST_TYPE
+                    From rep_loan_notice_two, LOANS_GUARANTOR_DETAILS, CUSTOMER, LOANS_PROD_CHQCHRG
+                    where  
+                    LOANS_GUARANTOR_DETAILS.ACCT_NUM=rep_loan_notice_two.ACCT_NUM 
+                    AND rep_loan_notice_two.PROD_ID = LOANS_PROD_CHQCHRG.PROD_ID(+) AND LOANS_PROD_CHQCHRG.NOTICE_TYPE = #NOTICE_TYPE:VARCHAR#
+                    AND CUSTOMER.CUST_ID=LOANS_GUARANTOR_DETAILS.CUST_ID
+                    AND rep_loan_notice_two.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_ID">
+                            rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_DT">
+                            FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                            rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+            
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                            rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                            (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                        NO_MONTH_DUE between 1 and 2
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                        NO_MONTH_DUE between 3 and 4
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                        NO_MONTH_DUE &gt; 4
+                    </isEqual>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+        ORDER BY 1
+        <!--Select REP_LOAN_NOTICE3.ACCT_NUM as num , membership_no, CUST_ID, BORROW_NO,
+        REP_LOAN_NOTICE3.FNAME as fname , 
+        REP_LOAN_NOTICE3.FROM_DT as from_dt , 
+        REP_LOAN_NOTICE3.TO_DT as todt , 
+        NVL(REP_LOAN_NOTICE3.LIMIT,0) as limit , 
+        NVL(REP_LOAN_NOTICE3.PRINCIPAL,0) as balance , 
+        NVL(REP_LOAN_NOTICE3.DEMAND_CURRENT_PRINCIPAL,0)-REP_LOAN_NOTICE3.TOT_PRINCIPAL_COLLECTED as principal_demand , 
+        NVL(REP_LOAN_NOTICE3.INTEREST_DEMAND,0) as int_demand , 
+        due_dt,
+        REP_LOAN_NOTICE3.NO_OF_MONTHS_DUE
+        From REP_LOAN_NOTICE3, BRANCH_MASTER, BANK   
+        where BRANCH_MASTER.BRANCH_CODE = REP_LOAN_NOTICE3.BRANCH_CODE  and 
+        NVL(REP_LOAN_NOTICE3.DEMAND_CURRENT_PRINCIPAL,0)-REP_LOAN_NOTICE3.TOT_PRINCIPAL_COLLECTED>0 AND
+        REP_LOAN_NOTICE3.BRANCH_CODE = #BRANCH_CODE# and 
+        REP_LOAN_NOTICE3.PRODUCT_ID = #PROD_ID  and 
+        REP_LOAN_NOTICE3.DAY_END_DTT=#TO_DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DATE">
+                    REP_LOAN_NOTICE3.FROM_DT BETWEEN #FROM_DT# AND #TO_DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        order by REP_LOAN_NOTICE3.NO-->
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getAccountsForMDSLoanNotice" result-class = "java.util.LinkedHashMap" >
+    
+        SELECT B.SCHEME_NAME,B.CHITTAL_NO ||'_'||B.SUB_NO AS CHITTAL_NO, B.MEMBER_NO AS MEM_NO,B.MEMBER_NAME,A.CUR_INST_NO-A.PAID_INST 
+        AS NO_OF_MONTHS_DUE,
+        <!--INST_AMT*(A.CUR_INST_NO-A.PAID_INST)-D.BONUS_AMT AS DUE_AMT,-->
+        nvl(INST_AMT,0)*(nvl(A.CUR_INST_NO,0)-nvl(A.PAID_INST,0))- nvl(D.BONUS_AMT,0) AS DUE_AMT,
+        B.PENAL_AMT,NVL(C.APPLICABLE_CHARGES,0||'+'||0) 
+        AS APPLICABLE_CHARGES,'ACT_HOLDER' AS CUST_TYPE  FROM 
+        (SELECT   CHITTAL_NO,SUB_NO,(select max(MPD.INSTALLMENT_NO) from MDS_PRIZED_MONEY_DETAILS mpd where MPD.SCHEME_NAME=#PROD_ID:VARCHAR#) CUR_INST_NO, SUM (NO_OF_INST)  PAID_INST
+        FROM MDS_TRANS_DETAILS MTD,MDS_SCHEME_CUR_INSTALLMENT MSCI
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND MTD.SCHEME_NAME=#PROD_ID:VARCHAR# AND MTD.SCHEME_NAME=MSCI.SCHEME_NAME 
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# GROUP BY CHITTAL_NO,SUB_NO,CUR_INST_NO ) A left join
+        (SELECT MA.SCHEME_NAME,MA.CHITTAL_NO,MA.SUB_NO,MEMBER_NO,MA.MEMBER_NAME,INST_AMT,GET_MDS_PENAL (MA.CHITTAL_NO,MA.SUB_NO) AS PENAL_AMT             
+        FROM MDS_APPLICATION MA, MDS_SCHEME_DETAILS MSD
+        WHERE GET_MDS_PENAL (MA.CHITTAL_NO,MA.SUB_NO)>0 AND
+        MA.SCHEME_NAME=MSD.SCHEME_NAME AND 
+        MSD.SCHEME_NAME=#PROD_ID:VARCHAR# ORDER BY CHITTAL_NO,SUB_NO) B on A.CHITTAL_NO = B.CHITTAL_NO and A.SUB_NO = B.SUB_NO  join
+        (SELECT SCHEME_NAME,NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) AS APPLICABLE_CHARGES 
+        FROM MDS_NOTICE_CHARGE_DETAILS WHERE SCHEME_NAME=#PROD_ID:VARCHAR# AND NOTICE_TYPE=#NOTICE_TYPE:VARCHAR#) C on C.SCHEME_NAME= B.SCHEME_NAME join
+        (SELECT MA.SCHEME_NAME,MA.CHITTAL_NO,MA.SUB_NO,mm.chit_close_dt,GET_MDS_BONUS (cast(MA.CHITTAL_NO as varchar),cast(MA.SUB_NO as numeric)) AS BONUS_AMT             
+        FROM MDS_APPLICATION MA, MDS_SCHEME_DETAILS MSD,mds_master_maintenance mm
+        WHERE MA.SCHEME_NAME=MSD.SCHEME_NAME AND MSD.SCHEME_NAME=#PROD_ID:VARCHAR# AND ma.chittal_no = mm.chittal_no) D on A.CHITTAL_NO = D.CHITTAL_NO 
+        and B.SUB_NO = D.SUB_NO and A.SUB_NO = D.SUB_NO
+        WHERE A.CUR_INST_NO>A.PAID_INST  <!--AND A.CHITTAL_NO= B.CHITTAL_NO AND C.SCHEME_NAME(+)=B.SCHEME_NAME AND 
+        A.CHITTAL_NO= D.CHITTAL_NO AND A.SUB_NO= B.SUB_NO AND B.SUB_NO= D.SUB_NO AND A.SUB_NO= D.SUB_NO-->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    (A.CUR_INST_NO-A.PAID_INST)&gt;= cast(#NO_OF_INSTALLMENTS# as numeric)
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PRIZED">
+                    B.CHITTAL_NO IN(SELECT CHITTAL_NO FROM MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME=#PROD_ID:VARCHAR# AND 
+                    STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED')
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NON_PRIZED">
+                    B.CHITTAL_NO NOT IN(SELECT CHITTAL_NO FROM MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME=#PROD_ID:VARCHAR# AND 
+                    STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED')
+                </isNotNull>
+                AND d.chit_close_dt is null
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    SELECT B.SCHEME_NAME,B.CHITTAL_NO ||'_'||B.SUB_NO AS CHITTAL_NO, B.MEMBER_NO AS MEM_NO,B.MEMBER_NAME,A.CUR_INST_NO-A.PAID_INST 
+                    AS NO_OF_MONTHS_DUE,
+                    <!--INST_AMT*(A.CUR_INST_NO-A.PAID_INST)-D.BONUS_AMT AS DUE_AMT, -->
+                    nvl(INST_AMT,0)*(nvl(A.CUR_INST_NO,0)-nvl(A.PAID_INST,0))- nvl(D.BONUS_AMT,0) AS DUE_AMT,
+                    B.PENAL_AMT,
+                    NVL(C.APPLICABLE_CHARGES,0||'+'||0) AS APPLICABLE_CHARGES,'GUARANTOR' AS CUST_TYPE  FROM 
+                    (SELECT   CHITTAL_NO,SUB_NO,(select max(MPD.INSTALLMENT_NO) from MDS_PRIZED_MONEY_DETAILS mpd where MPD.SCHEME_NAME=#PROD_ID:VARCHAR#) CUR_INST_NO, SUM (NO_OF_INST)  PAID_INST
+                    FROM MDS_TRANS_DETAILS MTD,MDS_SCHEME_CUR_INSTALLMENT MSCI
+                    WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+                    AND MTD.SCHEME_NAME=#PROD_ID:VARCHAR# AND MTD.SCHEME_NAME=MSCI.SCHEME_NAME 
+                    AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# GROUP BY CHITTAL_NO,SUB_NO,CUR_INST_NO ) A, 
+                    (SELECT MA.SCHEME_NAME,MMT.CHITTAL_NO,MMT.SUB_NO,MMT.MEMBER_NO,MMT.MEMBER_NAME,
+                    INST_AMT,GET_MDS_PENAL (MA.CHITTAL_NO,MA.SUB_NO) AS PENAL_AMT FROM MDS_MEMBER_TYPE MMT, 
+                    MDS_APPLICATION MA, MDS_SCHEME_DETAILS MSD WHERE GET_MDS_PENAL (MA.CHITTAL_NO,MA.SUB_NO)>0 
+                    AND MA.SCHEME_NAME=MSD.SCHEME_NAME AND MMT.CHITTAL_NO=MA.CHITTAL_NO AND 
+                    MMT.SUB_NO=MA.SUB_NO AND MMT.STATUS!='DELETED' AND MMT.AUTHORIZED_STATUS='AUTHORIZED' 
+                    AND MSD.SCHEME_NAME=#PROD_ID:VARCHAR# ORDER BY CHITTAL_NO,SUB_NO) B,
+                    (SELECT SCHEME_NAME,NVL(NOTICE_CHARGE_AMT,0) || '+' || NVL(POSTAGE_AMT,0) AS APPLICABLE_CHARGES 
+                    FROM MDS_NOTICE_CHARGE_DETAILS WHERE SCHEME_NAME=#PROD_ID:VARCHAR# AND NOTICE_TYPE=#NOTICE_TYPE:VARCHAR#) C,
+                    (SELECT MA.SCHEME_NAME,MA.CHITTAL_NO,MA.SUB_NO,mm.chit_close_dt,GET_MDS_BONUS (cast(MA.CHITTAL_NO as varchar),cast(MA.SUB_NO as numeric)) AS BONUS_AMT             
+                    FROM MDS_APPLICATION MA, MDS_SCHEME_DETAILS MSD, mds_master_maintenance mm WHERE 
+                    MA.SCHEME_NAME=MSD.SCHEME_NAME AND MSD.SCHEME_NAME=#PROD_ID:VARCHAR# AND ma.chittal_no = mm.chittal_no) D
+                    WHERE A.CUR_INST_NO>A.PAID_INST  AND A.CHITTAL_NO= B.CHITTAL_NO AND A.CHITTAL_NO= D.CHITTAL_NO 
+                    AND C.SCHEME_NAME=D.SCHEME_NAME AND A.SUB_NO= B.SUB_NO AND B.SUB_NO= D.SUB_NO AND A.SUB_NO= D.SUB_NO
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            (A.CUR_INST_NO-A.PAID_INST)&gt;= cast(#NO_OF_INSTALLMENTS# as numeric)
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PRIZED">
+                            B.CHITTAL_NO IN(SELECT CHITTAL_NO FROM MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME=#PROD_ID:VARCHAR# AND 
+                            STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED')
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NON_PRIZED">
+                            B.CHITTAL_NO NOT IN(SELECT CHITTAL_NO FROM MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME=#PROD_ID:VARCHAR# AND 
+                            STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED')
+                        </isNotNull>
+                    </isParameterPresent>
+
+                </isNotNull>
+                AND d.chit_close_dt is null
+            </isParameterPresent>
+        </dynamic>     
+        <!--ORDER BY 1-->
+        ORDER BY 2
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getChargesForLoanNotices" result-class = "java.util.LinkedHashMap" >
+        SELECT NOTICE_CHARGE_AMT, POSTAGE_AMT FROM LOANS_PROD_CHQCHRG WHERE 
+        PROD_ID=#PROD_ID:VARCHAR# AND NOTICE_TYPE=#NOTICE_TYPE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getAccountsForMDSLoanNoticeForParticularChittal" result-class = "java.util.LinkedHashMap" >        
+		SELECT   b.scheme_name, b.chittal_no || '_' || b.sub_no AS chittal_no,
+        b.member_no AS mem_no, b.member_name,
+        a.cur_inst_no - a.paid_inst AS no_of_months_due,
+        inst_amt * (a.cur_inst_no - a.paid_inst) - d.bonus_amt AS due_amt,
+        b.penal_amt,
+        NVL (c.applicable_charges, 0 || '+' || 0) AS applicable_charges,
+        'ACT_HOLDER' AS cust_type
+    	FROM (SELECT   chittal_no, sub_no,(select max(MPD.INSTALLMENT_NO) from MDS_PRIZED_MONEY_DETAILS mpd where MPD.SCHEME_NAME=#PROD_ID:VARCHAR#) cur_inst_no, SUM (no_of_inst)
+        paid_inst
+        FROM mds_trans_details mtd, mds_scheme_cur_installment msci
+        WHERE status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        AND mtd.scheme_name = #PROD_ID:VARCHAR#
+        AND mtd.scheme_name = msci.scheme_name
+        AND branch_code = #BRANCH_CODE:VARCHAR#
+        GROUP BY chittal_no, sub_no, cur_inst_no) a left join
+        (SELECT   ma.scheme_name, ma.chittal_no, ma.sub_no, member_no,
+        ma.member_name, inst_amt,
+        get_mds_penal (ma.chittal_no, ma.sub_no) AS penal_amt
+        FROM mds_application ma, mds_scheme_details msd
+        WHERE get_mds_penal (ma.chittal_no, ma.sub_no) > 0
+        AND ma.scheme_name = msd.scheme_name
+        AND msd.scheme_name = #PROD_ID:VARCHAR#
+        ORDER BY chittal_no, sub_no) b on a.chittal_no = b.chittal_no join
+        (SELECT scheme_name,
+        NVL (notice_charge_amt, 0)
+        || '+'
+        || NVL (postage_amt, 0) AS applicable_charges
+        FROM mds_notice_charge_details
+        WHERE scheme_name = #PROD_ID:VARCHAR# AND notice_type = #NOTICE_TYPE:VARCHAR#) c on c.scheme_name = b.scheme_name join
+        (SELECT ma.scheme_name, ma.chittal_no, ma.sub_no,
+        get_mds_bonus (ma.chittal_no, ma.sub_no) AS bonus_amt
+        FROM mds_application ma, mds_scheme_details msd
+        WHERE ma.scheme_name = msd.scheme_name AND msd.scheme_name =  #PROD_ID# ) d on a.chittal_no = d.chittal_no and a.sub_no = b.sub_no and b.sub_no = d.sub_no
+   		WHERE a.cur_inst_no > a.paid_inst
+     	AND b.CHITTAL_NO=#CHITTAL_NO:VARCHAR#
+		UNION
+		SELECT   b.scheme_name, b.chittal_no || '_' || b.sub_no AS chittal_no,
+        b.member_no AS mem_no, b.member_name,
+        a.cur_inst_no - a.paid_inst AS no_of_months_due,
+        inst_amt * (a.cur_inst_no - a.paid_inst) - d.bonus_amt AS due_amt,
+        b.penal_amt,
+        NVL (c.applicable_charges, 0 || '+' || 0) AS applicable_charges,
+        'GUARANTOR' AS cust_type
+	    FROM (SELECT   chittal_no, sub_no,(select max(MPD.INSTALLMENT_NO) from MDS_PRIZED_MONEY_DETAILS mpd where MPD.SCHEME_NAME=#PROD_ID:VARCHAR#) cur_inst_no, SUM (no_of_inst)
+        paid_inst
+        FROM mds_trans_details mtd, mds_scheme_cur_installment msci
+        WHERE status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        AND mtd.scheme_name = #PROD_ID:VARCHAR#
+        AND mtd.scheme_name = msci.scheme_name
+        AND branch_code = #BRANCH_CODE:VARCHAR#
+        GROUP BY chittal_no, sub_no, cur_inst_no) a,
+        (SELECT   ma.scheme_name, mmt.chittal_no, mmt.sub_no, mmt.member_no,
+        mmt.member_name, inst_amt,
+        get_mds_penal (ma.chittal_no, ma.sub_no) AS penal_amt
+        FROM mds_member_type mmt,
+        mds_application ma,
+        mds_scheme_details msd
+        WHERE get_mds_penal (ma.chittal_no, ma.sub_no) > 0
+        AND ma.scheme_name = msd.scheme_name
+        AND mmt.chittal_no = ma.chittal_no
+        AND mmt.sub_no = ma.sub_no
+        AND mmt.status != 'DELETED'
+        AND mmt.authorized_status = 'AUTHORIZED'
+        AND msd.scheme_name = #PROD_ID:VARCHAR#
+        ORDER BY chittal_no, sub_no) b,
+        (SELECT scheme_name,
+        NVL (notice_charge_amt, 0)
+        || '+'
+        || NVL (postage_amt, 0) AS applicable_charges
+        FROM mds_notice_charge_details
+        WHERE scheme_name = #PROD_ID:VARCHAR# AND notice_type = #NOTICE_TYPE:VARCHAR#) c,
+        (SELECT ma.scheme_name, ma.chittal_no, ma.sub_no,
+        get_mds_bonus (ma.chittal_no, ma.sub_no) AS bonus_amt
+        FROM mds_application ma, mds_scheme_details msd
+        WHERE ma.scheme_name = msd.scheme_name AND msd.scheme_name = #PROD_ID:VARCHAR#) d
+   		WHERE a.cur_inst_no > a.paid_inst
+     	AND a.chittal_no = b.chittal_no
+     	AND a.chittal_no = d.chittal_no
+     	AND c.scheme_name = d.scheme_name
+     	AND a.sub_no = b.sub_no
+     	AND b.sub_no = d.sub_no
+     	AND a.sub_no = d.sub_no
+     	AND b.CHITTAL_NO=#CHITTAL_NO:VARCHAR#
+		ORDER BY 1      
+    </mapped-statement>
+    <mapped-statement name="insertNoticeChargeDet" inline-parameters="true">
+        Insert into LOANS_NOTICE_CHARGE_DETAILS
+        (PROD_TYPE, PROD_ID, ACT_NUM, MEMBER_NO, CUST_ID, CUST_NAME,
+        NOTICE_CHARGE, POSTAGE_CHARGE, CUST_TYPE, SENT_BY, SENT_DT, AUCTION_DT, NOTICE_TYPE)
+        Values
+        (#PROD_TYPE:VARCHAR#, #PROD_ID:VARCHAR#, #ACT_NUM:VARCHAR#, #MEMBER_NO:VARCHAR#, #CUST_ID:VARCHAR#, #CUST_NAME:VARCHAR#,
+        #NOTICE_CHARGE:NUMBER#, #POSTAGE_CHARGE:NUMBER#, #CUST_TYPE:VARCHAR#, #SENT_BY:VARCHAR#, #SENT_DT:DATE#, #AUCTION_DT:DATE#, #NOTICE_TYPE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getNoticeChargeDetails" result-class = "java.util.LinkedHashMap" >
+        SELECT PROD_ID, ACT_NUM, MEMBER_NO, CUST_ID, CUST_NAME,
+        NOTICE_CHARGE, POSTAGE_CHARGE, CUST_TYPE, SENT_BY, SENT_DT 
+        FROM LOANS_NOTICE_CHARGE_DETAILS WHERE 
+        ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getChargesForMDSNotices" result-class = "java.util.LinkedHashMap" >
+        SELECT NOTICE_CHARGE_AMT, POSTAGE_AMT FROM MDS_NOTICE_CHARGE_DETAILS WHERE 
+        SCHEME_NAME=#PROD_ID:VARCHAR# AND NOTICE_TYPE=#NOTICE_TYPE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getPostageRevereseMDS" result-class = "java.util.HashMap" >
+        SELECT IS_REV_POST_ADV,CREDIT_STAMP_ADVANCES FROM MDS_SCHEME_DETAILS WHERE 
+        SCHEME_NAME=#PROD_ID:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectLoanProducts" result-class = "java.util.LinkedHashMap" >
+        SELECT DISTINCT AUTHORIZE_REMARK AS PROD_TYPE FROM LOANS_PRODUCT order by  AUTHORIZE_REMARK
+    </mapped-statement>
+    
+</sql-map>
+        

@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ViewLogTOMap">
+
+	<!-- Use ViewLogTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+<!--	<mapped-statement name="insertViewLogTO" inline-parameters="true">
+		INSERT INTO LOG
+		(TIME_STAMP, MODULE, SCREEN, IP_ADDR, BRANCH_ID, USER_ID, STATUS, PRIMARY_KEY, DATA, REMARKS
+		) VALUES (
+		#timeStamp:DATE#, #module:VARCHAR#, #screen:VARCHAR#, #ipAddr:VARCHAR#, #branchId:VARCHAR#, #userId:VARCHAR#, #status:VARCHAR#, #primaryKey:VARCHAR#, #data:VARCHAR#, #remarks:VARCHAR#)
+	</mapped-statement> -->
+
+	<!-- Use ViewLogTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+<!--	<mapped-statement name="updateViewLogTO" inline-parameters="true">
+		UPDATE LOG SET 
+		TIME_STAMP = #timeStamp:DATE#,
+		MODULE = #module:VARCHAR#,
+		SCREEN = #screen:VARCHAR#,
+		IP_ADDR = #ipAddr:VARCHAR#,
+		BRANCH_ID = #branchId:VARCHAR#,
+		USER_ID = #userId:VARCHAR#,
+		STATUS = #status:VARCHAR#,
+		PRIMARY_KEY = #primaryKey:VARCHAR#,
+		DATA = #data:VARCHAR#,
+		REMARKS = #remarks:VARCHAR#
+		WHERE 
+	</mapped-statement> -->
+
+	<!-- Use ViewLogTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+<!--	<mapped-statement name="deleteViewLogTO" inline-parameters="true">
+		DELETE FROM LOG 
+		WHERE 
+	</mapped-statement> -->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ViewLogTO object (JavaBean) properties -->
+    <result-map name="getViewLogTOResult" class="com.see.truetransact.transferobject.sysadmin.view.ViewLogTO">
+        <property name="timeStamp" column="TIME_STAMP"/>
+        <property name="module" column="MODULE"/>
+        <property name="screen" column="SCREEN"/>
+        <property name="ipAddr" column="IP_ADDR"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="userId" column="USER_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="primaryKey" column="PRIMARY_KEY"/>
+        <property name="data" column="DATA"/>
+        <property name="remarks" column="REMARKS"/>
+    </result-map>
+    <mapped-statement name="getSelectViewLogTO" result-map="getViewLogTOResult" >
+        SELECT  *
+        FROM  LOGVIEW
+    </mapped-statement> 
+        
+<!--       For User ID        -->
+    <result-map name="ViewLog_get-UserId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="USER_ID" />
+        <property name="lookUpDesc" column="USER_ID" />
+    </result-map>
+        
+    <mapped-statement name="ViewLog.UserID" result-map="ViewLog_get-UserId-result" >
+        SELECT DISTINCT USER_ID
+        FROM LOG 
+    </mapped-statement>
+    
+<!--       For Branch ID        -->
+    <result-map name="ViewLog_get-BranchId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BRANCH_ID" />
+        <property name="lookUpDesc" column="BRANCH_ID" />
+    </result-map>
+        
+    <mapped-statement name="ViewLog.BranchID" result-map="ViewLog_get-BranchId-result" >
+        SELECT DISTINCT BRANCH_ID 
+        FROM LOG 
+    </mapped-statement>
+    
+<!--       For Screen       -->
+    <result-map name="ViewLog_get-Screen-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SCREEN" />
+        <property name="lookUpDesc" column="SCREEN" />
+    </result-map>
+        
+    <mapped-statement name="ViewLog.Screen" result-map="ViewLog_get-Screen-result" >
+        SELECT DISTINCT SCREEN 
+        FROM LOG 
+    </mapped-statement>
+    
+<!--       For IP Address       -->
+    <result-map name="ViewLog_get-IPAddress-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="IP_ADDR" />
+        <property name="lookUpDesc" column="IP_ADDR" />
+    </result-map>
+        
+    <mapped-statement name="ViewLog.IPAddress" result-map="ViewLog_get-IPAddress-result" >
+        SELECT DISTINCT IP_ADDR 
+        FROM LOG 
+    </mapped-statement>    
+  
+<!--       For Module       -->
+    <result-map name="ViewLog_get-Module-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="MODULE" />
+        <property name="lookUpDesc" column="MODULE" />
+    </result-map>
+        
+    <mapped-statement name="ViewLog.Module" result-map="ViewLog_get-Module-result" >
+        SELECT DISTINCT MODULE 
+        FROM LOG 
+    </mapped-statement>    
+
+    
+<!--       For Activity       -->
+    <result-map name="ViewLog_get-Activity-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="STATUS" />
+        <property name="lookUpDesc" column="STATUS" />
+    </result-map>
+        
+    <mapped-statement name="ViewLog.Activity" result-map="ViewLog_get-Activity-result" >
+        SELECT DISTINCT STATUS 
+        FROM LOG 
+    </mapped-statement>       
+    
+    
+<!--     <mapped-statement name="ViewLog.ViewAllLog" result-class="java.util.LinkedHashMap" >
+       SELECT  TIME_STAMP, USER_ID, IP_ADDR, MODULE, STATUS, DATA
+        FROM  LOG
+    </mapped-statement>  -->
+    
+    <dynamic-mapped-statement name="ViewLog.ViewLogSelectedRow" result-class="java.util.LinkedHashMap" >
+        SELECT  TO_CHAR(TIME_STAMP, 'MM/DD/YYYY HH24:MI:SS') AS "TIME_STAMP", USER_ID, IP_ADDR, MODULE, STATUS, DATA, PRIMARY_KEY, REMARKS, SCREEN, BRANCH_ID
+        FROM  LOGVIEW
+        <dynamic prepend="WHERE">
+        
+            <isNotEmpty prepend = "AND" property = "MODULE" >
+                MODULE = #MODULE:VARCHAR# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property= "SCREEN" >
+                SCREEN = #SCREEN:VARCHAR# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "IP_ADDR" >
+                IP_ADDR = #IP_ADDR:VARCHAR#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "BRANCH_ID" >
+                BRANCH_ID = #BRANCH_ID:VARCHAR#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "USER_ID" >
+                USER_ID = #USER_ID:VARCHAR#
+            </isNotEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "STATUS" >
+                STATUS = #STATUS:VARCHAR#
+            </isNotEmpty>
+            
+            <isNotEmpty prepend= "AND" property = "TIME_STAMP" >
+                TIME_STAMP =  TO_DATE(#TIME_STAMP# ,'MM/DD/YYYY HH24:MI:SS')
+            </isNotEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "PRIMARY_KEY" >
+                PRIMARY_KEY = #PRIMARY_KEY:VARCHAR#
+            </isNotEmpty>
+            
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="ViewLog.ViewLogMultipleIPADDR" result-class="java.util.LinkedHashMap" >
+        SELECT USER_ID, IP_ADDR, COUNT(*) NO_VISIT
+        FROM LOGVIEW 
+        <dynamic prepend="WHERE">
+        
+            <isNotEmpty prepend = "AND" property = "USER_ID" >
+                USER_ID IN (SELECT USER_ID FROM LOGVIEW  
+                GROUP BY USER_ID
+                HAVING USER_ID = #USER_ID:VARCHAR# AND COUNT(DISTINCT IP_ADDR) > 1)
+            </isNotEmpty>
+
+            <isEmpty prepend = "AND" property= "USER_ID" >
+                USER_ID IN (SELECT USER_ID FROM LOGVIEW  
+                GROUP BY USER_ID
+                HAVING COUNT(DISTINCT IP_ADDR) > 1)
+            </isEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "MODULE" >
+                MODULE = #MODULE:VARCHAR# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property= "SCREEN" >
+                SCREEN = #SCREEN:VARCHAR# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "IP_ADDR" >
+                IP_ADDR = #IP_ADDR:VARCHAR#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "BRANCH_ID" >
+                BRANCH_ID = #BRANCH_ID:VARCHAR#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "STATUS" >
+                STATUS = #STATUS:VARCHAR#
+            </isNotEmpty>
+            
+            <isNotEmpty prepend= "AND" property = "TIME_STAMP" >
+                TIME_STAMP =  TO_DATE(#TIME_STAMP# ,'MM/DD/YYYY HH24:MI:SS')
+            </isNotEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "PRIMARY_KEY" >
+                PRIMARY_KEY = #PRIMARY_KEY:VARCHAR#
+            </isNotEmpty>
+            
+        </dynamic>
+        GROUP BY USER_ID, IP_ADDR
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="ViewLog.ViewLogMultipleUSERS" result-class="java.util.LinkedHashMap" >
+        SELECT USER_ID, IP_ADDR, COUNT(*) NO_VISIT
+        FROM LOGVIEW 
+        <dynamic prepend="WHERE">
+        
+            <isNotEmpty prepend = "AND" property = "IP_ADDR" >
+                IP_ADDR IN (SELECT IP_ADDR FROM LOGVIEW  
+                GROUP BY IP_ADDR
+                HAVING IP_ADDR = #IP_ADDR:VARCHAR# AND COUNT(DISTINCT USER_ID) > 1)
+            </isNotEmpty>
+
+            <isEmpty prepend = "AND" property= "IP_ADDR" >
+                IP_ADDR IN (SELECT IP_ADDR FROM LOGVIEW  
+                GROUP BY IP_ADDR
+                HAVING COUNT(DISTINCT USER_ID) > 1)
+            </isEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "MODULE" >
+                MODULE = #MODULE:VARCHAR# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property= "SCREEN" >
+                SCREEN = #SCREEN:VARCHAR# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "BRANCH_ID" >
+                BRANCH_ID = #BRANCH_ID:VARCHAR#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "USER_ID" >
+                USER_ID = #USER_ID:VARCHAR#
+            </isNotEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "STATUS" >
+                STATUS = #STATUS:VARCHAR#
+            </isNotEmpty>
+            
+            <isNotEmpty prepend= "AND" property = "TIME_STAMP" >
+                TIME_STAMP =  TO_DATE(#TIME_STAMP# ,'MM/DD/YYYY HH24:MI:SS')
+            </isNotEmpty>
+            
+            <isNotEmpty prepend = "AND" property = "PRIMARY_KEY" >
+                PRIMARY_KEY = #PRIMARY_KEY:VARCHAR#
+            </isNotEmpty>
+            
+        </dynamic>
+        GROUP BY USER_ID, IP_ADDR
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="ViewLog.ViewConditionalLog" result-class="java.util.LinkedHashMap" >
+        SELECT  TO_CHAR(TIME_STAMP, 'MM/DD/YYYY HH24:MI:SS') AS "TIME_STAMP", USER_ID, IP_ADDR, MODULE, STATUS, DATA, REMARKS, SCREEN, BRANCH_ID, PRIMARY_KEY 
+        FROM  LOGVIEW
+        <dynamic prepend="WHERE">
+            <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="oracle.jdbc.driver.OracleDriver" >
+                    <isNotEmpty prepend= "" property = "ROW_COUNT" >
+                        ROWNUM  &lt; = #ROW_COUNT#
+                    </isNotEmpty>
+                </isEqual>
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="org.postgresql.Driver" >
+                    <isNotEmpty prepend= "" property = "ROW_COUNT" >
+                        LIMIT  #ROW_COUNT#
+                    </isNotEmpty>
+                </isEqual>
+            </isPropertyAvailable>
+            <isNotEmpty prepend = "AND" property = "MODULE" >
+                MODULE = #MODULE# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property= "SCREEN" >
+                SCREEN = #SCREEN# 
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "IP_ADDR" >
+                IP_ADDR = #IP_ADDR#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "BRANCH_ID" >
+                BRANCH_ID = #BRANCH_ID#
+            </isNotEmpty>
+
+            <isNotEmpty prepend = "AND" property = "USER_ID" >
+                USER_ID = #USER_ID#
+            </isNotEmpty>
+				
+            <isNotEmpty prepend = "AND" property = "STATUS" >
+                STATUS = #STATUS#
+            </isNotEmpty>
+				
+            <isNotEmpty prepend= "AND" property = "FROM_DT" >
+                TIME_STAMP &gt; =  TO_DATE(#FROM_DT# ,'DD/MM/YYYY HH24:MI:SS')
+            </isNotEmpty>
+				   
+            <isNotEmpty prepend= "AND" property = "TO_DT" >
+                TIME_STAMP &lt;  = TO_DATE(#TO_DT# ,'DD/MM/YYYY HH24:MI:SS')
+            </isNotEmpty>
+            <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="oracle.jdbc.driver.OracleDriver" >
+                    <isNotEmpty prepend= "" property = "ROW_COUNT" >
+                        ORDER BY TIME_STAMP ASC
+                    </isNotEmpty>
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>     
+    </dynamic-mapped-statement>
+</sql-map>

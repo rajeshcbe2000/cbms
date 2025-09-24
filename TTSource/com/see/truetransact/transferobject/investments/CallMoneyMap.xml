@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CallMoneyTOMap">
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #haFsh# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCallMoneyTO" inline-parameters="true">
+        INSERT INTO CALL_MONEY_MASTER
+        (CALL_MONEY_DT,CALLMONEY_INSTITUATION ,CALLMONEY_COMMUNICATION , NO_OF_DAYS ,INTEREST_RATE ,CALLMONEY_AMOUNT ,INTEREST_AMOUNT ,
+        TRANS_TYPE ,TRANS_MODE ,TRANS_DATE , BATCH_ID ,PARTICULARS ,RECONCILESTATUS ,
+        RECONCILE_BATCHAID ,STATUS ,STATUS_BY ,STATUS_DT ,AUTHORIZE_STATUS,AUTHORIZE_BY ,AUTHORIZE_DT, CALLMONEY_TYPE, INIT_BRANCH ,
+        CALLMONY_INST_ID)VALUES
+        (#callMoneydate:DATE#,#callMoneyInstituation:VARCHAR#,#callMoneyCommunication:VARCHAR#,#noOfDays:NUMERIC#,#interestRate:NUMERIC#,#callMoneyAmount:NUMERIC#,
+        #interestAmt:NUMERIC#,#transType:VARCHAR#,#transMode:VARCHAR#,#transDT:DATE#,#batchID:VARCHAR#,#particulars:VARCHAR#,#reconcileStatus:VARCHAR#,
+        #reconcileBatchId:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,(SELECT (SELECT SYS_DATE() FROM DUAL) FROM DUAL),#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:DATE#,#callMoneyType:VARCHAR#,#initBran:VARCHAR# 
+        ,#txtCallMoneyInstId:VARCHAR# )
+    </mapped-statement>
+        
+    <mapped-statement name="insertCallMoneyExtensionTO" inline-parameters="true">
+        INSERT INTO CALL_MONEY_EXTENSION
+        (CALL_MONEY_DT,CALLMONEY_INSTITUATION ,CALLMONEY_COMMUNICATION , NO_OF_DAYS ,INTEREST_RATE ,CALLMONEY_AMOUNT  ,
+        TRANS_DATE , BATCH_ID ,PARTICULARS ,STATUS ,STATUS_BY ,STATUS_DT ,AUTHORIZE_STATUS,AUTHORIZE_BY ,AUTHORIZE_DT,EXTENSION_INT_RATE ,NO_OF_DAYSEXTENSION,INIT_BRANCH )VALUES
+        (#callMoneydate:DATE#,#callMoneyInstituation:VARCHAR#,#callMoneyCommunication:VARCHAR#,#noOfDays:NUMERIC#,#interestRate:NUMERIC#,#callMoneyAmount:NUMERIC#,
+        #transDT:DATE#,#batchID:VARCHAR#,#particulars:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,(SELECT (SELECT SYS_DATE() FROM DUAL) FROM DUAL),#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:DATE#,#extensioninterestRate:NUMERIC#,#noOfDayExtension:NUMERIC#,#initBran:VARCHAR#
+        )
+    </mapped-statement>
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCallMoneyTO" inline-parameters="true">
+        UPDATE  CALL_MONEY_MASTER SET
+        CALL_MONEY_DT=#callMoneydate:DATE#,
+        CALLMONEY_INSTITUATION =#callMoneyInstituation:VARCHAR#,
+        CALLMONEY_COMMUNICATION =#callMoneyCommunication:VARCHAR#,
+        NO_OF_DAYS=#noOfDays:NUMERIC#,
+        INTEREST_RATE =#interestRate:NUMERIC# ,
+        CALLMONEY_AMOUNT=#callMoneyAmount:NUMERIC#  ,
+        INTEREST_AMOUNT=#interestAmt:NUMERIC# ,
+        TRANS_TYPE =#transType:VARCHAR# ,
+        TRANS_MODE =#transMode:VARCHAR#,
+        TRANS_DATE =#transDT:DATE#, 
+        BATCH_ID=#batchID:VARCHAR# ,
+        PARTICULARS=#particulars:VARCHAR# ,
+        RECONCILESTATUS =#reconcileStatus:VARCHAR#,
+        RECONCILE_BATCHAID =#reconcileBatchId:VARCHAR#,
+        STATUS=#status:VARCHAR#  ,
+        STATUS_BY=#statusBy:VARCHAR#  ,
+        STATUS_DT=(SELECT SYS_DATE() FROM DUAL) ,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDt:DATE# ,
+        CALLMONEY_TYPE=#callMoneyType:VARCHAR#
+        WHERE  BATCH_ID=#batchID:VARCHAR# 
+        AND INIT_BRANCH=#initBran:VARCHAR# AND TRANS_DATE = #transDT:DATE#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="updateCallMoneyExtensionTO" inline-parameters="true">
+        UPDATE  CALL_MONEY_EXTENSION SET
+        CALL_MONEY_DT=#callMoneydate:DATE#,
+        CALLMONEY_INSTITUATION =#callMoneyInstituation:VARCHAR#,
+        CALLMONEY_COMMUNICATION =#callMoneyCommunication:VARCHAR#,
+        NO_OF_DAYS=#noOfDays:NUMERIC#,
+        NO_OF_DAYSEXTENSION=#noOfDayExtension:NUMERIC#,
+        INTEREST_RATE =#interestRate:NUMERIC# ,
+        EXTENSION_INT_RATE =#extensioninterestRate:NUMERIC# ,
+        CALLMONEY_AMOUNT=#callMoneyAmount:NUMERIC#  ,
+        TRANS_DATE =#transDT:DATE#, 
+        BATCH_ID=#batchID:VARCHAR# ,
+        PARTICULARS=#particulars:VARCHAR# ,
+        STATUS=#status:VARCHAR#  ,
+        STATUS_BY=#statusBy:VARCHAR#  ,
+        STATUS_DT=(SELECT SYS_DATE() FROM DUAL) ,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDt:DATE# 
+        WHERE  BATCH_ID=#batchID:VARCHAR# AND TRANS_DATE=#transDT:DATE#
+        AND INIT_BRANCH=#initBran:VARCHAR# 
+            
+    </mapped-statement>
+     	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareProductLoanTO object (JavaBean) properties -->
+    <result-map name="getCallMoneyTOResult" class="com.see.truetransact.transferobject.investments.CallMoneyTO">
+        <property name="callMoneydate" column="CALL_MONEY_DT"/>
+        <property name="callMoneyInstituation" column="CALLMONEY_INSTITUATION"/>
+        <property name="callMoneyCommunication" column="CALLMONEY_COMMUNICATION"/>
+        <property name="noOfDays" column="NO_OF_DAYS"/>
+        <property name="interestRate" column="INTEREST_RATE"/>
+        <property name="callMoneyAmount" column="CALLMONEY_AMOUNT"/>
+        <property name="interestAmt" column="INTEREST_AMOUNT"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="transMode" column="TRANS_MODE"/>
+        <property name="transDT" column="TRANS_DATE"/>
+        <property name="batchID" column="BATCH_ID"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="reconcileStatus" column="RECONCILESTATUS"/>
+        <property name="reconcileBatchId" column="RECONCILE_BATCHAID"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="callMoneyType" column="CALLMONEY_TYPE"/>
+        <property name="txtCallMoneyInstId" column="CALLMONY_INST_ID"/>
+                 
+    </result-map>
+        
+    <result-map name="getCallMoneyExtensionTOResult" class="com.see.truetransact.transferobject.investments.CallMoneyTO">
+        <property name="callMoneydate" column="CALL_MONEY_DT"/>
+        <property name="callMoneyInstituation" column="CALLMONEY_INSTITUATION"/>
+        <property name="callMoneyCommunication" column="CALLMONEY_COMMUNICATION"/>
+        <property name="noOfDays" column="NO_OF_DAYS"/>
+        <property name="noOfDayExtension" column="NO_OF_DAYSEXTENSION"/>
+        <property name="interestRate" column="INTEREST_RATE"/>
+        <property name="extensioninterestRate" column="EXTENSION_INT_RATE"/>
+        <property name="callMoneyAmount" column="CALLMONEY_AMOUNT"/>
+        <property name="transDT" column="TRANS_DATE"/>
+        <property name="batchID" column="BATCH_ID"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+               
+    </result-map>
+    <mapped-statement name="getSelectCallMoney" result-class="java.util.LinkedHashMap" >
+        SELECT BATCH_ID , CALL_MONEY_DT,CALLMONEY_INSTITUATION,INTEREST_RATE ,CALLMONEY_AMOUNT ,PARTICULARS,CALLMONEY_TYPE FROM CALL_MONEY_MASTER 
+        WHERE  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCallMoneyReconcile" result-class="java.util.LinkedHashMap" >
+        SELECT  BATCH_ID, CALL_MONEY_DT,CALLMONEY_INSTITUATION,CALLMONEY_COMMUNICATION, INTEREST_RATE  ,NO_OF_DAYS, CALLMONEY_TYPE ,CALLMONEY_AMOUNT FROM   CALL_MONEY_MASTER
+        WHERE CALLMONEY_TYPE=#CALLMONEY_TYPE:VARCHAR# AND ( AUTHORIZE_STATUS IS NOT  NULL OR AUTHORIZE_STATUS!='REJECTED')
+        AND RECONCILE_BATCHAID IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCallMoneyTO" result-map="getCallMoneyTOResult" >
+        SELECT * FROM CALL_MONEY_MASTER                
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR# AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+        AND INIT_BRANCH=#BRANCH_CODE:VARCHAR# AND TRANS_DATE = #TRANS_DATE:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCallMoneyExtensionTO" result-map="getCallMoneyTOResult" >
+        SELECT * FROM CALL_MONEY_MASTER         
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR# AND  STATUS NOT IN ('DELETED') AND ( AUTHORIZE_STATUS IS NOT  NULL OR AUTHORIZE_STATUS!='REJECTED')
+        AND INIT_BRANCH=#INIT_BRANCH:VARCHAR# AND TRANS_DATE = #TRANS_DATE:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCallMoneyExtensionotherThanInsertTO" result-map="getCallMoneyExtensionTOResult" >
+        SELECT * FROM CALL_MONEY_EXTENSION  
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR# AND  STATUS NOT IN ('DELETED') 
+        AND  AUTHORIZE_STATUS IS NULL 
+        AND INIT_BRANCH=#INIT_BRANCH:VARCHAR# AND TRANS_DATE = #TRANS_DATE:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCallMoneyDetailsTO" result-map="getCallMoneyTOResult" >
+        SELECT * FROM CALL_MONEY_MASTER               
+        WHERE    STATUS NOT IN ('DELETED')  AND ( AUTHORIZE_STATUS IS NOT  NULL OR AUTHORIZE_STATUS!='REJECTED')
+        AND   TRANS_DATE BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE#
+    </mapped-statement>
+    <mapped-statement name="getSelectCallMoneyExtensionList" result-class="java.util.LinkedHashMap" >
+        SELECT BATCH_ID , CALL_MONEY_DT,CALLMONEY_INSTITUATION,INTEREST_RATE ,CALLMONEY_AMOUNT ,PARTICULARS FROM CALL_MONEY_MASTER 
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL) AND ( AUTHORIZE_STATUS IS NOT  NULL  OR AUTHORIZE_STATUS!='REJECTED')
+        AND RECONCILE_BATCHAID IS NULL
+    </mapped-statement>
+    <mapped-statement name="getSelectCallMoneyExtensionOtherThanInsertlIST" result-class="java.util.LinkedHashMap" >
+        SELECT BATCH_ID , CALL_MONEY_DT,CALLMONEY_INSTITUATION,INTEREST_RATE ,CALLMONEY_AMOUNT ,PARTICULARS FROM CALL_MONEY_EXTENSION
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL) 
+        AND ( AUTHORIZE_STATUS IS   NULL )
+    </mapped-statement>
+    <mapped-statement name="deleteCallMoneyTO" inline-parameters="true">
+        UPDATE CALL_MONEY_MASTER  SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE BATCH_ID = #batchID:VARCHAR#  AND STATUS NOT IN ('DELETED')
+        AND INIT_BRANCH=#initBran:VARCHAR# AND TRANS_DATE = #transDT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="upDateReconcileStatus" inline-parameters="true">
+        UPDATE CALL_MONEY_MASTER SET RECONCILE_BATCHAID=#BATCH_ID:VARCHAR# ,RECONCILESTATUS='R'
+        WHERE  BATCH_ID=#RECONCILE_BATCHID:VARCHAR#
+        AND INIT_BRANCH=#INIT_BRANCH:VARCHAR# AND TRANS_DATE = #TRANS_DATE:DATE#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="updateNoOfExtensionDays" inline-parameters="true">
+        UPDATE CALL_MONEY_MASTER SET NO_OF_DAYS=NO_OF_DAYS+#NOOFDAYS:NUMBER#
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR#
+        AND INIT_BRANCH=#INIT_BRANCH:VARCHAR# AND TRANS_DATE = #TRANS_DATE:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteCallMoneyExtensionTO" inline-parameters="true">
+        UPDATE CALL_MONEY_EXTENSION  SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE BATCH_ID = #batchID:VARCHAR#  AND STATUS NOT IN ('DELETED')
+        AND TRANS_DATE=#transDT:DATE#
+    </mapped-statement>
+    <dynamic-mapped-statement name="getCallMoneyAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BATCH_ID , CALL_MONEY_DT,CALLMONEY_INSTITUATION,INTEREST_RATE ,CALLMONEY_AMOUNT ,PARTICULARS FROM CALL_MONEY_MASTER  SCD
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY BATCH_ID
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getCallMoneyExtensionAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BATCH_ID , CALL_MONEY_DT,CALLMONEY_INSTITUATION,INTEREST_RATE ,CALLMONEY_AMOUNT ,PARTICULARS FROM CALL_MONEY_EXTENSION  SCD
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY BATCH_ID
+    </dynamic-mapped-statement>
+    <mapped-statement name="authorizeCallMoney" inline-parameters="true">
+        UPDATE CALL_MONEY_MASTER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND STATUS != 'DELETED' 
+        AND INIT_BRANCH=#INIT_BRANCH# AND TRANS_DATE = #TRANS_DATE#
+    </mapped-statement>
+    <mapped-statement name="authorizeCallMoneyExtension" result-class="java.util.HashMap">
+        UPDATE CALL_MONEY_EXTENSION  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+       
+</sql-map>

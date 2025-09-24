@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="InwardClearingMap">
+
+	<!-- Use InwardClearingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInwardClearingTO" inline-parameters="true">
+        INSERT INTO INWARD_CLEARING
+        (INWARD_ID, PROD_ID, ACCT_NO, CLEARING_TYPE, CLEARING_DT, SCHEDULE_NO, INSTRUMENT_DT, AMOUNT, PAYEE_NAME, BANK_CODE, BRANCH_CODE, STATUS, INSTRUMENT_NO1, INSTRUMENT_NO2, SUSER_ID, S_DATE, S_REMARKS, INSTRUMENT_TYPE, INWARD_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, AUTHORIZE_REMARKS, IN_CURRENCY, OUTPUT_AMOUNT, BRANCH_ID, AC_HD_ID, PROD_TYPE, CREATED_BY, INITIATED_BRANCH
+        ) VALUES (
+        #inwardId:VARCHAR#, #prodId:VARCHAR#, #acctNo:VARCHAR#, #clearingType:VARCHAR#, #clearingDt:DATE#, #scheduleNo:VARCHAR#, #instrumentDt:DATE#, #amount:NUMERIC#, #payeeName:VARCHAR#, #bankCode:VARCHAR#, #branchCode:VARCHAR#, #status:VARCHAR#, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#, #suserId:VARCHAR#,SYS_DATE()<!--#sDate:TIMESTAMP#-->, #sRemarks:VARCHAR#, #instrumentType:VARCHAR#, #inwardDt:TIMESTAMP#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #authorizeRemarks:VARCHAR#, #inCurrency:VARCHAR#, #outputAmount:NUMERIC#, #branchId:VARCHAR#, #acHdId:VARCHAR#, #prodType:VARCHAR#, #createdBy:VARCHAR#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="viewInwardClearing" result-class="java.util.LinkedHashMap">
+<!--		SELECT INWARD_ID as "Inward Id", CLEARING_TYPE as "Clearing Type" , ACCT_NO as "Account Number" ,
+                CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) AS "Customer Name"  
+                FROM INWARD_CLEARING,ACT_MASTER,CUSTOMER 
+                WHERE CUSTOMER.CUST_ID = ACT_MASTER.CUST_ID 
+                AND ACT_NUM = ACCT_NO
+                AND INWARD_CLEARING.STATUS != 'DELETED'
+                AND (INWARD_CLEARING.AUTHORIZE_STATUS != 'AUTHORIZED' OR INWARD_CLEARING.AUTHORIZE_STATUS IS NULL)
+                AND INWARD_CLEARING.BRANCH_ID = #BRANCH_ID#
+                ORDER BY INWARD_ID -->
+                
+        SELECT INWARD_ID  AS "INWARD ID", PROD_TYPE AS "Product Type", PROD_ID as "Product Id", ACCT_NO as "Account Number",
+        ((SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) from CUSTOMER, ACT_MASTER
+        WHERE ACT_MASTER.ACT_NUM = INWARD_CLEARING.ACCT_NO
+        AND CUSTOMER.CUST_ID = ACT_MASTER.CUST_ID)
+        UNION 
+        (SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) from CUSTOMER, LOANS_FACILITY_DETAILS LFD, LOANS_BORROWER LB
+        WHERE LFD.ACCT_NUM = INWARD_CLEARING.ACCT_NO
+        AND LB.BORROW_NO = LFD.BORROW_NO
+        AND CUSTOMER.CUST_ID = LB.CUST_ID )) as "Name", AMOUNT AS "Amount", 
+        CLEARING_TYPE AS "Clearing Type", INSTRUMENT_TYPE AS "Instrument Type", INSTRUMENT_NO1 || ' ' || INSTRUMENT_NO2 AS "Instrument No", 
+        PAYEE_NAME AS "Payee Name",clearing_dt as trans_Dt,initiated_branch as initiated_branch
+        FROM INWARD_CLEARING
+        WHERE (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+        AND STATUS != 'DELETED'
+        AND INWARD_CLEARING.BRANCH_ID = #BRANCH_ID:VARCHAR:VARCHAR#
+        ORDER BY INWARD_ID
+    </mapped-statement>
+
+	<!-- Use InwardClearingTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInwardClearingTO" inline-parameters="true">
+        UPDATE INWARD_CLEARING SET 		
+        PROD_ID = #prodId:VARCHAR#,
+        ACCT_NO = #acctNo:VARCHAR#,
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+        CLEARING_DT = #clearingDt:DATE#,
+        SCHEDULE_NO = #scheduleNo:VARCHAR#,
+        INSTRUMENT_DT = #instrumentDt:DATE#,
+        AMOUNT = #amount:NUMERIC#,
+        PAYEE_NAME = #payeeName:VARCHAR#,
+        BANK_CODE = #bankCode:VARCHAR#,
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        INSTRUMENT_NO1 = #instrumentNo1:VARCHAR#,
+        INSTRUMENT_NO2 = #instrumentNo2:VARCHAR#,
+        SUSER_ID = #suserId:VARCHAR#,
+        S_DATE = (SELECT SYS_DATE() FROM DUAL)<!--#sDate:TIMESTAMP#-->,
+        S_REMARKS = #sRemarks:VARCHAR#,
+        INSTRUMENT_TYPE = #instrumentType:VARCHAR#,
+<!--		INWARD_DT = #inwardDt:DATE#,-->
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+        IN_CURRENCY = #inCurrency:VARCHAR#,
+        OUTPUT_AMOUNT = #outputAmount:NUMERIC#,
+<!--		BRANCH_ID = #branchId:VARCHAR#, 
+                CREATED_BY = #createdBy:VARCHAR#-->
+        AC_HD_ID = #acHdId:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+        WHERE INWARD_ID = #inwardId:VARCHAR#
+                <!--AND BRANCH_ID = #branchId:VARCHAR#-->
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND CLEARING_DT=#TRANS_DT:DATE#  
+    </mapped-statement>
+
+	<!-- Use InwardClearingTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInwardClearingTO" inline-parameters="true">
+<!--		DELETE FROM INWARD_CLEARING 
+		WHERE PROD_ID = #prodId:VARCHAR#-->
+        UPDATE INWARD_CLEARING SET 
+        S_DATE = (SELECT SYS_DATE() FROM DUAL)<!--#sDate:TIMESTAMP#-->,
+        STATUS = #status:VARCHAR#
+        WHERE INWARD_ID = #inwardId:VARCHAR#
+                <!--AND BRANCH_ID = #branchId:VARCHAR#-->
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND CLEARING_DT=#TRANS_DT:DATE#  
+              
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardClearingTO object (JavaBean) properties -->
+    <result-map name="getInwardClearingTOResult" class="com.see.truetransact.transferobject.transaction.clearing.InwardClearingTO">
+        <property name="inwardId" column="INWARD_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="clearingDt" column="CLEARING_DT"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="instrumentDt" column="INSTRUMENT_DT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="payeeName" column="PAYEE_NAME"/>
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="instrumentNo1" column="INSTRUMENT_NO1"/>
+        <property name="instrumentNo2" column="INSTRUMENT_NO2"/>
+        <property name="suserId" column="SUSER_ID"/>
+        <property name="sDate" column="S_DATE"/>
+        <property name="sRemarks" column="S_REMARKS"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="inwardDt" column="INWARD_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="inCurrency" column="IN_CURRENCY"/>
+        <property name="outputAmount" column="OUTPUT_AMOUNT"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>        
+    <mapped-statement name="getSelectInwardClearingTO" result-map="getInwardClearingTOResult" >
+        SELECT * FROM INWARD_CLEARING 
+        WHERE INWARD_ID = #INWARD_ID:VARCHAR#
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND CLEARING_DT=#TRANS_DT:DATE#  
+    </mapped-statement>
+        
+           <!-- Product Data from Product Table -->
+            
+        
+        
+        
+    <mapped-statement name="getProdCurrency" result-class="java.util.HashMap">
+        SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_ID = 'FOREX.CURRENCY'
+        AND LOOKUP_REF_ID = #PRODCURRENCY:VARCHAR#
+    </mapped-statement>
+                
+
+        
+        <!-- To get the Clearing Date -->  
+    <mapped-statement name="getClearingDate" result-class="java.util.HashMap">
+        SELECT CLEARING_DT FROM INWARD_CLEARING 
+        WHERE INWARD_ID = #INWARD_ID:VARCHAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+        
+
+<!-- ==============================AUTHORIZATION===================================================== -->
+    <dynamic-mapped-statement name="getSelectInwardClearingAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT INWARD_ID  AS "INWARD ID",  PROD_ID as "Product Id", ACCT_NO as "Account Number",
+            <!-- To get the Name of the Customer-->
+        (Select CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) from CUSTOMER, ACT_MASTER
+        WHERE ACT_MASTER.ACT_NUM = INWARD_CLEARING.ACCT_NO
+        AND CUSTOMER.CUST_ID = ACT_MASTER.CUST_ID) as "Name", AMOUNT AS "Amount",
+        INSTRUMENT_NO1 AS "Instrument 1", INSTRUMENT_NO2 AS "Instrument 2",PAYEE_NAME AS "Payee Name", 
+
+        STATUS AS "Status", SUSER_ID AS "User Id",
+        AC_HD_ID AS "Acct Head Id", SCHEDULE_NO AS "Schedule No.", CLEARING_TYPE AS "Clearing Type", 
+        CLEARING_DT AS "Clearing Date", INSTRUMENT_TYPE AS "Instrument Type", INSTRUMENT_NO1 AS "Instrument 1", 
+        INSTRUMENT_NO2 AS "Instrument 2", INSTRUMENT_DT AS "Instrument Date", 
+        BANK_CODE AS "Bank Code" , BRANCH_CODE AS "Branch Code", AUTHORIZE_STATUS AS "Authorize Status",PROD_TYPE AS "Product Type",
+        CLEARING_DT AS "trans_Dt",initiated_branch as initiated_branch
+
+        FROM INWARD_CLEARING
+        WHERE SUSER_ID != #USER_ID:VARCHAR# 
+<!--                AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)-->
+<!--            AND BRANCH_ID = #BRANCH_CODE#-->
+        AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = INWARD_CLEARING.SUSER_ID)
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))   
+            </isNotEqual>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="INWARD ID">
+                    UPPER(INWARD_ID) LIKE UPPER('%$INWARD ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Product Id">
+                    UPPER(PROD_ID) LIKE UPPER('%$Product Id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Account Number">
+                    UPPER(ACCT_NO) LIKE UPPER('%$Account Number$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="Amount">
+                    UPPER(AMOUNT) LIKE UPPER('%$Amount$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="Payee Name">
+                    UPPER(PAYEE_NAME) LIKE UPPER('%$Payee Name$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="Acct Head Id">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$Acct Head Id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Schedule No.">
+                    UPPER(SCHEDULE_NO) LIKE UPPER('%$Schedule No.$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="Clearing Type">
+                    UPPER(CLEARING_TYPE) LIKE UPPER('%$Clearing Type$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Product Type">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$Product Type$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="Branch Code">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$Branch Code$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="initiated_branch">
+                    UPPER(initiated_branch) LIKE UPPER('%$initiated_branch$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+        </dynamic>
+            <!--and STATUS not in('DELETED')-->
+        ORDER BY INWARD_ID
+    </dynamic-mapped-statement> 
+
+    <mapped-statement name="authorizeInwardClearing" result-class="java.util.HashMap">
+        UPDATE INWARD_CLEARING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #TODAY_DT:TIMESTAMP#,
+        AUTHORIZE_REMARKS = #REMARKS:VARCHAR#
+        WHERE INWARD_ID = #INWARD ID:VARCHAR# 
+            <!--AND BRANCH_ID = #BRANCH_ID#-->
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND CLEARING_DT=#TRANS_DT:DATE#  
+    </mapped-statement>        
+        
+    <mapped-statement name="rejectInwardClearing" result-class="java.util.HashMap">
+        UPDATE INWARD_CLEARING SET 
+        STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = '', 
+        AUTHORIZE_DT = null,
+        AUTHORIZE_REMARKS = ''
+        WHERE INWARD_ID = #INWARD ID:VARCHAR#
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND CLEARING_DT=#TRANS_DT:DATE#  
+    </mapped-statement>
+        
+<!-- =================================================================================== -->        
+    <mapped-statement name="clearing.getClearingDetail" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) + 
+        NVL((SELECT COUNT(*) 
+        FROM OUTWARD_RETURN 
+        WHERE SCHEDULE_NO = IC.SCHEDULE_NO 
+        AND (STATUS != 'DELETED' )), 0)
+        AS COUNT,
+        SUM(AMOUNT) + 
+        NVL((SELECT SUM(AMOUNT)
+        FROM OUTWARD_RETURN 
+        WHERE SCHEDULE_NO = IC.SCHEDULE_NO 
+        AND (STATUS != 'DELETED' )), 0)
+        AS SUM 
+        FROM INWARD_CLEARING  IC
+        WHERE SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# 
+        AND (STATUS != 'DELETED' )
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL) 
+        GROUP BY SCHEDULE_NO
+    </mapped-statement>       	
+        
+    <mapped-statement name="clearing.getTallyDetail" result-class="java.util.LinkedHashMap" >
+        SELECT CLEARING_DT, SERV_INSTRUMENTS, SERV_AMOUNT, PHY_INSTRUMENTS, PHY_AMOUNT
+        FROM INWARD_TALLY_DETAILS D,INWARD_TALLY T 
+        WHERE T.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR#
+        AND T.SCHEDULE_NO = D.SCHEDULE_NO (+)
+        AND T.BRANCH_ID = #BRANCH_ID:VARCHAR# 
+    </mapped-statement>     
+	
+    <mapped-statement name="clearing.getScheduleNoExistance" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS COUNT FROM INWARD_TALLY WHERE SCHEDULE_NO = #SCHEDULE_NO:VARCHAR#
+            <!-- table name INWARD_TALLY_DETAILS changed as INWARD_TALLY -->
+    </mapped-statement>    
+        
+    <dynamic-mapped-statement name="inwardClearing.getScheduleNo" result-class="java.util.LinkedHashMap">
+        SELECT SCHEDULE_NO, CLEARING_DT FROM INWARD_TALLY 
+        WHERE CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# AND  BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND TALLY_STATUS = 'OPEN'
+        AND STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  prepend="AND" property="SCHEDULE_NO">
+                    SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLEARING_DATE">
+                    CLEARING_DT=#CLEARING_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getShadowDebit" result-class="java.util.LinkedHashMap">
+        SELECT 'Cash' as "Type", PROD_ID AS "Product",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        INSTRUMENT_NO1 || ' '|| INSTRUMENT_NO2 as "Instrument",
+        INST_DT as "Instrument Dt",
+        AMOUNT as "Amount"
+        FROM CASH_TRANS WHERE
+        ACT_NUM = #ACCT_NO:VARCHAR# AND TRANS_TYPE='DEBIT' AND
+        (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED')) AND STATUS!='DELETED'
+        UNION ALL
+        SELECT 'Transfer' as "Type", PROD_ID AS "Product",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        INSTRUMENT_NO1 || ' '|| INSTRUMENT_NO2 as "Instrument",
+        INST_DT as "Instrument Dt",
+        AMOUNT as "Amount"
+        FROM TRANSFER_TRANS WHERE
+        ACT_NUM = #ACCT_NO:VARCHAR# AND TRANS_TYPE='DEBIT' AND
+        STATUS !='DELETED'  AND (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED'))
+        UNION ALL
+        SELECT 'Clearing' as "Type", PROD_ID AS "Product",
+        TO_CHAR(CLEARING_DT, 'MM/DD/YYYY') as "Date",
+        INSTRUMENT_NO1 || ' '|| INSTRUMENT_NO2 as "Instrument",
+        INSTRUMENT_DT as "Instrument Dt",
+        AMOUNT as "Amount"
+        FROM INWARD_CLEARING WHERE
+        ACCT_NO = #ACCT_NO:VARCHAR# 
+        AND  (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED')) and STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getShadowDebitGL" result-class="java.util.LinkedHashMap">
+        SELECT 'Cash' as "Type", PARTICULARS AS "Particulars",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM CASH_TRANS WHERE
+        AC_HD_ID = #ACCT_NO:VARCHAR# AND ACT_NUM IS NULL AND TRANS_TYPE='DEBIT' AND
+        (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED')) AND STATUS!='DELETED'
+        UNION ALL
+        SELECT 'Transfer' as "Type", PARTICULARS AS "Product",
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM TRANSFER_TRANS WHERE
+        AC_HD_ID = #ACCT_NO:VARCHAR# AND ACT_NUM IS NULL AND TRANS_TYPE='DEBIT' AND
+        STATUS !='DELETED'  AND (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED'))
+        UNION ALL
+        SELECT 'Clearing' as "Type", CLEARING_TYPE AS "Product",
+        TO_CHAR(CLEARING_DT, 'MM/DD/YYYY') as "Date",
+        AMOUNT as "Amount"
+        FROM INWARD_CLEARING WHERE
+        AC_HD_ID = #ACCT_NO:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        AND ACCT_NO IS NULL AND  (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED')) and STATUS!='DELETED'
+    </mapped-statement>
+
+        <!--!==================================-->    
+        
+        <!-- ===============Changes after Product Type ====================== -->
+        
+        <!-- Used to set the Account Head Values  -->
+        <!--
+        <mapped-statement name="getAccountHeadProd" result-class="java.util.HashMap">
+            // SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #PROD_ID# 
+            SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC, OP_AC_PRODUCT.BASE_CURRENCY AS PROD_CURRENCY FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #PROD_ID# 
+        </mapped-statement>
+         -->
+        <!-- To get the Name of the Account Holder-->        
+        <!--  
+        <mapped-statement name="getAccountNumberName" result-class="java.util.HashMap">
+            SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME
+            FROM ACT_MASTER, CUSTOMER
+            WHERE ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID  and  ACT_NUM = #ACC_NUM#
+        </mapped-statement>
+           -->    
+            
+            <!--  Used somewhere..... -->
+    <mapped-statement name="clearing.getAcctList" result-class="java.util.LinkedHashMap" >
+        SELECT
+        ACT_NUM AS "Account Number", get_cust_name(CUSTOMER.CUST_ID)  AS "Customer Name",
+        CUST_TYPE_ID AS "Customr Type"
+        FROM ACT_MASTER, CUSTOMER
+        WHERE ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID  AND PROD_ID = #PROD_ID:VARCHAR# AND 
+        (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))
+    </mapped-statement> 
+        <!-- -->
+        
+        <!-- For account Head if to be included in inward clearin -->
+        <!--
+        <mapped-statement name="Inward.getSelectAcctHead" result-class="java.util.LinkedHashMap">
+                SELECT AH.AC_HD_ID AS "A/C HEAD", AC_HD_DESC AS "A/C HEAD DESCRIPTION"                
+                FROM AC_HD_PARAM AHP, AC_HD AH
+                WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN ('DELETED')) and 
+                AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_clr='Y')
+	</mapped-statement>
+        -->
+        
+        
+    <result-map name="getProductIdDataResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>    
+    <mapped-statement name="InwardClearing.getProductDataOA" result-map="getProductIdDataResult">
+        SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZED_STATUS = 'AUTHORIZED' 
+        AND AC_HD_ID IN (SELECT AC_HD_ID FROM AC_HD_PARAM 
+        WHERE DR_CLR = 'Y' or DR_CLR ='y'
+        AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+        
+    <mapped-statement name="InwardClearing.getProductDataAD" result-map="getProductIdDataResult" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND ACCT_HEAD IN (SELECT AC_HD_ID FROM AC_HD_PARAM 
+        WHERE (DR_CLR = 'Y' OR DR_CLR ='y')
+        AND BEHAVES_LIKE IN ('OD', 'CC')
+        AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+
+    <mapped-statement name="InwardClearing.getProductDataAAD" result-map="getProductIdDataResult" >
+        SELECT PROD_ID, PROD_DESC FROM AGRILOANS_PRODUCT
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND ACCT_HEAD IN (SELECT AC_HD_ID FROM AC_HD_PARAM 
+        WHERE (DR_CLR = 'Y' OR DR_CLR ='y')
+        AND BEHAVES_LIKE IN ('AOD', 'ACC')
+        AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+                
+    <mapped-statement name="InwardClearing.getProductDataRM" result-map="getProductIdDataResult">
+        SELECT PROD_ID, PROD_DESC FROM REMITTANCE_PRODUCT
+        WHERE STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND ISSUE_HD IN (SELECT AC_HD_ID FROM AC_HD_PARAM 
+        WHERE DR_CLR = 'Y' or DR_CLR ='y'
+        AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+    <dynamic-mapped-statement name="getInwardClearngView" result-class="java.util.LinkedHashMap">
+        select  CLEARING_TYPE as "CLEARING_TYPE" ,CLEARING_DT as "CLEARING_DT",SCHEDULE_NO as "SCHEDULE_NO" ,
+        INWARD_ID AS "INWARD ID",PROD_ID ,ACCT_NO,INSTRUMENT_NO2,AMOUNT,PAYEE_NAME,INSTRUMENT_DT,CREATED_BY,AUTHORIZE_BY
+        AUTHORIZE_STATUS,STATUS from inward_clearing 
+        where    CLEARING_TYPE=#CLEARING_TYPE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEDULE_NO">
+                    SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>             
+        </dynamic> 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INWARD_DT">
+                    INWARD_DT=#INWARD_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>             
+        </dynamic> 
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="inwardClearing.getScheduleNoForView" result-class="java.util.LinkedHashMap">
+        SELECT SCHEDULE_NO, CLEARING_DT FROM INWARD_TALLY 
+        WHERE CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# AND  BRANCH_ID = #BRANCH_ID:VARCHAR#
+           
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  prepend="AND" property="SCHEDULE_NO">
+                    SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLEARING_DATE">
+                    CLEARING_DT=#CLEARING_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+        
+    <mapped-statement name="getAccountStatusOA" result-class="java.util.HashMap">
+        select * from act_master where act_num=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getAccountStatusAD" result-class="java.util.HashMap">
+        select ACCT_STATUS as ACT_STATUS_ID from loans_facility_details where acct_num=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="inward.InstrumentAlreadyEntered" result-class="java.util.HashMap">
+        select * from  inward_clearing where 
+        INSTRUMENT_NO1=#INSTRUMENT_NO1:VARCHAR# and 
+        INSTRUMENT_NO2=#INSTRUMENT_NO2:VARCHAR#
+        and SCHEDULE_NO=#SCHEDULE_NO:VARCHAR# 
+        and authorize_status!='REJECTED'
+    </mapped-statement>
+
+    <mapped-statement name="Cash.getAccProductRM" result-map="getProductIdDataResult">
+        SELECT PROD_ID, PROD_DESC FROM REMITTANCE_PRODUCT
+        WHERE STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND ISSUE_HD IN (SELECT AC_HD_ID FROM AC_HD_PARAM 
+        WHERE DR_CLR = 'Y' or DR_CLR ='y'
+        AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>        
+        
+    <mapped-statement name="remitanceExistance" result-class="java.util.HashMap">
+        select INWARD_ID,SCHEDULE_NO,to_char(CLEARING_DT,'dd-mon-yyyy') as CLEARING_DT , AMOUNT from  inward_clearing 
+        WHERE  STATUS!='DELETED' AND  (AUTHORIZE_STATUS!='REJECTED' OR  AUTHORIZE_STATUS IS NULL)  AND 
+        INSTRUMENT_NO1=#INSTRUMENT_NO1:VARCHAR# AND INSTRUMENT_NO2=#INSTRUMENT_NO2:VARCHAR#
+    </mapped-statement>    
+    <mapped-statement name="getInstrumentMonthDiff" result-class="java.util.HashMap">
+        SELECT MONTHS_BETWEEN(#CURR_DATE:DATE#,#INST_DATE:DATE#) AS MONTH_DIFF FROM DUAL
+    </mapped-statement> 
+               
+</sql-map>

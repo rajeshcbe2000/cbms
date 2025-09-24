@@ -1,0 +1,1204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="cashierAuthMapForDebitTransfer">
+
+<!--
+    Document   : SalaryDeductionMappingMap.xml
+    Created on : June 13, 2012, 1:39 PM
+    Author     : Rajesh
+    Description:
+        Purpose of the document follows.
+-->
+    <mapped-statement name="getSelectActMasterAuthDebit" result-class="java.util.HashMap" >
+         SELECT   ACT_MASTER.ACT_NUM AS ACCOUNTNO, ACT_MASTER.PROD_ID, ACT_MASTER.CUST_ID,
+         get_cust_name(customer.cust_id) as CUSTOMER_NAME,
+         CREATE_DT,
+         (SELECT LOOKUP_DESC
+         FROM LOOKUP_MASTER
+         WHERE (   LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE'
+                  OR LOOKUP_ID = 'CUSTOMER.TYPE'
+                 )
+         AND LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) AS "Customer Type"
+         FROM ACT_MASTER, CUSTOMER,ALL_TRANS
+         WHERE ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID
+         AND ACT_MASTER.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+         AND ACT_MASTER.STATUS_BY != #USER_ID:VARCHAR#
+         AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND UM.USER_ID = ACT_MASTER.STATUS_BY)
+         AND (   ACT_MASTER.AUTHORIZATION_STATUS IS NULL
+          OR ACT_MASTER.AUTHORIZATION_STATUS NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+         )
+        AND ALL_TRANS.ACT_NUM=ACT_MASTER.ACT_NUM
+        AND ALL_TRANS.TRANS_TYPE='CREDIT'
+        AND ALL_TRANS.TRANS_MODE='TRANSFER'
+        AND ALL_TRANS.TRANS_DT=#TRANS_DT:DATE#
+        ORDER BY ACT_MASTER.ACT_NUM
+    </mapped-statement>
+
+    <mapped-statement name="getSelectActClosingAuthDebit" result-class="java.util.HashMap" >
+        SELECT act_master.act_num AS accountno, act_master.prod_id, customer.cust_id,
+        get_cust_name(customer.cust_id) as customer_name,
+        create_dt, act_closing.status AS close_status
+        FROM act_closing, act_master, customer,all_trans
+        WHERE act_master.cust_id = customer.cust_id
+        AND act_closing.act_num = act_master.act_num
+        AND act_master.branch_code = #BRANCH_CODE:VARCHAR#
+        AND act_closing.status_by !=#USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+          (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = act_closing.status_by)
+        AND act_closing.status != 'DELETED'
+   
+        AND (act_closing.authorize_status IS NULL
+        OR act_closing.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+        )
+        AND ALL_TRANS.ACT_NUM=ACT_MASTER.ACT_NUM
+        AND ALL_TRANS.TRANS_TYPE='DEBIT'
+        AND ALL_TRANS.TRANS_MODE IN ('CASH','TRANSFER')
+        AND ALL_TRANS.TRANS_DT=#TRANS_DT:DATE#
+        ORDER BY ACT_MASTER.ACT_NUM
+    </mapped-statement>  
+    
+	<mapped-statement name="getSelectSalaryRecoveryTransactionAuthDedit" result-class="java.util.HashMap" >
+    	<!--SELECT DISTINCT tc.trans_all_id, clock_no, customer_no,
+                cust_name AS customer_name
+           FROM trans_all tc,TRANSFER_TRANS TT
+          WHERE (tc.status = 'CREATED' OR tc.status = 'UPDATED'
+                 OR tc.status = 'MODIFIED'
+                )
+            AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                            'Y', hierarchy_id,
+                                            hierarchy_id + 1
+                                           )
+                               FROM user_master um, role_master rm
+                              WHERE rm.role_id = um.user_role
+                                AND um.user_id = tc.status_by
+                                AND um.user_id != #USER_ID:VARCHAR#)
+            AND tc.branch_id = #BRANCH_CODE:VARCHAR#
+            AND tc.status_dt = #TRANS_DT:DATE#
+            AND (   tc.authorize_status IS NULL
+                 OR tc.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                ) AND TT.TRANS_ALL_ID = TC.TRANS_ALL_ID and not 
+         	exists (select count(*) from cash_trans ct where ct.trans_all_id = tt.trans_all_id)
+       ORDER BY trans_all_id-->            
+        SELECT DISTINCT tc.trans_all_id, clock_no, customer_no,cust_name AS customer_name
+        FROM trans_all tc, transfer_trans tt WHERE (tc.status = 'CREATED' OR tc.status = 'UPDATED' OR tc.status = 'MODIFIED')
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),'Y', hierarchy_id,hierarchy_id + 1)
+        FROM user_master um, role_master rm WHERE rm.role_id = um.user_role AND um.user_id = tc.status_by AND um.user_id != #USER_ID:VARCHAR#)
+        AND tc.branch_id = #BRANCH_CODE:VARCHAR# AND tc.status_dt = #TRANS_DT:DATE#
+        AND (tc.authorize_status IS NULL OR tc.authorize_status NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+        AND tt.trans_all_id = tc.trans_all_id
+        AND NOT EXISTS (SELECT ct.trans_all_id FROM cash_trans ct WHERE ct.trans_all_id = tt.trans_all_id)
+        ORDER BY trans_all_id
+    </mapped-statement>  
+    <mapped-statement name="getSelectDepositOpeningAuthDebit" result-class="java.util.HashMap" >    
+        SELECT   AT.BATCH_ID,da.deposit_no AS "DEPOSIT NO",
+         MAX(SUBSTR (get_cust_name(customer.cust_id),
+                 1,
+                 15
+                )) AS "Customer Name",
+         deposit_amt "Deposit Amt", deposit_dt "Deposit Date",
+         opening_mode AS "Opening Mode", da.prod_id AS "Product Id",
+         da.status_by AS "Status By"
+    FROM deposit_acinfo da, deposit_sub_acinfo dsa, customer c, all_trans AT
+   WHERE (dsa.status != 'DELETED' OR dsa.status IS NULL)
+     AND da.deposit_no = dsa.deposit_no
+     AND acct_status = 'NEW'
+     AND c.cust_id = da.cust_id
+     AND da.status_by != #USER_ID:VARCHAR#
+     AND da.branch_id = #BRANCH_CODE:VARCHAR#
+     AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND um.user_id = da.status_by)
+     AND (   dsa.authorize_status IS NULL
+          OR dsa.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+         )
+     AND opening_mode = #OPENING_MODE:VARCHAR#
+     AND AT.act_num = da.deposit_no || '_1'
+     AND AT.trans_dt = #TRANS_DT:DATE#
+     AND AT.trans_mode = 'TRANSFER'
+     AND AT.trans_type = 'CREDIT'
+     AND AT.AUTHORIZE_STATUS IS NULL
+     group by da.deposit_no,deposit_amt,deposit_dt,opening_mode,da.prod_id,da.status_by,
+     AT.BATCH_ID
+ORDER BY da.deposit_no
+
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectDepositClosingAuthDebit" result-class="java.util.HashMap" >
+        SELECT   DA.DEPOSIT_NO AS DEPOSIT_ACT_NUM,
+        DSA.DEPOSIT_SUB_NO AS DEPOSIT_SUB_NO, C.CUST_ID,
+        CONCAT (CONCAT (CONCAT (CONCAT (FNAME, ' '), MNAME), ' '),
+                 LNAME
+                ) AS CUSTOMER_NAME,
+        DEPOSIT_DT, DA.PROD_ID
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, CUSTOMER C, ALL_TRANS AT
+        WHERE DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        AND DA.CUST_ID = C.CUST_ID
+        AND DSA.CLOSE_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND UM.USER_ID = DSA.CLOSE_BY)
+        AND DA.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND (   DA.AUTHORIZE_STATUS IS NULL
+          OR DSA.AUTHORIZE_STATUS NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+         )
+        AND (DSA.ACCT_STATUS = 'CLOSED' OR DSA.ACCT_STATUS = 'MATURED')
+        AND AT.ACT_NUM = DA.DEPOSIT_NO || '_1'
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.TRANS_MODE IN ('TRANSFER', 'CASH')
+        ORDER BY DA.DEPOSIT_NO
+    </mapped-statement>
+
+    <mapped-statement name="getSelectLoanOpeningAuthDebit" result-class="java.util.HashMap" >
+     SELECT SA.EMP_REFNO_NEW as Employee_No,  fd.acct_num, fd.renewal_acct_no AS renewed_loan_no, fd.prod_id,
+     fd.borrow_no, fd.sanction_no,
+     get_cust_name(cust.cust_id) AS NAME
+     FROM loans_borrower lb, loans_facility_details "FD", customer cust, share_acct sa 
+     WHERE lb.cust_id = cust.cust_id
+     AND lb.borrow_no = fd.borrow_no
+     AND fd.status NOT IN ('DELETED')
+     AND fd.branch_id = #BRANCH_ID:VARCHAR#
+     and LB.CUST_ID = SA.CUST_ID (+) 
+     AND (DECODE ((SELECT behaves_like
+                   FROM loans_product
+                   WHERE status IN ('CREATED', 'MODIFIED')
+                   AND prod_id = fd.prod_id),
+                   'OD', 1,
+                   (DECODE ((SELECT behaves_like
+                            FROM loans_product
+                            WHERE status IN ('CREATED', 'MODIFIED')
+                            AND prod_id = fd.prod_id),
+                            'CC', 1,
+                         (SELECT COUNT (acct_num)
+                          FROM loans_repay_schedule
+                          WHERE acct_num = fd.acct_num
+                          AND status IN ('CREATED', 'MODIFIED'))
+                         )
+                    )
+                    ) > 0
+       )
+   AND (    fd.status_by != #STATUS_BY:VARCHAR#
+            AND (fd.authorize_by_1 IS NULL OR fd.authorize_by_1 != #STATUS_BY:VARCHAR#)
+       )
+  AND cast(#HIERARCHY_ID# as numeric) &gt;=
+          (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                          'Y', hierarchy_id,
+                          hierarchy_id + 1
+                         )
+             FROM user_master um, role_master rm
+             WHERE rm.role_id = um.user_role
+             AND rm.GROUP_ID = um.user_group
+             AND um.user_id = fd.status_by
+             AND branch_code = #BRANCH_ID:VARCHAR#)
+  AND (   fd.authorize_status_1 IS NULL
+        OR fd.authorize_status_1 NOT IN
+                                      ('AUTHORIZED', 'REJECTED')
+       )
+ AND NOT EXISTS (
+          SELECT borrow_no
+          FROM loans_facility_details
+          WHERE prod_id IN (SELECT prod_id
+                               FROM loans_product
+                               WHERE authorize_remark = 'GOLD_LOAN')
+ AND lb.borrow_no = loans_facility_details.borrow_no)
+ AND NOT EXISTS (
+             SELECT borrow_no
+             FROM loans_facility_details
+             WHERE prod_id IN (SELECT prod_id
+             FROM loans_product
+             WHERE behaves_like = 'LOANS_AGAINST_DEPOSITS')
+             AND borrow_no = lb.borrow_no)
+             
+    </mapped-statement>  
+    <mapped-statement name="getSelectSBClosingAuthDebit" result-class="java.util.HashMap" >
+        SELECT GET_EMP_REF_NO(act_master.act_num), act_master.act_num AS accountno, prod_id, customer.cust_id,
+       get_cust_name(customer.cust_id) customer_name,
+          create_dt, act_closing.status AS close_status
+          FROM act_closing, act_master, customer,share_acct sa
+          WHERE act_master.cust_id = customer.cust_id
+           AND act_closing.act_num = act_master.act_num
+           AND act_master.branch_code =  #BRANCH_ID:VARCHAR#
+           AND act_closing.status_by != #STATUS_BY:VARCHAR#
+           AND ACT_MASTER.ACT_NUM = SA.CUST_ID(+)
+           AND cast(#HIERARCHY_ID# as numeric) &gt;=
+          (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = act_closing.status_by)
+           AND act_closing.status != 'DELETED'
+           AND (   act_closing.authorize_status IS NULL
+                OR act_closing.authorize_status NOT IN
+                                              ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+               )
+    </mapped-statement>  
+      <mapped-statement name="getSelectLoanGoldLoanOpeningAuthDebit" result-class="java.util.HashMap" >
+     SELECT SA.EMP_REFNO_NEW as Employee_No,  fd.acct_num, fd.renewal_acct_no AS renewed_loan_no, fd.prod_id,
+     fd.borrow_no, fd.sanction_no,
+     get_cust_name(cust.cust_id) AS NAME
+     FROM loans_borrower lb, loans_facility_details "FD", customer cust, share_acct sa 
+     WHERE lb.cust_id = cust.cust_id
+     AND lb.borrow_no = fd.borrow_no
+     AND fd.status NOT IN ('DELETED')
+     AND fd.branch_id = #BRANCH_ID:VARCHAR#
+     and LB.CUST_ID = SA.CUST_ID (+) 
+     AND (DECODE ((SELECT behaves_like
+                   FROM loans_product
+                   WHERE status IN ('CREATED', 'MODIFIED')
+                   AND prod_id = fd.prod_id),
+                   'OD', 1,
+                   (DECODE ((SELECT behaves_like
+                            FROM loans_product
+                            WHERE status IN ('CREATED', 'MODIFIED')
+                            AND prod_id = fd.prod_id),
+                            'CC', 1,
+                         (SELECT COUNT (acct_num)
+                          FROM loans_repay_schedule
+                          WHERE acct_num = fd.acct_num
+                          AND status IN ('CREATED', 'MODIFIED'))
+                         )
+                    )
+                    ) > 0
+       )
+   AND (    fd.status_by != #STATUS_BY:VARCHAR#
+            AND (fd.authorize_by_1 IS NULL OR fd.authorize_by_1 != #STATUS_BY:VARCHAR#)
+       )
+  AND cast(#HIERARCHY_ID# as numeric) &gt;=
+          (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                          'Y', hierarchy_id,
+                          hierarchy_id + 1
+                         )
+             FROM user_master um, role_master rm
+             WHERE rm.role_id = um.user_role
+             AND rm.GROUP_ID = um.user_group
+             AND um.user_id = fd.status_by
+             AND branch_code = #BRANCH_ID:VARCHAR#)
+  AND (   fd.authorize_status_1 IS NULL
+        OR fd.authorize_status_1 NOT IN
+                                      ('AUTHORIZED', 'REJECTED')
+       )
+ AND NOT EXISTS (
+          SELECT borrow_no
+          FROM loans_facility_details
+          WHERE prod_id IN (SELECT prod_id
+                               FROM loans_product
+                               WHERE authorize_remark != 'GOLD_LOAN')
+ AND lb.borrow_no = loans_facility_details.borrow_no)
+ AND NOT EXISTS (
+             SELECT borrow_no
+             FROM loans_facility_details
+             WHERE prod_id IN (SELECT prod_id
+             FROM loans_product
+             WHERE behaves_like = 'LOANS_AGAINST_DEPOSITS')
+             AND borrow_no = lb.borrow_no)
+             
+    </mapped-statement>  
+     
+    <mapped-statement name="getSelectDepositLoanOpeningAuthDebit" result-class="java.util.HashMap" >
+            SELECT fd.prod_id, fd.borrow_no, fd.acct_num, fd.sanction_no,
+            get_cust_name(cust.cust_id) AS "CUSTOMER NAME",
+           <!-- fd.authorize_by_1, fd.authorize_status_1, fd.authorize_by_2,
+            fd.authorize_status_2,--> cust.cust_id AS "CUSTOMER ID",
+            cust.membership_no AS membership_no
+            FROM loans_borrower lb, loans_facility_details "FD", customer cust,all_trans at
+            WHERE lb.cust_id = cust.cust_id
+            AND lb.borrow_no = fd.borrow_no
+            AND fd.authorize_status_1 IS NULL
+            AND fd.acct_status != 'CLOSED'
+            AND fd.status NOT IN ('DELETED')
+            AND fd.branch_id = #BRANCH_ID:VARCHAR#
+            AND (    fd.status_by != #STATUS_BY:VARCHAR#
+            AND (fd.authorize_by_1 IS NULL OR fd.authorize_by_1 != #STATUS_BY#)
+            )
+            AND cast(#HIERARCHY_ID# as numeric)>=
+            (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                          'Y', hierarchy_id,
+                          hierarchy_id + 1
+                         )
+             FROM user_master um, role_master rm
+             WHERE rm.role_id = um.user_role
+             AND rm.GROUP_ID = um.user_group
+             AND um.user_id = fd.status_by
+             AND branch_code = #BRANCH_ID:VARCHAR#
+             AND (  fd.authorize_status_1 IS NULL
+             OR fd.authorize_status_1 NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+            )
+            )
+            AND EXISTS (
+            SELECT borrow_no
+            FROM loans_facility_details lfd
+            WHERE EXISTS (
+                    SELECT prod_id
+                      FROM loans_product
+                     WHERE behaves_like = 'LOANS_AGAINST_DEPOSITS'
+                       AND lfd.prod_id = prod_id)
+             AND lb.borrow_no = borrow_no)      
+             and AT.ACT_NUM=FD.ACCT_NUM
+             and at.trans_dt=#TRANS_DT:DATE#
+             and AT.TRANS_MODE in ('CASH','TRANSFER')
+    </mapped-statement>
+      
+    <mapped-statement name="getSelectLoanClosingAuthDebit" result-class="java.util.HashMap" >
+            SELECT act_closing.act_num AS accountno, customer.cust_id,
+            CONCAT (CONCAT (CONCAT (CONCAT (fname, ' '), mname), ' '),
+               lname
+              ) customer_name,
+            loans_facility_details.prod_id AS "PRODUCT ID", create_dt, act_closing.status AS close_status
+            FROM act_closing, loans_facility_details, customer, loans_borrower,all_trans
+            WHERE customer.cust_id = loans_borrower.cust_id
+            AND loans_borrower.borrow_no = loans_facility_details.borrow_no
+            AND loans_facility_details.acct_num = act_closing.act_num
+            AND loans_facility_details.branch_id = #BRANCH_CODE:VARCHAR#
+            AND act_closing.status_by !=#USER_ID:VARCHAR#
+            AND (   act_closing.remarks IS NULL
+            OR act_closing.remarks != 'DEPOSIT_TRANSACTION'
+            )
+            AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                          'Y', hierarchy_id,
+                          hierarchy_id + 1
+                         )
+            FROM user_master um, role_master rm
+            WHERE rm.role_id = um.user_role
+              AND um.user_id = act_closing.status_by)
+            AND (   act_closing.authorize_status IS NULL
+            OR act_closing.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+            )
+            AND (act_closing.status IS NULL OR act_closing.status != 'DELETED')                            
+             and all_trans.ACT_NUM=loans_facility_details.ACCT_NUM
+             and all_trans.trans_dt=#TRANS_DT:DATE#
+             and all_trans.TRANS_MODE in ('','TRANSFER')
+             and all_trans.TRANS_TYPE='CREDIT'
+    </mapped-statement> 
+      
+    <mapped-statement name="getDrfTransDebitAuth" result-class="java.util.HashMap" >
+        SELECT   DISTINCT c.drf_trans_id, c.drf_prod_id, c.member_no, c.amount,
+         c.reciept_or_payment
+        FROM drf_transaction c, share_acct sa,all_trans at
+        WHERE sa.share_acct_no = c.member_no
+        AND c.authorize_status IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = c.status_by)
+        AND c.status_by != #USER_ID:VARCHAR#
+        AND (sa.drf_applicable = 'N' or sa.drf_applicable is null)
+        AND c.status != 'DELETED'
+        and AT.LINK_BATCH_ID=C.DRF_TRANS_ID
+        and AT.TRANS_DT=#TRANS_DT:DATE#
+        and AT.TRANS_MODE IN ('CASH','TRANSFER')
+        and AT.TRANS_TYPE='DEBIT'
+        ORDER BY c.drf_trans_id
+    </mapped-statement>
+     
+    <mapped-statement name="getMDSappDebitAuth" result-class="java.util.HashMap" > 
+      SELECT scheme_name, chittal_no, sub_no, mdsa.trans_id, chit_start_dt
+      FROM mds_application mdsa, all_trans AT
+      WHERE (mdsa.status != 'DELETED' OR mdsa.status IS NULL)
+       AND mdsa.status_by !=  #USER_ID:VARCHAR#
+       AND branch_code =  #SELECTED_BRANCH_ID:VARCHAR#
+       AND mdsa.authorize_status IS NULL
+       AND cast(#HIERARCHY_ID# as numeric) &gt;=
+              (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                       'Y', hierarchy_id,
+                                       hierarchy_id + 1
+                                      )
+                          FROM user_master um, role_master rm
+                         WHERE rm.role_id = um.user_role
+                           AND um.user_id = mdsa.status_by)
+       AND AT.trans_id = mdsa.trans_id
+       AND AT.trans_dt =#TRANS_DT:DATE#
+       AND AT.trans_mode IN ('TRANSFER', '')
+    </mapped-statement>
+    
+    <mapped-statement name="getLoanApplicationAuthorizeDebitList" result-class="java.util.HashMap" > 
+            SELECT   DISTINCT TC.APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME
+            FROM LOAN_APPLICATION_REGISTER TC,ALL_TRANS AT
+            WHERE (TC.STATUS = 'CREATED' OR TC.STATUS = 'UPDATED' OR TC.STATUS = 'MODIFIED')
+            AND (   TC.AUTHORIZE_STATUS IS NULL
+            OR TC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+            )
+            AND AT.LINK_BATCH_ID= TC.APPLICATION_NO
+            AND AT.TRANS_DT=#TRANS_DT:DATE#
+            AND AT.TRANS_MODE='TRANSFER'
+            ORDER BY TC.APPLICATION_NO
+    </mapped-statement> 
+    
+    <mapped-statement name = "getAuthorizationsListForMutipleCashDebit" result-class = "java.util.HashMap">
+        select distinct TRANS_ID,TRANS_DT from cash_trans
+        where AUTHORIZE_REMARKS='MULTIPLE_CASH' and AUTHORIZE_STATUS is null and STATUS_BY != #USER_ID:VARCHAR#
+        and trans_type='DEBIT'
+    </mapped-statement>
+    
+    <mapped-statement name = "getRentTransAuthorizeDebitList" result-class = "java.util.HashMap">
+        SELECT   RT.RTID , RT.BUILDING_NO, RT.ROOM_NO
+        FROM RENT_TRANS RT,ALL_TRANS AT
+        WHERE (RT.STATUS = 'CREATED' OR RT.STATUS = 'UPDATED' OR RT.STATUS = 'MODIFIED')
+        AND (   RT.AUTHORIZE_STATUS IS NULL
+          OR RT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+         )
+        AND AT.LINK_BATCH_ID=RT.RTID
+        AND AT.TRANS_DT=#TRANS_DT:DATE#
+        AND AT.TRANS_MODE='TRANSFER'
+        ORDER BY RT.RTID
+    </mapped-statement>    
+     
+    <mapped-statement name = "getInvestmentTransAuthorizeDebitList" result-class = "java.util.HashMap">
+        SELECT   scd.batch_id, investment_type, investment_prod_id, investment_name,
+         tran_code, investment_id, scd.status
+        FROM investment_trans_details scd,all_trans at
+        WHERE (scd.status != 'DELETED' OR scd.status IS NULL)
+        AND (purchase_mode IS NULL OR purchase_mode NOT IN ('SHARE_PAYMENT'))
+        AND scd.status_by != #USER_ID:VARCHAR#
+        AND (share_fees_paid IS NOT NULL)
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                            'Y', hierarchy_id,
+                            hierarchy_id + 1
+                           )
+               FROM user_master um, role_master rm
+              WHERE rm.role_id = um.user_role AND um.user_id = scd.status_by)
+        AND (   scd.authorize_status IS NULL
+          OR scd.authorize_status NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+         )
+        and AT.LINK_BATCH_ID = SCD.INVESTMENT_ID
+        and AT.TRANS_DT=#TRANS_DT:DATE#
+        and AT.TRANS_MODE in ('CASH','TRANSFER')
+        AND AT.TRANS_TYPE='DEBIT'
+        ORDER BY investment_prod_id
+    </mapped-statement>   
+    
+    <mapped-statement name = "getLodgementMasterAuthorizeDebitList" result-class ="java.util.LinkedHashMap">   
+    SELECT SA.EMP_REFNO_NEW,SA.SHARE_ACCT_NO,   b.lodgement_id, b.borrow_acct_num,
+    (SELECT get_cust_name(customer.cust_id)
+            FROM act_master am, customer c
+            WHERE am.act_num = b.borrow_acct_num AND c.cust_id = am.cust_id)
+            AS act_name,
+            blc.instrument_amount, b.created_dt, b.bill_status, b.bills_type,
+            b.prod_type, b.instrument_type, b.drawee_bank_code, b.status_by,
+            b.delay_rate
+   FROM bills_lodgement_master b, bills_lodgement_cheque blc,ACT_MASTER AM,SHARE_ACCT SA
+   WHERE obc_other IS NULL
+     AND B.BORROW_ACCT_NUM =  AM.ACT_NUM (+) 
+     AND AM.CUST_ID = SA.CUST_ID(+)
+     AND (b.status = 'CREATED' OR b.status = 'UPDATED'
+          OR b.status = 'MODIFIED'
+         )
+     AND (   b.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+          OR b.authorize_status IS NULL
+         )
+     AND b.status_by != #USER_ID:VARCHAR#
+     AND b.lodgement_id = blc.lodgement_id
+     AND  cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                            'Y', hierarchy_id,
+                            hierarchy_id + 1
+                           )
+               FROM user_master um, role_master rm
+              WHERE rm.role_id = um.user_role AND um.user_id = b.status_by)
+     AND (   b.authorize_status IS NULL
+          OR b.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+         )
+ORDER BY b.lodgement_id 
+
+    </mapped-statement>   
+       
+    <mapped-statement name = "getSelectNonAuthRecordForTransferReceipt" result-class = "java.util.HashMap">   
+  SELECT mdsa.scheme_name, mp_mds_code AS scheme_desc, chittal_no, sub_no,
+    Member_name, chit_start_dt, net_trans_id, net_amt,SA.EMP_REFNO_NEW as Employee_No
+    FROM mds_receipt_entry mdsa 
+    join mds_scheme_details msd on mdsa.scheme_name = msd.scheme_name
+    join all_trans AT on at.trans_id = mdsa.net_trans_id
+    join mds_application ma on ma.chittal_no = mdsa.chittal_no
+    left join SHARE_ACCT sa on SA.SHARE_ACCT_NO = MA.MEMBER_NO
+    WHERE (mdsa.status != 'DELETED' OR mdsa.status IS NULL)
+       AND mdsa.status_by != #USER_ID:VARCHAR#
+       AND mdsa.initiated_branch = #SELECTED_BRANCH_ID:VARCHAR#
+       AND mdsa.authorize_status IS NULL
+       AND (ma.status != 'DELETED' OR ma.status IS NULL)
+       AND cast(#HIERARCHY_ID# as numeric) &gt;=
+       (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                )
+                      FROM user_master um, role_master rm
+                      WHERE rm.role_id = um.user_role
+                      AND um.user_id = mdsa.status_by)
+       AND chittal_no NOT IN (
+                       SELECT chittal_no
+                       FROM mds_member_receipt_entry
+                       WHERE status != 'DELETED'
+                       AND authorized_status IS NULL)
+   AND AT.trans_dt = #TRANS_DT:DATE#
+   AND AT.trans_mode = 'TRANSFER'
+    </mapped-statement> 
+     
+    <mapped-statement name = "getSelectCashAuthDebit" result-class = "java.util.LinkedHashMap">   
+         SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         ct.act_num AS "Account No",
+         get_cust_name(cu.cust_id) AS "Customer",
+         ct.amount, ct.trans_type, ct.trans_dt, CT.TRANS_MOD_TYPE,  ct.initiated_branch,
+         ct.status, ct.init_trans_id AS "Created By", ct.authorize_status,
+         ct.branch_id, ct.init_chann_type, ct.inp_amount, ct.inp_curr,
+         ct.instrument_no1, ct.instrument_no2, ct.inst_dt, ct.inst_type,
+         ct.particulars, ct.prod_id, ct.token_no, ct.init_trans_id,
+         ct.prod_type
+        FROM cash_trans ct, act_master am, customer cu
+        WHERE ct.act_num = am.act_num
+        AND am.cust_id = cu.cust_id
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt = #TRANS_DT:DATE#
+        AND ct.link_batch_id IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        UNION ALL
+        SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         ct.act_num AS "Account No", sam.suspense_name AS "Customer",
+         ct.amount, ct.trans_type, ct.trans_dt, CT.TRANS_MOD_TYPE, ct.initiated_branch,
+         ct.status, ct.init_trans_id AS "Created By", ct.authorize_status,
+         ct.branch_id, ct.init_chann_type, ct.inp_amount, ct.inp_curr,
+         ct.instrument_no1, ct.instrument_no2, ct.inst_dt, ct.inst_type,
+         ct.particulars, ct.prod_id, ct.token_no, ct.init_trans_id,
+         ct.prod_type
+        FROM cash_trans ct, suspense_account_master sam, customer cu
+        WHERE ct.act_num = sam.suspense_acct_num
+        AND sam.suspense_customer_id = cu.cust_id(+)
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt = #TRANS_DT:DATE#
+        AND ct.link_batch_id IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        UNION ALL
+        SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         ct.act_num AS "Account No",
+         get_cust_name(cu.cust_id) AS "Customer",
+         ct.amount, ct.trans_type, ct.trans_dt, CT.TRANS_MOD_TYPE, ct.initiated_branch,
+         ct.status, ct.init_trans_id AS "Created By", ct.authorize_status,
+         ct.branch_id, ct.init_chann_type, ct.inp_amount, ct.inp_curr,
+         ct.instrument_no1, ct.instrument_no2, ct.inst_dt, ct.inst_type,
+         ct.particulars, ct.prod_id, ct.token_no, ct.init_trans_id,
+         ct.prod_type
+        FROM cash_trans ct, deposit_acinfo dp, customer cu, deposit_sub_acinfo ds
+        WHERE ct.act_num = ds.deposit_no || '_' || ds.deposit_sub_no
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        AND NOT EXISTS (
+            SELECT dps.prod_id
+              FROM deposits_product dps, deposits_prod_renewal dpr
+             WHERE behaves_like = 'DAILY'
+               AND dp.prod_id = dps.prod_id
+               AND dps.prod_id = dpr.prod_id
+               AND (   dpr.partial_withdrawal_allowed = 'N'
+                    OR dpr.partial_withdrawal_allowed IS NULL
+                   ))
+        AND dp.deposit_no = ds.deposit_no
+        AND dp.cust_id = cu.cust_id
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt = #TRANS_DT:DATE#
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        UNION ALL
+        SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         DECODE (ct.act_num,
+                 NULL, ct.link_batch_id,
+                 ct.act_num
+                ) AS "Account No",
+         ac.ac_hd_desc AS "Customer", ct.amount, ct.trans_type, ct.trans_dt,
+         CT.TRANS_MOD_TYPE, ct.initiated_branch , ct.status, ct.init_trans_id AS "Created By",
+         ct.authorize_status, ct.branch_id, ct.init_chann_type, ct.inp_amount,
+         ct.inp_curr, ct.instrument_no1, ct.instrument_no2, ct.inst_dt,
+         ct.inst_type, ct.particulars, ct.prod_id, ct.token_no,
+         ct.init_trans_id, ct.prod_type
+        FROM cash_trans ct, gl g, ac_hd ac
+        WHERE ct.act_num IS NULL
+        AND ct.ac_hd_id = g.ac_hd_id
+        AND g.ac_hd_id = ac.ac_hd_id
+        AND ct.ac_hd_id = ac.ac_hd_id
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt =#TRANS_DT:DATE#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        UNION ALL
+        SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         ct.act_num AS "Account No", am.agency_name AS "Customer", ct.amount,
+         ct.trans_type, ct.trans_dt, CT.TRANS_MOD_TYPE, ct.initiated_branch, ct.status,
+         ct.init_trans_id AS "Created By", ct.authorize_status, ct.branch_id,
+         ct.init_chann_type, ct.inp_amount, ct.inp_curr, ct.instrument_no1,
+         ct.instrument_no2, ct.inst_dt, ct.inst_type, ct.particulars,
+         ct.prod_id, ct.token_no, ct.init_trans_id, ct.prod_type
+        FROM cash_trans ct, other_banks_act_master am
+        WHERE ct.act_num = am.act_master_id
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt =#TRANS_DT:DATE#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        UNION ALL
+        SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         ct.act_num AS "Account No",
+         get_cust_name(cu.cust_id) AS "Customer",
+         ct.amount, ct.trans_type, ct.trans_dt, CT.TRANS_MOD_TYPE, ct.initiated_branch,
+         ct.status, ct.init_trans_id AS "Created By", ct.authorize_status,
+         ct.branch_id, ct.init_chann_type, ct.inp_amount, ct.inp_curr,
+         ct.instrument_no1, ct.instrument_no2, ct.inst_dt, ct.inst_type,
+         ct.particulars, ct.prod_id, ct.token_no, ct.init_trans_id,
+         ct.prod_type
+        FROM cash_trans ct,
+         loans_facility_details am,
+         customer cu,
+         loans_borrower lb
+        WHERE ct.act_num = am.acct_num
+        AND lb.cust_id = cu.cust_id
+        AND lb.borrow_no = am.borrow_no
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt = #TRANS_DT:DATE#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        UNION ALL
+        SELECT   ct.trans_id AS "TRANS_ID", ct.ac_hd_id AS "ACCT_HD_ID",
+         ct.act_num AS "Account No",
+         get_cust_name(cu.cust_id) AS "Customer",
+         ct.amount, ct.trans_type, ct.trans_dt, CT.TRANS_MOD_TYPE, ct.initiated_branch,
+         ct.status, ct.init_trans_id AS "Created By", ct.authorize_status,
+         ct.branch_id, ct.init_chann_type, ct.inp_amount, ct.inp_curr,
+         ct.instrument_no1, ct.instrument_no2, ct.inst_dt, ct.inst_type,
+         ct.particulars, ct.prod_id, ct.token_no, ct.init_trans_id,
+         ct.prod_type
+        FROM cash_trans ct,
+         agri_loans_facility_details am,
+         customer cu,
+         agri_loans_borrower lb
+        WHERE ct.act_num = am.acct_num
+        AND lb.cust_id = cu.cust_id
+        AND lb.borrow_no = am.borrow_no
+        AND ct.initiated_branch = #BRANCH_CODE:VARCHAR#
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt = #TRANS_DT:DATE#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                     'Y', hierarchy_id,
+                                     hierarchy_id + 1
+                                    )
+                        FROM user_master um, role_master rm
+                       WHERE rm.role_id = um.user_role
+                         AND rm.GROUP_ID = um.user_group
+                         AND um.user_id = ct.status_by)
+        AND (   ct.authorize_status IS NULL
+          OR ct.authorize_status NOT IN ('AUTHORIZED', 'REJECTED')
+         )
+        AND (   (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+          OR (    ct.trans_type = 'DEBIT'
+              AND ct.amount &lt;=
+                     (SELECT cash_DEBIT
+                        FROM level_master lm, role_master rm, user_master um
+                       WHERE lm.level_id = rm.level_id
+                         AND um.user_id = #USER_ID:VARCHAR#
+                         AND um.user_role = rm.role_id
+                         AND um.user_group = rm.GROUP_ID)
+             )
+         )
+        AND ct.init_trans_id != #USER_ID:VARCHAR#
+        AND (   ct.authorize_status_2 != 'ENTERED_AMOUNT'
+          OR ct.authorize_status_2 IS NULL
+         )
+        ORDER BY 1
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectNonAuthRecordForShareDebit" result-class = "java.util.HashMap"> 
+     <!--SELECT DISTINCT sa.share_appl_no AS "Share Application No",
+                sa.share_acct_no AS "Share Account No",
+                sac.share_acct_det_no AS "Share Detail No",
+                sa.acct_status AS "Account Status",
+                sac.no_of_shares AS "No.of shares",
+                sa.share_type AS "Share Type",AT.TRANS_MODE,AT.TRANS_TYPE
+          FROM share_acct sa, share_acct_details sac, all_trans AT
+          WHERE (    (sa.status != 'DELETED' OR sa.status IS NULL)
+                 AND (sac.status != 'DELETED' OR sac.status IS NULL)
+                )
+            AND (   sac.share_appl_no = sa.share_appl_no
+                 OR sac.share_acct_no = sa.share_acct_no
+                )
+            AND AT.initiated_branch = #BRANCH_CODE:VARCHAR#
+            AND sa.status_by != #USER_ID:VARCHAR#
+            AND (   AT.link_batch_id =
+                              sa.share_acct_no || '_' || sac.share_acct_det_no
+                 OR AT.link_batch_id =
+                              sa.share_appl_no || '_' || sac.share_acct_det_no
+                )
+            AND (   AT.authorize_status IS NULL
+                 OR AT.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                )
+                AND (AT.TRANS_TYPE='DEBIT' OR (AT.TRANS_MODE='TRANSFER' AND AT.TRANS_TYPE='CREDIT'))
+            AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                            'Y', hierarchy_id,
+                                            hierarchy_id + 1
+                                           )
+                               FROM user_master um, role_master rm
+                              WHERE rm.role_id = um.user_role
+                                AND um.user_id = sa.status_by)
+           AND (    (   sa.authorize IS NULL
+                      OR sa.authorize NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                     )
+           AND (sac.authorize IS NULL
+                      OR sac.authorize NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                )
+                )              
+            UNION
+            SELECT sa.share_appl_no AS "Share Application No",
+                   sa.share_acct_no AS "Share Account No", '1' AS "Share Detail No",
+                   sa.acct_status AS "Account Status", 0 AS "No.of shares",
+                   sa.share_type AS "Share Type",AT.TRANS_MODE,AT.TRANS_TYPE
+             FROM share_acct sa, share_acct_details sac, all_trans AT
+             WHERE AT.initiated_branch = #BRANCH_CODE:VARCHAR#
+             AND sa.status_by != #USER_ID:VARCHAR#
+             AND (   AT.link_batch_id = sa.share_acct_no || '_' || sac.share_acct_det_no
+                    OR AT.link_batch_id = sa.share_appl_no || '_' || sac.share_acct_det_no
+                  )
+             AND (   AT.authorize_status IS NULL
+                    OR AT.authorize_status NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                  )
+             AND (AT.TRANS_TYPE='DEBIT' OR (AT.TRANS_MODE='TRANSFER' AND AT.TRANS_TYPE='CREDIT'))
+             AND (sa.status != 'DELETED' OR sa.status IS NULL)
+             AND sa.branch_code = #BRANCH_CODE:VARCHAR#
+             AND sa.status_by != #USER_ID:VARCHAR#
+             AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+                      (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                               'Y', hierarchy_id,
+                                               hierarchy_id + 1
+                                              )
+                          FROM user_master um, role_master rm
+                          WHERE rm.role_id = um.user_role
+                          AND um.user_id = sa.status_by)
+             AND (   sa.authorize IS NULL
+             OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                 )
+             AND sa.share_appl_no NOT IN (
+             SELECT DISTINCT sa.share_appl_no
+                         FROM share_acct sa, share_acct_details sac, all_trans AT
+                         WHERE (    (sa.status != 'DELETED' OR sa.status IS NULL)
+                         AND (sac.status != 'DELETED' OR sac.status IS NULL
+                             )
+                               )
+                         AND (   sac.share_appl_no = sa.share_appl_no
+                               OR sac.share_acct_no = sa.share_acct_no
+                              )
+                         AND AT.initiated_branch = #BRANCH_CODE:VARCHAR#
+                         AND sa.status_by != #USER_ID:VARCHAR#
+                         AND (   AT.link_batch_id =
+                                        sa.share_acct_no
+                                     || '_'
+                                     || sac.share_acct_det_no
+                               OR AT.link_batch_id =
+                                        sa.share_appl_no
+                                     || '_'
+                                     || sac.share_acct_det_no
+                              )
+                         AND (   AT.authorize_status IS NULL
+                               OR AT.authorize_status NOT IN
+                                          ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                             )
+                         AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+                                 (SELECT DISTINCT DECODE
+                                                     (NVL (same_hierarchy_allowed,
+                                                           'N'
+                                                          ),
+                                                      'Y', hierarchy_id,
+                                                      hierarchy_id + 1
+                                                     )
+                                             FROM user_master um, role_master rm
+                                            WHERE rm.role_id = um.user_role
+                                              AND um.user_id = sa.status_by)
+                        AND (    (   sa.authorize IS NULL
+                                     OR sa.authorize NOT IN
+                                     ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                                  )
+                               AND (   sac.authorize IS NULL
+                                    OR sac.authorize NOT IN
+                                    ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                                   )
+                              ))-->
+SELECT DISTINCT sa.share_appl_no AS "Share Application No",
+                sa.share_acct_no AS "Share Account No",
+                sac.share_acct_det_no AS "Share Detail No",
+                sa.acct_status AS "Account Status",
+                sac.no_of_shares AS "No.of shares",
+                sa.share_type AS "Share Type", AT.trans_mode, AT.trans_type
+           FROM share_acct sa, share_acct_details sac, all_trans AT,DAY_END DE 
+          WHERE (    (sa.status != 'DELETED' OR sa.status IS NULL)
+                 AND (sac.status != 'DELETED' OR sac.status IS NULL)
+                )
+            AND (   sac.share_appl_no = sa.share_appl_no
+                 OR sac.share_acct_no = sa.share_acct_no
+                )
+                AND AT.TRANS_DT = DE.CURR_APPL_DT
+            AND AT.initiated_branch = #BRANCH_CODE:VARCHAR#
+            AND sa.status_by != #USER_ID:VARCHAR#
+            AND (   AT.link_batch_id =
+                              sa.share_acct_no || '_' || sac.share_acct_det_no
+                 OR AT.link_batch_id =
+                              sa.share_appl_no || '_' || sac.share_acct_det_no
+                )
+            AND (   AT.authorize_status IS NULL
+                 OR AT.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                )
+            AND (   AT.trans_type = 'DEBIT'
+                 OR (AT.trans_mode = 'TRANSFER' AND AT.trans_type = 'CREDIT'
+                    )
+                )
+            AND cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                            'Y', hierarchy_id,
+                                            hierarchy_id + 1
+                                           )
+                               FROM user_master um, role_master rm
+                              WHERE rm.role_id = um.user_role
+                                AND um.user_id = sa.status_by)
+            AND (    (   sa.authorize IS NULL
+                      OR sa.authorize NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                     )
+                 AND (   sac.authorize IS NULL
+                      OR sac.authorize NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                     )
+                )
+UNION
+SELECT sa.share_appl_no AS "Share Application No",
+       sa.share_acct_no AS "Share Account No", '1' AS "Share Detail No",
+       sa.acct_status AS "Account Status", 0 AS "No.of shares",
+       sa.share_type AS "Share Type", AT.trans_mode, AT.trans_type
+  FROM share_acct sa, share_acct_details sac, all_trans AT,DAY_END DE
+ WHERE AT.initiated_branch =#BRANCH_CODE:VARCHAR#
+ AND AT.TRANS_DT = DE.CURR_APPL_DT
+   AND sa.status_by != #USER_ID:VARCHAR#
+   AND (   AT.link_batch_id = sa.share_acct_no || '_' || sac.share_acct_det_no
+        OR AT.link_batch_id = sa.share_appl_no || '_' || sac.share_acct_det_no
+       )
+   AND (   AT.authorize_status IS NULL
+        OR AT.authorize_status NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+       )
+   AND (   AT.trans_type = 'DEBIT'
+        OR (AT.trans_mode = 'TRANSFER' AND AT.trans_type = 'CREDIT')
+       )
+   AND (sa.status != 'DELETED' OR sa.status IS NULL)
+   AND sa.branch_code =#BRANCH_CODE:VARCHAR#
+   AND sa.status_by != #USER_ID:VARCHAR#
+   AND cast(#HIERARCHY_ID# as numeric) &gt;=
+          (SELECT  DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = sa.status_by)
+   AND (   sa.authorize IS NULL
+        OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+       )
+   AND NOT EXISTS ( /*sa.share_appl_no NOT IN */
+          SELECT  sa.share_appl_no
+                     FROM share_acct sa, share_acct_details sac, all_trans AT,DAY_END DE
+                    WHERE (    (sa.status != 'DELETED' OR sa.status IS NULL)
+                           AND (sac.status != 'DELETED' OR sac.status IS NULL
+                               )
+                          )
+                      AND DE.CURR_APPL_DT = AT.TRANS_DT
+                      AND (   sac.share_appl_no = sa.share_appl_no
+                           OR sac.share_acct_no = sa.share_acct_no
+                          )
+                      AND AT.initiated_branch = #BRANCH_CODE:VARCHAR#
+                      AND sa.status_by != #USER_ID:VARCHAR#
+                      AND (   AT.link_batch_id =
+                                    sa.share_acct_no
+                                 || '_'
+                                 || sac.share_acct_det_no
+                           OR AT.link_batch_id =
+                                    sa.share_appl_no
+                                 || '_'
+                                 || sac.share_acct_det_no
+                          )
+                      AND (   AT.authorize_status IS NULL
+                           OR AT.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                          )
+                      AND cast(#HIERARCHY_ID# as numeric) &gt;=
+                             (SELECT  DECODE
+                                                 (NVL (same_hierarchy_allowed,
+                                                       'N'
+                                                      ),
+                                                  'Y', hierarchy_id,
+                                                  hierarchy_id + 1
+                                                 )
+                                         FROM user_master um, role_master rm
+                                        WHERE rm.role_id = um.user_role
+                                          AND um.user_id = sa.status_by)
+                      AND (    (   sa.authorize IS NULL
+                                OR sa.authorize NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                               )
+                           AND (   sac.authorize IS NULL
+                                OR sac.authorize NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                               )
+                          ))
+
+ </mapped-statement>
+</sql-map>

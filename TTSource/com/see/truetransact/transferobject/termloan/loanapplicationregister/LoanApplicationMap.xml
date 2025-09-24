@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanApplicationMap">
+
+    <!-- Use InwardRegisterTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLoanApplicationTO" inline-parameters="true">
+        INSERT INTO LOAN_APPLICATION_REGISTER
+        (APPLICATION_NO, CUSTOMER_ID, MEMBER_ID,
+        APPLICATION_DATE, APPLICATION_INWARD_DATE, SCHEME_NAME, LOAN_AMT_APPLIED, 
+        SURETY_NAME, REMARKS, STATUS_REGISTER, 
+        STATUS_BY, STATUS_DT,CREATED_BY,CREATED_DT,STATUS,PROD_ID,FIRST_INSTALLMENT_DT,DUE_DT,PURPOSE_CODE,BRANCH_ID,NO_OF_INSTALLMENT,INSTALLMENT_TYPE,MORATORIUM_PERIOD,IS_TRANSACTION,TOTAL_SALARY,ELIGIBLE_AMT,REPAYMENT_TYPE,COST_OF_VEHICHLE,INSTALLMENT_AMOUNT) VALUES (
+        #applNo:VARCHAR#, #custId:VARCHAR#, #memId:VARCHAR#,                 
+        #applDt:DATE#, #applInwrdDt:DATE#, 
+        #schemName:VARCHAR#, #loanAmt:NUMBER#, #suretyName:VARCHAR#, 
+        #remarks:VARCHAR#, #regstrStatus:VARCHAR#, 
+        #statusBy:VARCHAR#, #statusDt:DATE#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#,
+        #status:VARCHAR#, #prodId:VARCHAR#,#fromDt:DATE#,#dueDt:DATE#,#purposeCode:VARCHAR#,#branCode:VARCHAR#,#noOfInstalmnt:NUMBER#,#rePayment:VARCHAR#,#moratoriumPeriod:NUMBER#,#isTransaction:VARCHAR#,#totalSalary:NUMBER#,#eligibleAmt:NUMBER#,#repaymentType:NUMBER#,#costOfVehicle:NUMBER#,#txtInstallmentAmt:NUMBER#)
+    </mapped-statement>
+
+    <mapped-statement name="insertShareAcctDetailsTOForLoanApplicationRegister" inline-parameters="true">
+        INSERT INTO SHARE_ACCT_DETAILS
+        (SHARE_ACCT_NO, SHARE_VALUE, SHARE_MEM_FEE
+        ) VALUES (
+        #memId:VARCHAR#, #shareAmt:NUMERIC#, #membShpFee:NUMERIC#)
+    </mapped-statement> 
+        
+    <mapped-statement name="updateShareAccInfoTOForLoanApplicationRegister" inline-parameters="true">
+        UPDATE SHARE_ACCT SET 
+        SHARE_ACCT_NO = #shareAcctNo:VARCHAR#,
+        OUTSTANDING_AMOUNT = OUTSTANDING_AMOUNT + #OUTSTANDING_AMOUNT:NUMERIC#, 
+        AVILABLE_NO_SHARES = AVILABLE_NO_SHARES + #AVAILABLE_NO_SHARES:NUMERIC#
+        WHERE SHARE_ACCT_NO = #MEM_ID:VARCHAR#
+    </mapped-statement>
+
+
+    <mapped-statement name="getShareFeeAndMembshpFeeAcHd" result-class="java.util.HashMap">
+        select scd.share_fee_achd,scd.membership_fee_achd from share_conf_details scd,share_acct sa 
+        where scd.share_type = sa.share_type and sa.share_acct_no = #SHARE_ACC_NO:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to InwardRegisterTO object (JavaBean) properties -->
+    <result-map name="getLoanApplicationTOResult" class="com.see.truetransact.transferobject.termloan.loanapplicationregister.LoanApplicationTO">
+        <property name="applNo" column="APPLICATION_NO"/>
+        <property name="custId" column="CUSTOMER_ID"/>
+        <property name="memId" column="MEMBER_ID"/>
+        <property name="applDt" column="APPLICATION_DATE"/>
+        <property name="applInwrdDt" column="APPLICATION_INWARD_DATE"/>
+        <property name="schemName" column="SCHEME_NAME"/>
+        <property name="loanAmt" column="LOAN_AMT_APPLIED"/>
+        <property name="suretyName" column="SURETY_NAME"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="regstrStatus" column="STATUS_REGISTER"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="purposeCode" column="PURPOSE_CODE"/>
+        <property name="branCode" column="BRANCH_ID"/>
+        <property name="rePayment" column="INSTALLMENT_TYPE"/>
+        <property name="noOfInstalmnt" column="NO_OF_INSTALLMENT"/>
+        <property name="moratoriumPeriod" column="MORATORIUM_PERIOD"/>
+        <property name="isTransaction" column="IS_TRANSACTION"/>
+        <property name="totalSalary" column="TOTAL_SALARY"/>
+        <property name="eligibleAmt" column="ELIGIBLE_AMT"/>
+        <property name="repaymentType" column="REPAYMENT_TYPE"/>
+        <property name="fromDt" column="FIRST_INSTALLMENT_DT"/>
+        <property name="costOfVehicle" column="COST_OF_VEHICHLE"/>
+        <property name="dueDt" column="DUE_DT"/>
+         <property name="txtInstallmentAmt" column="INSTALLMENT_AMOUNT"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getLoanApplicationEdit" result-class="java.util.LinkedHashMap">
+        SELECT APPLICATION_NO,CUSTOMER_ID,
+        MEMBER_ID,APPLICATION_DATE FROM LOAN_APPLICATION_REGISTER
+        WHERE STATUS!='DELETED' AND (authorize_status IS NULL OR authorize_status='AUTHORIZED') AND
+        authorize_status!='REJECTED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="APPLICATION_NO">
+                    UPPER(APPLICATION_NO) LIKE UPPER('%$APPLICATION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTOMER_ID">
+                    UPPER(CUSTOMER_ID) LIKE UPPER('%$CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="MEMBER_ID">
+                    UPPER(MEMBER_ID) LIKE UPPER('%$MEMBER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="APPLICATION_DATE">
+                    UPPER(APPLICATION_DATE) LIKE UPPER('%$APPLICATION_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectLoanApplicationTO" result-map="getLoanApplicationTOResult" >
+        SELECT * FROM LOAN_APPLICATION_REGISTER  
+        WHERE APPLICATION_NO =#APPLICATION_NO:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="getSelectCustmrData" result-class="java.util.LinkedHashMap" >
+        select CUST_ID,FNAME,MEMBERSHIP_NO from customer order by cust_id  
+    </mapped-statement>
+    <mapped-statement name="getSelectCustmrNameData" result-class="java.util.HashMap" >
+        SELECT GET_CUST_NAME(#CUST_ID:VARCHAR#) AS CUST_NAME FROM DUAL  
+    </mapped-statement>
+    <mapped-statement name="getSelectPurposeCodeFromLoanApplRegstr" result-class="java.util.LinkedHashMap" >
+        select purpose_code,PROD_ID,BRANCH_ID from loan_application_register where application_no = #APPNO:VARCHAR# and status!='DELETED'  
+    </mapped-statement>
+
+    <mapped-statement name="getSelectShareFeeAchdForShareBal" result-class="java.util.HashMap" >
+        select scf.SHARE_ACHD as share_fee_achd from share_conf_details scf 
+        where scf.share_type in (select sa.share_type from share_acct sa where sa.cust_id = #CUSTID:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTotalPendingLoanAmount" result-class="java.util.HashMap" >
+        select nvl(sum(lfd.total_balance),0) as tot_bal from loans_facility_details lfd join loans_product lp on lp.prod_id=lfd.prod_id
+        where lfd.borrow_no in (select borrow_no from loans_borrower where cust_id = #CUSTID:VARCHAR#) and lp.SHARE_LINKING='Y'
+    </mapped-statement>
+    
+     <mapped-statement name="getLoanAcctNum" result-class="java.util.HashMap" >
+         select LFD.ACCT_NUM from loans_facility_details lfd join loans_product lp
+         on lp.prod_id=lfd.prod_id where lfd.borrow_no in (select borrow_no from loans_borrower where cust_id = #CUSTID:VARCHAR#) AND LFD.STATUS !='CLOSED'
+         AND LFD.ACCT_STATUS !='CLOSED' AND LFD.STATUS !='DELETED' AND(LFD.AUTHORIZE_STATUS_1='AUTHORIZED' AND LFD.AUTHORIZE_STATUS_1!='REJECTED')
+         AND LP.PROD_DESC=#PROD_DESC:VARCHAR#
+         AND LFD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSelectCasteForLoanAppl" result-class="java.util.LinkedHashMap" >
+        select caste,DOB,RETIREMENT_DT from customer WHERE CUST_ID = #CUSTID:VARCHAR# 
+    </mapped-statement>
+     
+    <mapped-statement name="getSelectMaxShareBorrower" result-class="java.util.LinkedHashMap" >
+        Select nvl(sp.borrower_share,0) max_share_borrower from share_prod_loans sp
+        where sp.share_type in (select c.membership_class from customer c where c.cust_id = #CUST_ID:VARCHAR#) 
+        and sp.loan_type in (select lp.authorize_remark from loans_product lp where lp.prod_id=#PROD_ID:VARCHAR#) and 
+        sp.status_dt in (select max(sp.status_dt) from share_prod_loans sp 
+        where sp.share_type in (select c.membership_class from customer c where c.cust_id = #CUST_ID:VARCHAR#) 
+        and sp.loan_type in (select lp.authorize_remark from loans_product lp where lp.prod_id=#PROD_ID:VARCHAR#)) 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectOutstandingAmount" result-class="java.util.LinkedHashMap" >
+        Select nvl(sa.outstanding_amount,0) share_Balance  from share_acct sa where sa.share_acct_no = #MEM_NO:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFaceValueAdmFeeMaxAdmFee" result-class="java.util.LinkedHashMap" >
+        select nvl(scd.face_value,0) face_value, nvl(scd.admission_fee,0) adm_fee  ,nvl(scd.admission_fee_max,0) Max_adm_fee from share_conf_details scd where scd.share_type in (select c.membership_class from customer c where c.cust_id = #CUST_ID:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getacHdData" result-class="java.util.LinkedHashMap" >
+        select acc_head from loan_charge_definition where scheme_id = #SCHEME_NAME:VARCHAR# AND charge_desc = #CHARGE_DESC:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateLoanApplicationTO" inline-parameters="true">
+        UPDATE LOAN_APPLICATION_REGISTER SET 
+        CUSTOMER_ID =  #custId:VARCHAR#,
+        MEMBER_ID =  #memId:VARCHAR#,
+        APPLICATION_DATE = #applDt:DATE#,
+        APPLICATION_INWARD_DATE= #applInwrdDt:DATE#, 
+        SCHEME_NAME=  #schemName:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#,
+        LOAN_AMT_APPLIED= #loanAmt:NUMBER#,
+        SURETY_NAME = #suretyName:VARCHAR#, 
+        REMARKS = #remarks:VARCHAR#, 
+        STATUS_REGISTER = #regstrStatus:VARCHAR#,  
+        STATUS_BY =#statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:DATE#, 
+        CREATED_BY =#createdBy:VARCHAR#,
+        CREATED_DT =#createdDt:DATE#,
+        AUTHORIZE_STATUS =#authorizeStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        BRANCH_ID =#branCode:VARCHAR#,
+        NO_OF_INSTALLMENT= #noOfInstalmnt:NUMBER#,
+        INSTALLMENT_TYPE =#rePayment:VARCHAR#,
+        MORATORIUM_PERIOD= #moratoriumPeriod:NUMBER#,
+        IS_TRANSACTION =  #isTransaction:VARCHAR#,
+        TOTAL_SALARY=#totalSalary:NUMBER#,
+        ELIGIBLE_AMT=#eligibleAmt:NUMBER#,<!--#repaymentType:NUMBER#,-->
+        REPAYMENT_TYPE=#repaymentType:NUMBER#,
+       INSTALLMENT_AMOUNT=#txtInstallmentAmt:NUMBER#
+        WHERE APPLICATION_NO =#applNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteLoanApplicationTO" inline-parameters="true">
+        UPDATE LOAN_APPLICATION_REGISTER SET 
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS = #status:VARCHAR#
+        WHERE APPLICATION_NO = #applNo:VARCHAR#
+    </mapped-statement>
+        
+    <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getLoanApplicationAuthorizeList" result-class="java.util.LinkedHashMap">
+            SELECT DISTINCT CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN AT.BATCH_ID
+                   ELSE AT.TRANS_ID
+                END AS TRANS_ID,
+                APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,AT.AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC, ALL_TRANS AT
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS != 'DELETED'
+            AND CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN 'AUTHORIZED'
+                   ELSE AT.PAYMENT_STATUS
+                END IS NOT NULL
+            AND AT.LINK_BATCH_ID = TC.APPLICATION_NO
+            AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+            AND AT.TRANS_DT = #TRANS_DT:DATE#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            AND TC.APPLICATION_DATE = #TRANS_DT:DATE#
+            AND TC.IS_TRANSACTION =  'Y'
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic> 
+        UNION
+          SELECT NULL AS TRANS_ID, APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,NULL AS AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS NOT IN ('DELETED', 'MODIFIED')
+            AND TC.IS_TRANSACTION =  'Y'
+            AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            AND TC.APPLICATION_DATE = #TRANS_DT:DATE#
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        UNION
+          SELECT NULL AS TRANS_ID, APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,NULL AS AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS = 'MODIFIED'
+            AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  APPLICATION_NO
+    </dynamic-mapped-statement>
+     <dynamic-mapped-statement name="getLoanApplicationAuthorizeListForCashierAuth" result-class="java.util.LinkedHashMap">
+            SELECT DISTINCT CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN AT.BATCH_ID
+                   ELSE AT.TRANS_ID
+                END AS TRANS_ID,
+                APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,AT.AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC, ALL_TRANS AT
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS != 'DELETED'
+            AND CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN 'AUTHORIZED'
+                   ELSE AT.PAYMENT_STATUS
+                END IS NOT NULL
+            AND AT.LINK_BATCH_ID = TC.APPLICATION_NO
+            AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+            AND AT.TRANS_DT = #TRANS_DT:DATE#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            AND TC.APPLICATION_DATE = #TRANS_DT:DATE#
+            AND TC.IS_TRANSACTION =  'Y'
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic> 
+        ORDER BY  APPLICATION_NO
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getLoanApplicationAuthorizeListWithOutCahsier" result-class="java.util.LinkedHashMap">
+                        SELECT DISTINCT CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN AT.BATCH_ID
+                   ELSE AT.TRANS_ID
+                END AS TRANS_ID,
+                APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,AT.AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC, ALL_TRANS AT
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS != 'DELETED'
+            AND AT.LINK_BATCH_ID = TC.APPLICATION_NO
+            AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+            AND AT.TRANS_DT = #TRANS_DT:DATE#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            AND TC.APPLICATION_DATE = #TRANS_DT:DATE#
+            AND TC.IS_TRANSACTION =  'Y'
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic> 
+        UNION
+          SELECT NULL AS TRANS_ID, APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,NULL AS AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS NOT IN ('DELETED', 'MODIFIED')
+            AND TC.IS_TRANSACTION =  'N'
+            AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            AND TC.APPLICATION_DATE = #TRANS_DT:DATE#
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        UNION
+          SELECT NULL AS TRANS_ID, APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,NULL AS AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS = 'MODIFIED'
+            AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  APPLICATION_NO
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getLoanApplicationAuthorizeListWithOutTransaction" result-class="java.util.LinkedHashMap">
+              SELECT NULL AS TRANS_ID, APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,NULL AS AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS NOT IN ('DELETED', 'MODIFIED')
+            AND TC.IS_TRANSACTION =  'N'
+            AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            AND TC.APPLICATION_DATE = #TRANS_DT:DATE#
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        UNION
+          SELECT NULL AS TRANS_ID, APPLICATION_NO, CUSTOMER_ID, MEMBER_ID, SCHEME_NAME,NULL AS AMOUNT
+            FROM LOAN_APPLICATION_REGISTER TC
+            WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                            'Y', HIERARCHY_ID,
+                                            HIERARCHY_ID + 1
+                                           )
+                               FROM USER_MASTER UM, ROLE_MASTER RM
+                              WHERE RM.ROLE_ID = UM.USER_ROLE
+                                AND UM.USER_ID = TC.STATUS_BY)
+            AND TC.STATUS = 'MODIFIED'
+            AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+            AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZE_STATUS IS NULL OR 
+                tc.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  APPLICATION_NO
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeLoanApplication" result-class="java.util.HashMap">
+        UPDATE loan_application_register  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  APPLICATION_NO = #APPLICATION_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getMaxSurety" result-class="java.util.HashMap">
+        select MAXIMUM_SURETY,CLOSE_BEFORE,MAXIMUM_LOAN_PER_SURETY,MAXIMUM_SURETY_AMT from PERSONAL_SURETY_CONFIGURATION
+    </mapped-statement>
+    <dynamic-mapped-statement name="getMaxPeriodForSelectedItem" result-class="java.util.HashMap" >
+       select max_period from LOANS_PROD_INTCALC
+       where prod_id=#PROD_ID:VARCHAR#
+    </dynamic-mapped-statement>
+    <mapped-statement name="getnoOfSecurityDetailsofMember" result-class="java.util.HashMap">
+        select COUNT(CUST_ID) AS TOT_NOS
+        FROM(
+        select B.CUST_ID
+        from LOANS_SECURITY_MEMBER S
+        join LOANS_FACILITY_DETAILS F on F.ACCT_NUM = S.ACCT_NUM
+        join LOANS_BORROWER B on B.BORROW_NO = F.BORROW_NO
+        where F.ACCT_STATUS != 'CLOSED'  and
+        F.AUTHORIZE_STATUS_1 = 'AUTHORIZED' and F.STATUS != 'DELETED' and S.MEMBER_NO=#MEMBER_NO:VARCHAR#
+        group by B.CUST_ID
+        )a
+    </mapped-statement>
+    <mapped-statement name="getSecurityDetailsofMember" result-class="java.util.HashMap">
+        select B.CUST_ID as CUST_ID
+        from LOANS_SECURITY_MEMBER S
+        join LOANS_FACILITY_DETAILS F on F.ACCT_NUM = S.ACCT_NUM
+        join LOANS_BORROWER B on B.BORROW_NO = F.BORROW_NO
+        where F.ACCT_STATUS != 'CLOSED'  and
+        F.AUTHORIZE_STATUS_1 = 'AUTHORIZED' and F.STATUS != 'DELETED' and S.MEMBER_NO=#MEMBER_NO:VARCHAR#
+        group by B.CUST_ID
+    </mapped-statement>
+    <mapped-statement name="getServiePeriod" result-class="java.util.HashMap">
+        select EMP_SERVICE_PERIOD from EMP_SERVICE_PERIOD
+    </mapped-statement>
+    <mapped-statement name="getDOB" result-class="java.util.HashMap">
+        select DOB,JOINING_DATE from CUSTOMER where MEMBERSHIP_NO=#MEMBERSHIP_NO:VARCHAR# AND JOINING_DATE IS NOT NULL
+    </mapped-statement>
+    <mapped-statement name="getServicewiseLoanDetail" result-class="java.util.HashMap">
+        select SLI.PAST_SERVICE_PERIOD,SLI.NO_OF_SURETIES_REQUIRED from EMP_SERVICEWISE_LOAN_ISSUE SLI
+        where SLI.EFFECT_FROM=
+        (select max(LI.EFFECT_FROM) from EMP_SERVICEWISE_LOAN_ISSUE LI
+        join EMP_SERVICEWISE_LOAN_PROD LP
+        on LI.ESLI_ID=LP.ESLI_ID
+        and LP.PROD_ID=#PROD_ID:VARCHAR# )
+        and #AMOUNT:NUMBER# between SLI.ELIGIBLE_FROM_AMOUNT and SLI.ELIGIBLE_TO_AMOUNT
+        order by SLI.PAST_SERVICE_PERIOD desc
+    </mapped-statement>
+    <mapped-statement name="getServicewiseLoanEligibleAmount" result-class="java.util.HashMap">
+        select SLI.ELG_MIN_AMOUNT,SLI.ELG_MAX_AMOUNT from EMP_SERVICEWISE_LOAN_ELG SLI
+        where SLI.EFFECT_FROM=
+        (select max(LI.EFFECT_FROM) from EMP_SERVICEWISE_LOAN_ELG LI
+        join EMP_SERVICEWISE_LOAN_ELG_PROD LP
+        on LI.ESLE_ID=LP.ESLE_ID
+        and LP.PROD_ID=#PROD_ID:VARCHAR# )
+        and #PERIOD:NUMBER# between SLI.PAST_SERVPRD_FROM and SLI.PAST_SERVPRD_TO
+    </mapped-statement>
+    
+    <mapped-statement name="getElibebleImbpAmount" result-class="java.util.HashMap">
+        SELECT NVL(ISS.MAX_LOAN_AMOUNT,0) as loan_amt
+        FROM imbp_settings iss, imbp_settings_prod isp
+        WHERE isp.prod_id = #PROD_ID:VARCHAR#
+        AND NVL(SHARE_TYPE, #SHARE_TYPE:VARCHAR#) = #SHARE_TYPE:VARCHAR#
+        AND iss.imbp_id = isp.imbp_id
+        AND ISS.STATUS != 'DELETED'
+        AND iss.effect_from IN (
+        SELECT MAX (im.effect_from)
+        FROM imbp_settings im, imbp_settings_prod ims
+        WHERE im.imbp_id = ims.imbp_id
+        AND NVL(SHARE_TYPE, #SHARE_TYPE:VARCHAR#) = #SHARE_TYPE:VARCHAR#
+        AND IM.STATUS != 'DELETED'
+        AND ims.prod_id = isp.prod_id)
+    </mapped-statement>
+    <mapped-statement name="getChargeTransDetails" result-class="java.util.HashMap">
+    SELECT distinct LCD.CHARGE_DESC AS CHARGE_DESC,LCD.CHARGE_ID from loan_charge_definition LCD,ALL_TRANS A where  
+    LCD.ACC_HEAD = A.AC_HD_ID AND A.LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# AND A.AUTHORIZE_STATUS  ='AUTHORIZED'  AND A.STATUS !='DELETED'
+    </mapped-statement>
+     <mapped-statement name="getFutureServicePeriod" result-class="java.util.HashMap">
+    select GET_FUTURE_SERVICE(#CUST_ID:VARCHAR#) as SERVICE from dual 
+    </mapped-statement>
+    
+  <mapped-statement name="getEligibleAmount" result-class="java.util.HashMap">   
+  SELECT * FROM LOAD_LOAN_ELG_BORROWER(#MEMBER_NO:VARCHAR#,#PROD_ID:VARCHAR#,cast(#SALARY# as numeric),#SETTILEMENT:VARCHAR#,cast(#APPLIED_AMT# as numeric),cast(#COST_OF_VEHICLE# as numeric))
+ </mapped-statement>
+ 
+  <mapped-statement name="getSuretyEligibleAmount" result-class="java.util.HashMap">   
+  <!--SELECT * FROM (TABLE(LOAD_LOAN_ELG_SURETY(#MEMBER_NO:VARCHAR#,#BORROWMEMNO:VARCHAR#,#PROD_ID:VARCHAR#,#SALARY:NUMBER#,#SETTILEMENT:VARCHAR#,#APPLIED_AMT:NUMBER#)) )-->
+ 
+  SELECT * FROM LOAD_LOAN_ELG_SURETY(#MEMBER_NO:VARCHAR#,#BORROWMEMNO:VARCHAR#,#PROD_ID:VARCHAR#,cast(#SALARY# as numeric),#SETTILEMENT:VARCHAR#,cast(#APPLIED_AMT# as numeric)) 
+ 
+  </mapped-statement>
+  
+  <mapped-statement name="getSelectappliedForLoanAppl" result-class="java.util.HashMap">  
+ select L.STATUS_REGISTER from LOAN_APPLICATION_REGISTER l  where L.CUSTOMER_ID=#CUST_ID:VARCHAR#
+  </mapped-statement>
+  
+   <mapped-statement name="getMaxNumberOfLoaneeOfMember" result-class="java.util.HashMap">
+         SELECT  COUNT(CUST_ID) AS TOT_NO_LOAN
+        FROM(
+        SELECT B.CUST_ID
+        FROM LOANS_SECURITY_MEMBER S
+        JOIN LOANS_FACILITY_DETAILS F on F.ACCT_NUM = S.ACCT_NUM
+        JOIN LOANS_BORROWER B ON B.BORROW_NO = F.BORROW_NO
+        WHERE F.ACCT_STATUS != 'CLOSED'  AND
+        S.AUTHORIZED_STATUS='AUTHORIZED' AND  S.STATUS !='DELETED' AND 
+        F.AUTHORIZE_STATUS_1 = 'AUTHORIZED' and F.STATUS != 'DELETED' and S.MEMBER_NO=#MEMBER_NO:VARCHAR#
+        GROUP  BY B.CUST_ID
+        )a
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getTotAmtSetAsSuretyForMember" result-class="java.util.HashMap">
+        <!--SELECT sum(S.NETWORTH) AS TOT_SURETY_AMT
+        FROM LOANS_SECURITY_MEMBER S
+        JOIN LOANS_FACILITY_DETAILS F on F.ACCT_NUM = S.ACCT_NUM
+        JOIN LOANS_BORROWER B ON B.BORROW_NO = F.BORROW_NO
+        WHERE F.ACCT_STATUS != 'CLOSED'  AND
+        S.AUTHORIZED_STATUS='AUTHORIZED' AND  S.STATUS !='DELETED' AND 
+        F.AUTHORIZE_STATUS_1 = 'AUTHORIZED' and F.STATUS != 'DELETED' and S.MEMBER_NO= #MEMBER_NO:VARCHAR#
+        GROUP  BY S.MEMBER_NO-->
+        SELECT GET_MEMBER_TOTAL_SURETY_AMT (#MEMBER_NO:VARCHAR#) AS TOT_SURETY_AMT FROM DUAL
+    </mapped-statement>
+    
+    
+</sql-map>

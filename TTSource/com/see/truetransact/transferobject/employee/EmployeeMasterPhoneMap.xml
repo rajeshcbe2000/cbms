@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeMasterPhoneMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmployeeMasterPhoneTO" inline-parameters="true">
+        INSERT INTO EMOLOYEE_MASTER_PHONE
+        (SYS_ID, PHONE_TYPE_ID, AREA_CODE, PHONE_NUMBER, ADDR_TYPE, PHONE_ID, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #sysId:VARCHAR#, #phoneTypeId:VARCHAR#, #areaCode:VARCHAR#, #phoneNumber:VARCHAR#, #addrType:VARCHAR#, #phoneId:NUMERIC#, #status:VARCHAR#, #statusBy:VARCHAR#, SYS_DATE())
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateEmployeeMasterPhoneTO" inline-parameters="true">
+        UPDATE EMOLOYEE_MASTER_PHONE SET 
+        PHONE_TYPE_ID = #phoneTypeId:VARCHAR#,
+        AREA_CODE = #areaCode:VARCHAR#,
+        PHONE_NUMBER = #phoneNumber:VARCHAR#,
+        ADDR_TYPE = #addrType:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE SYS_ID = #sysId# AND ADDR_TYPE = #addrType:VARCHAR# 
+<!--                AND PHONE_TYPE_ID = #phoneTypeId:VARCHAR#  -->
+        AND PHONE_ID = #phoneId:NUMERIC# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="deleteEmployeeMasterPhone" inline-parameters="true">
+        DELETE FROM EMOLOYEE_MASTER_PHONE 
+        WHERE SYS_ID = #sysId:VARCHAR#
+        AND ADDR_TYPE = #addrType:VARCHAR# 
+        AND PHONE_TYPE_ID = #phoneTypeId:VARCHAR# 
+        AND PHONE_ID = #phoneId:NUMERIC# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="deleteEmployeeMasterPhoneTO" inline-parameters="true">
+        UPDATE EMOLOYEE_MASTER_PHONE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE SYS_ID = #sysId:VARCHAR# AND ADDR_TYPE = #addrType:VARCHAR# AND PHONE_TYPE_ID = #phoneTypeId:VARCHAR# AND PHONE_ID = #phoneId:NUMERIC#
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getEmployeeMasterPhoneTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterPhoneTO">
+        <property name="sysId" column="SYS_ID"/>
+        <property name="phoneTypeId" column="PHONE_TYPE_ID"/>
+        <property name="phoneId" column="PHONE_ID"/>
+        <property name="areaCode" column="AREA_CODE"/>
+        <property name="phoneNumber" column="PHONE_NUMBER"/>
+        <property name="addrType" column="ADDR_TYPE"/>
+        <property name="status" column="STATUS" />
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectEmployeeMasterPhoneTO" result-map="getEmployeeMasterPhoneTOResult" >
+        SELECT * FROM EMOLOYEE_MASTER_PHONE WHERE SYS_ID=#SYS_EMPID:VARCHAR# 
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                (STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY PHONE_ID   
+    </dynamic-mapped-statement>
+</sql-map>        

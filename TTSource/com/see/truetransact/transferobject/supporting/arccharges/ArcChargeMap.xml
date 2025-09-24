@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ArcChargeMap">
+
+    <mapped-statement name="insertArcChargesTO" inline-parameters="true">
+        INSERT INTO ARC_CHARGE_DEFINITION
+        ( CHARGE_ID, CHARGE_TYPE, DEDUCTION_ACCU, CHARGE_BASE, FROM_SLAB_AMT,TO_SLAB_AMT, FLAT_CHARGE, CHARGE_RATE, DIVISIBLE_BY, ROUND_OFF_TYPE, MIN_CHARGE_AMOUNT, MAX_CHARGE_AMOUNT, STATUS, STATUS_DT,STATUS_BY
+        ) VALUES (
+        #chargeId:VARCHAR#,#chargeType:VARCHAR#, 
+        #deductionAccu:VARCHAR#, #chargeBase:VARCHAR#, #fromSlabAmt:VARCHAR#, #toSlabAmt:VARCHAR#, #flatCharge:VARCHAR#, 
+        #chargeRate:VARCHAR#, #divisibleBy:VARCHAR#, #roundOffType:VARCHAR#, #minChargeAmount:VARCHAR#, #maxChargeAmount:VARCHAR#, 
+        #status:VARCHAR#, #statusDt:DATE#, #statusBy:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateArcChargesTO" inline-parameters="true">
+        UPDATE ARC_CHARGE_DEFINITION SET 
+        CHARGE_TYPE = #chargeType:VARCHAR#,
+        DEDUCTION_ACCU = #deductionAccu:VARCHAR#,
+        CHARGE_BASE = #chargeBase:VARCHAR#,
+        FROM_SLAB_AMT = #fromSlabAmt:VARCHAR#,
+        TO_SLAB_AMT = #toSlabAmt:VARCHAR#,
+        FLAT_CHARGE = #flatCharge:VARCHAR#,
+        CHARGE_RATE = #chargeRate:VARCHAR#,
+        DIVISIBLE_BY = #divisibleBy:VARCHAR#,
+        ROUND_OFF_TYPE = #roundOffType:VARCHAR#,
+        MIN_CHARGE_AMOUNT = #minChargeAmount:VARCHAR#,
+        MAX_CHARGE_AMOUNT = #maxChargeAmount:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#
+        WHERE  CHARGE_ID = #chargeId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteArcChargesTO" inline-parameters="true">
+        UPDATE ARC_CHARGE_DEFINITION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE  CHARGE_ID = #chargeId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <result-map name="getArcChargesTOResult" class="com.see.truetransact.transferobject.supporting.arccharges.ArcChargesTO">
+        <property name="chargeType" column="CHARGE_TYPE"/>
+        <property name="chargeId" column="CHARGE_ID"/>
+        <property name="deductionAccu" column="DEDUCTION_ACCU"/>
+        <property name="chargeBase" column="CHARGE_BASE"/>
+        <property name="fromSlabAmt" column="FROM_SLAB_AMT"/>
+        <property name="toSlabAmt" column="TO_SLAB_AMT"/>
+        <property name="flatCharge" column="FLAT_CHARGE"/>
+        <property name="chargeRate" column="CHARGE_RATE"/>
+        <property name="divisibleBy" column="DIVISIBLE_BY"/>
+        <property name="roundOffType" column="ROUND_OFF_TYPE"/>
+        <property name="minChargeAmount" column="MIN_CHARGE_AMOUNT"/>
+        <property name="maxChargeAmount" column="MAX_CHARGE_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectArcChargesTO" result-map="getArcChargesTOResult" >
+        SELECT * FROM ARC_CHARGE_DEFINITION 
+        WHERE STATUS!='DELETED'  AND CHARGE_ID=#CHARGE_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeArcChargesDetails" result-class="java.util.HashMap">
+        UPDATE ARC_CHARGE_DEFINITION SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS!='DELETED'  AND CHARGE_ID=#CHARGE_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getARCChargeDetailEditView" result-class="java.util.LinkedHashMap">
+        SELECT CHARGE_ID,CHARGE_TYPE,AUTHORIZED_STATUS FROM ARC_CHARGE_DEFINITION WHERE 
+        STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED'  ORDER BY CHARGE_ID 
+    </mapped-statement>
+        
+    <mapped-statement name="getARCChargeDetailAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT CHARGE_ID,CHARGE_TYPE,STATUS FROM ARC_CHARGE_DEFINITION C WHERE 
+        STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# ORDER BY C.CHARGE_ID    
+    </mapped-statement>
+        
+    <mapped-statement name="getARCChargeDetailDelete" result-class="java.util.LinkedHashMap">
+        SELECT CHARGE_TYPE,CHARGE_ID,STATUS FROM ARC_CHARGE_DEFINITION WHERE 
+        STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL ORDER BY CHARGE_ID    
+    </mapped-statement>
+
+    <mapped-statement name="checkARCChargeDetails" result-class="java.util.LinkedHashMap">
+        SELECT CHARGE_TYPE,CHARGE_ID,STATUS FROM ARC_CHARGE_DEFINITION WHERE 
+        STATUS!='DELETED' AND CHARGE_TYPE =#CHARGE_TYPE:VARCHAR# AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS !='REJECTED')  ORDER BY CHARGE_ID    
+    </mapped-statement>
+        
+    <mapped-statement name="insertARCSlabChargesTO" inline-parameters="true">
+        INSERT INTO ARC_SLAB_AMOUNT_DETAILS
+        (SL_NO, CHARGE_ID, FROM_SLAB_AMT, TO_SLAB_AMT, CHARGE_RATE, DIVISIBLE_BY, ROUND_OFF_TYPE, MIN_CHARGE_AMOUNT, MAX_CHARGE_AMOUNT, STATUS, STATUS_DT, STATUS_BY
+        ) VALUES (
+        #slNo:VARCHAR#, #chargeId:VARCHAR#, #fromSlabAmt:VARCHAR#, #toSlabAmt:VARCHAR#, #chargeRate:VARCHAR#, #divisibleBy:VARCHAR#, #roundOffType:VARCHAR#, #minChargeAmount:VARCHAR#, #maxChargeAmount:VARCHAR#, #status:VARCHAR#, #statusDt:DATE#, #statusBy:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateARCSlabChargesTO" inline-parameters="true">
+        UPDATE ARC_SLAB_AMOUNT_DETAILS SET 
+        FROM_SLAB_AMT = #fromSlabAmt:VARCHAR#,
+        TO_SLAB_AMT = #toSlabAmt:VARCHAR#,
+        CHARGE_RATE = #chargeRate:VARCHAR#,
+        DIVISIBLE_BY = #divisibleBy:VARCHAR#,
+        ROUND_OFF_TYPE = #roundOffType:VARCHAR#,
+        MIN_CHARGE_AMOUNT = #minChargeAmount:VARCHAR#,
+        MAX_CHARGE_AMOUNT = #maxChargeAmount:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE SL_NO = #slNo:VARCHAR# AND CHARGE_ID = #chargeId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteARCSlabChargesTO" inline-parameters="true">
+        UPDATE ARC_SLAB_AMOUNT_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE SL_NO = #slNo:VARCHAR# AND CHARGE_ID = #chargeId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteARCSlabChargeDetails" inline-parameters="true">
+        UPDATE ARC_SLAB_AMOUNT_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE CHARGE_ID = #chargeId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <result-map name="getARCSlabChargesTOResult" class="com.see.truetransact.transferobject.supporting.arccharges.ArcSlabChargesTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="chargeId" column="CHARGE_ID"/>
+        <property name="fromSlabAmt" column="FROM_SLAB_AMT"/>
+        <property name="toSlabAmt" column="TO_SLAB_AMT"/>
+        <property name="chargeRate" column="CHARGE_RATE"/>
+        <property name="divisibleBy" column="DIVISIBLE_BY"/>
+        <property name="roundOffType" column="ROUND_OFF_TYPE"/>
+        <property name="minChargeAmount" column="MIN_CHARGE_AMOUNT"/>
+        <property name="maxChargeAmount" column="MAX_CHARGE_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+    </result-map>
+    <mapped-statement name="getSelectARCSlabChargesTO" result-map="getARCSlabChargesTOResult" >
+        SELECT * FROM ARC_SLAB_AMOUNT_DETAILS WHERE STATUS!='DELETED' AND CHARGE_ID=#CHARGE_ID:VARCHAR# ORDER BY SL_NO 
+    </mapped-statement>
+        
+
+        
+
+
+</sql-map>

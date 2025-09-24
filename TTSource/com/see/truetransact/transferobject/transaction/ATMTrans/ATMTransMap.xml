@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ATMTransMap">
+
+    <mapped-statement name="setATMLog" inline-parameters="true">
+        insert into atm_log (atm_transaction_id, card_no,acc_no, transaction_type, date_time, request, trace_no,reversal_trace_no) values (#ATM_TRANSACTION_ID:VARCHAR#, #ATM_CARD_NO:VARCHAR#, #ACC_NO:VARCHAR#, #TRANS_TYPE:VARCHAR#,#DATE_TIME:DATE#,
+        #REQUEST:VARCHAR#, #TRACE_NO:VARCHAR#,#REVERSAL_TRACE_NO:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="updateATMLog" inline-parameters="true">
+        update atm_log set response = #RESPONSE:VARCHAR#, reversal_trace_no=#REVERSAL_TRACE_NO:VARCHAR# where atm_transaction_id=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getATMLogByReversalTraceNo" result-class="java.util.HashMap" >
+        select ATM_TRANSACTION_ID from atm_log where trace_no like #TRACE_NO:VARCHAR# and reversal_trace_no=#REVERSAL_TRACE_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getATMLogByTraceNo" result-class="java.util.HashMap" >
+        select ATM_TRANSACTION_ID, REQUEST from atm_log where trace_no like #TRACE_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getBalanceForATM" result-class="java.util.HashMap" >
+        <!--select clear_balance, available_balance from act_master where act_num=#ACT_NUM#-->
+        select clear_balance, available_balance, branch_code, act_num, prod_type, prod_id, ac_hd_id from atm_prod_accts where atm_card_no=#ATM_CARD_NO:VARCHAR# 
+        <!--(select act_num from act_param_detail where atm_card_no=#ATM_CARD_NO#)-->
+    </mapped-statement>
+    <mapped-statement name="getMiniStatementForATM" result-class="java.util.HashMap" >
+        select trans_dt, particulars, NVL(debit,0) as debit, NVL(credit,0) as credit, NVL(balance,0) as balance from 
+        (select trans_dt, particulars, debit, credit, balance from pass_book where act_num=(select act_num from ATM_PROD_ACCTS where atm_card_no=#ATM_CARD_NO:VARCHAR#)
+        order by created_dt desc) where rownum &lt;10 order by rownum desc
+    </mapped-statement>
+
+    <mapped-statement name="getInitiatedATMTerminalId" result-class="java.util.HashMap" >
+        <!--select clear_balance, available_balance from act_master where act_num=#ACT_NUM#-->
+        SELECT BRANCH_CODE AS INITIATED_BRANCH FROM ATM_TERMINAL_AC_HD WHERE TERMINAL_ID = #ATM_TERMINAL_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        <!--(select act_num from act_param_detail where atm_card_no=#ATM_CARD_NO#)-->
+    </mapped-statement>
+    
+    <mapped-statement name="insertATMAcknowledgementTO" inline-parameters="true">
+        insert into ATM_ACKNOWLEDGEMENT (ACCT_NUM,CARD_ACCT_NUM,TRANS_DT,AMOUNT,TRANS_TYPE,STATUS,SEQUENCE_NO,INITIATED_BRANCH,TRAN_ID,TRAN_STATUS,
+        ERROR_CODE,RRN,STATION_CODE,ATMTYPE,FILE_CREATED,FILE_CREATED_DATE,FILE_ACK_DT,ATMDTSTR,NETWORK_TYPE,ATM_POSTTIME,CHARGE_BIT,CHARGE_AMT,STATUS_DT
+        ) values 
+        (#acctNum:VARCHAR#, #cardAcctNum:VARCHAR#, #transDt:DATE#, #amount:NUMERIC#,#transType:VARCHAR#,#status:VARCHAR#,#sequenceNo:VARCHAR#,
+        #initiatedBranch:VARCHAR#,#transId:VARCHAR#,#tran_status:VARCHAR#,#error_code:VARCHAR#,#rrn:VARCHAR#,#station_code:VARCHAR#,
+        #atmType:VARCHAR#,#file_created:VARCHAR#,#file_created_date:DATE#,#file_ack_dt:DATE#,#atmDtStr:VARCHAR#,#netWorkType:VARCHAR#,
+        #atm_postTime:VARCHAR#,#chargeBit:VARCHAR#,#chargeAmt:VARCHAR#,(SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="getCardAcctDetails" result-class="java.util.HashMap" >
+        SELECT * FROM ACT_MASTER WHERE lpad(CARD_ACCT_NUM,35,0)= #CARD_ACCT_NUM:VARCHAR# 
+        AND ACT_STATUS_ID != 'CLOSED' AND STATUS !='DELETED' AND (AUTHORIZATION_STATUS='AUTHORIZED' OR AUTHORIZATION_STATUS IS NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="getCardStatusDetails" result-class="java.util.HashMap" >
+        
+        <!--   SELECT * FROM ACT_MASTER WHERE lpad(CARD_ACCT_NUM,35,0)=#CARD_ACCT_NUM:VARCHAR# 
+        AND ACT_STATUS_ID !='CLOSED' AND STATUS !='DELETED' AND (AUTHORIZATION_STATUS='AUTHORIZED' OR AUTHORIZATION_STATUS IS NULL) -->
+        SELECT * FROM CARD_ACCT_STATUS CAS WHERE SL_NO IN (
+        SELECT MAX(SL_NO ) AS COUNTS
+        FROM CARD_ACCT_STATUS WHERE CAS.CARD_ACCT_NUM =CARD_ACCT_NUM AND
+        lpad(CARD_ACCT_NUM,35,0) = lpad(#CARD_ACCT_NUM:VARCHAR#,35,0) AND  STATUS !='DELETED'  AND
+        ( AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS !='REJECTED') )
+        AND 
+        lpad(CARD_ACCT_NUM,35,0) = lpad(#CARD_ACCT_NUM:VARCHAR#,35,0) AND  STATUS !='DELETED'  AND
+        ( AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS !='REJECTED')
+
+    </mapped-statement>
+    <!--
+    <mapped-statement name="getAcctHeadforAcct" result-class="java.util.HashMap">
+        SELECT * FROM ALL_PRODUCTS WHERE PROD_ID =#PROD_ID#   
+    </mapped-statement>    -->
+    <result-map name="getATMAcknowledgementTOResult" class="com.see.truetransact.transferobject.transaction.ATMTrans.ATMAcknowledgementTO">
+        <property name="transId" column="TRAN_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+        <property name="cardAcctNum" column="CARD_ACCT_NUM"/>
+        <property name="sequenceNo" column="SEQUENCE_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="transDt" column="TRANS_DT"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="tran_status" column="TRAN_STATUS"/>
+        <property name="error_code" column="ERROR_CODE"/>
+        <property name="rrn" column="RRN"/>
+        <property name="station_code" column="STATION_CODE"/>
+        <property name="atmType" column="ATMTYPE"/>
+        <property name="chargeBit" column="CHARGE_BIT"/>
+        <property name="chargeAmt" column="CHARGE_AMT"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="remarks" column="REMARKS"/>
+    </result-map>
+    <mapped-statement name="getSelectATMAcknowledgementTO" result-map = "getATMAcknowledgementTOResult" >
+        SELECT * FROM ATM_ACKNOWLEDGEMENT AA, ACT_MASTER AM WHERE AA.ACCT_NUM = AM.ACT_NUM AND AM.ACT_STATUS_ID NOT IN ('CLOSED')
+        AND lpad(AA.CARD_ACCT_NUM,35,0) = #CARD_ACCT_NUM# AND SEQUENCE_NO = #SEQUENCE_NO#
+    </mapped-statement>    
+    
+    <mapped-statement name="UPDATEAtmAcknowledgement" inline-parameters="true" >
+        UPDATE ATM_ACKNOWLEDGEMENT   SET TRAN_STATUS=#tran_status#,
+        REMARKS = #remarks# WHERE CARD_ACCT_NUM=#cardAcctNum# AND SEQUENCE_NO=#sequenceNo# 
+    </mapped-statement> 
+    
+<!--    <mapped-statement name="getAcctHeadforAcct" result-class="java.util.HashMap">
+        SELECT * FROM ALL_PRODUCTS WHERE PROD_ID =#PROD_ID#   
+    </mapped-statement>-->
+    
+    <mapped-statement name="insertSponsorBankDetailsTO" inline-parameters="true">
+        INSERT INTO SPONSOR_BANK_DETAILS(ACT_NUM, CARD_ACT_NUM, AMOUNT, INITIATED_BRANCH, SEQUENCE_NO, TRANS_DT, TRANS_TYPE,
+        TRANS_ID, STATUS, STATUS_BY, STATUS_DT) VALUES 
+        (#acctNum:VARCHAR#, LPAD(#cardAcctNum:VARCHAR#,35,0), #amount:NUMERIC#, #initiatedBranch:VARCHAR#, #sequenceNo:VARCHAR#, #transDt:DATE#, #transType:VARCHAR#,
+        #transId:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+
+    <result-map name="getSponsorBankDetailsTOResult" class="com.see.truetransact.transferobject.transaction.ATMTrans.SponsorBankDetailsTO">
+        <property name="acctNum" column="ACT_NUM"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="cardAcctNum" column="CARD_ACT_NUM"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="sequenceNo" column="SEQUENCE_NO"/>
+        <property name="transDt" column="TRANS_DT"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <!--<property name="station_code" column="PROCESSED"/>-->
+    </result-map>
+    
+    <mapped-statement name="getSponsorBankNotProcessedRecord" result-map="getSponsorBankDetailsTOResult">
+        SELECT * FROM SPONSOR_BANK_DETAILS WHERE PROCESSED IS NULL  
+    </mapped-statement>
+
+    <mapped-statement name="UpdateSponsorBankProcessedRecord" inline-parameters="true">
+        UPDATE SPONSOR_BANK_DETAILS SET PROCESSED = 'Y' WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND CARD_ACT_NUM = #CARD_ACT_NUM:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getTransactionReportFile" result-class="java.util.HashMap">
+        SELECT LPAD(STATION_CODE,6,0) STATION_NO,ACCT_NUM ACCOUNT_NO,RPAD(RRN,12,0) RRN,RPAD(STATION_CODE,16,0) STATION_ID,ATMDTSTR TRAN_DATE,
+        ATM_POSTTIME TRAN_TIME,ERROR_CODE TRAN_CODE,CHARGE_AMT TRAN_CHARGES,AMOUNT TRAN_AMOUNT,LPAD(CARD_ACCT_NUM,35,0) CARD_NO,NULL CURRENT_ACCOUNT_NO,
+        NULL AS RBI_ATM_CHARGE,MOP,NETWORK_TYPE NETWORK,ATMTYPE AS MSG_TYPE,STATUS,TRAN_ID FROM ATM_ACKNOWLEDGEMENT WHERE TRANS_DT = #TRANS_DT:DATE#
+        AND TXN_FILE_GENERATED_FLAG IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="UpdateTxnGeneratedFlag" inline-parameters="true">
+        UPDATE ATM_ACKNOWLEDGEMENT SET TXN_FILE_GENERATED_FLAG = 'Y' WHERE ACCT_NUM = #ACT_NUM:VARCHAR# AND CARD_ACCT_NUM = #CARD_ACT_NUM:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND TRAN_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSposnerBankStatusForAccount" inline-parameters="true">
+        UPDATE ACT_MASTER SET 
+        SPONSOR_BANK_STATUS = #SPONSOR_BANK_STATUS:VARCHAR#,
+        REQUESTED_TIME = (SELECT SYS_DATE() FROM DUAL),
+        CLOSED_DT = NULL
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>	
+    
+    <mapped-statement name="getSponsorBankStatus" result-class="java.util.HashMap">
+        SELECT SPONSOR_BANK_STATUS,REQUESTED_TIME FROM ACT_MASTER WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND SPONSOR_BANK_STATUS IS NOT NULL AND REQUESTED_TIME IS NOT NULL AND
+        ((SELECT SYS_DATE() FROM DUAL)- REQUESTED_TIME) &lt; 1
+    </mapped-statement>	
+
+    <mapped-statement name="getSequencNoRRNExistorNot" result-class="java.util.HashMap">
+        SELECT * FROM ATM_ACKNOWLEDGEMENT WHERE SEQUENCE_NO = #SEQUENCE_NO:VARCHAR# AND RRN = #RRN:VARCHAR#
+    </mapped-statement>	
+    
+    <mapped-statement name="updateSposnerBankErrorStatus" inline-parameters="true">
+        UPDATE ACT_MASTER SET ATM_LIMIT_AMT = 0 WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

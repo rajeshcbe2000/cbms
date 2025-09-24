@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="RecoveryParametersMap">
+
+<!--
+    Document   : SalaryDeductionMappingMap.xml
+    Created on : June 13, 2012, 1:39 PM
+    Author     : Rajesh
+    Description:
+        Purpose of the document follows.
+-->
+
+    <mapped-statement name="insertRecoveryParametersTO" inline-parameters="true" >
+        INSERT INTO RECOVERY_PARAMETERS (FIRST_DAY,LAST_DAY,STATUS,STATUS_BY,STATUS_DT,SUSPENSE_PRODUCT_ID,MDS_SUSPENSE_PROD_ID,RD_SUSPENSE_PROD_ID)
+        VALUES(#firstDay:VARCHAR#,#lastDay:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#salarySuspenseProdId:VARCHAR#,#mDSSuspenseProdId:VARCHAR#,#rDSuspenseProdId:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="updateRecoveryParameters" inline-parameters="true" >
+        UPDATE RECOVERY_PARAMETERS SET 
+        FIRST_DAY = #firstDay:VARCHAR#,
+        LAST_DAY = #lastDay:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        SUSPENSE_PRODUCT_ID = #salarySuspenseProdId:VARCHAR#,
+        MDS_SUSPENSE_PROD_ID = #mDSSuspenseProdId:VARCHAR#,
+        RD_SUSPENSE_PROD_ID = #rDSuspenseProdId:VARCHAR#
+    </mapped-statement>
+       
+    <result-map name="getRecoveryParametersTOResult" class="com.see.truetransact.transferobject.salaryrecovery.RecoveryParametersTO">
+        <property name="firstDay" column="FIRST_DAY"/>
+        <property name="lastDay" column="LAST_DAY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+                
+    </result-map>
+         
+    <mapped-statement name="getRecoveryParameters" result-class="java.util.HashMap" >
+        SELECT FIRST_DAY,LAST_DAY,SUSPENSE_PRODUCT_ID,MDS_SUSPENSE_PROD_ID,RD_SUSPENSE_PROD_ID,GRACE_PERIOD  FROM RECOVERY_PARAMETERS
+    </mapped-statement>
+</sql-map>

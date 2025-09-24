@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<!--
+    Document   : GroupRole.xml
+    Created on : April 12, 2004, 3:34 PM
+    Author     : Administrator
+    Description:
+        Purpose of the document follows.
+-->
+<sql-map name="GroupRoleMap">
+
+	<!-- Use GroupMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertGroupMasterTO" inline-parameters="true">
+        INSERT INTO GROUP_MASTER
+        (GROUP_ID, GROUP_NAME, STATUS
+        ) VALUES (
+        #groupId:VARCHAR#, #groupName:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use GroupMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="updateGroupMasterTO" inline-parameters="true">
+		UPDATE GROUP_MASTER SET 
+		GROUP_ID = #groupId:VARCHAR#,
+		GROUP_NAME = #groupName:VARCHAR#,
+		STATUS = #status:VARCHAR#
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use GroupMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--mapped-statement name="deleteGroupMasterTO" inline-parameters="true">
+		DELETE FROM GROUP_MASTER 
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to GroupMasterTO object (JavaBean) properties -->
+	<!--result-map name="getGroupMasterTOResult" class="java.util.LinkedHashMap">
+		<property name="GROUP_ID" column="Group ID"/>
+		<property name="GROUP_NAME" column="Group Name"/>		
+	</result-map -->
+        
+    <dynamic-mapped-statement name="getSelectGroupMasterTO" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID AS "Group ID",GROUP_NAME AS "Group Name"
+        FROM GROUP_MASTER 
+        WHERE STATUS !='DELETED'
+        AND AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+            <!-- AND AUTHORIZE_STATUS_2 = 'AUTHORIZED'-->
+        AND BRANCH_GROUP = 'N'
+          <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Group ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$Group ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Group Name">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$Group Name$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <result-map name="selectGroupMasterTOResult" class="java.util.LinkedHashMap">
+        <property name="groupId" column="GROUP_ID"/>
+        <property name="groupName" column="GROUP_NAME"/>		
+    </result-map>
+    <mapped-statement name="selectGroupMasterTO" result-map="selectGroupMasterTOResult" >
+        SELECT GROUP_ID,GROUP_NAME 
+        FROM GROUP_MASTER 
+        WHERE GROUP_ID = #GROUP ID:VARCHAR# 
+        AND AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+            <!--AND AUTHORIZE_STATUS_2 = 'AUTHORIZED'-->
+        AND BRANCH_GROUP = 'N'		
+    </mapped-statement>       
+        <!-- Use LevelMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLevelMasterTO" inline-parameters="true">
+        INSERT INTO LEVEL_MASTER
+        (LEVEL_ID, LEVEL_DESC, CASH_CREDIT, CASH_DEBIT, TRANS_CREDIT, TRANS_DEBIT, CLEARING_CREDIT, CLEARING_DEBIT, STATUS, LEVEL_NAME
+        ) VALUES (
+        #levelId:VARCHAR#, #levelDesc:VARCHAR#, #cashCredit:NUMERIC#, #cashDebit:NUMERIC#, #transCredit:NUMERIC#, #transDebit:NUMERIC#, #clearingCredit:NUMERIC#, #clearingDebit:NUMERIC#, #status:VARCHAR#, #levelName:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LevelMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="updateLevelMasterTO" inline-parameters="true">
+		UPDATE LEVEL_MASTER SET 
+		LEVEL_ID = #levelId:VARCHAR#,
+		LEVEL_DESC = #levelDesc:VARCHAR#,
+		CASH_CREDIT = #cashCredit:NUMERIC#,
+		CASH_DEBIT = #cashDebit:NUMERIC#,
+		TRANS_CREDIT = #transCredit:NUMERIC#,
+		TRANS_DEBIT = #transDebit:NUMERIC#,
+		CLEARING_CREDIT = #clearingCredit:NUMERIC#,
+		CLEARING_DEBIT = #clearingDebit:NUMERIC#,
+		STATUS = #status:VARCHAR#,
+		LEVEL_NAME = #levelName:VARCHAR#
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use LevelMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--mapped-statement name="deleteLevelMasterTO" inline-parameters="true">
+		DELETE FROM LEVEL_MASTER 
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LevelMasterTO object (JavaBean) properties -->
+    <result-map name="getLevelMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.role.LevelMasterTO">
+        <property name="levelId" column="LEVEL_ID"/>
+        <property name="levelDesc" column="LEVEL_DESC"/>
+        <property name="cashCredit" column="CASH_CREDIT"/>
+        <property name="cashDebit" column="CASH_DEBIT"/>
+        <property name="transCredit" column="TRANS_CREDIT"/>
+        <property name="transDebit" column="TRANS_DEBIT"/>
+        <property name="clearingCredit" column="CLEARING_CREDIT"/>
+        <property name="clearingDebit" column="CLEARING_DEBIT"/>
+        <property name="status" column="STATUS"/>
+        <property name="levelName" column="LEVEL_NAME"/>
+    </result-map>	
+    <mapped-statement name="getSelectLevelMasterTO" result-map="getLevelMasterTOResult" >
+        SELECT * FROM LEVEL_MASTER 
+        WHERE LEVEL_ID = #LEVEL_ID:VARCHAR# 
+        AND STATUS!='DELETED'
+    </mapped-statement>        
+        
+        
+    <result-map name="selectLevelMasterTOResult" class="java.util.LinkedHashMap">
+        <property name="Level ID" column="LEVEL_ID"/>
+        <property name="Level Name" column="LEVEL_NAME"/>
+    </result-map>	        
+    <dynamic-mapped-statement name="selectLevelMasterTO" result-map="selectLevelMasterTOResult" >
+        SELECT LEVEL_ID,LEVEL_NAME FROM LEVEL_MASTER 
+        WHERE STATUS!='DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+          <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEVEL_ID">
+                    UPPER(LEVEL_ID) LIKE UPPER('%$LEVEL_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEVEL_NAME">
+                    UPPER(LEVEL_NAME) LIKE UPPER('%$LEVEL_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+    </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!-- Use RoleMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRoleMasterTO" inline-parameters="true">
+        INSERT INTO ROLE_MASTER
+        (ROLE_ID, ROLE_NAME, GROUP_ID, STATUS, LEVEL_ID, ACCESS_ALL_BRANCH, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, FOREIGN_LEVEL_ID, HIERARCHY_ID, SAME_HIERARCHY_ALLOWED
+        ) VALUES (
+        #roleId:VARCHAR#, #roleName:VARCHAR#, #groupId:VARCHAR#, #status:VARCHAR#, #levelId:VARCHAR#, #accessAllBranch:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #foreignLevelId:VARCHAR#, #hierarchyId:NUMERIC#, #sameHierarchyAllowed:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use RoleMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="updateRoleMasterTO" inline-parameters="true">
+		UPDATE ROLE_MASTER SET 
+		ROLE_ID = #roleId:VARCHAR#,
+		ROLE_NAME = #roleName:VARCHAR#,
+		GROUP_ID = #groupId:VARCHAR#,
+		STATUS = #status:VARCHAR#,
+		LEVEL_ID = #levelId:VARCHAR#,
+		ACCESS_ALL_BRANCH = #accessAllBranch:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		STATUS_DT = #statusDt:DATE#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#,
+                FOREIGN_LEVEL_ID = #foreignLevelId:VARCHAR#
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use RoleMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteRoleMasterTO" inline-parameters="true">
+        DELETE FROM ROLE_MASTER 
+        WHERE GROUP_ID = #value:VARCHAR# 
+        AND STATUS!= 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusRoleMasterTO" inline-parameters="true">
+        UPDATE ROLE_MASTER SET 
+<!--            STATUS = 'DELETED' -->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE GROUP_ID = #groupId:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deleteRole_Master" inline-parameters="true">
+        UPDATE ROLE_MASTER SET 
+<!--            STATUS = 'DELETED' -->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE GROUP_ID = #groupId:VARCHAR# AND ROLE_ID = #roleId:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to RoleMasterTO object (JavaBean) properties -->
+    <result-map name="getRoleMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.role.RoleMasterTO">
+        <property name="roleId" column="ROLE_ID"/>
+        <property name="roleName" column="ROLE_NAME"/>
+        <property name="groupId" column="GROUP_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="levelId" column="LEVEL_ID"/>
+        <property name="accessAllBranch" column="ACCESS_ALL_BRANCH"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="foreignLevelId" column="FOREIGN_LEVEL_ID"/>
+        <property name="hierarchyId" column="HIERARCHY_ID"/>
+        <property name="sameHierarchyAllowed" column="SAME_HIERARCHY_ALLOWED"/>
+    </result-map>
+        
+	<!-- <dynamic-mapped-statement name="getSelectRoleMasterTO" result-map="getRoleMasterTOResult" >
+            SELECT * FROM ROLE_MASTER 
+            WHERE GROUP_ID = #GROUP ID# 
+            AND  STATUS!='DELETED'
+            <dynamic>
+                <isParameterPresent>
+                    <isNotNull prepend="AND" property="AUTH">
+                        (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+                    </isNotNull>
+                </isParameterPresent> 
+            </dynamic>
+	</dynamic-mapped-statement>  -->  
+        
+    <mapped-statement name="getSelectRoleMasterTO" result-map="getRoleMasterTOResult" >
+        SELECT * FROM ROLE_MASTER 
+        WHERE GROUP_ID = #GROUP ID:VARCHAR# 
+        AND  STATUS!='DELETED' AND
+        (AUTHORIZE_STATUS NOT IN ('REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>                        
+
+    <mapped-statement name="getSelectRoleMasterTOList" result-class="java.util.HashMap" >
+        SELECT * FROM ROLE_MASTER 
+        WHERE GROUP_ID = #GROUP_ID:VARCHAR# AND ROLE_ID = #ROLE_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getSelectLevelMasterTO1" result-class="java.util.HashMap" >
+        SELECT * FROM LEVEL_MASTER 
+        WHERE LEVEL_ID = #LEVEL_ID:VARCHAR# 
+        AND STATUS!='DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="getSelectAuthorizeRoleMasterTO" result-map="getRoleMasterTOResult" >
+        SELECT * FROM ROLE_MASTER 
+        WHERE GROUP_ID = #GROUP ID:VARCHAR# AND ROLE_ID = #ROLE_ID:VARCHAR#
+        AND  STATUS!='DELETED' AND
+        (AUTHORIZE_STATUS NOT IN ('REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>  
+           
+        <!-- Use this query if no level is to be duplicated in a particular group instead
+        of "selectLevelMasterTO" query--> 
+    <result-map name="levelMasterTOResult" class="java.util.LinkedHashMap">
+        <property name="LEVEL_ID" column="LEVEL_ID"/>
+        <property name="LEVEL_NAME" column="LEVEL_NAME"/>
+    </result-map>	        
+    <mapped-statement name="getLevelMasterTO" result-map="levelMasterTOResult" >
+	         <!--select LEVEL_ID,LEVEL_NAME from LEVEL_MASTER 
+                 where LEVEL_ID not in 
+                 (select level_id from ROLE_MASTER where group_id=#value# and level_id is not null)	-->
+        select LEVEL_ID,LEVEL_NAME from LEVEL_MASTER LM
+        where  not EXISTS 
+        (select level_id from ROLE_MASTER where group_id=#value:VARCHAR# and level_id is not null AND LEVEL_ID=LM.level_id)
+    </mapped-statement>    
+        
+        
+        
+        <!-- ======================================Autorization==============================================  -->        
+
+
+    <dynamic-mapped-statement name="getRoleMasterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT  GROUP_ID AS "Group ID", ROLE_ID AS "Role ID",  
+        ROLE_NAME AS "Role Name", AUTHORIZE_STATUS AS "Exception Status"
+        FROM ROLE_MASTER 
+        WHERE STATUS!='DELETED'
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ROLE_MASTER.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY GROUP_ID, ROLE_ID
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authorizeRoleMasterMasterData" result-class="java.util.HashMap">
+        UPDATE ROLE_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE ROLE_ID = #ROLE ID:VARCHAR# 
+        AND GROUP_ID = #GROUP ID:VARCHAR#
+    </mapped-statement>
+        
+        
+        
+            
+</sql-map>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="interestProcessingMap">         
+    
+    <mapped-statement name="getThriftBenevolentDepsositProduct" result-class="java.util.LinkedHashMap" >
+        SELECT LOOKUP_REF_ID,LOOKUP_DESC FROM LOOKUP_MASTER LM WHERE LM.LOOKUP_REF_ID IN ('THRIFT','BENEVOLENT')
+    </mapped-statement>
+    
+    <mapped-statement name="getThriftBenevolentDepsositIntPay" result-class="java.util.LinkedHashMap" >
+        SELECT dp.prod_id,dp.PROD_DESC, dp.behaves_like, dpi.int_appl_freq
+        FROM deposits_product dp JOIN deposits_prod_intpay dpi
+        ON dpi.prod_id = dp.prod_id
+        WHERE dp.behaves_like = #BEHAVES_LIKE:VARCHAR#
+        AND (dp.authorize_status IS NOT NULL OR dp.authorize_status = 'AUTHORIZED'
+        )
+        AND dp.status != 'DELETED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getThriftBenevolentDepositDetails" result-class="java.util.LinkedHashMap" >
+        SELECT dab.act_num || '_' || dsa.deposit_sub_no AS act_num, dab.amt,
+        dab.day_end_dt, dab.prod_id
+        FROM deposit_acinfo da JOIN deposit_sub_acinfo dsa
+        ON da.deposit_no = dsa.deposit_no
+        JOIN deposits_product dp ON dp.prod_id = da.prod_id
+        JOIN deposit_dayend_balance dab ON dab.act_num = da.deposit_no
+        JOIN deposit_recurring dr
+        ON dr.deposit_no_sub = dsa.deposit_no || '_' || dsa.deposit_sub_no
+        WHERE dp.behaves_like = #BEHAVES_LIKE:VARCHAR#
+        AND da.branch_id = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "FROM_DATE">
+                    dab.day_end_dt BETWEEN #FROM_DATE:DATE# AND #TO_DATE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "CHECK_DATE">
+                    dab.day_end_dt =(select max(DDA.DAY_END_DT) from DEPOSIT_DAYEND_BALANCE dda where DDA.DAY_END_DT &lt;#CHECK_DATE:DATE# and DSA.DEPOSIT_NO= DDA.ACT_NUM)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND dab.day_end_dt = dr.trans_dt
+        AND (da.authorize_status IS NOT NULL OR da.authorize_status = 'AUTHORIZED'
+        )
+        AND (dsa.authorize_status IS NOT NULL
+        OR dsa.authorize_status = 'AUTHORIZED'
+        )
+        AND (dp.authorize_status IS NOT NULL OR dp.authorize_status = 'AUTHORIZED'
+        )
+        AND da.status != 'DELETED'
+        AND dsa.status != 'DELETED'
+        AND dp.status != 'DELETED'
+        AND da.deposit_status != 'CLOSED'
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getThriftBenevolentDepositDayEndBalance" result-class="java.util.LinkedHashMap" >
+        SELECT NVL (amt, 0) AS opening, ddb.day_end_dt
+        FROM deposit_dayend_balance ddb JOIN deposit_sub_acinfo dsa
+        ON dsa.deposit_no = ddb.act_num
+        WHERE dsa.deposit_no || '_' || dsa.deposit_sub_no = #ACC_NO:VARCHAR#
+        AND ddb.act_num = dsa.deposit_no
+        AND ddb.day_end_dt =
+        (SELECT MAX (dds.day_end_dt)
+        FROM deposit_dayend_balance dds
+        WHERE dds.act_num = dsa.deposit_no
+        AND dds.day_end_dt &lt;= #FROM_DT:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateAvailableClearTotalThriftBenevolentBalance" result-class="java.util.LinkedHashMap" >
+        UPDATE deposit_sub_acinfo 
+        SET <!--dsa.available_balance = (NVL (dsa.available_balance, 0) + #AMOUNT:INTEGER#),
+        dsa.total_balance = (NVL (dsa.total_balance, 0) + #AMOUNT:INTEGER#),
+        dsa.clear_balance = (NVL (dsa.clear_balance, 0) + #AMOUNT:INTEGER#),-->
+        total_int_credit = (NVL (total_int_credit, 0) + #AMOUNT:INTEGER#),
+        total_int_drawn = (NVL (total_int_drawn, 0) + #AMOUNT:INTEGER#)
+        WHERE deposit_no = #ACT_NUM:VARCHAR#
+        AND status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED' 
+    </mapped-statement>
+    
+    <mapped-statement name="updateTotIntCreditBenevolent" result-class="java.util.LinkedHashMap" >
+    UPDATE deposit_sub_acinfo 
+        SET total_int_credit = (NVL (total_int_credit, 0) + #AMOUNT:INTEGER#)
+        WHERE deposit_no = #ACT_NUM:VARCHAR#
+        AND status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED' 
+    </mapped-statement>
+    
+    <mapped-statement name="getOutstandingAmountThriftBenevolent" result-class="java.util.LinkedHashMap" >
+        SELECT NVL (dde.amt, 0) as amount
+        FROM deposit_dayend_balance dde
+        WHERE dde.day_end_dt =
+        (SELECT MAX (de.day_end_dt)
+        FROM deposit_dayend_balance de
+        WHERE de.act_num = dde.act_num AND de.day_end_dt &lt; #TO_DATE:DATE#)
+        AND dde.day_end_dt &lt; #TO_DATE:DATE#
+        AND dde.act_num = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getThriftBenevolentCustId" result-class="java.util.LinkedHashMap" >
+        select C.CUST_ID from DEPOSIT_ACINFO da join DEPOSIT_SUB_ACINFO dsa on DA.DEPOSIT_NO = DSA.DEPOSIT_NO join CUSTOMER c on C.CUST_ID = DA.CUST_ID 
+        where DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        and (DA.AUTHORIZE_STATUS is not null
+        or DA.AUTHORIZE_STATUS = 'AUTHORIZED')
+        and (DSA.AUTHORIZE_STATUS is not null
+        or DSA.AUTHORIZE_STATUS = 'AUTHORIZED')
+        and DSA.ACCT_STATUS != 'CLOSED'
+        and DA.DEPOSIT_NO = #ACT_NUM:VARCHAR#  
+    </mapped-statement>
+    
+    <mapped-statement name="updateLastIntApplDtLastTransDtThriftBenevolent" result-class="java.util.LinkedHashMap" >
+        UPDATE deposit_sub_acinfo 
+        SET last_int_appl_dt = #LAST_INT_APPL_DT:DATE#,
+        last_trans_dt = #LAST_TRANS_DT:DATE#
+        WHERE deposit_no = #DEPOSIT_NO:VARCHAR#
+        AND (authorize_status IS NOT NULL
+        OR authorize_status = 'AUTHORIZED'
+        )
+        AND acct_status != 'DELETED'
+        AND status != 'DELETED'
+    </mapped-statement>
+     <mapped-statement name="getThriftInterestProcessing" result-class="java.util.LinkedHashMap" >
+         SELECT DA.DEPOSIT_NO  AS ACT_NUM,GET_CUST_NAME(DA.CUST_ID)as NAME,
+        Get_TDBD_Interest(DA.DEPOSIT_NO,dp.behaves_like,TO_DATE(#FROM_DATE:DATE#,'DD-MM-YYYY'),TO_DATE(#TO_DATE:VARCHAR#,'DD-MM-YYYY'),cast(#ROI# as numeric)) as INTEREST
+        FROM deposit_acinfo da JOIN deposit_sub_acinfo dsa
+        ON da.deposit_no = dsa.deposit_no
+        JOIN deposits_product dp ON dp.prod_id = da.prod_id
+        WHERE dp.behaves_like = #BEHAVES_LIKE:VARCHAR#
+        AND da.PROD_ID=#PROD_ID:VARCHAR#
+        AND da.branch_id = #BRANCH_CODE:VARCHAR#
+       AND da.DEPOSIT_STATUS='NEW' AND da.AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="inserThriftBenCalcMasterTO" inline-parameters="true">
+        INSERT INTO THRIFTBEN_INT_CALC_MASTER
+        (PROD_ID, DEBIT_GL,PAYABLE_GL,FROM_PERIOD,TO_PERIOD,INT_PERCENT,RESOLUTION_NO,RESOLUTION_DATE,
+        REMARKS,TOTAL_DIV_AMOUNT,STATUS,STATUS_BY,STATUS_DATE,CREATED_DT,CREATED_BY,BRANCH_CODE,RESERVEFUND_PERCENT,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE
+        ) VALUES (
+        #prodId:VARCHAR#, #txtDebitGl:VARCHAR#,#txtPayableGl:VARCHAR#,#tdtFromPeriod:DATE#,
+        #tdtToPeriod:DATE#,#txtIntPercent:NUMBER#,#txtResolutionNo:VARCHAR#,#tdtResolutionDate:DATE#,
+        #txtRemarks:VARCHAR#,#txtTotalAmount:NUMBER#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#createdDt:DATE#,
+        #createdBy:VARCHAR#,#branchCode:VARCHAR#,#txtReservefundPercent:NUMBER#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#) 
+    </mapped-statement>
+    
+    <mapped-statement name="getThriftBenevolentAchds" result-class="java.util.LinkedHashMap" >
+        select d.INT_DEBIT,d.INT_PAY,d.INT_RESERVE,DP.ACCT_HEAD
+        from DEPOSITS_PROD_ACHD d,DEPOSITS_PRODUCT dp
+        where D.PROD_ID = DP.PROD_ID and 
+        D.PROD_ID = #PROD_ID:VARCHAR#
+        and DP.AUTHORIZE_STATUS in ('AUTHORIZED')
+    </mapped-statement>
+
+</sql-map>
+

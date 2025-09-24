@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RelationshipsTOMap">
+
+	<!-- Use RelationshipsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRelationshipsTO" inline-parameters="true">
+        INSERT INTO PVT_RELATIONSHIP
+        (RELATE_ID, MEMBER_ID, BANKER_NAME, INITIATED_BY, LEAD_RSO, CONTACT_DESC, RELATE_TYPE, RELATE_SOURCE, SOURCE_REF, CONTACT_DT, SUB_TYPE, STATUS
+        ) VALUES (
+        #relateId:VARCHAR#, #memberId:VARCHAR#, #bankerName:VARCHAR#, #initiatedBy:VARCHAR#, #leadRso:VARCHAR#, #contactDesc:VARCHAR#, #relateType:VARCHAR#, #relateSource:VARCHAR#, #sourceRef:VARCHAR#, #contactDt:DATE#, #subType:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use RelationshipsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateRelationshipsTO" inline-parameters="true">
+        UPDATE PVT_RELATIONSHIP SET 
+        MEMBER_ID = #memberId:VARCHAR#,
+        BANKER_NAME = #bankerName:VARCHAR#,
+        INITIATED_BY = #initiatedBy:VARCHAR#,
+        LEAD_RSO = #leadRso:VARCHAR#,
+        CONTACT_DESC = #contactDesc:VARCHAR#,
+        RELATE_TYPE = #relateType:VARCHAR#,
+        RELATE_SOURCE = #relateSource:VARCHAR#,
+        SOURCE_REF = #sourceRef:VARCHAR#,
+        CONTACT_DT = #contactDt:DATE#,
+        SUB_TYPE = #subType:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE RELATE_ID = #relateId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use RelationshipsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteRelationshipsTO" inline-parameters="true">
+        UPDATE PVT_RELATIONSHIP SET 
+        STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = TODAY_DT 
+        WHERE RELATE_ID = #relateId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to RelationshipsTO object (JavaBean) properties -->
+    <result-map name="getRelationshipsTOResult" class="com.see.truetransact.transferobject.privatebanking.comlogs.relationships.RelationshipsTO">
+        <property name="relateId" column="RELATE_ID"/>
+        <property name="memberId" column="MEMBER_ID"/>
+        <property name="bankerName" column="BANKER_NAME"/>
+        <property name="initiatedBy" column="INITIATED_BY"/>
+        <property name="leadRso" column="LEAD_RSO"/>
+        <property name="contactDesc" column="CONTACT_DESC"/>
+        <property name="relateType" column="RELATE_TYPE"/>
+        <property name="relateSource" column="RELATE_SOURCE"/>
+        <property name="sourceRef" column="SOURCE_REF"/>
+        <property name="contactDt" column="CONTACT_DT"/>
+        <property name="subType" column="SUB_TYPE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectRelationshipsTO" result-map="getRelationshipsTOResult" >
+        SELECT * FROM PVT_RELATIONSHIP 
+        WHERE RELATE_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+        <!-- This statement is used to execute the Query to fill up the UI Fields when edit or delete button is clicked -->
+    <mapped-statement name="getSelectPvtRelationships" result-class="java.util.LinkedHashMap" >
+        SELECT RELATE_ID, MEMBER_ID, BANKER_NAME FROM PVT_RELATIONSHIP 
+        WHERE STATUS != 'DELETED'
+    </mapped-statement>
+      
+        <!-- This statement is used to execute a Query to fill up the textfield with Employee id -->
+    <mapped-statement name="getSelectBankEmployee" result-class="java.util.LinkedHashMap" >
+        SELECT E.EMPLOYEE_CODE, E.TITLE||' '||E.FNAME||' '||E.LNAME AS "EMPLOYEE NAME", B.BRANCH_NAME from Bank_employee E, BRANCH_MASTER B 
+        WHERE E.BRANCH_CODE = B.BRANCH_CODE
+    </mapped-statement>
+        
+<!-- =================================================================================== -->        
+        <!--     Authorization Queries -->
+    <mapped-statement name="getRelationshipsAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT RELATE_ID, MEMBER_ID, BANKER_NAME FROM PVT_RELATIONSHIP 
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND (AUTHORIZE_STATUS NOT IN 
+        ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL) 
+    </mapped-statement>
+
+    <mapped-statement name="authorizeRelationships" result-class="java.util.HashMap">
+        UPDATE PVT_RELATIONSHIP
+        SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = TODAY_DT
+        WHERE RELATE_ID = #RELATE_ID:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+ 
+</sql-map>

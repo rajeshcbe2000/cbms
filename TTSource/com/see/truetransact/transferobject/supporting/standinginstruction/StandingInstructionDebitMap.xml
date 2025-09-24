@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<!--
+    Document   : StandingInstructionDebitMap.xml
+    Created on : February 3, 2004, 2:07 PM
+    Author     : Hemant
+    Description:
+        Purpose of the document follows.
+-->
+
+<sql-map name="StandingInstructionDebitMap">
+
+	<!-- Use StandingInstructionDebitTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertStandingInstructionDebitTO" inline-parameters="true">
+        INSERT INTO STANDING_INSTRUCTION_DEBIT
+        (SI_ID, PROD_ID, ACCT_NO, AMOUNT, PARTICULARS, PROD_TYPE, STATUS, AC_HD_ID
+,BRANCH_CODE
+        ) VALUES (
+        #siId:VARCHAR#, #prodId:VARCHAR#, #acctNo:VARCHAR#, #amount:NUMERIC#, #particulars:VARCHAR#, #prodType:VARCHAR#, #status:VARCHAR#, #acHdId:VARCHAR#,#branchId:varchar#)
+    </mapped-statement>
+
+	<!-- Use StandingInstructionDebitTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDeletedStandingInstructionDebitTO" inline-parameters="true">
+        UPDATE STANDING_INSTRUCTION_DEBIT SET 
+        SI_ID = #siId:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#,
+        ACCT_NO = #acctNo:VARCHAR#,
+        AMOUNT = #amount:NUMERIC#,
+        PARTICULARS = #particulars:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AC_HD_ID = #acHdId:VARCHAR#
+        WHERE SI_ID = #siId# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use StandingInstructionDebitTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteStandingInstructionDebitTO" inline-parameters="true">
+        UPDATE STANDING_INSTRUCTION_DEBIT 
+        SET STATUS = #status:VARCHAR#
+        WHERE SI_ID = #siId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to StandingInstructionDebitTO object (JavaBean) properties -->
+    <result-map name="getStandingInstructionDebitTOResult" class="com.see.truetransact.transferobject.supporting.standinginstruction.StandingInstructionDebitTO">
+        <property name="siId" column="SI_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="status" column="STATUS"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectStandingInstructionDebitTO" result-map="getStandingInstructionDebitTOResult" >
+       <!--SELECT * FROM STANDING_INSTRUCTION_DEBIT 
+        WHERE SI_ID = #SI_ID:VARCHAR# AND STATUS NOT IN ('DELETED')-->
+   SELECT SB.AC_HD_ID,SB.ACCT_NO,SB.BRANCH_CODE,SB.PARTICULARS,SB.PROD_ID,SB.PROD_TYPE,SB.SI_ID,SB.STATUS,
+   CASE SC.PROD_TYPE
+   WHEN 'TL'
+   THEN
+   CASE 
+   WHEN 
+   <dynamic>
+   GET_STANDING_AMT(SC.PROD_ID,SC.PROD_TYPE,SC.ACCT_NO,NVL(SI.INSTALMENT_NO,0),SB.AMOUNT
+   <isEqual prepend="," property="SAL_REC_MODULE" compareValue="Y" >
+   #ASONDATE:DATE#
+   </isEqual>
+   )
+   </dynamic>
+   >(SELECT GET_TL_TOTAL(SC.ACCT_NO,#CURRDATE:DATE#) AS BALANCE FROM DUAL)
+   THEN (SELECT GET_TL_TOTAL(SC.ACCT_NO,#CURRDATE:DATE#) AS BALANCE FROM DUAL)
+   ELSE 
+   <dynamic>
+   GET_STANDING_AMT(SC.PROD_ID,SC.PROD_TYPE,SC.ACCT_NO,NVL(SI.INSTALMENT_NO,0),SB.AMOUNT
+   <isEqual prepend="," property="SAL_REC_MODULE" compareValue="Y" >
+   #ASONDATE:DATE#
+   </isEqual>
+   )
+   </dynamic>
+   END
+   ELSE SB.AMOUNT
+   END AMOUNT
+   FROM STANDING_INSTRUCTION_DEBIT SB JOIN STANDING_INSTRUCTION_CREDIT SC ON SB.SI_ID=SC.SI_ID ,standing_instruction si
+   WHERE SB.SI_ID = #SI_ID:VARCHAR# AND SB.STATUS NOT IN ('DELETED')  AND  si.si_id = sc.si_id
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectStandingInstructionVariableDebitTO" result-map="getStandingInstructionDebitTOResult" >
+      <!-- SELECT S.SI_ID,S.ACCT_NO,S.AC_HD_ID,S.PROD_ID,S.PROD_TYPE,S.PARTICULARS,S.STATUS,S.BRANCH_CODE,case S.PROD_TYPE
+       WHEN 'TD' THEN ( SELECT D.AVAILABLE_BALANCE   FROM DEPOSIT_SUB_ACINFO D WHERE S.ACCT_NO=D.DEPOSIT_NO ||'_'||D.DEPOSIT_SUB_NO)
+       ELSE 0 END AMOUNT FROM STANDING_INSTRUCTION_DEBIT S WHERE SI_ID =#SI_ID:VARCHAR# AND STATUS NOT IN ('DELETED')-->
+       <!--SELECT S.SI_ID,S.ACCT_NO,S.AC_HD_ID,S.PROD_ID,S.PROD_TYPE,S.PARTICULARS,S.STATUS,S.BRANCH_CODE,case S.PROD_TYPE
+       WHEN 'TD' THEN 
+       (SELECT 
+       case 
+       when D.AVAILABLE_BALANCE>(SELECT GET_TL_TOTAL(SC.ACCT_NO,#CURRDATE:DATE#)+CALCULATE_DD_SI_COMMFUNCT(S.ACCT_NO,ST.LAST_RUN_DT,#CURRDATE:DATE#) AS BALANCE from dual)
+       THEN (SELECT GET_TL_TOTAL(SC.ACCT_NO,#CURRDATE:DATE#)+CALCULATE_DD_SI_COMMFUNCT(S.ACCT_NO,ST.LAST_RUN_DT,#CURRDATE:DATE#) AS BALANCE from dual)
+       ELSE D.AVAILABLE_BALANCE
+       END
+       FROM DEPOSIT_SUB_ACINFO D WHERE S.ACCT_NO=D.DEPOSIT_NO ||'_'||D.DEPOSIT_SUB_NO)
+       WHEN 'OA' THEN
+                (SELECT AVAILABLE_BALANCE FROM ALL_CUSTOMER_BALANCE WHERE ACT_NUM = S.ACCT_NO)
+       ELSE 0 END AMOUNT FROM STANDING_INSTRUCTION_DEBIT S JOIN STANDING_INSTRUCTION_CREDIT SC ON S.SI_ID=SC.SI_ID 
+       JOIN STANDING_INSTRUCTION ST 
+       ON SC.SI_ID=ST.SI_ID
+       WHERE S.SI_ID =#SI_ID:VARCHAR# AND S.STATUS NOT IN ('DELETED')-->
+       
+       SELECT S.SI_ID, S.ACCT_NO, S.AC_HD_ID, S.PROD_ID, S.PROD_TYPE, S.PARTICULARS,
+       S.STATUS, S.BRANCH_CODE,
+             CASE S.PROD_TYPE
+          WHEN 'TD'
+             THEN (SELECT CASE
+                             WHEN D.AVAILABLE_BALANCE >
+                                    (SELECT   ABS(NVL(GET_TL_TOTAL
+                                                      (SC.ACCT_NO,
+                                                       #CURRDATE:DATE#
+                                                      ),0))
+                                            + NVL(CALCULATE_DD_SI_COMMFUNCT
+                                                                  (S.ACCT_NO,
+                                                                   #CURRDATE:DATE#,
+                                                                   S.PROD_ID,S.SI_ID
+                                                                  ),0)
+                                                           AS BALANCE
+                                       FROM DUAL)
+                                THEN (SELECT   ABS(NVL(GET_TL_TOTAL
+                                                      (SC.ACCT_NO,
+                                                       #CURRDATE:DATE#
+                                                      ),0))
+                                             + NVL(CALCULATE_DD_SI_COMMFUNCT
+                                                                  (S.ACCT_NO,
+                                                                   #CURRDATE:DATE#,
+                                                                   S.PROD_ID,S.SI_ID
+                                                                  ),0)
+                                                           AS BALANCE
+                                        FROM DUAL)
+                             ELSE D.AVAILABLE_BALANCE
+                          END
+                     FROM DEPOSIT_SUB_ACINFO D
+                    WHERE S.ACCT_NO =
+                               D.DEPOSIT_NO || '_' || D.DEPOSIT_SUB_NO)
+          WHEN 'OA'
+             THEN (SELECT CASE
+                             WHEN AVAILABLE_BALANCE >
+                                    (SELECT  NVL( GET_TL_TOTAL
+                                                      (SC.ACCT_NO,
+                                                       #CURRDATE:DATE#
+                                                      ),0)
+                                            + NVL(CALCULATE_DD_SI_COMMFUNCT
+                                                                  (S.ACCT_NO,
+                                                                   #CURRDATE:DATE#,
+                                                                   S.PROD_ID,S.SI_ID
+                                                                  ),0) + NVL(MIN_BALANCE,0)
+                                                           AS BALANCE
+                                       FROM DUAL)
+                                THEN (SELECT   ABS(NVL(GET_TL_TOTAL
+                                                      (SC.ACCT_NO,
+                                                       #CURRDATE:DATE#
+                                                      ),0))
+                                             + NVL(CALCULATE_DD_SI_COMMFUNCT
+                                                                  (S.ACCT_NO,
+                                                                   #CURRDATE:DATE#,
+                                                                   S.PROD_ID,S.SI_ID
+                                                                  ),0)
+                                                           AS BALANCE
+                                        FROM DUAL)
+                             ELSE AVAILABLE_BALANCE-NVL(MIN_BALANCE,0)
+                          END
+                     FROM ALL_CUSTOMER_BALANCE
+                    WHERE ACT_NUM = S.ACCT_NO)
+            WHEN 'SA'
+             THEN (SELECT CASE
+                             WHEN AVAILABLE_BALANCE >
+                                    (SELECT  ABS(NVL(GET_TL_TOTAL
+                                                      (SC.ACCT_NO,
+                                                       #CURRDATE:DATE#
+                                                      ),0))
+                                            + NVL(CALCULATE_DD_SI_COMMFUNCT
+                                                                  (S.ACCT_NO,
+                                                                   #CURRDATE:DATE#,
+                                                                   S.PROD_ID,S.SI_ID
+                                                                  ),0)
+                                                           AS BALANCE
+                                       FROM DUAL)
+                                THEN (SELECT   ABS(NVL(GET_TL_TOTAL
+                                                      (SC.ACCT_NO,
+                                                       #CURRDATE:DATE#
+                                                      ),0))
+                                             + NVL(CALCULATE_DD_SI_COMMFUNCT
+                                                                  (S.ACCT_NO,
+                                                                   #CURRDATE:DATE#,
+                                                                   S.PROD_ID,S.SI_ID
+                                                                  ),0)
+                                                           AS BALANCE
+                                        FROM DUAL)
+                             ELSE AVAILABLE_BALANCE
+                          END
+                     FROM ALL_CUSTOMER_BALANCE
+                    WHERE ACT_NUM = S.ACCT_NO)
+          ELSE 0
+       END AMOUNT
+        FROM STANDING_INSTRUCTION_DEBIT S JOIN STANDING_INSTRUCTION_CREDIT SC
+       ON S.SI_ID = SC.SI_ID
+       JOIN STANDING_INSTRUCTION ST ON SC.SI_ID = ST.SI_ID
+        WHERE S.SI_ID = #SI_ID:VARCHAR# AND S.STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    
+    
+     <mapped-statement name="getSelectStandingDebitMasterDetails" result-map="getStandingInstructionDebitTOResult" >
+        SELECT SIC.* FROM STANDING_INSTRUCTION S, STANDING_INSTRUCTION_DEBIT SIC
+        WHERE SIC.SI_ID = S.SI_ID 
+        AND S.STATUS NOT IN('DELETED')
+        AND SIC.SI_ID = #SI_ID:VARCHAR#
+    </mapped-statement>       
+    
+       
+</sql-map>

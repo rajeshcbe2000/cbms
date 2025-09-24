@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingacheadMap">
+    <mapped-statement name="insertTradingAccountHeadTO" inline-parameters="true">
+        INSERT INTO TRADING_AC_HD
+        (ACCOUNTHEAD_ID,CASH_ON_HAND,PURCHASE,SALES,PURCHASE_RETURN,SALES_RETURN, DAMAGES,STOCK,PURCHASE_VAT,SALES_VAT,SA_RECEIVABLE,SL_PAYABLE,
+        SALES_RET_BEFORE,PERIOD,STATUS,STATUS_BY,STATUS_DT) 
+        VALUES (#accountHeadPid:VARCHAR#,#cashOnHand:VARCHAR#,#purchase:VARCHAR#,#sales:VARCHAR#,#purchaseReturn:VARCHAR#,#salesReturn:VARCHAR#,
+        #damages:VARCHAR#,#stock:VARCHAR#,#purchaseVAT:VARCHAR#,#salesVAT:VARCHAR#,#saReceivable:VARCHAR#,#slPayable:VARCHAR#,#value:VARCHAR#,#period:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,
+        (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingAcHdTO" inline-parameters="true">
+        UPDATE TRADING_AC_HD SET 
+        CASH_ON_HAND = #cashOnHand:VARCHAR#,
+        PURCHASE = #purchase:VARCHAR#,
+        SALES = #sales:VARCHAR#,
+        PURCHASE_RETURN = #purchaseReturn:VARCHAR#,
+        SALES_RETURN = #salesReturn:VARCHAR#,
+        DAMAGES = #damages:VARCHAR#,
+        STOCK = #stock:VARCHAR#,
+        PURCHASE_VAT = #purchaseVAT:VARCHAR#,
+        SALES_VAT = #salesVAT:VARCHAR#,
+        SA_RECEIVABLE = #saReceivable:VARCHAR#,
+        SL_PAYABLE = #slPayable:VARCHAR#,
+        SALES_RET_BEFORE= #value:VARCHAR#,
+        PERIOD = #period:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT =(SELECT SYS_DATE() FROM DUAL)
+        WHERE ACCOUNTHEAD_ID = #accountHeadPid:VARCHAR#
+    </mapped-statement>
+   
+    <mapped-statement name="getAcHdListForTradingAcHd" result-class="java.util.HashMap">
+        SELECT ACCOUNTHEAD_ID as KEY, ACCOUNTHEAD_TYPE  as VALUE FROM TRADING_AC_HD WHERE         
+        AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED'   ORDER BY ACCOUNTHEAD_ID    
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingAcHdID" result-class="java.util.HashMap">
+        SELECT AH.AC_HD_ID,AH.AC_HD_DESC FROM AC_HD AH WHERE AH.AC_HD_ID NOT IN(SELECT AHT.ACCOUNTHEAD_ID FROM 
+        TRADING_AC_HD AHT WHERE AHT.ACCOUNTHEAD_TYPE = 'Bank A/c') AND AH.STATUS  != 'DELETED'  
+    </mapped-statement>
+    
+    <result-map name="getTradingAcHdTOResult" class="com.see.truetransact.transferobject.trading.tradingachead.TradingacheadTO">
+        <property name="accountHeadPid" column="ACCOUNTHEAD_ID"/>
+        <property name="cashOnHand" column="CASH_ON_HAND"/>
+        <property name="purchase" column="PURCHASE"/>
+        <property name="sales" column="SALES"/>
+        <property name="purchaseReturn" column="PURCHASE_RETURN"/>
+        <property name="salesReturn" column="SALES_RETURN"/>
+        <property name="damages" column="DAMAGES"/>
+        <property name="stock" column="STOCK"/>
+        <property name="purchaseVAT" column="PURCHASE_VAT"/>
+        <property name="salesVAT" column="SALES_VAT"/>
+        <property name="saReceivable" column="SA_RECEIVABLE"/>
+        <property name="slPayable" column="SL_PAYABLE"/>
+        <property name="value" column="SALES_RET_BEFORE"/>
+        <property name="period" column="PERIOD"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <mapped-statement name="getTradingAcHdEdit" result-class="java.util.LinkedHashMap">
+       SELECT ACCOUNTHEAD_PID,ACCOUNTHEAD_ID,ACCOUNTHEAD_DESC,ACCOUNTHEAD_TYPE FROM TRADING_AC_HD WHERE STATUS != 'DELETED'AND AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectTradingAcHdTO" result-map="getTradingAcHdTOResult" >
+       SELECT * FROM TRADING_AC_HD <!--WHERE ACCOUNTHEAD_PID=#ACCOUNTHEAD_PID# AND STATUS!='DELETED'-->
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingAcHdForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT ACCOUNTHEAD_PID,ACCOUNTHEAD_ID,ACCOUNTHEAD_DESC,ACCOUNTHEAD_TYPE FROM TRADING_AC_HD WHERE STATUS != 'DELETED' AND 
+        AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingAcHd" result-class="java.util.HashMap">
+        UPDATE TRADING_AC_HD SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        <!--WHERE STATUS != 'DELETED' AND   ACCOUNTHEAD_ID=#ACCOUNTHEAD_ID#-->
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingAcHdView" result-class="java.util.LinkedHashMap">
+        SELECT ACCOUNTHEAD_PID,ACCOUNTHEAD_ID,ACCOUNTHEAD_DESC,ACCOUNTHEAD_TYPE FROM TRADING_AC_HD WHERE STATUS != 'DELETED' 
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingAcHeadTO" inline-parameters="true">
+        UPDATE TRADING_AC_HD SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE  ACCOUNTHEAD_ID=#accountHeadId:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectTradingAcHd" result-map="getTradingAcHdTOResult" >
+		SELECT * FROM TRADING_AC_HD 		 
+            <dynamic>
+                <isParameterPresent>
+                    <isNotNull prepend="WHERE" property="USER_ID">
+                        (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+                        AND STATUS_BY != #USER_ID:VARCHAR#
+                    </isNotNull>
+                </isParameterPresent> 
+            </dynamic>
+	</dynamic-mapped-statement> 
+</sql-map>

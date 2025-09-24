@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<!--
+    Document   : StandingInstructionMap.xml
+    Created on : February 3, 2004, 2:07 PM
+    Author     : Hemant
+    Description:
+        Purpose of the document follows.
+-->
+
+<sql-map name="StandingInstructionMap">
+
+	<!-- Use StandingInstructionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertStandingInstructionTO" inline-parameters="true">
+        INSERT INTO STANDING_INSTRUCTION
+        (SI_ID, SI_DT, SI_TYPE, MULTIPLES_OF, MIN_BALANCE, SI_START_DT, SI_END_DT, FREQUENCY, GRACE_DAYS, COLLECT_SI_COMM, 
+        SI_CHARGES, COLLECT_REMIT_COMM, REMIT_CHARGES, REMIT_MODE, BENEFICIARY, STATUS, WEEK_DAY, WEEK, SPECIFIC_DATE, 
+        SI_HOLIDAY_EXEC, AUTOMATIC_POSTING, CARRIED_FORWARD_COUNT, EXEC_CHARGE, FAILURE_CHARGE, EXEC_CONFIG, ACCEPTANCE_CHARGE, 
+        CHANGE_HOLIDAY_EXEC, STATUS_BY, STATUS_DT, BRANCH_CODE, INITIATED_BRANCH, SERVICE_TAX, FAILURE_ST, SUSPEND_DT,INSTALMENT_YN,INSTALMENT_NO,PENDING_INST_YN
+        ) VALUES (
+        #siId:VARCHAR#, #siDt:DATE#, #siType:VARCHAR#, #multiplesOf:NUMERIC#, #minBalance:NUMERIC#, #siStartDt:DATE#, 
+        #siEndDt:DATE#, #frequency:VARCHAR#, #graceDays:NUMERIC#, #collectSiComm:VARCHAR#, #siCharges:NUMERIC#, 
+        #collectRemitComm:VARCHAR#, #remitCharges:NUMERIC#, #remitMode:VARCHAR#, #beneficiary:VARCHAR#, #status:VARCHAR#, 
+        #weekDay:VARCHAR#, #week:VARCHAR#, #specificDate:NUMERIC#, #siHolidayExec:VARCHAR#, #automaticPosting:VARCHAR#, 
+        #carriedForwardCount:NUMERIC#, #execCharge:NUMERIC#, #failureCharge:NUMERIC#, #execConfig:VARCHAR#, 
+        #acceptanceCharge:NUMERIC#, #changeHolidayExec:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #initiatedBranch:VARCHAR#, 
+        #initiatedBranch:VARCHAR#, #serviceTax:NUMERIC#, #failureServiceTax:NUMERIC#, #siSuspendDt:DATE#,#chkInstalment:VARCHAR#,#noOfInstalments:NUMBER#,#chkPendingInstalment:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertStandingTLProcessed" inline-parameters="true"> 
+        INSERT INTO TL_SI_PROCESSED (BRANCH_ID,TRANS_DT,BATCH_ID,STATUS) VALUES(#BRANCH_ID:VARCHAR#,#TRANS_DT:DATE#,#BATCH_ID:VARCHAR#,#STATUS:VARCHAR#)
+    </mapped-statement>
+	<!-- Use StandingInstructionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateStandingInstructionTO" inline-parameters="true">
+        UPDATE STANDING_INSTRUCTION SET 
+        SI_ID = #siId:VARCHAR#,
+        SI_DT = #siDt:DATE#,
+        SI_TYPE = #siType:VARCHAR#,
+        MULTIPLES_OF = #multiplesOf:NUMERIC#,
+        MIN_BALANCE = #minBalance:NUMERIC#,
+        SI_START_DT = #siStartDt:DATE#,
+        SI_END_DT = #siEndDt:DATE#,
+        FREQUENCY = #frequency:VARCHAR#,
+        GRACE_DAYS = #graceDays:NUMERIC#,
+        COLLECT_SI_COMM = #collectSiComm:VARCHAR#,
+        SI_CHARGES = #siCharges:NUMERIC#,
+        COLLECT_REMIT_COMM = #collectRemitComm:VARCHAR#,
+        REMIT_CHARGES = #remitCharges:NUMERIC#,
+        REMIT_MODE = #remitMode:VARCHAR#,
+        BENEFICIARY = #beneficiary:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        WEEK_DAY = #weekDay:VARCHAR#,
+        WEEK = #week:VARCHAR#,
+        SPECIFIC_DATE = #specificDate:NUMERIC#,
+        SI_HOLIDAY_EXEC = #siHolidayExec:VARCHAR#,
+        AUTOMATIC_POSTING = #automaticPosting:VARCHAR#,
+        CARRIED_FORWARD_COUNT = #carriedForwardCount:NUMERIC#,
+        EXEC_CHARGE = #execCharge:NUMERIC#,
+        FAILURE_CHARGE = #failureCharge:NUMERIC#,
+        EXEC_CONFIG = #execConfig:VARCHAR#,
+        ACCEPTANCE_CHARGE = #acceptanceCharge:NUMERIC#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#, 
+        AUTHORIZE_DT = #authorizeDt:TIMESTAMP#,
+        CHANGE_HOLIDAY_EXEC = #changeHolidayExec:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#,
+        SERVICE_TAX = #serviceTax:NUMERIC#,
+        FAILURE_ST = #failureServiceTax:NUMERIC#,
+        SUSPEND_DT = #siSuspendDt:DATE#,
+        INSTALMENT_YN = #chkInstalment:VARCHAR#,
+        INSTALMENT_NO = #noOfInstalments:NUMBER#,
+        PENDING_INST_YN = #chkPendingInstalment:VARCHAR#
+        WHERE SI_ID = #siId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use StandingInstructionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateDeletedStandingInstructionTO" inline-parameters="true">
+        UPDATE STANDING_INSTRUCTION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = null
+        WHERE SI_ID = #siId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to StandingInstructionTO object (JavaBean) properties -->
+    <result-map name="getStandingInstructionTOResult" class="com.see.truetransact.transferobject.supporting.standinginstruction.StandingInstructionTO">
+        <property name="siId" column="SI_ID"/>
+        <property name="siDt" column="SI_DT"/>
+        <property name="siType" column="SI_TYPE"/>
+        <property name="multiplesOf" column="MULTIPLES_OF"/>
+        <property name="minBalance" column="MIN_BALANCE"/>
+        <property name="siStartDt" column="SI_START_DT"/>
+        <property name="siEndDt" column="SI_END_DT"/>
+        <property name="frequency" column="FREQUENCY"/>
+        <property name="graceDays" column="GRACE_DAYS"/>
+        <property name="collectSiComm" column="COLLECT_SI_COMM"/>
+        <property name="siCharges" column="SI_CHARGES"/>
+        <property name="collectRemitComm" column="COLLECT_REMIT_COMM"/>
+        <property name="remitCharges" column="REMIT_CHARGES"/>
+        <property name="remitMode" column="REMIT_MODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="beneficiary" column="BENEFICIARY"/>
+        <property name="status" column="STATUS"/>
+        <property name="weekDay" column="WEEK_DAY"/>
+        <property name="week" column="WEEK"/>
+        <property name="specificDate" column="SPECIFIC_DATE"/>
+        <property name="siHolidayExec" column="SI_HOLIDAY_EXEC"/>
+        <property name="automaticPosting" column="AUTOMATIC_POSTING"/>
+        <property name="carriedForwardCount" column="CARRIED_FORWARD_COUNT"/>
+        <property name="count" column="COUNT"/>
+        <property name="execCharge" column="EXEC_CHARGE"/>
+        <property name="failureCharge" column="FAILURE_CHARGE"/>
+        <property name="execConfig" column="EXEC_CONFIG"/>
+        <property name="acceptanceCharge" column="ACCEPTANCE_CHARGE"/>
+        <property name="changeHolidayExec" column="CHANGE_HOLIDAY_EXEC"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="nextRunDt" column="NEXT_RUN_DT"/>
+        <property name="lastRunDt" column="LAST_RUN_DT"/>
+        <property name="forwardRunDt" column="FORWARD_RUN_DT"/>
+        <property name="execDtHoliday" column="EXEC_DT_IF_HOLIDAY"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>
+        <property name="failureServiceTax" column="FAILURE_ST"/>
+        <property name="siSuspendDt" column="SUSPEND_DT"/>
+        <property name="chkInstalment" column="INSTALMENT_YN"/>
+        <property name="noOfInstalments" column="INSTALMENT_NO"/>   
+        <property name="chkPendingInstalment" column="PENDING_INST_YN"/>   
+    </result-map>
+    <mapped-statement name="getSelectStandingInstructionTO" result-map="getStandingInstructionTOResult" >
+        SELECT * FROM STANDING_INSTRUCTION 
+        WHERE SI_ID = #SI_ID:VARCAHR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# <!--AND STATUS NOT IN ('DELETED')-->
+    </mapped-statement>
+
+   <dynamic-mapped-statement name="getSelectStandingInstructionTOList" result-class="java.util.LinkedHashMap" >
+        SELECT  SI.SI_ID, SI.SI_DT AS SI_CREATION_DT,SD.ACCT_NO AS DEBIT_ACT_NO, SC.ACCT_NO AS CREDIT_ACT_NO,
+        SI.SI_TYPE, SI.SI_START_DT, SI.SI_END_DT ,si.AUTHORIZE_STATUS, si.status
+        FROM STANDING_INSTRUCTION SI, STANDING_INSTRUCTION_DEBIT SD,STANDING_INSTRUCTION_CREDIT SC                
+        WHERE SI.STATUS NOT IN ('DELETED') AND SI.BRANCH_CODE  = #BRANCH_CODE:VARCHAR#
+        AND SI.SI_ID = SD.SI_ID AND SI.SI_ID = SC.SI_ID
+        AND (SI.AUTHORIZE_STATUS != 'REJECTED' or SI.AUTHORIZE_STATUS is null)
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SI_ID">
+                    UPPER(SI.SI_ID) LIKE UPPER('%$SI_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SI_CREATION_DT">
+                    UPPER(SI.SI_DT) LIKE UPPER('%$SI_CREATION_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEBIT_ACT_NO">
+                    UPPER(SD.ACCT_NO) LIKE UPPER('%$DEBIT_ACT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREDIT_ACT_NO">
+                    UPPER( SC.ACCT_NO) LIKE UPPER('%$CREDIT_ACT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SI_TYPE">
+                    UPPER(SI.SI_TYPE) LIKE UPPER('%$SI_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SI_START_DT">
+                    UPPER(SI.SI_START_DT) LIKE UPPER('%$SI_START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SI_END_DT">
+                    UPPER(SI.SI_END_DT) LIKE UPPER('%$SI_END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="status">
+                    UPPER(si.status) LIKE UPPER('%$status$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectStandingInstructionDepositTOList" result-class="java.util.LinkedHashMap" >
+       SELECT TL.SI_ID,TL.D_ACT  AS DEBIT_ACT_NO,TL.S_ACT AS CREDIT_ACT_NO FROM TL_SI_MARKING TL WHERE TL.BRANCH_CODE  = #BRANCH_CODE:VARCHAR#
+   </mapped-statement>
+   
+    <mapped-statement name="getOtherSystem" result-class="java.util.LinkedHashMap" >
+        SELECT SIC.SI_ID, ACT.CUST_ID, CUST.FNAME, SIC.PROD_ID,
+        SIC.ACCT_NO, SIC.AMOUNT, SIC.PARTICULARS
+        FROM STANDING_INSTRUCTION_CREDIT SIC,
+        ACT_MASTER ACT, STANDING_INSTRUCTION_DEBIT SID,
+        CUSTOMER CUST
+        WHERE SIC.SI_ID = SID.SI_ID AND SID.ACCT_NO = ACT.ACT_NUM
+        AND CUST.CUST_ID = ACT.CUST_ID AND SIC.PROD_ID = 'WEALTH'
+        ORDER BY 1
+    </mapped-statement>
+        
+    <result-map name="getAccountHeadIDResult" class="java.util.HashMap">
+        <property name="accHeadID" column="AC_HD_ID"/>
+        <property name="accHeadDesc" column="AC_HD_DESC"/>
+        <property name="baseCurr" column="BASE_CURRENCY"/>
+        <property name="currDesc" column="LOOKUP_DESC"/>
+    </result-map>
+        
+    <mapped-statement name="getAccountHeadID" result-map="getAccountHeadIDResult" >        
+        SELECT OP_AC_PRODUCT.AC_HD_ID,AC_HD_DESC,BASE_CURRENCY, LOOKUP_DESC FROM OP_AC_PRODUCT,LOOKUP_MASTER,AC_HD 
+        WHERE PROD_ID = #value:VARCHAR# AND LOOKUP_REF_ID = BASE_CURRENCY AND LOOKUP_ID='FOREX.CURRENCY'
+        AND OP_AC_PRODUCT.AC_HD_ID=AC_HD.AC_HD_ID
+    </mapped-statement>
+        
+    <result-map name="getSelectAccountNoPISDResult" class="java.util.HashMap">
+        <property name="ACT_NUM" column="ACT_NUM"/>
+        <property name="ACT_STATUS_ID" column="ACT_STATUS_ID"/>    
+        <property name="CUST_ID" column="CUST_ID"/>
+        <property name="CREATE_DT" column="CREATE_DT"/>
+        <property name="CLOSED_DT" column="CLOSED_DT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectAccountNoPISD" result-map="getSelectAccountNoPISDResult" >        
+        SELECT ACT_NUM, ACT_STATUS_ID, CUST_ID, CREATE_DT, CLOSED_DT FROM ACT_MASTER 
+        WHERE PROD_ID = #prodID:VARCHAR#  and
+        (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))
+        and (authorization_status='AUTHORIZED')
+    </mapped-statement>
+              
+    <result-map name="getAccountDetailsSIResult" class="java.util.HashMap">
+        <property name="fName" column="FNAME"/>
+        <property name="mName" column="MNAME"/>
+        <property name="lName" column="LNAME"/>
+        <property name="openingDt" column="CREATE_DT"/>
+        <property name="category" column="ACT_CAT_ID"/>
+        <property name="optMode" column="OPT_MODE_ID"/>
+        <property name="CLEAR_BALANCE" column="CLEAR_BALANCE"/>  
+        <property name="EFFECTIVE_BALANCE" column="AVAILABLE_BALANCE"/>   
+        <property name="SHADOW_DEBIT" column="SHADOW_DEBIT"/>
+        <property name="SHADOW_CREDIT" column="SHADOW_CREDIT"/>       
+    </result-map>
+        
+        <!--> This query 'll fetch the details of given account no<-->
+    <mapped-statement name="getAccountDetailsSI" result-map="getAccountDetailsSIResult" >        
+        SELECT FNAME, MNAME, LNAME, CREATE_DT, ACT_CAT_ID, OPT_MODE_ID, CLEAR_BALANCE, AVAILABLE_BALANCE, SHADOW_DEBIT, SHADOW_CREDIT FROM ACT_MASTER, CUSTOMER
+        WHERE ACT_NUM = #value:VARCHAR# AND ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID
+    </mapped-statement>
+        <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+        
+    <dynamic-mapped-statement name="getStandingInstructionAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT SI.SI_ID, SI.SI_DT AS SI_CREATION_DT,SD.ACCT_NO AS DEBIT_ACT_NO, SC.ACCT_NO AS CREDIT_ACT_NO,
+        SD.PROD_TYPE AS DEBIT_PROD_TYPE, SC.PROD_TYPE AS CREDIT_PROD_TYPE,
+        SI.STATUS, SI.SI_START_DT, SI.SI_END_DT FROM STANDING_INSTRUCTION SI  ,           
+        STANDING_INSTRUCTION_DEBIT SD,
+        STANDING_INSTRUCTION_CREDIT SC WHERE SI.SI_ID = SD.SI_ID AND SI.SI_ID = SC.SI_ID AND
+        STATUS_BY != #USER_ID:VARCHAR# AND SI.STATUS != 'DELETED'
+        AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SI.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SI.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (SI.AUTHORIZE_STATUS IS NULL OR 
+                SI.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+
+    <mapped-statement name="authorizeStandingInstruction" result-class="java.util.HashMap">
+        UPDATE STANDING_INSTRUCTION SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE SI_ID = #SI_ID:VARCHAR#  AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getDeletedStatus" result-class="java.util.LinkedHashMap" >
+        SELECT STATUS FROM STANDING_INSTRUCTION WHERE SI_ID = #SI_ID:VARCHAR# 	
+    </mapped-statement>
+    <mapped-statement name="setDeletedStatus" result-class="java.util.LinkedHashMap" >
+        UPDATE STANDING_INSTRUCTION
+        SET STATUS ='MODIFIED', AUTHORIZE_STATUS = 'AUTHORIZED' WHERE SI_ID = #SI_ID:VARCHAR# 	
+    </mapped-statement>
+        
+    <mapped-statement name="setRejSuspStatus" result-class="java.util.LinkedHashMap" >
+        UPDATE STANDING_INSTRUCTION
+        SET STATUS ='MODIFIED', AUTHORIZE_STATUS = 'AUTHORIZED', SUSPEND_DT = NULL WHERE SI_ID = #SI_ID:VARCHAR# 	
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatus" result-class="java.util.LinkedHashMap" >
+        UPDATE STANDING_INSTRUCTION
+        SET STATUS ='SUSPENDED' WHERE SI_ID = #SI_ID:VARCHAR# 	
+    </mapped-statement>
+        
+    <result-map name="getServiceTaxSiChargesResult" class="java.util.HashMap">
+        <property name="siFailureSt" column="SERVICE_TAX"/>
+        <property name="siComHd" column="SI_COM_HD"/>
+        <property name="failChargeHd" column="FAIL_CHARGE_HD"/>
+        <property name="serviceTaxHd" column="SERVICE_TAX_HD"/>
+    </result-map>
+        
+    <mapped-statement name="getServiceTaxSiCharges" result-map="getServiceTaxSiChargesResult" >
+        select SI_FAILURE_ST as SERVICE_TAX, SI_COM_HD, FAIL_CHARGE_HD, SERVICE_TAX_HD FROM si_charges_ac_hd
+    </mapped-statement>
+        
+    <mapped-statement name="updateSuspStatus" result-class="java.util.HashMap" >
+        UPDATE STANDING_INSTRUCTION SET NEXT_RUN_DT = #NEXT_DATE:DATE#,
+        EXEC_DT_IF_HOLIDAY = #HOL_EXEC_DATE:DATE# WHERE SI_ID = #SI_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateSuspStatusNull" result-class="java.util.HashMap" >
+        UPDATE STANDING_INSTRUCTION SET NEXT_RUN_DT = #NEXT_DATE:DATE#,
+        EXEC_DT_IF_HOLIDAY = NULL WHERE SI_ID = #SI_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateDepSIFlag" result-class="java.util.HashMap" >
+        update deposit_acinfo set STANDING_INSTRUCT = 'Y' where DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadProdMDS" result-class="java.util.HashMap">
+        SELECT RECEIPT_HEAD AC_HEAD,MSD.SCHEME_DESC AS AC_HEAD_DESC FROM MDS_ACCT_HEAD MAH,MDS_SCHEME_DETAILS MSD WHERE MAH.SCHEME_NAME = MSD.SCHEME_NAME AND 
+        STATUS!= 'DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND MAH.SCHEME_NAME = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getChittalListSIMDS" result-class="java.util.HashMap">
+        SELECT CHITTAL_NO ,MEMBER_NAME,INST_AMT,CHIT_START_DT   FROM MDS_APPLICATION WHERE STATUS!= 'DELETED' AND 
+        AUTHORIZE_STATUS='AUTHORIZED' AND SCHEME_NAME=#PROD_ID:VARCHAR#
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="CHITTAL_NO">
+                        UPPER(CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                    </isNotNull>
+                </isParameterPresent>
+                 <isParameterPresent>
+                    <isNotNull prepend="AND"      property="MEMBER_NAME">
+                        UPPER(MEMBER_NAME) LIKE UPPER('%$MEMBER_NAME$%')
+                    </isNotNull>
+                </isParameterPresent>
+                 <isParameterPresent>
+                    <isNotNull prepend="AND"      property="INST_AMT">
+                        UPPER(INST_AMT) LIKE UPPER('%$INST_AMT$%')
+                    </isNotNull>
+                </isParameterPresent>
+                 <isParameterPresent>
+                    <isNotNull prepend="AND"      property="CHIT_START_DT">
+                        UPPER(CHIT_START_DT) LIKE UPPER('%$CHIT_START_DT$%')
+                    </isNotNull>
+                </isParameterPresent>
+           </dynamic>
+        ORDER BY CHITTAL_NO
+ </dynamic-mapped-statement>
+        
+    <mapped-statement name="getBranchCode_ACT_MASTERMDS" result-class="java.util.HashMap">
+        SELECT BRANCH_CODE FROM MDS_APPLICATION WHERE CHITTAL_NO = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getProdID_OP_AC_PRODUCTMDS" result-class="java.util.HashMap">
+		SELECT RECEIPT_HEAD AC_HD_ID  FROM MDS_ACCT_HEAD MAH,MDS_SCHEME_DETAILS MSD WHERE MAH.SCHEME_NAME = MSD.SCHEME_NAME AND 
+		STATUS!= 'DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND MAH.SCHEME_NAME = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateStandingInstructionDaily" result-class="java.util.HashMap">
+		UPDATE STANDING_INSTRUCTION SI SET SI.LAST_RUN_DT=ADD_MONTHS(SI.LAST_RUN_DT,1),
+		SI.NEXT_RUN_DT=ADD_MONTHS(SI.NEXT_RUN_DT,1) WHERE SI.SI_ID=#SI_ID:VARCHAR#
+   </mapped-statement>
+   <mapped-statement name="getStandingInstalmentNumber" result-class="java.util.HashMap">
+        SELECT SI.INSTALMENT_YN,NVL(SI.INSTALMENT_NO,0) INSTALMENT_NO,PENDING_INST_YN FROM STANDING_INSTRUCTION SI WHERE 
+        SI.SI_ID =#SI_ID:VARCHAR# AND SI.AUTHORIZE_STATUS ='AUTHORIZED' AND SI.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getPrincipalforStanding" result-class="java.util.HashMap">
+        SELECT    SUM (NVL (principle, 0)) AS principle,
+        SUM (NVL (interest, 0)) AS interest, SUM (NVL (penal, 0)) AS penal,
+        SUM (NVL (expense, 0)) AS expense
+        FROM loan_trans_details
+        WHERE act_num = #ACT_NUM:VARCHAR# AND trans_dt BETWEEN (select LF.ACCT_OPEN_DT  from LOANS_FACILITY_DETAILS lf where LF.ACCT_NUM = #ACT_NUM:VARCHAR# 
+        and LF.AUTHORIZE_STATUS_1 = 'AUTHORIZED')
+        AND #CURR_DATE:DATE#
+        AND trn_code IN ('C*', 'OLG') GROUP BY act_num
+    </mapped-statement>
+    
+    <mapped-statement name="getSusupensLoanAccounts" result-class="java.util.HashMap">
+        SELECT SIDT.ACCT_NO SUSPENSE_ACT_NUM,SIDT.PROD_ID SUSPENSE_PROD_ID,SIDT.PROD_TYPE SUSPENSE_PROD_TYPE,
+        SIDT.AC_HD_ID SUSPENSE_ACT_HEAD,SIDT.BRANCH_CODE SUSPENSE_BRANCH_ID
+        FROM STANDING_INSTRUCTION_DEBIT SIDT,STANDING_INSTRUCTION_CREDIT SICT,STANDING_INSTRUCTION SIT,LOANS_FACILITY_DETAILS LFD
+        WHERE SICT.ACCT_NO = LFD.ACCT_NUM AND SIT.SI_ID = SICT.SI_ID AND SIT.SI_ID = SIDT.SI_ID AND LFD.ACCT_STATUS = 'NEW' 
+        AND LFD.ACCT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getOABalanceForStanding" result-class="java.util.HashMap">
+        select nvl(AB.AVAILABLE_BALANCE,0) - nvl(AB.MIN_BALANCE,0) as TOTAL_BALANCE from ALL_CUSTOMER_BALANCE ab
+        where AB.ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    
+</sql-map>

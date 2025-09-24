@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InvestmentsAmortizationTOMap">
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInvestmentShiftingTO" inline-parameters="true">
+        INSERT INTO   INVESTMENT_SHIFTING_DETAILS
+        (INVESTMENT_TYPE ,INVESTMENT_ID ,INVESTMENT_NAME ,BATCH_ID , SHFTING_DATE,VALUATION_RATE ,  STATUS ,STATUS_BY ,STATUS_DT,  OLD_CLASSIFICATION,  NEW_CLASSIFICATION, TRANS_DT, INITIATED_BRANCH)
+        VALUES (#investmentBehaves:VARCHAR#,#investmentID:VARCHAR#,#investmentName:VARCHAR#,#batchID:VRACHAR#,#shiftingDate:DATE#,
+        #valuationRate:NUMERIC#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#oldClassfication:VARCHAR#, #newClassfication:VARCHAR#, #transDT:DATE#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertInvestmentAmrotizationTO" inline-parameters="true">
+        INSERT INTO   AMORTIZATION_DETAILS
+        (INVESTMENT_TYPE ,INVESTMENT_ID ,INVESTMENT_NAME ,BATCH_ID ,   STATUS ,STATUS_BY ,STATUS_DT,
+        AMORTIZATION_DATE , UPTO_DATE,AMORTIZATION,TOTAL_PREMIUM )
+        VALUES (#investmentBehaves:VARCHAR#,#investmentID:VARCHAR#,#investmentName:VARCHAR#,#batchID:VRACHAR#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#transDate:DATE#,#uptoDate:DATE#, #amortizationAmount:NUMERIC#,
+        #premium:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInvestmentShiftingTO" inline-parameters="true">
+        UPDATE  INVESTMENT_SHIFTING_DETAILS SET
+        INVESTMENT_TYPE =#investmentBehaves:VARCHAR#,
+        INVESTMENT_ID =#investmentID:VARCHAR#,
+        INVESTMENT_NAME=#investmentName:VARCHAR# ,
+        BATCH_ID =#batchID:VRACHAR# ,
+        SHFTING_DATE=#shiftingDate:DATE#,
+        VALUATION_RATE =#valuationRate:NUMERIC#,
+        STATUS=#status:VARCHAR#  ,
+        STATUS_BY=#statusBy:VARCHAR#  ,    
+        STATUS_DT=#statusDt:DATE# ,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDt:DATE#,
+        OLD_CLASSIFICATION=#oldClassfication:VARCHAR#,  
+        NEW_CLASSIFICATION=#newClassfication:VARCHAR#
+        WHERE INVESTMENT_NAME=#investmentName:VARCHAR# AND SHFTING_DATE=#shiftingDate:DATE# AND INVESTMENT_TYPE =#investmentBehaves:VARCHAR# AND 
+        INVESTMENT_ID =#investmentID:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+     	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareProductLoanTO object (JavaBean) properties -->
+    <result-map name="getInvestmentsAmortizationTOResult" class="com.see.truetransact.transferobject.investments.InvestmentsAmortizationTO">
+        <property name="investmentBehaves" column="INVESTMENT_TYPE"/>
+        <property name="investmentID" column="INVESTMENT_ID"/>
+        <property name="investmentName" column="INVESTMENT_NAME"/>
+        <property name="batchID" column="BATCH_ID"/>
+        <property name="shiftingDate" column="SHFTING_DATE"/>
+        <property name="valuationRate" column="VALUATION_RATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="oldClassfication" column="OLD_CLASSIFICATION"/>
+        <property name="newClassfication" column="NEW_CLASSIFICATION"/>
+    </result-map>
+    <mapped-statement name="getSelectInvestmentsAmortization" result-class="java.util.LinkedHashMap" >
+        SELECT BATCH_ID , INVESTMENT_TYPE,INVESTMENT_PROD_ID,INVESTMENT_NAME,TRAN_CODE,NO_OF_UNITS_PURCHASE AS NO_OF_UNITS,STATUS from INVESTMENT_SHIFTING_DETAILS
+        WHERE  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+    </mapped-statement>
+    <mapped-statement name="getSelectInvestmentsAmortizationTO" result-map="getInvestmentsAmortizationTOResult" >
+        SELECT * FROM INVESTMENT_SHIFTING_DETAILS                
+        WHERE  BATCH_ID=#value:VARCHAR# AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+    </mapped-statement>
+    <mapped-statement name="authorizeInvestmentShifting" inline-parameters="true">
+        UPDATE INVESTMENT_SHIFTING_DETAILS  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE  SHFTING_DATE = #SHFTING_DATE:DATE# AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+    </mapped-statement>
+       
+    <dynamic-mapped-statement name="getInvestmentsAmortizationAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT SHFTING_DATE , INVESTMENT_TYPE,INVESTMENT_ID,INVESTMENT_NAME,OLD_CLASSIFICATION,NEW_CLASSIFICATION,BATCH_ID,STATUS from INVESTMENT_SHIFTING_DETAILS SCD
+        WHERE  STATUS NOT IN ('DELETED')   AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY INVESTMENT_ID
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectInvestmentShifting" result-class="java.util.LinkedHashMap" >
+        SELECT SHFTING_DATE , INVESTMENT_TYPE,INVESTMENT_ID,INVESTMENT_NAME,OLD_CLASSIFICATION,NEW_CLASSIFICATION,BATCH_ID,STATUS from INVESTMENT_SHIFTING_DETAILS
+        WHERE  STATUS NOT IN ('DELETED')   AND   AUTHORIZE_STATUS IS NULL
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_TYPE" >
+                    INVESTMENT_TYPE = #INVESTMENT_TYPE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_PROD_ID" >
+                    INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AUTHORIZE_STATUS" >
+                    (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NOT NULL)
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectInvestmentShiftingTO" result-map="getInvestmentsAmortizationTOResult" >
+        SELECT * FROM INVESTMENT_SHIFTING_DETAILS                 
+        WHERE  SHFTING_DATE=#SHFTING_DATE:DATE# AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#  AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+    </mapped-statement>
+        
+    <mapped-statement name="deleteInvestmentShiftingTO" inline-parameters="true">
+        UPDATE INVESTMENT_SHIFTING_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE  SHFTING_DATE = #shiftingDate:DATE# AND INVESTMENT_NAME=#investmentName:VARCHAR#
+        AND  STATUS NOT IN ('DELETED') 
+    </mapped-statement>
+    <mapped-statement name="shiftingInvestmentClassification" inline-parameters="true">
+        UPDATE INVESTMENT_MASTER SET CLASSIFICATION=#CLASSIFICATION:VARCHAR#
+        WHERE INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+    </mapped-statement>
+          
+          
+    <dynamic-mapped-statement name="getSelectInvestmentForAmortization" result-class="java.util.LinkedHashMap" >
+        select INVESTMENT_TYPE,INVESTMENT_PROD_ID ,INVESTMENT_NAME ,INVESTMENT_ISSUE_DT,INVESTMENT_MATURITY_DT,INVESTMENT_FACE_VALUE,AVILABLE_NO_OF_UNITS
+        ,NVL(TOTAL_PREMIUM_COLLECTED,0) AS TOTAL_PREMIUM_COLLECTED ,NVL(TOTAL_PREMIUM_PAID,0) AS TOTAL_PREMIUM_PAID ,
+        INVESTMENT_OUTSTANDING_AMOUNT,NVL(TOTAL_PREMIUM_PAID,0)-NVL(TOTAL_PREMIUM_COLLECTED,0) AS PENDING_PREMIUM ,INVESTMENT_STATUS
+        from investment_master  IM WHERE   ( INVESTMENT_TYPE,INVESTMENT_PROD_ID) IN(SELECT INVESTMENT_TYPE,INVESTMENT_PROD_ID FROM INVESTMENT_CONF_DETAILS)
+        AND   NVL(TOTAL_PREMIUM_PAID,0)-NVL(TOTAL_PREMIUM_COLLECTED,0) &gt;0 AND
+        CLASSIFICATION='HFM' AND (INVESTMENT_STATUS!='CLOSED' OR INVESTMENT_STATUS IS NULL)
+        AND IM.INVESTMENT_NAME NOT IN (SELECT INVESTMENT_NAME from AMORTIZATION_DETAILS where 
+        UPTO_DATE=#UPTO_DATE:DATE#)
+        <dynamic>  
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_TYPE" >
+                    INVESTMENT_TYPE = #INVESTMENT_TYPE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_PROD_ID" >
+                    INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_NAME" >
+                    INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AUTHORIZE_STATUS" >
+                    (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NOT NULL)
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+        
+        
+    <mapped-statement name="getLastFinancialYearend" result-class="java.util.LinkedHashMap" >
+        select LAST_FINANCIAL_YEAR_END from PARAMETERS
+    </mapped-statement>
+        
+      
+    <mapped-statement name="updateInvestmentAmortzation" inline-parameters="true"> 
+        UPDATE INVESTMENT_MASTER SET AMORTIZATION_AMOUNT=NVL(AMORTIZATION_AMOUNT,0)+#AMORTIZATION_AMOUNT:NUMERIC#
+        WHERE INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR# AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+    </mapped-statement>
+       
+
+</sql-map>

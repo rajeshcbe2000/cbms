@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map-config
+PUBLIC "-//iBATIS.com//DTD SQL Map Config 1.0//EN"
+"http://www.ibatis.com/dtd/sql-map-config.dtd">
+
+<!-- Always ensure to use the correct XML header as above! -->
+<sql-map-config>
+
+	<!-- The properties (name=value) in the file specified here can be used placeholders in this config
+	file (e.g. "${driver}". The file is relative to the classpath and is completely optional. -->
+	<properties resource="com/see/truetransact/serverutil/SqlMapConfig.properties" />
+
+	<!-- These settings control SqlMap configuration details, primarily to do with transaction
+	management. They are all optional (more detail later in this document). -->
+	<settings maxExecute="300" maxExecutePerConnection="1" maxTransactions="10" statementCacheSize="75"/>
+ 
+	<!-- Configure a datasource to use with this SQL Map using Jakarta DBCP
+	notice the use of the properties from the above resource -->
+	<datasource name="basic" default = "true" factory-class="com.ibatis.db.sqlmap.datasource.DbcpDataSourceFactory">
+		<property name="JDBC.Driver" value="${driver}"/>
+		<property name="JDBC.ConnectionURL" value="${url}"/>
+		<property name="JDBC.Username" value="${username}"/>
+		<property name="JDBC.Password" value="${password}"/>
+		<property name="Pool.MaximumActiveConnections" value="3000"/>
+		<property name="Pool.MaximumIdleConnections" value="5"/>
+		<property name="Pool.MaximumWait" value="60000"/>
+	</datasource>
+
+	<!-- Identify all SQL Map XML files to be loaded by this SQL map. Notice the paths
+	are relative to the classpath. For now, we only have one� -->
+        
+        <!-- Batch Process Maps -->
+        <sql-map resource="com/see/truetransact/transferobject/batchprocess/OperativeAccountBatchMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/batchprocess/supporting/standinginstruction/StandingInstructionBatchMap.xml"/>
+</sql-map-config>

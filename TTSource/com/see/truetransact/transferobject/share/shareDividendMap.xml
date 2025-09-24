@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="shareDividendMap">
+      
+      <!-- View all Share account info Queries  -->
+    
+             <!-- ====================================================SHARE DIVIDEND CALC STARTS FROM HERE ================================= -->
+             
+    <mapped-statement name="insertShareDividendCalcMaster" inline-parameters="true">
+        INSERT INTO SHARE_DIVIDEND_CALC_MASTER
+        (DIVIDEND_CALC_ID, SHARE_CLASS, DEBIT_GL,PAYABLE_GL,FROM_PERIOD,TO_PERIOD,DIVIDEND_PERCENT,RESOLUTION_NO,RESOLUTION_DATE,
+        REMARKS,TOTAL_DIV_AMOUNT,STATUS,STATUS_BY,STATUS_DATE,CREATED_DT,CREATED_BY,BRANCH_CODE
+        ) VALUES (
+        #dividendID:VARCHAR#, #cboShareClass:VARCHAR#, #txtDebitGl:VARCHAR#,#txtPayableGl:VARCHAR#,#tdtFromPeriod:DATE#,
+        #tdtToPeriod:DATE#,#txtDividendPercent:VARCHAR#,#txtResolutionNo:VARCHAR#,#tdtResolutionDate:DATE#,
+        #txtRemarks:VARCHAR#,#txtTotalAmount:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#createdDt:DATE#,
+        #createdBy:VARCHAR#,#branchCode:VARCHAR#)
+                
+    </mapped-statement>
+        
+    <result-map name="getShareDividendCalcTOResult" class="com.see.truetransact.transferobject.share.ShareDividendCalculationTO">
+        <property name="dividendID" column="DIVIDEND_CALC_ID"/>
+        <property name="cboShareClass" column="SHARE_CLASS"/>
+        <property name="txtDebitGl" column="DEBIT_GL"/>
+        <property name="txtPayableGl" column="PAYABLE_GL"/>
+        <property name="tdtFromPeriod" column="FROM_PERIOD"/>
+        <property name="tdtToPeriod" column="TO_PERIOD"/>
+        <property name="txtDividendPercent" column="DIVIDEND_PERCENT"/>
+        <property name="txtResolutionNo" column="RESOLUTION_NO"/>
+        <property name="tdtResolutionDate" column="RESOLUTION_DATE"/>
+        <property name="txtRemarks" column="REMARKS"/>
+        <property name="txtTotalAmount" column="TOTAL_DIV_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+                
+    </result-map>
+    
+    <mapped-statement name="getShareDetailsForDivCalc" result-class="java.util.LinkedHashMap">
+        SELECT DIVIDEND_CALC_TYPE,DIVIDEND_ROUND_OFF,MIN_DIVIDEND_AMOUNT,DIVIDEND_CALC_FREQUENCY FROM SHARE_CONF_DETAILS
+        WHERE  SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getShareDividendMemberDetails" result-class="java.util.LinkedHashMap">
+        SELECT SA.SHARE_ACCT_NO,SA.CREATED_DT , CU.CUST_ID,
+        <!--DECODE(CU.MEMBERSHIP_NO,NULL , sa.share_acct_no,CU.MEMBERSHIP_NO) MEMBERSHIP_NO,-->
+        CASE WHEN SA.ACCT_STATUS = 'CLOSED' THEN
+             SA.SHARE_ACCT_NO
+         ELSE    
+           DECODE (cu.membership_no,
+                 NULL, sa.share_acct_no,
+                 cu.membership_no
+                )
+         END AS membership_no,
+        DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_PAY_MODE,DIVIDEND_CREDIT_AC,
+        get_cust_name(cu.cust_id) AS NAME FROM SHARE_ACCT SA,CUSTOMER CU WHERE
+        SA.CREATED_DT &lt;= #tdtToPeriod:DATE# AND
+        SA.CUST_ID = CU.CUST_ID AND CU.CUSTOMER_STATUS !='RETIRED' AND
+        SA.SHARE_TYPE = #cboShareClass:VARCHAR# AND (SA.AUTHORIZE='AUTHORIZED' OR sa.authorize IS NULL) and sa.share_acct_no is not null  
+        order by length(sa.share_acct_no),sa.share_acct_no
+    </mapped-statement>
+        
+    <mapped-statement name="checkIfShareClosed" result-class="java.util.LinkedHashMap">
+      <!--  SELECT DISTINCT REP_SHARE_SCHEDULE.actnumber,
+        REP_SHARE_SCHEDULE.FANME ,
+        SHARE_CUST.CUST_ID,
+        SHARE_CUST.SHARE_VALUE,
+        SHARE_CUST.STATUS_DT AS CLOSING_DATE
+        FROM REP_SHARE_SCHEDULE,
+        (SELECT SUM(REP_SHARE_SCHEDULE.SHARE_VALUE) AS TOTAL_AMOUNT,ACTNUMBER FROM
+        REP_SHARE_SCHEDULE WHERE SHARE_NO_FROM ='WITHDRAWAL' GROUP BY ACTNUMBER) WITH_TABLE ,
+        (SELECT SUM(REP_SHARE_SCHEDULE.SHARE_VALUE) AS TOTAL_AMOUNT,ACTNUMBER FROM 
+        REP_SHARE_SCHEDULE WHERE SHARE_NO_FROM ='ADD' GROUP BY ACTNUMBER) ADD_TABLE,
+        (SELECT CUST_ID,SHARE_ACCT_DETAILS.STATUS_DT,SHARE_ACCT_DETAILS.SHARE_ACCT_NO ,MAX(SHARE_ACCT_DET_NO),SHARE_ACCT_DETAILS.SHARE_VALUE FROM SHARE_ACCT_DETAILS,SHARE_ACCT WHERE
+        SHARE_ACCT_DETAILS.SHARE_NO_FROM = 'WITHDRAWAL' AND
+        SHARE_ACCT_DETAILS.SHARE_ACCT_NO =SHARE_ACCT.SHARE_ACCT_NO AND   SHARE_ACCT.ACCT_STATUS = 'CLOSED'
+        GROUP BY  SHARE_ACCT_DETAILS.SHARE_ACCT_NO,SHARE_ACCT_DETAILS.STATUS_DT,CUST_ID,SHARE_ACCT_DETAILS.SHARE_VALUE ) SHARE_CUST
+        WHERE REP_SHARE_SCHEDULE.ACTNUMBER = WITH_TABLE.ACTNUMBER  AND
+        WITH_TABLE.TOTAL_AMOUNT != ADD_TABLE.TOTAL_AMOUNT AND
+        SHARE_CUST.SHARE_ACCT_NO = REP_SHARE_SCHEDULE.ACTNUMBER AND
+        ADD_TABLE.ACTNUMBER = WITH_TABLE.ACTNUMBER AND
+        SHARE_CUST.STATUS_DT &lt;= #FROM_PERIOD:DATE# AND
+        REP_SHARE_SCHEDULE.ACTNUMBER =  #SHARE_ACCT_NO:VARCHAR#-->
+        SELECT SA.SHARE_FEE,SHARE_ACCT_NO FROM SHARE_ACCT SA WHERE  SA.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR# AND SA.ACCT_STATUS = 'CLOSED'
+        AND SA.AUTHORIZE = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAmtAsonFrmPeriod" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT ACTNUMBER,(NVL((SELECT SUM(REP_SHARE_SCHEDULE.SHARE_VALUE) AS TOTAL_AMOUNT FROM 
+        REP_SHARE_SCHEDULE,SHARE_ACCT SA WHERE SHARE_NO_FROM ='ADD' AND
+        REP_SHARE_SCHEDULE.SHARE_CERT_ISSUE_DT &lt;= #FROM_PERIOD:DATE# AND
+        SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND
+        SA.SHARE_ACCT_NO = ACTNUMBER AND
+        ACTNUMBER = #SHARE_ACCT_NO:VARCHAR# AND
+        (SA.AUTHORIZE='AUTHORIZED' OR SA.AUTHORIZE IS NULL)
+        GROUP BY ACTNUMBER),'0') -
+        NVL((SELECT SUM(REP_SHARE_SCHEDULE.SHARE_VALUE) AS TOTAL_AMOUNT FROM 
+        REP_SHARE_SCHEDULE,SHARE_ACCT SA WHERE SHARE_NO_FROM ='WITHDRAWAL' AND
+        REP_SHARE_SCHEDULE.SHARE_CERT_ISSUE_DT &lt;= #FROM_PERIOD:DATE# AND
+        SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND
+        SA.SHARE_ACCT_NO = ACTNUMBER AND
+        ACTNUMBER = #SHARE_ACCT_NO:VARCHAR# AND
+        (SA.AUTHORIZE='AUTHORIZED' OR SA.AUTHORIZE IS NULL)
+        GROUP BY ACTNUMBER),'0') + NVL((SELECT SUM(REP_SHARE_SCHEDULE.SHARE_VALUE) AS TOTAL_AMOUNT FROM 
+        REP_SHARE_SCHEDULE,SHARE_ACCT SA WHERE SHARE_NO_FROM ='DIFFERENTIAL' AND
+        REP_SHARE_SCHEDULE.SHARE_CERT_ISSUE_DT  &lt;= #FROM_PERIOD:DATE# AND
+        SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND
+        SA.SHARE_ACCT_NO = ACTNUMBER AND
+        ACTNUMBER = #SHARE_ACCT_NO:VARCHAR# AND
+        (SA.AUTHORIZE='AUTHORIZED' OR SA.AUTHORIZE IS NULL)
+        GROUP BY ACTNUMBER),'0')) AS BALANCE_AS_ON_START FROM  REP_SHARE_SCHEDULE
+        WHERE ACTNUMBER = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getCustomerShareBetweenPeriodDaily" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SHARE_ACCT_DETAILS WHERE  
+        SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#  AND STATUS_DT BETWEEN
+        #FROM_PERIOD:DATE# AND #TO_PERIOD:DATE#
+        and AUTHORIZE IN ('AUTHORIZED')
+    </mapped-statement>
+        
+    <mapped-statement name="insertShareDivCalcMasterTO" inline-parameters="true">
+        INSERT INTO SHARE_DIVIDEND_CALC_DETAILS
+        (DIVIDEND_CALC_ID, MEMBER_NO, NAME, DIV_AMOUNT, SI_ACCOUNT_NO, 
+        PRODUCT_TYPE, PRODUCT_ID, DIVIDEND_PAID_STATUS,AUTHORIZED_STATUS)
+        Values
+        (#dividendCalcID:VARCHAR#, #memberNO:VARCHAR#,#name:VARCHAR#,#dividendAmt:VARCHAR#, #siAcctNo:VARCHAR#, 
+        #prodType:VARCHAR#,#prodID:VARCHAR#, #dividendPaidStatus:VARCHAR#,#authStatus:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="getShareDetailsForDivPayment" result-class="java.util.LinkedHashMap">
+        SELECT SCD.*,SCM.PAYABLE_GL,SCM.FROM_PERIOD,SCM.TO_PERIOD,cad.AREA,cad.STREET,cad.PIN_CODE,SCM.BRANCH_CODE FROM SHARE_DIVIDEND_CALC_DETAILS SCD,
+        SHARE_DIVIDEND_CALC_MASTER SCM,cust_addr cad,customer c,share_acct sa
+        WHERE SCD.DIVIDEND_CALC_ID = SCM.DIVIDEND_CALC_ID AND
+        cad.ADDR_TYPE = c.COMM_ADDR_TYPE AND
+        SCM.SHARE_CLASS = #SHARE_CLASS:VARCHAR# AND
+        SCD.DIVIDEND_PAID_STATUS = 'UNPAID' AND
+        (SCD.AUTHORIZED_STATUS IS NULL OR SCD.AUTHORIZED_STATUS='UNAUTHORIZED') AND PAYMENT_ID IS NULL AND
+        SCM.TO_PERIOD &gt;= #TO_PERIOD:DATE# AND cad.CUST_ID=c.CUST_ID 
+        and SA.SHARE_ACCT_NO = member_no
+        and SA.CUST_ID = C.CUST_ID and
+        <!--and c.MEMBERSHIP_NO=MEMBER_NO and-->
+        MEMBER_NO = #MEMBER_NO:VARCHAR# ORDER BY SCM.TO_PERIOD
+    </mapped-statement>
+
+    <mapped-statement name="getShareDetailsForDivPaymentPeriod" result-class="java.util.LinkedHashMap">
+        SELECT max(SCM.TO_PERIOD) AS TO_PERIOD  FROM SHARE_DIVIDEND_CALC_DETAILS SCD, 
+        SHARE_DIVIDEND_CALC_MASTER SCM WHERE SCD.DIVIDEND_CALC_ID = SCM.DIVIDEND_CALC_ID AND SCM.SHARE_CLASS = #SHARE_CLASS:VARCHAR# AND 
+        SCD.DIVIDEND_PAID_STATUS = 'UNPAID' AND (SCD.AUTHORIZED_STATUS IS NULL OR SCD.AUTHORIZED_STATUS='UNAUTHORIZED')  AND MEMBER_NO = #MEMBER_NO:VARCHAR# 
+    </mapped-statement>
+     <mapped-statement name="getShareDetailsForDivPaymentForClosed" result-class="java.util.LinkedHashMap">
+        SELECT SCD.*,SCM.PAYABLE_GL,SCM.FROM_PERIOD,SCM.TO_PERIOD,cad.AREA,cad.STREET,cad.PIN_CODE,SCM.BRANCH_CODE FROM SHARE_DIVIDEND_CALC_DETAILS SCD,
+        SHARE_DIVIDEND_CALC_MASTER SCM,cust_addr cad,customer c,SHARE_ACCT sa
+        WHERE SCD.DIVIDEND_CALC_ID = SCM.DIVIDEND_CALC_ID AND
+        cad.ADDR_TYPE = c.COMM_ADDR_TYPE AND
+        SCM.SHARE_CLASS = #SHARE_CLASS:VARCHAR# AND
+        SCD.DIVIDEND_PAID_STATUS = 'UNPAID' AND
+        (SCD.AUTHORIZED_STATUS IS NULL OR SCD.AUTHORIZED_STATUS='UNAUTHORIZED') AND PAYMENT_ID IS NULL AND
+        SCM.TO_PERIOD &gt;= #TO_PERIOD:DATE# AND cad.CUST_ID=c.CUST_ID and SA.SHARE_ACCT_NO = member_no and C.CUST_ID = SA.CUST_ID AND
+        MEMBER_NO = #MEMBER_NO:VARCHAR# ORDER BY SCM.TO_PERIOD
+    </mapped-statement>
+    <mapped-statement name ="getUnpaidShareDetails" result-class="java.util.LinkedHashMap">
+        SELECT NAME FROM SHARE_DIVIDEND_CALC_DETAILS SDCD WHERE SDCD.MEMBER_NO = #MEMBER_NO:VARCHAR# AND  DIVIDEND_PAID_STATUS = 'UNPAID'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name = "getSelectMemberUnpaidDividend" result-class = "java.util.LinkedHashMap">
+        <!--SELECT DISTINCT MEMBER_NO,NAME FROM SHARE_DIVIDEND_CALC_DETAILS SCD,SHARE_DIVIDEND_CALC_MASTER SCM WHERE   
+        SCM.SHARE_CLASS = #SHARE_CLASS:VARCHAR# AND
+        DIVIDEND_PAID_STATUS = 'UNPAID'-->
+        
+        SELECT DISTINCT MEMBER_NO,NAME FROM SHARE_DIVIDEND_CALC_DETAILS SCD,SHARE_DIVIDEND_CALC_MASTER SCM ,SHARE_ACCT SA WHERE
+        SCM.SHARE_CLASS = #SHARE_CLASS:VARCHAR# AND SA.SHARE_ACCT_NO = SCD.MEMBER_NO AND <!--SA.STATUS != 'CLOSED' AND -->        
+        DIVIDEND_PAID_STATUS = 'UNPAID'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MEMBER_NUMBER">
+                    MEMBER_NO = #MEMBER_NUMBER:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLOSED">
+                  <!--SA.STATUS = 'CLOSED'-->
+                  SA.ACCT_STATUS = 'CLOSED'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NOTCLOSED">
+                  <!--SA.STATUS != 'CLOSED'-->
+                  SA.ACCT_STATUS != 'CLOSED'
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="NAME">
+                    UPPER(NAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMBER_NO">
+                    UPPER(MEMBER_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name ="getselectShareAcct" result-class = "java.util.LinkedHashMap">
+        SELECT S.SHARE_ACCT_NO AS MEMBER_NO,  s.ACCT_STATUS, C.FNAME AS NAME,S.EMP_REFNO_NEW as EMPNO FROM SHARE_ACCT S,Customer C where S.CUST_ID=C.CUST_ID 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MEMBER_NO">
+                    S.SHARE_ACCT_NO LIKE '%$MEMBER_NO$%'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_STATUS">
+                    S.ACCT_STATUS=#ACCT_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NAME">
+                    UPPER(C.FNAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="EMPNO">
+                    UPPER(S.EMP_REFNO_NEW) LIKE UPPER('%$EMP_REFNO_NEW$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>  
+          
+          
+    <mapped-statement name="getCustId" result-class="java.util.HashMap">
+      SELECT C.CUST_ID   FROM CUSTOMER C WHERE C.MEMBERSHIP_NO=#MEMBERSHIP_NO:VARCHAR# AND C.STATUS !='DELETED' AND C.STATUS !='CLOSED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateDividendDetails" result-class="java.util.LinkedHashMap" >
+        UPDATE SHARE_DIVIDEND_CALC_DETAILS SET 
+        AUTHORIZED_STATUS = 'UNAUTHORIZED',
+        PAYMENT_ID = #PAYMENT_ID:VARCHAR#,
+        PAYMENT_BRANCH_ID =#PAYMENT_BRANCH_ID:VARCHAR# 
+        WHERE MEMBER_NO = #MEMBER_NO:VARCHAR# AND
+        DIVIDEND_CALC_ID = #DIVIDEND_CALC_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDividendPaymentTransferAuthMode" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE MAX(AT.TRANS_ID)
+         END AS TRANS_ID,PAYMENT_ID,MEMBER_NO,NAME,SUM(cast(DIV_AMOUNT as numeric)) AS TOTAL_AMOUNT,SHARE_CLASS,AT.SINGLE_TRANS_ID as single_trans_id
+        FROM SHARE_DIVIDEND_CALC_DETAILS D,SHARE_DIVIDEND_CALC_MASTER C,ALL_TRANS AT
+        WHERE AUTHORIZED_STATUS = 'UNAUTHORIZED' 
+        AND AT.status_by != #USER_ID:VARCHAR#
+        AND PAYMENT_BRANCH_ID=#BRANCH_CODE# 
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.LINK_BATCH_ID = D.PAYMENT_ID
+        AND AT.PAYMENT_STATUS  IS  NULL
+        AND AT.STATUS = 'CREATED'
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.Ac_hd_id = c.payable_gl
+        AND AT.INSTRUMENT_NO1 =  d.dividend_calc_id 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND C.DIVIDEND_CALC_ID = D.DIVIDEND_CALC_ID
+        GROUP BY MEMBER_NO,NAME,SHARE_CLASS,PAYMENT_ID,single_trans_id,AT.trans_mode,AT.batch_id
+        ORDER BY PAYMENT_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getDividendPaymentAuthWithOutCashier" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE MAX(AT.TRANS_ID)
+         END AS TRANS_ID,PAYMENT_ID,MEMBER_NO,NAME,SUM(cast(DIV_AMOUNT as numeric)) AS TOTAL_AMOUNT,SHARE_CLASS,AT.SINGLE_TRANS_ID as single_trans_id
+        FROM SHARE_DIVIDEND_CALC_DETAILS D,SHARE_DIVIDEND_CALC_MASTER C,ALL_TRANS AT
+        WHERE AUTHORIZED_STATUS = 'UNAUTHORIZED' 
+        AND AT.status_by != #USER_ID:VARCHAR#
+        AND PAYMENT_BRANCH_ID=#BRANCH_CODE# 
+        AND AT.LINK_BATCH_ID = D.PAYMENT_ID
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.STATUS = 'CREATED'
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.Ac_hd_id = c.payable_gl
+         AND AT.INSTRUMENT_NO1 =  d.dividend_calc_id 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND C.DIVIDEND_CALC_ID = D.DIVIDEND_CALC_ID
+        GROUP BY MEMBER_NO,NAME,SHARE_CLASS,PAYMENT_ID,single_trans_id,AT.trans_mode,AT.batch_id
+        ORDER BY PAYMENT_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getShareDetailsForDivPaymentAuthMode" result-class="java.util.LinkedHashMap">
+        SELECT SCD.*,SCM.PAYABLE_GL,SCM.FROM_PERIOD,SCM.TO_PERIOD,SCM.BRANCH_CODE FROM SHARE_DIVIDEND_CALC_DETAILS SCD,
+        SHARE_DIVIDEND_CALC_MASTER SCM
+        WHERE SCD.DIVIDEND_CALC_ID = SCM.DIVIDEND_CALC_ID AND
+        SCM.SHARE_CLASS = #SHARE_CLASS:VARCHAR# AND
+        SCD.DIVIDEND_PAID_STATUS = 'UNPAID' AND
+        SCD.AUTHORIZED_STATUS = 'UNAUTHORIZED' AND
+        MEMBER_NO = #MEMBER_NO:VARCHAR# AND PAYMENT_ID=#PAYMENT_ID:VARCHAR# ORDER BY SCD.DIVIDEND_CALC_ID
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="authorizeShareDividendDetails"  result-class="java.util.HashMap">
+        UPDATE SHARE_DIVIDEND_CALC_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        <dynamic>
+            <isParameterPresent>
+                <isNull property="PAYMENT_ID">
+                    PAYMENT_ID = NULL,
+                </isNull>
+            </isParameterPresent>
+        </dynamic> 
+        DIVIDEND_PAID_STATUS = #PAID_STATUS:VARCHAR#,
+        PAYMENT_BRANCH_ID=#PAYMENT_BRANCH_ID:VARCHAR#
+        WHERE MEMBER_NO = #MEMBER_NO:VARCHAR# AND
+        AUTHORIZED_STATUS = 'UNAUTHORIZED' AND PAYMENT_ID IS NOT NULL
+    </dynamic-mapped-statement>
+    <mapped-statement name="ShareDivCheckIfAuthPending" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SHARE_DIVIDEND_CALC_DETAILS
+        WHERE DIVIDEND_PAID_STATUS = 'UNPAID' AND
+        AUTHORIZED_STATUS = 'UNAUTHORIZED' AND
+        MEMBER_NO = #MEMBER_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAmount" result-class="java.util.HashMap">        
+        SELECT A.NO_OF_SHARES-B.NO_OF_SHARES AS NO_OF_SHARES, A.TOTAL_SHARE_AMOUNT-B.TOTAL_SHARE_AMOUNT AS TOTAL_SHARE_AMOUNT FROM
+        (SELECT NVL(SUM(SAD.NO_OF_SHARES),0) AS NO_OF_SHARES,
+        NVL(SUM(cast(SAD.SHARE_VALUE as numeric)),0) AS TOTAL_SHARE_AMOUNT FROM 
+        SHARE_ACCT_DETAILS SAD,SHARE_ACCT SA
+        WHERE  SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO 
+        <!--AND SHARE_NO_FROM='ADD' -->
+        AND SHARE_NO_FROM IN ('ADD','DIFFERENTIAL')
+        AND SAD.STATUS !='DELETED' AND SAD.AUTHORIZE = 'AUTHORIZED' AND 
+        SA.CUST_ID=(select C.CUST_ID FROM CUSTOMER C  WHERE C.MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#)) A,
+        ( SELECT NVL(SUM(SAD.NO_OF_SHARES),0) AS NO_OF_SHARES,
+        NVL(SUM(cast(SAD.SHARE_VALUE as numeric)),0) AS TOTAL_SHARE_AMOUNT FROM 
+        SHARE_ACCT_DETAILS SAD,SHARE_ACCT SA
+        WHERE  SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO AND SHARE_NO_FROM='WITHDRAWAL' AND
+        SAD.STATUS !='DELETED' AND SAD.AUTHORIZE = 'AUTHORIZED' AND 
+        SA.CUST_ID=(select C.CUST_ID FROM CUSTOMER C WHERE C.MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#) ) B
+    </mapped-statement>
+          
+    <mapped-statement name="getCashDetailsForShareDevident" result-class="java.util.HashMap">
+        SELECT BATCH_DT,TRANS_AMT FROM REMIT_ISSUE_TRANS RMT WHERE BATCH_ID=
+        (SELECT  MAX(PAYMENT_ID) FROM SHARE_DIVIDEND_CALC_DETAILS WHERE MEMBER_NO=#MEMBER_NO:VARCHAR#
+        AND AUTHORIZED_STATUS!='REJECTED' OR AUTHORIZED_STATUS!=NULL and PAYMENT_ID!=NULL) AND STATUS!='DELETED'  ORDER BY BATCH_DT
+    </mapped-statement>
+                
+    <mapped-statement name="updateShareDivDetails"  result-class="java.util.HashMap">
+        UPDATE SHARE_DIVIDEND_CALC_DETAILS SET PAYMENT_ID = #PAYMENT_ID:VARCHAR#
+        WHERE DIVIDEND_CALC_ID = #DIVIDEND_CALC_ID:VARCHAR# and MEMBER_NO = #MEMBER_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name ="checkCustomerRetirementAge" result-class="java.util.LinkedHashMap">
+       SELECT RETIREMENT_DT,MEMBERSHIP_NO FROM CUSTOMER  WHERE  MEMBERSHIP_NO =#MEMBER_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name ="getDividendDetailsForTransfer" result-class="java.util.LinkedHashMap">
+      SELECT   scd.member_no, scd.NAME,
+         (COUNT (scd.div_amount) || ' Fin Years') AS div_periods_of,
+         SUM (CAST(scd.div_amount AS NUMERIC)) AS tot_div_amount,
+         MIN (scm.from_period) AS from_period,
+         MAX (scm.to_period) AS to_period
+    FROM share_dividend_calc_details scd,
+         share_dividend_calc_master scm,
+         share_acct sa
+   WHERE scd.dividend_calc_id = scm.dividend_calc_id
+     AND sa.share_acct_no = member_no
+     AND scm.share_class = #SHARE_CLASS:VARCHAR#
+     AND scd.dividend_paid_status = 'UNPAID'
+     AND (   scd.authorized_status IS NULL
+          OR scd.authorized_status = 'UNAUTHORIZED'
+         )
+     AND payment_id IS NULL
+     AND sa.dividend_credit_ac IS NOT NULL
+    GROUP BY scd.member_no, scd.NAME
+    ORDER BY TO_NUMBER (SUBSTR (scd.member_no, 3, 6))
+    </mapped-statement>
+    
+    <mapped-statement name ="getDividendAccountDetails" result-class="java.util.LinkedHashMap">
+        SELECT DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_CREDIT_AC,DIVIDEND_PAY_MODE
+        FROM SHARE_ACCT WHERE SHARE_ACCT_NO = #MEMBER_NO:VARCHAR#
+        AND  DIVIDEND_PAY_MODE = 'TRANSFER'
+    </mapped-statement>
+   
+      <dynamic-mapped-statement  name="getShareDividendDetails" result-class="java.util.LinkedHashMap">
+        SELECT SA.SHARE_ACCT_NO,SA.CREATED_DT , CU.CUST_ID,
+        <!--DECODE(CU.MEMBERSHIP_NO,NULL , sa.share_acct_no,CU.MEMBERSHIP_NO) MEMBERSHIP_NO,-->
+        CASE WHEN SA.ACCT_STATUS = 'CLOSED' THEN
+             SA.SHARE_ACCT_NO
+         ELSE    
+           DECODE (cu.membership_no,
+                 NULL, sa.share_acct_no,
+                 cu.membership_no
+                )
+         END AS membership_no,
+        DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_PAY_MODE,DIVIDEND_CREDIT_AC,
+        get_cust_name(cu.cust_id) AS NAME FROM SHARE_ACCT SA,CUSTOMER CU WHERE
+        SA.CREATED_DT &lt;= #tdtToPeriod:DATE# AND
+        SA.CUST_ID = CU.CUST_ID AND CU.CUSTOMER_STATUS !='RETIRED' AND
+        SA.SHARE_TYPE = #cboShareClass:VARCHAR# AND (SA.AUTHORIZE='AUTHORIZED' OR sa.authorize IS NULL) and 
+        sa.share_acct_no is not null  AND sa.DIVIDEND_PAY_MODE='TRANSFER'
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="closedFreq">
+               <isEqual prepend="AND" property="closedFreq" compareValue="N" >
+                   SA.ACCT_STATUS not in ('CLOSED')
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic> 
+        order by length(sa.share_acct_no),sa.share_acct_no
+   </dynamic-mapped-statement>
+   
+   <dynamic-mapped-statement  name="getShareDrfDetails" result-class="java.util.LinkedHashMap">
+        SELECT SA.SHARE_ACCT_NO,
+        CASE WHEN SA.ACCT_STATUS = 'CLOSED' THEN
+             SA.SHARE_ACCT_NO
+         ELSE    
+           DECODE (cu.membership_no,
+                 NULL, sa.share_acct_no,
+                 cu.membership_no
+                )
+         END AS membership_no,
+        DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_PAY_MODE,DIVIDEND_CREDIT_AC,
+        get_cust_name(cu.cust_id) AS NAME,#DRF_AMOUNT:VARCHAR# AS "DRF_AMOUNT" FROM SHARE_ACCT SA,CUSTOMER CU WHERE
+        SA.CUST_ID = CU.CUST_ID AND CU.CUSTOMER_STATUS !='RETIRED' AND
+        SA.DRF_PRODUCT = #DRF_PRODUCT:VARCHAR# AND SA.AUTHORIZE='AUTHORIZED'  AND 
+        sa.share_acct_no is not null  AND sa.DIVIDEND_PAY_MODE='TRANSFER'
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="closedFreq">
+               <isEqual prepend="AND" property="closedFreq" compareValue="N" >
+                   SA.ACCT_STATUS not in ('CLOSED')
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic> 
+        order by length(sa.share_acct_no),sa.share_acct_no
+   </dynamic-mapped-statement>   
+   
+   
+    <dynamic-mapped-statement name ="getRetirementMembersShareDetails" result-class = "java.util.LinkedHashMap">
+        SELECT SA.SHARE_ACCT_NO,
+        CU.CUST_ID,
+        get_cust_name(cu.cust_id) AS NAME,
+        CU.DOB,
+        FLOOR ((MONTHS_BETWEEN (#CURR_DT:DATE#, CU.DOB)) / 12) AS AGE,
+        get_retire_date(CU.CUST_ID) AS RETIRE_DT,
+        regexp_replace(SA.SHARE_ACCT_NO,get_share_pattern_prefix(SA.SHARE_TYPE),#SHARE_CONVERSION_CLASS:VARCHAR#) AS CONVERTED_SHARE                 
+        FROM SHARE_ACCT SA, CUSTOMER CU
+        WHERE   SA.CUST_ID = CU.CUST_ID       
+        AND SA.ACCT_STATUS != 'CLOSED'
+        AND SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR#
+        AND (SA.AUTHORIZE = 'AUTHORIZED' OR sa.authorize IS NULL)
+        AND sa.share_acct_no IS NOT NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AGE">
+                    FLOOR ((MONTHS_BETWEEN (#CURR_DT:DATE#, CU.DOB)) / 12) &gt;= #AGE:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AS_ON">
+                    get_retire_date(CU.CUST_ID) &lt;= #AS_ON:DATE#  
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MEMBER_NO">
+                    SA.SHARE_ACCT_NO = #MEMBER_NO:VARCHAR#  
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY LENGTH (sa.share_acct_no), sa.share_acct_no
+    </dynamic-mapped-statement>  
+    
+    <mapped-statement name="updateShateAcctAfterConversion" result-class="java.util.LinkedHashMap" >
+        UPDATE SHARE_ACCT S
+        SET S.SHARE_ACCT_NO = #CONVERTED_SHARE:VARCHAR#,S.SHARE_TYPE = #SHARE_CONVERSION_CLASS:VARCHAR#
+        WHERE S.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateShateAcctDetailsAfterConversion" result-class="java.util.LinkedHashMap" >
+        UPDATE SHARE_ACCT_DETAILS S
+        SET S.SHARE_ACCT_NO = #CONVERTED_SHARE:VARCHAR#
+        WHERE S.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateMDSApplicationAfterConversion" result-class="java.util.LinkedHashMap" >
+        UPDATE MDS_APPLICATION M
+        SET M.MEMBER_NO = #CONVERTED_SHARE:VARCHAR#,
+        M.MEMBER_TYPE = #SHARE_CONVERSION_CLASS:VARCHAR#
+        WHERE M.MEMBER_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerAfterShareConversion" result-class="java.util.LinkedHashMap" >
+        UPDATE CUSTOMER C
+        SET C.MEMBERSHIP_NO = #CONVERTED_SHARE:VARCHAR#,C.MEMBERSHIP_CLASS = #SHARE_CONVERSION_CLASS:VARCHAR#
+        WHERE C.MEMBERSHIP_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertShareAcctConversionDetails" result-class="java.util.HashMap">
+        INSERT INTO SHARE_ACCT_CONVERSION_DETAILS
+        (SHARE_ACCT_NO, CONSTITUTION, CUST_ID, RESOLUTION_NO, PROPERTY_DETAILS, RELATIVE_MEMBERS, CONNECTED_GROUP, DIRECTOR_RELATIVE, ID_ISSUE_DT, NOT_ELIGIBLE_LOAN, NOT_ELIGIBLE_DT, APPL_FEE, MEM_FEE, SHARE_FEE, SHARE_AMOUNT, WELFARE_FUND_PAID, ACCT_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE, AUTHORIZE_BY, AUTHORIZE_DT, CREATED_DT, CREATED_BY, COMM_ADDR_TYPE, SHARE_TYPE, REMARKS, BRANCH_CODE,
+        DIVIDEND_CREDIT_AC,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_PAY_MODE, ID_CARD_NO,SHARE_APPL_NO,IMBP,EMP_REFNO_NEW,EMP_REFNO_OLD,DUPLICATE_ID,ID_RESOLUTION_NO,IDCARD_ISSUE_DT,RESOLUTION_DT,DRF_APPLICABLE,DRF_STATUS,DRF_PRODUCT,INITIATED_BRANCH,CONVERSION_DT
+        ) (SELECT SHARE_ACCT_NO, CONSTITUTION, CUST_ID, RESOLUTION_NO, PROPERTY_DETAILS, RELATIVE_MEMBERS, CONNECTED_GROUP, DIRECTOR_RELATIVE, ID_ISSUE_DT, NOT_ELIGIBLE_LOAN, NOT_ELIGIBLE_DT, APPL_FEE, MEM_FEE, SHARE_FEE, SHARE_AMOUNT, WELFARE_FUND_PAID, ACCT_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE, AUTHORIZE_BY, AUTHORIZE_DT, CREATED_DT, CREATED_BY, COMM_ADDR_TYPE, SHARE_TYPE, REMARKS, BRANCH_CODE,
+        DIVIDEND_CREDIT_AC,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_PAY_MODE, ID_CARD_NO,SHARE_APPL_NO,IMBP,EMP_REFNO_NEW,EMP_REFNO_OLD,DUPLICATE_ID,ID_RESOLUTION_NO,IDCARD_ISSUE_DT,RESOLUTION_DT,DRF_APPLICABLE,DRF_STATUS,DRF_PRODUCT,INITIATED_BRANCH,(SELECT SYS_DATE() FROM DUAL) FROM SHARE_ACCT WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#)      
+    </mapped-statement>  
+   
+   
+</sql-map>
+

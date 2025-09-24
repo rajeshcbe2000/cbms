@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="TransExceptionMap">
+
+<!--
+    Document   :TransExceptionMap.xml
+    Created on : June 13, 2012, 1:39 PM
+    Author     : ....
+    Description:
+        Purpose of the document follows.
+-->
+    <mapped-statement name="GetClockNO" result-class="java.util.HashMap" >
+        select d.emp_ref_no as clock_no,a.cust_id
+        from deduction_exemption_mapping d
+        join share_acct a on d.emp_ref_no=a.emp_refno_new
+        where d.exemption_mode='By Standing Instruction'
+        and d.status!='DELETED' and a.status!='CLOSED'
+        order by to_number(d.emp_ref_no)
+     <!--  select distinct clock_no,cust_id from 
+                (select b.cust_id,scheme_name as prod_id,b.emp_refno_new as clock_no
+                from mds_master_maintenance a join share_acct b on
+                a.member_no=b.share_acct_no
+                where nvl(salary_recovery,'N')='N'
+                union all
+                select b.cust_id,a.prod_id,c.emp_refno_new as clock_no
+                from loans_facility_details a  join loans_borrower b join 
+                share_acct c on b.cust_id=c.cust_id
+                on a.borrow_no=b.borrow_no 
+                where nvl(salary_recovery,'N')='N'
+                union all 
+                select b.cust_id,A.PROD_ID,b.emp_refno_new as clock_no
+                from DEPOSIT_ACINFO a join deposit_sub_acinfo c
+                on a.deposit_no=c.deposit_no
+                join share_acct b on a.cust_id=b.cust_id
+                where nvl(c.salary_recovery,'N')='N') x-->
+    </mapped-statement> 
+    <mapped-statement name="GetSBdetails" result-class="java.util.HashMap" >
+        select a.cust_id as cust_id,clock_no,a.act_num as act_num,total_balance,acct_name,b.min_act_bal as min_balance,prod_id
+        from act_master a left outer join act_param_detail b on a.act_num=b.act_num where 
+        cust_id=#CLOCK_NO:VARCHAR# and act_cat_id='INDIVIDUAL'
+    </mapped-statement>
+    <dynamic-mapped-statement name="getReprintDataForExcemptionDeduction" result-class="java.util.HashMap">
+        SELECT DISTINCT del.trans_exception_id, del.process_date,del.clock_no AS employee_no, del.NAME, SUM (del.amount)
+        FROM deduction_exception_list del
+        WHERE del.process_date = #From_Date:DATE#
+         <dynamic> <!-- This dynamic statement given by Rajesh. This statement passes the branchcode if we passed -->
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="trans_exception_id">
+                    UPPER(del.trans_exception_id) LIKE UPPER('%$trans_exception_id$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="process_date">
+                    UPPER(del.process_date) LIKE UPPER('%$process_date$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="employee_no">
+                    UPPER(del.clock_no) LIKE UPPER('%$employee_no$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="NAME">
+                    UPPER(del.NAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+           </dynamic>
+        GROUP BY del.trans_exception_id,
+                del.process_date,
+                del.clock_no,
+                del.NAME
+                
+    </dynamic-mapped-statement>
+    <mapped-statement name="getDueDetailsTransException" result-class="java.util.LinkedHashMap" >
+        select F.ACCT_NUM as act_num,F.PROD_ID as prod_id ,P.PROD_DESC,DECODE(p.BEHAVES_LIKE,'SI_BEARING','TL','OD','AD',NULL) as PRODTYPE,e.priority as priority
+        from LOANS_FACILITY_DETAILS f
+        join LOANS_BORROWER b on F.BORROW_NO = B.BORROW_NO join exception_priority e
+        on f.prod_id=e.prod_id join LOANS_PRODUCT p on F.PROD_ID=P.PROD_ID
+        where B.CUST_ID = #CUST_ID:VARCHAR# AND F.CLEAR_BALANCE &lt;0 AND f.ACCT_STATUS != 'CLOSED'
+        union all
+        select S.DEPOSIT_NO||'_'||S.DEPOSIT_SUB_NO as act_num,A.PROD_ID as prod_id ,DP.PROD_DESC,'TD' as prodtype,e.priority as priority
+        from DEPOSIT_ACINFO a
+        join DEPOSIT_SUB_ACINFO s on A.DEPOSIT_NO = s.DEPOSIT_NO
+        join DEPOSITS_PRODUCT dp on A.PROD_ID = DP.PROD_ID
+        left outer join exception_priority e on  A.PROD_ID=e.prod_id
+        where A.CUST_ID = #CUST_ID:VARCHAR# AND s.CLOSE_DT is null  and DP.BEHAVES_LIKE = 'RECURRING' AND S.ACCT_STATUS != 'CLOSED'
+        union all
+        select A.CHITTAL_NO||'_'||A.SUB_NO as act_num,A.SCHEME_NAME as prod_id ,MSD.SCHEME_DESC as PROD_DESC,'MDS' as prodtype,
+        TO_NUMBER(DECODE (GET_MDS_PRIZEDSTATUS(A.CHITTAL_NO),'Prized', '1','99')) AS priority
+        from MDS_APPLICATION a
+        JOIN MDS_SCHEME_DETAILS MSD ON A.SCHEME_NAME = MSD.SCHEME_NAME
+        JOIN mds_master_maintenance MM on mm.chittal_no=a.chittal_no
+        JOIN SHARE_ACCT SA ON A.MEMBER_NO = SA.SHARE_ACCT_NO
+        LEFT OUTER JOIN exception_priority e on a.scheme_name=e.prod_id
+        WHERE SA.CUST_ID =#CUST_ID:VARCHAR# 
+        AND A.STATUS!='DELETED' AND A.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND  MSD.STATUS!='DELETED' AND MSD.STATUS!='CLOSED'
+        <!-- AND (mm.lock_status!='Y' OR mm.lock_status is NULL)-->
+        union all
+        select SUSPENSE_ACCT_NUM AS ACT_NUM,SUSPENSE_PROD_ID AS PROD_ID,SUSPENSE_PROD_DESC as PROD_DESC,'SA' as  prodtype,e.priority as priority
+        from SUSPENSE_ACCOUNT_MASTER sam left outer join exception_priority e
+        on sam.SUSPENSE_PROD_ID=e.prod_id
+        WHERE SAM.SUSPENSE_CUSTOMER_ID =#CUST_ID:VARCHAR#
+        order by 5,4,2
+    </mapped-statement>
+    <result-map name="getTransExceptionTOResult" class="com.see.truetransact.transferobject.transexception.TransExceptionTO">
+        <property name="intCalcUptoDt" column="INT_CALC_UPTO_DT"/>
+        <property name="empRefNo" column="EMP_REF_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="prod_ID" column="PROD_ID"/>
+        <property name="prod_Type" column="PROD_TYPE"/>
+        <property name="penalMonth" column="DEPOSIT_PENAL_MONTH"/>
+        <property name="status" column="STATUS"/>
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="totalDemand" column="TOTAL_DEMAND"/>
+        <property name="principal" column="PRINCIPAL"/>
+        <property name="interest" column="INTEREST"/>
+        <property name="penal" column="PENAL"/>
+        <property name="charges" column="CHARGES"/>
+        <property name="instDate" column="INSTALLMENT_DATE"/>
+    </result-map>
+    <mapped-statement name="GetSuspenseDuedetails1" result-class="java.util.HashMap" >
+        select nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as amt,bill_id
+        from suspense_installment where INSTALLMENT_DATE &lt;#INSTALLMENT_DATE:DATE# and acct_num=#ACT_NUM:VARCHAR#
+        group by bill_id
+    </mapped-statement>
+    <mapped-statement name="insertTransException" inline-parameters="true">
+        INSERT INTO DEDUCTION_EXCEPTION_LIST
+        (TRANS_EXCEPTION_ID, PROCESS_DATE, SL_NO,CUST_ID,CLOCK_NO,NAME,PROD_TYPE,PROD_ID,ACT_NUM,AMOUNT,
+        PRINCIPAL,INTEREST,PENAL,BONUS,CHARGES,NO_OF_INSTALMENT,ACTUAL_DEMAND) VALUES (
+        #transId:VARCHAR#, #instDate:DATE#,#slno:NUMBER#, #cust_id:VARCHAR#, #empRefNo:VARCHAR#,#memberName:VARCHAR#,
+        #prod_Type:VARCHAR#,#prod_ID:VARCHAR#, #actNum:VARCHAR#,#totalDemand:NUMBER#,#principal:NUMBER#,
+        #interest:NUMBER#,#penal:NUMBER#,#bonus:NUMBER#,#charges:NUMBER#,#penalMonth:NUMBER#,#actualDemand:NUMBER#) 
+    </mapped-statement>
+         
+        
+        
+        <!-- Added by Akhila for interest calc for salary List generation  -->
+                
+    <mapped-statement name="getDueDetails2" result-class="java.util.HashMap" > 
+           
+       <!-- select INSTALLMENT_DATE,INSTALLMENT_AMOUNT from suspense_installment
+        where paid_date is null and acct_num=#ACT_NUM# and installment_date&lt;#INSTALLMENT_DATE# -->
+       
+       <!-- select INSTALLMENT_DATE,nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as INSTALLMENT_AMOUNT from suspense_installment
+    where acct_num=#ACT_NUM# and installment_date&lt;#INSTALLMENT_DATE# having nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0)>0
+        group by INSTALLMENT_DATE-->
+        
+        select '01/'|| EXTRACT(MONTH FROM INSTALLMENT_DATE)||'/'|| EXTRACT(YEAR FROM INSTALLMENT_DATE) as INSTALLMENT_DATE,nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as INSTALLMENT_AMOUNT from suspense_installment
+        where acct_num=#ACT_NUM:VARCHAR# and installment_date&lt;#INSTALLMENT_DATE:DATE# having nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0)>0
+        group by EXTRACT(MONTH FROM INSTALLMENT_DATE),EXTRACT(YEAR FROM INSTALLMENT_DATE) 
+    </mapped-statement>
+        
+         <!-- Added by Akhila for interest calc for salary List generation  -->
+                
+    <mapped-statement name="getSelIntRt" result-class="java.util.HashMap" > 
+           
+        select  INTEREST_RATE,nvl(GRACE_PERIOD_DAYS,0) as GRACE_PERIOD_DAYS  from shop_master_table where shop_master_mode=0
+    </mapped-statement>
+    <mapped-statement name="getAccountHeadProdForSAInterest" result-class="java.util.HashMap" > 
+          
+        select  ACCOUNTHEAD_ID from accounthead_table where accounthead_type='Credit Sale Interest'
+    </mapped-statement>
+        
+        
+</sql-map>

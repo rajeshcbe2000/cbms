@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AccountTransMap">
+
+    <!-- Use AccountTO object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAccountTransMap" inline-parameters="true">
+        UPDATE ACT_MASTER SET 
+	ACT_STATUS_ID = 'OPERATIONAL'
+	WHERE ACT_NUM = #value:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAccountTransMap" result-class="java.util.LinkedHashMap">
+        SELECT 'y' as "Select", actmast.ACT_NUM as "Account Number", get_cust_name(cust.cust_id) as
+        "Account Holder's Name", TO_CHAR (actmast.LAST_TRANS_DT, 'ddth Month,YYYY') as "Last Transaction Date", actmast.AVAILABLE_BALANCE as "Balance", ACT_STATUS_ID as "status"
+        FROM ACT_MASTER actmast, CUSTOMER cust
+        WHERE actmast.CUST_ID = cust.CUST_ID AND
+        actmast.ACT_STATUS_ID IN ('IN_OPERATIVE', 'DORMANT') AND 
+        actmast.PROD_ID = #PRODUCT_ID:VARCHAR#
+        <!--AND actmast.BRANCH_CODE = #BRANCH_CODE:VARCHAR#-->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NUM">
+                    actmast.ACT_NUM = #ACT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY ACT_NUM
+    </dynamic-mapped-statement>    
+    
+    <mapped-statement name="InoperativeOrDormantToOperativeAccount" inline-parameters="true">
+       insert into OPERATIVE_ACCOUNT_MOVEMENT(ACT_NUM,OLD_STATUS,NEW_STATUS,CREATED_BY,CREATED_DT)
+        values(#ACT_NUM:VARCHAR#,#OLD_STATUS:VARCHAR#,'OPERATIONAL',#CREATED_BY:VARCHAR#,#CREATED_DT:DATE#)
+    </mapped-statement>
+    
+    <!--mapped-statement name="getAccountTransMap" result-class="java.util.HashMap">
+        SELECT 'y' as "Select", actmast.ACT_NUM as "Account Number", cust.FNAME || ' ' || cust.MName || ' ' || cust.LName as
+        "Account Holder''s Name", TO_CHAR (actmast.LAST_TRANS_DT, 'ddth Month,YYYY') as "Last Transaction Date", actmast.AVAILABLE_BALANCE as "Balance"
+        FROM ACT_MASTER actmast, CUSTOMER cust
+        WHERE actmast.CUST_ID = cust.CUST_ID AND
+        actmast.ACT_STATUS_ID = 'IN_OPERATIVE' AND actmast.PROD_ID = #value#
+        ORDER BY ACT_NUM
+    </mapped-statement-->    
+    
+    <mapped-statement name="getAccountHeadForProduct" result-class="java.util.HashMap">
+        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>  
+    
+    
+     <mapped-statement name="getProductFromAcnt" result-class="java.util.HashMap">
+       select PRODUCT_ID from loans_sanction_details where BORROW_NO=(select BORROW_NO from loans_facility_details where ACCT_NUM=#ACCOUNTNO:VARCHAR#)
+    </mapped-statement> 
+    
+     <mapped-statement name="getCheckingCondition" result-class="java.util.HashMap">
+       select CALCULATE_EXPIRY from loans_prod_intrec where PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>   
+    
+    
+    
+</sql-map>

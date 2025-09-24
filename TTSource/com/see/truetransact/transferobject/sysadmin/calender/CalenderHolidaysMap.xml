@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CalenderHolidaysTOMap">
+
+<!-- Use CalenderHolidaysTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCalenderHolidaysTO" inline-parameters="true">
+        INSERT INTO HOLIDAY_MASTER
+        (HOLIDAY_DT, HOLIDAY_NAME, REMARKS, STATUS, HOLIDAY_ID, 
+        BRANCH_ID, STATUS_BY, STATUS_DT, CREATED_BY, CREATED_DT, 
+        AUTHORIZED_STATUS, AUTHORIZED_BY, AUTHORIZED_DT
+        ) VALUES (
+        cast(#holidayDt# as DATE), #holidayName:VARCHAR#, #remarks:VARCHAR#, 
+        #status:VARCHAR#, #holidayId:VARCHAR#, #branchId:VARCHAR#, 
+        #statusBy:VARCHAR#, #statusDt#::TIMESTAMP, #createdBy:VARCHAR#, 
+        #createdDt#::TIMESTAMP, #authorizedStatus:VARCHAR#, 
+        #authorizedBy:VARCHAR#, cast(#authorizedDt# as DATE))
+    </mapped-statement>
+
+<!-- Use CalenderHolidaysTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCalenderHolidaysTO" inline-parameters="true">
+        UPDATE HOLIDAY_MASTER SET 
+        HOLIDAY_DT = cast(#holidayDt# as DATE),
+        HOLIDAY_NAME = #holidayName:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt#::TIMESTAMP,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = cast(#authorizedDt# as DATE)
+        WHERE HOLIDAY_ID = #holidayId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use CalenderHolidaysTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCalenderHolidaysTO" inline-parameters="true">
+<!--	DELETE FROM HOLIDAY_MASTER 
+	WHERE HOLIDAY_NAME = 'aaa'  -->
+<!--	HOLIDAY_DT = #holidayDt:DATE#,  
+	HOLIDAY_NAME = #holidayName:VARCHAR#, 
+	REMARKS = 'D'   -->
+        UPDATE HOLIDAY_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt#::TIMESTAMP
+        WHERE HOLIDAY_ID = #holidayId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to CalenderHolidaysTO object (JavaBean) properties -->
+    <result-map name="getCalenderHolidaysTOResult" class="com.see.truetransact.transferobject.sysadmin.calender.CalenderHolidaysTO">
+        <property name="holidayDt" column="HOLIDAY_DT"/>
+        <property name="holidayName" column="HOLIDAY_NAME"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="holidayId" column="HOLIDAY_ID"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectCalenderHolidaysTO" result-map="getCalenderHolidaysTOResult" >
+<!--	SELECT HOLIDAY_DT, HOLIDAY_NAME, REMARKS
+        FROM HOLIDAY_MASTER   -->
+        SELECT  *
+        FROM HOLIDAY_MASTER 
+        WHERE HOLIDAY_ID = #HOLIDAY_ID:VARCHAR#
+    </mapped-statement>
+        
+   <dynamic-mapped-statement name="ViewAllCalenderHolidaysTO" result-class="java.util.LinkedHashMap" >
+        SELECT HOLIDAY_ID, To_char(HOLIDAY_DT, 'DD/MM/YYYY') as "HOLIDAY_DT", 
+        HOLIDAY_NAME, REMARKS FROM HOLIDAY_MASTER 
+        WHERE STATUS NOT IN ('DELETED') 
+        AND  ((AUTHORIZED_STATUS not in ('REJECTED')) or  
+        (AUTHORIZED_STATUS is null))  
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOLIDAY_ID">
+                    UPPER(HOLIDAY_ID) LIKE UPPER('%$HOLIDAY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOLIDAY_NAME">
+                    UPPER(HOLIDAY_NAME) LIKE UPPER('%$HOLIDAY_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="REMARKS">
+                    UPPER(REMARKS) LIKE UPPER('%$REMARKS$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOLIDAY_DT">
+                    UPPER(To_char(HOLIDAY_DT, 'DD/MM/YYYY')) LIKE UPPER('%$HOLIDAY_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="ViewMonthAndDate" result-class="java.util.LinkedHashMap" >
+<!--	select * from HOLIDAY_MASTER   where to_char(HOLIDAY_DT, 'MM') = #MONTH" and
+        to_char(HOLIDAY_DT, 'YYYY') = #YEAR# and (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')-->
+        <!--SELECT HOLIDAY_ID AS "Holiday ID", To_char(HOLIDAY_DT, 'DD/MM/YYYY') as "Date", HOLIDAY_NAME as "Name", REMARKS as "Remarks"
+        FROM HOLIDAY_MASTER   
+        WHERE to_number(to_char(HOLIDAY_DT, 'MM')) = cast(#MONTH# as numeric)
+        and to_char(HOLIDAY_DT, 'YYYY') = #YEAR# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        and (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')-->
+        
+        SELECT HOLIDAY_ID, To_char(HOLIDAY_DT, 'DD/MM/YYYY') as DATE, HOLIDAY_NAME as NAME, REMARKS as REMARKS
+        FROM HOLIDAY_MASTER   
+        WHERE to_number(to_char(HOLIDAY_DT, 'MM')) = cast(#MONTH# as numeric)
+        and to_char(HOLIDAY_DT, 'YYYY') = #YEAR# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        and (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>
+        
+        
+<!-- =================================================================================== -->     
+<!--     Weekly Off Queries -->
+   
+	<!-- Use WeeklyOffTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertWeeklyOffTO" inline-parameters="true">
+        INSERT INTO WEEKLY_OFF
+        (WEEKLY_OFF, WEEKLY_OFF1, WEEKLY_OFF2, 
+        HALF_DAY1, HALF_DAY2, BRANCH_ID, 
+        STATUS_BY, STATUS_DT, CREATED_BY, CREATED_DT, STATUS
+        ) VALUES (
+        #weeklyOff:VARCHAR#, #weeklyOff1:VARCHAR#, #weeklyOff2:VARCHAR#, 
+        #halfDay1:VARCHAR#, #halfDay2:VARCHAR#, #branchId:VARCHAR#, 
+        #statusBy:VARCHAR#, cast(#statusDt# as DATE), #createdBy:VARCHAR#, 
+        cast(#createdDt# as DATE), #status:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use WeeklyOffTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateWeeklyOffTO" inline-parameters="true">
+        UPDATE WEEKLY_OFF SET 
+        WEEKLY_OFF = #weeklyOff:VARCHAR#,
+        WEEKLY_OFF1 = #weeklyOff1:VARCHAR#,
+        WEEKLY_OFF2 = #weeklyOff2:VARCHAR#,
+        HALF_DAY1 = #halfDay1:VARCHAR#,
+        HALF_DAY2 = #halfDay2:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = cast(#statusDt# as DATE),
+        STATUS = #status:VARCHAR#
+        WHERE BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use WeeklyOffTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteWeeklyOffTO" inline-parameters="true">
+        UPDATE WEEKLY_OFF SET 
+        STATUS = #STATUS:VARCHAR#, 
+        STATUS_BY = #USER_ID:VARCHAR#, 
+        STATUS_DT = cast(#statusDt# as DATE )
+        WHERE BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to WeeklyOffTO object (JavaBean) properties -->
+    <result-map name="getWeeklyOffTOResult" class="com.see.truetransact.transferobject.sysadmin.calender.WeeklyOffTO">
+        <property name="weeklyOff" column="WEEKLY_OFF"/>
+        <property name="weeklyOff1" column="WEEKLY_OFF1"/>
+        <property name="weeklyOff2" column="WEEKLY_OFF2"/>
+        <property name="halfDay1" column="HALF_DAY1"/>
+        <property name="halfDay2" column="HALF_DAY2"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectWeeklyOffTO" result-map="getWeeklyOffTOResult" >
+        SELECT * FROM WEEKLY_OFF 
+        WHERE BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+<!-- Use WeeklyOffTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property.
+    <mapped-statement name="insertWeeklyOffTO" inline-parameters="true">
+	INSERT INTO WEEKLY_OFF
+	(WEEKLY_OFF, WEEKLY_OFF1, WEEKLY_OFF2, HALF_DAY1, HALF_DAY2, BRANCH_ID
+	) VALUES (
+	#weeklyOff:VARCHAR#, #weeklyOff1:VARCHAR#, #weeklyOff2:VARCHAR#, #halfDay1:VARCHAR#, #halfDay2:VARCHAR#)
+    </mapped-statement>
+ -->
+<!-- Use WeeklyOffTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. 
+    <mapped-statement name="updateWeeklyOffTO" inline-parameters="true">
+	UPDATE WEEKLY_OFF SET 
+	WEEKLY_OFF = #weeklyOff:VARCHAR#,
+	WEEKLY_OFF1 = #weeklyOff1:VARCHAR#,
+	WEEKLY_OFF2 = #weeklyOff2:VARCHAR#,
+	HALF_DAY1 = #halfDay1:VARCHAR#,
+	HALF_DAY2 = #halfDay2:VARCHAR#
+    </mapped-statement>
+-->
+<!-- Use WeeklyOffTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+<!--    <mapped-statement name="deleteWeeklyOffTO" inline-parameters="true">
+	DELETE FROM WEEKLY_OFF 
+	WHERE 
+    </mapped-statement>  -->
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to WeeklyOffTO object (JavaBean) properties 
+    <result-map name="getWeeklyOffTOResult" class="com.see.truetransact.transferobject.sysadmin.calender.WeeklyOffTO">
+	<property name="weeklyOff" column="WEEKLY_OFF"/>
+	<property name="weeklyOff1" column="WEEKLY_OFF1"/>
+	<property name="weeklyOff2" column="WEEKLY_OFF2"/>
+	<property name="halfDay1" column="HALF_DAY1"/>
+	<property name="halfDay2" column="HALF_DAY2"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectWeeklyOffTO" result-map="getWeeklyOffTOResult" >
+	SELECT * FROM WEEKLY_OFF 
+    </mapped-statement>      
+    -->
+    <mapped-statement name="ViewWeekOff" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM WEEKLY_OFF 
+        WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        AND STATUS NOT IN ('DELETED')
+    </mapped-statement>  
+    
+    <mapped-statement name="getHolidayList" result-class="java.lang.String" >
+        SELECT TO_Number(To_char(HOLIDAY_DT, 'DD')) FROM HOLIDAY_MASTER   
+        WHERE to_number(to_char(HOLIDAY_DT, 'MM')) = #MONTH# 
+        and to_char(HOLIDAY_DT, 'YYYY') = #YEAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND STATUS != 'DELETED'
+        and to_char(HOLIDAY_DT, 'YYYY') = #YEAR# and 
+        (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>    
+        
+    
+<!-- ==============================AUTHORIZATION QUERIES===================================================== -->
+    <dynamic-mapped-statement name="getSelectCalendarAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT HOLIDAY_ID AS "Holiday ID", To_char(HOLIDAY_DT, 'DD/MM/YYYY') AS "Holiday Date", 
+        HOLIDAY_NAME AS "Holiday Name", AUTHORIZED_STATUS as "Authorized Status", AUTHORIZED_BY as "Authorized by",
+        AUTHORIZED_DT as "Authorized date"
+        FROM HOLIDAY_MASTER 
+        WHERE (STATUS NOT IN ('DELETED')) 
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS = 'EXCEPTION' 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS IS NULL
+            </isNotEqual>
+        </dynamic>
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        ORDER BY HOLIDAY_ID
+    </dynamic-mapped-statement>
+
+
+<!-- Use authorizeOperativeAcctProduct object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="authorizeCalendar" result-class="java.util.HashMap">
+        UPDATE HOLIDAY_MASTER SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT#::TIMESTAMP
+        WHERE HOLIDAY_ID = #HOLIDAY ID:VARCHAR# 
+    </mapped-statement>
+<!-- ==============================END OF AUTHORIZATION QUERIES===================================================== -->
+
+    <mapped-statement name="getWeekoffRecordCnt" result-class="java.util.HashMap" >
+        select count(*) as rec_count from weekly_off where BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="checkHolidayProvisionTD" result-class="java.util.HashMap" > 
+        SELECT * FROM HOLIDAY_MASTER WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR# AND 
+        AUTHORIZED_STATUS='AUTHORIZED' AND HOLIDAY_DT
+        <!--BETWEEN TO_DATE(#NEXT_DATE:DATE#,'dd-MM-yyyy')AND TO_DATE(#CURR_DATE:DATE#,'dd-MM-yyyy') AND STATUS != 'DELETED'-->
+        <!-- Changed by Kannan -->
+        BETWEEN (#NEXT_DATE#::TIMESTAMP)AND (#CURR_DATE#::TIMESTAMP) AND STATUS != 'DELETED'
+<!--        TO_DATE(#NEXT_DATE:DATE#) AND STATUS != 'DELETED' -->
+    </mapped-statement>
+    
+    <mapped-statement name="ChekHoliday" result-class="java.lang.String"> 
+     select GET_HOLIDAY_CHECKING(cast(#CURR_DATE# as DATE),#BRANCH_CODE:VARCHAR#,cast(#NEXT_DATE# as DATE)) as count1  from dual
+    </mapped-statement>
+    
+     <mapped-statement name="updateSession" inline-parameters="true">
+   alter session set nls_date_format='DD-MON-RR'
+   </mapped-statement>
+   
+    <mapped-statement name="checkWeeklyOffTD" result-class="java.util.HashMap" > 
+        SELECT * FROM WEEKLY_OFF WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR# AND WEEKLY_OFF='Y' AND
+        STATUS !='DELETED' AND (TO_CHAR(#NEXT_DATE#::DATE, 'D') = WEEKLY_OFF1 OR
+        TO_CHAR(cast(#NEXT_DATE# as DATE), 'D') = WEEKLY_OFF2)
+    </mapped-statement>
+  
+</sql-map>

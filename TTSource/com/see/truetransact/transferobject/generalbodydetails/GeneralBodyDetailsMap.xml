@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GeneralBodyDetailsMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+         
+    <dynamic-mapped-statement name="GeneralBody.getSelectGeneralBodyList" result-class="java.util.LinkedHashMap" >
+        SELECT GBID, GDATE, VENUE,TOT_ATTENDANCE,REMARKS FROM GENERAL_BODY_DETAILS
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+             
+                 
+             
+    <mapped-statement name="insertGeneralBodyTO" inline-parameters="true">
+        INSERT INTO GENERAL_BODY_DETAILS
+        (GDATE, VENUE, TOT_ATTENDANCE, REMARKS,GBID,STATUS) 
+        VALUES (
+        #gDate:DATE#,#venu:VARCHAR#,#totalAttendance:INTEGER#,#remarks:VARCHAR#,#gbid:VARCHAR#,#status:VARCHAR#)
+                
+    </mapped-statement>
+        
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateGeneralBodyTO" inline-parameters="true">
+        UPDATE GENERAL_BODY_DETAILS SET 
+        GDATE=#gDate:DATE#,
+        VENUE=#venu:VARCHAR#,
+        TOT_ATTENDANCE=#totalAttendance:INTEGER#,
+        REMARKS=#remarks:VARCHAR#
+        WHERE GBID=#gbid:VARCHAR#
+    </mapped-statement>
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteGeneralBodyTO" inline-parameters="true">
+        UPDATE GENERAL_BODY_DETAILS SET 
+        STATUS = #status:VARCHAR#
+        WHERE GBID = #gbid:VARCHAR#
+    </mapped-statement>
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getGeneralBodyTOResult" class="com.see.truetransact.transferobject.generalbodydetails.GeneralBodyDetailsTO">
+        <property name="gDate" column="GDATE"/>
+        <property name="venu" column="VENUE"/>
+        <property name="totalAttendance" column="TOT_ATTENDANCE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="gbid" column="GBID"/>
+               
+    </result-map>
+	
+    <mapped-statement name="GeneralBody.getSelectGeneralBody" result-map="getGeneralBodyTOResult" >
+        SELECT * FROM GENERAL_BODY_DETAILS
+        WHERE GBID = #GBID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+
+
+</sql-map>

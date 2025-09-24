@@ -1,0 +1,749 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : OutwardClearingMap.xml
+    Created on : January 12, 2004, 4:17 PM
+    Author     : Hemant
+    Description:
+        Purpose of the document follows.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OutwardClearingMap">
+
+	<!-- Use OutwardClearingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOutwardClearingTO" inline-parameters="true">
+        INSERT INTO OUTWARD_CLEARING
+        (BATCH_ID, OUTWARD_ID, OUTWARD_DT, CLEARING_TYPE, INSTRUMENT_TYPE, INSTRUMENT_DT, 
+        AMOUNT, PAYEE_NAME, DRAWER, DRAWER_ACCT_NO, BANK_CODE, BRANCH_CODE, REMARKS, 
+        STATUS, INSTRUMENT_NO1, INSTRUMENT_NO2, SCHEDULE_NO, AUTHORIZE_BY, AUTHORIZE_DT, 
+        AUTHORIZE_STATUS, CURRENCY, STATUS_BY, BRANCH_ID, STATUS_DT, AUTHORIZE_REMARKS, 
+        CREATED_BY, CREATED_DT,INITIATED_BRANCH) 
+        VALUES 
+        (#batchId:VARCHAR#, #outwardId:VARCHAR#, #outwardDt:DATE#, #clearingType:VARCHAR#,
+        #instrumentType:VARCHAR#, #instrumentDt:DATE#, #amount:NUMERIC#,#payeeName:VARCHAR#, 
+        #drawer:VARCHAR#, #drawerAcctNo:VARCHAR#, #bankCode:VARCHAR#, #branchCode:VARCHAR#, 
+        #remarks:VARCHAR#, #status:VARCHAR#, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#, 
+        #scheduleNo:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #authorizeStatus:VARCHAR#, 
+        #currency:VARCHAR#, #statusBy:VARCHAR#, #branchId:VARCHAR#, SYS_DATE()<!--#statusDt:VARCHAR#-->, #authorizeRemarks:VARCHAR#, 
+        #createdBy:VARCHAR#, #createdDt:VARCHAR#,#initiatedBranch:VARCHAR#)
+    </mapped-statement>
+	<!-- Use OutwardClearingTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="deleteStatusOutwardClearingTOStatus" inline-parameters="true">
+        UPDATE OUTWARD_CLEARING SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:VARCHAR#-->
+        WHERE BATCH_ID = #batchId:VARCHAR# 
+        and STATUS!='DELETED' and 
+        (AUTHORIZE_STATUS!='AUTHORIZED' or AUTHORIZE_STATUS is null) and
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR# and
+        OUTWARD_DT = #outwardDt:DATE#
+    </mapped-statement>        
+       
+	<!-- Use OutwardClearingTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+        <!--
+	<mapped-statement name="deleteOutwardClearingTO" inline-parameters="true">
+		DELETE FROM OUTWARD_CLEARING 
+		WHERE BATCH_ID = #batchId#
+	</mapped-statement>
+        -->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OutwardClearingTO object (JavaBean) properties -->
+    <result-map name="getOutwardClearingTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="outwardId" column="OUTWARD_ID"/>
+        <property name="outwardDt" column="OUTWARD_DT"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="instrumentDt" column="INSTRUMENT_DT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="payeeName" column="PAYEE_NAME"/>
+        <property name="drawer" column="DRAWER"/>
+        <property name="drawerAcctNo" column="DRAWER_ACCT_NO"/>
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="instrumentNo1" column="INSTRUMENT_NO1"/>
+        <property name="instrumentNo2" column="INSTRUMENT_NO2"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="currency" column="CURRENCY"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+                
+    </result-map>
+    <mapped-statement name="getSelectOutwardClearingTO" result-map="getOutwardClearingTOResult" >
+        SELECT * FROM OUTWARD_CLEARING 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# and status!='DELETED' and
+        (AUTHORIZE_STATUS!='AUTHORIZED' or (AUTHORIZE_STATUS is null))
+    </mapped-statement>                      
+        
+    <mapped-statement name="getDoOutwardClearingTO" result-map="getOutwardClearingTOResult" >
+        SELECT * FROM OUTWARD_CLEARING 
+        WHERE BATCH_ID = #value:VARCHAR# and status!='DELETED'
+    </mapped-statement>
+        <!--
+        <result-map name="getOutwardClearingTOListResult" class="java.util.LinkedHashMap">
+            <property name="BatchId" column="BID"/>
+            <property name="TotalInstruments" column="Count(O.OUTWARD_ID)"/>
+            <property name="InstrumentAmount" column="sum(O.AMOUNT)"/>
+            <property name="TotalPayInSlip" column="Count(P.PAY_IN_SLIP_ID)"/>
+            <property name="PayInSlipAmount" column="sum(P.AMOUNT)"/>
+        </result-map>        
+        <mapped-statement name="getSelectOutwardClearingTOList" result-map="getOutwardClearingTOListResult" >
+                SELECT O.BATCH_ID AS BID,
+                COUNT(O.OUTWARD_ID) ,
+                SUM(O.AMOUNT),
+                COUNT(P.PAY_IN_SLIP_ID),
+                SUM(P.AMOUNT)
+                FROM PAY_IN_SLIP P, OUTWARD_CLEARING O
+                WHERE P.BATCH_ID=O.BATCH_ID and P.STATUS!='DELETED' and 
+                (P.AUTHORIZE_STATUS!='AUTHORIZED' or P.authorize_status is null) and 
+                O.STATUS!='DELETED' and (O.AUTHORIZE_STATUS!='AUTHORIZED' or O.authorize_status is null)
+            GROUP BY O.BATCH_ID
+        </mapped-statement>
+        -->     
+        
+    <result-map name="getOutwardClearingTOListResult" class="java.util.LinkedHashMap">
+        <property name="BatchId" column="BID"/>            
+        <property name="OutwardClearingType" column="CLEARING_TYPE"/>
+        <property name="ScheduleNo" column="SCHEDULE_NO"/>
+        <property name="OutwardAmount" column="OUTWARD_AMOUNT"/>            
+        <property name="PayInSlipAmount" column="PAY_IN_SLIP_AMOUNT"/>
+        <property name="CreatedBy" column="CREATED_BY"/>
+    </result-map>        
+     <dynamic-mapped-statement name="getSelectOutwardClearingTOList" result-map="getOutwardClearingTOListResult" >
+        SELECT distinct oc.BATCH_ID AS BID,oc.CLEARING_TYPE, oc.SCHEDULE_NO, oc.CREATED_BY,
+        nvl((select sum(amount)
+        from outward_clearing where status != 'DELETED'
+        and oc.batch_id = batch_id and ((authorize_status is null) or 
+        AUTHORIZE_STATUS NOT IN ('REALIZED','AUTHORIZED', 'REJECTED') )GROUP BY BATCH_ID),0) 
+        as OUTWARD_AMOUNT,
+        nvl((select SUM(PAY_IN_SLIP.AMOUNT) as "Pay In Slip Amount"
+        from PAY_IN_SLIP where STATUS!='DELETED' and batch_id = PC.batch_id GROUP BY BATCH_ID),0) as 
+        PAY_IN_SLIP_AMOUNT            
+        FROM PAY_IN_SLIP PC,OUTWARD_CLEARING oc WHERE PC.BATCH_ID=oc.BATCH_ID 
+        and oc.STATUS!='DELETED' and PC.STATUS!='DELETED'
+        AND ((oc.AUTHORIZE_STATUS NOT IN ('REALIZED','AUTHORIZED', 'REJECTED')) 
+        OR (oc.AUTHORIZE_STATUS IS NULL)) and 
+        ((PC.AUTHORIZE_STATUS NOT IN ('REALIZED','AUTHORIZED', 'REJECTED')) 
+        OR (PC.AUTHORIZE_STATUS IS NULL))  
+          <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="BID">
+                    UPPER(oc.BATCH_ID) LIKE UPPER('%$BID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CLEARING_TYPE">
+                    UPPER(oc.CLEARING_TYPE) LIKE UPPER('%$CLEARING_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEDULE_NO">
+                    UPPER(oc.SCHEDULE_NO) LIKE UPPER('%$SCHEDULE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="CREATED_BY">
+                    UPPER(oc.CREATED_BY) LIKE UPPER('%$CREATED_BY$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>     
+        
+        <!--
+        <mapped-statement name="getSelectOutwardClearingAuthorizeTOList" result-class="java.util.LinkedHashMap" >        
+                SELECT OUTWARD_CLEARING.BATCH_ID AS BID,
+                COUNT(OUTWARD_ID) as "Outward",
+                SUM(OUTWARD_CLEARING.AMOUNT) as "Outward Amount",
+                COUNT(PAY_IN_SLIP_ID) as "Pay In Slip",
+                SUM(PAY_IN_SLIP.AMOUNT) as "Pay In Slip Amount"
+                FROM PAY_IN_SLIP , OUTWARD_CLEARING
+                WHERE PAY_IN_SLIP.BATCH_ID=OUTWARD_CLEARING.BATCH_ID
+		AND (NOT(OUTWARD_CLEARING.STATUS = 'DELETED'))
+                AND ((OUTWARD_CLEARING.AUTHORIZE_STATUS NOT IN ('REALIZED','AUTHORIZED', 'REJECTED')) OR (OUTWARD_CLEARING.AUTHORIZE_STATUS IS NULL))
+                GROUP BY OUTWARD_CLEARING.BATCH_ID
+        </mapped-statement>
+        
+        
+            nvl((select sum(amount)
+                from outward_clearing where status != 'DELETED'
+                and oc.batch_id = batch_id and (authorize_status is null or AUTHORIZE_STATUS NOT IN ('REALIZED','AUTHORIZED', 'REJECTED')) GROUP BY BATCH_ID),0) 
+                as OUTWARD_AMOUNT,
+            nvl((select SUM(PAY_IN_SLIP.AMOUNT) as "Pay In Slip Amount"
+                from PAY_IN_SLIP where STATUS!='DELETED' and batch_id = PC.batch_id and 
+                (authorize_status is null or
+                authorize_status not in('REALIZED','AUTHORIZED','REJECTED')) GROUP BY BATCH_ID),0)
+                as PAY_IN_SLIP_AMOUNT,
+        
+        -->
+        
+    <mapped-statement name="getSelectOutwardClearingAuthorizeTOList" result-class="java.util.LinkedHashMap" >        
+        SELECT oc.BATCH_ID AS BID, oc.CLEARING_TYPE, oc.SCHEDULE_NO, oc.CREATED_BY,
+        oc.INSTRUMENT_NO1, oc.INSTRUMENT_NO2, oc.amount as OUTWARD_AMOUNT, OC.REMARKS, OC.BRANCH_ID, 
+        decode((select batch_id from outward_clearing where status!='DELETED' and batch_id = oc.Batch_id 
+        and INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        and OUTWARD_DT = #OUTWARD_DT:DATE#
+        GROUP BY BATCH_ID), null, 'DELETED', 'CREATED/MODIFIED') as BATCH_STATUS
+        FROM OUTWARD_CLEARING oc  
+        WHERE oc.AUTHORIZE_STATUS is null or 
+        oc.AUTHORIZE_STATUS not in('REALIZED','AUTHORIZED','REJECTED') <!--AND and STATUS_BY=#USER_ID#-->
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectOutwardClearingRealizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT oc.BATCH_ID AS BID, oc.CLEARING_TYPE, oc.OUTWARD_DT, 
+        oc.SCHEDULE_NO, oc.INSTRUMENT_NO2, ps.ACCT_NO AS ACCOUNT_NO ,
+        oc.AMOUNT, oc.REMARKS, oc.BRANCH_ID, oc.CREATED_BY, oc.INSTRUMENT_NO1
+        FROM OUTWARD_CLEARING oc, pay_in_slip ps WHERE oc.BATCH_ID=ps.BATCH_ID
+        AND oc.status!='DELETED'
+        AND oc.AUTHORIZE_STATUS='AUTHORIZED'
+        and oc.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        and oc.OUTWARD_DT = #OUTWARD_DT:DATE#
+           <!-- AND OC.SCHEDULE_NO NOT IN (SELECT SCHEDULE_NO FROM OUTWARD_TALLY
+            WHERE CLOSING_DT IS NULL)-->
+        AND  NOT EXISTS (SELECT SCHEDULE_NO FROM OUTWARD_TALLY
+        WHERE CLOSING_DT IS NULL AND oc.SCHEDULE_NO=SCHEDULE_NO)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEDULE_NO">
+                    oc.SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="OUTWARD_DT">
+                    oc.OUTWARD_DT=#OUTWARD_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLEARING_TYPE">
+                    oc.CLEARING_TYPE=#CLEARING_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+       <!--mapped-statement name="getSelectOutwardClearingRealizeTOList" result-class="java.util.LinkedHashMap" >                
+            SELECT distinct oc.BATCH_ID AS BID, oc.CLEARING_TYPE, oc.SCHEDULE_NO, oc.CREATED_BY,
+            nvl((select sum(amount)
+                from outward_clearing where status != 'DELETED'
+                and oc.batch_id = batch_id and (authorize_status='AUTHORIZED') GROUP BY BATCH_ID),0) 
+                as OUTWARD_AMOUNT,
+            nvl((select SUM(PAY_IN_SLIP.AMOUNT) as "Pay In Slip Amount"
+                from PAY_IN_SLIP where STATUS!='DELETED'and batch_id = PC.batch_id 
+                and authorize_status='AUTHORIZED' GROUP BY BATCH_ID),0) as PAY_IN_SLIP_AMOUNT 
+            FROM PAY_IN_SLIP PC,OUTWARD_CLEARING oc WHERE PC.BATCH_ID=oc.BATCH_ID
+            and oc.status!='DELETED'and PC.status!='DELETED'
+            AND (oc.AUTHORIZE_STATUS='AUTHORIZED' and PC.authorize_status='AUTHORIZED')
+       </mapped-statement-->
+       
+       <!--
+       <mapped-statement name="getSelectOutwardClearingRealizeTOList" result-class="java.util.LinkedHashMap" >        
+            SELECT OUTWARD_CLEARING.BATCH_ID AS BID,
+            COUNT(OUTWARD_ID) as "Outward",
+            SUM(OUTWARD_CLEARING.AMOUNT) as "Outward Amount",
+            COUNT(PAY_IN_SLIP_ID) as "Pay In Slip",
+            SUM(PAY_IN_SLIP.AMOUNT) as "Pay In Slip Amount"
+            FROM PAY_IN_SLIP , OUTWARD_CLEARING
+            WHERE PAY_IN_SLIP.BATCH_ID=OUTWARD_CLEARING.BATCH_ID
+            AND (NOT(OUTWARD_CLEARING.STATUS = 'DELETED'))
+            AND (OUTWARD_CLEARING.AUTHORIZE_STATUS = 'AUTHORIZED')
+            GROUP BY OUTWARD_CLEARING.BATCH_ID
+       </mapped-statement>  
+       -->
+               
+        <!--
+        <mapped-statement name="selectPayInSlipDetails" result-class="com." >        
+                SELECT * FROM PAY_IN_SLIP WHERE BATCH_ID = #BID#
+        </mapped-statement>
+        -->
+        
+    <mapped-statement name="authorizeOutwardClearing" result-class="java.util.HashMap">
+        UPDATE OUTWARD_CLEARING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT#,                
+        AUTHORIZE_REMARKS = #REMARKS:VARCHAR#
+        WHERE BATCH_ID = #BID:VARCHAR# and 
+        INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR# and 
+        INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR# and 
+        ((status!='DELETED' and (AUTHORIZE_STATUS in ('AUTHORIZED','EXCEPTION') or
+        AUTHORIZE_STATUS is null))  or 
+        (status='DELETED' and (AUTHORIZE_STATUS is null or 
+        AUTHORIZE_STATUS in ('EXCEPTION'))))
+        and INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        and OUTWARD_DT = #OUTWARD_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getOutwardReturned" result-class="java.lang.Double" >
+        SELECT OC.AMOUNT FROM OUTWARD_CLEARING OC, 
+        OUTWARD_RETURN RE 
+        WHERE OC.BATCH_ID = RE.BATCH_ID AND 
+        OC.INSTRUMENT_NO1 = RE.INSTRUMENT_NO1 AND 
+        OC.INSTRUMENT_NO2 = RE.INSTRUMENT_NO2 AND 
+        OC.STATUS NOT IN ('DELETED') AND 
+        OC.BATCH_ID = #batchId:VARCHAR# AND 
+        RE.STATUS NOT IN ('DELETED') AND 
+        RE.AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getOutwardClearingType" result-class="java.lang.String" >
+        SELECT DISTINCT CLEARING_TYPE FROM OUTWARD_CLEARING 
+        WHERE STATUS NOT IN ('DELETED') AND 
+        BATCH_ID = #BATCH_ID:VARCHAR# and INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        AND outward_dt = #OUTWARD_DT:VARCHAR#
+    </mapped-statement>
+        
+        <!--
+        <mapped-statement name="realizeOutwardClearing" inline-parameters="true">
+        UPDATE ACT_MASTER SET AVAILABLE_BALANCE = (AVAILABLE_BALANCE + #AMOUNT#),
+        SHADOW_CREDIT = (SHADOW_CREDIT - #AMOUNT#)
+        WHERE ACT_NUM = #ACCT_NO#
+        </mapped-statement>
+        -->  
+        
+    <dynamic-mapped-statement name="getScheduleNo" result-class="java.util.HashMap">
+        SELECT SCHEDULE_NO, CLEARING_DT FROM OUTWARD_TALLY
+        WHERE CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND  BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        AND CLOSING_DT IS NULL AND TALLY_STATUS = 'OPEN' 
+        AND STATUS NOT IN ('DELETED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEDULE_NO">
+                    SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLEARING_DATE">
+                    CLEARING_DT=#CLEARING_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>       
+        
+    <dynamic-mapped-statement name="getViewScheduleNo" result-class="java.util.HashMap">
+        SELECT SCHEDULE_NO, CLEARING_DT FROM OUTWARD_TALLY
+        WHERE CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND  BRANCH_ID = #BRANCH_ID:VARCHAR# 
+             
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEDULE_NO">
+                    SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLEARING_DATE">
+                    CLEARING_DT=#CLEARING_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>       
+        
+    <mapped-statement name="getMaxOutwardClearingID" result-class="java.lang.Integer" >
+        SELECT count(*) FROM OUTWARD_CLEARING 
+        WHERE BATCH_ID = #batchId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateOutwardClearingTO" inline-parameters="true">
+        UPDATE OUTWARD_CLEARING SET 				
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+        INSTRUMENT_TYPE = #instrumentType:VARCHAR#,
+        INSTRUMENT_DT = #instrumentDt:DATE#,
+        AMOUNT = #amount:NUMERIC#,
+        PAYEE_NAME = #payeeName:VARCHAR#,
+        DRAWER = #drawer:VARCHAR#,
+        DRAWER_ACCT_NO = #drawerAcctNo:VARCHAR#,
+        BANK_CODE = #bankCode:VARCHAR#,
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        INSTRUMENT_NO1 = #instrumentNo1:VARCHAR#,
+        INSTRUMENT_NO2 = #instrumentNo2:VARCHAR#,
+        SCHEDULE_NO = #scheduleNo:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        CURRENCY = #currency:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:VARCHAR#-->, 
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#
+        WHERE BATCH_ID = #batchId:VARCHAR# and OUTWARD_ID = #outwardId:VARCHAR#
+        and INITIATED_BRANCH = #initiatedBranch:VARCHAR# and OUTWARD_DT = #outwardDt:DATE#
+    </mapped-statement>            
+        
+    <mapped-statement name="rejectOutwardClearing" result-class="java.util.HashMap">
+        UPDATE OUTWARD_CLEARING 
+        SET 
+        STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = '',
+        AUTHORIZE_DT = null,                
+        AUTHORIZE_REMARKS = '',
+        AUTHORIZE_STATUS = ''
+        WHERE BATCH_ID = #BID:VARCHAR# and
+        (status='DELETED' and AUTHORIZE_STATUS='REJECTED')
+    </mapped-statement>
+        
+    <result-map name="getAuthorizeOutwardClearingTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="outwardId" column="OUTWARD_ID"/>
+        <property name="outwardDt" column="OUTWARD_DT"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="instrumentDt" column="INSTRUMENT_DT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="payeeName" column="PAYEE_NAME"/>
+        <property name="drawer" column="DRAWER"/>
+        <property name="drawerAcctNo" column="DRAWER_ACCT_NO"/>
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="instrumentNo1" column="INSTRUMENT_NO1"/>
+        <property name="instrumentNo2" column="INSTRUMENT_NO2"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="currency" column="CURRENCY"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectAuthorizeOutwardClearingTO" result-map="getAuthorizeOutwardClearingTOResult" >
+        SELECT * FROM OUTWARD_CLEARING 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# and 
+        ((status!='DELETED' and 
+        (AUTHORIZE_STATUS!='AUTHORIZED' or AUTHORIZE_STATUS is null)) or 
+        (status='DELETED' and (AUTHORIZE_STATUS is null or AUTHORIZE_STATUS in ('EXCEPTION'))))
+    </mapped-statement>  
+        
+    <result-map name="getRealizeOutwardClearingTOResult" class="com.see.truetransact.transferobject.transaction.clearing.outward.OutwardClearingTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="outwardId" column="OUTWARD_ID"/>
+        <property name="outwardDt" column="OUTWARD_DT"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="instrumentDt" column="INSTRUMENT_DT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="payeeName" column="PAYEE_NAME"/>
+        <property name="drawer" column="DRAWER"/>
+        <property name="drawerAcctNo" column="DRAWER_ACCT_NO"/>
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="instrumentNo1" column="INSTRUMENT_NO1"/>
+        <property name="instrumentNo2" column="INSTRUMENT_NO2"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="currency" column="CURRENCY"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectRealizeOutwardClearingTO" result-map="getRealizeOutwardClearingTOResult" >
+        SELECT * FROM OUTWARD_CLEARING 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# and (status!='DELETED' and
+        AUTHORIZE_STATUS='AUTHORIZED')
+    </mapped-statement>  
+        
+    <mapped-statement name="getViewforOutwardClearing" result-map="getRealizeOutwardClearingTOResult" >
+        SELECT * FROM OUTWARD_CLEARING 
+        WHERE BATCH_ID=#BATCH_ID:VARCHAR#
+        and INITIATED_BRANCH = #BRANCH_ID:VARCHAR#
+        and OUTWARD_DT = #PAY_IN_SLIP_DT:DATE#
+    </mapped-statement>  
+        
+ <!-- ============================Changes after Product Type======================================== -->       
+       
+    <result-map name="getAccountHeadID4PISDResult" class="java.util.HashMap">
+        <property name="accHeadID" column="AC_HD_ID"/>
+        <property name="accHeadDesc" column="AC_HD_DESC"/>
+        <property name="baseCurr" column="BASE_CURRENCY"/>
+        <property name="currDesc" column="LOOKUP_DESC"/>
+    </result-map>
+        
+    <mapped-statement name="getAccountHeadID4PISD" result-map="getAccountHeadID4PISDResult" >        
+        SELECT OP_AC_PRODUCT.AC_HD_ID,AC_HD_DESC,BASE_CURRENCY, LOOKUP_DESC FROM OP_AC_PRODUCT,LOOKUP_MASTER,AC_HD 
+        WHERE PROD_ID = #value:VARCHAR# AND LOOKUP_REF_ID = BASE_CURRENCY AND LOOKUP_ID='FOREX.CURRENCY'
+        AND OP_AC_PRODUCT.AC_HD_ID=AC_HD.AC_HD_ID
+    </mapped-statement>        
+       
+    <result-map name="getAccountDetailsPISDResult" class="java.util.HashMap">
+        <property name="fName" column="FNAME"/>
+        <property name="mName" column="MNAME"/>
+        <property name="lName" column="LNAME"/>
+        <property name="openingDt" column="CREATE_DT"/>
+        <property name="category" column="ACT_CAT_ID"/>
+        <property name="optMode" column="OPT_MODE_ID"/>
+        <property name="CLEAR_BALANCE" column="CLEAR_BALANCE"/>  
+        <property name="EFFECTIVE_BALANCE" column="AVAILABLE_BALANCE"/>   
+        <property name="SHADOW_DEBIT" column="SHADOW_DEBIT"/>
+        <property name="SHADOW_CREDIT" column="SHADOW_CREDIT"/>       
+    </result-map>
+        <!-- -->
+        <!--> This query 'll fetch the details of given account no<-->
+        
+    <mapped-statement name="getAccountDetailsPISD" result-map="getAccountDetailsPISDResult" >        
+        SELECT FNAME, MNAME, LNAME, CREATE_DT, ACT_CAT_ID, OPT_MODE_ID, CLEAR_BALANCE, AVAILABLE_BALANCE, SHADOW_DEBIT, SHADOW_CREDIT FROM ACT_MASTER, CUSTOMER
+        WHERE ACT_NUM = #value:VARCHAR# AND ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID
+    </mapped-statement>
+       <!-- -->
+        
+   <dynamic-mapped-statement name="Outward.getSelectAcctHead" result-class="java.util.LinkedHashMap">
+        SELECT AH.AC_HD_ID AS "A/C HEAD", AC_HD_DESC AS "A/C HEAD DESCRIPTION"                
+        FROM AC_HD_PARAM AHP, AC_HD AH
+        WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN ('DELETED')) and 
+        AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_clr='Y')
+        AND AHP.TRANSPOST IN ('MANUAL', 'BOTH')
+        AND AH.AC_HD_ID IN (SELECT BG.AC_HD_ID FROM BRANCH_GL BG, BRANCH_MASTER BM 
+        WHERE BG.GROUP_ID = BM.GL_GROUP_ID AND BM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+          <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="A/C HEAD">
+                    UPPER(AH.AC_HD_ID) LIKE UPPER('%$A/C Head$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="A/C HEAD DESCRIPTION">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$A/C Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Outward.getSelectBankCode" result-class="java.util.HashMap">
+        (SELECT BANK_CODE AS "BANK_CODE", BANK_NAME FROM BANK
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="BANK_CODE">
+                    WHERE BANK_CODE=#BANK_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>  
+        )
+        UNION
+        (SELECT BANK_CODE AS "BANK_CODE", BANK_NAME
+        FROM OTHER_BANK 
+        WHERE (OTHER_BANK.STATUS !='DELETED' OR OTHER_BANK.STATUS IS NULL)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BANK_CODE">
+                    BANK_CODE=#BANK_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        )
+        order by 2
+    </dynamic-mapped-statement>
+    <mapped-statement name="outWardclearingDetails" result-class="java.util.HashMap" >
+        select count(*) as BOOKEDINST ,sum(AMOUNT) as BOOKEDAMT    from   outward_clearing where SCHEDULE_NO= #SCHEDULE_NO:VARCHAR#
+        AND (STATUS != 'DELETED' )
+        AND BRANCH_ID =  #BRANCH_ID:VARCHAR# AND 
+        (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL) 
+        GROUP BY SCHEDULE_NO
+    </mapped-statement>  
+        
+    <mapped-statement name="getOutwardBatchCount" result-class="java.util.HashMap" >
+        select count(*) as COUNT from outward_clearing where BATCH_ID=#BATCH_ID:VARCHAR#
+        and INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        and OUTWARD_DT = #OUTWARD_DT:DATE#
+    </mapped-statement>  
+        
+    <dynamic-mapped-statement name="getViewOutwardClearing" result-class="java.util.LinkedHashMap">
+        select  oc.BATCH_ID as BID ,oc.CLEARING_TYPE AS CLEARING_TYPE ,oc.INSTRUMENT_NO2 AS INSTRUMENT_NO,
+        oc.INSTRUMENT_DT AS INSTRUMENT_DT ,oc.AMOUNT AS OUTWARD_AMOUNT  ,sp.PROD_ID AS PROD_ID ,
+        sp.ACCT_NO AS ACCOUNT_NO ,  sp.AMOUNT AS PAY_IN_SLIP_AMOUNT, SP.PAY_IN_SLIP_ID AS PAY_IN_SLIP_ID
+        , oc.SCHEDULE_NO AS SCHEDULE_NO ,OC.STATUS AS STATUS ,OC.AUTHORIZE_STATUS AS AUTHORIZE_STATUS
+        FROM outward_clearing oc ,pay_in_slip sp   WHERE oc.BATCH_ID=sp.BATCH_ID     AND OC.CLEARING_TYPE=#CLEARING_TYPE:VARCHAR#             
+       <!-- <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEDULE_NO">
+                    OC.SCHEDULE_NO=#SCHEDULE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>             
+        </dynamic>--> 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="OUTWARD_DT">
+                    OC.OUTWARD_DT=#OUTWARD_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="BID">
+                    UPPER(oc.BATCH_ID) LIKE UPPER('%$BID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="CLEARING_TYPE">
+                    UPPER(oc.CLEARING_TYPE) LIKE UPPER('%$CLEARING_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="INSTRUMENT_NO">
+                    UPPER(oc.INSTRUMENT_NO2) LIKE UPPER('%$INSTRUMENT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="INSTRUMENT_DT">
+                    UPPER(oc.INSTRUMENT_DT) LIKE UPPER('%$INSTRUMENT_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="OUTWARD_AMOUNT">
+                    UPPER(oc.AMOUNT) LIKE UPPER('%$OUTWARD_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(sp.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                  <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACCOUNT_NO">
+                    UPPER(sp.ACCT_NO) LIKE UPPER('%$ACCOUNT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PAY_IN_SLIP_AMOUNT">
+                    UPPER(sp.AMOUNT) LIKE UPPER('%$PAY_IN_SLIP_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="PAY_IN_SLIP_ID">
+                    UPPER(SP.PAY_IN_SLIP_ID) LIKE UPPER('%$PAY_IN_SLIP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEDULE_NO">
+                    UPPER(oc.SCHEDULE_NO) LIKE UPPER('%$SCHEDULE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="STATUS">
+                    UPPER(OC.STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AUTHORIZE_STATUS">
+                    UPPER(OC.AUTHORIZE_STATUS) LIKE UPPER('%$AUTHORIZE_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+               
+    </dynamic-mapped-statement>     	
+               
+    <dynamic-mapped-statement name="Outward.getSelectBankBranch" result-class="java.util.HashMap">
+        (SELECT BRANCH_CODE, BRANCH_NAME  
+        AS "BRANCH_NAME" FROM OTHER_BANK_BRANCH
+        WHERE BANK_CODE = #BANK_CODE:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="OTHER_BRANCH_CODE">
+                    BRANCH_CODE=#OTHER_BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_NAME">
+                    UPPER(BRANCH_NAME) LIKE UPPER('%$BRANCH_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND  (STATUS NOT IN ('DELETED')))
+        UNION
+        (SELECT BRANCH_CODE,BRANCH_NAME  
+        AS "BRANCH_NAME" FROM BRANCH_MASTER
+        WHERE BANK_CODE = #BANK_CODE:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="OTHER_BRANCH_CODE">
+                    BRANCH_CODE=#OTHER_BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_NAME">
+                    UPPER(BRANCH_NAME) LIKE UPPER('%$BRANCH_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND STATUS NOT IN ('DELETED') )order by 2
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="updatePartialreailzAmt" inline-parameters="true">
+        update pay_in_slip set CONVERT_AMT=nvl(CONVERT_AMT,0)+#OUT_AMOUNT:NUMERIC# ,AMOUNT=nvl(AMOUNT,0)+#MINUSAMOUNT:NUMERIC#
+        where BATCH_ID=#BATCH_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="realizePartialMap" result-class="java.util.HashMap">
+        UPDATE PAY_IN_SLIP SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #TODAY_DT:DATE#,
+        AUTHORIZE_REMARKS = #REMARKS:VARCHAR#,
+        AMOUNT=#REALIZEDAMT:NUMERIC#,
+        CONVERT_AMT=nvl(CONVERT_AMT,0)+#RESTAMT:NUMERIC#
+        WHERE BATCH_ID = #BID:VARCHAR# and 
+        ((status!='DELETED' and 
+        (AUTHORIZE_STATUS in ('AUTHORIZED','EXCEPTION') or 
+        AUTHORIZE_STATUS is null)) 
+        or (status='DELETED' and 
+        (AUTHORIZE_STATUS is null or 
+        AUTHORIZE_STATUS in ('EXCEPTION'))))
+    </mapped-statement>  
+</sql-map>

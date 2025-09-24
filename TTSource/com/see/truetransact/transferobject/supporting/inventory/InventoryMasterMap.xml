@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : InventoryMasterMap.xml
+    Created on : August 20, 2004, 2:29 PM
+    Author     : rahul
+    Description:
+        Purpose of the document follows.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InventoryMasterTOMap">
+
+	<!-- Use InventoryMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInventoryMasterTO" inline-parameters="true">
+        INSERT INTO INVENTORY_MASTER
+        (ITEM_ID, ITEM_TYPE, ITEM_SUB_TYPE, AVAILABLE_BOOKS, LEAVES_PER_BOOK, BOOKS_REORDER_LEVEL, BOOKS_DANGER_LEVEL, CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, BRANCH_ID, INSTRUMENT_PREFIX, REMARKS, INITIATED_BRANCH
+        ) VALUES (
+        #itemId:VARCHAR#, #itemType:VARCHAR#, #itemSubType:VARCHAR#, #availableBooks:NUMERIC#, #leavesPerBook:NUMERIC#, #booksReorderLevel:NUMERIC#, #booksDangerLevel:NUMERIC#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #branchId:VARCHAR#, #instrumentPrefix:VARCHAR#, #remarks:VARCHAR#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InventoryMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInventoryMasterTO" inline-parameters="true">
+        UPDATE INVENTORY_MASTER SET 
+<!--		ITEM_ID = #itemId:VARCHAR#,-->
+        ITEM_TYPE = #itemType:VARCHAR#,
+        ITEM_SUB_TYPE = #itemSubType:VARCHAR#,
+        AVAILABLE_BOOKS = #availableBooks:NUMERIC#,
+        LEAVES_PER_BOOK = #leavesPerBook:NUMERIC#,
+        BOOKS_REORDER_LEVEL = #booksReorderLevel:NUMERIC#,
+        BOOKS_DANGER_LEVEL = #booksDangerLevel:NUMERIC#,
+<!--		CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        INSTRUMENT_PREFIX = #instrumentPrefix:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+        WHERE ITEM_ID = #itemId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InventoryMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInventoryMasterTO" inline-parameters="true">
+<!--		DELETE FROM INVENTORY_MASTER -->
+        UPDATE INVENTORY_MASTER SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ITEM_ID = #itemId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InventoryMasterTO object (JavaBean) properties -->
+    <result-map name="getInventoryMasterTOResult" class="com.see.truetransact.transferobject.supporting.inventory.InventoryMasterTO">
+        <property name="itemId" column="ITEM_ID"/>
+        <property name="itemType" column="ITEM_TYPE"/>
+        <property name="itemSubType" column="ITEM_SUB_TYPE"/>
+        <property name="availableBooks" column="AVAILABLE_BOOKS"/>
+        <property name="leavesPerBook" column="LEAVES_PER_BOOK"/>
+        <property name="booksReorderLevel" column="BOOKS_REORDER_LEVEL"/>
+        <property name="booksDangerLevel" column="BOOKS_DANGER_LEVEL"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="instrumentPrefix" column="INSTRUMENT_PREFIX"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+    <mapped-statement name="getSelectInventoryMasterTO" result-map="getInventoryMasterTOResult" >
+        SELECT * FROM INVENTORY_MASTER 
+        WHERE ITEM_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="viewInventoryMaster" result-class="java.util.LinkedHashMap" >
+        SELECT ITEM_ID AS "ITEM ID", ITEM_TYPE AS "ITEM TYPE" , ITEM_SUB_TYPE AS "ITEM SUB TYPE",
+        LEAVES_PER_BOOK AS "LEAVES PER BOOK" , AVAILABLE_BOOKS AS "AVAILABLE BOOKS",
+        AUTHORIZE_STATUS FROM INVENTORY_MASTER
+        WHERE STATUS != 'DELETED' AND ((AUTHORIZE_STATUS = 'AUTHORIZED') or
+        (AUTHORIZE_STATUS is null)) 
+        AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getBookQuanTransIn" result-class="java.util.LinkedHashMap" >
+        SELECT SUM(BOOK_QUANTITY) AS "BOOK_QUAN_IN" FROM INVENTORY_DETAILS
+        WHERE ITEM_ID = #ITEM ID:VARCHAR# 
+        AND TRANS_TYPE = 'TRANS_IN'
+        AND (STATUS NOT IN ('DELETED'))
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED'))
+    </mapped-statement>
+
+    <mapped-statement name="getBookQuanTransOut" result-class="java.util.LinkedHashMap" >
+        SELECT SUM(BOOK_QUANTITY) AS "BOOK_QUAN_OUT" FROM INVENTORY_DETAILS
+        WHERE ITEM_ID = #ITEM ID:VARCHAR#
+        AND TRANS_TYPE = 'TRANS_OUT'
+        AND (STATUS NOT IN ('DELETED'))
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getDuplicateInventoryMaster" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM INVENTORY_MASTER
+        WHERE ITEM_TYPE = #ITEM_TYPE:VARCHAR#
+        AND ITEM_SUB_TYPE = #ITEM_SUB_TYPE:VARCHAR#
+        AND LEAVES_PER_BOOK = #LEAVES_PER_BOOK:NUMBER#
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND (STATUS NOT IN ('DELETED')OR STATUS IS NULL)
+    </mapped-statement>
+        
+        
+        
+        
+        
+<!--=====================================AUTHORIZE===========================================-->        
+        
+    <dynamic-mapped-statement name="getSelectInventoryMasterTOList" result-class="java.util.LinkedHashMap" >
+        SELECT ITEM_ID AS "ITEM ID", ITEM_TYPE AS "ITEM TYPE" , ITEM_SUB_TYPE AS "ITEM SUB TYPE" 
+        FROM INVENTORY_MASTER
+        WHERE STATUS != 'DELETED' 
+<!--                AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)-->
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = INVENTORY_MASTER.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY ITEM_ID                
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authInventoryMaster" result-class="java.util.HashMap">
+        UPDATE INVENTORY_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE ITEM_ID = #ITEM ID:VARCHAR# 
+    </mapped-statement>        
+        
+
+</sql-map>

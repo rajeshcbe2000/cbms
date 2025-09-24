@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LogMap">
+	<!-- Use Log object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLog" inline-parameters="true">
+        INSERT INTO LOG
+        (TIME_STAMP, MODULE, SCREEN, IP_ADDR, BRANCH_ID, USER_ID, STATUS, PRIMARY_KEY, DATA, REMARKS, APPL_DT, SELECTED_BRANCH_ID
+        ) VALUES (
+        (SELECT SYS_DATE() FROM DUAL), #module:VARCHAR#, #screen:VARCHAR#, #ipAddr:VARCHAR#, #branchId:VARCHAR#, #userId:VARCHAR#, #status:VARCHAR#, #primaryKey:VARCHAR#, #data:VARCHAR#, #remarks:VARCHAR#, #applDt:DATE#, #selectedBranchId:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertEditLock" inline-parameters="true">
+        <!--changed query for transId-->
+        INSERT INTO EDIT_LOCK (
+        SCREEN_ID, RECORD_KEY , LOCKED_BY, BRANCH_ID, CUR_DATE
+        ) VALUES (
+        #SCREEN_ID:VARCHAR#, #RECORD_KEY:VARCHAR# , #USER_ID:VARCHAR#, #BRANCH_ID:VARCHAR#, #CUR_DATE:DATE#)
+                    
+                    <!--INSERT INTO EDIT_LOCK (
+                    SCREEN_ID, RECORD_KEY , LOCKED_BY
+		) VALUES (
+                    #SCREEN_ID:VARCHAR#, #RECORD_KEY:VARCHAR# , #USER_ID:VARCHAR#)-->
+    </mapped-statement>
+        
+         <mapped-statement name="deleteLock" inline-parameters="true">
+              DELETE FROM EDIT_LOCK 
+              WHERE  
+              RECORD_KEY = #RECORD_KEY:VARCHAR#
+              AND
+              BRANCH_ID = #BRANCH_ID:VARCHAR#
+              AND
+              CUR_DATE = #CUR_DATE:DATE#
+        </mapped-statement>
+        
+    <mapped-statement name="deleteEditLock" inline-parameters="true">
+        <!--changed query for transId-->
+        DELETE FROM EDIT_LOCK 
+        WHERE  
+        <!--SCREEN_ID = #SCREEN_ID:VARCHAR#
+        AND -->
+        RECORD_KEY = #RECORD_KEY:VARCHAR#
+        AND 
+        LOCKED_BY = #USER_ID:VARCHAR#
+        AND
+        BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND
+        CUR_DATE = #CUR_DATE:DATE#
+                 <!--DELETE FROM EDIT_LOCK 
+                    WHERE  
+                    SCREEN_ID = #SCREEN_ID:VARCHAR#
+                    AND 
+                    RECORD_KEY = #RECORD_KEY:VARCHAR#
+                    AND 
+                    LOCKED_BY = #USER_ID:VARCHAR#-->
+    </mapped-statement>
+        
+    <mapped-statement name="deleteAllEditLock" inline-parameters="true">
+        DELETE FROM EDIT_LOCK 
+        WHERE  
+        LOCKED_BY = #USERID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="selectEditLock" result-class="java.lang.String">
+        SELECT LOCKED_BY FROM EDIT_LOCK WHERE
+        RECORD_KEY = #RECORD_KEY:VARCHAR#
+        AND 
+        CUR_DATE = #CUR_DATE:DATE#
+               
+        
+       <!-- WHERE  
+        RECORD_KEY = #RECORD_KEY:VARCHAR#-->
+        
+        <!--SCREEN_ID = #SCREEN_ID:VARCHAR#
+        AND 
+        RECORD_KEY = #RECORD_KEY:VARCHAR#
+        AND
+        BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND
+        CUR_DATE = #CUR_DATE:DATE#-->
+        
+    </mapped-statement>
+  
+    <mapped-statement name="getLockedDetails" result-class="java.util.HashMap">
+        SELECT MAX(TIME_STAMP) AS LOCKED_TIME, IP_ADDR, BRANCH_ID FROM LOG WHERE USER_ID = #LOCKED_BY:VARCHAR#
+        AND SCREEN = #SCREEN_ID:VARCHAR# GROUP BY IP_ADDR, BRANCH_ID 
+    </mapped-statement>
+    
+        <mapped-statement name="deleteAllAccountLock" inline-parameters="true">
+        <!--changed query for transId-->
+        DELETE FROM EDIT_LOCK 
+        WHERE  
+        SCREEN_ID = #SCREEN_ID:VARCHAR#
+        AND 
+        LOCKED_BY = #USER_ID:VARCHAR#
+        AND
+        BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND
+        CUR_DATE = #CUR_DATE:DATE#
+             
+    </mapped-statement>
+    
+    
+    <mapped-statement name="selectEditLockScreenName" result-class="java.lang.String">
+        SELECT SCREEN_ID FROM EDIT_LOCK 
+        WHERE  
+        RECORD_KEY = #RECORD_KEY:VARCHAR#
+        AND 
+        CUR_DATE = #CUR_DATE:DATE#
+    </mapped-statement>
+    
+    
+    
+</sql-map>

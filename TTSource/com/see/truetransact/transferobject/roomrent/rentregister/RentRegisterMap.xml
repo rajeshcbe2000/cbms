@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BorrowingsMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <dynamic-mapped-statement name="RentRegister.getSelectRentRegisterList" result-class="java.util.LinkedHashMap">
+        SELECT RRID, ROOM_NO ,APPLN_NO as APPLICATION_NO FROM RENT_REGISTER   
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL  ) and (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS!='REJECTED')
+    </dynamic-mapped-statement>
+   <dynamic-mapped-statement name="RentRegister.getBuildingNo" result-class="java.util.HashMap">
+        SELECT BUILDING_NUM,RMNUMBER,RSTATUS FROM RENT_PROFILE  
+        WHERE AUTHORIZE_STATUS IS NOT NULL AND (STATUS != 'DELETED' OR STATUS IS NULL )
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BUILDING_NUM" >
+                    UPPER(BUILDING_NUM) LIKE UPPER('%$BUILDING_NUM$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RMNUMBER" >
+                    UPPER(RMNUMBER) LIKE UPPER('%$RMNUMBER$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RSTATUS" >
+                    UPPER(RSTATUS) LIKE UPPER('%$RSTATUS$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="RentRegister.getRoomNo" result-class="java.util.HashMap">
+        <!--SELECT ROOMNUM,RMNUMBER,RENT_AMT FROM RENT_DETAILS  
+                    WHERE  RMNUMBER =#BUILDING_NO:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL)-->
+                    
+                 <!--   Select Rent_Details.Roomnum,Rent_Details.Rmnumber,Rent_Details.Rent_Amt,Rent_Register.Name From Rent_Details  
+Join Rent_Register On Rent_Register.Room_No=Rent_Details.Roomnum
+                    WHERE  Rent_Details.RMNUMBER =#BUILDING_NO:VARCHAR# AND (Rent_Details.STATUS != 'DELETED' OR Rent_Details.STATUS IS NULL)-->
+        SELECT RR.BUILDING_NO,RR.PLACE,RD.ROOMNUM AS "ROOM NUMBER" ,RD.RMNUMBER,RD.RENT_AMT,RR.NAME,
+        RR.RRID FROM RENT_DETAILS RD  
+        Join RENT_REGISTER RR ON RR.ROOM_NO=RD.ROOMNUM  
+        WHERE (RD.STATUS != 'DELETED' OR RD.STATUS IS NULL) AND 
+        (RR.ACCOUNT_STATUS NOT IN ('CLOSED','DEFAULTER') OR RR.ACCOUNT_STATUS IS NULL)
+        AND RR.AUTHORIZE_STATUS != 'REJECTED'
+        AND RD.RMNUMBER = (SELECT RP.RMNUMBER FROM RENT_PROFILE RP WHERE RP.BUILDING_NUM = RR.BUILDING_NO)
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BUILDING_NO" >
+                    UPPER(RR.BUILDING_NO) LIKE UPPER('%$BUILDING_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PLACE" >
+                    UPPER(RR.PLACE) LIKE UPPER('%$PLACE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "ROOM NUMBER" >
+                    UPPER(RD.ROOMNUM) LIKE UPPER('%$ROOM NUMBER$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RMNUMBER" >
+                    UPPER(RD.RMNUMBER) LIKE UPPER('%$RMNUMBER$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "NAME" >
+                    UPPER(RR.NAME) LIKE UPPER('%$NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RENT_AMT" >
+                    UPPER(RD.RENT_AMT) LIKE UPPER('%$RENT_AMT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RRID" >
+                    UPPER(RR.RRID) LIKE UPPER('%$RRID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic> 
+    </dynamic-mapped-statement>
+     
+    <mapped-statement name="RentRegister.getRoomNonew" result-class="java.util.HashMap">
+        SELECT ROOMNUM,RMNUMBER,RENT_AMT FROM RENT_DETAILS  
+        WHERE  RMNUMBER =#BUILDING_NO:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL) and (ROOM_STATUS!='REGISTERED' or ROOM_STATUS IS NULL)
+    </mapped-statement> 
+                                           
+    <mapped-statement name="RentRegister.getAcHeads" result-class="java.util.HashMap">
+        SELECT RENT_AC_HD_ID,ADV_RENT_ACT_HD_ID FROM RENT_PROFILE 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND BUILDING_NUM = #BUILDING_NUM:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="insertRentRegisterTO" inline-parameters="true">
+        INSERT INTO RENT_REGISTER
+        (RRID, ROOM_NO,APPLN_NO,APPLN_DATE,NAME,HOUSE_NAME,PLACE, CITY,PHONE_NO,MOB_NO,EMAIL_ID,
+        GUARDIAN,NOMINEE,OCCUPIED_DATE,COMM_DATE,RECOMM_BY,AGREMENT_NO,
+        AGREMENT_DATE,RENT_AMT,RENT_DATE,PENAL_GR_PERIOD,ADV_AMT,ADV_AMT_DETAILS,
+        AUTHORIZE_STATUS, AUTHORIZED_BY, AUTHORIZED_DT, STATUS,BUILDING_NO, BRANCH_CODE,STATUS_BY,STATUS_DT
+        ) VALUES 
+        (#rrId:VARCHAR#, #roomNo:VARCHAR#, #appNo:VARCHAR#,#applDate:DATE#, #name:VARCHAR#,#houseName:VARCHAR#,#place:VARCHAR#,#city:VARCHAR#,#phNo:VARCHAR#, #mobNo:VARCHAR#,#emailId:VARCHAR#,
+        #guardian:VARCHAR#, #nominee:VARCHAR#,#occDate:DATE#,#commDate:DATE#,#recommBy:VARCHAR#,#agreNo:VARCHAR#,
+        #agrDate:DATE#,#rentAmt:NUMBER#,#rentDate:VARCHAR#,#penalGrPeriod:VARCHAR#,#advAmt:NUMBER#,#aAdvDetails:VARCHAR#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#buidingNo:VARCHAR#,#branchCode:VARCHAR#,
+        #statusBy:VARCHAR#,#statusDate:DATE#)
+    </mapped-statement> 
+        
+    <mapped-statement name="insertRentDetails" inline-parameters="true">
+        Update RENT_DETAILS set
+        ROOM_STATUS=#rentDetails:VARCHAR#
+        where RMNUMBER =#rmNumber:VARCHAR# and ROOMNUM=#roomNo:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="updateRentRegisterTO" inline-parameters="true">
+        UPDATE RENT_REGISTER SET 
+        ROOM_NO=#roomNo:VARCHAR#,
+        APPLN_NO= #appNo:VARCHAR#,
+        APPLN_DATE=#applDate:DATE#,
+        NAME=#name:VARCHAR#,
+        HOUSE_NAME=#houseName:VARCHAR#,
+        PLACE=#place:VARCHAR#,
+        CITY=#city:VARCHAR#,
+        PHONE_NO=#phNo:VARCHAR#,
+        MOB_NO=#mobNo:VARCHAR#,
+        EMAIL_ID=#emailId:VARCHAR#,
+        GUARDIAN=#guardian:VARCHAR#,
+        NOMINEE=#nominee:VARCHAR#,
+        OCCUPIED_DATE=#occDate:DATE#,
+        COMM_DATE=#commDate:DATE#,
+        RECOMM_BY=#recommBy:VARCHAR#,
+        AGREMENT_NO=#agreNo:VARCHAR#,
+        AGREMENT_DATE=#agrDate:DATE#,
+        RENT_AMT=#rentAmt:NUMBER#,
+        RENT_DATE=#rentDate:VARCHAR#,
+        PENAL_GR_PERIOD=#penalGrPeriod:VARCHAR#,
+        ADV_AMT=#advAmt:NUMBER#,
+        ADV_AMT_DETAILS=#aAdvDetails:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+                <!--STORE_NAME=#storeName:VARCHAR#, -->
+        BUILDING_NO=#buidingNo:VARCHAR#
+        WHERE RRID = #rrId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deleteRentRegisterTO" inline-parameters="true">
+        UPDATE RENT_REGISTER SET 
+        STATUS = #status:VARCHAR# 
+        WHERE RRID = #rrId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getRentRegisterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT TC.RRID, TC.ROOM_NO ,TC.APPLN_NO as APPLICATION_NO,(select rtid from rent_trans rt where tc.rrid = rt.rrid) as RTID FROM
+        RENT_REGISTER TC  
+        WHERE ( TC.STATUS = 'CREATED' OR TC.STATUS = 'UPDATED' OR TC.STATUS = 'MODIFIED' ) AND
+        TC.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        TC.STATUS_BY != #USER_ID:VARCHAR# AND
+         <!-- TC.RRID = RT.RRID AND
+         AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        #HIERARCHY_ID# &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY)  
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION">
+                TC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION">
+                (TC.AUTHORIZE_STATUS IS NULL OR 
+                TC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  TC.RRID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeRentRegister" result-class="java.util.HashMap">
+        UPDATE RENT_REGISTER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  RRID = #RRID:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getRentRegisterTOResult" class="com.see.truetransact.transferobject.roomrent.rentregister.RentRegisterTO">
+        <property name="rrId" column="RRID"/>
+        <property name="roomNo" column="ROOM_NO"/>
+        <property name="appNo" column="APPLN_NO"/>
+        <property name="applDate" column="APPLN_DATE"/>
+        <property name="name" column="NAME"/>
+        <property name="houseName" column="HOUSE_NAME"/>
+        <property name="place" column="PLACE"/>
+        <property name="city" column="CITY"/>
+        <property name="phNo" column="PHONE_NO"/>
+        <property name="mobNo" column="MOB_NO"/>
+        <property name="emailId" column="EMAIL_ID"/>
+        <property name="guardian" column="GUARDIAN"/>
+        <property name="nominee" column="NOMINEE"/>
+        <property name="occDate" column="OCCUPIED_DATE"/>
+        <property name="commDate" column="COMM_DATE"/>
+        <property name="recommBy" column="RECOMM_BY"/>
+        <property name="agreNo" column="AGREMENT_NO"/>
+        <property name="agrDate" column="AGREMENT_DATE"/>
+        <property name="rentAmt" column="RENT_AMT"/>
+        <property name="rentDate" column="RENT_DATE"/>
+        <property name="penalGrPeriod" column="PENAL_GR_PERIOD"/>
+        <property name="advAmt" column="ADV_AMT"/>
+        <property name="aAdvDetails" column="ADV_AMT_DETAILS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="buidingNo" column="BUILDING_NO"/>  
+        <property name="rmNumber" column="RMNUMBER"/>
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="RentRegister.getSelectRentRegister" result-map="getRentRegisterTOResult">
+        SELECT RR.*, RP.RMNUMBER FROM RENT_REGISTER RR LEFT JOIN RENT_PROFILE RP ON RP.BUILDING_NUM = RR.BUILDING_NO
+        WHERE RR.STATUS NOT IN ('DELETED') and (RR.AUTHORIZE_STATUS IS NULL OR RR.AUTHORIZE_STATUS!='REJECTED') AND RR.RRID = #RRID:VARCHAR#
+		<!--SELECT BORROWING_NO, AGENCY_CODE, BORRWING_REFNO, TYPE, DESCRIPTION,
+                SANCTION_DATE,SANCTION_AMT,AMOUNT_BORRWED,RATE_INTEREST,NO_OF_INSTALLMENTS,
+                PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,SANCTION_EXP_DATE,SECURITY_DET,PRINCIPAL_GRP_HEAD,
+                INT_GRP_HEAD,PENAL_GRP_HEAD,CHARGES_GRP_HEAD FROM BORROWING_MASTER 
+		WHERE STATUS NOT IN ('DELETED')  and AUTHORIZE_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO#-->
+    </mapped-statement>
+    
+    <mapped-statement name="RentRegister.getDefaulterNClosedAccounts" result-class="java.util.HashMap">
+        Select Rent_Register.BUILDING_NO,Rent_Register.PLACE,Rent_Details.Roomnum as "ROOM NUMBER" ,Rent_Details.Rmnumber,Rent_Details.Rent_Amt,Rent_Register.Name,
+        Rent_Register.RRID From Rent_Details  
+        Join Rent_Register On Rent_Register.Room_No=Rent_Details.Roomnum
+        WHERE ((rent_details.status != 'DELETED' OR rent_details.status IS NULL) AND 
+        (rent_register.account_status ='CLOSED' OR rent_register.account_status ='DEFAULTER'))
+    </mapped-statement> 
+    <mapped-statement name="getRoomRentOccupiedDate" result-class="java.util.HashMap">
+        SELECT OCCUPIED_DATE AS RENT_PERIOD_TO FROM rent_register  
+        WHERE  ROOM_NO = #ROOM_NO:VARCHAR# and RRID = #RRID:VARCHAR#
+    </mapped-statement> 
+       
+</sql-map>

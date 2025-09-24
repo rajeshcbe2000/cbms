@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+
+<project name="CBMS" default="all" basedir="E:\TTCBS_KERALA\CBMS++DEV">
+    <!--import file="nbproject/build-impl.xml"/-->
+    <property environment="env" />
+    <property name="env.ANT_OPTS" value="-Xmx1024m"  />
+    <property name="appname" value="TT"/>
+   
+    <!--target name="jar" description="Netbeans default build target"/-->          
+    <target name="-post-compile">
+        <obfuscate>
+            <fileset dir="${build.classes.dir}"/>
+        </obfuscate>
+    </target>
+
+    <target name="init"> 
+        <property name="dirs.base" value="${basedir}"/>
+        <property name="classdir" value="${dirs.base}/TTclasses"/>
+        <property name="src" value="${dirs.base}/TTSource"/>
+
+        <property name="uiJar" value="${dirs.base}/TTDeploy/TTUi.jar"/>
+        <property name="serverJar" value="${dirs.base}/TTDeploy/TTServer.jar"/>
+
+        <property name="jarDir" value="${dirs.base}/jar"/>
+        <property name="jarServDir" value="${dirs.base}/serverjar"/>
+        <property name="debug" value="on" />
+        <property name="deprecation" value="true" />
+        <mkdir dir="${jarServDir}/META-INF"/>
+        <mkdir dir="${classdir}"/>
+    </target>
+ 
+	<!-- Main target  -->
+    <target name="jar" depends="init,build,buildJar,buildServerJar"/>
+        
+    <!--target name="compile-single" description="Netbeans default build target" depends="init,build"/-->
+    
+    <target name="build" >
+
+        <javac fork="true" destdir="${classdir}" debug="${debug}" deprecation="${deprecation}" memoryMaximumSize="1024m" includeantruntime="false" >
+            <src>
+                <pathelement location="${src}"/>
+            </src>
+            <classpath>
+                <fileset dir="${dirs.base}/lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+          
+    <target name="buildJar" depends="init">
+        <copy todir="${jarDir}">
+            <fileset dir="${classdir}">
+                <include name= "**/clientproxy/*.class" />
+                <include name= "**/health/jms/client/*.class" />
+                <include name= "**/health/util/*.class" />
+                <include name= "**/tools/workflow/**/*.class" />
+                <include name= "**/serverside/batchprocess/task/TaskHeader.class" />
+                <include name= "**/serverside/batchprocess/task/TaskStatus.class" />
+                <include name= "**/businessdelegate/**/*.class" />
+                <include name= "**/clientexception/**/*.class" />
+                <include name= "**/commonutil/**/*.class" />
+                <exclude name= "**/commonutil/security/*.class" />
+                <include name= "**/transferobject/**/*.class" />
+                <include name= "**/ui/**/*.*" />
+                <exclude name= "**/reporttool/ui/*.class" />
+                <include name= "**/uicomponent/**/*.class" />
+                <include name= "**/uimandatory/*.class" />
+                <include name= "**/uivalidation/*.class" />
+                <include name= "**/clientutil/**/*.class" />
+                <include name= "**/ttlite/**/*.class" />
+            </fileset>
+            <fileset dir="${src}">
+                <include name= "**/*.properties" />
+                <include name= "**/*.gif" />
+                <include name= "**/*.jpg" />
+                <exclude name= "**/SqlMapConfig.properties" />
+            </fileset>
+                      
+        </copy>
+            
+        <jar jarfile="${uiJar}" basedir="${jarDir}" />
+    </target>
+        
+    <target name="buildServerJar" depends="init">
+        <copy todir="${jarServDir}">
+		      
+            <fileset dir="${classdir}">
+                <include name= "**/clientproxy/*.class" />
+                <include name= "**/health/jms/client/*.class" />
+                <include name= "**/health/util/*.class" />
+                <exclude name= "**/tools/workflow/**/*.class" />
+                <include name= "**/serverside/**/*.class" />
+                <include name= "**/sendsms/**/*.class" />
+                <include name= "**/businessdelegate/**/*.class" />
+                <include name= "**/businessrule/**/*.class" />
+                <include name= "**/serverexception/**/*.class" />
+                <include name= "**/serverutil/**/*.*" />
+                <exclude name= "**/serverutil/security/*.*" />
+                <include name= "**/serviceactivator/*.*" />
+                <include name= "**/servicelocator/*.*" />
+                <include name= "**/commonutil/**/*.class" />
+                <exclude name= "**/commonutil/security/*.class" />
+                <include name= "**/transferobject/**/*.*" />
+                <exclude name= "**/reporttool/ui/*.class" />
+                <include name= "**/clientutil/ClientConstants.class" />
+                <include name= "**/ttlite/**/*.class" />
+            </fileset>
+                       
+            <fileset dir="${src}">
+                <include name= "**/*.properties" />
+                <include name= "**/*.xml" />
+                <exclude name= "**/ui/**/*.properties" />
+            </fileset>
+        </copy>
+        <jar jarfile="${serverJar}" basedir="${jarServDir}" />
+    </target>
+        
+    <target name="-deps-clean-init" unless="built-clean.properties">
+        <property location="${build.dir}/built-clean.properties" name="built-clean.properties"/>
+        <delete file="${built-clean.properties}" quiet="true"/>
+    </target>
+    
+    <target if="already.built.clean.${basedir}" name="-warn-already-built-clean">
+        <echo level="warn" message="Cycle detected: CBMS was already built"/>
+    </target>
+    
+    <target depends="init,-deps-clean-init" name="deps-clean" unless="no.deps">
+        <mkdir dir="${build.dir}"/>
+        <touch file="${built-clean.properties}" verbose="false"/>
+        <property file="${built-clean.properties}" prefix="already.built.clean."/>
+        <antcall target="-warn-already-built-clean"/>
+        <propertyfile file="${built-clean.properties}">
+            <entry key="${basedir}" value=""/>
+        </propertyfile>
+    </target>
+    
+    <target depends="init" name="-do-clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}" followsymlinks="false" includeemptydirs="true"/>
+    </target>
+    
+    <target name="-post-clean">
+        <!-- Empty placeholder for easier customization. -->
+        <!-- You can override this target in the ../build.xml file. -->
+    </target>
+    
+    <target depends="init,deps-clean,-do-clean,-post-clean" description="Clean build products." name="clean"/>
+    
+    <target name="-check-call-dep">
+        <property file="${call.built.properties}" prefix="already.built."/>
+        <condition property="should.call.dep">
+            <not>
+                <isset property="already.built.${call.subproject}"/>
+            </not>
+        </condition>
+    </target>
+    
+    <target depends="-check-call-dep" if="should.call.dep" name="-maybe-call-dep">
+        <ant antfile="${call.script}" inheritall="false" target="${call.target}">
+            <propertyset>
+                <propertyref prefix="transfer."/>
+                <mapper from="transfer.*" to="*" type="glob"/>
+            </propertyset>
+        </ant>
+    </target>
+</project>

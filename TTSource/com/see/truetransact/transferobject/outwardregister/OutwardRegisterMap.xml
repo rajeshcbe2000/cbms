@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OutwardRegisterMap">
+
+<!--  Added BRANCH_ID by nithya on 14-07-2016 for 4796 -->
+	<!-- Use InwardRegisterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOutwardTO" inline-parameters="true">
+        INSERT INTO OUTWARD_REGISTER
+        (OUTWARD_NO,SENT_DATE,REFERENCE_NO,
+        SENT_DETAILS,REMARKS,
+        STATUS,MESSENGER,ADDRESS,BRANCH_ID) VALUES (
+        #outwardNo:VARCHAR#, #odate:DATE#,                
+        #referenceNo:VARCHAR#, 
+        #details:VARCHAR#, #remarks:VARCHAR#,
+        #status:VARCHAR#,#cbmmessenger:VARCHAR#,#address:VARCHAR#,#branchId:VARCHAR#)
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardRegisterTO object (JavaBean) properties -->
+    <result-map name="getOutwardTOResult" class="com.see.truetransact.transferobject.outwardregister.OutwardRegisterTO">
+        <property name="outwardNo" column="OUTWARD_NO"/>
+        <property name="odate" column="SENT_DATE"/>
+        <property name="referenceNo" column="REFERENCE_NO"/>
+        <property name="details" column="SENT_DETAILS"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="cbmmessenger" column="MESSENGER"/>
+        <property name="address" column="ADDRESS"/>
+        <property name="branchId" column="BRANCH_ID"/>
+    </result-map>
+    <mapped-statement name="getOutwardRegisterEdit" result-class="java.util.LinkedHashMap">
+        SELECT OUTWARD_NO,SENT_DATE,
+        REFERENCE_NO FROM OUTWARD_REGISTER
+        WHERE STATUS!='DELETED' AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectOutwardTO" result-map="getOutwardTOResult" >
+        SELECT * FROM OUTWARD_REGISTER  
+        WHERE OUTWARD_NO =#OUTWARD_NO:VARCHAR# AND STATUS != 'DELETED' AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateOutwardTO" inline-parameters="true">
+        UPDATE OUTWARD_REGISTER SET 
+        SENT_DATE = #odate:DATE#,      
+        REFERENCE_NO = #referenceNo:VARCHAR#, 
+        SENT_DETAILS=  #details:VARCHAR#,
+        REMARKS =  #remarks:VARCHAR#,
+        STATUS =#status:VARCHAR#,
+        MESSENGER=#cbmmessenger:VARCHAR#,
+        ADDRESS=#address:VARCHAR#
+        WHERE OUTWARD_NO = #outwardNo:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR#        
+    </mapped-statement>
+    <mapped-statement name="deleteOutwardTO" inline-parameters="true">
+        UPDATE OUTWARD_REGISTER SET 
+        STATUS = #status:VARCHAR#
+        WHERE OUTWARD_NO = #outwardNo:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR#    
+    </mapped-statement>
+
+   
+</sql-map>

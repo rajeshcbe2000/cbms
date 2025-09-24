@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RemittanceIssueTransactionTOMap">
+
+	<!-- Use RemittanceIssueTransactionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRemittanceIssueTransactionTO" inline-parameters="true">
+        INSERT INTO REMIT_ISSUE_TRANS
+        (BATCH_ID, BATCH_DT, TRANS_ID, APPL_NAME, TRANS_TYPE, TRANS_AMT, INST_TYPE, 
+        DEBIT_ACCT_NO, CHEQUE_NO, CHEQUE_NO2, CHEQUE_DT, STATUS, PROD_ID, PRODUCT_TYPE,TOKEN_NO, BRANCH_CODE,PARTICULARS
+        ) VALUES (
+        #batchId:VARCHAR#, #batchDt:DATE#, #transId:VARCHAR#, #applName:VARCHAR#, 
+        #transType:VARCHAR#, #transAmt:NUMERIC#, #instType:VARCHAR#, #debitAcctNo:VARCHAR#, 
+        #chequeNo:VARCHAR#, #chequeNo2:VARCHAR#, #chequeDt:DATE#, #status:VARCHAR#,
+        #productId:VARCHAR#, #productType:VARCHAR#,#tokenNo:VARCHAR#,#branchId:VARCHAR#,#particulars:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use RemittanceIssueTransactionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateRemittanceIssueTransactionTO" inline-parameters="true">
+        UPDATE REMIT_ISSUE_TRANS SET 
+        PROD_ID = #productId:VARCHAR#,
+        PRODUCT_TYPE = #productType:VARCHAR#,
+        APPL_NAME = #applName:VARCHAR#,
+        TRANS_TYPE = #transType:VARCHAR#,
+        TRANS_AMT = #transAmt:NUMERIC#,
+        INST_TYPE = #instType:VARCHAR#,
+        DEBIT_ACCT_NO = #debitAcctNo:VARCHAR#,
+        CHEQUE_NO = #chequeNo:VARCHAR#,
+        CHEQUE_NO2 = #chequeNo2:VARCHAR#,
+        CHEQUE_DT = #chequeDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        TOKEN_NO = #tokenNo:VARCHAR#
+        WHERE BATCH_ID = #batchId:VARCHAR# AND 
+        TRANS_ID = #transId:VARCHAR# AND 
+        BRANCH_CODE = #branchId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use RemittanceIssueTransactionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteRemittanceIssueTransactionTO" inline-parameters="true">
+		<!--DELETE FROM REMIT_ISSUE_TRANS 
+		WHERE -->
+        UPDATE REMIT_ISSUE_TRANS SET STATUS ='DELETED'
+        WHERE BATCH_ID = #batchId:VARCHAR# AND 
+        TRANS_ID = #transId:VARCHAR# AND 
+        BRANCH_CODE = #branchId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to RemittanceIssueTransactionTO object (JavaBean) properties -->
+    <result-map name="getRemittanceIssueTransactionTOResult" class="com.see.truetransact.transferobject.common.transaction.TransactionTO">
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="batchDt" column="BATCH_DT"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="applName" column="APPL_NAME"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="transAmt" column="TRANS_AMT"/>
+        <property name="productId" column="PROD_ID"/>
+        <property name="productType" column="PRODUCT_TYPE"/>
+        <property name="debitAcctNo" column="DEBIT_ACCT_NO"/>
+        <property name="chequeNo" column="CHEQUE_NO"/>
+        <property name="chequeNo2" column="CHEQUE_NO2"/>
+        <property name="instType" column="INST_TYPE"/>
+        <property name="chequeDt" column="CHEQUE_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="tokenNo" column="TOKEN_NO"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+		<property name="particulars" column="PARTICULARS"/>
+    </result-map>
+    <mapped-statement name="getSelectRemittanceIssueTransactionTO" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT * FROM REMIT_ISSUE_TRANS 
+        WHERE BATCH_ID = #value:VARCHAR#  AND ( STATUS != 'DELETED' OR STATUS IS NULL ) ORDER BY TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectRemittanceIssueTransactionTODate" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT * FROM REMIT_ISSUE_TRANS 
+        WHERE BATCH_ID = #TRANS_ID:VARCHAR#  AND 
+        BATCH_DT = #TRANS_DT:DATE# AND
+        <!--BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND-->
+        ( STATUS != 'DELETED' OR STATUS IS NULL ) ORDER BY TRANS_ID
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getSelectRemittanceIssueTransactionTODate1" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT distinct * FROM REMIT_ISSUE_TRANS 
+        WHERE BATCH_ID = #TRANS_ID:VARCHAR#  AND
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        ( STATUS != 'DELETED' OR STATUS IS NULL ) ORDER BY TRANS_ID
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getSelectRemitIssueTransFromTransID" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT * FROM REMIT_ISSUE_TRANS 
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR#  AND 
+        BATCH_DT = #TRANS_DT:DATE# AND
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        ( STATUS != 'DELETED' OR STATUS IS NULL ) ORDER BY TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectGuaranteeRemittanceIssueTransactionTO" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT * FROM REMIT_ISSUE_TRANS 
+        WHERE TRANS_ID = #value:VARCHAR#  AND ( STATUS != 'DELETED' OR STATUS IS NULL ) ORDER BY TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectRemittanceIssueTransactionHash" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT * FROM REMIT_ISSUE_TRANS 
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR#  AND ( STATUS != 'DELETED' OR STATUS IS NULL ) ORDER BY TRANS_ID
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="Remittance.getAccountDataOA" result-class="java.util.LinkedHashMap">        
+        SELECT
+        ACT_NUM, get_cust_name(CU.CUST_ID) AS CUSTNAME, 
+        CA.STREET AS HOUSE_NAME,
+        AVAILABLE_BALANCE, AM.BRANCH_CODE
+        FROM ACT_MASTER AM, CUSTOMER CU, CUST_ADDR CA, OP_AC_SPCLITEM_PARAM OASP
+        WHERE AM.CUST_ID = CU.CUST_ID AND
+        CU.CUST_ID = CA.CUST_ID AND
+        CU.CUST_ID = CA.CUST_ID AND 
+        AM.PROD_ID = OASP.PROD_ID AND 
+        NVL(OASP.ATM_CARD_ISSUED,'N') = 'N' AND
+        AM.PROD_ID = #PRODUCT_ID:VARCHAR# AND
+        (AM.ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE')) AND 
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZATION_STATUS='AUTHORIZED'
+      <!--  <dynamic prepend="AND">
+            <isNotEmpty property="ACT_NUM">
+                ACT_NUM != #ACT_NUM:VARCHAR#
+            </isNotEmpty>-->
+           <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+                </isPropertyAvailable>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTNAME">
+                    UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CUSTNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AVAILABLE_BALANCE">
+                    UPPER(AVAILABLE_BALANCE) LIKE UPPER('%$AVAILABLE_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="BRANCH_CODE">
+                    UPPER(AM.BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY ACT_NUM
+    </dynamic-mapped-statement>  
+        
+    <dynamic-mapped-statement name="Remittance.getAccountDataTD" result-class="java.util.LinkedHashMap">        
+            <!--SELECT 
+            DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACT_NUM, 
+            DECODE(CU.CUST_TYPE, 'CORPORATE', COMP_NAME, FNAME || ' ' || MNAME || ' ' || LNAME) AS CUSTNAME,
+            CU.CUST_TYPE as CUST_TYPE_ID, DS.DEPOSIT_AMT AS AVAILABLE_BALANCE
+            FROM DEPOSIT_ACINFO DA, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS,
+            DEPOSITS_PRODUCT DP 
+            WHERE DA.CUST_ID = CU.CUST_ID AND 
+            DP.PROD_ID = DA.PROD_ID AND 
+            DA.PROD_ID = #PRODUCT_ID#
+            <dynamic prepend="AND">
+                <isNotEmpty property="ACT_NUM">
+                    DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO != #ACT_NUM# 
+                </isNotEmpty>
+            </dynamic> 
+            AND DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND
+            (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND 
+            DS.STATUS NOT IN ('DELETED') AND 
+            DS.AUTHORIZE_STATUS='AUTHORIZED' 
+            ORDER BY DA.DEPOSIT_NO-->
+        SELECT
+        DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACCOUNTNO, 
+        get_cust_name(cu.cust_id) AS CUSTOMERNAME,
+        CA.STREET AS HOUSE_NAME,
+        CU.CUST_TYPE as CUST_TYPE_ID, DP.BEHAVES_LIKE AS TYPE,NVL(DS.AVAILABLE_BALANCE,0) AS amount 
+        FROM DEPOSIT_ACINFO DA, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS,
+        DEPOSITS_PRODUCT DP, CUST_ADDR CA
+        WHERE DA.CUST_ID = CU.CUST_ID AND 
+        DP.PROD_ID = DA.PROD_ID AND 
+        CU.CUST_ID = CA.CUST_ID AND
+        DA.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND 
+        (nvl(DS.AVAILABLE_BALANCE,0) >= (NVL(DS.CLEAR_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0) - NVL(DS.SHADOW_DEBIT,0))
+            <!-- NVL(DS.AVAILABLE_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0) +
+                   NVL((SELECT LIEN_AMOUNT FROM DEPOSIT_LIEN WHERE DEPOSIT_NO=DA.DEPOSIT_NO),0) -->
+        OR DP.BEHAVES_LIKE = 'RECURRING') AND 
+        (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND 
+        DS.STATUS NOT IN ('DELETED') AND 
+        DS.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+        <dynamic>
+            <iterate prepend="AND DS.DEPOSIT_NO||'_'||DS.DEPOSIT_SUB_NO NOT IN" property="ACT NUM" open = "(" close=")" conjunction="," >
+                #ACT NUM[]#
+            </iterate>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+                </isPropertyAvailable>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACCOUNTNO">
+                    UPPER(DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) LIKE UPPER('%$ACCOUNTNO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTOMERNAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMERNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUST_TYPE_ID">
+                    UPPER(CU.CUST_TYPE) LIKE UPPER('%$CUST_TYPE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="TYPE">
+                    UPPER(DP.BEHAVES_LIKE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="amount">
+                    UPPER(NVL(DS.AVAILABLE_BALANCE,0)) LIKE UPPER('%$amount$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY DA.DEPOSIT_NO   
+    </dynamic-mapped-statement>  
+        
+    <dynamic-mapped-statement name="Remittance.getAccountDataTL" result-class="java.util.LinkedHashMap">        
+        SELECT
+        LFD.ACCT_NUM as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTNAME,
+        CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY as CATEGORY 
+        FROM LOANS_BORROWER LB, CUSTOMER CU, LOANS_FACILITY_DETAILS LFD, CUST_ADDR CA
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        CU.CUST_ID = CA.CUST_ID AND
+        LFD.PROD_ID = #PRODUCT_ID:VARCHAR# 
+      <!--  <dynamic prepend="AND">
+            <isNotEmpty property="ACT_NUM">
+                LFD.ACCT_NUM != #ACT_NUM:VARCHAR# 
+            </isNotEmpty>-->
+            <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+                </isPropertyAvailable>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTNAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CATEGORY">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+            <!--AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->
+        ORDER BY LFD.ACCT_NUM
+    </dynamic-mapped-statement> 
+        
+    <dynamic-mapped-statement name="Remittance.getAccountDataATL" result-class="java.util.LinkedHashMap">        
+        SELECT
+        LFD.ACCT_NUM as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTNAME,
+        CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY as CATEGORY 
+        FROM AGRI_LOANS_BORROWER LB, CUSTOMER CU, AGRI_LOANS_FACILITY_DETAILS LFD, CUST_ADDR CA
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        CU.CUST_ID = CA.CUST_ID AND
+        LFD.PROD_ID = #PRODUCT_ID:VARCHAR# 
+      <!--  <dynamic prepend="AND">-->
+            <!--<isNotEmpty property="ACT_NUM">
+                LFD.ACCT_NUM != #ACT_NUM:VARCHAR# 
+            </isNotEmpty>-->
+            <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+                </isPropertyAvailable>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTNAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CATEGORY">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+        </dynamic>
+        AND (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+            <!--AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->
+        ORDER BY LFD.ACCT_NUM
+    </dynamic-mapped-statement> 
+        
+        
+    <dynamic-mapped-statement name="Remittance.getAccountDataAD" result-class="java.util.LinkedHashMap"> 
+        SELECT
+        LFD.ACCT_NUM as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTNAME, 
+        CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY as CATEGORY 
+        FROM LOANS_BORROWER LB, CUSTOMER CU, LOANS_FACILITY_DETAILS LFD, CUST_ADDR CA
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        CU.CUST_ID = CA.CUST_ID AND
+        LFD.PROD_ID = #PRODUCT_ID:VARCHAR# 
+       <!-- <dynamic prepend="AND">
+            <isNotEmpty property="ACT_NUM">
+                LFD.ACCT_NUM != #ACT_NUM:VARCHAR# 
+            </isNotEmpty>-->
+            <dynamic>
+           <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+                </isPropertyAvailable>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTNAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CATEGORY">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+            <!--AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->
+        ORDER BY LFD.ACCT_NUM
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Remittance.getAccountDataINV" result-class="java.util.LinkedHashMap"> 
+        SELECT INVESTMENT_REF_NO AS ACT_NUM ,' ' AS CUSTNAME, INVESTMENT_TYPE AS TYPE, AVAILABLE_BALANCE FROM 
+        INVESTMENT_MASTER WHERE AVAILABLE_BALANCE>0 AND INVESTMENT_PROD_ID=#PRODUCT_ID:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+           <dynamic>
+           <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+                </isPropertyAvailable>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(INVESTMENT_REF_NO) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="TYPE">
+                    UPPER(INVESTMENT_TYPE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AVAILABLE_BALANCE">
+                    UPPER(AVAILABLE_BALANCE) LIKE UPPER('%$AVAILABLE_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+                </dynamic>
+        ORDER BY INVESTMENT_REF_NO
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Remittance.getAccountDataBRW" result-class="java.util.LinkedHashMap"> 
+        SELECT BORRWING_REFNO AS ACT_NUM ,DESCRIPTION AS CUSTNAME, TYPE AS TYPE, AVAL_BALANCE AS AVAILABLE_BALANCE FROM
+        BORROWING_MASTER WHERE AVAL_BALANCE>0 
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' AND TYPE='Cash Credit' 
+        <dynamic>
+           <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(BORRWING_REFNO) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTNAME">
+                    UPPER(DESCRIPTION) LIKE UPPER('%$CUSTNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="TYPE">
+                    UPPER(TYPE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AVAILABLE_BALANCE">
+                    UPPER(TYPE) LIKE UPPER('%$AVAILABLE_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY BORRWING_REFNO
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getAccountHeadOA" result-class="java.lang.String" >
+        SELECT AC_HD_ID FROM OP_AC_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadTD" result-class="java.lang.String" >
+        SELECT ACCT_HEAD as AC_HD_ID FROM DEPOSITS_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadTL" result-class="java.lang.String" >
+        SELECT ACCT_HEAD as AC_HD_ID FROM LOANS_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadATL" result-class="java.lang.String" >
+        SELECT ACCT_HEAD as AC_HD_ID FROM AGRILOANS_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadAD" result-class="java.lang.String" >
+        SELECT ACCT_HEAD as AC_HD_ID FROM LOANS_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>          
+        
+    <mapped-statement name = "getSelectDepositTransMode" result-class= "java.util.HashMap">
+        SELECT TOKEN_NO,BATCH_ID FROM REMIT_ISSUE_TRANS WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND TRANS_TYPE = 'CASH'
+    </mapped-statement>
+        
+    <mapped-statement name="updateTokenNOFromOtherModule" inline-parameters="true">
+        UPDATE CASH_TRANS SET TOKEN_NO =#TOKEN_NO:VARCHAR# WHERE LINK_BATCH_ID = #BATCH_ID:VARCHAR#
+        AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectChargesServiceRemittanceIssue" result-map="getRemittanceIssueTransactionTOResult" >
+        SELECT * FROM REMIT_ISSUE_TRANS WHERE BATCH_ID = #value:VARCHAR#  AND TRANS_ID IN(
+        SELECT MAX(TRANS_ID) FROM REMIT_ISSUE_TRANS WHERE BATCH_ID = #value:VARCHAR# AND STATUS != 'DELETED')
+        ORDER BY TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectExgST" result-class= "java.util.HashMap">
+        SELECT EXCHANGE,OTHER_CHARGES as service_tax,EXCHANGE+OTHER_CHARGES AS TOT_amt,PROD_ID from
+        remit_issue where VARIABLE_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectExgSTPayment" result-class= "java.util.HashMap">
+        SELECT CHARGES,SERVICE_TAX as service_tax,CHARGES+SERVICE_TAX AS TOT_amt,INSTRUMENT_TYPE AS PROD_ID from
+        remit_payment where REMIT_PAY_ID = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectExgSTRev" result-class= "java.util.HashMap">
+        SELECT REVALIDATE_CHARGE,REV_SERV_TAX as service_tax,REVALIDATE_CHARGE+REV_SERV_TAX AS TOT_amt,PROD_ID from
+        remit_issue where VARIABLE_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectExgSTDup" result-class= "java.util.HashMap">
+        SELECT DUPLICATE_CHARGE,DUP_SERV_TAX as service_tax,DUPLICATE_CHARGE+DUP_SERV_TAX AS TOT_amt,PROD_ID from
+        remit_issue where VARIABLE_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectSTHeadRemittance" result-class= "java.util.HashMap">
+        SELECT OTHER_CHRG_HD AS AC_HD_ID, EXCHANGE_HD FROM REMITTANCE_PRODUCT WHERE PROD_ID = #PROD_ID:VARCHAR# AND
+        AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectSTHeadRemittancePayment" result-class= "java.util.HashMap">
+        SELECT OTHER_CHRG_HD AS AC_HD_ID, EXCHANGE_HD FROM REMITTANCE_PRODUCT WHERE PROD_ID = #PROD_ID:VARCHAR# AND
+        AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectTransCashRemitSTDetails" result-class= "java.util.HashMap">
+        SELECT BATCH_ID as TRAN_ID,AC_HD_ID,ACT_NUM,TRANS_DT,PARTICULARS,PROD_ID,BRANCH_ID,LINK_BATCH_ID,AMOUNT,PROD_TYPE
+        FROM TRANSFER_TRANS WHERE LINK_BATCH_ID = #VARIABLE_NO# AND AC_HD_ID = #AC_HD_ID:VARCHAR#
+        AND AMOUNT = #SERVICE_TAX:NUMBER#
+        union
+        SELECT TRANS_ID as TRAN_ID,AC_HD_ID,ACT_NUM,TRANS_DT,PARTICULARS,PROD_ID,BRANCH_ID,LINK_BATCH_ID,AMOUNT,PROD_TYPE
+        FROM CASH_TRANS WHERE LINK_BATCH_ID = #VARIABLE_NO# AND AC_HD_ID = #AC_HD_ID:VARCHAR#
+        AND AMOUNT = #SERVICE_TAX:NUMBER#
+    </mapped-statement>
+</sql-map>

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="SalaryDeductionMappingMap">
+
+<!--
+    Document   : SalaryDeductionMappingMap.xml
+    Created on : June 13, 2012, 1:39 PM
+    Author     : Rajesh
+    Description:
+        Purpose of the document follows.
+-->
+    <mapped-statement name="getEmployerRefNo" result-class="java.util.HashMap">
+        SELECT SH.EMP_REFNO_NEW, get_cust_name(C.CUST_ID) AS "NAME" FROM  
+        SHARE_ACCT SH,CUSTOMER C WHERE SH.CUST_ID = C.CUST_ID AND SH.STATUS != 'DELETED'
+        AND SH.EMP_REFNO_NEW IS NOT NULL AND (SH.AUTHORIZE IS NOT NULL OR (SH.AUTHORIZE='AUTHOTIZED' AND SH.AUTHORIZE!='REJECTED'))
+         AND C.CUSTOMER_STATUS = 'PRESENT' AND SH.STATUS != 'CLOSED'
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getDeductionExemptionMAppingEmployerRefNo" result-class="java.util.HashMap">
+        SELECT sh.emp_refno_new, get_cust_name(c.cust_id) AS "NAME"
+        FROM share_acct sh
+        Join Customer C on sh.cust_id = c.cust_id
+        left Join DEDUCTION_EXEMPTION_MAPPING dem  on dem.emp_ref_no = sh.emp_refno_new
+        WHERE DEM.EMP_REF_NO is null  AND sh.status != 'DELETED'
+        AND sh.emp_refno_new IS NOT NULL
+        AND (   sh.authorize IS NOT NULL
+        OR (sh.authorize = 'AUTHORIZED' AND sh.authorize != 'REJECTED')
+        )
+        AND c.customer_status = 'PRESENT'
+        AND sh.status != 'CLOSED'
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_REFNO_NEW">
+                    UPPER(sh.emp_refno_new) LIKE UPPER('%$emp_refno_new$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(get_cust_name(C.CUST_ID)) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        order by sh.emp_refno_new
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getAccountNumberListForEmp" result-class="java.util.HashMap">
+        SELECT FNAME,ACT_NUM FROM ALL_CUSTOMER AM,SHARE_ACCT SH WHERE SH.CUST_ID = AM.CUST_ID AND AM.ACT_NUM= #ACT_NUM:VARCHAR# AND SH.EMP_REFNO_NEW= #EMP_REFNO_NEW:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertSalaryDeductionMappingTO" inline-parameters="true">
+        INSERT INTO SALARY_DEDUCTION_MAPPING (EMP_REF_NO,MAP_PROD_TYPE,MAP_PROD_ID,MAP_ACT_NUM,AMOUNT,REMARKS,STATUS,STATUS_BY,STATUS_DT,
+        AUTHORIZE_BY,AUTHORIZE_DT,AUTHORIZE_STATUS,DELETE_FLAG,CREATED_BY,CREATED_DT,BRANCH_CODE) VALUES 
+        (#employerRefNo:VARCHAR#,  #prodType:VARCHR#, #prodId:VARCHAR# , #actNum:VARCHAR# , #amount:NUMERIC# ,#remarks:VARCHAR#, #status:VARCHAR# , #statusBy:VARCHAR#,
+        #statusDt:VARCHAR# , #authorizeBy:VARCHAR# , #authorizeDt:DATE# , #authorizeStatus:VARCHAR# , #deleteFlag:VARCHAR# , #createdBy:VARCHAR# , #createdDt:DATE#,#branchId:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getSalaryDeductionMapping" result-class="java.util.HashMap">
+        SELECT EMP_REF_NO,MAP_PROD_TYPE,MAP_PROD_ID, MAP_ACT_NUM,AMOUNT,REMARKS,DELETE_FLAG ,FNAME FROM SALARY_DEDUCTION_MAPPING SH, 
+        ALL_CUSTOMER AM WHERE EMP_REF_NO =#EMP_REF_NO:VARCHAR# AND MAP_ACT_NUM= #MAP_ACT_NUM# AND AM.ACT_NUM=SH.MAP_ACT_NUM
+    </mapped-statement>
+    
+    <mapped-statement name="getSalaryDeductionMappingForGeneralLedger" result-class="java.util.HashMap">
+        SELECT SM.EMP_REF_NO,SM.MAP_PROD_TYPE,SM.MAP_PROD_ID, SM.MAP_ACT_NUM,SM.AMOUNT,SM.REMARKS,SM.DELETE_FLAG,AC.AC_HD_DESC  FROM SALARY_DEDUCTION_MAPPING SM,AC_HD AC
+        WHERE SM.EMP_REF_NO =#EMP_REF_NO:VARCHAR# AND SM.MAP_ACT_NUM= #MAP_ACT_NUM# AND SM.MAP_ACT_NUM = AC.AC_HD_ID
+    </mapped-statement>
+      
+    <mapped-statement name="updateSalaryDeductionMappingTO" inline-parameters="true">
+        UPDATE SALARY_DEDUCTION_MAPPING SET
+        EMP_REF_NO = #employerRefNo:VARCHAR#,
+        MAP_PROD_TYPE= #prodType:VARCHR#,
+        MAP_PROD_ID = #prodId:VARCHAR#,
+        MAP_ACT_NUM = #actNum:VARCHAR#,
+        AMOUNT = #amount:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        DELETE_FLAG = #deleteFlag:VARCHAR#
+        WHERE EMP_REF_NO= #employerRefNo:VARCHAR# AND MAP_ACT_NUM = #actNum:VARCHAR# AND STATUS!='DELETED' AND BRANCH_CODE = #branchId:VARCHAR#
+    </mapped-statement> 
+     
+    <mapped-statement name="deleteSalaryDeductionMappingTO" result-class="java.util.HashMap">
+        UPDATE SALARY_DEDUCTION_MAPPING SET STATUS ='DELETED' WHERE EMP_REF_NO = #employerRefNo:VARCHAR# AND MAP_ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="getsalaryDeductionmappingAccountNo" result-class="java.util.HashMap">
+        SELECT MAP_ACT_NUM FROM SALARY_DEDUCTION_MAPPING WHERE  STATUS != 'DELETED' AND (AUTHORIZE_STATUS IS NULL 
+        OR(AUTHORIZE_STATUS = 'AUTHORIZED' AND AUTHORIZE_STATUS != 'REJECTED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getEditList" result-class="java.util.LinkedHashMap">
+        SELECT SD.EMP_REF_NO, get_cust_name(C.CUST_ID) AS "NAME",SD.MAP_PROD_ID,SD.MAP_ACT_NUM ,SD.DELETE_FLAG FROM SALARY_DEDUCTION_MAPPING SD, CUSTOMER C ,SHARE_ACCT SH
+        WHERE SD.EMP_REF_NO=SH.EMP_REFNO_NEW AND 
+        SH.CUST_ID=C.CUST_ID AND SD.STATUS != 'DELETED' AND (SD.AUTHORIZE_STATUS IS NULL OR(SD.AUTHORIZE_STATUS ='AUTHORIZED' AND SD.AUTHORIZE_STATUS !='REJECTED')) AND
+        SH.STATUS !='DELETED' AND SH.AUTHORIZE='AUTHORIZED' AND SD.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="getName" result-class="java.util.LinkedHashMap">
+        SELECT  get_cust_name(C.CUST_ID) AS "NAME" FROM  
+        SHARE_ACCT SH,CUSTOMER C WHERE SH.CUST_ID = C.CUST_ID AND SH.STATUS != 'DELETED' AND SH.EMP_REFNO_NEW= #EMP_REFNO_NEW#
+        AND (SH.AUTHORIZE IS NOT NULL OR (SH.AUTHORIZE='AUTHOTIZED' AND SH.AUTHORIZE!='REJECTED'))
+    </mapped-statement>
+       
+    <mapped-statement name="getDeleteList" result-class="java.util.LinkedHashMap">
+        SELECT SD.EMP_REF_NO, get_cust_name(C.CUST_ID) AS "NAME",SD.MAP_PROD_ID,SD.MAP_ACT_NUM,SD.DELETE_FLAG FROM SALARY_DEDUCTION_MAPPING SD, CUSTOMER C ,SHARE_ACCT SH
+        WHERE SD.EMP_REF_NO=SH.EMP_REFNO_NEW AND SD.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND
+        SH.CUST_ID=C.CUST_ID AND SD.STATUS != 'DELETED' AND SH.STATUS !='DELETED' AND(SH.AUTHORIZE IS NOT NULL OR (SH.AUTHORIZE='AUTHORIZED' AND SH.AUTHORIZE != 'REJECTED')) AND
+        (SD.AUTHORIZE_STATUS IS NULL OR(SD.AUTHORIZE_STATUS !='AUTHORIZED' AND SD.AUTHORIZE_STATUS !='REJECTED'))
+    </mapped-statement>
+      
+    <mapped-statement name="getSalaryDeductionMappingAuthList" result-class="java.util.LinkedHashMap">
+        SELECT SD.EMP_REF_NO, get_cust_name(C.CUST_ID) AS "NAME" ,SD.MAP_PROD_ID,SD.MAP_ACT_NUM ,SD.DELETE_FLAG FROM SALARY_DEDUCTION_MAPPING SD, CUSTOMER C ,SHARE_ACCT SH
+        WHERE SD.EMP_REF_NO=SH.EMP_REFNO_NEW AND SD.STATUS_BY !=#USER_ID:VARCHAR# AND SD.BRANCH_CODE=#BRANCH_CODE# AND
+        SH.CUST_ID=C.CUST_ID AND SD.STATUS != 'DELETED' AND SH.STATUS !='DELETED' AND(SH.AUTHORIZE IS NULL OR (SH.AUTHORIZE='AUTHORIZED' AND SH.AUTHORIZE != 'REJECTED')) AND
+        (SD.AUTHORIZE_STATUS IS NULL OR(SD.AUTHORIZE_STATUS !='AUTHORIZED' AND SD.AUTHORIZE_STATUS !='REJECTED'))
+    </mapped-statement>
+      
+    <dynamic-mapped-statement name="getViewList" result-class="java.util.LinkedHashMap">
+        SELECT SD.EMP_REF_NO, get_cust_name(C.CUST_ID) AS "NAME",SD.MAP_PROD_ID,SD.MAP_ACT_NUM,SD.DELETE_FLAG FROM SALARY_DEDUCTION_MAPPING SD, CUSTOMER C ,SHARE_ACCT SH
+        WHERE SD.EMP_REF_NO=SH.EMP_REFNO_NEW AND SD.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND
+        SH.CUST_ID=C.CUST_ID  AND SH.STATUS !='DELETED' AND(SH.AUTHORIZE IS NOT NULL OR (SH.AUTHORIZE='AUTHORIZED' AND SH.AUTHORIZE != 'REJECTED')) 
+    <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_REF_NO">
+                    UPPER(SD.EMP_REF_NO) LIKE UPPER('%$EMP_REF_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(get_cust_name(C.CUST_ID)) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EXEMPTION_MODE">
+                    UPPER(SD.EXEMPTION_MODE) LIKE UPPER('%$EXEMPTION_MODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="MAP_PROD_ID">
+                    UPPER(SD.MAP_PROD_ID) LIKE UPPER('%$MAP_PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="MAP_ACT_NUM">
+                    UPPER(SD.MAP_ACT_NUM) LIKE UPPER('%$MAP_ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend="AND"   property="DELETE_FLAG">
+                    UPPER(SD.DELETE_FLAG) LIKE UPPER('%$DELETE_FLAG$%')
+                </isNotNull>
+            </isParameterPresent>
+           </dynamic>
+    </dynamic-mapped-statement>
+      
+    <mapped-statement name="authorizeSalaryDeductionMapping" result-class="java.util.HashMap">
+        UPDATE SALARY_DEDUCTION_MAPPING SET 
+        AUTHORIZE_STATUS='AUTHORIZED',
+        AUTHORIZE_BY =#USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE EMP_REF_NO= #EMP_REF_NO:VARCHAR#  AND MAP_ACT_NUM = #MAP_ACT_NUM:VARCHAR# AND STATUS!='DELETED' 
+        AND (AUTHORIZE_STATUS IS NULL OR(AUTHORIZE_STATUS !='AUTHORIZED' AND AUTHORIZE_STATUS != 'REJECTED'))
+    </mapped-statement>
+      
+    <mapped-statement name="rejectSalaryDeductionMapping" result-class="java.util.HashMap">
+        UPDATE SALARY_DEDUCTION_MAPPING SET 
+        AUTHORIZE_STATUS='REJECTED',
+        AUTHORIZE_BY =#USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE EMP_REF_NO= #EMP_REF_NO:VARCHAR# AND MAP_ACT_NUM = #MAP_ACT_NUM:VARCHAR# AND STATUS!='DELETED'
+        AND (AUTHORIZE_STATUS IS NULL OR(AUTHORIZE_STATUS !='AUTHORIZED' AND AUTHORIZE_STATUS != 'REJECTED'))
+    </mapped-statement>
+      
+    <mapped-statement name="getLockStatusforAdvances" result-class="java.util.HashMap">
+        SELECT SALARY_RECOVERY FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+      
+    <result-map name="getSalaryDeductionMappingTOResult" class="com.see.truetransact.transferobject.salaryrecovery.SalaryDeductionMappingTO">
+        <property name="employerRefNo" column="EMP_REF_NO"/>
+        <property name="prodType" column="MAP_PROD_TYPE"/>
+        <property name="prodId" column="MAP_PROD_ID"/>
+        <property name="actNum" column="MAP_ACT_NUM"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="chkDeleteFlag" column="DELETE_FLAG"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+     
+    </result-map>
+</sql-map>

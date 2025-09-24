@@ -1,0 +1,972 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="payRoll">
+    
+   
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <dynamic-mapped-statement name="getSelectEmployee" result-class="java.util.LinkedHashMap">  
+        SELECT EM.EMPLOYEEID, EM.EMPLOYEE_NAME,C.CUST_ID  FROM EMPLOYEE_MASTER EM, CUSTOMER C  WHERE C.STAFF_ID = EM.EMPLOYEEID
+        AND EM.EMP_STATUS = 'Service'   AND EM.AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+           <!-- <isParameterPresent>
+                <isNotNull prepend="WHERE" property="EMPLOYEEID">
+                    EM.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>-->
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EM.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(EM.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(C.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY SORT_ORDER
+    </dynamic-mapped-statement>
+ 
+    
+    <mapped-statement name="GetNonGLDeduction" result-map="getPayMasterSalTOResult">
+
+    SELECT Y.EMPLOYEEID,Y.PAY_CODE,Y.PROD_ID,Y.PROD_TYPE,Y.AMOUNT,Y.ACTIVE,Y.ACC_NO,
+     Y.RECOVERY_MONTHS,Y.PAYMENT_TRANS,Y.FROM_DATE,C.PAY_EARNDEDU,Y.TO_DATE,Y.SRL_NO 
+      FROM  PAYCODES_MASTER C join 
+     (select p.* from PAYMASTER p
+        join 
+       ( SELECT PM.EMPLOYEEID,PM.PAY_CODE,MAX(PM.SRL_NO) AS SRL_NO
+        FROM PAYMASTER PM 
+        GROUP BY  PM.EMPLOYEEID, PM.PAY_CODE)x on P.EMPLOYEEID=x.EMPLOYEEID and P.PAY_CODE=x.PAY_CODE and P.SRL_NO=x.SRL_NO
+         WHERE p.EMPLOYEEID in($EMPID$) and p.PAY_CODE in ($paycode$)
+        )Y  on C.PAY_CODE=Y.PAY_CODE  AND C.ACTIVE='Y' and Y.ACTIVE='Y'  order by Y.EMPLOYEEID,Y.PAY_CODE
+    
+    </mapped-statement>
+    
+    
+    <result-map name="getLookUpPayroll" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    
+    <mapped-statement name="getUserList" result-class="java.util.LinkedHashMap">
+        SELECT EMPLOYEEID,EMPLOYEE_NAME FROM EMPLOYEE_MASTER
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectPayCodes" result-class="java.util.LinkedHashMap">
+        SELECT PAY_CODE,PAY_DESCRI
+        FROM PAYCODES_MASTER WHERE STATUS!='DELETED'      
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAY_EARNDEDU">
+                    PAY_EARNDEDU = #PAY_EARNDEDU:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+    </dynamic-mapped-statement>  
+    
+    <mapped-statement name="getPayCodes" result-class="java.util.HashMap">
+        SELECT PAY_CODE FROM  PAYCODES_MASTER WHERE PAY_DESCRI = #PAY_DESCRI:VARCHAR#
+    </mapped-statement> 
+    
+    <result-map name="getPayMasterTOResult" class="com.see.truetransact.transferobject.payroll.earningsDeductions.EarnDeduPayTO">
+        <property name="accNo" column="ACC_NO"/>
+        <property name="employeeId" column="EMPLOYEEID"/>
+        <property name="payCode" column="PAY_CODE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="active" column="ACTIVE"/>  
+        <property name="recovryMnth" column="RECOVERY_MONTHS"/>
+        <property name="payTrans" column="PAYMENT_TRANS"/>
+<!--        <property name="status" column="STATUS"/>-->
+        <property name="fromDate" column="FROM_DATE"/>
+    </result-map> 
+    
+    <result-map name="getPayMasterSalTOResult" class="com.see.truetransact.transferobject.payroll.earningsDeductions.EarnDeduPayTO">
+        <property name="accNo" column="ACC_NO"/>
+        <property name="employeeId" column="EMPLOYEEID"/>
+        <property name="payCode" column="PAY_CODE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="active" column="ACTIVE"/>  
+        <property name="recovryMnth" column="RECOVERY_MONTHS"/>
+        <property name="payTrans" column="PAYMENT_TRANS"/>
+<!--        <property name="status" column="STATUS"/>-->
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="payEarndedu" column="PAY_EARNDEDU"/>
+    </result-map> 
+        
+    <mapped-statement name="getSelectPayMasterTO" result-map="getPayMasterTOResult" >
+        <!--SELECT EMPLOYEEID,PAY_CODE,PROD_ID,PROD_TYPE,AMOUNT,ACTIVE,ACC_NO,RECOVERY_MONTHS,
+        PAYMENT_TRANS,FROM_DATE FROM PAYMASTER WHERE STATUS!='DELETED' AND EMPLOYEEID = #EMPLOYEEID:VARCHAR#  ORDER BY PAY_CODE-->
+         SELECT A.* FROM (
+        (SELECT EMPLOYEEID,PAY_CODE,PROD_ID,PROD_TYPE,AMOUNT,ACTIVE,ACC_NO,
+        RECOVERY_MONTHS,PAYMENT_TRANS,FROM_DATE,SRL_NO FROM PAYMASTER WHERE STATUS!='DELETED' 
+        AND EMPLOYEEID = #EMPLOYEEID:VARCHAR#     
+        ORDER BY PAY_CODE)A
+        JOIN
+        (SELECT EMPLOYEEID,PAY_CODE,MAX(SRL_NO) AS SRL_NO FROM PAYMASTER WHERE STATUS!='DELETED' 
+        AND EMPLOYEEID = #EMPLOYEEID:VARCHAR# 
+        GROUP BY      EMPLOYEEID,PAY_CODE)B
+        ON B.EMPLOYEEID = A.EMPLOYEEID AND B.PAY_CODE = A.PAY_CODE AND A.SRL_NO = B.SRL_NO)
+    </mapped-statement>
+    
+    <mapped-statement name="getPayDescription" result-class="java.util.HashMap">
+        SELECT PAY_DESCRI FROM  PAYCODES_MASTER WHERE PAY_CODE = #PAY_CODE:VARCHAR#
+    </mapped-statement> 
+    
+   <dynamic-mapped-statement name="getPayMasterEdit" result-class="java.util.HashMap">
+        SELECT  EM.EMPLOYEEID, EMPLOYEE_NAME
+        FROM EMPLOYEE_MASTER EM,PAYMASTER PM 
+        WHERE PM.EMPLOYEEID = EM.EMPLOYEEID 
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EM.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY  EM.EMPLOYEEID,EMPLOYEE_NAME,SORT_ORDER
+        ORDER BY SORT_ORDER
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updatePayMaster" result-class="java.util.HashMap">
+        UPDATE PAYMASTER SET
+        AMOUNT=#amount:NUMBER#,
+        PROD_TYPE=#prodType:VARCHAR#,
+        PROD_ID=#prodId:VARCHAR#,
+        ACC_NO=#accNo:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#, 
+        ACTIVE=#active:VARCHAR#, 
+        STATUS=#status:VARCHAR#, 
+        STATUS_DATE=#statusDate:DATE#,
+        FROM_DATE = #fromDate:DATE#,
+        RECOVERY_MONTHS=#recovryMnth:NUMBER#
+        WHERE EMPLOYEEID=#employeeId:VARCHAR#
+        and PAY_CODE=#payCode:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="deletePayMaster" result-class="java.util.HashMap">
+        DELETE FROM  PAYMASTER 
+        WHERE PAY_CODE=#payCode:VARCHAR#  
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="employeeId">
+                    EMPLOYEEID=#employeeId:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+    </dynamic-mapped-statement>  
+    
+    <dynamic-mapped-statement name="getselectAcHeadsForTransaction" result-class="java.util.HashMap">
+        SELECT ACC_HD FROM PAY_ACCOUNT PA,PAYCODES_MASTER PM 
+        WHERE PA.PAYCODE_ID = PM.PAYCODE_ID
+        AND PAY_CODE = #PAY_CODE:VARCHAR#
+        AND STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CONTRA_TRANS_TYPE">
+                    UPPER(PA.ACC_TYPE)=UPPER(#CONTRA_TRANS_TYPE:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+    </dynamic-mapped-statement>  
+    
+    <mapped-statement name="getDepositClosingHeadsPayroll" result-class="java.util.HashMap" >
+        SELECT DA.SERVICE_CHARGE_ACHD, DP.ACCT_HEAD AS AC_HD_ID, DA.INT_DEBIT, DA.INT_MATURED_DEPOSIT,
+        DA.INT_PAY, DA.INT_PROV_ACHD, DA.INT_PROV_MATURED, DA.INT_RECOVERY_HEAD, DA.MATURITY_DEPOSIT, DA.COMMISION_HEAD,DP.BEHAVES_LIKE,
+        DA.DELAYED_ACHD,DPT.TDS_GL_ACHD, DPT.RECALC_MATURITY_VALTDS,DA.TRANSFEROUT_ACHD,DPS.SERVICE_CHARGE_ALLOWED,DPS.SERVICE_CHARGE FROM 
+        DEPOSITS_PROD_ACHD DA,DEPOSITS_PRODUCT DP,DEPOSITS_PROD_TAX DPT,DEPOSITS_PROD_SCHEME DPS WHERE DA.PROD_ID = DPT.PROD_ID AND
+        DA.PROD_ID = DPS.PROD_ID AND DP.PROD_ID = DA.PROD_ID AND DP.PROD_ID = DPT.PROD_ID  AND DA.PROD_ID = #PROD_ID:VARCHAR# 
+    </mapped-statement> 
+    
+    <mapped-statement name="getAccountHeadProdADHeadPayroll" result-class="java.util.HashMap" > 
+        select ACCT_HEAD AS AC_HD_ID from LOANS_PRODUCT where PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getPayMasterCashierAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT CASE
+        WHEN AT.TRANS_MODE = 'CASH'
+        THEN MAX (AT.TRANS_ID)
+        ELSE AT.BATCH_ID
+        END AS TRANS_ID,PM.EMPLOYEEID,EM.EMPLOYEE_NAME,PM.PAY_CODE
+        FROM PAYMASTER PM,EMPLOYEE_MASTER EM,ALL_TRANS AT WHERE  
+        cast(#HIERARCHY_ID# as numeric)  &gt;=
+        (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+        'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1
+        )
+        FROM USER_MASTER UM, ROLE_MASTER RM
+        WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND RM.GROUP_ID = UM.USER_GROUP
+        AND UM.USER_ID = PM.STATUS_BY)
+        AND EM.EMPLOYEEID = PM.EMPLOYEEID
+        AND AT.LINK_BATCH_ID = PM.EMPLOYEEID
+        AND AT.TRANS_TYPE = 'CREDIT'
+        AND CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED' ELSE AT.PAYMENT_STATUS END IS  NOT NULL
+        AND PM.AUTHORIZED_STATUS IS NULL
+        AND PM.STATUS!='DELETED'
+        AND  PM.PAYMENT_TRANS = 'Y'
+        AND PM.CREATED_DATE = #TRANS_DT:DATE# 
+        AND AT.STATUS_BY != #USER_ID:VARCHAR#
+        and AT.TRANS_DT = #TRANS_DT:DATE# 
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.STATUS != 'DELETED'
+        GROUP BY AT.TRANS_MODE,AT.BATCH_ID,PM.EMPLOYEEID,EM.EMPLOYEE_NAME,PM.PAY_CODE
+        UNION
+        SELECT CASE
+        WHEN AT.TRANS_MODE = 'CASH'
+        THEN MAX (AT.TRANS_ID)
+        ELSE AT.BATCH_ID
+        END AS TRANS_ID,PM.EMPLOYEEID,EM.EMPLOYEE_NAME,PM.PAY_CODE
+        FROM PAYMASTER PM,EMPLOYEE_MASTER EM,ALL_TRANS AT WHERE  
+        cast(#HIERARCHY_ID# as numeric) &gt;=
+        (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+        'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1
+        )
+        FROM USER_MASTER UM, ROLE_MASTER RM
+        WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND RM.GROUP_ID = UM.USER_GROUP
+        AND UM.USER_ID = PM.STATUS_BY)
+        AND EM.EMPLOYEEID = PM.EMPLOYEEID
+        AND AT.LINK_BATCH_ID = PM.EMPLOYEEID
+        AND AT.TRANS_TYPE = 'DEBIT'
+        AND AT.PAYMENT_STATUS IS  NULL
+        AND PM.AUTHORIZED_STATUS IS NULL
+        AND PM.STATUS!='DELETED'
+        AND  PM.PAYMENT_TRANS = 'Y'
+        AND PM.CREATED_DATE = #TRANS_DT:DATE# 
+        AND AT.STATUS_BY != #USER_ID:VARCHAR#
+        and AT.TRANS_DT = #TRANS_DT:DATE# 
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.STATUS != 'DELETED'
+        GROUP BY AT.TRANS_MODE,AT.BATCH_ID,PM.EMPLOYEEID,EM.EMPLOYEE_NAME,PM.PAY_CODE
+        ORDER BY TRANS_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getPayMasterAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT CASE
+        WHEN AT.TRANS_MODE = 'CASH'
+        THEN MAX (AT.TRANS_ID)
+        ELSE AT.BATCH_ID
+        END AS TRANS_ID,PM.EMPLOYEEID,EM.EMPLOYEE_NAME,PM.PAY_CODE
+        FROM PAYMASTER PM,EMPLOYEE_MASTER EM,ALL_TRANS AT WHERE  
+        cast(#HIERARCHY_ID# as numeric) &gt;=
+        (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+        'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1
+        )
+        FROM USER_MASTER UM, ROLE_MASTER RM
+        WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND RM.GROUP_ID = UM.USER_GROUP
+        AND UM.USER_ID = PM.STATUS_BY)
+        AND EM.EMPLOYEEID = PM.EMPLOYEEID
+        AND AT.LINK_BATCH_ID = PM.EMPLOYEEID
+        AND PM.AUTHORIZED_STATUS IS NULL
+        AND PM.STATUS!='DELETED'
+        AND  PM.PAYMENT_TRANS = 'Y'
+        AND PM.CREATED_DATE = #TRANS_DT:DATE# 
+        AND AT.STATUS_BY != #USER_ID:VARCHAR#
+        and AT.TRANS_DT = #TRANS_DT:DATE# 
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.STATUS != 'DELETED'
+        GROUP BY AT.TRANS_MODE,AT.BATCH_ID,PM.EMPLOYEEID,EM.EMPLOYEE_NAME,PM.PAY_CODE
+        ORDER BY TRANS_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getPayMasterTransAuthorizeCheck" result-class="java.util.LinkedHashMap">
+        SELECT *
+        FROM ALL_TRANS AT
+        WHERE AT.AUTHORIZE_STATUS IS NULL
+        AND AT.STATUS != 'DELETED'
+        and AT.LINK_BATCH_ID =#LINK_BATCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectEmployeeData" result-class="java.util.LinkedHashMap">
+        SELECT EM.EMPLOYEEID,EM.EMPLOYEE_NAME
+        FROM EMPLOYEE_MASTER EM,PAYMASTER PM
+        WHERE PM.EMPLOYEEID = EM.EMPLOYEEID
+        AND EM.EMP_STATUS  ='Service'
+        AND EM.AUTHORIZE_STATUS='AUTHORIZED'
+        GROUP BY EM.EMPLOYEEID,EM.EMPLOYEE_NAME,EM.SORT_ORDER
+        ORDER BY EM.SORT_ORDER
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectPaycodeData" result-class="java.util.LinkedHashMap">
+        SELECT PAY_CODE,PAY_DESCRI FROM 
+        PAYCODES_MASTER WHERE PAY_EARNDEDU = 'EARNINGS'
+        and STATUS !='DELETED'
+        AND ACTIVE  = 'Y'
+    </mapped-statement>
+    
+    <mapped-statement name="getPayCodeType" result-class="java.util.LinkedHashMap">
+        SELECT PAY_EARNDEDU FROM PAYCODES_MASTER 
+        WHERE STATUS !='DELETED' 
+        AND PAY_CODE = #PAY_CODE:VARCHAR#         
+    </mapped-statement> 
+    
+<!--    <mapped-statement name="getIncrementDatails" result-class="java.util.LinkedHashMap">
+        SELECT PI.INCR_ID,PI.PRESENT_BASIC,PI.NEW_BASIC,PI.NEW_INCR_DATE
+        FROM PAYROLL_INCREMENT PI WHERE PI.EMPLOYEEID = #EMPLOYEEID:VARCHAR# 
+        AND PI.NEW_INCR_DATE BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+   </mapped-statement> -->
+   
+<!--   <mapped-statement name="getArrearPaycodes" result-class="java.util.LinkedHashMap">
+        SELECT PAY_CODE,PAY_DESCRI,PAY_MODULE_TYPE
+        FROM PAYCODES_MASTER WHERE PAY_EARNDEDU = 'EARNINGS'
+        AND STATUS!='DELETED'
+   </mapped-statement> -->
+   
+    <mapped-statement name="getIncrementDatails" result-class="java.util.LinkedHashMap">
+        SELECT INCR_ID,PRESENT_BASIC,NEW_BASIC,NEW_INCR_DATE
+        FROM PAYROLL_INCREMENT WHERE EMPLOYEEID=#EMPLOYEEID:VARCHAR# 
+        AND  EXTRACT(MONTH FROM
+        TO_DATE(NEW_INCR_DATE, 'DD-MON-RR')) = EXTRACT(MONTH FROM
+        TO_DATE(#FROM_DT:DATE#, 'DD-MON-RR'))
+    </mapped-statement>  
+   
+    <mapped-statement name="getArrearPaycodes" result-class="java.util.LinkedHashMap">
+        SELECT PAY_SETTINGS.PAY_CODE, PAYCODES_MASTER.PAY_DESCRI,PAYCODES_MASTER.PAY_MODULE_TYPE,
+        PAY_SETTINGS.PAY_CALC_ON,PAYCODES_MASTER.PAY_DESCRI,
+        SUBSTR (PAY_SETTINGS.PAY_CALC_ON,
+        1,
+        INSTR (PAY_SETTINGS.PAY_CALC_ON, '+') - 1
+        ) AS FIRST,
+        SUBSTR (PAY_SETTINGS.PAY_CALC_ON,
+        INSTR (PAY_SETTINGS.PAY_CALC_ON, '+') + 1,
+        LENGTH (PAY_SETTINGS.PAY_CALC_ON)
+        ) AS SEC,
+        PAY_SETTINGS.PAY_MIN_AMT, PAY_SETTINGS.PAY_MAX_AMT,
+        PAY_SETTINGS.PAY_FIX_AMT, PAY_SETTINGS.PAY_PERCENT
+        FROM PAY_SETTINGS, PAYCODES_MASTER
+        WHERE PAYCODES_MASTER.PAY_CODE = PAY_SETTINGS.PAY_CODE
+        AND PAYCODES_MASTER.PAY_EARNDEDU = 'EARNINGS'
+        AND PAY_SETTINGS.TO_DATE IS NULL
+        AND (SUBSTR (PAY_SETTINGS.PAY_CALC_ON,
+        1,
+        INSTR (PAY_SETTINGS.PAY_CALC_ON, '+') - 1
+        ) = (SELECT PAY_CODE
+        FROM PAYCODES_MASTER WHERE PAY_EARNDEDU = 'EARNINGS'
+        AND STATUS!='DELETED' and PAY_MODULE_TYPE = #PAY_MODULE_TYPE:VARCHAR#)            
+        OR SUBSTR (PAY_SETTINGS.PAY_CALC_ON,
+        INSTR (PAY_SETTINGS.PAY_CALC_ON, '+') + 1,
+        LENGTH (PAY_SETTINGS.PAY_CALC_ON)
+        ) = (SELECT PAY_CODE
+        FROM PAYCODES_MASTER WHERE PAY_EARNDEDU = 'EARNINGS'
+        AND STATUS!='DELETED' and PAY_MODULE_TYPE = #PAY_MODULE_TYPE:VARCHAR# ))
+    </mapped-statement>
+    
+    <mapped-statement name="getEmployeeSalaryDetails" result-class="java.util.LinkedHashMap">      
+        SELECT PY.EMPLOYEEID,PY.MONTH_YEAR,PY.PAY_TYPE,PY.PAY_CODE,PY.AMOUNT,PM.PAY_MODULE_TYPE,TO_NUMBER(ps.PAYCODE_ID) AS PAYCODE_ID
+        FROM PAYROLL PY,PAYCODES_MASTER PM,PAY_SETTINGS ps WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR = #SALARY_DATE:DATE#
+        AND PM.PAY_EARNDEDU = 'EARNINGS'
+        AND PM.PAY_CODE = PY.PAY_CODE
+        and PS.PAY_CODE = PM.PAY_CODE
+        AND (PY.TRANSFER_LINK_ID !='INDIVIDUAL' OR PY.TRANSFER_LINK_ID IS NULL)
+        UNION
+        SELECT PY.EMPLOYEEID,PY.MONTH_YEAR,PY.PAY_TYPE,PY.PAY_CODE,PY.AMOUNT,PM.PAY_MODULE_TYPE,TO_NUMBER(ps.PAYCODE_ID) AS PAYCODE_ID
+        FROM PAYROLL PY,PAYCODES_MASTER PM,PAY_SETTINGS ps WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR = #SALARY_DATE:DATE#
+        AND PM.PAY_EARNDEDU = 'DEDUCTIONS'
+        AND PM.PAY_CODE = PY.PAY_CODE
+        and PS.PAY_CODE = PM.PAY_CODE
+        AND PM.PAY_MODULE_TYPE ='PF'
+        AND (PY.TRANSFER_LINK_ID !='INDIVIDUAL' OR PY.TRANSFER_LINK_ID IS NULL)
+        UNION
+        SELECT PY.EMPLOYEEID,PY.MONTH_YEAR,PY.PAY_TYPE,PY.PAY_CODE,PY.AMOUNT,PM.PAY_MODULE_TYPE,TO_NUMBER(ps.PAYCODE_ID) AS PAYCODE_ID
+        FROM PAYROLL PY,PAYCODES_MASTER PM,PAY_SETTINGS ps WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR = #SALARY_DATE:DATE#
+        AND PM.PAY_EARNDEDU = 'CONTRA'
+        AND PM.PAY_CODE = PY.PAY_CODE
+        and PS.PAY_CODE = PM.PAY_CODE
+        AND PM.PAY_MODULE_TYPE ='PF'
+        AND (PY.TRANSFER_LINK_ID !='INDIVIDUAL' OR PY.TRANSFER_LINK_ID IS NULL)
+        order by PAYCODE_ID
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getEmployeePFSalaryDetails" result-class="java.util.LinkedHashMap">  
+        SELECT PY.EMPLOYEEID,PY.MONTH_YEAR,PY.PAY_TYPE,PY.PAY_CODE,PY.AMOUNT,PM.PAY_MODULE_TYPE,TO_NUMBER(pm.PAYCODE_ID) AS PAYCODE_ID
+        FROM PAYROLL PY,PAYCODES_MASTER PM
+<!--        ,PAY_SETTINGS ps -->
+        WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR = #SALARY_DATE:DATE#
+        AND PM.PAY_EARNDEDU = 'CONTRA'
+        AND PM.PAY_CODE = PY.PAY_CODE
+<!--        and PS.PAY_CODE = PM.PAY_CODE-->
+        AND PM.PAY_MODULE_TYPE ='PF'
+        <dynamic>
+                <isParameterPresent>
+                    <isNull prepend="UNION" property="PENSION_ONLY">
+                        SELECT PY.EMPLOYEEID,PY.MONTH_YEAR,PY.PAY_TYPE,PY.PAY_CODE,PY.AMOUNT,PM.PAY_MODULE_TYPE,TO_NUMBER(pm.PAYCODE_ID) AS PAYCODE_ID
+                        FROM PAYROLL PY,PAYCODES_MASTER PM
+<!--                        ,PAY_SETTINGS ps -->
+                        WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+                        AND PY.MONTH_YEAR = #SALARY_DATE:DATE#
+                        AND PM.PAY_EARNDEDU = 'DEDUCTIONS'              
+                        AND PM.PAY_CODE = PY.PAY_CODE
+<!--                        and PS.PAY_CODE = PM.PAY_CODE-->
+                        AND PM.PAY_MODULE_TYPE ='PF'  
+                    </isNull>
+                </isParameterPresent>
+        </dynamic>                     
+       order by PAYCODE_ID  
+    </dynamic-mapped-statement>
+   
+    <mapped-statement name="getDistinctSalaryMonths" result-class="java.util.LinkedHashMap">        
+        SELECT DISTINCT PY.MONTH_YEAR
+        FROM PAYROLL PY, PAYCODES_MASTER PM, PAY_SETTINGS PS
+        WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND PM.PAY_EARNDEDU = 'EARNINGS'
+        AND PM.PAY_CODE = PY.PAY_CODE
+        AND PS.PAY_CODE = PM.PAY_CODE
+        AND PY.REMARK ='SALARY_PROCESS'
+        UNION
+        SELECT DISTINCT PY.MONTH_YEAR
+        FROM PAYROLL PY, PAYCODES_MASTER PM, PAY_SETTINGS PS
+        WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND PM.PAY_EARNDEDU = 'DEDUCTIONS'
+        AND PM.PAY_CODE = PY.PAY_CODE
+        AND PS.PAY_CODE = PM.PAY_CODE
+        AND PM.PAY_MODULE_TYPE = 'PF'
+        AND PY.REMARK='SALARY_PROCESS'
+        ORDER BY MONTH_YEAR
+    </mapped-statement>
+  
+    <mapped-statement name="getPaycodeCalcOn" result-class="java.util.LinkedHashMap">    
+        SELECT PS.PAY_CALC_ON
+        FROM PAYCODES_MASTER PM,PAY_SETTINGS PS
+        WHERE PS.PAY_CODE = PM.PAY_CODE
+        AND PM.PAY_MODULE_TYPE = #PAY_MODULE_TYPE:VARCHAR#
+        AND PS.TO_DATE IS NULL
+    </mapped-statement>     
+  
+    <mapped-statement name="getCalculatedamount" result-class="java.util.LinkedHashMap">    
+        <!--SELECT SUM(PY.AMOUNT) AS AMOUNT
+        FROM PAYROLL PY,PAYCODES_MASTER PM WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND PY.MONTH_YEAR = #SALARY_DATE:DATE#  
+        AND PM.PAY_CODE = PY.PAY_CODE
+        and py.pay_code in (#CALCULATIONS:VARCHAR#)-->
+        SELECT (
+        (SELECT nvl(SUM (PY.AMOUNT),0)
+          FROM PAYROLL PY, PAYCODES_MASTER PM
+         WHERE PY.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+           AND PY.MONTH_YEAR = #SALARY_DATE:DATE#
+           AND PM.PAY_CODE = PY.PAY_CODE
+           AND PY.PAY_CODE IN (#CALCULATIONS:VARCHAR#))
+           + 
+           (SELECT nvl(SUM (DIFFERENCE),0)
+                     FROM ARREAR_CALCULATION_MASTER
+                    WHERE #SALARY_DATE:DATE# BETWEEN TRUNC (FROM_DT, 'MM')
+                                           AND LAST_DAY (FROM_DT)
+                                           AND TRANS_DT !=#TRANS_DT:DATE#
+                      AND EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+                      AND PAY_CODE IN (#CALCULATIONS:VARCHAR#))) AS AMOUNT FROM DUAL
+    </mapped-statement> 
+   
+    <mapped-statement name="getPayCodeSettings" result-class="java.util.LinkedHashMap">   
+        SELECT PAY_SETTINGS.PAY_CODE, PAYCODES_MASTER.PAY_DESCRI,PAYCODES_MASTER.PAY_MODULE_TYPE,
+        PAY_SETTINGS.PAY_CALC_ON,       
+        PAY_SETTINGS.PAY_MIN_AMT, PAY_SETTINGS.PAY_MAX_AMT,
+        PAY_SETTINGS.PAY_FIX_AMT, PAY_SETTINGS.PAY_PERCENT
+        <!-- ,PAY_SETTINGS.ARREAR_PAY_PERCENT-->
+        FROM PAY_SETTINGS, PAYCODES_MASTER
+        WHERE PAYCODES_MASTER.PAY_CODE = PAY_SETTINGS.PAY_CODE 
+        and PAYCODES_MASTER.PAY_CODE = #PAY_CODE:VARCHAR#
+        AND ((#MONTH_YEAR:DATE# BETWEEN FROM_DATE AND TO_DATE) OR (FROM_DATE &lt;= #MONTH_YEAR:DATE# AND TO_DATE IS NULL))
+    </mapped-statement> 
+   
+    <mapped-statement name="getPayCodeFromModuleType" result-class="java.util.LinkedHashMap"> 
+        SELECT PAY_CODE FROM  PAYCODES_MASTER WHERE UPPER(PAY_MODULE_TYPE) =UPPER(#PAY_MODULE_TYPE:VARCHAR#)
+    </mapped-statement> 
+   
+    <mapped-statement name="getSelectPaycodeCheck" result-class="java.util.LinkedHashMap"> 
+        SELECT * FROM PAYMASTER WHERE EMPLOYEEID = #EMPLOYEEID:VARCHAR# AND PAY_CODE =#PAY_CODE:VARCHAR# 
+    </mapped-statement> 
+   
+    <mapped-statement name="getArrearDetails" result-class="java.util.LinkedHashMap"> 
+        SELECT   ACM.EMPLOYEEID, ACM.PAY_CODE, ACM.PAY_DESCRI, ACM.FROM_DT,
+        ACM.OLD_AMT, ACM.NEW_AMT, ACM.DIFFERENCE
+        FROM ARREAR_CALCULATION_MASTER ACM, PAY_SETTINGS PS
+        WHERE PS.PAY_CODE = ACM.PAY_CODE
+        AND ACM.STATUS = 'CREATED'
+        AND PS.TO_DATE IS NULL
+        AND ACM.FROM_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND ACM.TO_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND UPPER(ACM.BASED_ON) = UPPER(#BASED_ON:VARCHAR#)
+        AND ACM.EMPLOYEEID IN ($EMPLOYEEID$)
+        AND ACM.TRANS_DT = #TRANS_DT:DATE#
+        ORDER BY ACM.EMPLOYEEID,ACM.FROM_DT, ACM.TO_DT, PS.PAYCODE_ID
+    </mapped-statement> 
+
+    <mapped-statement name="getNetArrearAmount" result-class="java.util.LinkedHashMap"> 
+        SELECT   ACM.EMPLOYEEID,
+        SUM (CASE
+        WHEN PM.PAY_EARNDEDU = 'EARNINGS'
+        THEN 1 * ACM.DIFFERENCE
+        ELSE -1 * ACM.DIFFERENCE
+        END
+        ) AS NET_AMOUNT
+        FROM ARREAR_CALCULATION_MASTER ACM, PAY_SETTINGS PS, PAYCODES_MASTER PM
+        WHERE PS.PAY_CODE = ACM.PAY_CODE
+        AND PM.PAY_CODE = ACM.PAY_CODE
+        AND ACM.STATUS = 'CREATED'
+        AND ACM.FROM_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND ACM.TO_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND PS.TO_DATE IS NULL
+        AND PM.PAY_EARNDEDU NOT IN ('CONTRA')
+        AND ACM.EMPLOYEEID=#EMPLOYEEID:VARCHAR#
+        AND ACM.TRANS_DT= #TRANS_DT:DATE#
+        GROUP BY ACM.EMPLOYEEID
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getNetPfArrearAmount" result-class="java.util.LinkedHashMap"> 
+        SELECT   ACM.EMPLOYEEID,
+        SUM (CASE
+        WHEN PM.PAY_EARNDEDU = 'EARNINGS'
+        THEN 1 * ACM.DIFFERENCE
+        ELSE -1 * ACM.DIFFERENCE
+        END
+        ) AS NET_AMOUNT
+        FROM ARREAR_CALCULATION_MASTER ACM, PAY_SETTINGS PS, PAYCODES_MASTER PM
+        WHERE PS.PAY_CODE = ACM.PAY_CODE
+        AND PM.PAY_CODE = ACM.PAY_CODE
+        AND ACM.STATUS = 'CREATED'
+        AND ACM.FROM_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND ACM.TO_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND PS.TO_DATE IS NULL
+        AND PM.PAY_MODULE_TYPE  IN ('PF')    
+        <dynamic>            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAY_EARNDEDU">
+                    PM.PAY_EARNDEDU = #PF_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND ACM.EMPLOYEEID=#EMPLOYEEID:VARCHAR#
+        AND ACM.TRANS_DT= #TRANS_DT:DATE#
+        GROUP BY ACM.EMPLOYEEID
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="deleteArrearProcessData" result-class="java.util.HashMap">
+        DELETE FROM ARREAR_CALCULATION_MASTER WHERE   
+        FROM_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND TO_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND STATUS = 'CREATED'
+        AND TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement> 
+    
+    <mapped-statement name="getemployeeSalAccount" result-class="java.util.HashMap">
+        SELECT EM.EMPLOYEEID, EM.NET_SALARY_PROD_TYPE, EM.NET_SALARY_PROD_ID,
+        EM.NET_SALARY_ACC_NO
+        FROM EMPLOYEE_MASTER EM
+        WHERE EM.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+    </mapped-statement> 
+ 
+    <mapped-statement name="getArrearEmployeeWise" result-class="java.util.HashMap">
+        SELECT   ACM.EMPLOYEEID,PM.PAY_EARNDEDU,ACM.DIFFERENCE,ACM.FROM_DT,PS.PAY_CODE
+        ,PA.ACC_HD,PA.ACC_TYPE,PM.PAY_MODULE_TYPE,PM.PAY_DESCRI
+        FROM ARREAR_CALCULATION_MASTER ACM, PAY_SETTINGS PS, PAYCODES_MASTER PM,PAY_ACCOUNT PA
+        WHERE PS.PAY_CODE = ACM.PAY_CODE
+        AND PA.PAYCODE_ID = PM.PAYCODE_ID
+        AND PM.PAY_CODE = ACM.PAY_CODE
+        AND ACM.STATUS = 'CREATED'
+        AND ACM.FROM_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND ACM.TO_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND UPPER(ACM.BASED_ON) = UPPER(#BASED_ON:VARCHAR#)
+        and ACM.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND ACM.TRANS_DT= #TRANS_DT:DATE#
+        AND PS.TO_DATE IS NULL
+        ORDER BY ACM.FROM_DT,ACM.EMPLOYEEID
+    </mapped-statement> 
+   
+    <mapped-statement name="getIncrementDetails" result-class="java.util.HashMap">
+        SELECT EMPLOYEEID,PRESENT_BASIC,NEW_BASIC
+        FROM PAYROLL_INCREMENT PI
+        WHERE PI.NEW_INCR_DATE BETWEEN #FROM_DT:DATE# AND (add_months(#FROM_DT:DATE#,1)-1)
+        AND EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement> 
+    
+    <mapped-statement name="getPaidArrearDetails" result-class="java.util.HashMap">
+        SELECT SUM(DIFFERENCE) AS AMOUNT FROM ARREAR_CALCULATION_MASTER 
+        WHERE #FROM_DT:DATE# BETWEEN TRUNC(FROM_DT,'MM') AND LAST_DAY(FROM_DT)
+        AND EMPLOYEEID=  #EMPLOYEEID:VARCHAR# AND PAY_CODE = #PAY_CODE:VARCHAR# 
+        AND TRANS_DT !=#TRANS_DT:DATE#
+    </mapped-statement> 
+
+
+    <mapped-statement name="GET_SUSPENSE_HD" result-class="java.util.LinkedHashMap">  
+        SELECT SALARY_SUSPENSE FROM PARAMETERS
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectPayrollData" result-class="java.util.LinkedHashMap">  
+        SELECT P.EMPLOYEEID,P.PAY_CODE,P.AMOUNT,P.PROD_TYPE,P.ACC_NO,P.PRINCIPAL,P.INTEREST,P.PENALINTEREST,P.CALC_UPTO,P.MONTH_YEAR,p.PAYROLLID FROM PAYROLL P
+        WHERE  P.STATUS='temp'
+        <dynamic>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAYROLL_ID">
+                    p.PAYROLLID=#PAYROLL_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    
+    <mapped-statement name="getExistingPayId" result-class="java.util.LinkedHashMap">
+        select DISTINCT(P.PAYROLLID) from payroll p where P.MONTH_YEAR=#MONTH_YEAR:DATE#  AND P.REMARK='SALARY_PROCESS'
+    </mapped-statement> 
+    
+    <mapped-statement name="getpayrollData" result-map="getPayrollTOResult">
+        
+        <!--SELECT DISTINCT(p.pay_code),p.employeeid, p.month_year, p.amount, p.prod_type,
+        p.prod_id, p.acc_no, p.principal, p.interest, p.penalinterest,
+        p.calc_upto, p.from_date, p.TO_DATE, pm.pay_earndedu,
+        pm.pay_module_type, pm.pay_descri, pa.acc_hd, pa.acc_type,EM.EMPLOYEE_NAME,p.PAYROLLID
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN pay_account pa ON pm.paycode_id = pa.paycode_id join EMPLOYEE_MASTER EM on P.EMPLOYEEID=EM.EMPLOYEEID
+        union
+        SELECT DISTINCT (p.pay_code), p.employeeid, p.month_year, p.amount,
+        p.prod_type, p.prod_id, p.acc_no, p.principal, p.interest,
+        p.penalinterest, p.calc_upto, p.from_date, p.TO_DATE,
+        pm.pay_earndedu, pm.pay_module_type, pm.pay_descri, null as acc_hd,
+        null as acc_type, em.employee_name, p.payrollid
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN employee_master em ON p.employeeid = em.employeeid where P.PROD_TYPE !='GL'-->
+     <!--     x.calc_upto, x.from_date, x.TO_DATE, x.pay_earndedu,
+        x.pay_module_type, x.pay_descri, x.acc_hd, x.acc_type,x.EMPLOYEE_NAME,x.PAYROLLID
+        from
+        (SELECT DISTINCT(p.pay_code),p.employeeid, p.month_year, p.amount, p.prod_type,
+        p.prod_id, p.acc_no, p.principal, p.interest, p.penalinterest,
+        p.calc_upto, p.from_date, p.TO_DATE, pm.pay_earndedu,
+        pm.pay_module_type, pm.pay_descri, pa.acc_hd, pa.acc_type,EM.EMPLOYEE_NAME,p.PAYROLLID
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN pay_account pa ON pm.paycode_id = pa.paycode_id join EMPLOYEE_MASTER EM on P.EMPLOYEEID=EM.EMPLOYEEID
+        where PM.PAY_EARNDEDU !='CONTRA'  and P.STATUS='temp' AND p.PAYROLLID=#payrollid:varchar#
+        )x order by X.EMPLOYEEID-->
+       <!-- union
+        SELECT DISTINCT(p.pay_code),p.employeeid, p.month_year, p.amount, p.prod_type,
+        p.prod_id, p.acc_no, p.principal, p.interest, p.penalinterest,
+        p.calc_upto, p.from_date, p.TO_DATE, pm.pay_earndedu,
+        pm.pay_module_type, pm.pay_descri, pa.acc_hd, pa.acc_type,EM.EMPLOYEE_NAME,p.PAYROLLID
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN pay_account pa ON pm.paycode_id = pa.paycode_id join EMPLOYEE_MASTER EM on P.EMPLOYEEID=EM.EMPLOYEEID
+        where PM.PAY_EARNDEDU ='CONTRA' and PA.ACC_TYPE='Debit' AND P.STATUS='temp' AND p.PAYROLLID=#payrollid:varchar#)x order by X.EMPLOYEEID-->
+   
+        SELECT DISTINCT(p.pay_code),pm.PAYCODE_ID,p.employeeid, p.month_year, p.amount, p.prod_type,
+        p.prod_id, p.acc_no, p.principal, p.interest, p.penalinterest,
+        p.calc_upto, p.from_date, p.TO_DATE, pm.pay_earndedu,
+        pm.pay_module_type, pm.pay_descri, pa.acc_hd, pa.acc_type,EM.EMPLOYEE_NAME,p.PAYROLLID
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN pay_account pa ON pm.paycode_id = pa.paycode_id join EMPLOYEE_MASTER EM on P.EMPLOYEEID=EM.EMPLOYEEID
+        where PM.PAY_EARNDEDU !='CONTRA'  and P.STATUS='temp' AND p.PAYROLLID=#payrollid:varchar# order by pm.PAYCODE_ID
+     
+   </mapped-statement>
+   
+      <mapped-statement name="getpayrollContraData" result-map="getPayrollTOResult">
+      
+        SELECT DISTINCT(p.pay_code),p.employeeid, p.month_year, p.amount, p.prod_type,
+        p.prod_id, p.acc_no, p.principal, p.interest, p.penalinterest,
+        p.calc_upto, p.from_date, p.TO_DATE, pm.pay_earndedu,
+        pm.pay_module_type, pm.pay_descri, pa.acc_hd, pa.acc_type,EM.EMPLOYEE_NAME,p.PAYROLLID
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN pay_account pa ON pm.paycode_id = pa.paycode_id join EMPLOYEE_MASTER EM on P.EMPLOYEEID=EM.EMPLOYEEID
+        where PM.PAY_EARNDEDU ='CONTRA' and PA.ACC_TYPE='Debit' AND P.STATUS='temp' AND p.PAYROLLID=#payrollid:varchar#
+        AND P.PAY_CODE=#pay_code:varchar#
+       
+       </mapped-statement>
+       
+        <mapped-statement name="getpayrollConsolidateContraData" result-class="java.util.LinkedHashMap">
+            
+        SELECT sum(P.AMOUNT) as amount,max(p.pay_code) As pay_code, max(pa.acc_hd) as acc_hd,MAX(PM.PAY_DESCRI) as PAY_DESCRI,max(PM.PAY_MODULE_TYPE) as PAY_MODULE_TYPE
+        FROM payroll p JOIN paycodes_master pm ON p.pay_code = pm.pay_code
+        JOIN pay_account pa ON pm.paycode_id = pa.paycode_id join EMPLOYEE_MASTER EM on P.EMPLOYEEID=EM.EMPLOYEEID
+        where PM.PAY_EARNDEDU ='CONTRA' and PA.ACC_TYPE='Debit' AND P.STATUS='temp' AND p.PAYROLLID=#payrollid:varchar#
+        group by p.pay_code
+      
+      </mapped-statement>
+
+ <result-map name="getPayrollTOResult" class="com.see.truetransact.transferobject.payroll.PayRollTo">
+        <property name="acct_num" column="ACC_NO"/>
+        <property name="employeeId" column="EMPLOYEEID"/>
+        <property name="payCode" column="PAY_CODE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="amount" column="AMOUNT"/>
+<!--        <property name="status" column="STATUS"/>-->
+        <property name="fromDt" column="FROM_DATE"/>
+        <property name="toDt" column="TO_DATE"/>
+        <property name="payEarndedu" column="PAY_EARNDEDU"/>
+        <property name="pricipal" column="PRINCIPAL"/>
+        <property name="interest" column="INTEREST"/>
+        <property name="penal" column="PENALINTEREST"/>
+        <property name="month" column="MONTH_YEAR"/>
+        <property name="calUpto" column="CALC_UPTO"/>
+        <property name="payModuleType" column="PAY_MODULE_TYPE"/>
+        <property name="payDesc" column="PAY_DESCRI"/>
+        <property name="accHd" column="ACC_HD"/>
+        <property name="accType" column="ACC_TYPE"/>
+        <property name="employeeName" column="EMPLOYEE_NAME"/>
+        <property name="payrollId" column="PAYROLLID"/>
+    </result-map> 
+    
+    <mapped-statement name="getSalaryData" result-map="getSalaryTOResult">
+        SELECT EMPLOYEEID,EMPLOYEE_NAME,NET_SALARY_ACC_NO,NET_SALARY_PROD_TYPE,NET_SALARY_PROD_ID,EARNINGS,DEDUCTIONS, EARNINGS-DEDUCTIONS AS NET_SALARY FROM 
+       (SELECT DISTINCT(e.employeeid),E.EMPLOYEE_NAME,E.NET_SALARY_ACC_NO,E.NET_SALARY_PROD_TYPE,E.NET_SALARY_PROD_ID,
+       (SELECT NVL(SUM(PR.AMOUNT),0) FROM PAYROLL PR ,EMPLOYEE_MASTER EM, PAYCODES_MASTER PC WHERE PR.PAYROLLID=#payrollid:varchar# AND PR.STATUS='temp' AND 
+        PC.PAY_CODE=PR.PAY_CODE AND PC.PAY_EARNDEDU='EARNINGS' AND PR.EMPLOYEEID=EM.EMPLOYEEID AND EM.EMPLOYEEID=E.EMPLOYEEID) AS EARNINGS,(SELECT NVL(SUM(PR.AMOUNT),0)
+        FROM PAYROLL PR ,EMPLOYEE_MASTER EM, paycodes_master PC WHERE PR.PAYROLLID=#payrollid:varchar# AND PR.STATUS='temp' AND PC.PAY_CODE=PR.PAY_CODE AND 
+        PC.PAY_EARNDEDU='DEDUCTIONS' AND PR.EMPLOYEEID=EM.EMPLOYEEID AND EM.EMPLOYEEID=E.EMPLOYEEID) AS DEDUCTIONS FROM PAYROLL p , EMPLOYEE_MASTER e WHERE P.PAYROLLID=#payrollid:varchar# 
+        AND E.EMP_STATUS='Service' AND E.AUTHORIZE_STATUS='AUTHORIZED' AND P.EMPLOYEEID=E.EMPLOYEEID ORDER BY E.EMPLOYEEID) X
+    </mapped-statement>
+    
+    <result-map name="getSalaryTOResult" class="com.see.truetransact.transferobject.payroll.employeeSalaryTO">
+       
+        <property name="employeeName" column="EMPLOYEE_NAME"/>
+        <property name="employeeId" column="EMPLOYEEID"/>
+        <property name="netSalaryAccNo" column="NET_SALARY_ACC_NO"/>
+        <property name="salProdType" column="NET_SALARY_PROD_TYPE"/>
+        <property name="earnings" column="EARNINGS"/>
+        <property name="deductions" column="DEDUCTIONS"/>
+<!--        <property name="status" column="STATUS"/>-->
+        <property name="netSalary" column="NET_SALARY"/>
+        <property name="salProdId" column="NET_SALARY_PROD_ID"/>
+       
+    </result-map> 
+    
+    <mapped-statement name="getSettingData" result-class="java.util.LinkedHashMap">
+        SELECT P.PAY_CODE,P.PAY_DESCRI FROM PAYCODES_MASTER P WHERE P.ACTIVE='Y' order by P.PAY_CODE
+    </mapped-statement>
+    
+    <mapped-statement name="getEmployeeData" result-class="java.util.LinkedHashMap">
+        SELECT e.employeeid, e.employee_name FROM employee_master e WHERE e.emp_status = 'Service' AND e.stop_payment != 'YES' and E.AUTHORIZE_STATUS='AUTHORIZED' order by E.EMPLOYEEID
+    </mapped-statement>
+    
+    <mapped-statement name="getSalaryProcessData" result-class="java.util.LinkedHashMap">
+        SELECT PM.EMPLOYEEID,PM.PAY_CODE,P.PAY_MODULE_TYPE,P.PAY_EARNDEDU,PM.AMOUNT,PM.PROD_TYPE,PM.PROD_ID,PM.ACC_NO,PM.PRINCIPAL,PM.INTEREST,PM.PENALINTEREST AS PENAL,PM.CALC_UPTO,PM.ACTIVE FROM PAYMASTER PM
+        JOIN
+        (
+        SELECT P.EMPLOYEEID,P.PAY_CODE,MAX(P.SRL_NO) AS SRL_NO   FROM PAYMASTER P 
+        WHERE P.ACTIVE='Y' AND P.EMPLOYEEID in($EMPID$)
+        GROUP BY P.EMPLOYEEID,P.PAY_CODE ORDER BY P.EMPLOYEEID,P.PAY_CODE) S ON S.PAY_CODE=PM.PAY_CODE AND
+        S.SRL_NO=PM.SRL_NO AND 
+        S.EMPLOYEEID=PM.EMPLOYEEID JOIN PAYCODES_MASTER P ON P.PAY_CODE=S.PAY_CODE
+        WHERE   S.PAY_CODE IN($paycode$)  ORDER BY PM.EMPLOYEEID,PM.PAY_CODE    
+    </mapped-statement>
+    
+    <mapped-statement name="updatePayrollData" result-class="java.util.HashMap">
+        update payroll  set STATUS ='posted',TRANSFER_LINK_ID=#generateSingleTransId:varchar#,AUTHORIZE_STATUS='Y' where PAYROLLID=#PAYROLLID:varchar#
+    </mapped-statement>
+    
+    <mapped-statement name="getCreditHead" result-class="java.util.HashMap">
+        select PA.ACC_HD from PAYCODES_MASTER p join PAY_ACCOUNT pa on P.PAYCODE_ID=PA.PAYCODE_ID where PA.ACC_TYPE='Credit' and P.PAY_CODE=#value:varchar#
+    </mapped-statement>
+  
+    <mapped-statement name="rejectpayrollPost" result-class="java.util.HashMap">
+        delete from payroll P where P.PAYROLLID=#PAYROLL_ID:varchar# and P.STATUS='temp'
+    </mapped-statement>
+    
+    <mapped-statement name = "getTransferDetailsPayRoll" result-class = "java.util.HashMap">
+        SELECT T.TRANS_ID, T.BATCH_ID,AH.AC_HD_DESC AS AC_HD_ID,T.ACT_NUM,T.INP_AMOUNT,T.
+        INP_CURR,T.AMOUNT,T.TRANS_DT,T.TRANS_TYPE,T.INST_TYPE,T.
+        INST_DT,T.INIT_TRANS_ID,T.INIT_CHANN_TYPE,T.PARTICULARS,T.STATUS,T.
+        INSTRUMENT_NO1,T.INSTRUMENT_NO2,T.PROD_ID,T.AUTHORIZE_STATUS,T.AUTHORIZE_BY,T.
+        AUTHORIZE_DT,T.AUTHORIZE_REMARKS,T.STATUS_BY,T.BRANCH_ID,T.STATUS_DT,T.
+        PROD_TYPE,T.LINK_BATCH_ID,T.LINK_BATCH_DT,T.TRANS_MODE,T.INITIATED_BRANCH,T.
+        LOAN_HIERARCHY,T.AUTHORIZE_STATUS_2,T.NARRATION,T.SHIFT,T.
+        TRANS_ALL_ID,T.REC_MODE,T.SINGLE_TRANS_ID,T.AUTHORIZE_BY_2,T.GL_TRANS_ACT_NUM,T.TRANS_MOD_TYPE FROM TRANSFER_TRANS T
+        JOIN AC_HD AH ON AH.AC_HD_ID=T.AC_HD_ID
+        WHERE T.SINGLE_TRANS_ID=#BATCH_ID:VARCHAR# AND T.TRANS_DT=#TRANS_DT:DATE# AND T.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getCashDetailsPayRoll" result-class = "java.util.HashMap">
+        <!-- SELECT * FROM CASH_TRANS WHERE LINK_BATCH_ID =#BATCH_ID# AND TRANS_DT=#TRANS_DT# AND INITIATED_BRANCH=#BRANCH_CODE# -->
+        SELECT C.TRANS_ID, AH.AC_HD_DESC AS AC_HD_ID, C.ACT_NUM, C.INP_AMOUNT, C.INP_CURR, C.AMOUNT, C.TRANS_DT, C.TRANS_TYPE, C.INST_TYPE, C.INST_DT, 
+        C.TOKEN_NO, C.INIT_TRANS_ID, C.INIT_CHANN_TYPE, C.PARTICULARS, C.STATUS, C.INSTRUMENT_NO1, 
+        C.INSTRUMENT_NO2, C.AVAILABLE_BALANCE, C.PROD_ID, C.PROD_TYPE, C.AUTHORIZE_STATUS, 
+        C.AUTHORIZE_BY, C.AUTHORIZE_DT, C.AUTHORIZE_REMARKS, C.STATUS_BY, C.BRANCH_ID, 
+        C.STATUS_DT, C.LINK_BATCH_ID, C.INITIATED_BRANCH, C.LINK_BATCH_DT, C.PAYMENT_STATUS, 
+        C.PAYMENT_BY, C.PAYMENT_STATUS_DT, C.PAN_NUMBER, C.AUTHORIZE_STATUS_2, C.AUTHORIZE_BY_2, 
+        C.AUTHORIZE_DT_2, C.LOAN_HIERARCHY, C.NARRATION, C.SCREEN_NAME, C.SHIFT, 
+        C.TRANS_ALL_ID, 
+        C.SINGLE_TRANS_ID,C.GL_TRANS_ACT_NUM, C.TRANS_MOD_TYPE FROM CASH_TRANS C
+        JOIN AC_HD AH ON C.AC_HD_ID=AH.AC_HD_ID 
+        WHERE C.SINGLE_TRANS_ID =#BATCH_ID:VARCHAR# AND C.TRANS_DT=#TRANS_DT:DATE# AND C.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="callParoll_Leave_Process" result-class="java.util.LinkedHashMap">
+         call PAYROLL_LEAVE_PROCESS(#SalaryMonth:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="getPFBalance" result-class="java.util.LinkedHashMap">
+        SELECT NVL(SUM(
+            CASE 
+                WHEN PAY.TRANS_TYPE='CREDIT' THEN 1
+                ELSE -1
+            END * PAY.AMOUNT),0) AS BALANCE,PAY.PAY_CODE,PM.PAY_MODULE_TYPE,PFM.PF_ACT_NO
+        FROM PAYROLL PAY  
+        JOIN PAYCODES P ON P.PAY_CODE=PAY.PAY_CODE
+        JOIN PAYCODES_MASTER PM ON PM.PAY_CODE=PAY.PAY_CODE
+        JOIN PAY_PF_MASTER PFM ON PFM.EMP_ID=PAY.EMPLOYEEID
+        WHERE PAY.EMPLOYEEID=#EMPLOYEEID:VARCHAR# 
+        AND PM.PAY_EARNDEDU = 'DEDUCTIONS'
+        AND PM.PAY_MODULE_TYPE = 'PF'
+        AND PAY.PAY_CODE = #PAY_CODE:VARCHAR# 
+        GROUP BY PAY.PAY_CODE,PM.PAY_MODULE_TYPE,PFM.PF_ACT_NO
+   </mapped-statement>
+    <dynamic-mapped-statement name="getEmployeeDetailsForPF" result-class="java.util.LinkedHashMap">
+        SELECT  EM.EMPLOYEEID,EM.EMPLOYEE_NAME,P.PAY_CODE ,PPM.LAST_INT_CALC_DT+1 AS INT_CALC_DT FROM PAYCODES_MASTER P , PAY_PF_MASTER PPM,EMPLOYEE_MASTER EM
+        WHERE P.PAY_MODULE_TYPE=#PF_TYPE:VARCHAR# AND PPM.EMP_ID = EM.EMPLOYEEID AND EM.STATUS !='DELETED' AND EM.AUTHORIZE_STATUS='AUTHORIZED'    AND P.PAY_EARNDEDU ='DEDUCTIONS'
+         <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_ACC_NO">
+                    EM.EMPLOYEEID BETWEEN #FROM_ACC_NO:VARCHAR# AND #TO_ACC_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EM.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(EM.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="PAY_CODE">
+                    UPPER(P.PAY_CODE) LIKE UPPER('%$PAY_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INT_CALC_DT">
+                    UPPER(PPM.LAST_INT_CALC_DT+1) LIKE UPPER('%$INT_CALC_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY EM.EMPLOYEEID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getPFInterest" result-class="java.util.LinkedHashMap">
+       select round(get_pfinterest(#FROM_DATE:DATE#,#TO_DATE:DATE#,#EMP_ID:VARCHAR#,#PAY_CODE:VARCHAR#,cast(#INT_RATE# as NUMERIC))) as INTEREST from dual
+    </mapped-statement>
+    
+    <mapped-statement name="getPFPayCode" result-class="java.util.LinkedHashMap">
+        SELECT PA.ACC_HD,PA.ACC_TYPE,PM.PAY_CODE
+        FROM PAYCODES_MASTER PM join PAY_ACCOUNT PA on PM.PAYCODE_ID=PA.PAYCODE_ID 
+        WHERE PM.PAY_EARNDEDU='DEDUCTIONS' AND PM.PAY_MODULE_TYPE='PF'
+    </mapped-statement>
+    
+    <mapped-statement name="updatePFPayMasterLastIntDate" result-class="java.util.HashMap">
+        UPDATE PAY_PF_MASTER SET
+        LAST_INT_CALC_DT = #LAST_INT_CALC_DT:DATE#
+        WHERE EMP_ID=#employeeId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getPayrollLoanStatus" result-class="java.util.HashMap">
+        SELECT L.ACCT_STATUS from LOANS_FACILITY_DETAILS L WHERE L.ACCT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateRollBackPayrollData" result-class="java.util.HashMap">
+        update payroll  set STATUS ='DELETED',AUTHORIZE_STATUS='N' ,AUTHORIZED_BY = #USER_ID:VARCHAR# where BATCH_ID=#TRANS_ID:varchar# AND TRANS_DATE=#TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getClosedNetPayAccount" result-class="java.util.HashMap">
+        SELECT * FROM ALL_EMPLOYEE_ACCOUNTS
+    </mapped-statement>
+    
+    <mapped-statement name="getBulkPaymaserDetails" result-class="java.util.LinkedHashMap">
+        SELECT PM.EMPLOYEEID,PM.PAY_CODE,PM.AMOUNT,PM.PRINCIPAL,PM.INTEREST,PM.PENALINTEREST,MAX(PM.SRL_NO) AS SRL_NO,PM.ACC_NO,PM.PROD_TYPE
+        FROM PAYMASTER PM
+        WHERE PM.PAY_CODE =#PAY_CODE:VARCHAR#
+        GROUP BY PM.EMPLOYEEID,PM.PAY_CODE,PM.AMOUNT,PM.PRINCIPAL,PM.INTEREST,PM.PENALINTEREST,PM.ACC_NO,PM.PROD_TYPE
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectBulkPayCodes" result-class="java.util.LinkedHashMap">
+        SELECT PAY_CODE,PAY_DESCRI
+        FROM PAYCODES_MASTER WHERE STATUS!='DELETED' AND PAY_CALC_TYPE !='Calculated' AND ACTIVE ='Y'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAY_EARNDEDU">
+                    PAY_EARNDEDU = #PAY_EARNDEDU:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+    </dynamic-mapped-statement> 
+    
+     <mapped-statement name="updateBulkPaymaster" result-class="java.util.HashMap">
+           UPDATE PAYMASTER  SET 
+           AMOUNT=CAST(#amount# AS NUMERIC),
+           STATUS=#status:VARCHAR#,
+           STATUS_DATE=#statusDate:DATE#,
+           STATUS_BY=#statusBy:VARCHAR#
+           where EMPLOYEEID=#employeeId:VARCHAR#
+           and PAY_CODE=#payCode:VARCHAR# AND 
+           SRL_NO=cast(#srlNo# as NUMERIC)
+    </mapped-statement> 
+    
+    <mapped-statement name="GetNonGLClosedAccounts" result-class="java.util.HashMap">
+        SELECT Y.EMPLOYEEID,Y.PAY_CODE,Y.PROD_ID,Y.PROD_TYPE,Y.ACC_NO
+        FROM  PAYCODES_MASTER C join 
+        (select p.* from PAYMASTER p
+        join 
+        ( SELECT PM.EMPLOYEEID,PM.PAY_CODE,MAX(PM.SRL_NO) AS SRL_NO
+        FROM PAYMASTER PM 
+        GROUP BY  PM.EMPLOYEEID, PM.PAY_CODE)x on P.EMPLOYEEID=x.EMPLOYEEID and P.PAY_CODE=x.PAY_CODE and P.SRL_NO=x.SRL_NO
+        WHERE p.EMPLOYEEID in($EMPID$) and p.PAY_CODE in ($paycode$)
+        )Y  on (C.PAY_CODE=Y.PAY_CODE  AND C.ACTIVE='Y' and Y.ACTIVE='Y')  JOIN ALL_CUSTOMER_ACCOUNTS1 AC
+             ON (rtrim(Y.ACC_NO,'_1') = AC.ACT_NUM
+                 AND AC.ACCT_STATUS = 'CLOSED')  order by Y.EMPLOYEEID,Y.PAY_CODE
+    </mapped-statement>
+    
+    
+      <mapped-statement name="getDepositBranchCode" result-class="java.util.HashMap">
+        SELECT BRANCH_ID as BRANCH_CODE  FROM DEPOSIT_ACINFO da WHERE da.deposit_no ||'_1' = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    
+     <result-map name="getAllPFTypeDeductionsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PAY_MODULE_TYPE" />
+        <property name="lookUpDesc" column="PAY_DESCRI" />
+    </result-map> 
+    
+    <mapped-statement name="getAllPFTypeDeductions" result-map="getAllPFTypeDeductionsResult"> 
+        SELECT PAY_MODULE_TYPE,PAY_DESCRI FROM PAYCODES_MASTER WHERE PAY_EARNDEDU = 'DEDUCTIONS'
+        AND pay_module_type like '%PF%'
+    </mapped-statement>    
+    
+   
+</sql-map>

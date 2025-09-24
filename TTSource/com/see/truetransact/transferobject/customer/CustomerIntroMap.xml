@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerIntroMap">
+
+<!--================================= Document ===============================================-->   
+    <mapped-statement name="insertIntroDocDetailsCUS" inline-parameters="true">
+        INSERT INTO CUST_INTRO_DOC
+        (CUST_ID, DOC_TYPE, ISSUE_DT, EXPIRY_DT, ISSUED_BY, DOC_NO, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #actNum:VARCHAR#, #docType:VARCHAR#, #issueDt:DATE#, #expiryDt:DATE#, #issuedBy:VARCHAR#, #docNo:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+
+    <mapped-statement name="updateIntroDocDetailsCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_DOC SET 
+        CUST_ID = #actNum:VARCHAR#,
+        DOC_TYPE = #docType:VARCHAR#,
+        ISSUE_DT = #issueDt:DATE#,
+        EXPIRY_DT = #expiryDt:DATE#,
+        ISSUED_BY = #issuedBy:VARCHAR#,
+        DOC_NO = #docNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE CUST_ID = #actNum:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use IntroDocDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteIntroDocDetailsCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_DOC SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE# 
+        WHERE CUST_ID = #actNum:VARCHAR#
+    </mapped-statement>
+
+    <result-map name="getCustIntroDocTOResult" class="com.see.truetransact.transferobject.common.introducer.IntroDocDetailsTO">
+        <property name="actNum" column="CUST_ID"/>
+        <property name="docType" column="DOC_TYPE"/>
+        <property name="issueDt" column="ISSUE_DT"/>
+        <property name="expiryDt" column="EXPIRY_DT"/>
+        <property name="issuedBy" column="ISSUED_BY"/>
+        <property name="docNo" column="DOC_NO"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+
+    <mapped-statement name="getSelectIntroDocDetailsCUS" result-map="getCustIntroDocTOResult" >
+        SELECT * FROM CUST_INTRO_DOC 
+        WHERE CUST_ID = #value:VARCHAR#
+                <!--AND STATUS != 'DELETED'--> 
+    </mapped-statement>
+<!--================================= Other Bank ===============================================-->   
+
+    <mapped-statement name="insertIntroOtherBankCUS" inline-parameters="true">
+        INSERT INTO CUST_INTRO_OTHERBANK
+        (CUST_ID, BANK_NAME, BRANCH_NAME, OTHER_ACT_NUM, OTHER_ACT_NAME, STATUS, STATUS_BY, STATUS_DT,OTHER_PROD_ID
+        ) VALUES (
+        #actNum:VARCHAR#, #bankName:VARCHAR#, #branchName:VARCHAR#, #otherActNum:VARCHAR#, #otherActName:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #prodId:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateIntroOtherBankCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_OTHERBANK SET 
+        CUST_ID = #actNum:VARCHAR#,
+        BANK_NAME = #bankName:VARCHAR#,
+        BRANCH_NAME = #branchName:VARCHAR#,
+        OTHER_ACT_NUM = #otherActNum:VARCHAR#,
+        OTHER_ACT_NAME = #otherActName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        OTHER_PROD_ID = #prodId:VARCHAR#
+        WHERE CUST_ID = #actNum:VARCHAR# 
+    </mapped-statement>
+
+
+    <mapped-statement name="deleteIntroOtherBankCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_OTHERBANK SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE# 
+        WHERE CUST_ID = #actNum:VARCHAR#
+    </mapped-statement>
+
+
+    <result-map name="getCustOtherBankTOResult" class="com.see.truetransact.transferobject.common.introducer.IntroOtherBankTO">
+        <property name="actNum" column="CUST_ID"/>
+        <property name="bankName" column="BANK_NAME"/>
+        <property name="branchName" column="BRANCH_NAME"/>
+        <property name="otherActNum" column="OTHER_ACT_NUM"/>
+        <property name="otherActName" column="OTHER_ACT_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="prodId" column="OTHER_PROD_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectIntroOtherBankCUS" result-map="getCustOtherBankTOResult" >
+        SELECT * FROM CUST_INTRO_OTHERBANK 
+        WHERE CUST_ID = #value:VARCHAR#
+        AND STATUS != 'DELETED' 
+    </mapped-statement>
+            
+<!--================================= Others ===============================================-->   
+
+    <mapped-statement name="insertIntroOthersCUS" inline-parameters="true">
+        INSERT INTO CUST_INTRO_OTHERS
+        (CUST_ID, INTRO_NAME, INTRO_DESIG, STREET, AREA, CITY, STATE, PIN_CODE, AREA_CODE, PH_NO, COUNTRY_CODE, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #actNum:VARCHAR#, #introName:VARCHAR#, #introDesig:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #pinCode:VARCHAR#, #areaCode:VARCHAR#, #phNo:VARCHAR#, #countryCode:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+    <mapped-statement name="updateIntroOthersCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_OTHERS SET 
+        INTRO_NAME = #introName:VARCHAR#,
+        INTRO_DESIG = #introDesig:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        PIN_CODE = #pinCode:VARCHAR#,
+        AREA_CODE = #areaCode:VARCHAR#,
+        PH_NO = #phNo:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE CUST_ID = #actNum:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deleteIntroOthersCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_OTHERS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT =  #statusDt:DATE#
+        WHERE CUST_ID = #actNum:VARCHAR#
+    </mapped-statement>
+
+    <result-map name="getCustOthersTOResult" class="com.see.truetransact.transferobject.common.introducer.IntroOthersTO">
+        <property name="actNum" column="CUST_ID"/>
+        <property name="introName" column="INTRO_NAME"/>
+        <property name="introDesig" column="INTRO_DESIG"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pinCode" column="PIN_CODE"/>
+        <property name="areaCode" column="AREA_CODE"/>
+        <property name="phNo" column="PH_NO"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectIntroOthersCUS" result-map="getCustOthersTOResult" >
+        SELECT * FROM CUST_INTRO_OTHERS 
+        WHERE CUST_ID = #value:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+<!--============================= Proof ===================================================-->  
+
+    <mapped-statement name="insertIntroIdentityCUS" inline-parameters="true">
+        INSERT INTO CUST_INTRO_PROOF
+        (CUST_ID, PROOF_TYPE_ID, PROOF_NUM, ISSUE_AUTH, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #actNum:VARCHAR#, #proofTypeId:VARCHAR#, #proofNum:VARCHAR#, #issueAuth:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+
+    <mapped-statement name="updateIntroIdentityCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_PROOF SET 
+		<!--CUST_ID = #actNum:VARCHAR#,
+		PROOF_TYPE_ID = #proofTypeId:VARCHAR#,-->
+        PROOF_NUM = #proofNum:VARCHAR#,
+        ISSUE_AUTH = #issueAuth:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE CUST_ID = #actNum:VARCHAR# 
+    </mapped-statement>
+
+
+    <mapped-statement name="deleteIntroIdentityCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_PROOF SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT =  #statusDt:DATE#
+        WHERE CUST_ID = #actNum:VARCHAR#
+    </mapped-statement>
+
+
+    <result-map name="getCustIdentityTOResult" class="com.see.truetransact.transferobject.common.introducer.IntroIdentityTO">
+        <property name="actNum" column="CUST_ID"/>
+        <property name="proofTypeId" column="PROOF_TYPE_ID"/>
+        <property name="proofNum" column="PROOF_NUM"/>
+        <property name="issueAuth" column="ISSUE_AUTH"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectIntroIdentityCUS" result-map="getCustIdentityTOResult" >
+        SELECT * FROM CUST_INTRO_PROOF 
+        WHERE CUST_ID = #value:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                (STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                OR STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+<!--============================= Self ===================================================-->  
+
+    <mapped-statement name="insertIntroSelfCUS" inline-parameters="true">
+        INSERT INTO CUST_INTRO_SELF
+        (CUST_ID, CUST_NO_INTRO, STATUS, STATUS_BY, STATUS_DT,INTRO_ACT_NUM
+        ) VALUES (
+        #actNum:VARCHAR#, #actNumIntro:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#,#introacctNo#)
+    </mapped-statement>
+
+
+    <mapped-statement name="updateIntroSelfCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_SELF SET 
+        CUST_NO_INTRO = #actNumIntro:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        INTRO_ACT_NUM=#introacctNo#
+        WHERE CUST_ID = #actNum:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="deleteIntroSelfCUS" inline-parameters="true">
+        UPDATE CUST_INTRO_SELF SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE# 
+        WHERE CUST_ID = #actNum:VARCHAR#  
+    </mapped-statement>
+
+    <result-map name="getCustSelfTOResult" class="com.see.truetransact.transferobject.common.introducer.IntroSelfTO">
+        <property name="actNum" column="CUST_ID"/>
+        <property name="actNumIntro" column="CUST_NO_INTRO"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="introacctNo" column="INTRO_ACT_NUM"/>
+                
+    </result-map>
+    <mapped-statement name="getSelectIntroSelfCUS" result-map="getCustSelfTOResult" >
+        SELECT * FROM CUST_INTRO_SELF 
+        WHERE CUST_ID = #value:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+<!--================================================================================-->   
+
+</sql-map>     

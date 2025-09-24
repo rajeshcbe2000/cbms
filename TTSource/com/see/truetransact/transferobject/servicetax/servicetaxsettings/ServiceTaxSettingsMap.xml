@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ServiceTaxSettingsMap">
+<!--
+    Document   : LockerRentSIApplicationMap.xml
+    Created on : February 29, 2012, 5:56 PM
+    Author     : Rajesh
+    Description:
+        Purpose of the document follows.
+-->
+ <mapped-statement name="insertServiceTaxSettingsTO" inline-parameters="true">
+        INSERT INTO SERVICE_TAX_SETTINGS
+        (SERVICETAX_GEN_ID, WEF_DATE, SERVICE_TAX, EDUCATION_CESS, HIGHER_EDU_CESS,  BRANCH_ID, CREATED_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT,TAX_HEAD_ID
+      ,SWACHH_HEAD_ID,KRISHI_HEAD_ID,KRISHI_KALYAN_CESS,SWACHH_CESS,CESS_ROUNDOFF) VALUES (
+        #serviceTaxId:VARCHAR#, #fromDate:DATE#, #taxRate:NUMBER#, #educationCess:NUMBER#, #higherEdu_Cess:NUMBER#, #branchId:VARCHAR#, #createdDt:TIMESTAMP#,
+        #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#,#taxHeadId:VARCHAR#,#swatchhHeadId:VARCHAR#,#krishiKalyanHeadid:VARCHAR#,#krishiKalyanCess:VARCHAR#,#swachhCess:VARCHAR#,#cessRoundOff:VARCHAR#)
+    </mapped-statement>
+
+ 
+    <result-map name="getServiceTaxSettingsTOResult" class="com.see.truetransact.transferobject.servicetax.servicetaxsettings.ServiceTaxSettingsTO">
+        <property name="serviceTaxId" column="SERVICETAX_GEN_ID"/>
+        <property name="fromDate" column="WEF_DATE"/>
+        <property name="taxRate" column="SERVICE_TAX"/>
+        <property name="educationCess" column="EDUCATION_CESS"/>
+        <property name="higherEdu_Cess" column="HIGHER_EDU_CESS"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DATE"/>
+        <property name="endDate" column="END_DATE"/>
+        <property name="taxHeadId" column="TAX_HEAD_ID"/>
+        <property name="swatchhHeadId" column="SWACHH_HEAD_ID"/>
+        <property name="krishiKalyanHeadid" column="KRISHI_HEAD_ID"/>
+        <property name="krishiKalyanCess" column="KRISHI_KALYAN_CESS"/>
+        <property name="swachhCess" column="SWACHH_CESS"/>
+        <property name="cessRoundOff" column="CESS_ROUNDOFF"/>
+    </result-map>
+    <mapped-statement name="getServiceTaxSettingsTO" result-map="getServiceTaxSettingsTOResult" >
+        SELECT * FROM SERVICE_TAX_SETTINGS 
+        WHERE SERVICETAX_GEN_ID = #SERVICETAX_GEN_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND END_DATE IS NULL
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getSelectServiceTaxSettings" result-class="java.util.LinkedHashMap" >
+        SELECT SERVICETAX_GEN_ID, WEF_DATE, SERVICE_TAX, EDUCATION_CESS, HIGHER_EDU_CESS FROM SERVICE_TAX_SETTINGS 
+        WHERE STATUS NOT IN ('DELETED')  
+        <dynamic>
+         <isParameterPresent>
+                <isNotEmpty prepend="AND" property="NEW_TAX_SETTINGS">
+                   AUTHORIZED_STATUS = 'AUTHORIZED'
+                </isNotEmpty>
+         </isParameterPresent>
+         <isParameterPresent>
+                <isNotEmpty prepend="AND" property="EDIT_TAX_SETTINGS">
+                   AUTHORIZED_STATUS IS NULL 
+                </isNotEmpty>
+         </isParameterPresent>
+         </dynamic>
+        <!--and AUTHORIZED_STATUS IS NULL -->
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND END_DATE IS  NULL
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateServiceTaxSettingsTO" inline-parameters="true">
+        UPDATE SERVICE_TAX_SETTINGS SET 
+        WEF_DATE =#fromDate:VARCHAR#,
+        SERVICE_TAX = #taxRate:VARCHAR#,
+        EDUCATION_CESS = #educationCess:VARCHAR#,
+        HIGHER_EDU_CESS = #higherEdu_Cess:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZED_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DATE = #authorizeDt:DATE#,
+        TAX_HEAD_ID = #taxHeadId:VARCHAR#,
+        SWACHH_HEAD_ID = #swatchhHeadId:VARCHAR#,
+        KRISHI_HEAD_ID = #krishiKalyanHeadid:VARCHAR#,
+        KRISHI_KALYAN_CESS = #krishiKalyanCess:VARCHAR#,
+        SWACHH_CESS = #swachhCess:VARCHAR#,
+        CESS_ROUNDOFF = #cessRoundOff:VARCHAR#
+        WHERE SERVICETAX_GEN_ID = #serviceTaxId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteServiceTaxSettingsTO" inline-parameters="true">
+        UPDATE SERVICE_TAX_SETTINGS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SERVICETAX_GEN_ID = #serviceTaxId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getServiceTaxSettingsAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  SERVICETAX_GEN_ID, WEF_DATE, BRANCH_ID, SERVICE_TAX,EDUCATION_CESS, HIGHER_EDU_CESS FROM SERVICE_TAX_SETTINGS TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZED_STATUS IS NULL OR 
+                AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  SERVICETAX_GEN_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeServiceTaxSettings" result-class="java.util.HashMap">
+        UPDATE SERVICE_TAX_SETTINGS  SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  SERVICETAX_GEN_ID = #SERVICETAX_GEN_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="getValidateWEFDate" result-class="java.util.LinkedHashMap" >
+        select SERVICETAX_GEN_ID,AUTHORIZED_STATUS,STATUS from SERVICE_TAX_SETTINGS ST WHERE
+        ST.WEF_DATE=(select max(STS.WEF_DATE)  from SERVICE_TAX_SETTINGS STS 
+        WHERE  (STS.status not in ('DELETED','UNFREEZED') or STS.status is null) and
+        (STS.AUTHORIZED_STATUS!='REJECTED'or STS.AUTHORIZED_STATUS is null)) AND ST.WEF_DATE >= #WEFDATE:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateEndDate" result-class="java.util.LinkedHashMap" >
+    UPDATE SERVICE_TAX_SETTINGS SET  END_DATE=#END_DATE:DATE#   WHERE 
+    WEF_DATE=(select max(STS.WEF_DATE)  from SERVICE_TAX_SETTINGS STS 
+    WHERE  (STS.STATUS != 'DELETED' AND STS.AUTHORIZED_STATUS = 'AUTHORIZED' AND STS.END_DATE IS NULL))
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getServiceTaxDetails" result-class="java.util.LinkedHashMap" >
+    <!--SELECT SERVICE_TAX,EDUCATION_CESS,HIGHER_EDU_CESS,TAX_HEAD_ID,SWACHH_HEAD_ID,KRISHI_HEAD_ID,SWACHH_CESS,KRISHI_KALYAN_CESS FROM SERVICE_TAX_SETTINGS WHERE 
+     END_DATE IS NULL AND  ( status not in ('DELETED','UNFREEZED') or status is null) and
+    AUTHORIZED_STATUS='AUTHORIZED'
+      <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CHQSTOPID">
+                    WEF_DATE &lt;= #CURR_DT:DATE# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> -->        
+        SELECT service_tax, education_cess, higher_edu_cess, tax_head_id,
+        swachh_head_id, krishi_head_id, swachh_cess, krishi_kalyan_cess,CESS_ROUNDOFF
+        FROM service_tax_settings
+        WHERE     
+        (status NOT IN ('DELETED', 'UNFREEZED') OR status IS NULL)
+        AND authorized_status = 'AUTHORIZED'   
+        and  SERVICETAX_GEN_ID = #SERVICE_TAX_ID:VARCHAR#        
+        and END_DATE IS NULL
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getCheckServiceTaxApplicable" result-class="java.util.HashMap">
+       select ach.SERVICE_TAX_APPLICABLE,ACH.SERVICE_TAX_ID from AC_HD_PARAM ACH,LOAN_CHARGE_DEFINITION LCH  where 
+       ACH.AC_HD_ID=LCH.ACC_HEAD AND LCH.SCHEME_ID=#SCHEME_NAME:VARCHAR#
+       AND LCH.CHARGE_DESC=#CHARGE_DESC:VARCHAR# AND ACH.AUTHORIZE_STATUS='AUTHORIZED' and ACH.STATUS != 'DELETED'
+    </mapped-statement>
+    
+     <mapped-statement name="getCheckServiceTaxApplicableForShare" result-class="java.util.HashMap">
+       select SERVICE_TAX_APPLICABLE,SERVICE_TAX_ID from AC_HD_PARAM where AC_HD_ID=#AC_HD_ID:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED' and STATUS != 'DELETED'
+    </mapped-statement>
+    
+      <mapped-statement name="closeCurrentTaxSettings" result-class="java.util.LinkedHashMap" >
+       UPDATE SERVICE_TAX_SETTINGS SET
+       END_DATE = #END_DATE:DATE#
+       WHERE SERVICETAX_GEN_ID = #SERVICETAX_GEN_ID:VARCHAR#
+       AND AUTHORIZED_STATUS = 'AUTHORIZED'
+       AND STATUS NOT IN ('DELETED')
+       AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+       AND END_DATE IS NULL
+    </mapped-statement>
+    
+</sql-map>   

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : InventoryDetailsMap.xml
+    Created on : August 23, 2004, 12:45 PM
+    Author     : rahul
+    Description:
+        Purpose of the document follows.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InventoryDetailsTOMap">
+
+	<!-- Use InventoryDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInventoryDetailsTO" inline-parameters="true">
+        INSERT INTO INVENTORY_DETAILS
+        (ITEM_ID, TRANS_DT, TRANS_TYPE, BOOK_QUANTITY, BOOK_SLNO_FROM, BOOK_SLNO_TO, LEAVES_SLNO_FROM, LEAVES_SLNO_TO, PROD_TYPE, ACT_NUM, CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, TRANS_ID, TRANS_IN_ID, BOOK_SERIES_OVER, INITIATED_BRANCH, INSTRUMENT_PREFIX
+        ) VALUES (
+        #itemId:VARCHAR#, #transDt:TIMESTAMP#, #transType:VARCHAR#, #bookQuantity:NUMERIC#, #bookSlnoFrom:NUMERIC#, #bookSlnoTo:NUMERIC#, #leavesSlnoFrom:NUMERIC#, #leavesSlnoTo:NUMERIC#, #prodType:VARCHAR#, #actNum:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #transId:VARCHAR#, #transInId:VARCHAR#, #bookSeriesOver:VARCHAR#, #initiatedBranch:VARCHAR#, #instPrefix:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InventoryDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInventoryDetailsTO" inline-parameters="true">
+        UPDATE INVENTORY_DETAILS SET 
+<!--            TRANS_ID = #transId:VARCHAR#,-->
+        ITEM_ID = #itemId:VARCHAR#,
+<!--		TRANS_DT = #transDt:DATE#,-->
+        TRANS_TYPE = #transType:VARCHAR#,
+        BOOK_QUANTITY = #bookQuantity:NUMERIC#,
+        BOOK_SLNO_FROM = #bookSlnoFrom:NUMERIC#,
+        BOOK_SLNO_TO = #bookSlnoTo:NUMERIC#,
+        LEAVES_SLNO_FROM = #leavesSlnoFrom:NUMERIC#,
+        LEAVES_SLNO_TO = #leavesSlnoTo:NUMERIC#,
+<!--		PROD_TYPE = #prodType:VARCHAR#,
+		ACT_NUM = #actNum:VARCHAR#,
+		CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#,
+        INSTRUMENT_PREFIX = #instPrefix:VARCHAR#
+<!--		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#,
+                TRANS_IN_ID = #transInId:VARCHAR#
+                BOOK_SERIES_OVER = #bookSeriesOver:VARCHAR# -->
+        WHERE TRANS_ID = #transId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InventoryDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInventoryDetailsTO" inline-parameters="true">
+<!--		DELETE FROM INVENTORY_DETAILS -->
+        UPDATE INVENTORY_DETAILS SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE TRANS_ID = #transId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InventoryDetailsTO object (JavaBean) properties -->
+    <result-map name="getInventoryDetailsTOResult" class="com.see.truetransact.transferobject.supporting.inventory.InventoryDetailsTO">
+        <property name="itemId" column="ITEM_ID"/>
+        <property name="transDt" column="TRANS_DT"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="bookQuantity" column="BOOK_QUANTITY"/>
+        <property name="bookSlnoFrom" column="BOOK_SLNO_FROM"/>
+        <property name="bookSlnoTo" column="BOOK_SLNO_TO"/>
+        <property name="leavesSlnoFrom" column="LEAVES_SLNO_FROM"/>
+        <property name="leavesSlnoTo" column="LEAVES_SLNO_TO"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="instPrefix" column="INSTRUMENT_PREFIX"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="transInId" column="TRANS_IN_ID"/>
+        <property name="bookSeriesOver" column="BOOK_SERIES_OVER"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+    <mapped-statement name="getSelectInventoryDetailsTO" result-map="getInventoryDetailsTOResult" >
+        SELECT * FROM INVENTORY_DETAILS 
+        WHERE TRANS_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="viewInventoryDetails" result-class="java.util.LinkedHashMap" >
+        SELECT  TRANS_ID AS "TRANSACTION ID", TRANS_TYPE AS "TRANSACTION TYPE",
+        BOOK_QUANTITY AS "BOOK QUANTITY", TO_CHAR(TRANS_DT, 'DD/MM/YYYY') AS "TRANSACTION DATE",
+        ID.AUTHORIZE_STATUS AS "AUTHORIZE STATUS"
+        FROM INVENTORY_DETAILS ID, INVENTORY_MASTER IM
+        WHERE ID.STATUS != 'DELETED'  
+        AND IM.ITEM_ID = ID.ITEM_ID
+        AND IM.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND (ID.AUTHORIZE_STATUS != 'REJECTED' OR ID.AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getInventoryMasterLeaveNo" result-class="java.util.HashMap">
+        SELECT LEAVES_PER_BOOK FROM INVENTORY_MASTER
+        WHERE ITEM_ID = #ITEM ID:VARCHAR#
+    </mapped-statement>         
+        
+    <mapped-statement name="vaidateInstrumentNo" result-class="java.util.HashMap">
+		<!--SELECT ID.ITEM_ID FROM INVENTORY_DETAILS ID, INVENTORY_MASTER IM
+                WHERE TRANS_TYPE = #TRANS_TYPE#
+                AND ((#SERIES_FROM# BETWEEN BOOK_SLNO_FROM AND BOOK_SLNO_TO
+                        OR #SERIES_TO# BETWEEN BOOK_SLNO_FROM AND BOOK_SLNO_TO
+                        OR (#SERIES_FROM# &lt; BOOK_SLNO_FROM AND #SERIES_TO# &gt; BOOK_SLNO_TO))
+                     OR (#INSTRU_FROM# BETWEEN LEAVES_SLNO_FROM AND LEAVES_SLNO_TO
+                        OR #INSTRU_TO# BETWEEN LEAVES_SLNO_FROM AND LEAVES_SLNO_TO
+                        OR (#INSTRU_FROM# &lt; LEAVES_SLNO_FROM AND #INSTRU_TO# &gt; LEAVES_SLNO_TO)))
+                AND ID.ITEM_ID = IM.ITEM_ID
+                AND IM.ITEM_ID = #ITEM_ID#
+                AND ID.STATUS != 'DELETED'
+                AND ID.AUTHORIZE_STATUS = 'AUTHORIZED'-->
+                   SELECT ITEM_ID FROM INVENTORY_DETAILS IDE
+                   WHERE IDE.BOOK_QUANTITY > 0 
+                   AND IDE.instrument_prefix = #INSTRUMENT_PREFIX:VARCHAR#
+                   AND IDE.STATUS != 'DELETED'
+                   AND IDE.AUTHORIZE_STATUS = 'AUTHORIZED'
+                   AND IDE.ITEM_ID = #ITEM_ID:VARCHAR#
+                   AND IDE.TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+                   AND ((#INSTRU_FROM:NUMBER# BETWEEN LEAVES_SLNO_FROM AND LEAVES_SLNO_TO) 
+                   OR ( #INSTRU_TO:NUMBER# BETWEEN LEAVES_SLNO_FROM AND LEAVES_SLNO_TO))
+    </mapped-statement>         
+<!--==========================================AUTHORIZE======================================================-->
+        
+        
+                
+    <dynamic-mapped-statement name="getSelectInventoryDetailsTOList" result-class="java.util.LinkedHashMap" >
+        SELECT distinct TRANS_ID AS "TRANSACTION ID", TRANS_TYPE AS "TRANSACTION TYPE", ID.ITEM_ID AS "ITEM ID",
+        BOOK_QUANTITY AS "BOOK QUANTITY", TO_CHAR(TRANS_DT, 'DD/MM/YYYY') AS "TRANSACTION DATE",
+        ID.CREATED_BY AS "CREATED BY", ID.STATUS
+        FROM INVENTORY_DETAILS ID, INVENTORY_MASTER IM
+        WHERE ID.STATUS_BY != #USER_ID:VARCHAR#
+        AND IM.ITEM_ID = ID.ITEM_ID
+        AND ID.TRANS_ID NOT IN(SELECT IDD.TRANS_ID FROM inventory_details IDD, cheque_issue CI  WHERE CI.ACCT_NO = IDD.ACT_NUM
+        AND IDD.TRANS_ID = ID.TRANS_ID AND CI.AUTHORIZE_STATUS  IS NULL AND IDD.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#)
+        AND ID.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND ID.STATUS != 'DELETED'
+<!--            AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OD AUTHORIZE_STATUS IS NULL)-->
+                
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ID.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ID.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (ID.AUTHORIZE_STATUS IS NULL OR 
+                ID.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY TRANS_ID
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authInventoryDetails" result-class="java.util.HashMap">
+        UPDATE INVENTORY_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZESTATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE TRANS_ID = #TRANSACTION ID:VARCHAR# 
+    </mapped-statement> 
+        
+
+    <mapped-statement name="updateInventoryMasterAvailBooks" result-class="java.util.HashMap">
+        UPDATE INVENTORY_MASTER SET
+        AVAILABLE_BOOKS = NVL(AVAILABLE_BOOKS, 0) + cast(#BOOK QUANTITY# as numeric)
+        WHERE ITEM_ID = #ITEM ID:VARCHAR# 
+    </mapped-statement> 
+        
+    <mapped-statement name="rejectInventoryDetails" result-class="java.util.HashMap">
+        UPDATE INVENTORY_DETAILS SET
+        STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = '', 
+        AUTHORIZE_DT = null
+        WHERE TRANS_ID = #TRANSACTION ID:VARCHAR# 
+    </mapped-statement> 
+        
+    <mapped-statement name="getBookSeriesNo" result-class="java.util.HashMap">
+        SELECT NVL(MAX(BOOK_SLNO_TO),0)+1 AS BOOK_SLNO FROM INVENTORY_DETAILS WHERE ITEM_ID = #ITEM ID:VARCHAR# AND STATUS != 'DELETED'
+        <!-- AND INITIATED_BRANCH = #BRANCH_ID:VARCHAR# -->
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+         
+    <mapped-statement name="getInvenCheqDetails" result-class="java.util.HashMap">
+        SELECT ITEM_SUB_TYPE AS "ITEM SUB TYPE",                 
+        LEAVES_PER_BOOK AS "LEAVES PER BOOK" , AVAILABLE_BOOKS AS "AVAILABLE BOOKS"                 
+        FROM INVENTORY_MASTER WHERE (STATUS NOT IN ('DELETED')OR STATUS IS NULL)                               
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND ITEM_ID = #ITEM ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="checkInventoryDetails" result-class="java.util.HashMap">
+        SELECT DISTINCT IDE.BOOK_QUANTITY,IDE.BOOK_SLNO_FROM,IDE.BOOK_SLNO_TO,IDE.LEAVES_SLNO_FROM
+        ,IDE.LEAVES_SLNO_TO,IDE.INSTRUMENT_PREFIX FROM INVENTORY_DETAILS IDE WHERE IDE.ITEM_ID = #ITEM_ID:VARCHAR#
+        AND IDE.INSTRUMENT_PREFIX = #INSTRUMENT_PREFIX:VARCHAR# AND IDE.BOOK_QUANTITY > 0 AND IDE.TRANS_TYPE = 'TRANS_IN'
+        AND IDE.INITIATED_BRANCH = #BRANCH_ID:VARCHAR#
+        AND cast(#START_CHK_NO# as numeric) BETWEEN IDE.LEAVES_SLNO_FROM AND IDE.LEAVES_SLNO_TO AND IDE.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getItemID" result-class="java.util.HashMap">
+        SELECT ITEM_ID FROM INVENTORY_MASTER WHERE ITEM_SUB_TYPE = #USAGE# AND LEAVES_PER_BOOK = #LEAVESNUM:NUMERIC#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#   AND STATUS NOT IN('DELETED') AND AUTHORIZE_STATUS NOT IN('REJECTED')
+    </mapped-statement>
+        
+    <mapped-statement name="getIssuedCheques" result-class="java.util.HashMap">
+        SELECT CHQ_ISSUE_ID FROM CHEQUE_ISSUE WHERE CAST(#START_CHK_NO# AS numeric) BETWEEN cast(START_CHQ_NO2 as numeric) AND cast(END_CHQ_NO2 as numeric)
+        AND  (START_CHQ_NO1 = #INSTRUMENT_PREFIX:VARCHAR# AND END_CHQ_NO1 = #INSTRUMENT_PREFIX:VARCHAR#) AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+                <!--AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL) AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getAvailableBooks" result-class="java.util.HashMap">
+        SELECT AVAILABLE_BOOKS FROM INVENTORY_MASTER WHERE ITEM_ID = #ITEM_ID:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' AND AVAILABLE_BOOKS >= #BOOK_QUANTITY:NUMBER#
+    </mapped-statement>  
+    
+    <mapped-statement name="getNextChequeNO" result-class="java.util.HashMap">
+        SELECT MAX(cast(END_CHQ_NO2 as numeric))+1  AS CHQ_NO FROM CHEQUE_ISSUE WHERE END_CHQ_NO1 =#INSTRUMENT_PREFIX:VARCHAR# AND BRANCH_ID =#BRANCH_ID:VARCHAR# AND 
+        (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL) AND STATUS != 'DELETED' AND
+        CHQ_ISSUE_DT = (SELECT MAX(CHQ_ISSUE_DT) FROM CHEQUE_ISSUE CI WHERE CI.START_CHQ_NO1 = #INSTRUMENT_PREFIX:VARCHAR# AND CI.BRANCH_ID ='0001' AND 
+        (CI.AUTHORIZE_STATUS != 'REJECTED' OR CI.AUTHORIZE_STATUS IS NULL) AND CI.STATUS != 'DELETED' )
+    </mapped-statement>  
+</sql-map>

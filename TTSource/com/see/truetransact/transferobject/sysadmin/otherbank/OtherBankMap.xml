@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OtherBankTOMap">
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOtherBankTO" inline-parameters="true">
+        INSERT INTO OTHER_BANK
+        (BANK_CODE, BANK_SHORT_NAME, BANK_NAME, STATUS, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #bankCode:VARCHAR#, #bankShortName:VARCHAR#, #bankName:VARCHAR#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOtherBankTO" inline-parameters="true">
+        UPDATE OTHER_BANK SET 
+		<!--BANK_CODE = #bankCode:VARCHAR#,-->
+        BANK_SHORT_NAME = #bankShortName:VARCHAR#,
+        BANK_NAME = #bankName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE BANK_CODE = #bankCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOtherBankTO" inline-parameters="true">
+        UPDATE OTHER_BANK SET 
+        STATUS = #status:VARCHAR#
+		<!--STATUS_BY = #USER_ID:VARCHAR#, 
+		STATUS_DT =  -->
+        WHERE BANK_CODE = #bankCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OtherBankTO object (JavaBean) properties -->
+    <result-map name="getOtherBankTOResult" class="com.see.truetransact.transferobject.sysadmin.otherbank.OtherBankTO">
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="bankShortName" column="BANK_SHORT_NAME"/>
+        <property name="bankName" column="BANK_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectOtherBankTO" result-map="getOtherBankTOResult" >
+        SELECT * FROM OTHER_BANK 
+        WHERE BANK_CODE = #value:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+        
+        <!-- Other Bank Branch TO Map -->
+        <!-- Use OtherBankBranchTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOtherBankBranchTO" inline-parameters="true">
+        INSERT INTO OTHER_BANK_BRANCH
+        (BANK_CODE, BRANCH_CODE, BRANCH_SHORT_NAME, BRANCH_NAME, STATUS, CITY, ADDRESS, STATE, COUNTRY, PINCODE, PHONE_NO, BANK_TYPE, 
+        HIGH_VALUE_CLEARING, MICR,ACCOUNT_HEAD, PROD_TYPE, PROD_ID
+        ) VALUES (
+        #bankCode:VARCHAR#, #branchCode:VARCHAR#, #branchShortName:VARCHAR#, #branchName:VARCHAR#, #status:VARCHAR#, 
+        #city:VARCHAR#, #address:VARCHAR#, #state:VARCHAR#, #country:VARCHAR#, 
+        #pincode:VARCHAR#,#phoneNo:VARCHAR#,#cRadio_DB_Yes:VARCHAR#,#cRadio_HVC_Yes:VARCHAR#, #micr:VARCHAR#, #accountHead:VARCHAR#,
+        #prodType:VARCHAR#, #prodId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use OtherBankBranchTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOtherBankBranchTO" inline-parameters="true">
+        UPDATE OTHER_BANK_BRANCH SET 		
+		<!--BRANCH_CODE = #branchCode:VARCHAR#,-->
+        BRANCH_SHORT_NAME = #branchShortName:VARCHAR#,
+        BRANCH_NAME = #branchName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        ADDRESS = #address:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        COUNTRY = #country:VARCHAR#,
+        PINCODE = #pincode:VARCHAR#,
+        PHONE_NO=#phoneNo:VARCHAR#,
+        BANK_TYPE=#cRadio_DB_Yes:VARCHAR#,
+        HIGH_VALUE_CLEARING=#cRadio_HVC_Yes:VARCHAR#,
+        MICR = #micr:VARCHAR#,
+        ACCOUNT_HEAD = #accountHead:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#
+        WHERE BANK_CODE = #bankCode:VARCHAR# AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankBranchTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOtherBankBranchTO" inline-parameters="true">
+        UPDATE OTHER_BANK_BRANCH SET 
+        STATUS = #status:VARCHAR#
+		<!--STATUS_BY = #USER_ID:VARCHAR#, 
+		STATUS_DT =  -->
+        WHERE BANK_CODE = #bankCode:VARCHAR# AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OtherBankBranchTO object (JavaBean) properties -->
+    <result-map name="getOtherBankBranchTOResult" class="com.see.truetransact.transferobject.sysadmin.otherbank.OtherBankBranchTO">
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="branchShortName" column="BRANCH_SHORT_NAME"/>
+        <property name="branchName" column="BRANCH_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="city" column="CITY"/>
+        <property name="address" column="ADDRESS"/>
+        <property name="state" column="STATE"/>
+        <property name="country" column="COUNTRY"/>
+        <property name="pincode" column="PINCODE"/>
+        <property name="phoneNo" column="PHONE_NO"/>
+        <property name="cRadio_DB_Yes" column="BANK_TYPE"/>
+        <property name="cRadio_HVC_Yes" column="HIGH_VALUE_CLEARING"/>
+        <property name="micr" column="MICR"/>
+        <property name="accountHead" column="ACCOUNT_HEAD"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectOtherBankBranchTO" result-map="getOtherBankBranchTOResult" >
+        SELECT * FROM OTHER_BANK_BRANCH 
+        WHERE BANK_CODE = #value:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewOtherBank" result-class = "java.util.LinkedHashMap" >
+        SELECT DISTINCT BANK_CODE AS "BANK_CODE", BANK_SHORT_NAME AS "BANK_SHORT_NAME", BANK_NAME AS "BANK_NAME" FROM OTHER_BANK WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND
+        (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+          <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="BANK_CODE">
+                    UPPER(BANK_CODE) LIKE UPPER('%$BANK_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="BANK_SHORT_NAME">
+                    UPPER(BANK_SHORT_NAME) LIKE UPPER('%$BANK_SHORT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="BANK_NAME">
+                    UPPER(BANK_NAME) LIKE UPPER('%$BANK_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="viewAuthorizeOtherBank" result-class = "java.util.LinkedHashMap" >
+        SELECT DISTINCT BANK_CODE AS "BANK_CODE", BANK_SHORT_NAME AS "BANK_SHORT_NAME", BANK_NAME AS "BANK_NAME", AUTHORIZE_STATUS AS "AUTHORIZE_STATUS" FROM OTHER_BANK WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND
+        (AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="authorizeOtherBank" result-class="java.util.HashMap">
+        UPDATE OTHER_BANK SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE BANK_CODE = #BANK_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="countBankCode" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(BANK_CODE) AS "COUNT" FROM OTHER_BANK WHERE BANK_CODE = #BANK_CODE:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+
+</sql-map>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CashMovementTOMap">
+
+	<!-- Use CashMovementTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCashMovementTO" inline-parameters="true">
+        INSERT INTO CASH_MOVEMENT
+        (CASH_MOVEMENT_ID, CASH_DT, RECEIVED_CASHIER_ID, VAULT_CASH, TRANS_TYPE, CASH_BOX_BALANCE, CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, ISSUED_CASHIER_ID, BRANCH_ID
+        ) VALUES (
+        #cashMovementId:VARCHAR#, #cashDt:DATE#, #receivedCashierId:VARCHAR#, #vaultCash:VARCHAR#, #transType:VARCHAR#, #cashBoxBalance:NUMERIC#, #createdBy:VARCHAR#, #createdDt:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #issuedCashierId:VARCHAR#, #branchId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use CashMovementTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCashMovementTO" inline-parameters="true">
+        UPDATE CASH_MOVEMENT SET 		
+        CASH_DT = #cashDt:DATE#,
+        RECEIVED_CASHIER_ID = #receivedCashierId:VARCHAR#,
+        VAULT_CASH = #vaultCash:VARCHAR#,
+        TRANS_TYPE = #transType:VARCHAR#,
+        CASH_BOX_BALANCE = #cashBoxBalance:NUMERIC#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        ISSUED_CASHIER_ID = #issuedCashierId:VARCHAR#
+        WHERE CASH_MOVEMENT_ID = #cashMovementId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use CashMovementTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCashMovementTO" inline-parameters="true">
+        UPDATE CASH_MOVEMENT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE# 
+        WHERE CASH_MOVEMENT_ID = #cashMovementId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CashMovementTO object (JavaBean) properties -->
+    <result-map name="getCashMovementTOResult" class="com.see.truetransact.transferobject.transaction.cashmanagement.CashMovementTO">
+        <property name="cashMovementId" column="CASH_MOVEMENT_ID"/>
+        <property name="cashDt" column="CASH_DT"/>
+        <property name="receivedCashierId" column="RECEIVED_CASHIER_ID"/>
+        <property name="vaultCash" column="VAULT_CASH"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="cashBoxBalance" column="CASH_BOX_BALANCE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="issuedCashierId" column="ISSUED_CASHIER_ID"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectCashMovementTO" result-map="getCashMovementTOResult" >
+        SELECT * FROM CASH_MOVEMENT 
+        WHERE CASH_MOVEMENT_ID = #CASH_MOVEMENT_ID:VARCHAR# AND STATUS != 'DELETED' AND 
+        (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="viewCashMovement" result-class = "java.util.LinkedHashMap" >
+        SELECT CASH_MOVEMENT_ID AS "CASH_MOVEMENT_ID", RECEIVED_CASHIER_ID AS "RECEIVED_CASHIER_ID", 
+        ISSUED_CASHIER_ID AS "ISSUED_CASHIER_ID", TRANS_TYPE AS "TRANS_TYPE" 
+        FROM CASH_MOVEMENT 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND
+        (AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED') OR 
+        AUTHORIZE_STATUS IS NULL) 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="viewCashMovementDetails" result-class = "java.util.LinkedHashMap" >
+        SELECT CASH_DT,CASH_MOVEMENT_ID AS "CASH_MOVEMENT_ID", RECEIVED_CASHIER_ID AS "RECEIVED_CASHIER_ID", 
+        ISSUED_CASHIER_ID AS "ISSUED_CASHIER_ID", TRANS_TYPE AS "TRANS_TYPE" 
+        FROM CASH_MOVEMENT 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )  and AUTHORIZE_STATUS != 'REJECTED'            
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="viewAuthorizeCashMovement" result-class = "java.util.LinkedHashMap" >
+        SELECT CASH_MOVEMENT_ID AS "CASH_MOVEMENT_ID", CASH_DT AS "CASH_DT", 
+        RECEIVED_CASHIER_ID AS "RECEIVED_CASHIER_ID", TRANS_TYPE AS "TRANS_TYPE", 
+        AUTHORIZE_STATUS AS "AUTHORIZE_STATUS" 
+        FROM CASH_MOVEMENT CM WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = CM.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CM.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CM.AUTHORIZE_STATUS IS NULL OR 
+                CM.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND CM.STATUS_BY != #USER_ID:VARCHAR# 
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getEmployeeName" result-class = "java.util.LinkedHashMap" >
+        SELECT USER_MASTER.EMPLOYEE_ID as "EMPLOYEE ID",USER_MASTER.USER_ID AS "USER ID",BANK_EMPLOYEE.TITLE||' '||BANK_EMPLOYEE.FNAME||' '||BANK_EMPLOYEE.LNAME AS "EMP NAME",BANK_EMPLOYEE.DESIG_ID AS "DESIGNATION" 
+        FROM USER_MASTER,BANK_EMPLOYEE WHERE USER_MASTER.EMPLOYEE_ID = BANK_EMPLOYEE.EMPLOYEE_CODE AND USER_MASTER.BRANCH_CODE = BANK_EMPLOYEE.BRANCH_CODE 
+        AND BANK_EMPLOYEE.STATUS != 'DELETED' AND USER_MASTER.STATUS != 'DELETED' 
+        AND USER_MASTER.AUTHORIZED_STATUS = 'AUTHORIZED' AND USER_MASTER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_ID">
+                    USER_MASTER.EMPLOYEE_ID=#EMP_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getEmployeeNameAtEdit" result-class = "java.util.LinkedHashMap" >
+        SELECT USER_MASTER.USER_ID AS "USER ID",BANK_EMPLOYEE.TITLE||' '||BANK_EMPLOYEE.FNAME||' '||BANK_EMPLOYEE.LNAME AS "EMP NAME",BANK_EMPLOYEE.DESIG_ID AS "DESIGNATION" 
+        FROM USER_MASTER,BANK_EMPLOYEE WHERE USER_MASTER.EMPLOYEE_ID = BANK_EMPLOYEE.EMPLOYEE_CODE AND USER_MASTER.BRANCH_CODE = BANK_EMPLOYEE.BRANCH_CODE 
+        AND BANK_EMPLOYEE.STATUS != 'DELETED' AND USER_MASTER.STATUS != 'DELETED' 
+        AND USER_MASTER.AUTHORIZED_STATUS = 'AUTHORIZED' AND USER_MASTER.USER_ID = #USER_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeCashMovement" result-class="java.util.HashMap">
+        UPDATE CASH_MOVEMENT SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:DATE#
+        WHERE CASH_MOVEMENT_ID = #CASH_MOVEMENT_ID:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="getCashBoxValue" result-class="java.util.HashMap">
+		<!--SELECT SUM(denomination_value * OPENING_COUNT) AS "Total" 
+                FROM FOREX_TELLER_DENOMINATION where SOURCE='CASH BOX'  AND BRANCH_CODE=#BRANCH_CODE#-->
+        SELECT DENOMINATION_VALUE,OPENING_COUNT,DENOMINATION_NAME,DENOMINATION_TYPE
+        FROM FOREX_TELLER_DENOMINATION where SOURCE='CASH BOX' AND OPENING_COUNT!=0 AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getTotalValueDuringDay" result-class="java.util.HashMap">
+        SELECT (OPENING_COUNT*DENOMINATION_VALUE) AS "COUNT" FROM FOREX_TELLER_DENOMINATION WHERE DENOMINATION_NAME=#DENOMINATION_NAME:VARCHAR# 
+        AND SOURCE=#SOURCE:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND DENOMINATION_TYPE=#DENOM_TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getPendingAuthList" result-class="java.util.HashMap">
+        SELECT * FROM CASH_MOVEMENT_DETAILS WHERE  
+        DENOMINATION_TYPE='VAULTREC' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS IS NULL and STATUS!='DELETED'
+    </mapped-statement>
+</sql-map>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LodgementInstructionsTOMap">
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLodgementInstructionsTO" inline-parameters="true">
+        INSERT INTO BILLS_LODGEMENT_INSTRUCTION
+        (LODGEMENT_ID, SL_NO, INSTRUCTION, STATUS, STATUS_BY, STATUS_DT, AMOUNT, SERVICE_TX
+        ) VALUES (
+        #lodgementId:VARCHAR#, #slNo:VARCHAR#, #instruction:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #amount:NUMERIC#, #serviceTx:NUMERIC#)
+    </mapped-statement>
+        
+    <mapped-statement name="delLodgementInstructionsTOj" inline-parameters="true">
+        DELETE FROM BILLS_LODGEMENT_INSTRUCTION  
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND INSTRUCTION = #instruction:VARCHAR#
+    </mapped-statement>
+        
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementInstructionsTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_INSTRUCTION SET 
+        LODGEMENT_ID = #lodgementId:VARCHAR#,
+        SL_NO = #slNo:VARCHAR#,
+        INSTRUCTION = #instruction:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AMOUNT = #amount:NUMERIC#,
+        SERVICE_TX = #serviceTx:NUMERIC#
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND INSTRUCTION = #instruction:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementInstructionsTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_INSTRUCTION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND INSTRUCTION = #instruction:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND SL_NO = #slNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LodgementInstructionsTO object (JavaBean) properties -->
+    <result-map name="getLodgementInstructionsTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementInstructionsTO">
+        <property name="lodgementId" column="LODGEMENT_ID"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="instruction" column="INSTRUCTION"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="serviceTx" column="SERVICE_TX"/>
+    </result-map>
+    <mapped-statement name="getSelectLodgementInstructionsTO" result-map="getLodgementInstructionsTOResult" >
+        SELECT * FROM BILLS_LODGEMENT_INSTRUCTION 
+        WHERE 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLodgementInstructions" result-class="java.util.LinkedHashMap" >
+        SELECT INSTRUCTION,AMOUNT,SERVICE_TX FROM BILLS_LODGEMENT_INSTRUCTION 
+        WHERE STATUS NOT IN ('DELETED') AND LODGEMENT_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+        <!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLodgementInstrTO" inline-parameters="true">
+        INSERT INTO BILLS_LODGEMENT_INST
+        (LODGEMENT_ID, SL_NO, INSTRUCTION, PARTICULARS , STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #instLodgementId:VARCHAR#, #instSlNo:VARCHAR#, #instInstruction:VARCHAR#,  #instParticulars:VARCHAR#, #instStatus:VARCHAR#, #instStatusBy:VARCHAR#, #instStatusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementInstrTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_INST SET 
+        LODGEMENT_ID = #instLodgementId:VARCHAR#,
+        SL_NO = #instSlNo:VARCHAR#,
+        INSTRUCTION = #instInstruction:VARCHAR#,
+        PARTICULARS = #instParticulars:VARCHAR#,
+        STATUS = #instStatus:VARCHAR#,
+        STATUS_BY = #instStatusBy:VARCHAR#,
+        STATUS_DT = #instStatusDt:DATE#
+        WHERE LODGEMENT_ID = #instLodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND INSTRUCTION = #instInstruction:VARCHAR# AND SL_NO = #instSlNo:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="delLodgementInstrTOj" inline-parameters="true">
+        DELETE FROM BILLS_LODGEMENT_INST
+        WHERE LODGEMENT_ID = #instLodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+               
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementInstrTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_INST SET 
+        STATUS = #instStatus:VARCHAR#,
+        STATUS_BY = #instStatusBy:VARCHAR#,
+        STATUS_DT = #instStatusDt:DATE#
+        WHERE LODGEMENT_ID = #instLodgementId:VARCHAR# AND INSTRUCTION = #instInstruction:VARCHAR#
+        AND STATUS NOT IN ('DELETED') AND SL_NO = #instSlNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LodgementInstructionsTO object (JavaBean) properties -->
+    <result-map name="getLodgementInstrTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementInstrTO">
+        <property name="instLodgementId" column="LODGEMENT_ID"/>
+        <property name="instSlNo" column="SL_NO"/>
+        <property name="instInstruction" column="INSTRUCTION"/>
+        <property name="instParticulars" column="PARTICULARS"/>
+        <property name="instStatus" column="STATUS"/>
+        <property name="instStatusBy" column="STATUS_BY"/>
+        <property name="instStatusDt" column="STATUS_DT"/>
+               
+    </result-map>
+    <mapped-statement name="getSelectLodgementInstrTO" result-class="java.util.LinkedHashMap">
+        SELECT INSTRUCTION,PARTICULARS FROM BILLS_LODGEMENT_INST
+        WHERE STATUS NOT IN ('DELETED') AND LODGEMENT_ID = #LODGEMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

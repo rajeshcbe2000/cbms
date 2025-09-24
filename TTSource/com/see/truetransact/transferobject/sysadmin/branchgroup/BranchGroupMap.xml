@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BranchGroupTOMap">
+
+   <!-- Use BranchGroupDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchGroupDetailsTO" inline-parameters="true">
+        INSERT INTO BRANCH_GROUP_DETAILS
+        (BRANCH_GROUP_ID, BRANCH_ID, STATUS
+        ) VALUES (
+        #branchGroupId:VARCHAR#, #branchId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+        
+        <!-- Use BranchGroupTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchGroupTO" inline-parameters="true">
+        INSERT INTO BRANCH_GROUP
+        (BRANCH_GROUP_ID, BRANCH_GROUP_NAME, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #branchGroupId:VARCHAR#, #branchGroupName:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+        
+	<!-- Use BranchGLTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchGroupDetailsTO" inline-parameters="true">
+        INSERT INTO BRANCH_GROUP_DETAILS
+        (BRANCH_GROUP_ID, BRANCH_ID, STATUS
+        ) VALUES (
+        #branchGroupId:VARCHAR#, #branchId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+        <!-- Use BranchGroupTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchGroupTO" inline-parameters="true">
+        UPDATE BRANCH_GROUP SET 
+        BRANCH_GROUP_NAME = #branchGroupName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE BRANCH_GROUP_ID = #branchGroupId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use BranchGroupDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchGroupDetailsTO" inline-parameters="true">
+        UPDATE BRANCH_GROUP_DETAILS SET 
+        STATUS = #status:VARCHAR#
+        WHERE BRANCH_GROUP_ID = #branchGroupId:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+        <!-- Use BranchGroupTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchGroupTO" inline-parameters="true">
+        UPDATE BRANCH_GROUP SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE BRANCH_GROUP_ID = #branchGroupId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchGroupDetailsTO object (JavaBean) properties -->
+    <result-map name="getBranchGroupDetailsTOResult" class="com.see.truetransact.transferobject.sysadmin.branchgroup.BranchGroupDetailsTO">
+        <property name="branchGroupId" column="BRANCH_GROUP_ID"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectBranchGroupDetails" result-class="java.util.LinkedHashMap" >
+        SELECT BGD.BRANCH_ID || '(' ||  BRANCH_NAME || ')' AS "BRANCH_ID"
+        FROM BRANCH_MASTER  BM, BRANCH_GROUP_DETAILS BGD 
+        WHERE BM.BRANCH_CODE = BGD.BRANCH_ID  AND BGD.BRANCH_GROUP_ID = #BRANCH_GROUP_ID:VARCHAR#
+        AND BGD.STATUS != 'DELETED'
+    </mapped-statement>
+        
+       <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchGroupTO object (JavaBean) properties -->
+    <result-map name="getBranchGroupTOResult" class="com.see.truetransact.transferobject.sysadmin.branchgroup.BranchGroupTO">
+        <property name="branchGroupId" column="BRANCH_GROUP_ID"/>
+        <property name="branchGroupName" column="BRANCH_GROUP_NAME"/>
+    </result-map>
+    <mapped-statement name="getSelectBranchGroupTO" result-map="getBranchGroupTOResult" >
+        SELECT DISTINCT BRANCH_GROUP_ID, BRANCH_GROUP_NAME FROM BRANCH_GROUP 
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED')) AND BRANCH_GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+       
+       <!-- This statement will return all the AvailableBranchIds in a bank -->
+    <mapped-statement name="getBranchIds" result-class= "java.util.HashMap" >
+        SELECT  BRANCH_CODE || ' (' || BRANCH_NAME || ')' AS "BRANCH_ID" FROM BRANCH_MASTER 
+        WHERE (STATUS  NOT IN ('DELETED')) AND (AUTHORIZE_STATUS_1 IN ('AUTHORIZED')) 
+        <!--AND (AUTHORIZE_STATUS_2 IN ('AUTHORIZED'))--> 
+       <!-- AND BRANCH_CODE NOT IN (SELECT BRANCH_ID FROM BRANCH_GROUP_DETAILS 
+        WHERE BRANCH_GROUP_ID  = #BRANCH_GROUP_ID# AND STATUS != 'DELETED')-->
+        AND  NOT EXISTS (SELECT BRANCH_ID FROM BRANCH_GROUP_DETAILS 
+        WHERE BRANCH_GROUP_ID  = #BRANCH_GROUP_ID:VARCHAR# AND STATUS != 'DELETED' AND BRANCH_CODE=BRANCH_GROUP_DETAILS.BRANCH_ID)
+    </mapped-statement>
+      
+       <!--This will return all the BranchId's  that a bank can use -->
+    <mapped-statement name="getNewBranchIDs" result-class= "java.util.HashMap" >
+        SELECT  BRANCH_CODE || ' (' ||BRANCH_NAME || ')' AS "BRANCH_ID" FROM BRANCH_MASTER
+        WHERE (STATUS  NOT IN ('DELETED'))
+        AND (AUTHORIZE_STATUS_1 IN ('AUTHORIZED')) 
+        AND (AUTHORIZE_STATUS_1 IN ('AUTHORIZED'))
+    </mapped-statement>
+          
+    <dynamic-mapped-statement name="getSelectBranchGroup" result-class= "java.util.LinkedHashMap" >
+        SELECT BRANCH_GROUP_ID,BRANCH_GROUP_NAME FROM BRANCH_GROUP WHERE STATUS != 'DELETED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="BRANCH_GROUP_ID">
+                    UPPER(BRANCH_GROUP_ID) LIKE UPPER('%$BRANCH_GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="BRANCH_GROUP_NAME">
+                    UPPER(BRANCH_GROUP_NAME) LIKE UPPER('%$BRANCH_GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+                  
+                 
+  <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getBranchGroupAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_GROUP_ID, BRANCH_GROUP_NAME, AUTHORIZE_STATUS, AUTHORIZE_BY, STATUS_BY FROM BRANCH_GROUP BG
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = BG.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeBranchGroup" result-class="java.util.HashMap">
+        UPDATE BRANCH_GROUP  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE BRANCH_GROUP_ID = #BRANCH_GROUP_ID:VARCHAR#  AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+    </mapped-statement>
+<!-- =================================================================================== -->  
+</sql-map>

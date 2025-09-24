@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MDSChangeofMemberMap">
+
+             <!-- Use ExternalWireTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             
+    <mapped-statement name="insertChangeOfMemberTO" inline-parameters="true">
+        INSERT INTO MDS_CHANGE_MEMBER
+        (CHITTAL_NO, OLD_MEMBER_NAME, NEW_MEMBER_NAME, NEW_MEMBER_NO, SCHEME_NAME, DIVISION_NO, OLD_MEMBER_NO, INSTALLMENT_NO, 
+        TOTAL_AMOUNT, NEW_MEMBER_MUNNAL, CHANGE_EFFECTIVE_DATE, REMARKS, STATUS, STATUS_DT, 
+        STATUS_BY, BRANCH_CODE, SUB_NO) VALUES (
+        #oldMemberNo#, #oldMemberName#, #newMemberName#, #newMemberNo#, #schemeName#, #divisionNo#, 
+        #chitNo#, #installmentNo#, #totalAmount#, #newMemberMunnal#, #changeEffectiveDate#,  
+        #remarks#, #status#, #statusDt#, #statusBy#, #branchCode#, #subNo#)
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getChangeOfMemberEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT CHITTAL_NO,SUB_NO,SCHEME_NAME,STATUS_BY FROM MDS_CHANGE_MEMBER
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE#  
+          <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHITTAL_NO">
+                    UPPER(CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUB_NO">
+                    UPPER(SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                  UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS_BY">
+                    UPPER(STATUS_BY) LIKE UPPER('%$STATUS_BY$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY CHITTAL_NO  
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getChangeOfMemberView" result-class="java.util.LinkedHashMap">
+        SELECT CHITTAL_NO,SUB_NO,SCHEME_NAME,STATUS_BY FROM MDS_CHANGE_MEMBER
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE# 
+         <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHITTAL_NO">
+                    UPPER(CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUB_NO">
+                    UPPER(SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                  UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS_BY">
+                    UPPER(STATUS_BY) LIKE UPPER('%$STATUS_BY$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY CHITTAL_NO  
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getChangeOfMemberAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT CHITTAL_NO,SUB_NO,SCHEME_NAME,STATUS_BY FROM MDS_CHANGE_MEMBER WHERE STATUS!='DELETED' AND
+        AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE#  ORDER BY CHITTAL_NO 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeChangeOfMember" result-class="java.util.HashMap">
+        UPDATE MDS_CHANGE_MEMBER SET 
+        AUTHORIZED_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = #AUTHORIZED_DT#
+        WHERE STATUS != 'DELETED' AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO# AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectChangeOfMemberTO" result-map="getMDSChangeofMemberToResult" >
+        SELECT * FROM MDS_CHANGE_MEMBER WHERE STATUS!='DELETED' AND CHITTAL_NO = #CHITTAL_NO# 
+		AND SUB_NO = cast(#SUB_NO# as numeric) AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+        
+    <mapped-statement name="updateMDSChangeofMemberTo" inline-parameters="true">
+        UPDATE MDS_CHANGE_MEMBER SET 
+        NEW_MEMBER_NO = #newMemberNo#,
+        NEW_MEMBER_NAME = #newMemberName#,
+        OLD_MEMBER_NAME = #oldMemberName#,
+        DIVISION_NO = #divisionNo#,
+        OLD_MEMBER_NO = #chitNo#,
+        INSTALLMENT_NO = #installmentNo#,
+        TOTAL_AMOUNT = #totalAmount#,
+        NEW_MEMBER_MUNNAL = #newMemberMunnal#,
+        CHANGE_EFFECTIVE_DATE = #changeEffectiveDate#,
+        REMARKS = #remarks#,
+        STATUS = #status#,
+        STATUS_DT = #statusDt#,
+        STATUS_BY = #statusBy#
+        WHERE CHITTAL_NO = #oldMemberNo# AND SUB_NO = #subNo# AND SCHEME_NAME = #schemeName# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteMDSChangeofMemberTo" inline-parameters="true">
+        UPDATE MDS_CHANGE_MEMBER SET 
+        STATUS = #status#,
+        STATUS_BY = #statusBy#,
+        STATUS_DT = #statusDt#
+        WHERE CHITTAL_NO = #oldMemberNo# AND SUB_NO = #subNo# AND SCHEME_NAME = #schemeName#
+    </mapped-statement>
+        
+<!--        <mapped-statement name="getProductIdFromMDSProduct" result-map="get-getMDSProductId-result"> 
+         SELECT PROD_ID FROM MDS_PRODUCT_GENERAL_DETAILS WHERE STATUS!='DELETED'
+ 	</mapped-statement>
+        
+        <result-map name="get-getMDSProductId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+            <property name="lookUpRefID" column="PROD_ID" />
+            <property name="lookUpDesc" column="PROD_ID" />
+        </result-map> -->
+        
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to MDSChangeofMemberTo object (JavaBean) properties -->
+    <result-map name="getMDSChangeofMemberToResult" class="com.see.truetransact.transferobject.mdsapplication.mdschangeofmember.MDSChangeofMemberTO">
+        <property name="oldMemberNo" column="CHITTAL_NO"/>
+        <property name="newMemberNo" column="NEW_MEMBER_NO"/>
+        <property name="oldMemberName" column="OLD_MEMBER_NAME"/>
+        <property name="newMemberName" column="NEW_MEMBER_NAME"/>
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="chitNo" column="OLD_MEMBER_NO"/>
+        <property name="installmentNo" column="INSTALLMENT_NO"/>
+        <property name="totalAmount" column="TOTAL_AMOUNT"/>
+        <property name="newMemberMunnal" column="NEW_MEMBER_MUNNAL"/>
+        <property name="changeEffectiveDate" column="CHANGE_EFFECTIVE_DATE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+    </result-map>
+        
+    <mapped-statement name="getTotalInstAmount" result-class="java.util.HashMap">
+        SELECT SUM(NO_OF_INST) NO_INST_PAID, SUM(NO_OF_INST*INST_AMT) PAID_AMT,SUM(BONUS_AMT) AS TOTAL_BONUS_AMT FROM MDS_TRANS_DETAILS WHERE 
+        CHITTAL_NO = #CHITTAL_NO# AND SUB_NO=#SUB_NO# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NOT NULL AND AUTHORIZE_STATUS='AUTHORIZED'
+      <!--   SELECT COUNT(*) NO_INST_PAID, SUM(INST_AMT) PAID_AMT FROM MDS_TRANS_DETAILS WHERE 
+            CHITTAL_NO = #CHITTAL_NO# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NOT NULL AND AUTHORIZE_STATUS='AUTHORIZED' -->
+    </mapped-statement>
+        
+    <mapped-statement name="getNoOfInstalmentsPaid" result-class="java.util.HashMap">
+        <!-- Changed by Rajesh -->
+         <!--SELECT SUM(NO_OF_INST) NO_OF_INST FROM MDS_TRANS_DETAILS WHERE -->
+        SELECT SUM(NO_OF_INST) NO_OF_INST, MAX(TRANS_DT) AS TRANS_DT FROM MDS_TRANS_DETAILS WHERE 
+        CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = cast(#SUB_NO# as numeric) AND STATUS!='DELETED' 
+		AND AUTHORIZE_STATUS IS NOT NULL AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>  
+        
+    <mapped-statement name="getMDSChangeOfMemDetails" result-class="java.util.HashMap">
+        SELECT NEW_MEMBER_NO, NEW_MEMBER_NAME,OLD_MEMBER_NO,OLD_MEMBER_NAME,INSTALLMENT_NO,CHANGE_EFFECTIVE_DATE,OLD_MEMBER_BONUS_EARNED,TOTAL_AMOUNT
+        FROM MDS_CHANGE_MEMBER WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO#
+    </mapped-statement> 
+        
+    <mapped-statement name="updateMemberDetailsInMDSApplication" result-class="java.util.LinkedHashMap">
+        UPDATE  MDS_APPLICATION SET 
+        MEMBER_NO = #MEMBERSHIP_NO#, 
+        MEMBER_TYPE = #MEMBERSHIP_CLASS#,
+        MEMBER_NAME = #CUSTOMER#,
+        CUST_ID = #CUST_ID#
+        WHERE STATUS != 'DELETED'  AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO# AND SCHEME_NAME = #SCHEME_NAME#   
+    </mapped-statement> 
+        
+    <mapped-statement name="updateMemberDetailsMasterMaintanance" result-class="java.util.LinkedHashMap">
+        UPDATE  MDS_MASTER_MAINTENANCE SET 
+        MEMBER_NO = #MEMBERSHIP_NO#, 
+        MEMBER_TYPE = #MEMBERSHIP_CLASS#,
+        MEMBER_NAME = #CUSTOMER#
+        WHERE STATUS != 'DELETED'  AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO# AND SCHEME_NAME = #SCHEME_NAME#   
+    </mapped-statement> 
+        
+    <mapped-statement name="updateMemAddressDetailsMDSApplication" result-class="java.util.HashMap">
+        UPDATE  MDS_APPLICATION SET 
+        HOUSE_ST = #street#,
+        AREA = #area#,
+        CITY = #city#,
+        STATE = #state#,
+        PIN = #pinCode#
+        WHERE STATUS != 'DELETED'  AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO# AND SCHEME_NAME = #SCHEME_NAME#   
+    </mapped-statement> 
+        
+    <mapped-statement name="updateMemberDetailsInReceiptEntry" result-class="java.util.HashMap">
+        UPDATE  MDS_RECEIPT_ENTRY SET 
+        MEMBER_NAME = #NEW_MEMBER_NAME#,
+        MEMBER_CHANGED = 'Y',
+        EARLIER_MEMBER_NO = #OLD_MEMBER_NO#,
+        EARLIER_MEMBER_NAME = #OLD_MEMBER_NAME#,
+        CHANGED_DT = #CHANGE_EFFECTIVE_DATE#,
+        CHANGED_INST_NO = #INSTALLMENT_NO#
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'  AND CHITTAL_NO = #CHITTAL_NO# 
+		AND SUB_NO = #SUB_NO# AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement> 
+        
+    <mapped-statement name="getSelectExistingMemberName" result-class="java.util.HashMap">
+        SELECT get_cust_name(cust_id) AS "CUSTOMER NAME" FROM CUSTOMER WHERE MEMBERSHIP_NO =#MEMBERSHIP_NO#
+    </mapped-statement> 
+        
+    <mapped-statement name="updateChangedMemberBonusEarned" result-class="java.util.HashMap">
+        UPDATE MDS_CHANGE_MEMBER SET OLD_MEMBER_BONUS_EARNED = #TOTAL_BONUS_AMT# 
+		WHERE  STATUS!='DELETED' AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO#
+    </mapped-statement>
+    
+    <mapped-statement name="updateMunnalChittalOnMemberChange" result-class="java.util.LinkedHashMap">
+        UPDATE  MDS_APPLICATION SET 
+        MUNNAL = 'Y'
+        WHERE STATUS != 'DELETED'  
+        AND CHITTAL_NO = #CHITTAL_NO# 
+        AND SUB_NO = #SUB_NO#   
+    </mapped-statement> 
+    
+
+</sql-map>

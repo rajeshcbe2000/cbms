@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OperativeAccountBatchMap">
+
+    <!--<mapped-statement name="checkAllBranchDayEndStartedOrNot" result-class="java.util.LinkedHashMap">
+       SELECT BRANCH_CODE, CURR_APPL_DT FROM DAY_END 
+        WHERE (END_DAY_STATUS NOT IN ('COMPLETED') OR END_DAY_STATUS IS NULL)
+        SELECT BRANCH_ID, COUNT(*) AS CNT FROM DAILY_DAYEND_STATUS WHERE 
+        DAYEND_DT = #CURR_DT# GROUP BY BRANCH_ID
+    </mapped-statement>-->
+   
+    <dynamic-mapped-statement name="checkAllBranchDayEndStartedOrNot" result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_ID, COUNT(*) AS CNT FROM DAILY_DAYEND_STATUS WHERE 
+        DAYEND_DT = #CURR_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend=" AND BRANCH_ID IN ( " property="BRANCH_ID">
+            <!--iterate  property="CUSTOMER ID" open = "(" close=")" conjunction="," >
+                #CUSTOMER ID[]#
+            </iterate-->
+                    $BRANCH_ID$ )
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY BRANCH_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="checkAllBranchDayEnd" result-class="java.util.LinkedHashMap">
+<!--        SELECT BRANCH_CODE, CURR_APPL_DT FROM DAY_END 
+        WHERE (END_DAY_STATUS NOT IN ('COMPLETED') OR END_DAY_STATUS IS NULL)-->
+        SELECT BRANCH_ID, TASK_NAME, TASK_STATUS FROM DAILY_DAYEND_STATUS WHERE 
+        TASK_STATUS!='COMPLETED' AND DAYEND_DT = TO_DATE(#CURR_DT:DATE#)
+    </mapped-statement> 
+    <mapped-statement name="checkSchedule" result-class="java.util.LinkedHashMap">
+        select * from  SCHEDULE_PRODUCT(#BRANCH_CODE:varchar#,#TODAY_DT:DATE#,#PREV_DT:DATE#)
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="checkScheduleData" result-class="java.util.LinkedHashMap">
+        SELECT  * FROM  DAILY_SCHEDULE_INFO D  WHERE D.TRANS_DT=#TODAY_DT:DATE# AND D.BRANCH_CODE=#BRANCH_ID:varchar# AND  TABLE_NAME =#TABLE_NAME:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="scheduleTable" result-class="java.util.LinkedHashMap">
+      SELECT  TABLE_NAME FROM  DAILY_SCHEDULE_INFO D  WHERE D.TRANS_DT=#TODAY_DT:DATE# AND D.BRANCH_CODE=#BRANCH_ID:varchar# GROUP  BY TABLE_NAME
+    </mapped-statement> 
+    
+    <mapped-statement name="checkTransactionData" result-class="java.util.LinkedHashMap">
+        select * from DATA_CHECKING(#TODAY_DT:DATE#,#BRANCH_CODE:varchar#)
+    </mapped-statement> 
+    
+    <mapped-statement name="getIssueTransactionTable" result-class="java.util.LinkedHashMap">
+        SELECT TABLE_NAME FROM  DATA_CHECKING_INFO D WHERE D.TRANS_DT =#TODAY_DT:DATE# AND D.BRANCH_CODE=#BRANCH_ID:varchar#  GROUP  BY D.TABLE_NAME
+    </mapped-statement> 
+    
+    <mapped-statement name="getTransactionData" result-class="java.util.LinkedHashMap">
+        SELECT * FROM  DATA_CHECKING_INFO D WHERE D.TRANS_DT =#TODAY_DT:DATE# AND D.BRANCH_CODE=#BRANCH_ID:varchar#  AND D.TABLE_NAME=#TABLE_NAME:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getMinDataIntegrityDt" result-class="java.util.LinkedHashMap">
+        SELECT  MIN(TRANS_DT) AS TRANS_DT FROM (SELECT  MIN(D.TRANS_DT) AS TRANS_DT from DAILY_SCHEDULE_INFO D WHERE D.RESOLVED_DT IS NULL 
+        UNION 
+        SELECT  MIN(D.TRANS_DT) AS TRANS_DT from DATA_CHECKING_INFO D WHERE D.RESOLVED_DT IS NULL )A
+    </mapped-statement>
+       
+</sql-map>

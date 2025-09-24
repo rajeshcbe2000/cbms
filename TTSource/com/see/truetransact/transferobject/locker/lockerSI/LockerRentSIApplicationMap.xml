@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LockerRentSIApplicationMap">
+<!--
+    Document   : LockerRentSIApplicationMap.xml
+    Created on : February 29, 2012, 5:56 PM
+    Author     : Rajesh
+    Description:
+        Purpose of the document follows.
+-->
+    <mapped-statement name="getExpDetails" result-class="java.util.HashMap">
+        SELECT LOCKER_NUM,PRODUCT_ID,LM.PROD_TYPE,LM.CUSTOMER_ID_CR,CUSTOMER.FNAME,
+        ACT_MASTER.AVAILABLE_BALANCE
+        FROM LOCKER_MASTER LM ,CUSTOMER,ACT_MASTER WHERE CUSTOMER.CUST_ID=LM.CUST_ID AND 
+        LM.CUSTOMER_ID_CR=ACT_MASTER.ACT_NUM AND 
+        LM.EXP_DT BETWEEN #TODAY_DT:DATE# AND #EXP_DT:DATE# AND LM.PROD_ID=#PROD_ID:VARCHAR# AND
+        LM.LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND
+        LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND LM.LOCKER_STATUS_ID != 'CLOSED'
+        UNION ALL
+        SELECT LOCKER_NUM,PRODUCT_ID,LM.PROD_TYPE,LM.CUSTOMER_ID_CR,CUSTOMER.FNAME,
+        LOANS_FACILITY_DETAILS.AVAILABLE_BALANCE
+        FROM LOCKER_MASTER LM ,CUSTOMER,LOANS_FACILITY_DETAILS WHERE CUSTOMER.CUST_ID=LM.CUST_ID AND 
+        LM.CUSTOMER_ID_CR=LOANS_FACILITY_DETAILS.ACCT_NUM AND 
+        LM.EXP_DT BETWEEN #TODAY_DT:DATE# AND #EXP_DT:DATE# AND LM.PROD_ID=#PROD_ID:VARCHAR# AND
+        LM.LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND
+        LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND LM.LOCKER_STATUS_ID != 'CLOSED'
+    </mapped-statement>
+        
+    <mapped-statement name="getExpDetailsForDayEnd" result-class="java.util.HashMap">
+        SELECT LOCKER_NUM,PRODUCT_ID,LM.PROD_TYPE,LM.CUSTOMER_ID_CR,CUSTOMER.FNAME,
+        ACT_MASTER.AVAILABLE_BALANCE
+        FROM LOCKER_MASTER LM ,CUSTOMER,ACT_MASTER WHERE CUSTOMER.CUST_ID=LM.CUST_ID AND 
+        LM.CUSTOMER_ID_CR=ACT_MASTER.ACT_NUM AND 
+        LM.EXP_DT BETWEEN #TODAY_DT:DATE# AND #EXP_DT:DATE# AND 
+        LM.LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND
+        LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND LM.LOCKER_STATUS_ID != 'CLOSED'
+    </mapped-statement>
+      
+    <mapped-statement name="getLockerTypeForDayEnd" result-class="java.util.HashMap">
+        SELECT PROD_ID FROM LOCKER_MASTER LM WHERE  LM.LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND
+        LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND LM.LOCKER_STATUS_ID != 'CLOSED'
+    </mapped-statement>
+      
+    <mapped-statement name="getServiceDetails" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT SERVICE_TAX,COMMISION,START_DT,END_DT FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        ((#TODAY_DT:DATE# BETWEEN START_DT AND #EXP_DT:DATE#) OR (START_DT BETWEEN #TODAY_DT:DATE# AND #EXP_DT:DATE#) OR
+        (START_DT&lt;=#TODAY_DT:DATE# AND END_DT IS NULL)) AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+    </mapped-statement> 
+        
+        
+    <mapped-statement name="getLockDetails" result-class="java.util.HashMap">
+        SELECT LOCKER_NUM,ISSUE_DT,EXP_DT,CUSTOMER_NAME FROM LOCKER_MASTER 
+        WHERE PROD_ID=#PROD_ID:VARCHAR# AND EXP_DT&lt;#EXP_DT:DATE# AND LOCKER_STATUS_ID != 'CLOSED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+      
+    <mapped-statement name="getLockDetailsForDayEnd" result-class="java.util.HashMap">
+        SELECT LOCKER_NUM,ISSUE_DT,EXP_DT,CUSTOMER_NAME FROM LOCKER_MASTER 
+        WHERE  EXP_DT&lt;=#EXP_DT:DATE# AND LOCKER_STATUS_ID != 'CLOSED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+     
+    <mapped-statement name="getDetails" result-class="java.util.HashMap">
+        SELECT l.CUST_ID,get_cust_name(c.cust_id) As NAME FROM LOCKER_MASTER L join CUSTOMER C on L.CUST_ID=C.CUST_ID WHERE LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR# AND LOCKER_STATUS_ID != 'CLOSED'
+    </mapped-statement>
+
+    <mapped-statement name="getRemarksDetails" result-class="java.util.HashMap">
+        SELECT REMARKS,STATUS_DT FROM LOCKER_MASTER WHERE LOCKER_NUM=#value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLockerWithDepostDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM GET_LOCKER_DEPOSIT_DETAILS (#BRANCH_ID:VARCHAR#,#PROD_ID:VARCHAR#,#MONTH:VARCHAR#,#YEAR:ARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateLockerDepositTempDate" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO D SET TEMP_NEXT_INT_APPL_DT=D.NEXT_INT_APPL_DT ,TEMP_LAST_INT_APPL_DT=D.LAST_INT_APPL_DT ,
+        TEMP_INT_CREDIT=D.TOTAL_INT_CREDIT,TEMP_INT_DRAWN=D.TOTAL_INT_DRAWN    WHERE DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>   

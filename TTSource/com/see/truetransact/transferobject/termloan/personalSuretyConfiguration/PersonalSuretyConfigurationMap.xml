@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="PersonalSuretyConfigurationMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+         <!--getSelectGeneralList-->
+    <dynamic-mapped-statement name="PersonalSuretyConfiguration.getSelectPersonalList" result-class="java.util.LinkedHashMap" >
+        SELECT PERSONAL_SURETY_ID, MAXIMUM_SURETY,CLOSE_BEFORE,MAXIMUM_LOAN_PER_SURETY FROM PERSONAL_SURETY_CONFIGURATION
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+             
+                 
+             
+    <mapped-statement name="insertPersonalTO" inline-parameters="true">
+        INSERT INTO PERSONAL_SURETY_CONFIGURATION
+        (MAXIMUM_SURETY, CLOSE_BEFORE, PERSONAL_SURETY_ID,STATUS,MAXIMUM_LOAN_PER_SURETY,MAXIMUM_SURETY_AMT) 
+        VALUES (
+        #maxSurety:INTEGER#,#closeBefore:INTEGER#,#gbid:VARCHAR#,#status:VARCHAR#,#maxLoanSurety:INTEGER#,#maxSuretyAmt:NUMBER#)
+                
+    </mapped-statement>
+        
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updatePersonalTO" inline-parameters="true">
+        UPDATE PERSONAL_SURETY_CONFIGURATION SET 
+        MAXIMUM_SURETY=#maxSurety:INTEGER#,
+        CLOSE_BEFORE=#closeBefore:INTEGER#,
+        STATUS=#status:VARCHAR#,
+        MAXIMUM_LOAN_PER_SURETY=#maxLoanSurety:INTEGER#,
+        MAXIMUM_SURETY_AMT=#maxSuretyAmt:NUMBER#        
+        WHERE PERSONAL_SURETY_ID=#gbid:VARCHAR#
+    </mapped-statement> 
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--<mapped-statement name="deleteGeneralBodyTO" inline-parameters="true">
+		UPDATE GENERAL_BODY_DETAILS SET 
+		STATUS = #status:VARCHAR#
+         	WHERE GBID = #gbid:VARCHAR#
+	</mapped-statement>-->
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getPersonalTOResult" class="com.see.truetransact.transferobject.termloan.personalSuretyConfiguration.PersonalSuretyConfigurationTO">
+        <property name="maxSurety" column="MAXIMUM_SURETY"/>
+        <property name="closeBefore" column="CLOSE_BEFORE"/>
+        <property name="status" column="STATUS"/>
+        <property name="maxLoanSurety" column="MAXIMUM_LOAN_PER_SURETY"/>
+        <property name="gbid" column="PERSONAL_SURETY_ID"/>
+        <property name="maxSuretyAmt" column="MAXIMUM_SURETY_AMT"/>       
+    </result-map>
+	
+    <mapped-statement name="getComboValues" result-class="java.util.LinkedHashMap" >
+        select distinct AUTHORIZE_REMARK from loans_product
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getSelectPersonal" result-map="getPersonalTOResult" >
+        SELECT * FROM PERSONAL_SURETY_CONFIGURATION
+        WHERE PERSONAL_SURETY_ID = #PSCID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getProductDts" result-class="java.util.LinkedHashMap" >
+        select PROD_ID,PROD_DESC from loans_product where authorize_remark=#AUTH_TYPE# and AUTHORIZE_STATUS='AUTHORIZED' 
+    </mapped-statement>
+        
+        
+    <mapped-statement name="insertIMBPMaster" inline-parameters="true">
+        INSERT INTO IMBP_SETTINGS
+        (IMBP_ID, IMBP_TYPE, MAX_LOAN_AMOUNT, EFFECT_FROM, STATUS, SHARE_TYPE,MAX_NO_OF_LOANS) 
+        VALUES (
+        #gbid:VARCHAR#, #prodType:VARCHAR#, #maximumLoanAmount:INTEGER#, #effectiveDate:Date#, #status:VARCHAR#, #shareType:VARCHAR#,#maxNoOfLoans:NUMBER#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertIMBPProd" inline-parameters="true">
+        INSERT INTO IMBP_SETTINGS_PROD
+        (IMBP_ID, PROD_ID) 
+        VALUES (
+        #gbid:VARCHAR#,#prodID:VARCHAR#)
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="PersonalSuretyConfiguration.getSelectIMBPList" result-class="java.util.LinkedHashMap" >
+        SELECT IMBP_ID,IMBP_TYPE, EFFECT_FROM, MAX_LOAN_AMOUNT,MAX_NO_OF_LOANS, NVL(SHARE_TYPE, ' ') AS SHARE_TYPE FROM IMBP_SETTINGS
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectIMBPProd" result-class="java.util.LinkedHashMap" >
+        SELECT IMBP_ID, a.PROD_ID,PROD_DESC FROM IMBP_SETTINGS_PROD a,loans_product b
+        WHERE IMBP_ID = #IMBPID:VARCHAR#  and a.prod_id=b.prod_id
+    </mapped-statement>
+        
+    <result-map name="getIMBPTOResult" class="com.see.truetransact.transferobject.termloan.personalSuretyConfiguration.PersonalSuretyConfigurationTO">
+        <property name="prodType" column="IMBP_TYPE"/>
+        <property name="maximumLoanAmount" column="MAX_LOAN_AMOUNT"/>
+        <property name="effectiveDate" column="EFFECT_FROM"/>        
+        <property name="gbid" column="IMBP_ID"/>
+        <property name="shareType" column="SHARE_TYPE"/>
+        <property name="maxNoOfLoans" column="MAX_NO_OF_LOANS"/>
+    </result-map>
+
+        
+    <mapped-statement name="getSelectIMBP" result-map="getIMBPTOResult" >
+        SELECT IMBP_ID, IMBP_TYPE, MAX_LOAN_AMOUNT, EFFECT_FROM,MAX_NO_OF_LOANS, NVL(SHARE_TYPE, ' ') AS SHARE_TYPE FROM IMBP_SETTINGS
+        WHERE IMBP_ID = #IMBPID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="updateIMBPMaster" inline-parameters="true">
+        UPDATE IMBP_SETTINGS SET 
+        MAX_LOAN_AMOUNT=#maximumLoanAmount:INTEGER#,
+        MAX_NO_OF_LOANS=#maxNoOfLoans:NUMBER#,
+        EFFECT_FROM=#effectiveDate:Date#,
+        STATUS=#status:VARCHAR#
+        WHERE IMBP_ID=#gbid:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="deleteIMBPSettingsProd" inline-parameters="true">
+        DELETE FROM IMBP_SETTINGS_PROD
+        WHERE IMBP_ID = #gbid:VARCHAR#
+    </mapped-statement> 
+         
+    <dynamic-mapped-statement name="checkImbpExists" result-class="java.util.HashMap" >
+        SELECT IMBP.IMBP_ID 
+        FROM IMBP_SETTINGS IMBP, IMBP_SETTINGS_PROD IMPROD
+        WHERE IMBP.IMBP_ID = IMPROD.IMBP_ID 
+        AND IMBP.IMBP_TYPE = #IMBP_TYPE:VARCHAR# 
+        AND IMPROD.PROD_ID IN $PROD_ID$
+        AND NVL(SHARE_TYPE, #SHARE_TYPE:VARCHAR#)=#SHARE_TYPE:VARCHAR#
+        AND IMBP.STATUS != 'DELETED' 
+    </dynamic-mapped-statement>      
+    
+    <mapped-statement name="deleteIMBPSettings" inline-parameters="true">
+        UPDATE IMBP_SETTINGS 
+        SET STATUS = #STATUS:VARCHAR#
+        WHERE IMBP_ID = #gbid:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getIMBPSettingsId" result-class="java.util.HashMap" >
+        SELECT DISTINCT(IMBP.IMBP_ID) 
+        FROM IMBP_SETTINGS IMBP JOIN IMBP_SETTINGS_PROD IMBPSP 
+        ON IMBP.IMBP_ID = IMBPSP.IMBP_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getImbpMaxEffectiveDate" result-class="java.util.HashMap" >
+        SELECT MAX(IMBP.EFFECT_FROM) AS EFF_DATE FROM IMBP_SETTINGS IMBP WHERE IMBP.IMBP_TYPE = #IMBP_TYPE:VARCHAR#
+        AND NVL(SHARE_TYPE, #SHARE_TYPE:VARCHAR#) = #SHARE_TYPE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getImbpType" result-class="java.util.HashMap" >
+        SELECT DISTINCT(IMBP.IMBP_TYPE), IMPROD.PROD_ID FROM IMBP_SETTINGS IMBP JOIN IMBP_SETTINGS_PROD IMPROD 
+        ON IMBP.IMBP_ID = IMPROD.IMBP_ID AND IMPROD.PROD_ID = #PROD_ID:VARCHAR# WHERE IMBP.STATUS != 'DELETED'
+    </mapped-statement>
+    
+</sql-map>

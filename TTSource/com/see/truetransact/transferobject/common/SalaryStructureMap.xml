@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SalaryStructureTOMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSalaryStructureTO" inline-parameters="true">
+        INSERT INTO SALARY_STRUCTURE (SL_NO,GRADE,FROM_DATE,TO_DATE,STARTING_SCALE_AMT,INCREMENT_AMT,NOOF_INCREMENT,
+        TOTAL_AMOUNT,SINGLEROW_TOTAMT,STAGNATION_INC,TOT_NOOF_STAGNATION,STAGNATION_INCAMT,NOOF_STAGNATION,
+        STAGNATION_ONCEIN,STAGNATION_VALUES,SALARY_TYPE,STATUS,STATUS_BY,STATUS_DATE,AUTHORIZE_STATUS,AUTHORIZE_BY,
+        AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO
+        )values(
+        #slNo#,#grade:VARCHAR#,#fromDate:DATE#,#toDate:DATE#,#startingScaleAmt:VARCHAR#,#incrementAmt:VARCHAR#,
+        #noOfIncrement:VARCHAR#,#totalAmount:VARCHAR#,#singleRowTotAmt:VARCHAR#,#stagnationInc:VARCHAR#,
+        #totNoOfStagnation:VARCHAR#,#stagnationIncAmt:VARCHAR#,#noofStagnation:VARCHAR#,#stagnationOnceIn:VARCHAR#,
+        #stagnationValues:VARCHAR#,#salaryType:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER#)
+    </mapped-statement>
+
+    <mapped-statement name="updateSalaryStructureTO" inline-parameters="true">
+        UPDATE SALARY_STRUCTURE SET INCREMENT_AMT = #incrementAmt:VARCHAR#,NOOF_INCREMENT = #noOfIncrement:VARCHAR#,
+        TOTAL_AMOUNT = #totalAmount:VARCHAR#,SINGLEROW_TOTAMT = #singleRowTotAmt:VARCHAR#,STATUS = #status:VARCHAR#,
+        STAGNATION_INCAMT = #stagnationIncAmt:VARCHAR#,NOOF_STAGNATION = #noofStagnation:VARCHAR#,
+        STAGNATION_ONCEIN = #stagnationOnceIn:VARCHAR#,STAGNATION_VALUES = #stagnationValues:VARCHAR# WHERE 
+        SL_NO = #slNo:VARCHAR# AND GRADE = #grade:VARCHAR# <!--TEMP_SL_NO = #tempSlNo:NUMBER#--> AND AUTHORIZE_STATUS IS NULL 
+        AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="deleteSalaryStructureTO" inline-parameters="true">
+           <!--  DELETE FROM SALARY_STRUCTURE WHERE SL_NO = #slNo:VARCHAR# -->
+        UPDATE SALARY_STRUCTURE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDate:DATE#
+        WHERE SL_NO = #slNo:VARCHAR#  AND STATUS !='DELETED' 
+        AND GRADE = #grade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+        
+    <result-map name="getSalaryStructureTOResult" class="com.see.truetransact.transferobject.common.SalaryStructureTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="grade" column="GRADE"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="startingScaleAmt" column="STARTING_SCALE_AMT"/>
+        <property name="incrementAmt" column="INCREMENT_AMT"/>
+        <property name="noOfIncrement" column="NOOF_INCREMENT"/>
+        <property name="totalAmount" column="TOTAL_AMOUNT"/>
+        <property name="singleRowTotAmt" column="SINGLEROW_TOTAMT"/>
+        <property name="stagnationInc" column="STAGNATION_INC"/>
+        <property name="totNoOfStagnation" column="TOT_NOOF_STAGNATION"/>
+        <property name="stagnationIncAmt" column="STAGNATION_INCAMT"/>
+        <property name="noofStagnation" column="NOOF_STAGNATION"/>
+        <property name="stagnationOnceIn" column="STAGNATION_ONCEIN"/>
+        <property name="stagnationValues" column="STAGNATION_VALUES"/>
+        <property name="salaryType" column="SALARY_TYPE"/>                
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+    </result-map>
+        
+    <mapped-statement name="getSelectSalaryAuthMode" result-class="java.util.LinkedHashMap" >
+          
+            <!--SELECT DISTINCT GRADE,FROM_DATE,STARTING_SCALE_AMT,TOTAL_AMOUNT FROM SALARY_STRUCTURE SS,DEARNESS_ALLOWANCE DA, CC_ALLOWANCE CC, 
+            HRA_ALLOWANCE HRA,TA_ALLOWANCE TA,MA_ALLOWANCE MA,OTHER_ALLOWANCE OA WHERE SS.BRANCH_CODE = #BRANCH_CODE# AND 
+            (SS.AUTHORIZE_STATUS IS NULL OR DA.AUTHORIZE_STATUS IS NULL OR CC.AUTHORIZE_STATUS IS NULL OR 
+            HRA.AUTHORIZE_STATUS IS NULL OR TA.AUTHORIZE_STATUS IS NULL OR MA.AUTHORIZE_STATUS IS NULL OR
+            OA.AUTHORIZE_STATUS IS NULL) AND (SS.STATUS!='DELETED' OR DA.STATUS!='DELETED' OR CC.STATUS!='DELETED' OR 
+            HRA.STATUS!='DELETED' OR TA.STATUS!='DELETED' OR MA.STATUS!='DELETED' OR OA.STATUS!='DELETED')AND
+            SS.GRADE = DA.DAGRADE AND DA.DAGRADE = CC.CCGRADE AND CC.CCGRADE = HRA.HRAGRADE AND 
+            HRA.HRAGRADE = TA.TAGRADE AND TA.TAGRADE = MA.MAGRADE AND MA.MAGRADE = OA.OAGRADE AND
+            OA.OAGRADE = SS.GRADE --> 
+        SELECT DISTINCT GRADE,FROM_DATE,STARTING_SCALE_AMT,TOTAL_AMOUNT FROM SALARY_STRUCTURE SS WHERE
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED'
+        AND 400 >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SS.STATUS_BY)                
+    </mapped-statement>   
+           
+    <mapped-statement name="getSelectSalaryEditMode" result-class="java.util.LinkedHashMap" >
+            <!--SELECT DISTINCT GRADE,FROM_DATE,STARTING_SCALE_AMT,TOTAL_AMOUNT FROM SALARY_STRUCTURE WHERE 
+            (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND 
+            BRANCH_CODE = #BRANCH_CODE# -->
+        SELECT DISTINCT GRADE,FROM_DATE,STARTING_SCALE_AMT,TOTAL_AMOUNT,TEMP_SL_NO FROM SALARY_STRUCTURE WHERE 
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND 
+        SL_NO = (SELECT MIN(SL_NO) FROM SALARY_STRUCTURE WHERE BRANCH_CODE = #BRANCH_CODE#  
+        AND STATUS!='DELETED') AND
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# <!--AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') -->
+    </mapped-statement>  
+      <!-- <mapped-statement name="getSelectSalaryAuthMode" result-class="java.util.LinkedHashMap" >
+            SELECT DISTINCT GRADE,FROM_DATE,STARTING_SCALE_AMT,TOTAL_AMOUNT,TEMP_SL_NO FROM SALARY_STRUCTURE SS WHERE 
+            STATUS!='DELETED' AND 
+            SL_NO = (SELECT MIN(SL_NO) FROM SALARY_STRUCTURE WHERE BRANCH_CODE = #BRANCH_CODE#  
+             AND STATUS!='DELETED') AND
+            BRANCH_CODE = #BRANCH_CODE# 
+            AND AUTHORIZE_STATUS IS NULL AND 400 >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SS.STATUS_BY)
+	</mapped-statement> -->
+           
+    <mapped-statement name="getSelectSalaryStructureTO" result-map="getSalaryStructureTOResult" >
+        SELECT * FROM SALARY_STRUCTURE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED' AND GRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,FROM_DATE,(TO_NUMBER(SL_NO))            
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectSalaryEditStructureTO" result-map="getSalaryStructureTOResult" >
+<!--            SELECT * FROM SALARY_STRUCTURE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') 
+            AND GRADE = #GRADE# AND STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE# 
+            ORDER BY (TO_NUMBER (SL_NO)),SALARY_TYPE,FROM_DATE -->
+        SELECT * FROM SALARY_STRUCTURE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND GRADE = #GRADE:VARCHAR# AND STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY TEMP_SL_NO,FROM_DATE,(TO_NUMBER(SL_NO))            
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeStatusSalary" result-class = "java.util.HashMap">
+        UPDATE SALARY_STRUCTURE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND GRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+           <!-- AND TEMP_SL_NO = #TEMP_SL_NO# -->
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectExistingRecords" result-class="java.util.LinkedHashMap" >
+        SELECT FROM_DATE FROM SALARY_STRUCTURE WHERE (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL) AND
+        STATUS != 'DELETED' AND GRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND FROM_DATE = #FROM_DATE:DATE#
+    </mapped-statement>      
+        
+    <mapped-statement name="updateStatusDeletedasExistingRecSS" result-class = "java.util.HashMap">
+        UPDATE SALARY_STRUCTURE SET STATUS = #STATUS:VARCHAR#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        GRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND FROM_DATE = #FROM_DATE:DATE# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="updateAuthStatusToNullSS" result-class = "java.util.HashMap">
+        UPDATE SALARY_STRUCTURE SET 
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = null,
+        AUTHORIZE_DATE = null WHERE 
+        GRADE = #GRADE:VARCHAR# AND
+        STATUS!='DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMaxofSlNoSS" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(SL_NO),0) AS SL_NO FROM SALARY_STRUCTURE
+            <!-- WHERE GRADE = #value# -->
+    </mapped-statement>
+    <mapped-statement name="getSelectMaxSlNOSalStruc " result-class = "java.util.HashMap">         
+        SELECT MAX(SL_NO) AS SL_NO FROM SALARY_STRUCTURE WHERE GRADE = #GRADE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getMaxSlNoOfNI" result-class = "java.util.HashMap">         
+        SELECT MAX(SL_NO) AS SL_NO FROM SALARY_STRUCTURE WHERE GRADE = #GRADE:VARCHAR#
+        AND STAGNATION_INC = 'N' AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+<!-- =================================DALLOWANCE================================================== -->
+    <mapped-statement name="insertDAllowanceTO" inline-parameters="true">
+        INSERT INTO DEARNESS_ALLOWANCE (DASL_NO,DAGRADE,DAFROM_DATE,DATO_DATE,DANOOF_POINTS,
+        DAINDEX,DAPERCENTAGE_PER_SLAB,DATOTAL_NOOF_SLAB,DATOTAL_PERCENTAGE,STATUS,STATUS_BY,
+        STATUS_DATE,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO,LAST_EFFECTIVE_DATE,INDEX_OR_PERCENT
+        )values(
+        #dAslNo:VARCHAR#,#dAgrade:VARCHAR#,#dAfromDate:DATE#,#dAtoDate:DATE#,#dANoOfPointsPerSlab:VARCHAR#,#dAIndex:VARCHAR#,
+        #dAPercentagePerSlab:VARCHAR#,#dATotalNoOfSlab:VARCHAR#,#dATotalDAPercentage:VARCHAR#,#status:VARCHAR#,
+        #statusBy:VARCHAR#,#statusDate:DATE#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#,
+        #branchCode:VARCHAR#,#tempSlNo:NUMBER#,#lastEffectiveDt:DATE#,#rdoIndexOrPercent:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateDAllowanceTO" inline-parameters="true">
+        UPDATE DEARNESS_ALLOWANCE SET 
+        DANOOF_POINTS = #dANoOfPointsPerSlab:VARCHAR#,
+        DAINDEX = #dAIndex:VARCHAR#,
+        DAPERCENTAGE_PER_SLAB = #dAPercentagePerSlab:VARCHAR#,
+        DATOTAL_NOOF_SLAB = #dATotalNoOfSlab:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        DATOTAL_PERCENTAGE = #dATotalDAPercentage:VARCHAR#,
+        INDEX_OR_PERCENT = #rdoIndexOrPercent:VARCHAR#
+        WHERE DASL_NO = #dAslNo:VARCHAR# AND 
+        AUTHORIZE_STATUS IS NULL AND 
+        DAGRADE = #dAgrade:VARCHAR#
+        AND STATUS != 'DELETED'         
+    </mapped-statement>
+
+    <mapped-statement name="deletetDAllowanceTO" inline-parameters="true">
+            <!--DELETE FROM DEARNESS_ALLOWANCE WHERE DASL_NO = #dAslNo:VARCHAR# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE DEARNESS_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE DASL_NO = #dAslNo:VARCHAR# AND 
+        DAGRADE = #dAgrade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+
+    <result-map name="getDearnessAllowanceTOResult" class="com.see.truetransact.transferobject.common.DearnessAllowanceTO">
+        <property name="dAslNo" column="DASL_NO"/>
+        <property name="dAgrade" column="DAGRADE"/>
+        <property name="dAfromDate" column="DAFROM_DATE"/>
+        <property name="dAtoDate" column="DATO_DATE"/>
+        <property name="dANoOfPointsPerSlab" column="DANOOF_POINTS"/>
+        <property name="dAIndex" column="DAINDEX"/>
+        <property name="dAPercentagePerSlab" column="DAPERCENTAGE_PER_SLAB"/>
+        <property name="dATotalNoOfSlab" column="DATOTAL_NOOF_SLAB"/>
+        <property name="dATotalDAPercentage" column="DATOTAL_PERCENTAGE"/>
+        <property name="rdoIndexOrPercent" column="INDEX_OR_PERCENT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+        <property name="lastEffectiveDt" column="LAST_EFFECTIVE_DATE"/>                        
+    </result-map>
+           
+    <mapped-statement name="getSelectDearnessAllowanceTO" result-map="getDearnessAllowanceTOResult" >
+        SELECT * FROM DEARNESS_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED'AND DAGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,DAFROM_DATE,(TO_NUMBER(DASL_NO))
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectDearnessAllowanceEditTO" result-map="getDearnessAllowanceTOResult" >
+        SELECT * FROM DEARNESS_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND DAGRADE = #GRADE:VARCHAR# AND STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+        ORDER BY TEMP_SL_NO,DAFROM_DATE,(TO_NUMBER(DASL_NO))
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeDearnessAllowance" result-class = "java.util.HashMap">
+        UPDATE DEARNESS_ALLOWANCE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND DAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <!--AND TEMP_SL_NO = #TEMP_SL_NO#-->
+    </mapped-statement>
+    <mapped-statement name="updatePrevDADate" result-class = "java.util.HashMap">
+        UPDATE DEARNESS_ALLOWANCE SET
+        DATO_DATE = #DATO_DATE:DATE#
+        WHERE
+        STATUS!='DELETED' AND 
+        DAGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        DASL_NO = #DASL_NO:VARCHAR#
+            <!--AND TEMP_SL_NO = #TEMP_SL_NO#-->
+    </mapped-statement>
+    <mapped-statement name="getDASlForAuth" result-class = "java.util.HashMap">
+        SELECT DAFROM_DATE,DASL_NO FROM DEARNESS_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND DAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND DASL_NO = (SELECT MAX(DASL_NO) FROM DEARNESS_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND DAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+            <!--AND TEMP_SL_NO = #TEMP_SL_NO#-->
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusDeletedasExistingRecDA" result-class = "java.util.HashMap">
+        UPDATE DEARNESS_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        DAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND DAFROM_DATE = #FROM_DATE:DATE# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMaxofSlNoDA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(DASL_NO),0) AS SL_NO FROM DEARNESS_ALLOWANCE 
+    </mapped-statement>
+        
+<!-- =================================================================================== -->
+    <mapped-statement name="insertCCAllowanceTO" inline-parameters="true">
+        INSERT INTO CC_ALLOWANCE (CCSL_NO,CCGRADE,CCCITY_TYPE,CCFROM_DATE,CCTO_DATE,CCA_PERCENT,CCA_MAX,
+        STATUS,STATUS_BY,STATUS_DATE,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO,PERCENT_OR_FIXED,FROM_AMOUNT,TO_AMOUNT
+        )values(
+        #cCslNo:VARCHAR#,#cCgrade:VARCHAR#,#cCCityType:VARCHAR#,#cCfromDate:DATE#,#cCtoDate:DATE#,
+        #cCstartingScaleAmt:VARCHAR#,#cCincrementAmt:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,
+        #statusDate:DATE#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER#,#rdoPercentOrFixed:VARCHAR#,#txtFromAmount:VARCHAR#,#txtToAmount:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateCCAllowanceTO" inline-parameters="true">
+        UPDATE CC_ALLOWANCE SET
+        CCA_PERCENT = #cCstartingScaleAmt:VARCHAR#,
+        CCA_MAX = #cCincrementAmt:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        PERCENT_OR_FIXED = #rdoPercentOrFixed:VARCHAR#,
+        FROM_AMOUNT = #txtFromAmount:VARCHAR#,
+        TO_AMOUNT = #txtToAmount:VARCHAR#
+        WHERE 
+        CCSL_NO = #cCslNo:VARCHAR# AND AUTHORIZE_STATUS IS NULL
+        AND STATUS != 'DELETED' AND
+        CCGRADE = #cCgrade:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deletetCCAllowanceTO" inline-parameters="true">
+            <!-- DELETE FROM CC_ALLOWANCE WHERE CCSL_NO = #cCslNo:VARCHAR# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE CC_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE 
+        CCSL_NO = #cCslNo:VARCHAR# AND
+        CCGRADE = #cCgrade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND 
+        STATUS != 'DELETED'
+    </mapped-statement>
+
+    <result-map name="getCCAllowanceTOResult" class="com.see.truetransact.transferobject.common.CCAllowanceTO">
+        <property name="cCslNo" column="CCSL_NO"/>
+        <property name="cCgrade" column="CCGRADE"/>
+        <property name="cCCityType" column="CCCITY_TYPE"/>
+        <property name="cCfromDate" column="CCFROM_DATE"/>
+        <property name="cCtoDate" column="CCTO_DATE"/>
+        <property name="cCstartingScaleAmt" column="CCA_PERCENT"/>
+        <property name="cCincrementAmt" column="CCA_MAX"/>               
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>  
+        <property name="rdoPercentOrFixed" column="PERCENT_OR_FIXED"/>
+        <property name="txtFromAmount" column="FROM_AMOUNT"/>
+        <property name="txtToAmount" column="TO_AMOUNT"/>          
+    </result-map>
+           
+    <mapped-statement name="getSelectCAllowanceTO" result-map="getCCAllowanceTOResult" >
+        SELECT * FROM CC_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED' AND CCGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,CCFROM_DATE,(TO_NUMBER(CCSL_NO))             
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectCAllowanceEditTO" result-map="getCCAllowanceTOResult" >
+        SELECT * FROM CC_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND CCGRADE = #GRADE:VARCHAR# AND CCFROM_DATE = #FROM_DATE:DATE# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,CCFROM_DATE,(TO_NUMBER(CCSL_NO))             
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeCAllowance" result-class = "java.util.HashMap">
+        UPDATE CC_ALLOWANCE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND CCGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <!--AND TEMP_SL_NO = #TEMP_SL_NO#-->
+    </mapped-statement>
+        <!--<mapped-statement name="updateAuthorizeOAllowance" result-class = "java.util.HashMap">
+            UPDATE OTHER_ALLOWANCE SET 
+            AUTHORIZE_STATUS = #AUTHORIZE_STATUS#,
+            AUTHORIZE_BY = #AUTHORIZE_BY#,
+            AUTHORIZE_DATE = #AUTHORIZE_DATE#,
+            STATUS = #STATUS# WHERE AUTHORIZE_STATUS IS NULL AND 
+            STATUS!='DELETED' AND OAGRADE = #GRADE# AND BRANCH_CODE = #BRANCH_CODE#
+        </mapped-statement>-->
+
+    <mapped-statement name="updateStatusDeletedasExistingRecCCA" result-class = "java.util.HashMap">
+        UPDATE CC_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        CCGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND CCFROM_DATE = #FROM_DATE:DATE# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMaxofSlNoCC" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(CCSL_NO),0) AS SL_NO FROM CC_ALLOWANCE 
+    </mapped-statement>
+        
+<!-- =================================================================================== -->
+    <mapped-statement name="insertHRAllowanceTO" inline-parameters="true">
+        INSERT INTO HRA_ALLOWANCE (HRASL_NO,HRAGRADE,HRACITY_TYPE,HRAFROM_DATE,HRATO_DATE,HRA_PERCENTAGE,HRA_MAX_AMOUNT,
+        HRA_PAYABLE,STATUS,STATUS_BY,STATUS_DATE,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO,LAST_EFFECTIVE_DATE
+        )values(
+        #hRAslNo:VARCHAR#,#hRAgrade:VARCHAR#,#hRACityType:VARCHAR#,#hRAfromDate:DATE#,#hRAtoDate:DATE#,#hRAstartingScaleAmt:VARCHAR#,
+        #hRAincrementAmt:VARCHAR#,#hRAPayable:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER#,#lastEffectiveDt:DATE#)
+    </mapped-statement>
+
+    <mapped-statement name="updateHRAllowanceTO" inline-parameters="true">
+        UPDATE HRA_ALLOWANCE SET HRA_PERCENTAGE = #hRAstartingScaleAmt:VARCHAR#,
+        HRA_MAX_AMOUNT = #hRAincrementAmt:VARCHAR#,STATUS = #status:VARCHAR# WHERE 
+        HRASL_NO = #hRAslNo:VARCHAR# AND AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED' AND
+        HRAGRADE =  #hRAgrade:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deletetHRAllowanceTO" inline-parameters="true">
+            <!--DELETE FROM HRA_ALLOWANCE WHERE HRASL_NO = #hRAslNo:VARCHAR# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE HRA_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#, WHERE 
+        HRASL_NO = #hRAslNo:VARCHAR# AND
+        HRAGRADE =  #hRAgrade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+
+    <result-map name="getHRAllowanceTOResult" class="com.see.truetransact.transferobject.common.HRAllowanceTO">
+        <property name="hRAslNo" column="HRASL_NO"/>
+        <property name="hRAgrade" column="HRAGRADE"/>
+        <property name="hRACityType" column="HRACITY_TYPE"/>
+        <property name="hRAfromDate" column="HRAFROM_DATE"/>
+        <property name="hRAtoDate" column="HRATO_DATE"/>
+        <property name="hRAstartingScaleAmt" column="HRA_PERCENTAGE"/>
+        <property name="hRAincrementAmt" column="HRA_MAX_AMOUNT"/>               
+        <property name="hRAPayable" column="HRA_PAYABLE"/>               
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+        <property name="lastEffectiveDt" column="LAST_EFFECTIVE_DATE"/>                        
+    </result-map>            
+           
+    <mapped-statement name="getSelectHRAllowanceTO" result-map="getHRAllowanceTOResult" >
+        SELECT * FROM HRA_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED' AND HRAGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,HRAFROM_DATE,(TO_NUMBER(HRASL_NO)) 
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectHRAllowanceEditTO" result-map="getHRAllowanceTOResult" >
+        SELECT * FROM HRA_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND HRAGRADE = #GRADE:VARCHAR# AND HRAFROM_DATE = #FROM_DATE:DATE# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,HRAFROM_DATE,(TO_NUMBER(HRASL_NO)) 
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeHRAllowance" result-class = "java.util.HashMap">
+        UPDATE HRA_ALLOWANCE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND HRAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <!--   AND TEMP_SL_NO = #TEMP_SL_NO# -->
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusDeletedasExistingRecHRA" result-class = "java.util.HashMap">
+        UPDATE HRA_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        HRAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND HRAFROM_DATE = #FROM_DATE:DATE# AND 
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMaxofSlNoHRA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(HRASL_NO),0) AS SL_NO FROM HRA_ALLOWANCE 
+    </mapped-statement>
+        
+<!-- =============================TA====================================================== -->
+    <mapped-statement name="insertTAllowanceTO" inline-parameters="true">
+        INSERT INTO TA_ALLOWANCE (TASL_NO,TAGRADE,TAFROM_DATE,TATO_DATE,TA_TYPE,BASIC_AMTUPTO,CONV_PERMONTH,
+        BASIC_AMT_BEYOND,CONVEYANCE_AMT,NOOF_LITRES_PERMONTH,PRICE_PERLITRE,TOTAL_CONV_AMT,STATUS,STATUS_BY,STATUS_DATE,
+        AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO
+        )values(
+        #tAslNo:VARCHAR#,#tAgrade:VARCHAR#,#tAfromDate:DATE#,#tAtoDate:DATE#,#taType:VARCHAR#,
+        #taBasicAmtUpto:VARCHAR#,#tAConveyancePerMonth:VARCHAR#,#taBasicAmtBeyond:VARCHAR#,#tAConveyanceAmt:VARCHAR#,
+        #tANoOflitresPerMonth:VARCHAR#,#tAPricePerLitre:VARCHAR#,#tATotalConveyanceAmt:VARCHAR#,#status:VARCHAR#,
+        #statusBy:VARCHAR#,#statusDate:DATE#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#,
+        #branchCode:VARCHAR#,#tempSlNo:NUMBER#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateTAllowanceTO" inline-parameters="true">
+        UPDATE TA_ALLOWANCE SET BASIC_AMTUPTO = #taBasicAmtUpto:VARCHAR#,CONV_PERMONTH = #tAConveyancePerMonth:VARCHAR#,
+        BASIC_AMT_BEYOND = #taBasicAmtBeyond:VARCHAR#,CONVEYANCE_AMT = #tAConveyanceAmt:VARCHAR#,
+        NOOF_LITRES_PERMONTH = #tANoOflitresPerMonth:VARCHAR#,PRICE_PERLITRE = #tAPricePerLitre:VARCHAR#,
+        TOTAL_CONV_AMT = #tATotalConveyanceAmt:VARCHAR#,STATUS = #status:VARCHAR# WHERE TASL_NO = #tAslNo:VARCHAR# AND 
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED' AND
+        TAGRADE =  #tAgrade:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deletetTAllowanceTO" inline-parameters="true">
+           <!-- DELETE FROM TA_ALLOWANCE WHERE TASL_NO = #tAslNo:VARCHAR# AND TEMP_SL_NO = #tempSlNo:NUMBER#-->
+        UPDATE TA_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE TASL_NO = #tAslNo:VARCHAR# AND
+        TAGRADE =  #tAgrade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+
+    <result-map name="getTAllowanceTOResult" class="com.see.truetransact.transferobject.common.TAllowanceTO">
+        <property name="tAslNo" column="TASL_NO"/>
+        <property name="tAgrade" column="TAGRADE"/>
+        <property name="tAfromDate" column="TAFROM_DATE"/>
+        <property name="tAtoDate" column="TATO_DATE"/>
+        <property name="taType" column="TA_TYPE"/>
+        <property name="taBasicAmtUpto" column="BASIC_AMTUPTO"/>                           
+        <property name="tAConveyancePerMonth" column="CONV_PERMONTH"/>
+        <property name="taBasicAmtBeyond" column="BASIC_AMT_BEYOND"/>               
+        <property name="tAConveyanceAmt" column="CONVEYANCE_AMT"/> 
+        <property name="tANoOflitresPerMonth" column="NOOF_LITRES_PERMONTH"/>
+        <property name="tAPricePerLitre" column="PRICE_PERLITRE"/>               
+        <property name="tATotalConveyanceAmt" column="TOTAL_CONV_AMT"/>               
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+    </result-map>            
+           
+    <mapped-statement name="getSelectTAllowanceTO" result-map="getTAllowanceTOResult" >
+        SELECT * FROM TA_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED' AND TAGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,TAFROM_DATE,(TO_NUMBER(TASL_NO))
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectTAllowanceEditTO" result-map="getTAllowanceTOResult" >
+        SELECT * FROM TA_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND TAGRADE = #GRADE:VARCHAR# AND TAFROM_DATE = #FROM_DATE:DATE# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,TAFROM_DATE,(TO_NUMBER(TASL_NO))
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeTAllowance" result-class = "java.util.HashMap">
+        UPDATE TA_ALLOWANCE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND TAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <!--AND TEMP_SL_NO = #TEMP_SL_NO#-->
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusDeletedasExistingRecTA" result-class = "java.util.HashMap">
+        UPDATE TA_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        TAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND TAFROM_DATE = #FROM_DATE:DATE# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+                
+    <mapped-statement name="getSelectMaxofSlNoTA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(TASL_NO),0) AS SL_NO FROM TA_ALLOWANCE 
+    </mapped-statement>
+        
+<!-- =============================MA====================================================== -->
+
+    <mapped-statement name="insertMAllowanceTO" inline-parameters="true">
+        INSERT INTO MA_ALLOWANCE (MASL_NO,MAGRADE,MAFROM_DATE,MATO_DATE,MAAMOUNT,STATUS,STATUS_BY,STATUS_DATE,
+        AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO
+        )values(
+        #mAslNo:VARCHAR#,#mAgrade:VARCHAR#,#mAfromDate:DATE#,#mAtoDate:DATE#,#mAAmount:VARCHAR#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,
+        #authorizeDate:DATE#,#branchCode:VARCHAR#,#tempSlNo:NUMBER#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateMAllowanceTO" inline-parameters="true">
+        UPDATE MA_ALLOWANCE SET MAAMOUNT = #mAAmount:VARCHAR#,STATUS = #status:VARCHAR# WHERE 
+        MASL_NO = #mAslNo:VARCHAR# AND AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED' AND 
+        MAGRADE = #mAgrade:VARCHAR#
+    </mapped-statement> 
+
+    <mapped-statement name="deletetMAllowanceTO" inline-parameters="true">
+            <!--DELETE FROM MA_ALLOWANCE WHERE MASL_NO = #mAslNo:VARCHAR# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE MA_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE# WHERE 
+        MASL_NO = #mAslNo:VARCHAR# AND 
+        MAGRADE = #mAgrade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+
+    <result-map name="getMAllowanceTOResult" class="com.see.truetransact.transferobject.common.MAllowanceTO">
+        <property name="mAslNo" column="MASL_NO"/>
+        <property name="mAgrade" column="MAGRADE"/>
+        <property name="mAfromDate" column="MAFROM_DATE"/>
+        <property name="mAtoDate" column="MATO_DATE"/>
+        <property name="mAAmount" column="MAAMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+    </result-map>            
+        
+    <mapped-statement name="getSelectMAllowanceTO" result-map="getMAllowanceTOResult" >
+        SELECT * FROM MA_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED' AND MAGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,MAFROM_DATE,(TO_NUMBER(MASL_NO))
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectMAllowanceEditTO" result-map="getMAllowanceTOResult" >
+        SELECT * FROM MA_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND MAGRADE = #GRADE:VARCHAR# AND MAFROM_DATE = #FROM_DATE:DATE# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,MAFROM_DATE,(TO_NUMBER(MASL_NO))
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeMAllowance" result-class = "java.util.HashMap">
+        UPDATE MA_ALLOWANCE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND MAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <!--AND TEMP_SL_NO = #TEMP_SL_NO#-->
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusDeletedasExistingRecMA" result-class = "java.util.HashMap">
+        UPDATE MA_ALLOWANCE SET STATUS = #STATUS:VARCHAR#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        MAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND MAFROM_DATE = #FROM_DATE:DATE# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>        
+        
+    <mapped-statement name="getSelectMaxofSlNoMA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(MASL_NO),0) AS SL_NO FROM MA_ALLOWANCE 
+    </mapped-statement>
+        
+<!-- =============================OA==================================================================================== -->
+    <mapped-statement name="insertOAllowanceTO" inline-parameters="true">
+        INSERT INTO OTHER_ALLOWANCE (OASL_NO,OAGRADE,OAFROM_DATE,OATO_DATE,OALLOWANCE_TYPE,OAPARAMETER_BASEDON,
+        OASUB_PARAMETER,OATYPE,OAFIXED_AMT,OAPERCENTAGE_VALUE,OAMAXIMUM_AMT,STATUS,STATUS_BY,STATUS_DATE,
+        AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DATE,BRANCH_CODE,TEMP_SL_NO,BASED_ON_PARAMETER
+        )values(
+        #oAslNo:NUMBER#,#oAgrade:VARCHAR#,#oAfromDate:DATE#,#oAtoDate:DATE#,#oAllowanceType:VARCHAR#,#oAParameterBasedOn:VARCHAR#,
+        #oASubParameter:VARCHAR#,#oAType:VARCHAR#,#oAFixedAmount:NUMBER#,#oAPercentageValue:NUMBER#,#oAMaximumPerAmt:NUMBER#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDate:DATE#,
+        #branchCode:VARCHAR#,#tempSlNo:NUMBER#,#oAbasedOnParameter:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateOAllowanceTO" inline-parameters="true">
+        UPDATE OTHER_ALLOWANCE SET 
+        OAGRADE = #oAgrade:VARCHAR#,
+        OAFIXED_AMT = #oAFixedAmount:NUMBER#,
+        OAFROM_DATE = #oAfromDate:DATE#,
+        OATO_DATE = #oAtoDate:DATE#,
+        OASUB_PARAMETER = #oASubParameter:VARCHAR#,
+        OATYPE = #oAType:VARCHAR#,
+        OAPERCENTAGE_VALUE = #oAPercentageValue:NUMBER#,
+        OAMAXIMUM_AMT = #oAMaximumPerAmt:NUMBER#,
+        OAPARAMETER_BASEDON = #oAParameterBasedOn:VARCHAR#,
+        BASED_ON_PARAMETER = #oAbasedOnParameter:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#  WHERE 
+        OASL_NO = #oAslNo:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED' AND
+        OAGRADE = #oAgrade:VARCHAR#
+    </mapped-statement> 
+
+    <mapped-statement name="deletetOAllowanceTO" inline-parameters="true">
+            <!--DELETE FROM OTHER_ALLOWANCE WHERE OASL_NO = #oAslNo:VARCHAR# AND TEMP_SL_NO = #tempSlNo:NUMBER# -->
+        UPDATE OTHER_ALLOWANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE# WHERE 
+        OASL_NO = #oAslNo:VARCHAR# AND
+        OAGRADE = #oAgrade:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+
+    <result-map name="getOAllowanceTOResult" class="com.see.truetransact.transferobject.common.OtherAllowanceTO">
+        <property name="oAslNo" column="OASL_NO"/>
+        <property name="oAgrade" column="OAGRADE"/>
+        <property name="oAfromDate" column="OAFROM_DATE"/>
+        <property name="oAtoDate" column="OATO_DATE"/>
+        <property name="oAllowanceType" column="OALLOWANCE_TYPE"/>
+        <property name="oAParameterBasedOn" column="OAPARAMETER_BASEDON"/>
+        <property name="oASubParameter" column="OASUB_PARAMETER"/>
+        <property name="oAType" column="OATYPE"/>
+        <property name="oAFixedAmount" column="OAFIXED_AMT"/>
+        <property name="oAPercentageValue" column="OAPERCENTAGE_VALUE"/>
+        <property name="oAMaximumPerAmt" column="OAMAXIMUM_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+        <property name="oAbasedOnParameter" column="BASED_ON_PARAMETER"/>
+    </result-map>            
+        
+    <mapped-statement name="getSelectOAllowanceTO" result-map="getOAllowanceTOResult" >
+        SELECT * FROM OTHER_ALLOWANCE WHERE AUTHORIZE_STATUS IS NULL AND STATUS!='DELETED' AND OAGRADE = #GRADE:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,OAFROM_DATE,(TO_NUMBER(OASL_NO))
+    </mapped-statement>      
+           
+    <mapped-statement name="getSelectOAllowanceEditTO" result-map="getOAllowanceTOResult" >
+        SELECT * FROM OTHER_ALLOWANCE WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND OAGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,OAFROM_DATE,(TO_NUMBER(OASL_NO))
+    </mapped-statement>      
+        
+    <mapped-statement name="updateAuthorizeOAllowance" result-class = "java.util.HashMap">
+        UPDATE OTHER_ALLOWANCE SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE#,STATUS = #STATUS:VARCHAR# WHERE AUTHORIZE_STATUS IS NULL AND 
+        STATUS!='DELETED' AND OAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusDeletedasExistingRecOA" result-class = "java.util.HashMap">
+        UPDATE OTHER_ALLOWANCE SET STATUS = #STATUS#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# WHERE 
+        OAGRADE = #GRADE:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND OAFROM_DATE = #FROM_DATE:DATE# AND 
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMaxofSlNoOA" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(OASL_NO),0) AS SL_NO FROM OTHER_ALLOWANCE 
+    </mapped-statement>
+<!-- ================================================================================================================= -->                
+    <mapped-statement name="getSelectAuthRecOAllowanceTO" result-map="getOAllowanceTOResult" >
+        SELECT * FROM OTHER_ALLOWANCE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND OAGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,OAFROM_DATE,(TO_NUMBER(OASL_NO))
+    </mapped-statement>      
+
+    <mapped-statement name="getSelectAuthRecMAllowanceTO" result-map="getMAllowanceTOResult" >
+        SELECT * FROM MA_ALLOWANCE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND MAGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,MAFROM_DATE,(TO_NUMBER(MASL_NO))
+    </mapped-statement>      
+
+    <mapped-statement name="getSelectAuthRecTAllowanceTO" result-map="getTAllowanceTOResult" >
+        SELECT * FROM TA_ALLOWANCE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND TAGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,TAFROM_DATE,(TO_NUMBER(TASL_NO))
+    </mapped-statement>      
+
+    <mapped-statement name="getSelectAuthRecHRAllowanceTO" result-map="getHRAllowanceTOResult" >
+        SELECT * FROM HRA_ALLOWANCE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND HRAGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,HRAFROM_DATE,(TO_NUMBER(HRASL_NO)) 
+    </mapped-statement>      
+
+    <mapped-statement name="getSelectAuthRecCAllowanceTO" result-map="getCCAllowanceTOResult" >
+        SELECT * FROM CC_ALLOWANCE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND CCGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,CCFROM_DATE,(TO_NUMBER(CCSL_NO))             
+    </mapped-statement>      
+
+    <mapped-statement name="getSelectAuthRecDearnessAllowanceTO" result-map="getDearnessAllowanceTOResult" >
+        SELECT * FROM DEARNESS_ALLOWANCE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND DAGRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,DAFROM_DATE,(TO_NUMBER(DASL_NO))
+    </mapped-statement>      
+
+    <mapped-statement name="getSelectAuthRecSalaryStructureTO" result-map="getSalaryStructureTOResult" >
+        SELECT * FROM SALARY_STRUCTURE WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND GRADE = #GRADE:VARCHAR# AND 
+        STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY TEMP_SL_NO,FROM_DATE,(TO_NUMBER(SL_NO))            
+    </mapped-statement>
+        
+        
+        
+<!-- ========================== Queries for EmpSalaryStructure Starts from here ============================================= -->   
+     
+    <mapped-statement name="SalaryStructure.getZonalData" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT ZONAL_ID FROM BRANCH_MASTER
+        WHERE AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="SalaryStructure.getBranchData" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT BRANCH_CODE FROM BRANCH_MASTER
+        WHERE AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="SalaryStructure.getPopulationData" result-class="java.util.LinkedHashMap" >
+        SELECT LOOKUP_REF_ID FROM LOOKUP_MASTER
+        WHERE LOOKUP_ID = 'CITY_TYPE'
+        AND (STATUS = 'CREATED' OR STATUS = 'MOFIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>
+    <mapped-statement name="SalaryStructure.getGradeData" result-class="java.util.LinkedHashMap" >
+        SELECT LOOKUP_REF_ID FROM LOOKUP_MASTER
+        WHERE LOOKUP_ID = 'SALARY_STRUCTURE'
+        AND (STATUS = 'CREATED' OR STATUS = 'MOFIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>
+        <!-- Use EmpSalaryStructureDAO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmpSalaryStructAllowance" inline-parameters="true">
+        INSERT INTO SALARY_ALLOWANCE_TYPE
+        (ALLOWANCE_ID, ALLOWANCE_TYPE, EARNING_OR_DEDUCTION, STATUS, AUTHORIZED_BY, AUTHORIZED_DT, AUTHORIZE_STATUS, STATUS_BY, STATUS_DT,USING_BASIC,PERCENT_OR_FIXED
+        ) VALUES (
+        #allowanceId:VARCHAR#, #allowanceType:VARCHAR#, #earnOrDed:VARCHAR#, #status:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #authorizeStatus:VARCHAR#,#statusBy:VARCHAR#, #statusDt:DATE#,#usingBasic:VARCHAR#,#percentOrFixed:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="insertSalaryZonal" result-class="java.util.HashMap">
+        INSERT INTO SALARY_ZONAL(ALLOWANCE_ID ,ZONAL_ID,STATUS) VALUES (#ALLOWANCE_ID:VARCHAR#,#ZONAL_ID:VARCHAR#,#STATUS:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="insertSalaryBranch" result-class="java.util.HashMap">
+        INSERT INTO SALARY_BRANCH(ALLOWANCE_ID,ZONAL_ID,BRANCH_ID,STATUS) VALUES (#ALLOWANCE_ID#,#ZONAL_ID:VARCHAR#,#BRANCH_ID:VARCHAR#,#STATUS:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="insertSalaryGrade" result-class="java.util.HashMap">
+        INSERT INTO SALARY_GRADE(ALLOWANCE_ID,BRANCH_ID,GRADE_ID,STATUS)  VALUES (#ALLOWANCE_ID#,#BRANCH_ID:VARCHAR#,#GRADE_ID:VARCHAR#,#STATUS:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="insertSalaryPopulationType" result-class="java.util.HashMap">
+        INSERT INTO SALARY_POPULATION_TYPE(ALLOWANCE_ID,BRANCH_ID,POPULATION_TYPE,STATUS) VALUES (#ALLOWANCE_ID:VARCHAR#,#BRANCH_ID:VARCHAR#,#POPULATION_TYPE:VARCHAR#,#STATUS:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="insertEmpSalaryDetailsTO" inline-parameters="true">
+        INSERT INTO SALARY_DETAILS
+        (ALLOWANCE_ID,FROM_DATE,TO_DATE,FROM_AMOUNT,TO_AMOUNT,AMT_OR_PER_ALLOWANCE,MAX_AMOUNT,STATUS,ALLOWANCE_TYPE,SAL_DETAILS_ID)
+        VALUES 
+        (#allowanceId:VARCHAR#, #fromDate:DATE#, #toDate:DATE#,#fromAmount:VARCHAR#, #toAmount:VARCHAR#,#amtOrPerAllowance:VARCHAR#,#maxAmount:VARCHAR#,#status:VARCHAR#,#allowanceType:VARCHAR#,#slNo:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="updateEmpSalaryDetailsTO" inline-parameters="true">
+        UPDATE  SALARY_DETAILS SET 
+        FROM_DATE =  #fromDate:DATE#,
+        TO_DATE =  #toDate:DATE#,
+        FROM_AMOUNT =  #fromAmount:VARCHAR#,
+        TO_AMOUNT =  #toAmount:VARCHAR#, 
+        AMT_OR_PER_ALLOWANCE =  #amtOrPerAllowance:VARCHAR#,
+        MAX_AMOUNT =  #maxAmount:VARCHAR#,
+        ALLOWANCE_TYPE = #allowanceType:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE SAL_DETAILS_ID =  #slNo:VARCHAR#
+        AND ALLOWANCE_ID = #allowanceId:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="updateSalaryAllowanceType" inline-parameters="true">
+        UPDATE SALARY_ALLOWANCE_TYPE SET
+        STATUS = #status:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        AUTHORIZED_BY =  #authorizedBy:VARCHAR#,  
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+    <dynamic-mapped-statement name="getSelectSalDetailsViewList" result-class="java.util.LinkedHashMap" >
+        SELECT ALLOWANCE_ID,ALLOWANCE_TYPE,EARNING_OR_DEDUCTION,USING_BASIC,PERCENT_OR_FIXED,AUTHORIZE_STATUS FROM SALARY_ALLOWANCE_TYPE WHERE STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ALLOWANCE_ID">
+                    ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR#
+                           <!-- CUST_ID = #CUSTOMER ID#-->
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectSalDetailsList" result-class="java.util.LinkedHashMap" >
+        SELECT ALLOWANCE_ID,ALLOWANCE_TYPE,EARNING_OR_DEDUCTION FROM SALARY_ALLOWANCE_TYPE WHERE STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ALLOWANCE_ID">
+                    ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR#
+                           <!-- CUST_ID = #CUSTOMER ID#-->
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    <mapped-statement name="getSelectSalDetailsAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT ALLOWANCE_ID,ALLOWANCE_TYPE,EARNING_OR_DEDUCTION FROM SALARY_ALLOWANCE_TYPE SAT
+        WHERE  AUTHORIZE_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = SAT.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# AND  STATUS != 'DELETED'
+    </mapped-statement>
+            
+    <mapped-statement name="authSalaryAllowanceType" result-class="java.util.HashMap">
+        UPDATE SALARY_ALLOWANCE_TYPE SET  
+        AUTHORIZED_DT = #AUTHORIZED_DT:DATE#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#
+        WHERE ALLOWANCE_ID = #ALLOWANCE_ID:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getSelectSalaryDetails" result-map="getEmpSalaryStructureTOResult">
+        SELECT * FROM SALARY_DETAILS WHERE ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR# AND STATUS NOT IN ('DELETED') ORDER BY SAL_DETAILS_ID
+    </mapped-statement>
+    <mapped-statement name="getSelectSalaryBranch" result-class="java.util.HashMap">
+        SELECT DISTINCT(BRANCH_ID) FROM SALARY_BRANCH WHERE ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getSelectSalaryZonal" result-class="java.util.HashMap">
+        SELECT DISTINCT(ZONAL_ID) FROM SALARY_ZONAL WHERE ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getSelectSalaryGrade" result-class="java.util.HashMap">
+        SELECT DISTINCT(GRADE_ID) FROM SALARY_GRADE WHERE ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getSelectSalaryPopulation" result-class="java.util.HashMap">
+        SELECT DISTINCT(POPULATION_TYPE) FROM SALARY_POPULATION_TYPE WHERE ALLOWANCE_ID =#ALLOWANCE_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpSalaryStructureTO object (JavaBean) properties -->
+    <result-map name="getEmpSalaryStructureTOResult" class="com.see.truetransact.transferobject.common.EmpSalaryStructureTO">
+        <property name="allowanceId" column="ALLOWANCE_ID"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+		<!--<property name="usingBasic" column="USING_BASIC"/> -->
+        <property name="fromAmount" column="FROM_AMOUNT"/>
+        <property name="toAmount" column="TO_AMOUNT"/>
+		<!--<property name="percentOrFixed" column="PERCENT_OR_FIXED"/> -->
+        <property name="amtOrPerAllowance" column="AMT_OR_PER_ALLOWANCE"/>
+        <property name="maxAmount" column="MAX_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="allowanceType" column="ALLOWANCE_TYPE"/>
+        <property name="slNo" column="SAL_DETAILS_ID"/>
+    </result-map>
+    <mapped-statement name="deleteEmpSalaryDetailsTO" inline-parameters="true">
+        UPDATE SALARY_DETAILS SET 
+        STATUS = #status:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR# AND STATUS !='DELETED' 
+        AND SAL_DETAILS_ID = #slNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteEmpSalaryAllowanceType" inline-parameters="true">
+        UPDATE SALARY_ALLOWANCE_TYPE SET 
+        STATUS = #status:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR# AND STATUS !='DELETED' 
+    </mapped-statement>
+    <mapped-statement name="deleteEmpSalaryZonal" inline-parameters="true">
+        UPDATE SALARY_ZONAL SET 
+        STATUS = #status:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR# AND STATUS !='DELETED' 
+    </mapped-statement>    
+
+    <mapped-statement name="deleteEmpSalaryBranch" inline-parameters="true">
+        UPDATE SALARY_BRANCH SET 
+        STATUS = #status:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR# AND STATUS !='DELETED' 
+    </mapped-statement> 
+    
+    <mapped-statement name="deleteEmpSalaryGrade" inline-parameters="true">
+        UPDATE SALARY_GRADE SET 
+        STATUS = #status:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR# AND STATUS !='DELETED' 
+    </mapped-statement> 
+    <mapped-statement name="deleteEmpSalPopulationType" inline-parameters="true">
+        UPDATE SALARY_POPULATION_TYPE SET 
+        STATUS = #status:VARCHAR#
+        WHERE ALLOWANCE_ID = #allowanceId:VARCHAR# AND STATUS !='DELETED' 
+    </mapped-statement>
+    <mapped-statement name="selectZonalList" result-class="java.util.HashMap">
+        SELECT ZONAL_ID FROM SALARY_ZONAL WHERE ALLOWANCE_ID = #ALLOWANCE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryZonal" inline-parameters="true">
+        DELETE FROM SALARY_ZONAL WHERE ALLOWANCE_ID = #allowanceId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryBranch" inline-parameters="true">
+        DELETE FROM SALARY_BRANCH WHERE ALLOWANCE_ID = #allowanceId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryGrade" inline-parameters="true">
+        DELETE FROM SALARY_GRADE WHERE ALLOWANCE_ID = #allowanceId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryPopulation" inline-parameters="true">
+        DELETE FROM SALARY_POPULATION_TYPE WHERE ALLOWANCE_ID = #allowanceId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="allowaceIdExistanceCheck"  result-class="java.util.HashMap">
+        SELECT ALLOWANCE_ID FROM SALARY_ALLOWANCE_TYPE WHERE  ALLOWANCE_ID = #ALLOWANCE_ID:VARCHAR#
+    </mapped-statement>
+</sql-map>

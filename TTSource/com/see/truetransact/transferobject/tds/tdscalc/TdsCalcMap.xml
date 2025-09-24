@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TdsCalcTOMap">
+
+	<!-- Use TdsCalcTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTdsCalcTO" inline-parameters="true">
+        INSERT INTO TDS_COLLECTED
+        (TDS_ID, TDS_DT, CUST_ID, PROD_TYPE, PROD_ID, TDS_BASE_AMT, TDS_AMT, IS_SUBMITTED,ACCT_NUM,INT_PAID_DT,TDS_RECIVED_FROM
+        ) VALUES (
+        #tdsId:VARCHAR#, #tdsDt:TIMESTAMP#, #custId:VARCHAR#, #prodType:VARCHAR#, #prodId:VARCHAR#, #tdsBaseAmt:NUMERIC#, #tdsAmt:NUMERIC#, #isSubmitted:VARCHAR#,
+        #acc_num:VARCHAR#,#intPaidDt:TIMESTAMP#,#tdsRecivedAcNo:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getTDSConfigData" result-class="java.util.HashMap" >
+        SELECT CUT_OF_AMT, TDS_PERCENTAGE, INCLUDE_CUTOF,TDS_CR_AC_HD_ID,PAN_PERCENTAGE
+        FROM TDS_CONFIG
+        WHERE (#INT_DATE:DATE# BETWEEN FIN_START_DT AND FIN_END_DT)
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' and CUST_TYPE=#CUST_TYPE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getTDSExceptionData" result-class="java.util.HashMap" >
+        SELECT CERT_REF_NO FROM TDS_EXEMPTION 
+        WHERE CUST_ID = #CUSTID:VARCHAR#
+        AND (#INT_DATE:DATE# BETWEEN EXEM_START_DT AND EXEM_END_DT)
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+
+    <mapped-statement name="Deposit.getRenewalInteres" result-class="java.util.HashMap" >
+        select sum(dss.RENEWAL_INTEREST_PAYABLE)-sum(dss.RENEWAL_INTEREST_PAID) AS RENEWAL_INTEREST_PAID from  
+        DEPOSIT_SUB_ACINFO_SAMENO dss where DSS.DEPOSIT_NO = #ACT_NUM:VARCHAR# AND (AUTHORIZE_STATUS !='REJECTED' OR AUTHORIZE_STATUS ='AUTHORIZED') 
+    </mapped-statement>
+               
+    <dynamic-mapped-statement name="getDepositInterestAmount" result-class="java.util.LinkedHashMap" >
+        SELECT  ACT_NUM,AC_HD_ID,APPL_DT,CUST_ID,INT_AMT,INT_DT,INT_PAID_DATE,INT_RATE,INT_TYPE,IS_TDS_APPLIED,LAST_TDS_DEDUCTED_DT,LAST_TDS_RECIVED_FROM,
+        PAID_INT,PRINCIPLE_AMT,PRODUCT_ID,PRODUCT_TYPE,nvl(TDS_AMT,0) as TDS_AMT ,nvl(TOTAL_INT_BALANCE,0) as TOTAL_INT_BALANCE,nvl(TOTAL_TDS_AMOUNT,0) as TOTAL_TDS_AMOUNT,
+        nvl(TOTAL_TDS_DEDUCTED_FROM_ALL,0) as OTAL_TDS_DEDUCTED_FROM_ALL,
+        TRANS_LOG_ID
+        from DEPOSIT_INTEREST
+        WHERE (IS_TDS_APPLIED != 'Y' OR IS_TDS_APPLIED IS NULL)  AND PAID_INT='CREDIT'
+        AND  not exists(select * from deposit_tds_deduction  where deposit_no||'_1'= act_num and AUTHORIZE_STATUS='AUTHORIZED' and status!='DELETED' )
+        AND INT_PAID_DATE &gt; #LST_TDS_APPL_DT:DATE# 
+        AND INT_PAID_DATE &lt;= #UPTO_TDS_APPL_DT:DATE#
+        and ACT_NUM!=#ACT_NUM:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUSTID">
+                    CUST_ID = #CUSTID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PRODID">
+                    PRODUCT_ID = #PRODID:VARCHAR#
+                    AND PRODUCT_TYPE = #PRODTYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getDepositInterestAmountSameNo" result-class="java.util.LinkedHashMap" >
+        SELECT  ACT_NUM,AC_HD_ID,APPL_DT,CUST_ID,INT_AMT,INT_DT,INT_PAID_DATE,INT_RATE,INT_TYPE,IS_TDS_APPLIED,LAST_TDS_DEDUCTED_DT,LAST_TDS_RECIVED_FROM,
+        PAID_INT,PRINCIPLE_AMT,PRODUCT_ID,PRODUCT_TYPE,nvl(TDS_AMT,0) as TDS_AMT ,nvl(TOTAL_INT_BALANCE,0) as TOTAL_INT_BALANCE,nvl(TOTAL_TDS_AMOUNT,0) as TOTAL_TDS_AMOUNT,
+        nvl(TOTAL_TDS_DEDUCTED_FROM_ALL,0) as OTAL_TDS_DEDUCTED_FROM_ALL,
+        TRANS_LOG_ID
+        from DEPOSIT_INTEREST
+        WHERE (IS_TDS_APPLIED != 'Y' OR IS_TDS_APPLIED IS NULL)  AND PAID_INT='CREDIT'
+        AND INT_PAID_DATE &gt; #LST_TDS_APPL_DT:DATE# 
+        AND INT_PAID_DATE &lt;= #UPTO_TDS_APPL_DT:DATE#
+        and ACT_NUM=#ACT_NUM:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUSTID">
+                    CUST_ID = #CUSTID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PRODID">
+                    PRODUCT_ID = #PRODID:VARCHAR#
+                    AND PRODUCT_TYPE = #PRODTYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+              
+        
+    <dynamic-mapped-statement name="updateDepositInterestTaxApplied" result-class="java.util.LinkedHashMap" >
+        UPDATE DEPOSIT_INTEREST SET 
+        IS_TDS_APPLIED = 'Y',
+        TDS_AMT = #TDS_AMT:NUMBER#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="WHERE" property="CUSTID">
+                    CUST_ID = #CUSTID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="WHERE" property="PRODID">
+                    PRODUCT_ID = #PRODID:VARCHAR#
+                    AND PRODUCT_TYPE = #PRODTYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>  
+<!--       <dynamic-mapped-statement name="getAccountforTDS" result-class="java.util.HashMap" >
+                select DP.BEHAVES_LIKE,da.PROD_ID, c.CUST_TYPE ,
+                DSA.*,NVL((SELECT SUM(TDS_AMT) FROM TDS_COLLECTED WHERE CUST_ID=#CUST_ID#),0) AS TDS_AMT
+                from Customer C,Deposit_sub_acinfo DSA,deposit_acinfo DA ,deposits_product DP WHERE 
+                dp.PROD_ID=da.PROD_ID and da.CUST_ID=c.CUST_ID and da.DEPOSIT_NO=dsa.DEPOSIT_NO and 
+                c.CUST_ID=#CUST_ID# AND (DA.FIFTEENH_DECLARE !='Y' OR C.MEMBERSHIP_CLASS IS NULL)
+                and DP.BEHAVES_LIKE in('CUMMULATIVE','FIXED') AND DSA.MATURITY_DT>#LST_TDS_APPL_DT#
+                AND (DSA.CLOSE_DT IS NULL OR DSA.CLOSE_DT>#LST_TDS_APPL_DT#)
+               </dynamic>
+                 <isParameterPresent>
+                    <isNotNull prepend="AND" property="CLOSEDACC">
+                      dsa.DEPOSIT_NO!=#CLOSEDACC#
+                       
+                    </isNotNull>
+                </isParameterPresent>
+                     
+        </dynamic-mapped-statement>  -->
+        
+    <dynamic-mapped-statement name="getAccountforTDS" result-class="java.util.HashMap" >
+               <!-- select DP.BEHAVES_LIKE,da.PROD_ID, c.CUST_TYPE ,
+                DSA.*,NVL((SELECT SUM(TDS_AMT) FROM TDS_COLLECTED WHERE dsa.DEPOSIT_NO||'_'||dsa.DEPOSIT_SUB_NO=ACCT_NUM),0) AS TDS_AMT
+                from Customer C,Deposit_sub_acinfo DSA,deposit_acinfo DA ,deposits_product DP WHERE 
+                dp.PROD_ID=da.PROD_ID and da.CUST_ID=c.CUST_ID and da.DEPOSIT_NO=dsa.DEPOSIT_NO and 
+                c.CUST_ID=#CUST_ID# AND DA.FIFTEENH_DECLARE !='Y' AND (C.MEMBERSHIP_CLASS not in('ASSOCIATE','REGULAR','NOMINAL') OR  C.MEMBERSHIP_CLASS  is null)
+                and DP.BEHAVES_LIKE in('CUMMULATIVE','FIXED') AND DSA.MATURITY_DT>#LST_TDS_APPL_DT#
+                AND (DSA.CLOSE_DT IS NULL OR DSA.CLOSE_DT>#LST_TDS_APPL_DT#)-->
+        SELECT dp.behaves_like, da.prod_id, c.cust_type, dsa.deposit_no,
+        dsa.deposit_sub_no, dsa.deposit_dt, dsa.deposit_period_yy,
+        dsa.deposit_period_mm, dsa.deposit_period_dd, dsa.deposit_amt,
+        dsa.intpay_mode, dsa.intpay_freq, dsa.maturity_dt, dsa.rate_of_int,
+        dsa.maturity_amt, dsa.tot_int_amt, dsa.periodic_int_amt, dsa.status,
+        dsa.clear_balance, dsa.unclear_balance, dsa.available_balance,
+        dsa.close_dt, dsa.close_by, dsa.create_by, dsa.authorize_dt,
+        dsa.authorize_by, dsa.authorize_status, dsa.shadow_lien,
+        dsa.shadow_freeze, dsa.substatus_by, dsa.substatus_dt, dsa.acct_status,
+        DECODE(dsa.last_int_appl_dt,NULL,DSA.DEPOSIT_DT,dsa.last_int_appl_dt) AS last_int_appl_dt,                 
+        dsa.total_int_credit, dsa.total_int_drawn,
+        dsa.total_int_debit, dsa.total_installments, dsa.total_install_paid,
+        dsa.payment_day, dsa.install_type, dsa.payment_type, dsa.shadow_debit,
+        dsa.shadow_credit, dsa.total_balance, dsa.last_trans_dt, dsa.penal_int,
+        dsa.int_pay_prod_type, dsa.int_pay_prod_id, dsa.int_pay_acc_no,
+        dsa.next_int_appl_dt,              
+        DECODE(dsa.lst_prov_dt,NULL,DSA.DEPOSIT_DT,DSA.lst_prov_dt) AS lst_prov_dt,   
+        dsa.curr_rate_of_int,
+        dsa.penal_rate, dsa.sb_int_amt, dsa.interest_amt, dsa.delayed_month,
+        dsa.delayed_amount, dsa.sb_period_run, dsa.calender_freq,
+        dsa.calender_date, dsa.calender_day, dsa.flexi_status,
+        NVL ((SELECT SUM (tds_amt)
+        FROM tds_collected
+        WHERE dsa.deposit_no || '_' || dsa.deposit_sub_no = acct_num),
+        0
+        ) AS tds_amt    ,
+           
+           <!--case when deposit_dt &lt; #LST_TDS_APPL_DT#
+           then (select amt from deposit_dayend_balance where dsa.deposit_no=act_num and day_end_dt=
+           (select max(day_end_dt) from deposit_dayend_balance where dsa.deposit_no=act_num and day_end_dt &lt;= #LST_TDS_APPL_DT#))
+           else deposit_amt
+           end as out_standing,-->
+        DSA.DEPOSIT_NO||'_1' AS ACT_NUM1
+        FROM customer c,
+        deposit_sub_acinfo dsa,
+        deposit_acinfo da,
+        deposits_product dp
+        WHERE dp.prod_id = da.prod_id
+        AND da.cust_id = c.cust_id
+        AND da.deposit_no = dsa.deposit_no
+               <!-- AND dsa.acct_status != 'CLOSED'-->
+        AND c.cust_id = #CUST_ID:VARCHAR#
+        AND (   c.membership_class NOT IN ('ASSOCIATE', 'REGULAR', 'NOMINAL','MEMBER')
+        OR c.membership_class IS NULL
+        )
+        AND dp.behaves_like IN ('CUMMULATIVE', 'FIXED')
+        AND dsa.maturity_dt &gt; #LST_TDS_APPL_DT:DATE#
+        AND (dsa.close_dt IS NULL OR dsa.close_dt &gt; #LST_TDS_APPL_DT:DATE#)
+               <!-- UNION ALL
+                SELECT dp.behaves_like, da.prod_id, c.cust_type, dsa.deposit_no,
+                dsa.deposit_sub_no, dsa.deposit_dt, dsa.deposit_period_yy,
+                dsa.deposit_period_mm, dsa.deposit_period_dd, dsa.deposit_amt,
+                dsa.intpay_mode, dsa.intpay_freq, dsa.maturity_dt, dsa.rate_of_int,
+                dsa.maturity_amt, dsa.tot_int_amt, dsa.periodic_int_amt, dsa.status,
+                dsa.clear_balance, dsa.unclear_balance, dsa.available_balance,
+                dsa.close_dt, dsa.close_by, dsa.create_by, dsa.authorize_dt,
+                dsa.authorize_by, dsa.authorize_status, dsa.shadow_lien,
+                dsa.shadow_freeze, dsa.substatus_by, dsa.substatus_dt, dsa.acct_status,
+                dsa.last_int_appl_dt, dsa.total_int_credit, dsa.total_int_drawn,
+                dsa.total_int_debit, dsa.total_installments, dsa.total_install_paid,
+                dsa.payment_day, dsa.install_type, dsa.payment_type, dsa.shadow_debit,
+                dsa.shadow_credit, dsa.total_balance, dsa.last_trans_dt, dsa.penal_int,
+                dsa.int_pay_prod_type, dsa.int_pay_prod_id, dsa.int_pay_acc_no,
+                dsa.next_int_appl_dt, 
+                 DECODE(dsa.lst_prov_dt,NULL,DSA.DEPOSIT_DT,DSA.lst_prov_dt) AS lst_prov_dt,   
+                dsa.curr_rate_of_int,
+                dsa.penal_rate, dsa.sb_int_amt, dsa.interest_amt, dsa.delayed_month,
+                dsa.delayed_amount, dsa.sb_period_run, dsa.calender_freq,
+                dsa.calender_date, dsa.calender_day, dsa.flexi_status,
+                NVL ((SELECT SUM (tds_amt)
+                FROM tds_collected
+                WHERE dsa.deposit_no || '_' || dsa.deposit_sub_no = acct_num),
+                0
+                ) AS tds_amt ,
+           
+         case when deposit_dt &lt; #LST_TDS_APPL_DT#
+           then (select amt from deposit_dayend_balance where dsa.deposit_no=act_num and day_end_dt=
+           (select max(day_end_dt) from deposit_dayend_balance where dsa.deposit_no=act_num and day_end_dt &lt;= #LST_TDS_APPL_DT#))
+           else deposit_amt
+           end as out_standing
+                FROM customer c,
+                deposit_sub_acinfo_sameno dsa,
+                deposit_acinfo da,
+                deposits_product dp
+                WHERE dp.prod_id = da.prod_id
+                AND da.cust_id = c.cust_id
+                AND da.deposit_no = dsa.deposit_no
+                AND c.cust_id = #CUST_ID#
+                AND (   c.membership_class NOT IN ('ASSOCIATE', 'REGULAR', 'NOMINAL','MEMBER')
+                OR c.membership_class IS NULL
+                )
+                AND dp.behaves_like IN ('CUMMULATIVE', 'FIXED')
+                AND dsa.maturity_dt &gt; #LST_TDS_APPL_DT#
+                AND (dsa.close_dt IS NULL OR dsa.close_dt &gt; #LST_TDS_APPL_DT#)-->
+
+
+
+
+
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLOSEDACC">
+                    dsa.DEPOSIT_NO!=#CLOSEDACC:VARCHAR#
+                       
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>  
+    <mapped-statement name="getAccountclosedforTDS" result-class="java.util.HashMap" >
+        select DP.BEHAVES_LIKE,da.PROD_ID, c.CUST_TYPE ,
+        DSA.*,NVL((SELECT SUM(TDS_AMT) FROM TDS_COLLECTED WHERE dsa.DEPOSIT_NO||'_'||dsa.DEPOSIT_SUB_NO=ACCT_NUM),0) AS TDS_AMT
+        from Customer C,Deposit_sub_acinfo DSA,deposit_acinfo DA ,deposits_product DP WHERE 
+        dp.PROD_ID=da.PROD_ID and da.CUST_ID=c.CUST_ID and da.DEPOSIT_NO=dsa.DEPOSIT_NO and 
+        c.CUST_ID=#CUST_ID:VARCHAR# AND DA.FIFTEENH_DECLARE !='Y' AND (C.MEMBERSHIP_CLASS not in('ASSOCIATE','REGULAR','NOMINAL') OR  C.MEMBERSHIP_CLASS  is null)
+        and DP.BEHAVES_LIKE in('CUMMULATIVE','FIXED') AND DSA.MATURITY_DT>#LST_TDS_APPL_DT:DATE#
+        AND (DSA.CLOSE_DT IS NULL OR DSA.CLOSE_DT>#LST_TDS_APPL_DT:DATE#)
+        and dsa.DEPOSIT_NO=#CLOSEDACC:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="getLastTDSApplDT" result-class="java.util.HashMap" >
+        select LAST_APPL_DT from  deposit_provision where BRANCH_CODE=#BRANCH_CODE:VARCHAR# and REMARKS=#REMARKS:VARCHAR# 
+        
+    </mapped-statement>
+         
+         
+    <mapped-statement name="getTotalIntpaidToAccount" result-class="java.util.HashMap" >
+        <!-- select nvl(sum(int_amt),0)  AS INT_PAID_AMT from deposit_interest 
+        where INT_PAID_DATE &gt; #LST_TDS_APPL_DT:DATE#  
+        AND  INT_PAID_DATE  &lt;=  #UPTO_TDS_APPL_DT:DATE#
+        AND ACT_NUM=#DEPOSIT_NO:VARCHAR# AND PAID_INT='CREDIT' -->
+        
+        SELECT NVL (SUM (di.int_amt), 0) AS INT_PAID_AMT
+        FROM deposit_interest di
+        WHERE di.INT_PAID_DATE > GET_LAST_FINENDDATE(#CURR_DT:DATE#) + 1
+        AND di.ACT_NUM = #DEPOSIT_NO:VARCHAR#
+        AND di.PAID_INT = 'CREDIT'          
+        
+    </mapped-statement>
+    <mapped-statement name="getTotalIntpaidToAccountAndDebitAcNo" result-class="java.util.HashMap" >
+        select DEBIT_ACCT_NO, DEBIT_PROD_TYPE,DEBIT_PROD_ID,AVAILABLE_BALANCE 
+        from  DEPOSIT_TDS_DEDUCTION  DTD , ACT_MASTER  AM
+        where AM.ACT_NUM=DTD.DEBIT_ACCT_NO AND DTD.DEPOSIT_NO||'_1'=#ACT_NUM:VARCHAR#
+        and am.ACT_STATUS_ID!='CLOSED' and dtd.AUTHORIZE_STATUS='AUTHORIZED'
+        and nvl(AVAILABLE_BALANCE ,0) &gt; 0
+    </mapped-statement>
+         
+    <mapped-statement name="updateTdSApplied" inline-parameters="true">
+        UPDATE deposit_interest 
+        SET IS_TDS_APPLIED=#IS_TDS_APPLIED:VARCHAR#,
+        TDS_AMT=#TDS_AMT:NUMBER#,
+        TOTAL_TDS_DEDUCTED_FROM_ALL =#TOTAL_TDS_DEDUCTED_FROM_ALL:NUMBER#,  
+        TOTAL_TDS_AMOUNT =#TOTAL_TDS_AMOUNT:VARCHAR# , 
+        LAST_TDS_DEDUCTED_DT=#LAST_TDS_DEDUCTED_DT:DATE#,    
+        LAST_TDS_RECIVED_FROM=#LAST_TDS_RECIVED_FROM:VARCHAR#   
+        WHERE 
+        CUST_ID=#CUST_ID:VARCHAR# AND PAID_INT='CREDIT'
+        AND INT_DT = #INT_DT:DATE# 
+        AND APPL_DT =#APPL_DT:DATE#
+        AND ACT_NUM=#ACT_NUM:VARCHAR#
+        AND TRANS_LOG_ID=#TRANS_LOG_ID:VARCHAR#
+        AND INT_PAID_DATE=#INT_PAID_DATE:DATE#
+        AND INT_AMT=#INT_AMT:NUMBER#
+            
+    </mapped-statement>
+    <mapped-statement name="getDepositRenwal" result-class="java.util.HashMap" >
+        select da.RENEWAL_FROM_DEPOSIT,dpr.MIN_DAYS_BKDT_DEPOSITS from  deposit_acinfo DA ,
+        deposit_sub_acinfo DSA,deposits_prod_renewal DPR 
+        where Dsa.DEPOSIT_NO=DA.RENEWAL_FROM_DEPOSIT
+        and da.PROD_ID=DPR.PROD_ID
+        and dsa.CLOSE_DT &gt; #LST_TDS_APPL_DT:DATE#  AND dsa.CLOSE_DT &lt;= #UPTO_TDS_APPL_DT:DATE#
+        and DSA.DEPOSIT_NO=#ACC_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getAccountPROvTDS1" result-class="java.util.HashMap" >
+        select DP.BEHAVES_LIKE,da.PROD_ID, c.CUST_TYPE ,
+        DSA.*,NVL((SELECT SUM(TDS_AMT) FROM TDS_COLLECTED WHERE tds_dt &lt;=#CUR_DT:DATE# AND 
+        dsa.DEPOSIT_NO||'_'||dsa.DEPOSIT_SUB_NO=ACCT_NUM),0) AS TDS_AMT
+        from Customer C,Deposit_sub_acinfo DSA,deposit_acinfo DA ,deposits_product DP WHERE 
+        dp.PROD_ID=da.PROD_ID and da.CUST_ID=c.CUST_ID and da.DEPOSIT_NO=dsa.DEPOSIT_NO 
+          <!--  AND DA.FIFTEENH_DECLARE !='Y' AND (C.MEMBERSHIP_CLASS not in('ASSOCIATE','REGULAR','NOMINAL') OR  C.MEMBERSHIP_CLASS  is null)            and DP.BEHAVES_LIKE in('CUMMULATIVE','FIXED') -->
+        and dsa.DEPOSIT_NO||'_'||DEPOSIT_SUB_NO=#CLOSEDACC:VARCHAR#
+
+    </mapped-statement> 
+    
+     <mapped-statement name="getTDSAccountLevel" result-class="java.util.HashMap" >
+        SELECT * FROM DEPOSIT_ACINFO WHERE DEPOSIT_NO=#DEPOSIT_NO# AND TAX_DEDUCTIONS='Y' AND FIFTEENH_DECLARE='N'
+    </mapped-statement> 
+    
+     <mapped-statement name="getDepositProvisionDetails" result-class="java.util.HashMap" >
+            SELECT DSA.DEPOSIT_NO, NVL(TOTAL_INT_CREDIT,0) - NVL(TOTAL_INT_DRAWN,0) AS PROV_AMT FROM DEPOSIT_SUB_ACINFO DSA, 
+            DEPOSIT_ACINFO DA, DEPOSITS_PRODUCT DP WHERE DSA.STATUS!='DELETED' AND DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND 
+            DA.PROD_ID =DP.PROD_ID AND DP.BEHAVES_LIKE='FIXED' AND NVL(TOTAL_INT_CREDIT,0) > NVL(TOTAL_INT_DRAWN,0)
+            AND DSA.DEPOSIT_NO=#DEPOSIT_NO#
+        </mapped-statement>
+        
+        <dynamic-mapped-statement name="getOldDepositInterestAmount" result-class="java.util.LinkedHashMap" >
+            SELECT  ACT_NUM,AC_HD_ID,APPL_DT,DI.CUST_ID,INT_AMT,INT_DT,INT_PAID_DATE,INT_RATE,INT_TYPE,IS_TDS_APPLIED,LAST_TDS_DEDUCTED_DT,LAST_TDS_RECIVED_FROM,
+            PAID_INT,PRINCIPLE_AMT,PRODUCT_ID,PRODUCT_TYPE,NVL(TDS_AMT,0) AS TDS_AMT ,NVL(TOTAL_INT_BALANCE,0) AS TOTAL_INT_BALANCE,NVL(TOTAL_TDS_AMOUNT,0) AS TOTAL_TDS_AMOUNT,
+            NVL(TOTAL_TDS_DEDUCTED_FROM_ALL,0) AS OTAL_TDS_DEDUCTED_FROM_ALL,
+            TRANS_LOG_ID FROM DEPOSIT_INTEREST DI, DEPOSIT_ACINFO DA
+            WHERE (IS_TDS_APPLIED != 'Y' OR IS_TDS_APPLIED IS NULL)  AND PAID_INT='CREDIT' AND DA.STATUS!='DELETED'
+            AND INT_PAID_DATE IS NOT NULL AND INT_AMT IS NOT NULL AND DA.DEPOSIT_NO||'_1'=DI.ACT_NUM AND DA.TAX_DEDUCTIONS='Y'
+            AND INT_PAID_DATE &gt; #LST_TDS_APPL_DT# 
+            AND INT_PAID_DATE &lt;= #UPTO_TDS_APPL_DT#
+            AND DI.CUST_ID = #CUSTID# ORDER BY INT_AMT
+        </dynamic-mapped-statement>
+        
+        
+    <mapped-statement name="getTotalTDSDeductedFromAccount" result-class="java.util.HashMap" >      
+        SELECT NVL (SUM (DI.TDS_AMT), 0) AS TDS_AMT
+        FROM deposit_interest di
+        WHERE     di.INT_PAID_DATE > GET_LAST_FINENDDATE (#CURR_DT:DATE#) + 1
+        AND di.ACT_NUM = #DEPOSIT_NO:VARCHAR#
+        AND di.PAID_INT = 'CREDIT'        
+    </mapped-statement>
+        
+</sql-map>

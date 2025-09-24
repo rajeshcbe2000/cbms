@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TdsDeductionTOMap">
+
+<!-- Use TdsDeductionTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTdsDeductionTO" inline-parameters="true">
+	
+        INSERT INTO DEPOSIT_TDS_DEDUCTION
+        (PROD_ID, DEPOSIT_NO , DEPOSIT_DT, MATURITY_DT, DEPOSIT_AMT, 
+        DEBIT_PROD_TYPE,DEBIT_PROD_ID ,DEBIT_ACCT_NO 
+        ,STATUS,STATUS_BY ,STATUS_DT,TDS_ID,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT
+        ) VALUES (
+        #prodId:VARCHAR#, #depositNo:VARCHAR#,  #depositDt:DATE#, #maturityDt:DATE#, #depositAmt:NUMERIC#, 
+        #debitProdType:VARCHAR#, #debitProdId:VARCHAR#,  #debitAcctNo:VARCHAR#, 
+        #status:VARCHAR# ,#statusBy:VARCHAR#,#statusDt:TIMESTAMP# ,#tdsId:VARCHAR# ,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:TIMESTAMP# )
+            
+            
+             
+    </mapped-statement>
+    
+    <mapped-statement name="insertTdsDeductionTOTemp" inline-parameters="true">
+	
+        INSERT INTO DEPOSIT_TDS_DEDUCTION_temp
+        (PROD_ID, DEPOSIT_NO , DEPOSIT_DT, MATURITY_DT, DEPOSIT_AMT, 
+        DEBIT_PROD_TYPE,DEBIT_PROD_ID ,DEBIT_ACCT_NO 
+        ,STATUS,STATUS_BY ,STATUS_DT,TDS_ID,MODIFIED,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT
+        ) VALUES (
+        #prodId:VARCHAR#, #depositNo:VARCHAR#,  #depositDt:DATE#, #maturityDt:DATE#, #depositAmt:NUMERIC#, 
+        #debitProdType:VARCHAR#, #debitProdId:VARCHAR#,  #debitAcctNo:VARCHAR#, 
+        #status:VARCHAR# ,#statusBy:VARCHAR#,#statusDt:TIMESTAMP# ,#tdsId:VARCHAR# ,#modified:VARCHAR# ,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:TIMESTAMP# )
+            
+             
+    </mapped-statement>
+
+<!-- Use TdsDeductionTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTdsDeductionTO" inline-parameters="true">
+
+        UPDATE DEPOSIT_TDS_DEDUCTION SET 
+        PROD_ID = #prodId:VARCHAR#,
+        DEPOSIT_NO = #depositNo:VARCHAR#,
+        DEPOSIT_DT = #depositDt:DATE#,
+        MATURITY_DT = #maturityDt:DATE#,
+        DEPOSIT_AMT = #depositAmt:NUMERIC#,
+        DEBIT_PROD_TYPE=#debitProdType:VARCHAR#,
+        DEBIT_PROD_ID=#debitProdId:VARCHAR#,
+        DEBIT_ACCT_NO = #debitAcctNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#,
+        STATUS_DT=SYS_DATE(),
+        AUTHORIZE_STATUS='',
+        AUTHORIZE_by='' ,
+        AUTHORIZE_dt=null
+        WHERE TDS_ID =  #tdsId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use TdsDeductionTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTdsDeductionTO" inline-parameters="true">
+        UPDATE DEPOSIT_TDS_DEDUCTION SET 
+        STATUS = #status:VARCHAR#
+        WHERE TDS_ID =  #tdsId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to TdsDeductionTO object (JavaBean) properties -->
+    <result-map name="getTdsDeductionTOResult" class="com.see.truetransact.transferobject.deposit.tds.TdsDeductionTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="depositNo" column="DEPOSIT_NO"/>
+        <property name="depositDt" column="DEPOSIT_DT"/>
+        <property name="maturityDt" column="MATURITY_DT"/>
+        <property name="depositAmt" column="DEPOSIT_AMT"/>
+        <property name="debitProdType" column="DEBIT_PROD_TYPE"/>
+        <property name="debitProdId" column="DEBIT_PROD_ID"/>
+        <property name="debitAcctNo" column="DEBIT_ACCT_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="tdsId" column="TDS_ID"/>
+        <property name="modified" column="MODIFIED"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectTdsDeductionTO" result-map="getTdsDeductionTOResult" >
+        SELECT  * 
+        FROM  DEPOSIT_TDS_DEDUCTION
+        WHERE TDS_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+            
+    <mapped-statement name="getSelectTdsDeductionTOTemp" result-map="getTdsDeductionTOResult" >
+        SELECT  * 
+        FROM  DEPOSIT_TDS_DEDUCTION_temp
+        WHERE TDS_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+<!-- Product ID from BILLS_PRODUCT Table -->
+    <mapped-statement name="Deposit_TDS.getProductID" result-class="java.util.LinkedHashMap" >
+        SELECT  ACCT_HEAD
+        FROM  DEPOSITS_PRODUCT
+        WHERE PROD_ID =  #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Deposit_TDS.ViewAllDepositNo" result-class="java.util.LinkedHashMap" >
+        SELECT ACTUAL.DEPOSIT_NO AS "DEPOSIT NUMBER", ACTUAL.CUST_ID AS "CUSTOMER ID",  get_cust_name(RELATION.CUST_ID) AS "CUSTOMER NAME"
+        ,DEPOSIT_DT,MATURITY_DT,DEPOSIT_AMT        
+        FROM DEPOSIT_ACINFO ACTUAL, CUSTOMER RELATION
+        ,DEPOSIT_SUB_ACINFO DSA
+        WHERE ACTUAL.CUST_ID = RELATION.CUST_ID (+) AND ACTUAL.STATUS NOT IN ('DELETED')  AND DSA.DEPOSIT_NO=ACTUAL.DEPOSIT_NO
+        AND ACTUAL.PROD_ID = #PROD_ID:VARCHAR#
+        ORDER BY ACTUAL.DEPOSIT_NO
+    </mapped-statement>
+    
+    <mapped-statement name="Deposit_TDS.getSelectAccoutHead" result-class="java.util.LinkedHashMap" >
+        SELECT  AC_HD_ID AS "ACCOUNT HEAD ID",AC_HD_DESC AS " ACCOUNT HEAD DESC"
+        FROM  AC_HD
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+    </mapped-statement> 
+    
+    <mapped-statement name="Deposit_TDS.getSelectAccoutNumber" result-class="java.util.LinkedHashMap" >
+        SELECT  AC_HD_ID AS "ACCOUNT HEAD ID",AC_HD_DESC AS " ACCOUNT HEAD DESC"
+        FROM  AC_HD
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+    </mapped-statement> 
+    
+
+    
+    
+    <mapped-statement name="getLastFinYear" result-class="java.util.LinkedHashMap"> 
+        select  LAST_FINANCIAL_YEAR_END from parameters
+    </mapped-statement>
+    
+    <mapped-statement name="getAllAccountFinIntForCustomer" result-class="java.util.LinkedHashMap"> 
+        select DEPOSIT_NO,DEPOSIT_DT,MATURITY_DT,DEPOSIT_AMT,RATE_OF_INT,INTPAY_FREQ,CLOSE_RATE_OF_INT,CLOSE_DT,INTER 
+        from rep_tds_interest_final where CUST_ID=#CUSTID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getTdsDeductionName" result-class="java.util.LinkedHashMap"> 
+        select GET_JOINT_CUST(#ACT_NUM:VARCHAR#) as NAME FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="getDepositNoExists" result-class="java.util.LinkedHashMap"> 
+        select deposit_no from DEPOSIT_TDS_DEDUCTION where status!='DELETED' AND DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTdsDeductionAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT TDS_ID AS "TDS DEDUCTION ID", PROD_ID AS "Product ID", DEPOSIT_NO AS "Deposit Number"
+        FROM DEPOSIT_TDS_DEDUCTION SCD
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY TDS_ID    
+    </dynamic-mapped-statement>
+
+        
+        
+    <dynamic-mapped-statement name="Deposit_TDS.ViewAllDepositTDSTO" result-class="java.util.LinkedHashMap" >
+        SELECT TDS_ID AS "TDS DEDUCTION ID", PROD_ID AS "Product ID", DEPOSIT_NO AS "Deposit Number"
+        FROM DEPOSIT_TDS_DEDUCTION
+        WHERE STATUS != 'DELETED'  and (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL)
+        <dynamic>
+            <isEqual prepend="AND" property="STATUS" compareValue="MODIFIED" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+        
+    <mapped-statement name="authorizeTdsDeduction" result-class="java.util.HashMap">
+        update DEPOSIT_TDS_DEDUCTION set AUTHORIZE_STATUS=#AUTHORIZESTATUS:VARCHAR#,AUTHORIZE_BY=#USER_ID:VARCHAR#,
+        AUTHORIZE_DT=(SELECT SYS_DATE() FROM DUAL) ,MODIFIED=1
+        WHERE TDS_ID=#TDS_ID:VARCHAR#  AND DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+            
+    <mapped-statement name="authorizeTdsDeductionTempDeletion" result-class="java.util.HashMap">
+        delete from DEPOSIT_TDS_DEDUCTION_temp
+        WHERE TDS_ID=#TDS_ID:VARCHAR#  AND DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+            
+            
+    <mapped-statement name="rejectionModifiedTdsDeductionDeletion" result-class="java.util.HashMap">
+        delete from DEPOSIT_TDS_DEDUCTION
+        WHERE TDS_ID=#TDS_ID:VARCHAR#  AND DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+    
+</sql-map>

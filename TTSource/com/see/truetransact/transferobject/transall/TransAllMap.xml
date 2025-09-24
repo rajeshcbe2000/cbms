@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BorrowingDisbursalMap">
+
+    <mapped-statement name="insertTransAllTO" inline-parameters="true">
+        INSERT INTO TRANS_ALL
+        (TRANS_ALL_ID,CLOCK_NO,CUSTOMER_NO,CUST_NAME,SCHEME_NAME,AC_NO,PAYING,PRINCIPAL,PENAL,INTEREST,BONUS,
+        OTHERS,NOTICE,ARBITRATION,PROD_ID,TOT_PRINCIPAL,TOT_INTEREST,TOT_PENAL,TOT_OTHERS,GRAND_TOTAL,   
+        AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,STATUS,RETIRED,STATUS_DT,STATUS_BY,TRANS_TYPE,CREATED_DT,BRANCH_ID,DESCRIPTION,PARTICULARS  
+        ) VALUES 
+        (#transallId:VARCHAR#, #clockNo:VARCHAR#, #memberNo:VARCHAR#,#custName:VARCHAR#,#schName:VARCHAR#,#acNo:VARCHAR#,#payingAmt:NUMBER#,
+        #principal:NUMBER#,#penel:NUMBER#,#interest:NUMBER#,#bonus:NUMBER#,#others:NUMBER#,#notice:NUMBER#,#arbitration:NUMBER#,#prodId:VARCHAR#,
+        #totprincipal:NUMBER#,#totInterest:NUMBER#,#totPenel:NUMBER#,#totOthers:NUMBER#,#grandTotal:NUMBER#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#retired:VARCHAR#,#statusDt:DATE#,#statusBy:VARCHAR#,
+        #transType:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#branchId:VARCHAR#,#description:VARCHAR#,#particulars:VARCHAR#)
+    </mapped-statement> 
+    
+    <mapped-statement name="updateTransAllTO" inline-parameters="true">
+        UPDATE TRANS_ALL SET 
+        CLOCK_NO= #clockNo:VARCHAR#,
+        MEMBERNO= #memberNo:VARCHAR#,
+        PROD_TYPE=#prodType:VARCHAR#,
+        PROD_ID=#prodId:VARCHAR#,
+        PROD_ACC_NO=#prodAccNo:VARCHAR#,
+        PAYING=#payingAmt:NUMBER#,
+        PENEL=#penel:NUMBER#,
+        INTEREST=#interest:NUMBER#,
+        TOT_PENEL=#totPenel:NUMBER#,
+        TOT_INTEREST=#totInterest:NUMBER#,
+        GRAND_TOTAL=#grandTotal:NUMBER#,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDte:DATE#,
+        STATUS=#status:VARCHAR#,
+        PRINCIPAL=#principal:NUMBER#,
+        TOT_PRINCIPAL=#totprincipal:NUMBER#,
+        OTHERS=#others:NUMBER#,
+        TOT_OTHERS =#totOthers:NUMBER#
+        WHERE TRANS_ALL_ID =#transallId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="deleteTransAllTO" inline-parameters="true">
+        UPDATE TRANS_ALL SET 
+        STATUS = #status:VARCHAR# 
+        WHERE TRANS_ALL_ID =#transallId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="TransAll.getSelectClockList" result-class="java.util.LinkedHashMap" >
+        select S.emp_refno_new as clock_no,S.cust_id as member_no,C.FNAME as name,S.SHARE_ACCT_NO AS MEM_NO 
+        from SHARE_ACCT S inner join customer C on C.CUST_ID =S.CUST_ID
+        <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="clock_no">
+                    UPPER(S.emp_refno_new) LIKE UPPER('%$clock_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="member_no">
+                    UPPER(S.cust_id) LIKE UPPER('%$member_no$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="name">
+                    UPPER(C.FNAME) LIKE UPPER('%$name$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEM_NO">
+                    UPPER(S.SHARE_ACCT_NO) LIKE UPPER('%$MEM_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="TransAll.getSelectClockListFocus" result-class="java.util.HashMap" >
+        select S.emp_refno_new as clock_no,S.cust_id as member_no,C.FNAME as name,S.SHARE_ACCT_NO AS MEM_NO  from SHARE_ACCT S 
+        inner join customer C on C.CUST_ID =S.CUST_ID where (S.EMP_REFNO_NEW = #CLOCK_NO:VARCHAR# or S.EMP_REFNO_OLD = #CLOCK_NO:VARCHAR#) 
+    </mapped-statement> 
+    
+    <mapped-statement name="TransAll.getACCHeadSA" result-class="java.util.HashMap" >
+        select ACCOUNTHEAD_ID from ACCOUNTHEAD_TABLE where ACCOUNTHEAD_TYPE='Credit Sale Interest'
+    </mapped-statement>
+    
+    <mapped-statement name="insertAuthCreditSales" inline-parameters="true">
+        insert into SUSPENSE_INSTALLMENT (CLOCK_NO,PRODUCT_ID,ACCT_NUM,PAID_AMOUNT,PAID_DATE,INTEREST,TRANS_ALL_ID,TRANS_TYPE) 
+        values (#CLOCK_NO:VARCHAR#,#PRODUCT_ID:VARCHAR#,#ACCT_NUM:VARCHAR#,#PAID_AMOUNT:NUMBER#,#PAID_DATE:DATE#,#INTEREST:NUMBER#,
+        #TRANS_ALL_ID:VARCHAR#,#TRANS_TYPE:VARCHAR#)
+    </mapped-statement>
+    
+     <mapped-statement name="TransAll.getPenalAmountForAD" result-class="java.util.HashMap" >
+        select GET_ADV_PEN_INT_APPLICATION(#ACCT_NUM:VARCHAR#,#AS_ON_DATE:DATE#) as penal from dual
+    </mapped-statement> 
+    
+    <mapped-statement name="getSuspenseInstallmentPresent" result-class="java.util.HashMap" >
+        SELECT   acct_num
+        FROM suspense_installment si, suspense_account_master sam
+        WHERE sam.suspense_acct_num = #ACCT_NUM:VARCHAR#
+        AND sam.suspense_acct_num = si.acct_num
+        GROUP BY acct_num
+        HAVING COUNT (*) > 0        
+    </mapped-statement> 
+   
+    <mapped-statement name="updateSuspenseLastIntCalcDt" inline-parameters="true">
+        UPDATE suspense_account_master sam
+        SET sam.suspense_last_int_calc_dt = #SUSPENSE_LAST_INT_CALC_DT:DATE#
+        WHERE sam.suspense_acct_num = #SUSPENSE_ACCT_NUM:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateSABalanceAmount1" result-class="java.util.HashMap" >
+        UPDATE SUSPENSE_INSTALLMENT
+        SET PAID_AMOUNT=NVL(PAID_AMOUNT,0)+#AMOUNT:NUMBER#,PAID_DATE=#PAID_DATE:DATE#,
+        BALANCE_AMOUNT=BALANCE_AMOUNT-#AMOUNT:NUMBER#
+        WHERE CLOCK_NO=#CLOCK_NO# AND ACCT_NUM=#ACCT_NUM:VARCHAR# AND INSTALLMENT_NO=#INSTALLMENT_NO# AND BILL_ID=#BILL_ID:VARCHAR# AND INSTALLMENT_DATE=#INSTALLMENT_DATE:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getSuspendCurrInstDetails1" result-class="java.util.HashMap" >
+        SELECT A.* FROM(SELECT * FROM SUSPENSE_INSTALLMENT  WHERE BALANCE_AMOUNT>0 AND ACCT_NUM=#ACCT_NUM:VARCHAR# ORDER BY INSTALLMENT_NO,BILL_ID)A,   
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT>0 and nvl(paid_amount,0)!=installment_amount
+        AND ACCT_NUM=#ACCT_NUM:VARCHAR#
+        GROUP BY BILL_ID ,ACCT_NUM)B  WHERE A.ACCT_NUM=B.ACCT_NUM  AND A.INSTALLMENT_NO=INST_NO AND A.BILL_ID=B.BILL_ID ORDER BY A.INSTALLMENT_DATE
+    </mapped-statement>
+    <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getTransAllAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT  trans_all_id, clock_no,CUSTOMER_NO,CUST_NAME AS CUSTOMER_NAME FROM TRANS_ALL TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY AND 
+        UM.USER_ID != #AUTHORIZED_BY:VARCHAR#) AND TC.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND STATUS_DT = #STATUS_DT:TIMESTAMP#
+        <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="trans_all_id">
+                    UPPER(trans_all_id) LIKE UPPER('%$trans_all_id$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="clock_no">
+                    UPPER(clock_no) LIKE UPPER('%$clock_no$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NO">
+                    UPPER(CUSTOMER_NO) LIKE UPPER('%$CUSTOMER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY  TRANS_ALL_ID
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getTransAllEditList" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT  trans_all_id, clock_no,CUSTOMER_NO,CUST_NAME AS CUSTOMER_NAME,STATUS_DT FROM TRANS_ALL TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="trans_all_id">
+                    UPPER(trans_all_id) LIKE UPPER('%$trans_all_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="clock_no">
+                    UPPER(clock_no) LIKE UPPER('%$clock_no$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NO">
+                    UPPER(CUSTOMER_NO) LIKE UPPER('%$CUSTOMER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  TRANS_ALL_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeTransAll" result-class="java.util.HashMap">
+        UPDATE TRANS_ALL  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#,
+        AUTHORIZE_DATE_TIME = (SELECT SYS_DATE() FROM DUAL)
+        WHERE TRANS_ALL_ID =#TRANS_ALL_ID:VARCHAR#
+    </mapped-statement>
+         
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getTransAllTOResult" class="com.see.truetransact.transferobject.transall.TransAllTO">
+        <property name="transallId" column="TRANS_ALL_ID"/>
+        <property name="clockNo" column="CLOCK_NO"/>
+        <property name="memberNo" column="CUSTOMER_NO"/>
+        <property name="custName" column="CUST_NAME"/>
+        <property name="schName" column="SCHEME_NAME"/>
+        <property name="acNo" column="AC_NO"/>
+        <property name="payingAmt" column="PAYING"/>
+        <property name="principal" column="PRINCIPAL"/>  
+        <property name="penel" column="PENAL"/>
+        <property name="interest" column="INTEREST"/>
+        <property name="bonus" column="BONUS"/>
+        <property name="others" column="OTHERS"/>
+        <property name="notice" column="NOTICE"/>
+        <property name="arbitration" column="ARBITRATION"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="totprincipal" column="TOT_PRINCIPAL"/>
+        <property name="totInterest" column="TOT_INTEREST"/>
+        <property name="totPenel" column="TOT_PENAL"/>
+        <property name="totOthers" column="TOT_OTHERS"/> 
+        <property name="grandTotal" column="GRAND_TOTAL"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDte" column="AUTHORIZE_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="retired" column="RETIRED"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="createdDate" column="CREATED_DT"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="authorizeDateTime" column="AUTHORIZE_DATE_TIME"/>
+        <property name="description" column="DESCRIPTION"/>
+    </result-map>
+         
+    <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="TransAll.getSelectClockDetails" result-map="gettransAllTOResult">
+        <!-- SELECT BORRWING_REFNO,AGENCY_CODE,BORROWING_NO,TYPE,DESCRIPTION,SANCTION_DATE,SANCTION_AMT
+    ,AMOUNT_BORRWED,RATE_INTEREST,NO_OF_INSTALLMENTS,PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,SANCTION_EXP_DATE FROM BORROWING_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO# -->
+                
+        select emp_refno_new as CLOCK_NO,cust_id as MEMBERNO,S.SHARE_ACCT_NO  from SHARE_ACCT s
+        where (S.EMP_REFNO_NEW = #CLOCK_NO:VARCHAR# or S.EMP_REFNO_OLD = #CLOCK_NO:VARCHAR#) 
+		
+    </mapped-statement>
+    
+    <mapped-statement name="TransAll.getSelTL" result-class="java.util.HashMap">
+        select F.ACCT_NUM AS ACT_NUM,F.PROD_ID,DECODE(LB.BEHAVES_LIKE,'SI_BEARING','TL','OD','AD','TL') as PRODTYPE,lb.PROD_DESC
+        from LOANS_FACILITY_DETAILS f join LOANS_BORROWER b on F.BORROW_NO = B.BORROW_NO
+        join LOANS_PRODUCT lb on LB.PROD_ID=F.PROD_ID where B.CUST_ID = #MEMBER_NO:VARCHAR# AND F.CLEAR_BALANCE!=0 AND lb.behaves_like NOT IN ('LOANS_AGAINST_DEPOSITS')
+        AND (f.acct_status IN ('NEW', 'TRANSFER_IN', 'DECEASED', 'OPERATIONAL') OR f.acct_status IS NULL )
+        ORDER BY 1,2
+    </mapped-statement>
+    
+    <mapped-statement name="checkPendingAuthTransaction" result-class="java.util.HashMap">
+        SELECT COUNT(LINK_BATCH_ID) AS COUNT FROM ALL_TRANS_TL WHERE  STATUS !='DELETED'  AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        AND (AUTHORIZE_STATUS NOT IN('AUTHORIZED','REJECTED' ) OR  AUTHORIZE_STATUS IS NULL) 
+        AND  LINK_BATCH_ID=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="TransAll.getSelRD" result-class="java.util.HashMap">
+        select A.DEPOSIT_NO||'_'||DEPOSIT_SUB_NO AS ACT_NUM,A.PROD_ID,'TD' as PRODTYPE,dp.PROD_DESC
+        from DEPOSIT_ACINFO a join DEPOSIT_SUB_ACINFO s on A.DEPOSIT_NO = s.DEPOSIT_NO
+        join DEPOSITS_PRODUCT dp on A.PROD_ID = DP.PROD_ID
+        where A.CUST_ID = #MEMBER_NO:VARCHAR# AND s.CLOSE_DT is null  and DP.BEHAVES_LIKE = 'RECURRING' ORDER BY 2,1
+    </mapped-statement>
+    
+    <mapped-statement name="TransAll.getSumDeposit" result-class="java.util.HashMap">
+        select SUM(AMOUNT) AS AMOUNT,count(*) AS COUNT from deposit_recurring where  DEPOSIT_NO_SUB=#DEPOSIT_NO:VARCHAR# and trans_dt is null
+    </mapped-statement>
+    
+    <mapped-statement name="TransAll.getSumSuspence" result-class="java.util.HashMap">
+        select sum(a.balance_amount) AS AMOUNT from  suspense_installment a where   a.ACCT_NUM=#ACT_NUM:VARCHAR#  and A.PAID_DATE is  null  
+    </mapped-statement>
+    
+    <mapped-statement name="TransAll.getSelMDS" result-class="java.util.HashMap">
+        select A.CHITTAL_NO||'_'||A.SUB_NO AS ACT_NUM,A.SCHEME_NAME AS PROD_ID,'MDS' as PRODTYPE,MSD.SCHEME_DESC AS PROD_DESC
+        from MDS_APPLICATION a
+        JOIN MDS_SCHEME_DETAILS MSD ON A.SCHEME_NAME = MSD.SCHEME_NAME 
+        JOIN SHARE_ACCT SA ON A.MEMBER_NO = SA.SHARE_ACCT_NO
+        WHERE SA.CUST_ID = #MEMBER_NO:VARCHAR#  AND A.STATUS!='DELETED' AND A.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND  MSD.STATUS!='DELETED' AND MSD.STATUS!='CLOSED' ORDER BY 2,1
+    </mapped-statement>
+    
+    <mapped-statement name="TransAll.getSelSB" result-class="java.util.HashMap">
+        select SUSPENSE_PROD_ID AS PROD_ID,'SA' as PRODTYPE,SUSPENSE_ACCT_NUM AS ACT_NUM,sp.PROD_DESC
+        from SUSPENSE_ACCOUNT_MASTER sam inner join SUSPENSE_PRODUCT sp on sp.PROD_ID=sam.SUSPENSE_PROD_ID 
+        WHERE SAM.SUSPENSE_CUSTOMER_ID =#MEMBER_NO:VARCHAR# AND SP.PROD_ID IN
+        ( SELECT DISTINCT(S.PRODUCT_ID) FROM SUSPENSE_INSTALLMENT S) ORDER BY 1,3
+    </mapped-statement>
+    
+    <mapped-statement name="GetSuspenseDuedetails" result-class="java.util.HashMap">
+        <!--select nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as amt,bill_id 
+        from suspense_installment where INSTALLMENT_DATE &lt;#AUTHORIZED_DT:DATE# AND ACCT_NUM=#CLOCK_NO:VARCHAR#
+        group by bill_id-->
+        
+        SELECT NVL
+        (  (SELECT NVL (SUM (installment_amount), 0) AS installmentamount
+        FROM suspense_installment
+        WHERE acct_num = #CLOCK_NO:VARCHAR#
+        AND installment_date &lt;
+        LAST_DAY (ADD_MONTHS (#AUTHORIZED_DT:DATE#, -2))
+        + 1)
+        - (SELECT NVL (SUM (si.paid_amount), 0) AS paidamt
+        FROM suspense_installment si
+        WHERE si.paid_date &lt;=#CURR_DT:DATE#
+        AND si.acct_num = #CLOCK_NO:VARCHAR#),
+        0
+        ) AS due
+        FROM DUAL
+        
+    </mapped-statement>  
+    
+    <mapped-statement name="getOpActBalDetails" result-class="java.util.HashMap">
+        SELECT am.shadow_credit, am.shadow_debit, am.clear_balance,
+        am.available_balance, am.act_num,
+        NVL (oa.chk_allowed, 'N') AS chk_allowed, oa.min_bal_w_chk,
+        oa.min_bal_wt_chk
+        FROM act_master am JOIN op_ac_account_param oa ON oa.prod_id = am.prod_id
+        WHERE am.act_num = #ACC_NO:VARCHAR#
+        AND am.act_status_id != 'CLOSED'
+        AND am.status != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="GetSuspenseDuedetails2" result-class="java.util.HashMap">
+       <!-- select nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as amt,bill_id 
+        from suspense_installment where INSTALLMENT_DATE &lt;=#AUTHORIZED_DT:DATE# AND ACCT_NUM=#CLOCK_NO:VARCHAR#
+        group by bill_id-->
+        select GETSUSPENSEDUE2(#CLOCK_NO:VARCHAR#,#AUTHORIZED_DT:DATE#) as amt from dual
+    </mapped-statement> 
+    
+    <mapped-statement name="getsuspenseduedelist" result-class="java.util.HashMap">
+       <!-- select nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as amt,bill_id 
+        from suspense_installment where INSTALLMENT_DATE &lt;=#AUTHORIZED_DT:DATE# AND ACCT_NUM=#CLOCK_NO:VARCHAR#
+        group by bill_id-->
+        select GETSUSPENSEDUEDELIST(#CLOCK_NO:VARCHAR#,#AUTHORIZED_DT:DATE#) as amt from dual
+    </mapped-statement>
+    
+    <mapped-statement name="GetSuspenseDuedetails3" result-class="java.util.HashMap">
+       <!-- select nvl(nvl(sum(INSTALLMENT_AMOUNT),0)-nvl(sum(paid_amount),0),0) as amt,bill_id 
+        from suspense_installment where INSTALLMENT_DATE &lt;=#AUTHORIZED_DT:DATE# AND ACCT_NUM=#CLOCK_NO:VARCHAR#
+        group by bill_id-->
+        select GETSUSPENSEDUERECTRANS(#CLOCK_NO:VARCHAR#,#AUTHORIZED_DT:DATE#) as amt from dual
+    </mapped-statement>
+   
+   <mapped-statement name="GetSuspenseDueDetailsRetiredBalance" result-class="java.util.HashMap">
+        select GETSUSPENSERETIRED(#CLOCK_NO:VARCHAR#,#AUTHORIZED_DT:DATE#) as amt from dual
+    </mapped-statement>
+   
+    <mapped-statement name="TransAll.getSelectTransAll" result-map="getTransAllTOResult" >
+        SELECT * FROM TRANS_ALL WHERE STATUS NOT IN ('DELETED') 
+        and (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND TRANS_ALL_ID = #TRANS_ALL_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSuspenseClearBalance" result-class="java.util.HashMap" >
+        select CLEAR_BALANCE from SUSPENSE_ACCOUNT_MASTER a join RECOVERY_PARAMETERS B
+        on a.SUSPENSE_PROD_ID=B.SUSPENSE_PRODUCT_ID
+        where a.SUSPENSE_MEMBER_NO=#SUSPENSE_MEMBER_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="TotalEmi" result-class="java.util.HashMap" >
+        select sum(TOTAL_AMT) as TOTAL_AMOUNT from loans_installment where acct_num=#ACC_NUM:VARCHAR# and nvl(active_status,'Y') = 'Y'
+        and INSTALLMENT_DT&lt;=#UP_TO:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getMorotorium" result-class="java.util.HashMap" >
+        SELECT NVL (moratorium_given, 'N') AS moratorium_given, lfd.clear_balance
+        FROM loans_sanction_details lsd, loans_facility_details lfd
+        WHERE lsd.borrow_no = lfd.borrow_no AND lfd.acct_num = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSchedules" result-class="java.util.HashMap" >
+        select TOTAL_AMT,INSTALLMENT_DT from loans_installment where acct_num=#ACC_NUM:VARCHAR# and nvl(active_status,'Y') = 'Y'
+        and INSTALLMENT_DT&lt;=#UP_TO#
+    </mapped-statement>   
+    
+    <mapped-statement name="getPenalData" result-class="java.util.HashMap" >
+        select TOTAL_AMT,INSTALLMENT_DT from loans_installment where acct_num=#ACC_NUM:VARCHAR# and nvl(active_status,'Y') = 'Y'
+        and INSTALLMENT_DT&gt;=#FROM_DATE:DATE# and INSTALLMENT_DT&lt;=#UP_TO:DATE# order by INSTALLMENT_DT
+    </mapped-statement>   
+    
+    <mapped-statement name="getPenalIntestRatefromMaintenance" result-class="java.util.HashMap" >
+        select PENAL_INTEREST from loans_int_maintenance where ACCT_NUM=#ACC_NUM:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="getLimitFromLoanSanc" result-class="java.util.HashMap" >
+        select limit from loans_sanction_details where borrow_no =(select borrow_no from loans_facility_details where acct_num=#ACC_NUM:VARCHAR#)
+    </mapped-statement>  
+        
+    <mapped-statement name="getPenalIntestRatefromROI" result-class="java.util.HashMap" >    
+        select penal_int,roi_date from deposit_roi_group_type_rate a where roi_group_id=
+        (select roi_group_id from deposit_roi_group_prod where prod_id =(select prod_id  from
+        loans_facility_details where acct_num=#ACC_NUM:VARCHAR#))
+        and #LIMIT:NUMBER# between from_amount and to_amount
+        and roi_date =(select max(roi_date) from deposit_roi_group_type_rate b where a.roi_group_id=b.roi_group_id )
+    </mapped-statement>
+    
+    <mapped-statement name="getGracePeriodDays" result-class="java.util.HashMap" >
+        select GRACE_PERIOD_DAYS from loans_prod_intrec where prod_id= (select prod_id  from
+        loans_facility_details where acct_num=#ACC_NUM:VARCHAR#)
+    </mapped-statement>  
+      
+    <mapped-statement name="getAdvAmt" result-class="java.util.HashMap" >
+        select TOTAL_AMT,PRINCIPAL_AMT,INTEREST_AMT from LOANS_INSTALLMENT where  ACCT_NUM=#ACT_NUM:VARCHAR# and (active_status is null or active_status='Y') and INSTALLMENT_DT=(
+        select max(A.INSTALLMENT_DT ) from  LOANS_INSTALLMENT a where A.INSTALLMENT_DT &lt;=#TO_DATE:DATE# and A.ACCT_NUM=#ACT_NUM:VARCHAR# and (A.active_status is null or A.active_status='Y'))
+    </mapped-statement> 
+
+    <mapped-statement name="getAccountHeadProdSAHead" result-class="java.util.HashMap" > 
+        select AC_HD_ID from SUSPENSE_PRODUCT where PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getAccountHeadProdADHead" result-class="java.util.HashMap" > 
+        select ACCT_HEAD from LOANS_PRODUCT where PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSuspenseCalculationinAccounts" result-class="java.util.HashMap">
+        SELECT GET_SUS_INTEREST(#ACT_NUM:VARCHAR#,#ASONDATE:DATE#) AS INTEREST FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="getSuspenseCalculationinAccountsTrans" result-class="java.util.HashMap">
+        SELECT GET_SUS_INTEREST_TRANS_ALL(#ACT_NUM:VARCHAR#,#ASONDATE:DATE#) AS INTEREST FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="getMDSTransactionAvailableorNot" result-class="java.util.HashMap">
+        SELECT DISTINCT(M.NET_TRANS_ID), M.BRANCH_CODE, M.INITIATED_BRANCH FROM MDS_RECEIPT_ENTRY M 
+        JOIN ALL_TRANS A ON  M.SINGLE_TRANS_ID=A.SINGLE_TRANS_ID  WHERE  A.TRANS_ALL_ID = #TRANS_ALL_ID:VARCHAR#
+        AND M.STATUS IN ('CREATED','MODIFIED') AND M.AUTHORIZE_STATUS IS NULL OR M.AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED','EXCEPTION')
+        AND M.PAID_DATE = #TRANS_DT:TIMESTAMP# 
+    </mapped-statement>
+      
+    <dynamic-mapped-statement name="getBatchTxTransferTOsTransAllId" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT TT.TRANS_ID AS transId,
+        TT.BATCH_ID AS batchId,
+        TT.PROD_ID AS prodId,
+        TT.AC_HD_ID AS acHdId,
+        DECODE(TT.ACT_NUM, NULL, LINK_BATCH_ID, TT.ACT_NUM) AS actNum,
+        TT.INP_AMOUNT AS inpAmount,
+        TT.INP_CURR AS inpCurr,
+        TT.AMOUNT AS amount,
+        TT.TRANS_DT AS transDt,
+        TT.TRANS_TYPE AS transType,
+        TT.INST_TYPE AS instType,
+        TT.INSTRUMENT_NO1 AS instrumentNo1,
+        TT.INSTRUMENT_NO2 AS instrumentNo2,
+        TT.INST_DT AS instDt,            
+        TT.INIT_TRANS_ID AS initTransId,
+        TT.INIT_CHANN_TYPE AS initChannType,
+        TT.PARTICULARS AS particulars,
+        TT.NARRATION AS narration,
+        TT.AUTHORIZE_BY AS authorizeBy,
+        TT.AUTHORIZE_DT AS authorizeDt,
+        TT.AUTHORIZE_STATUS AS authorizeStatus,
+        TT.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TT.BRANCH_ID AS branchId,
+        TT.STATUS_BY AS statusBy,
+        TT.STATUS_DT AS statusDt,
+        TT.LINK_BATCH_ID AS linkBatchId,
+        TT.STATUS AS status,           
+        TT.PROD_TYPE AS prodType,
+        TT.INITIATED_BRANCH AS initiatedBranch    
+        FROM TRANSFER_TRANS TT
+        WHERE TT.TRANS_ALL_ID = #TRANS_ALL_ID:VARCHAR# AND TT.STATUS!='DELETED' 
+        AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'EXCEPTION') 
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="NON_MDS_TRANSACTIOIN">
+                TT.SINGLE_TRANS_ID NOT IN (SELECT SINGLE_TRANS_ID FROM MDS_RECEIPT_ENTRY MRE WHERE 
+                MRE.SINGLE_TRANS_ID = TT.SINGLE_TRANS_ID) 
+            </isNotPropertyAvailable>
+            <!--<isPropertyAvailable prepend = "AND" property="WITH_MDS_TRANSACTIOIN">
+                TT.SINGLE_TRANS_ID IN (SELECT SINGLE_TRANS_ID FROM MDS_RECEIPT_ENTRY MRE WHERE 
+                MRE.SINGLE_TRANS_ID = TT.SINGLE_TRANS_ID) 
+            </isPropertyAvailable>            -->
+        </dynamic>
+        AND TT.TRANS_DT=#TRANS_DT:DATE# AND TT.INITIATED_BRANCH=#INITIATED_BRANCH:VARCHAR#
+        ORDER BY  TRANS_ID DESC
+    </dynamic-mapped-statement>     
+    
+    <mapped-statement name="getSelectNotProcessRecordcurrMonth" result-class="java.util.HashMap">
+        SELECT * FROM LOANS_FACILITY_DETAILS LFD, DEDUCTION_EXCEPTION_LIST DEL WHERE LFD.ACCT_NUM = DEL.ACT_NUM AND DEL.ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        LFD.ACCT_STATUS != 'CLOSED' AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND STATUS != 'DELETED'
+        AND PROCESS_DATE = (SELECT MAX(PROCESS_DATE) FROM DEDUCTION_EXCEPTION_LIST WHERE MONTHS_BETWEEN (#CURR_DATE:DATE#,LAST_INT_CALC_DT)&lt;1)          
+    </mapped-statement>     
+
+    <mapped-statement name="updateLoanActClosingDetailSalRecovery" result-class="java.util.HashMap">
+    	UPDATE LOANS_FACILITY_DETAILS SET STATUS_DT = #STATUS_DT:TIMESTAMP#, STATUS_BY = #STATUS_BY:VARCHAR#,
+    	ACCT_STATUS = #ACCT_STATUS:VARCHAR#, ACCT_CLOSE_DT = #ACCT_CLOSE_DT:DATE# WHERE ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSelectRDDepositMaxtransDt" result-class="java.util.HashMap">
+        SELECT * FROM DEPOSIT_RECURRING WHERE  DEPOSIT_NO_SUB = #DEPOSIT_NO:VARCHAR# AND SL_NO=(SELECT MAX(TO_NUMBER(SL_NO)) FROM 
+        DEPOSIT_RECURRING WHERE  DEPOSIT_NO_SUB = #DEPOSIT_NO:VARCHAR# AND TRANS_DT IS NOT NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectMDSMaxtransDt" result-class="java.util.HashMap">
+        SELECT * FROM MDS_TRANS_DETAILS WHERE CHITTAL_NO = #CHITTAL_NO:VARCHAR# AND TRANS_DT = 
+        (SELECT MAX(TRANS_DT) FROM MDS_TRANS_DETAILS WHERE CHITTAL_NO = #CHITTAL_NO:VARCHAR#)   
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectLoanMaxtransDt" result-class="java.util.HashMap">
+        SELECT * FROM LOAN_TRANS_DETAILS WHERE  ACT_NUM = #ACT_NUM:VARCHAR# AND ROWID = (SELECT MAX(ROWID) FROM 
+        LOAN_TRANS_DETAILS WHERE  ACT_NUM = #ACT_NUM:VARCHAR# AND TRANS_DT IS NOT NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectLoanPaidPrincipleMaxtransDt" result-class="java.util.HashMap">
+        SELECT SUM(PRINCIPLE) AS PRINCIPLE_PAID FROM LOAN_TRANS_DETAILS LTD,LOANS_FACILITY_DETAILS LFD WHERE LFD.ACCT_NUM = LTD.ACT_NUM AND 
+        ACT_NUM = #ACT_NUM:VARCHAR# AND ACCT_STATUS != 'CLOSED' AND TRANS_DT BETWEEN #LAST_INT_CALC_DT:DATE# AND #CURR_DATE:DATE#
+    </mapped-statement>
+    
+   <mapped-statement name="getNotProcessedCurrentMonthRecords" result-class="java.util.HashMap">
+        SELECT * FROM  ALL_TRANS WHERE  TRANS_DT &gt; LAST_DAY(ADD_MONTHS(#CURR_DATE:DATE#,-1)) AND
+        TRANS_DT &lt;= #CURR_DATE:DATE# AND LINK_BATCH_ID =#ACT_NUM:VARCHAR# AND INSTRUMENT_NO2 in ('LOAN_INTEREST','LOAN_PRINCIPAL')
+   </mapped-statement> 
+</sql-map>

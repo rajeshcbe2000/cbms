@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingTransferMap">
+    <mapped-statement name="insertTradingTransferTO" inline-parameters="true">
+        INSERT INTO TRADING_TRANSFER  (TRANSFER_ID,FROM_BRANCH,TO_BRANCH,AC_HEAD,SL_NO,PROD_ID,STOCK_ID,PROD_NAME,UNIT_TYPE,
+        AVAIL_QTY,TRANSFER_QTY,TOTAL_AMT,TRANSFER_DT,STATUS,STATUS_BY,STATUS_DT)
+        VALUES(#transferID#,#fromBranch#,#toBranch#,#achd#,#slNo#,#prodID#,#stockID#,#prod_Name#,#unitType#,#availQty#,#transferQty#,
+        #totAmt#,#transferDt#,#status#,#statusBy#,(SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingTransferTO" inline-parameters="true">
+        UPDATE TRADING_TRANSFER SET
+	PROD_ID = #prodID#,
+	STOCK_ID = #stockID#,
+	PROD_NAME = #prod_Name#,
+	UNIT_TYPE = #unitType#,
+        AVAIL_QTY = #availQty#,
+	TRANSFER_QTY = #transferQty#,
+	TOTAL_AMT = #totAmt#,
+	STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+	STATUS_DT=(SELECT SYS_DATE() FROM DUAL)
+        WHERE TRANSFER_ID = #transferID# AND SL_NO = #slNo# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingTransferTO" inline-parameters="true">
+        UPDATE TRADING_TRANSFER SET STATUS = #status:VARCHAR# WHERE 
+        TRANSFER_ID = #transferID# AND SL_NO = #slNo# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <result-map name="getTradingTransferTOResult" class="com.see.truetransact.transferobject.trading.tradingtransfer.TradingTransferTO">
+        <property name="transferID" column="TRANSFER_ID"/>
+        <property name="fromBranch" column="FROM_BRANCH"/>
+        <property name="toBranch" column="TO_BRANCH"/>
+        <property name="achd" column="AC_HEAD"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="prodID" column="PROD_ID"/>
+        <property name="stockID" column="STOCK_ID"/>
+        <property name="prod_Name" column="PROD_NAME"/>
+        <property name="unitType" column="UNIT_TYPE"/>
+        <property name="availQty" column="AVAIL_QTY"/>
+        <property name="transferQty" column="TRANSFER_QTY"/>
+        <property name="totAmt" column="TOTAL_AMT"/>
+        <property name="transferDt" column="TRANSFER_DT"/>
+        <property name="purchasePrice" column="STOCK_PURCHASE_PRICE"/>
+        <property name="salesPrice" column="STOCK_SALES_PRICE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getEditTransferDetails" result-class="java.util.LinkedHashMap">
+        SELECT TRANSFER_ID,FROM_BRANCH,TO_BRANCH,AC_HEAD,SUM(TRANSFER_QTY) AS TRANSFER_QTY,SUM(TOTAL_AMT)AS TOTAL_AMT,TRANSFER_DT
+        FROM TRADING_TRANSFER WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL GROUP BY TRANSFER_ID,FROM_BRANCH,TO_BRANCH,AC_HEAD,
+        TRANSFER_DT 
+        <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANSFER_ID">
+                    UPPER(TRANSFER_ID) LIKE UPPER('%$TRANSFER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="FROM_BRANCH">
+                    UPPER(FROM_BRANCH) LIKE UPPER('%$FROM_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TO_BRANCH">
+                    UPPER(TO_BRANCH) LIKE UPPER('%$TO_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AC_HEAD">
+                    UPPER(AC_HEAD) LIKE UPPER('%$AC_HEAD$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANSFER_DT">
+                    UPPER(TRANSFER_DT) LIKE UPPER('%$TRANSFER_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY TRANSFER_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getViewTransferDetails" result-class="java.util.LinkedHashMap">
+        SELECT TRANSFER_ID,FROM_BRANCH,TO_BRANCH,AC_HEAD,SUM(TRANSFER_QTY) AS TRANSFER_QTY,SUM(TOTAL_AMT)AS TOTAL_AMT,TRANSFER_DT
+        FROM TRADING_TRANSFER WHERE STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') GROUP BY TRANSFER_ID,FROM_BRANCH,TO_BRANCH,AC_HEAD,
+        TRANSFER_DT
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANSFER_ID">
+                    UPPER(TRANSFER_ID) LIKE UPPER('%$TRANSFER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="FROM_BRANCH">
+                    UPPER(FROM_BRANCH) LIKE UPPER('%$FROM_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TO_BRANCH">
+                    UPPER(TO_BRANCH) LIKE UPPER('%$TO_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AC_HEAD">
+                    UPPER(AC_HEAD) LIKE UPPER('%$AC_HEAD$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANSFER_DT">
+                    UPPER(TRANSFER_DT) LIKE UPPER('%$TRANSFER_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY TRANSFER_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getTradingTransferList" result-map="getTradingTransferTOResult">
+        SELECT TT.*,TS.STOCK_PURCHASE_PRICE,TS.STOCK_SALES_PRICE FROM TRADING_TRANSFER TT,TRADING_STOCK TS WHERE TT.STATUS!='DELETED' 
+        AND TRANSFER_ID = #TRANSFER_ID# AND TT.PROD_ID=TS.PRODUCT_ID AND TT.STOCK_ID=TS.STOCK_ID
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingTransferTO" result-class="java.util.HashMap">
+        UPDATE TRADING_TRANSFER SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND TRANSFER_ID = #TRANSFER_ID# 
+    </mapped-statement>
+</sql-map>

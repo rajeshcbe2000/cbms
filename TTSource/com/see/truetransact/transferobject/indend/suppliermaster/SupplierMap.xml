@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SupplierMap">
+
+	<!-- Use InwardRegisterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSupplierTO" inline-parameters="true">
+        INSERT INTO INDEND_SUPPLIER_MASTER
+        (SUPPLY_ID, NAME, TIN_NUMBER,
+        ADDRESS, STATUS_BY, STATUS_DT,CREATED_BY,CREATED_DT,STATUS,AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,SUSPENSE_ACHD,BRANCH_CODE) VALUES (
+        #supplierNo:VARCHAR#, #name:VARCHAR#, #tinNo:VARCHAR#, 
+        #address:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#,
+        #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#,#suspenseAcHd:VARCHAR#,#branchId:VARCHAR#)
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardRegisterTO object (JavaBean) properties -->
+    <result-map name="getSupplyTOResult" class="com.see.truetransact.transferobject.indend.suppliermaster.SupplierTO">
+        <property name="supplierNo" column="SUPPLY_ID"/>
+        <property name="name" column="NAME"/>
+        <property name="tinNo" column="TIN_NUMBER"/>
+        <property name="address" column="ADDRESS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="suspenseAcHd" column="SUSPENSE_ACHD"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getSupplyEdit" result-class="java.util.LinkedHashMap">
+        SELECT supply_id,name,tin_number,SUSPENSE_ACHD FROM INDEND_SUPPLIER_MASTER 
+        WHERE STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+          <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="supply_id">
+                    UPPER(supply_id) LIKE UPPER('%$supply_id$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="name">
+                    UPPER(name) LIKE UPPER('%$name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="tin_number">
+                    UPPER(tin_number) LIKE UPPER('%$tin_number$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUSPENSE_ACHD">
+                    UPPER(SUSPENSE_ACHD) LIKE UPPER('%$SUSPENSE_ACHD$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectSupplyTO" result-map="getSupplyTOResult" >
+        SELECT * FROM INDEND_SUPPLIER_MASTER WHERE supply_id=#SUPPLY_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="updateSupplyTO" inline-parameters="true">
+        UPDATE INDEND_SUPPLIER_MASTER SET 
+        NAME =  #name:VARCHAR#,
+        TIN_NUMBER = #tinNo:VARCHAR#,
+        ADDRESS = #address:VARCHAR#, 
+        AUTHORIZE_STATUS =  #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#,
+        STATUS_BY =#statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:DATE#, 
+        CREATED_BY =#createdBy:VARCHAR#,
+        CREATED_DT =#createdDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        SUSPENSE_ACHD=#suspenseAcHd:VARCHAR#
+        WHERE SUPPLY_ID = #supplierNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSupplyTO" inline-parameters="true">
+        UPDATE INDEND_SUPPLIER_MASTER SET 
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS = #status:VARCHAR#
+        WHERE SUPPLY_ID = #supplierNo:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getSupplierAcHdDesc" result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_DESC FROM AC_HD WHERE AC_HD_ID = #AC_HD_ID:VARCHAR#
+    </mapped-statement>
+    
+
+   
+</sql-map>

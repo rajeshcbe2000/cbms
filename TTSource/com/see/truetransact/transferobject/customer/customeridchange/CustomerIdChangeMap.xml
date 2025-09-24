@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerIdChangeTOMap">
+
+    <!-- Use CustIDChangeTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustIDChangeTO" inline-parameters="true">
+        INSERT INTO CUST_ID_CHANGE
+        (PROD_TYPE, PROD_ID, ACT_NUM,OLD_CUST_ID,NEW_CUST_ID,BRANCH_CODE, CREATE_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT,ACT_NAME,NEW_CUST_NAME,MULTIPLE_BATCH_ID,ACT_STATUS
+        ) VALUES (
+        #prodType:VARCHAR#, #prodId:VARCHAR#, #actNum:VARCHAR#, #oldCustId:VARCHAR#,#newCustId:VARCHAR#, #branchCode:VARCHAR#, #createdDate:TIMESTAMP#, #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL),#actName:VARCHAR#,#newActName:VARCHAR#,#multipleBatchId:VARCHAR#,#actStatus:VARCHAR#)
+    </mapped-statement>
+
+    <!-- Use CustIDChangeTO object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCustIDChangeTO" inline-parameters="true">
+        UPDATE CUST_ID_CHANGE SET 
+        OLD_CUST_ID = #oldCustId:VARCHAR#,
+        NEW_CUST_ID = #newCustId:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        NEW_CUST_NAME=#newActName:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ACT_NUM = #actNum:VARCHAR#
+        AND STATUS!='DELETED' AND
+        AUTHORIZATION_STATUS is null
+    </mapped-statement>
+
+    <!-- Use CustIDChangeTO object (JavaBean) properties as parameters for delete. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCustIDChangeTO" inline-parameters="true">
+        UPDATE CUST_ID_CHANGE SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ACT_NUM = #actNum:VARCHAR#
+        AND AUTHORIZATION_STATUS IS NULL
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getCustIDChangeTOResult" class="com.see.truetransact.transferobject.customer.customeridchange.CustomerIdChangeTO">
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="oldCustId" column="OLD_CUST_ID"/>
+        <property name="newCustId" column="NEW_CUST_ID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="createdDate" column="CREATE_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authstatus" column="AUTHORIZATION_STATUS"/>
+        <property name="authBy" column="AUTHORIZED_BY"/>
+        <property name="authDate" column="AUTHORIZED_DT"/>
+        <property name="actName" column="ACT_NAME"/>
+        <property name="newActName" column="NEW_CUST_NAME"/>
+        <property name="actStatus" column="ACT_STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectCustIDChangeTO" result-map="getCustIDChangeTOResult" >
+        SELECT * FROM CUST_ID_CHANGE 
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND OLD_CUST_ID=#OLD_CUST_ID:VARCHAR# AND STATUS!='DELETED'
+        <!--AND AUTHORIZATION_STATUS IS NULL-->
+    </mapped-statement>
+    <dynamic-mapped-statement name="getSelectAccountsForEdit" result-class="java.util.HashMap">
+        SELECT PROD_TYPE,PROD_ID,ACT_NUM,CIC.OLD_CUST_ID,NEW_CUST_ID,CIC.BRANCH_CODE,CIC.STATUS_DT,CUST_TYPE
+        FROM CUST_ID_CHANGE CIC,CUSTOMER  WHERE  CIC.STATUS!='DELETED' AND CIC.AUTHORIZATION_STATUS IS NULL
+        AND CIC.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND OLD_CUST_ID=CUSTOMER.CUST_ID
+        <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="AUTHORIZE_MODE">
+                CIC.STATUS_BY != #USER_ID:VARCHAR#
+                AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                FROM USER_MASTER UM, ROLE_MASTER RM 
+                WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = CIC.STATUS_BY)
+            </isPropertyAvailable>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSelectAccountsForView" result-class="java.util.LinkedHashMap">
+        SELECT PROD_TYPE,PROD_ID,ACT_NUM,OLD_CUST_ID,NEW_CUST_ID,BRANCH_CODE,STATUS_DT,AUTHORIZED_DT  
+        FROM CUST_ID_CHANGE WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        AND (AUTHORIZATION_STATUS IS NULL OR AUTHORIZATION_STATUS='AUTHORIZED')
+        ORDER BY STATUS_DT DESC ,ACT_NUM
+    </mapped-statement>
+    <mapped-statement name="getSelectActForCustIDChngOA" result-class="java.util.HashMap">
+        SELECT
+        ACT_NUM, get_cust_name(CU.CUST_ID) AS CUSTOMER_NAME,
+        AM.CUST_ID,CU.CUST_TYPE
+        FROM ACT_MASTER AM, CUSTOMER CU
+        WHERE AM.CUST_ID = CU.CUST_ID AND 
+        AM.PROD_ID = #PROD_ID:VARCHAR# AND  
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZATION_STATUS='AUTHORIZED' AND 
+        AM.BRANCH_CODE = #SELECTED_BRANCH:VARCHAR# 
+        ORDER BY ACT_NUM
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectActForCustIDChngSA" result-class="java.util.HashMap">
+        SELECT   AM.SUSPENSE_ACCT_NUM AS ACT_NUM,
+        get_cust_name(cu.cust_id) AS customer_name,
+        AM.SUSPENSE_CUSTOMER_ID AS CUST_ID, cu.cust_type
+        FROM SUSPENSE_ACCOUNT_MASTER am, customer cu
+        WHERE AM.SUSPENSE_CUSTOMER_ID = cu.cust_id
+        AND AM.SUSPENSE_PROD_ID = #PROD_ID:VARCHAR#
+        AND am.status NOT IN ('DELETED')
+        AND AM.AUTHORIZE_STATUS= 'AUTHORIZED'
+        AND am.branch_code = #SELECTED_BRANCH:VARCHAR# 
+        ORDER BY am.SUSPENSE_ACCT_NUM
+    </mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getSelectActForCustIDChngTD" result-class="java.util.HashMap">
+        SELECT DA.DEPOSIT_NO  as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTOMER_NAME,DA.CUST_ID AS CUST_ID,CU.CUST_TYPE AS CUST_TYPE FROM DEPOSIT_ACINFO DA, 
+        CUSTOMER CU,DEPOSIT_SUB_ACINFO DS, DEPOSITS_PRODUCT DP WHERE DA.CUST_ID = CU.CUST_ID AND 
+        DP.PROD_ID = DA.PROD_ID AND DA.PROD_ID = #PROD_ID:VARCHAR# AND DA.DEPOSIT_NO=DS.DEPOSIT_NO 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  prepend="AND"  property="BEHAVES_LIKE">
+                    DP.BEHAVES_LIKE = 'DAILY' 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NOT_DAILY">
+                    DP.BEHAVES_LIKE != 'DAILY'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND 
+        (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND DS.STATUS NOT IN 
+        ('DELETED') AND DS.AUTHORIZE_STATUS='AUTHORIZED' AND DA.BRANCH_ID = #SELECTED_BRANCH# ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+       
+    <mapped-statement name="getSelectActForCustIDChngTL" result-class="java.util.HashMap">
+        SELECT
+        DISTINCT(LFD.ACCT_NUM) AS ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+        LB.CUST_ID AS CUST_ID,CU.CUST_TYPE AS CUST_TYPE
+        FROM LOANS_BORROWER LB, CUSTOMER CU, LOANS_FACILITY_DETAILS LFD
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID:VARCHAR# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectActForCustIDChngAD" result-class="java.util.HashMap">
+        SELECT
+        LFD.ACCT_NUM as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+        LB.CUST_ID AS CUST_ID,CU.CUST_TYPE AS CUST_TYPE 
+        FROM LOANS_BORROWER LB, CUSTOMER CU, LOANS_FACILITY_DETAILS LFD
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID:VARCHAR# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+        LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+        ORDER BY LFD.ACCT_NUM
+    </mapped-statement>
+    <mapped-statement name="getSelectActForCustIDChngAAD" result-class="java.util.HashMap">
+        SELECT
+        LFD.ACCT_NUM as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+        LB.CUST_ID AS CUST_ID,CU.CUST_TYPE AS CUST_TYPE
+        FROM AGRI_LOANS_BORROWER LB, CUSTOMER CU, AGRI_LOANS_FACILITY_DETAILS LFD
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID:VARCHAR# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+        LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+        ORDER BY LFD.ACCT_NUM
+    </mapped-statement>
+       
+    <mapped-statement name="getSelectActForCustIDChngATL" result-class="java.util.HashMap">
+        SELECT
+        DISTINCT(LFD.ACCT_NUM) AS ACT_NUM,
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+        LB.CATEGORY as CATEGORY,LB.CUST_ID AS CUST_ID,CU.CUST_TYPE AS CUST_TYPE 
+        FROM AGRI_LOANS_BORROWER LB, CUSTOMER CU, AGRI_LOANS_FACILITY_DETAILS LFD
+        WHERE LB.CUST_ID = CU.CUST_ID AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID:VARCHAR# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'  AND 
+        LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR# 
+    </mapped-statement>
+       
+    <mapped-statement name="EnqCustIDIND" result-class="java.util.HashMap">
+        SELECT CUST_ID,get_cust_name(CUSTOMER.CUST_ID) AS CUSTOMER_NAME FROM CUSTOMER WHERE CUST_ID=#CUST_ID:VARCHAR#
+        AND STATUS!='DELETED' AND CUST_TYPE='INDIVIDUAL'
+    </mapped-statement>
+      
+    <mapped-statement name="EnqCustIDCORP" result-class="java.util.HashMap">
+        SELECT CUST_ID,get_cust_name(CUSTOMER.CUST_ID) AS CUSTOMER_NAME FROM CUSTOMER WHERE CUST_ID=#CUST_ID:VARCHAR#
+        AND STATUS!='DELETED' AND CUST_TYPE!='INDIVIDUAL'
+    </mapped-statement>
+      
+    <mapped-statement name="EnqActNum" result-class="java.util.HashMap">
+        SELECT ACT_NUM FROM cust_id_change WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZATION_STATUS is NULL
+    </mapped-statement>
+      
+    <mapped-statement name="getSelectCustIDForCustChangeIND" result-class="java.util.HashMap">
+        SELECT CUST_ID,get_cust_name(CUSTOMER.CUST_ID) AS CUSTOMER_NAME FROM CUSTOMER
+        WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND CUST_TYPE='INDIVIDUAL'
+    </mapped-statement>
+    <mapped-statement name="getSelectCustIDForCustChangeCORP" result-class="java.util.HashMap">
+        SELECT CUST_ID,get_cust_name(CUSTOMER.CUST_ID) AS CUSTOMER_NAME FROM CUSTOMER
+        WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND CUST_TYPE!='INDIVIDUAL'
+    </mapped-statement>
+    <!-- ============================Customer ID updation Queries OA=========================================================== -->  
+    <mapped-statement name="updateCustIDOA" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET CUST_ID=#NEW_CUST_ID:VARCHAR#
+        WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+    
+    <!-- Added by nithya -->
+    <mapped-statement name="updateCustIDSA" result-class="java.util.HashMap">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET SUSPENSE_CUSTOMER_ID = #NEW_CUST_ID:VARCHAR#,
+        SUSPENSE_MEMBER_NO = #MEMBERSHIP_NO:VARCHAR#,
+        SUSPENSE_NAME = #NEW_CUST_NAME:VARCHAR#,
+        SUSPENSE_ADDRESS = #NEW_CUST_ADDRESS:VARCHAR#
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectCustDetailsForSuspenseActChange" result-class="java.util.HashMap">
+        SELECT DISTINCT C.CUST_ID,DECODE (c.cust_type, 'INDIVIDUAL', fname, comp_name) AS "NAME",replace((CA.STREET || ' ' || CA.AREA || ' ' || CA.CITY),',') as "ADDRESS",C.MEMBERSHIP_NO FROM CUSTOMER C ,CUST_ADDR CA
+        WHERE C.CUST_ID = #NEW_CUST_ID:VARCHAR#
+        AND C.CUST_ID =CA.CUST_ID
+    </mapped-statement>    
+    <!-- End -->
+    
+    <mapped-statement name="updateActJointOA" result-class="java.util.HashMap">
+        UPDATE ACT_JOINT SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateActIntOA" result-class="java.util.HashMap">
+        UPDATE ACT_INTEREST SET CUST_ID=#NEW_CUST_ID#  WHERE ACT_NUM=#ACT_NUM# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateCustHisOA" result-class="java.util.HashMap">
+        UPDATE CUST_HISTORY SET CUST_ID=#NEW_CUST_ID:VARCHAR#  WHERE ACCT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustHisTD" result-class="java.util.HashMap">
+        UPDATE CUST_HISTORY SET CUST_ID=#NEW_CUST_ID:VARCHAR#  WHERE ACCT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustHisLoans" result-class="java.util.HashMap">
+        UPDATE CUST_HISTORY SET CUST_ID=#NEW_CUST_ID:VARCHAR#  WHERE ACCT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateNomDetailOA" result-class="java.util.HashMap">
+        UPDATE ACT_NOMINEE_DETAIL SET CUST_ID=#NEW_CUST_ID:VARCHAR#  WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updatePoaOA" result-class="java.util.HashMap">
+        UPDATE ACT_POA SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="updateJointOA" result-class="java.util.HashMap">
+        UPDATE ACT_OA_JOINT SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    <!-- ============================END OA=========================================================== -->  
+      
+    <!-- ============================Customer ID updation Queries TL and AD=========================================================== -->
+    <mapped-statement name="updateCustIDTL" result-class="java.util.HashMap">
+        UPDATE LOANS_BORROWER SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE BORROW_NO=
+        (SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateCustIDAD" result-class="java.util.HashMap">
+        UPDATE LOANS_BORROWER SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE BORROW_NO=
+        (SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoanAuth" result-class="java.util.HashMap">
+        UPDATE LOANS_AUTHORIZE SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE CUST_ID=#OLD_CUST_ID:VARCHAR# AND
+        BORROW_NO=(SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoanClosingIntTmp" result-class="java.util.HashMap">
+        UPDATE LOANS_CLOSING_INT_TMP SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoansGuarantor" result-class="java.util.HashMap">
+        UPDATE LOANS_Guarantor_details SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACCT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoanInt" result-class="java.util.HashMap">
+        UPDATE LOANS_INTEREST SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoansJoint" result-class="java.util.HashMap">
+        UPDATE LOANS_JOint SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE CUST_ID=#OLD_CUST_ID:VARCHAR# AND
+        BORROW_NO=(SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoansPoa" result-class="java.util.HashMap">
+        UPDATE LOANS_POA SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE CUST_ID=#OLD_CUST_ID:VARCHAR# AND
+        BORROW_NO=(SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateLoanSecDetails" result-class="java.util.HashMap">
+        UPDATE LOANS_SECURITY_DETails SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACCT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    <!-- ============================END TL and AD=========================================================== -->  
+      
+    <!-- ============================Customer ID updation Queries ATL and AAD=========================================================== -->
+    <mapped-statement name="updateCustIDATL" result-class="java.util.HashMap">
+        UPDATE AGRI_LOANS_BORROWER SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE BORROW_NO=
+        (SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateCustIDAAD" result-class="java.util.HashMap">
+        UPDATE AGRI_LOANS_BORROWER SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE BORROW_NO=
+        (SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+       
+    <mapped-statement name="updateAgriLoanClosingIntTmp" result-class="java.util.HashMap">
+        UPDATE LOANS_CLOSING_INT_TMP SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateAgriLoansGuarantor" result-class="java.util.HashMap">
+        UPDATE LOANS_Guarantor_details SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACCT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateAgriLoanInt" result-class="java.util.HashMap">
+        UPDATE LOANS_INTEREST SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateAgriLoansJoint" result-class="java.util.HashMap">
+        UPDATE LOANS_JOint SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE CUST_ID=#OLD_CUST_ID:VARCHAR# AND
+        BORROW_NO=(SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateAgriLoansPoa" result-class="java.util.HashMap">
+        UPDATE LOANS_POA SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE CUST_ID=#OLD_CUST_ID:VARCHAR# AND
+        BORROW_NO=(SELECT DISTINCT(BORROW_NO) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="updateAgriLoanSecDetails" result-class="java.util.HashMap">
+        UPDATE LOANS_SECURITY_DETails SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE ACCT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+       
+       
+       
+    <!-- ============================END ATL and AAD=========================================================== -->  
+      
+      
+    <!-- ============================Customer ID updation Queries TD=========================================================== -->  
+    <mapped-statement name="updateCustIDTD" result-class="java.util.HashMap">
+        update deposit_acinfo set CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateDepAuthTD" result-class="java.util.HashMap">
+        UPDATE deposit_authorize SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateDepJointActTD" result-class="java.util.HashMap">
+        UPDATE deposit_jointact SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateDepNomDetTD" result-class="java.util.HashMap">
+        UPDATE deposit_nominee_detail SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateDepPoaTD" result-class="java.util.HashMap">
+        UPDATE deposit_POA SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateDepPoa1TD" result-class="java.util.HashMap">
+        UPDATE deposit_POA1 SET CUST_ID=#NEW_CUST_ID:VARCHAR# WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateDepIntTD" result-class="java.util.HashMap">
+        UPDATE deposit_interest SET CUST_ID=#NEW_CUST_ID:VARCHAR#  WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND CUST_ID=#OLD_CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustPanNoTD" result-class="java.util.HashMap">
+        update deposit_acinfo set PAN_NUMBER = GET_SELECT_CUST_PAN_NUMBER(#NEW_CUST_ID:VARCHAR#)
+        WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+      
+    <!-- ============================END TD=========================================================== -->  
+      
+    <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getCustIDChangeTOAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  CONFIG_ID, TOKEN_TYPE, BRANCH_ID, SERIES_NO,TOKEN_START_NO, TOKEN_END_NO FROM TOKEN_CONFIG TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  CONFIG_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeCustIDChange" result-class="java.util.HashMap">
+        UPDATE CUST_ID_CHANGE SET 
+        AUTHORIZATION_STATUS=#STATUS:VARCHAR#,
+        AUTHORIZED_BY=#AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT:DATE#
+        WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        AND OLD_CUST_ID=#OLD_CUST_ID:VARCHAR# AND NEW_CUST_ID=#NEW_CUST_ID:VARCHAR#
+    </mapped-statement>  
+
+    <mapped-statement name="updateCustIDSH" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET CUST_ID=#NEW_CUST_ID#
+        WHERE SHARE_ACCT_NO=#ACT_NUM#
+    </mapped-statement> 
+        
+</sql-map>

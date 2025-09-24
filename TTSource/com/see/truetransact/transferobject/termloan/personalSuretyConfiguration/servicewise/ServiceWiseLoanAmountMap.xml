@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ServiceWiseLoanAmountMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+         <!--getSelectGeneralList-->
+    <dynamic-mapped-statement name="ServiceWiseLoanAmount.getSelectPersonalList" result-class="java.util.LinkedHashMap" >
+        SELECT ESLE_ID, PAST_SERVPRD_FROM,PAST_SERVPRD_TO FROM EMP_SERVICEWISE_LOAN_ELG
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+             
+                 
+             
+
+        
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateServicePersonalTO" inline-parameters="true">
+        UPDATE EMP_SERVICEWISE_LOAN_ELG SET 
+        PAST_SERVPRD_FROM=#fromServicePeriod:INTEGER#,
+        PAST_SERVPRD_TO=#toServicePeriod:INTEGER#,
+        ELG_MIN_AMOUNT=#minimumLoanAmount:INTEGER#,
+        ELG_MAX_AMOUNT=#maximumLoanAmount:INTEGER#,
+        EFFECT_FROM=#fromDate:Date#,
+        STATUS=#status:VARCHAR#,
+        SERVICE_PERIOD_REQUIRED= #totServicePeriodRequired:INTEGER#,
+        NO_OF_SURETIES_INCLUDING_LOAN= #totSecurityRequired:INTEGER#     
+        WHERE ESLE_ID=#gbid:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="deleteServicePersonalTO" inline-parameters="true">
+        DELETE FROM emp_servicewise_loan_elg_prod WHERE ESLE_ID = #gbid:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectServiceProdIdDesc" result-class="java.util.LinkedHashMap">
+        SELECT a.prod_id,b.prod_desc from emp_servicewise_loan_elg_prod A, LOANS_PRODUCT B WHERE A.ESLE_ID = #ESLEID:VARCHAR# AND a.prod_id=B.PROD_ID
+    </mapped-statement> 
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--<mapped-statement name="deleteGeneralBodyTO" inline-parameters="true">
+		UPDATE GENERAL_BODY_DETAILS SET 
+		STATUS = #status:VARCHAR#
+         	WHERE GBID = #gbid:VARCHAR#
+	</mapped-statement>-->
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getServicePersonalTOResult" class="com.see.truetransact.transferobject.termloan.personalSuretyConfiguration.servicewise.ServiceWiseLoanAmountTO">
+        <property name="fromServicePeriod" column="PAST_SERVPRD_FROM"/>
+        <property name="toServicePeriod" column="PAST_SERVPRD_TO"/>
+        <property name="fromDate" column="EFFECT_FROM"/>
+        <property name="minimumLoanAmount" column="ELG_MIN_AMOUNT"/>
+        <property name="maximumLoanAmount" column="ELG_MAX_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="gbid" column="ESLE_ID"/>
+        <property name="totServicePeriodRequired" column="SERVICE_PERIOD_REQUIRED"/>
+        <property name="totSecurityRequired" column="NO_OF_SURETIES_INCLUDING_LOAN"/>
+               
+    </result-map>
+	
+        
+        
+    <mapped-statement name="getSelectServicePersonal" result-map="getServicePersonalTOResult" >
+        select ESLE_ID,EFFECT_FROM,PAST_SERVPRD_FROM,PAST_SERVPRD_TO,ELG_MIN_AMOUNT,ELG_MAX_AMOUNT,STATUS,
+        SERVICE_PERIOD_REQUIRED,NO_OF_SURETIES_INCLUDING_LOAN
+        from EMP_SERVICEWISE_LOAN_ELG WHERE ESLE_ID = #ESLEID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getProductDtsForServiceWiseLoanAmount" result-class="java.util.LinkedHashMap" >
+        select PROD_ID,PROD_DESC from loans_product where AUTHORIZE_STATUS='AUTHORIZED' 
+    </mapped-statement>
+        
+        
+    <mapped-statement name="insertEmpServiceWiseLoanElg" inline-parameters="true">
+        INSERT INTO EMP_SERVICEWISE_LOAN_ELG
+        (ESLE_ID, EFFECT_FROM,PAST_SERVPRD_FROM,PAST_SERVPRD_TO,ELG_MIN_AMOUNT,ELG_MAX_AMOUNT,STATUS, SERVICE_PERIOD_REQUIRED,NO_OF_SURETIES_INCLUDING_LOAN) 
+        VALUES (
+        #gbid:VARCHAR#,#fromDate:DATE#,#fromServicePeriod:INTEGER#,#toServicePeriod:INTEGER#,#minimumLoanAmount:INTEGER#,
+        #maximumLoanAmount:INTEGER#,#status:VARCHAR#,#totServicePeriodRequired:NUMBER#,#totSecurityRequired:NUMBER#)
+                
+    </mapped-statement>
+        
+    <mapped-statement name="insertEmpServiceWiseLoanElgProd" inline-parameters="true">
+        INSERT INTO EMP_SERVICEWISE_LOAN_ELG_PROD
+        (ESLE_ID, PROD_ID) 
+        VALUES (
+        #gbid:VARCHAR#,#prodID:VARCHAR#)
+    </mapped-statement>
+        
+        
+
+</sql-map>

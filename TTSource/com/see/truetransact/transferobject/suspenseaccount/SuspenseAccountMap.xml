@@ -1,0 +1,851 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SuspenseAccountMap">
+
+        <!-- =================================== SUSPENSE ACCOUNT MASTER BEGINS HERE ============================================= -->
+    <mapped-statement name="insertSuspenseAccountMaster" inline-parameters="true">
+        INSERT INTO SUSPENSE_ACCOUNT_MASTER
+        (   SUSPENSE_PROD_ID,SUSPENSE_PROD_DESC,SUSPENSE_ACCT_NUM, SUSPENSE_OPEN__DATE,SUSPENSE_MEMBER_NO, SUSPENSE_CUSTOMER_ID,SUSPENSE_NAME,
+        SUSPENSE_ADDRESS, STATUS, STATUS_DATE, STATUS_BY, BRANCH_CODE,SUSPENSE_PREFIX,SUSPENSE_REF_NO,SALARY_RECOVERY,AGENT_ID,ISAUCTION,TOTAL_BALANCE,DEALER_ID,INT_CALC_UPTO_DT)
+        VALUES (#txtSuspenseProdDescription:VARCHAR#,#cboSuspenseProdID:VARCHAR#, #txtSuspenseActNum:VARCHAR#, #tdtSuspenseOpenDate:TIMESTAMP#, #txtMemberNumber:VARCHAR#,
+        #txtCustomerId:VARCHAR#,#txtName:VARCHAR#, #txtAddress:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#, #statusBy:VARCHAR#,#branchCode:VARCHAR#,
+        #txtPrefix:VARCHAR#,#txtAccRefNo:VARCHAR#,#rdoSalRecovery:VARCHAR#,#cboAgentID:VARCHAR#,#isAuction:VARCHAR#,#totalBalace:NUMBER#,#cboDealer:VARCHAR#,#intCalcUpToDt:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSuspenseAccountTOList" result-class="java.util.LinkedHashMap">
+        SELECT SUSPENSE_ACCT_NUM,SUSPENSE_NAME,SUSPENSE_CUSTOMER_ID,SUSPENSE_OPEN__DATE FROM SUSPENSE_ACCOUNT_MASTER WHERE STATUS NOT IN ('DELETED')
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED','EXCEPTION') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to PaddyLocalityMasterTO object (JavaBean) properties -->
+    <result-map name="getSuspenseAccountMasterTOResult" class="com.see.truetransact.transferobject.suspenseaccount.SuspenseAccountMasterTO">
+        <property name="txtSuspenseProdDescription" column="SUSPENSE_PROD_ID"/>
+        <property name="cboSuspenseProdID" column="SUSPENSE_PROD_DESC"/>
+        <property name="txtSuspenseActNum" column="SUSPENSE_ACCT_NUM"/>
+        <property name="tdtSuspenseOpenDate" column="SUSPENSE_OPEN__DATE"/>
+        <property name="txtMemberNumber" column="SUSPENSE_MEMBER_NO"/>
+        <property name="txtCustomerId" column="SUSPENSE_CUSTOMER_ID"/>
+        <property name="txtName" column="SUSPENSE_NAME"/>
+        <property name="txtAddress" column="SUSPENSE_ADDRESS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="txtPrefix" column="SUSPENSE_PREFIX"/>
+        <property name="txtAccRefNo" column="SUSPENSE_REF_NO"/>
+        <property name="rdoSalRecovery" column="SALARY_RECOVERY"/>
+        <property name="cboAgentID" column="AGENT_ID"/>
+        <property name="cboDealer" column="DEALER_ID"/>
+        <property name="isAuction" column="ISAUCTION"/>
+        <property name="totalBalace" column="TOTAL_BALANCE"/>
+        <property name="intCalcUpToDt" column="INT_CALC_UPTO_DT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectSelectSuspenseAccountTO" result-map="getSuspenseAccountMasterTOResult" >
+        SELECT * FROM SUSPENSE_ACCOUNT_MASTER 
+        WHERE SUSPENSE_ACCT_NUM = #SUSPENSE_ACCT_NUM:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="updateSuspenseAccountMaster" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET 
+        SUSPENSE_PROD_DESC = #cboSuspenseProdID:VARCHAR#,
+        SUSPENSE_PROD_ID = #txtSuspenseProdDescription:VARCHAR#,
+        SUSPENSE_ACCT_NUM = #txtSuspenseActNum:VARCHAR#,
+        SUSPENSE_OPEN__DATE = #tdtSuspenseOpenDate:DATE#,
+        SUSPENSE_MEMBER_NO = #txtMemberNumber:VARCHAR#,
+        SUSPENSE_CUSTOMER_ID = #txtCustomerId:VARCHAR#,
+        SUSPENSE_NAME = #txtName:VARCHAR#,
+        SUSPENSE_ADDRESS = #txtAddress:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#,
+        SUSPENSE_PREFIX = #txtPrefix:VARCHAR#,
+        SUSPENSE_REF_NO =#txtAccRefNo:VARCHAR#,
+        SALARY_RECOVERY = #rdoSalRecovery:VARCHAR#,
+        AGENT_ID=#cboAgentID:VARCHAR#,
+        DEALER_ID = #cboDealer:VARCHAR#,
+        ISAUCTION = #isAuction:VARCHAR#,
+        INT_CALC_UPTO_DT = #intCalcUpToDt:DATE#
+        WHERE 
+        SUSPENSE_ACCT_NUM = #txtSuspenseActNum:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use PaddyItemOpeningStockTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteSuspenseAccountMaster" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET 	
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#
+        WHERE 
+        SUSPENSE_ACCT_NUM = #txtSuspenseActNum:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSuspenseAccountMasterAuthMode" result-class="java.util.HashMap" >
+        SELECT SUSPENSE_NAME,SUSPENSE_ACCT_NUM,SUSPENSE_CUSTOMER_ID,SUSPENSE_MEMBER_NO,SUSPENSE_OPEN__DATE,STATUS_BY 
+        FROM SUSPENSE_ACCOUNT_MASTER C WHERE #HIERARCHY_ID:VARCHAR#>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) 
+        AND C.BRANCH_CODE =#BRANCH_CODE:VARCHAR#
+        AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY SUSPENSE_ACCT_NUM
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSuspenseAccountMasterTransaction" result-class="java.util.LinkedHashMap">              
+        SELECT   (SELECT   distinct CASE WHEN AT.TRANS_MODE ='CASH' THEN
+        AT.TRANS_ID ELSE AT.BATCH_ID END AS BATCH_ID
+            FROM SUSPENSE_ACCOUNT_MASTER C,ALL_TRANS AT
+           WHERE AT.LINK_BATCH_ID = C.SUSPENSE_ACCT_NUM
+            AND cast(#HIERARCHY_ID# as numeric) &gt;=
+                    (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                             'Y', HIERARCHY_ID,
+                                             HIERARCHY_ID + 1
+                                            )
+                                FROM USER_MASTER UM, ROLE_MASTER RM
+                               WHERE RM.ROLE_ID = UM.USER_ROLE
+                                 AND UM.USER_ID = C.STATUS_BY)
+             AND C.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+             AND C.STATUS != 'DELETED'
+             AND (   C.AUTHORIZE_STATUS IS NULL
+                  OR C.AUTHORIZE_STATUS NOT IN
+                                              ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                 )
+             AND C.STATUS_BY != #USER_ID:VARCHAR#
+             AND AT.TRANS_DT = #TRANS_DT:DATE#
+             AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+            AND ( AT.AUTHORIZE_STATUS IS NULL)) AS BATCH_ID,SUSPENSE_NAME, SUSPENSE_ACCT_NUM, SUSPENSE_CUSTOMER_ID,
+                 SUSPENSE_MEMBER_NO, SUSPENSE_OPEN__DATE, STATUS_BY
+            FROM SUSPENSE_ACCOUNT_MASTER C
+           WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+                    (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                             'Y', HIERARCHY_ID,
+                                             HIERARCHY_ID + 1
+                                            )
+                                FROM USER_MASTER UM, ROLE_MASTER RM
+                               WHERE RM.ROLE_ID = UM.USER_ROLE
+                                 AND UM.USER_ID = C.STATUS_BY)
+             AND C.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+             AND C.STATUS != 'DELETED'
+             AND (   C.AUTHORIZE_STATUS IS NULL
+                  OR C.AUTHORIZE_STATUS NOT IN
+                                              ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                 )
+             AND C.STATUS_BY !=#USER_ID:VARCHAR#
+        ORDER BY SUSPENSE_ACCT_NUM   
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeSuspenseAccountMaster" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:DATE#
+        WHERE SUSPENSE_ACCT_NUM = #SUSPENSE_ACCT_NUM:VARCHAR# 
+    </mapped-statement>
+        
+        
+        <!-- ========================================SUSPENSE ACCOUNT PRODUCT ============================================= -->
+        
+    <mapped-statement name="insertSuspenseAccountProduct" inline-parameters="true">
+        INSERT INTO SUSPENSE_PRODUCT
+        ( AC_HD_ID , PROD_ID, PROD_DESC ,STATUS, STATUS_DATE, STATUS_BY,CREATED_BY ,CREATED_DT,SUS_PREFIX,NEG_AMT_YN
+        ,BEHAVES_LIKE_LOAN,INT_AC_HD,INT_RATE
+        ) VALUES (
+        #txtSuspenseProductHead:VARCHAR#,#txtSuspenseProdID:VARCHAR#, #txtSuspenseProdName:VARCHAR#, 
+        #status:VARCHAR#,#statusDt:DATE#, #statusBy:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#txtPrefix:VARCHAR#,#chkNegBalnce:VARCHAR#
+        ,#loanBehaviour:VARCHAR#,#intAcHd:VARCHAR#,#intRate:NUMBER#)
+    </mapped-statement>
+        
+   <dynamic-mapped-statement name="getSelectSuspenseProductTOList" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID,PROD_DESC,AC_HD_ID FROM SUSPENSE_PRODUCT WHERE STATUS NOT IN ('DELETED')
+        AND (AUTHORIZED_STATUS NOT IN ('REJECTED','EXCEPTION') OR AUTHORIZED_STATUS IS NULL)
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_ID">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$AC_HD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to PaddyLocalityMasterTO object (JavaBean) properties -->
+    <result-map name="getSuspenseProductTOResult" class="com.see.truetransact.transferobject.suspenseaccount.SuspenseAccountProductTO">
+        <property name="txtSuspenseProductHead" column="AC_HD_ID"/>
+        <property name="txtSuspenseProdID" column="PROD_ID"/>
+        <property name="txtSuspenseProdName" column="PROD_DESC"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="txtPrefix" column="SUS_PREFIX"/>
+        <property name="chkNegBalnce" column="NEG_AMT_YN"/>
+        <property name="loanBehaviour" column="BEHAVES_LIKE_LOAN"/>
+        <property name="intAcHd" column="INT_AC_HD"/>
+        <property name="intRate" column="INT_RATE"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectSuspenseProductTO" result-map="getSuspenseProductTOResult" >
+        SELECT * FROM SUSPENSE_PRODUCT 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="updateSuspenseAccountProduct" inline-parameters="true">
+        UPDATE SUSPENSE_PRODUCT SET 
+        AC_HD_ID = #txtSuspenseProductHead:VARCHAR#,
+        PROD_ID = #txtSuspenseProdID:VARCHAR#,
+        PROD_DESC = #txtSuspenseProdName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#,
+        SUS_PREFIX= #txtPrefix:VARCHAR#,
+        AUTHORIZED_STATUS = null,
+        AUTHORIZED_BY = null, 
+        AUTHORIZED_DT = null,
+        NEG_AMT_YN =#chkNegBalnce:VARCHAR#,
+        BEHAVES_LIKE_LOAN = #loanBehaviour:VARCHAR#,
+        INT_AC_HD = #intAcHd:VARCHAR#,
+        INT_RATE = #intRate:NUMBER#
+        WHERE 
+        PROD_ID = #txtSuspenseProdID:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use PaddyItemOpeningStockTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteSuspenseAccountProduct" inline-parameters="true">
+        UPDATE SUSPENSE_PRODUCT SET 	
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#
+        WHERE 
+        PROD_ID = #txtSuspenseProdID:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSuspenseAccountProductAuthMode" result-class="java.util.HashMap" >
+       SELECT PROD_ID,PROD_DESC,AC_HD_ID,STATUS_BY 
+        FROM SUSPENSE_PRODUCT C WHERE cast(#HIERARCHY_ID# as numeric) &gt;=(SELECT DISTINCT CASE COALESCE(SAME_HIERARCHY_ALLOWED,'N') 
+         WHEN 'Y' THEN  HIERARCHY_ID  ELSE HIERARCHY_ID + 1 END
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZED_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZED_STATUS IS NULL OR 
+                C.AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY PROD_ID
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="authorizeSuspenseAccountProduct" result-class="java.util.HashMap">
+        UPDATE SUSPENSE_PRODUCT SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSuspenseProductID" result-map="get-getSuspenseProductId-result"> 
+        SELECT PROD_ID,PROD_DESC FROM SUSPENSE_PRODUCT WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-getSuspenseProductId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map> 
+        
+    <mapped-statement name="getSuspenseProdDescription" result-class="java.util.HashMap">
+        SELECT PROD_DESC,SUS_PREFIX FROM SUSPENSE_PRODUCT WHERE PROD_ID=#PROD_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateOtherBalancesSA" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET 
+        CLEAR_BALANCE = NVL (CLEAR_BALANCE, 0) + #AMOUNT:NUMBER# - #UNCLEAR_AMT:NUMBER#, 
+        TOTAL_BALANCE = NVL (TOTAL_BALANCE, 0) + #AMOUNT:NUMBER# 
+               <!-- UNCLEAR_BALANCE = NVL (UNCLEAR_BALANCE, 0) + #UNCLEAR_AMT# , 
+                LAST_TRANS_DT = #TODAY_DT# -->
+        WHERE SUSPENSE_ACCT_NUM = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateLastTransDateSA" result-class="java.util.HashMap">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET
+        LAST_TRANS_DT = #TODAY_DT:DATE#
+        WHERE SUSPENSE_ACCT_NUM = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="updateAvailBalanceSA" result-class="java.util.HashMap">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT:NUMBER# 
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="GREATERAMTCREDIT">
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+                          <!-- AVAILABLE_BALANCE =(nvl(CLEAR_BALANCE,0)+#AMOUNT#)+ nvl(AVAILABLE_BALANCE,0) -->
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="LESSERAMTCREDIT">
+                         <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0), -->
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="NORMAL">
+                        <!-- AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                      <!--  AVAILABLE_BALANCE = (CASE
+                                        WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&lt;#AMOUNT# )
+                                             )
+                                        THEN  (nvl(AVAILABLE_BALANCE,0) + #AMOUNT#) + NVL(CLEAR_BALANCE,0)
+                                        WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&gt;=#AMOUNT# )
+                                             )
+                                        THEN   nvl(AVAILABLE_BALANCE,0)
+                                        ELSE nvl(AVAILABLE_BALANCE,0) + #AMOUNT# 
+                                        END), -->
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="NORMALDEBIT">
+                        <!-- AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                        <!-- AVAILABLE_BALANCE= nvl(AVAILABLE_BALANCE,0) + #AMOUNT#, -->
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="GREATERAMTCREDITRUNNING">
+                          <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                        <!--  AVAILABLE_BALANCE = (CASE
+                                        WHEN(  #TOD_UTILIZED# &gt; 0
+                                             )
+                                        THEN  #AMOUNT#+nvl(CLEAR_BALANCE,0)+#TOD_AMOUNT#
+                                        WHEN(#TOD_UTILIZED# &lt;= 0 AND ABS(CLEAR_BALANCE)&lt;#AMOUNT#
+                                             )
+                                        THEN   (nvl(AVAILABLE_BALANCE,0) + #AMOUNT#) + NVL(CLEAR_BALANCE,0)
+                                        WHEN(#TOD_UTILIZED# &lt;= 0 AND ABS(CLEAR_BALANCE)&gt;=#AMOUNT#
+                                             )
+                                        THEN   nvl(AVAILABLE_BALANCE,0)
+                                        END), -->
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        WHERE SUSPENSE_ACCT_NUM = #ACCOUNTNO:VARCHAR#
+    </dynamic-mapped-statement>
+    <result-map name="getAccProductresultSA" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="Cash.getAccProductSA" result-map="getAccProductresultSA">
+        SELECT PROD_ID, PROD_DESC 
+        FROM SUSPENSE_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and 
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+        order by PROD_DESC
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadProdSA" result-class="java.util.HashMap">
+        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC,CR_CASH,DR_CASH
+        FROM AC_HD, SUSPENSE_PRODUCT,AC_HD_PARAM 
+        WHERE AC_HD.AC_HD_ID = SUSPENSE_PRODUCT.AC_HD_ID AND AC_HD.AC_HD_ID = AC_HD_PARAM.AC_HD_ID and
+        SUSPENSE_PRODUCT.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getAccountHeadSA" result-class="java.lang.String" >
+        SELECT AC_HD_ID FROM SUSPENSE_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+    <result-map name="getAccountResultListSA" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerType" column="CUST_TYPE_ID"/>
+        
+    </result-map>
+    <result-map name="getAccountResultSA" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerType" column="CUST_TYPE_ID"/>
+        <property name="MemberNo" column="MemNo"/>
+        <property name="EmployNo" column="EmpNo"/>
+        <property name="Branch_Id" column="BRANCH_CODE"/>
+    </result-map>
+    <dynamic-mapped-statement name="Cash.getAccountListSA" result-map="getAccountResultSA" >
+        SELECT  Distinct suspense_acct_num AS act_num, suspense_name AS customer_name,
+        ca.street AS house_name, cust_type_id, sa.share_acct_no AS memno,
+        sa.emp_refno_new AS empno, am.branch_code
+        FROM suspense_account_master am
+        <!--Join customer cu on am.suspense_customer_id = cu.cust_id
+        Join cust_addr ca on ca.cust_id = cu.cust_id and ca.addr_type = cu.comm_addr_type-->
+        left Join customer cu on am.suspense_customer_id = cu.cust_id
+        left Join cust_addr ca on ca.cust_id = cu.cust_id and ca.addr_type = cu.comm_addr_type
+        Left Join share_acct sa on sa.cust_id = cu.cust_id
+        WHERE 
+        am.suspense_prod_id = #PROD_ID:VARCHAR#
+        AND am.status != 'DELETED'
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(suspense_acct_num) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="customer_name">
+                    UPPER(suspense_name) LIKE UPPER('%$customer_name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="house_name">
+                    UPPER(ca.street) LIKE UPPER('%$house_name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="cust_type_id">
+                    UPPER(cust_type_id) LIKE UPPER('%$cust_type_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="memno">
+                    UPPER(sa.share_acct_no) LIKE UPPER('%$memno$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="empno">
+                    UPPER(sa.emp_refno_new) LIKE UPPER('%$empno$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="branch_code">
+                    UPPER(am.branch_code) LIKE UPPER('%$branch_code$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="ACT_NUM">
+                    AM.SUSPENSE_ACCT_NUM=#ACT_NUM:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="BRANCH_SA">
+                    AM.BRANCH_CODE=#BRANCH_SA:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND am.authorize_status = 'AUTHORIZED'
+        and (am.acct_status not in ('CLOSED') or am.acct_status is null)
+        and am.closed_dt is NULL
+        ORDER BY suspense_acct_num
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Report.getAccountListSA" result-map="getAccountResultListSA" >
+        SELECT SUSPENSE_ACCT_NUM AS ACT_NUM, SUSPENSE_NAME AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        CUST_TYPE_ID
+        FROM SUSPENSE_ACCOUNT_MASTER AM left join  CUSTOMER CU on  AM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID join CUST_ADDR CA
+        on CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE
+        WHERE
+        AM.SUSPENSE_PROD_ID = #PROD_ID:VARCHAR# AND 
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZE_STATUS='AUTHORIZED'
+         <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(SUSPENSE_ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(SUSPENSE_NAME) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_TYPE_ID">
+                    UPPER(CUST_TYPE_ID) LIKE UPPER('%$CUST_TYPE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+           </dynamic>
+        ORDER BY SUSPENSE_ACCT_NUM
+    </dynamic-mapped-statement>
+    <mapped-statement name="getProdIdForActNoSA" result-class="java.util.HashMap">
+        SELECT SUSPENSE_PROD_ID AS PROD_ID FROM SUSPENSE_ACCOUNT_MASTER WHERE SUSPENSE_ACCT_NUM = #ACC_NUM:VARCHAR#
+    </mapped-statement>  
+    <dynamic-mapped-statement name="getAccountNumberNameSA" result-class="java.util.HashMap">
+        <!--SELECT SUSPENSE_NAME AS CUSTOMER_NAME,
+        CUSTOMER.CUST_ID AS CUST_ID,CUST_TYPE,MEMBERSHIP_NO
+        FROM SUSPENSE_ACCOUNT_MASTER, CUSTOMER
+        WHERE SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID = CUSTOMER.CUST_ID(+) and SUSPENSE_ACCT_NUM = #ACC_NUM:VARCHAR#-->
+        SELECT SUSPENSE_NAME AS CUSTOMER_NAME,
+        CUSTOMER.CUST_ID AS CUST_ID,CUST_TYPE,MEMBERSHIP_NO
+        FROM SUSPENSE_ACCOUNT_MASTER LEFT JOIN CUSTOMER ON SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID = CUSTOMER.CUST_ID
+        WHERE SUSPENSE_ACCT_NUM = #ACC_NUM:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getBalanceSA" result-class="java.util.HashMap">
+        <!--SELECT        nvl(CLEAR_BALANCE,0) as "CLEAR_BALANCE",
+        nvl(TOTAL_BALANCE,0) as "TOTAL_BALANCE", 
+        nvl((SELECT SUM(LIEN_AMT) FROM ACT_LIEN 
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR# AND 
+        ((AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND LIEN_STATUS = 'LIENED') OR
+        (AUTHORIZE_STATUS = 'REJECTED' 
+        AND STATUS != 'DELETED' AND LIEN_STATUS = 'UNLIENED'))), 0) 
+        AS "LIEN_AMOUNT",
+        nvl((SELECT SUM(FREEZE_AMT) FROM ACT_FREEZE 
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR# AND
+        ((AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND FREEZE_STATUS = 'FREEZED') OR
+        (AUTHORIZE_STATUS = 'REJECTED' 
+        AND STATUS != 'DELETED' AND FREEZE_STATUS = 'UNFREEZED'))), 0) 
+        AS "FREEZE_AMOUNT", 
+        nvl(UNCLEAR_BALANCE,0) as "UNCLEAR_BALANCE",
+        nvl((SELECT SUM(TOD_AMOUNT)  FROM TOD_ALLOWED ,DAY_END
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR# AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND CURR_APPL_DT BETWEEN FROM_DT AND TO_DT),0) 
+        AS "TOD_AMOUNT",
+        nvl((SELECT SUM(TOD_UTILIZED)  FROM TOD_ALLOWED ,DAY_END
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR# AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND CURR_APPL_DT BETWEEN FROM_DT AND TO_DT),0) 
+        AS "TOD_UTILIZED"
+        FROM SUSPENSE_ACCOUNT_MASTER
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR#-->
+        SELECT NVL (clear_balance, 0) AS "CLEAR_BALANCE",
+        NVL (total_balance, 0) AS "TOTAL_BALANCE",
+           0 AS "LIEN_AMOUNT",
+        0 AS "FREEZE_AMOUNT",
+        NVL (unclear_balance, 0) AS "UNCLEAR_BALANCE",
+        0 AS "TOD_AMOUNT",
+        0 AS "TOD_UTILIZED"
+        FROM suspense_account_master
+        WHERE suspense_acct_num = #ACT_NUM:VARCHAR#
+                <!--AND  
+                (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))-->
+    </mapped-statement> 
+    <mapped-statement name="Inward.getAccountListSA" result-map="getAccountResultListSA" >
+        SELECT SUSPENSE_ACCT_NUM, SUSPENSE_NAME AS CUSTOMER_NAME,
+        CUST_TYPE_ID
+        FROM SUSPENSE_ACCOUNT_MASTER AM, CUSTOMER CU
+        WHERE AM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID(+) AND 
+        AM.SUSPENSE_PROD_ID = #PROD_ID:VARCHAR# AND 
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZE_STATUS='AUTHORIZED' 
+        ORDER BY SUSPENSE_ACCT_NUM
+    </mapped-statement>
+        
+    <result-map name="get-LookUp-resultOA" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    <mapped-statement name="getOpAccProductLookUpSA" result-map="get-LookUp-resultOA">
+        SELECT PROD_ID AS LOOKUP_REF_ID,PROD_DESC AS LOOKUP_DESC FROM SUSPENSE_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and 
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where CR_CLR='Y')
+    </mapped-statement>
+      
+    <mapped-statement name="getActDataSA" result-class="java.util.HashMap">
+        <!--SELECT LOOKUP_DESC AS OPT_MODE_ID,ACT_STATUS_ID AS STATUS, CATEGORY_ID AS "CATEGORY", ACT_CAT_ID AS "CONSTITUTION", CREATE_DT, 
+        OP.BASE_CURRENCY AS "PRODCURRENCY", AM.REMARKS as REMARKS, AM.BRANCH_CODE, AC.AUTHORIZE_DT AS CLOSED_DT,AC.AUTHORIZE_STATUS,
+        APD.HIDE_BALANCE, APD.SHOW_BALANCE_TO,CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,membership_no 
+        FROM ACT_MASTER AM, OP_AC_PRODUCT OP, ACT_PARAM_DETAIL APD, ACT_CLOSING AC , 
+        LOOKUP_MASTER LM,CUSTOMER C
+        WHERE 
+        AM.ACT_NUM = APD.ACT_NUM AND 
+        AM.ACT_STATUS_ID != 'CLOSED' AND
+        AM.PROD_ID = OP.PROD_ID AND 
+        AM.ACT_NUM = #ACT_NUM:VARCHAR# AND
+        LM.LOOKUP_REF_ID=OPT_MODE_ID AND 
+        AC.ACT_NUM(+)=APD.ACT_NUM AND 
+        LM.LOOKUP_ID = 'ACT_OP_MODE'
+        AND C.CUST_ID=AM.CUST_ID-->
+        SELECT NULL AS OPT_MODE_ID, SA.STATUS AS STATUS,
+        NULL AS "CATEGORY", NULL AS "CONSTITUTION", SA.STATUS_DATE AS CREATE_DT,
+        NULL AS  "PRODCURRENCY",NULL AS REMARKS,
+        SA.BRANCH_CODE, NULL AS CLOSED_DT, SA.AUTHORIZE_STATUS,
+        'N' AS HIDE_BALANCE, 0 AS SHOW_BALANCE_TO,NULL AS  CUSTOMER_STATUS, NULL AS MINOR,
+        SA.SUSPENSE_CUSTOMER_ID AS CUST_ID , SA.SUSPENSE_MEMBER_NO AS MEMBERSHIP_NO
+        FROM SUSPENSE_ACCOUNT_MASTER SA,
+        SUSPENSE_PRODUCT SP
+        WHERE  SA.SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR#
+        AND SP.PROD_ID = SA.SUSPENSE_PROD_ID
+    </mapped-statement>
+        
+        
+        
+<!-- ===================================Transfer Transaction =======================================================-->
+        
+    <mapped-statement name="Transfer.getCreditProductSA" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM SUSPENSE_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_trans='Y')
+        order by PROD_DESC
+    </mapped-statement>
+        
+    <mapped-statement name="Transfer.getDebitProductSA" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM SUSPENSE_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_trans='Y')
+        order by PROD_DESC
+    </mapped-statement>     
+        
+    <result-map name="getTransferSuspenseResultList" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerType" column="CUST_TYPE_ID"/>
+        <property name="MemberNo" column="MemNo"/>
+        <property name="EmployNo" column="EmpNo"/>
+        <property name="ClearBalance" column="CLEAR_BALANCE"/>
+    </result-map>    
+    <dynamic-mapped-statement name="Transfer.getAccountListSA" result-map="getTransferSuspenseResultList">
+                <!--SELECT CUSTOMER.CUST_ID as "Customer Id", DOB, get_cust_name(CUSTOMER.CUST_ID) "Name", GENDER , CUSTOMERGROUP, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE from CUSTOMER , CUST_ADDR  WHERE ((CUSTOMER.STATUS = 'MODIFIED') or (CUSTOMER.STATUS = 'UPDATED') or (CUSTOMER.STATUS = 'CREATED')) and (CUST_ADDR.CUST_ID = CUSTOMER.CUST_ID) and (CUSTOMER.COMM_ADDR_TYPE = CUST_ADDR.ADDR_TYPE)-->
+        SELECT SUSPENSE_ACCT_NUM AS ACT_NUM, SUSPENSE_NAME AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        CUST_TYPE_ID,SA.SHARE_ACCT_NO AS MemNo,SA.EMP_REFNO_NEW as EmpNo,Clear_Balance
+        FROM SUSPENSE_ACCOUNT_MASTER
+        <!--JOIN CUSTOMER on CUSTOMER.CUST_ID = SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID 
+        JOIN CUST_ADDR ca on CA.CUST_ID = CUSTOMER.CUST_ID and ca.addr_type = customer.comm_addr_type-->
+        LEFT JOIN CUSTOMER on CUSTOMER.CUST_ID = SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID 
+        LEFT JOIN CUST_ADDR ca on CA.CUST_ID = CUSTOMER.CUST_ID and ca.addr_type = customer.comm_addr_type
+        LEFT JOIN SHARE_ACCT sa on SA.CUST_ID = CUSTOMER.CUST_ID
+        WHERE (SUSPENSE_PROD_ID =#PROD_ID:VARCHAR# ) 
+        AND (SUSPENSE_ACCOUNT_MASTER.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        and (SUSPENSE_ACCOUNT_MASTER.acct_status not in ('CLOSED') or SUSPENSE_ACCOUNT_MASTER.acct_status is null)
+        and SUSPENSE_ACCOUNT_MASTER.closed_dt is NULL
+           <dynamic>
+                     <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="BRANCH_SA">
+                   SUSPENSE_ACCOUNT_MASTER.BRANCH_CODE=#BRANCH_SA:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    UPPER(SUSPENSE_NAME) LIKE UPPER('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(SUSPENSE_ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerType">
+                    UPPER(CUST_TYPE_ID) LIKE UPPER('%$CustomerType$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>    
+                <!-- AND ACT_MASTER.BRANCH_CODE = #BRANCH_CODE# -->
+                <!--dynamic>
+                <iterate prepend="AND ACT_NUM NOT IN" property="ACT NUM" open = "(" close=")" conjunction="," >
+                #ACT NUM[]#
+                </iterate>
+                </dynamic-->
+    </dynamic-mapped-statement>                
+       
+ <!-- ============================Outward Clearing======================================== -->
+         
+    <result-map name="getAccountHeadID4PISDResultSA" class="java.util.HashMap">
+        <property name="accHeadID" column="AC_HD_ID"/>
+        <property name="accHeadDesc" column="AC_HD_DESC"/>
+    </result-map>
+        
+    <mapped-statement name="getAccountHeadID4PISDSA" result-map="getAccountHeadID4PISDResultSA" >   
+        SELECT SUSPENSE_PRODUCT.AC_HD_ID, AC_HD_DESC FROM SUSPENSE_PRODUCT, AC_HD 
+        WHERE PROD_ID = #value:VARCHAR# AND SUSPENSE_PRODUCT.AC_HD_ID=AC_HD.AC_HD_ID     
+    </mapped-statement>   
+    <dynamic-mapped-statement name="InterMaintenance.getProductDataSA" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM SUSPENSE_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+ </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Remittance.getAccountDataSA" result-class="java.util.LinkedHashMap">        
+        SELECT SUSPENSE_ACCT_NUM AS ACT_NUM,SUSPENSE_NAME  AS CUSTNAME,
+        UNCLEAR_BALANCE AS AVAILABLE_BALANCE
+        <!--FROM SUSPENSE_ACCOUNT_MASTER AM, CUSTOMER CU
+        WHERE AM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID AND -->
+        FROM SUSPENSE_ACCOUNT_MASTER AM left join CUSTOMER CU
+        on  AM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID
+        WHERE AM.SUSPENSE_PROD_ID = #PRODUCT_ID:VARCHAR#  AND
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZE_STATUS='AUTHORIZED'
+        <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(SUSPENSE_ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTNAME">
+                    UPPER(SUSPENSE_NAME) LIKE UPPER('%$CUSTNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AVAILABLE_BALANCE">
+                    UPPER(UNCLEAR_BALANCE) LIKE UPPER('%$AVAILABLE_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+           </dynamic>
+        ORDER BY SUSPENSE_ACCT_NUM
+    </dynamic-mapped-statement>  
+    <mapped-statement name="getAllTransactionsSA" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_DT AS TRANS_DT, PARTICULARS AS PARTICULARS, 
+        INST_TYPE, INSTRUMENT_NO2 AS INSTRUMENT_NO, INST_DT AS INST_DT,
+        DECODE(TRANS_TYPE,'DEBIT',AMOUNT,0) AS DEBIT, DECODE(TRANS_TYPE,'CREDIT',AMOUNT,0) AS CREDIT, 
+        (SELECT AMT FROM SUSPENSE_DAYEND_BALANCE WHERE DAY_END_DT=(SELECT MAX(DAY_END_DT) FROM SUSPENSE_DAYEND_BALANCE
+        WHERE DAY_END_DT&lt;#FROM_DT:DATE# AND ACT_NUM=#ACT_NUM:VARCHAR#) AND ACT_NUM=#ACT_NUM:VARCHAR#) 
+        AS BALANCE FROM ALL_TRANSACTIONS_VIEW WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND 
+        TRANS_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE# AND INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' ORDER BY STATUS_DT
+           
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getDailyAvailableBalanceSA" result-class="java.util.HashMap">
+                                                        <!-- AS TOTAL_BALANCE added because for all other prod types we are taking TOTAL_BALANCE 
+                                                             For Common code in DailyBalanceUpdateTask -->
+        SELECT DISTINCT AM.SUSPENSE_ACCT_NUM AS ACT_NUM, AM.SUSPENSE_PROD_ID AS PROD_ID, nvl(AM.TOTAL_BALANCE,0) AS TOTAL_BALANCE,
+        nvl(AM.CLEAR_BALANCE ,0) AS AVAILABLE_BALANCE, nvl(AM.CLEAR_BALANCE,0) AS CLEAR_BALANCE,
+        DECODE(AMT,NULL,0,1) AS "EXISTS" FROM SUSPENSE_ACCOUNT_MASTER AM, SUSPENSE_PRODUCT OAP,
+        SUSPENSE_DAYEND_BALANCE ADB,ALL_TRANSACTIONS_VIEW ATV WHERE OAP.PROD_ID = AM.SUSPENSE_PROD_ID AND
+        (AM.STATUS &lt;&gt;'DELETED' OR AM.STATUS IS NULL) AND AM.AUTHORIZE_STATUS = 'AUTHORIZED'  
+        AND ADB.DAY_END_DT(+) = #DAY_END_DT:DATE# AND ADB.ACT_NUM(+) = AM.SUSPENSE_ACCT_NUM AND 
+        AM.SUSPENSE_ACCT_NUM = ATV.ACT_NUM AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT = #DAY_END_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    AM.SUSPENSE_PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="insertDailyBalanceSA">
+        INSERT INTO SUSPENSE_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,CLEAR_BALANCE,AVAILABLE_BALANCE) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#CLEAR_BALANCE:NUMBER#,#AVAILABLE_BALANCE:NUMBER#)
+    </mapped-statement>
+    <mapped-statement name="updateDailyBalanceSA">
+        UPDATE SUSPENSE_DAYEND_BALANCE SET AMT = #amt:NUMBER#,CLEAR_BALANCE=#CLEAR_BALANCE:NUMBER#,AVAILABLE_BALANCE=#AVAILABLE_BALANCE:NUMBER#
+        WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE#  
+    </mapped-statement>
+        
+    <mapped-statement name="getEmpRefNo" result-class="java.util.HashMap">
+        SELECT SA.EMP_REFNO_NEW FROM CUSTOMER C JOIN SHARE_ACCT SA 
+        ON C.CUST_ID = SA.CUST_ID 
+        WHERE C.CUST_ID = #CUST_ID:VARCHAR# AND C.STATUS != 'DELETED' AND C.AUTHORIZE_STATUS != 'REJECTED'
+        AND SA.STATUS != 'DELETED' AND SA.AUTHORIZE != 'REJECTED'        
+    </mapped-statement>
+    
+    <mapped-statement name="getNegativeAmtCheckForSA" result-class="java.util.LinkedHashMap" >
+     SELECT NEG_AMT_YN,NVL(SAM.CLEAR_BALANCE,0) AS CLEAR_BALANCE,TOTAL_BALANCE FROM SUSPENSE_PRODUCT SP, SUSPENSE_ACCOUNT_MASTER SAM WHERE SAM.STATUS != 'DELETED' 
+     AND SAM.AUTHORIZE_STATUS != 'REJECTED' AND SP.PROD_ID = SAM.SUSPENSE_PROD_ID AND SAM.SUSPENSE_ACCT_NUM =#ACCT_NUM:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="updateClosedSuspenseAccount" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET 
+        CLOSED_DT = #CLOSED_DT:DATE#,
+        ACCT_STATUS = #ACCT_STATUS:VARCHAR#
+        WHERE SUSPENSE_ACCT_NUM = #ACT_NUM:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    
+    <mapped-statement name="updateSuspenseAccountUnAuthorized" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET AUTHORIZE_STATUS=NULL ,AUTHORIZE_DATE=NULL ,AUTHORIZE_BY =NULL
+        WHERE SUSPENSE_ACCT_NUM =  #txtSuspenseActNum:VARCHAR#
+    </mapped-statement>    
+   
+    <mapped-statement name="getLoanAdjSA" result-class="java.util.LinkedHashMap" >
+    SELECT a.suspense_acct_num as ACCT_NUM  FROM suspense_account_master a WHERE a.suspense_prod_id IN (SELECT l.suspense_debit_achd      FROM loans_prod_achd l  WHERE l.prod_id = #PROD_ID:VARCHAR#)
+    AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>  
+    
+</sql-map>
+

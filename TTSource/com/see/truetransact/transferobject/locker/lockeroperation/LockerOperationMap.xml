@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LockerOperationTOMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLockerOptTO" inline-parameters="true">
+        INSERT INTO LOCKER_OPERATION
+        (OPERATION_ID, LOCKER_NUM, OPERATION_DT, CUST_ID, BRANCH_CODE, OPT_MODE_ID, CREATED_BY,LOCKER_OUT_BY,LOCKER_OUT_DT,
+        AUTHORIZED_BY, AUTHORIZATION_STATUS, AUTHORIZED_DT,STATUS, STATUS_BY, STATUS_DT, ACCT_NAME, REMARKS
+        ) 
+        VALUES (
+        #optId:VARCHAR#, #locNum:VARCHAR#, <!--#optDt:TIMESTAMP#-->(SELECT SYS_DATE() FROM DUAL), #custId:VARCHAR#, #branchID:VARCHAR#,
+        #optMode:VARCHAR#, #createdBy:VARCHAR#, #lockerOutBy:VARCHAR#,  #lockerOutDt:TIMESTAMP#, 
+        #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#,#authorizeDt:DATE#,
+        #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->, #acctName:VARCHAR#, #remarks:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLockerOptTO" inline-parameters="true">
+        UPDATE LOCKER_OPERATION SET 
+        LOCKER_OUT_BY = #lockerOutBy:VARCHAR#,
+        LOCKER_OUT_DT = <!--#lockerOutDt:TIMESTAMP#-->(SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#--> WHERE
+        OPERATION_ID = #optId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLockerOptTO" inline-parameters="true">
+        UPDATE LOCKER_OPERATION SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->
+        WHERE OPERATION_ID = #optId:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="insertLockerOptDetailsTO" inline-parameters="true">
+        INSERT INTO LOCKER_OPERATION_DETAILS
+        (OPERATION_ID, CUST_ID, CUST_NAME) 
+        VALUES (
+        #OPERATION_ID:VARCHAR#, #CUST_ID:VARCHAR#, #CUST_NAME:VARCHAR#)
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getLockerOptTOResult" class="com.see.truetransact.transferobject.locker.lockeroperation.LockerOperationTO">
+        <property name="optId" column="OPERATION_ID"/>
+        <property name="locNum" column="LOCKER_NUM"/>
+        <property name="optDt" column="OPERATION_DT"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="branchID" column="BRANCH_CODE"/>
+        <property name="optMode" column="OPT_MODE_ID"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="lockerOutBy" column="LOCKER_OUT_BY"/>
+        <property name="lockerOutDt" column="LOCKER_OUT_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZATION_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="acctName" column="ACCT_NAME"/>   
+    </result-map>
+    <mapped-statement name="getSelectLockerOptTO" result-map="getLockerOptTOResult" >
+        SELECT * FROM LOCKER_OPERATION 
+        WHERE OPERATION_ID = #OPERATION_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLockerOptDetails" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM LOCKER_OPERATION_DETAILS
+        WHERE OPERATION_ID = #OPERATION_ID:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getLockerOperationDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM LOCKER_OPERATION 
+        WHERE LOCKER_OUT_DT IS NULL AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# and STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getLastOperatedDt" result-class="java.util.LinkedHashMap" >
+        SELECT OPERATION_DT FROM LOCKER_OPERATION WHERE  STATUS!='DELETED' AND LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND 
+        OPERATION_ID=(SELECT MAX(OPERATION_ID) FROM LOCKER_OPERATION WHERE LOCKER_NUM=#LOCKER_NUM:VARCHAR#) AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+                
+    <mapped-statement name="PasswordDetails" result-class="java.util.LinkedHashMap" >
+        SELECT PASSWORD_REQUIRED FROM LOCKER_MASTER
+        WHERE LOCKER_NUM = #LOCKER_NUM# AND PROD_ID=#PROD_ID:VARCHAR# AND LOCKER_STATUS_ID != 'CLOSED' AND AUTHORIZATION_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement>  
+        
+        
+    <mapped-statement name="Passwordrequired" result-class="java.util.LinkedHashMap" >
+        SELECT PWD FROM LOCKER_PASSWORD_DETAILS LP , LOCKER_MASTER LM
+        WHERE   LP.LOCKER_NUM = #LOCKER_NUM:VARCHAR#  AND LM.REMARKS = LP.REMARKS AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+    </mapped-statement>  
+        
+        
+         
+    <dynamic-mapped-statement  name="getLockOptList" result-class="java.util.LinkedHashMap" >
+        select LM.PROD_ID, LM.locker_num,LM.cust_id,LM.acct_name as name,LM.OPT_MODE_ID as mode_of_operation,
+        LM.REMARKS AS ISSUE_ID, LM.ISSUE_DT, LM.EXP_DT, LM.LOCKER_CAT_ID 
+        from locker_master LM where LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# and LM.LOCKER_STATUS_ID != 'CLOSED'
+        AND  LM.REMARKS NOT IN (SELECT REMARKS FROM LOCKER_OPERATION WHERE  LOCKER_OUT_DT IS NULL)   
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PRODUCT_ID" >
+                    PROD_ID = #PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="prod_id">
+                    UPPER(LM.prod_id) LIKE UPPER('%$prod_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="locker_num">
+                    UPPER(LM.locker_num) LIKE UPPER('%$locker_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="cust_id">
+                    UPPER(LM.cust_id) LIKE UPPER('%$cust_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="acct_name">
+                    UPPER(LM.acct_name) LIKE UPPER('%$acct_name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="surrender_dt">
+                    UPPER(LM.surrender_dt) LIKE UPPER('%$surrender_dt$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="mode_of_operation">
+                    UPPER(LM.OPT_MODE_ID) LIKE UPPER('%$mode_of_operation$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_ID">
+                    UPPER(LM.REMARKS) LIKE UPPER('%$ISSUE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_DT">
+                   UPPER(LM.ISSUE_DT) LIKE UPPER('%$ISSUE_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EXP_DT">
+                   UPPER(LM.EXP_DT) LIKE UPPER('%$EXP_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_STATUS_ID">
+                   UPPER(LM.LOCKER_STATUS_ID) LIKE UPPER('%$LOCKER_STATUS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>    
+    </dynamic-mapped-statement >
+         
+    <mapped-statement name="selectLockerActOptTO" result-class="java.util.LinkedHashMap" >
+        select cust_id, ACCT_NAME as name from locker_master where LOCKER_NUM = #LOCKER_NUM:VARCHAR# and remarks = #ISSUE_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        UNION
+        SELECT lj.CUST_ID, (SELECT (get_cust_name(cust_id)) FROM CUSTOMER WHERE CUST_ID =  lj.CUST_ID )  as name  
+        FROM LOCKER_ISSUE_JOINT lj where lj.LOC_NUM = #ISSUE_ID:VARCHAR# and lj.status != 'DELETED'
+    </mapped-statement>
+          
+    <mapped-statement name="selectLockerActOptDetailsTO" result-class="java.util.LinkedHashMap" >
+        SELECT CUST_ID, CUST_NAME AS NAME FROM LOCKER_OPERATION_DETAILS WHERE OPERATION_ID = 
+        (SELECT OPERATION_ID FROM LOCKER_OPERATION WHERE REMARKS = #ISSUE_ID:VARCHAR# AND LOCKER_OUT_DT IS NULL)
+    </mapped-statement>
+                    
+    <dynamic-mapped-statement name="getSelectLockerOptEdit" result-class="java.util.LinkedHashMap" >
+        select OPERATION_ID,LOCKER_NUM,OPERATION_DT,CUST_ID,ACCT_NAME,REMARKS AS ISSUE_ID
+        from locker_operation where LOCKER_OUT_DT is null and BRANCH_CODE = #BRANCH_ID:VARCHAR# AND STATUS != 'DELETED'
+          <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="OPERATION_ID">
+                    UPPER(OPERATION_ID) LIKE UPPER('%$OPERATION_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_NUM">
+                    UPPER(LOCKER_NUM) LIKE UPPER('%$LOCKER_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="OPERATION_DT">
+                    UPPER(OPERATION_DT) LIKE UPPER('%$OPERATION_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCT_NAME">
+                    UPPER(ACCT_NAME) LIKE UPPER('%$ACCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_ID">
+                    UPPER(REMARKS) LIKE UPPER('%$ISSUE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+</sql-map>

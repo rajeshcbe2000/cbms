@@ -1,0 +1,742 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DataCorrectionMap">
+
+    <dynamic-mapped-statement name="getSelectTransferTransIdForDataCorrection" result-class="java.util.LinkedHashMap"> 
+        select trans_id,AC_HD_ID,batch_id,trans_type,act_num,amount,particulars,narration,
+        prod_id,prod_type
+        from transfer_trans where trans_dt = #TRANS_DT:DATE# 
+        and initiated_branch = #BRANCH_CODE:VARCHAR# 
+        and AUTHORIZE_STATUS = 'AUTHORIZED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_TYPE">
+                    TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">
+                    UPPER(TRANS_ID) LIKE UPPER('%$TRANS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="HEAD_CHANGE">
+                    TRANS_MOD_TYPE = 'GL'
+            </isEqual>
+            </isParameterPresent>
+             <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="OA_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'OA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="OTHERBANK_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'AB'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="SUSPENSE_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'SA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+             <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="TRANS_AMT_CHANGE">
+                  GET_TRANSFER_BATCH_CNT(batch_id, trans_dt::date, initiated_branch) = 2
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+             <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="TRANS_TYPE_INTERCHANGE">
+                  GET_AB_TRANSFER_BATCH_CNT(batch_id, trans_dt::date, initiated_branch) = 2
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+               <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="OA_TO_ALL_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'OA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="SA_TO_ALL_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'SA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="AB_TO_ALL_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'AB'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="GL_TO_ACTNO_MAPPING">
+                  PROD_TYPE = 'GL' and TRANS_MOD_TYPE = 'GL'
+            </isEqual>
+            </isParameterPresent>
+        </dynamic>
+        order by trans_id 
+    </dynamic-mapped-statement>   
+    
+     <dynamic-mapped-statement name="getSelectAllTransferDataForCorrection" result-class="java.util.LinkedHashMap">        
+       select trans_id,batch_id,AC_HD_ID,trans_type,act_num,amount,link_batch_id,particulars,narration,
+        prod_id,GET_PROD_DESC(prod_id) as product,screen_name,status_by,authorize_by,prod_type,branch_id  
+        from transfer_trans where trans_dt = #TRANS_DT:DATE# 
+        and initiated_branch = #BRANCH_CODE:VARCHAR# 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    ACT_NUM = #ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_TYPE">
+                    TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="HEAD_CHANGE">
+                    TRANS_MOD_TYPE = 'GL'
+            </isEqual>
+            </isParameterPresent>
+            
+        </dynamic>
+        order by trans_id       
+    </dynamic-mapped-statement>   
+    
+    <dynamic-mapped-statement name="getSelectCashTransIdForDataCorrection" result-class="java.util.LinkedHashMap"> 
+        select trans_id,AC_HD_ID,null as batch_id,trans_type,act_num,amount,particulars,narration,
+        prod_id,prod_type
+        from cash_trans where trans_dt = #TRANS_DT:DATE# 
+        and initiated_branch = #BRANCH_CODE:VARCHAR#
+        and AUTHORIZE_STATUS = 'AUTHORIZED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>         
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_TYPE">
+                    TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">
+                    UPPER(TRANS_ID) LIKE UPPER('%$TRANS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="HEAD_CHANGE">
+                    TRANS_MOD_TYPE = 'GL'
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="OA_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'OA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="OTHERBANK_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'AB'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="SUSPENSE_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'SA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+              <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="OA_TO_ALL_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'OA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+              <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="SA_TO_ALL_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'SA'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+              <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="AB_TO_ALL_ACTNO_CHANGE">
+                  ACT_NUM IS NOT NULL 
+                  AND  PROD_TYPE = 'AB'
+                  AND GET_ACTIVE_ACCOUNT(act_num,PROD_TYPE) > 0 
+            </isEqual>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="GL_TO_ACTNO_MAPPING">
+                  PROD_TYPE = 'GL' and TRANS_MOD_TYPE = 'GL'
+            </isEqual>
+            </isParameterPresent>
+        </dynamic>    
+        order by trans_id 
+    </dynamic-mapped-statement>   
+    
+     <dynamic-mapped-statement name="getSelectAllCashDataForCorrection" result-class="java.util.LinkedHashMap">        
+       select trans_id,null as batch_id,AC_HD_ID,trans_type,act_num,amount,link_batch_id,particulars,narration,
+        prod_id,GET_PROD_DESC(prod_id) as product,screen_name,status_by,authorize_by,prod_type,branch_id  
+        from cash_trans where trans_dt = #TRANS_DT:DATE# 
+        and initiated_branch = #BRANCH_CODE:VARCHAR# 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    ACT_NUM = #ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_TYPE">
+                    TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+            <isEqual prepend="AND" property="CORRECTION_TYPE" compareValue="HEAD_CHANGE">
+                    TRANS_MOD_TYPE = 'GL'
+            </isEqual>
+            </isParameterPresent>
+        </dynamic>
+        order by trans_id       
+    </dynamic-mapped-statement>   
+
+
+     <dynamic-mapped-statement name="data.correction.getAcctHeadList" result-class="java.util.LinkedHashMap" >
+        SELECT AD.AC_HD_ID AS "Account Head",AD.AC_HD_CODE AS "Account Head Code", 
+        AD.AC_HD_DESC  AS "Account HEAD DESCRIPTION" FROM AC_HD AD, AC_HD_PARAM  ADP
+        WHERE ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        ADP.AUTHORIZE_STATUS = 'AUTHORIZED' AND                 
+        AD.AC_HD_ID = ADP.AC_HD_ID 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_HD">
+                    AD.AC_HD_ID = #ACCT_HD:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend="AND" property="ACCT_TYPE">
+                    AD.MJR_AC_HD_ID IN 
+                    (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+                    WHERE MJR_AC_HD_TYPE= #ACCT_TYPE:VARCHAR# 
+                    AND STATUS != 'DELETED' OR STATUS IS NULL)
+                    AND ADP.BALANCETYPE = #BALANCETYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account Head">
+                    UPPER(AD.AC_HD_ID) LIKE UPPER('%$Account Head$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account Head Code">
+                    UPPER(AD.AC_HD_CODE) LIKE UPPER('%$Account Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account HEAD DESCRIPTION">
+                    UPPER(AD.AC_HD_DESC) LIKE UPPER('%$Account Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateCashTransactionNarration" inline-parameters="true">
+        update cash_trans set particulars = #NARRATION:VARCHAR# where trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR#       
+    </mapped-statement>
+    
+     <mapped-statement name="updateTransferTransactionNarration" inline-parameters="true">
+        update transfer_trans set particulars = #NARRATION:VARCHAR# where trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR#       
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransactionPassBookNarration" inline-parameters="true">      
+        update pass_book set particulars = #NARRATION:VARCHAR# where act_num = #ACT_NUM:VARCHAR# 
+        and trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR#   
+    </mapped-statement>  
+    
+    <mapped-statement name="insertDataCorrectionLogTO" inline-parameters="true">  
+        INSERT INTO DATA_CORRECTION_LOG(BRANCH_CODE,CORRECTION_DT,TRANS_DT,TRANS_ID,BATCH_ID,MODIFICATION_TYPE,
+        OLD_FIELD_VALE,NEW_FIELD_VLAUE,OLD_STATUS_BY,OLD_AUTHORIZED_BY,CORRECTION_USER_ID,CURRECTION_AUTHORIZE_STAFF,CURRECTION_AUTHORIZE_DATE,REMARKS,ACT_NUM)
+        VALUES(#branchCode:VARCHAR#,(SELECT SYSDATE() FROM DUAL),#transDt:DATE#,#transId:VARCHAR#,#batchId:VARCHAR#,#modificationType:VARCHAR#,
+        #oldFieldValue:VARCHAR#,#newFieldValue:VARCHAR#,#oldStatusBy:VARCHAR#,#oldAuthorizedBy:VARCHAR#,#correctionUserId:VARCHAR#,#correctionAuthorizeStaff:VARCHAR#,
+        (SELECT SYSDATE() FROM DUAL),#remarks:VARCHAR#,#actNum:VARCHAR#)
+    </mapped-statement> 
+    
+    
+    <mapped-statement name="updateCashTransactionHeadId" inline-parameters="true">    
+        update cash_trans set AC_HD_ID = #AC_HD_ID:VARCHAR# where trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR# 
+    </mapped-statement>    
+
+    <mapped-statement name="updateTransferTransactionHeadId" inline-parameters="true">    
+        update transfer_trans set AC_HD_ID = #AC_HD_ID:VARCHAR# where trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR# 
+    </mapped-statement> 
+    
+    <mapped-statement name="updateHeadCurBalanceAfterCorrection" inline-parameters="true">  
+       update gl set cur_bal = nvl(cur_bal,0) +  #AMOUNT:NUMERIC# where ac_hd_id = #AC_HD_ID:VARCHAR#
+       and branch_code = #BRANCH_CODE:VARCHAR#
+    </mapped-statement> 
+    
+  
+    <mapped-statement name="getSelectSecurityDetailsForCorrection" result-class="java.util.LinkedHashMap" >      
+        
+        select sd.acct_num,ls.borrow_no,ls.limit,sd.gross_weight,
+        sd.net_weight,sd.purity,sd.market_rate,sd.margin,
+        sd.margin_amt,sd.eligible_loan_amt,sd.particulars,
+        sd.status_by,sd.authorize_by
+        from LOANS_FACILITY_DETAILS lfd,
+        SECURITY_DETAILS sd,
+        LOANS_SANCTION_DETAILS ls,
+        LOANS_PRODUCT lp
+        where lfd.acct_num = sd.acct_num
+        and ls.borrow_no = lfd.borrow_no
+        and lp.prod_id =  lfd.prod_id
+        and lp.AUTHORIZE_REMARK = 'GOLD_LOAN'
+        and lfd.acct_num = #ACT_NUM:VARCHAR#
+        AND SD.is_release NOT IN ('Y')
+        AND sd.release_dt is null
+        
+    </mapped-statement>  
+    
+    <mapped-statement name="updateGoldWeightAfterCorrection" inline-parameters="true"> 
+        UPDATE SECURITY_DETAILS SET GROSS_WEIGHT = #NEW_GROSS_WEIGHT:NUMERIC#,
+        NET_WEIGHT = #NEW_NET_WEIGHT:NUMERIC#,
+        SECURITY_VALUE = #SECURITY_VALUE:NUMERIC#,
+        MARGIN_AMT = #MARGIN_AMT:NUMERIC#,
+        ELIGIBLE_LOAN_AMT = #ELIGIBLE_AMT:NEMERIC#
+        WHERE ACCT_NUM = #ACT_NUM:VARCHAR#
+        AND is_release NOT IN ('Y')
+        AND release_dt is null
+    </mapped-statement>    
+    
+    
+    <mapped-statement name="updateGoldItemsAfterCorrection" inline-parameters="true"> 
+        UPDATE SECURITY_DETAILS SET 
+        PARTICULARS = #PARTICULARS:VARCHAR#
+        WHERE ACCT_NUM = #ACT_NUM:VARCHAR#
+        AND is_release NOT IN ('Y')
+        AND release_dt is null
+    </mapped-statement>  
+
+     <mapped-statement name="getTillDateForDataCorrection" result-class="java.util.LinkedHashMap"> 
+        select add_months(LAST_FINANCIAL_YEAR_END,(nvl(CORRECTION_DURATION_MONTHS,0) * -1)) + 1 as CORRECTION_DATE from parameters
+    </mapped-statement>
+    
+    <mapped-statement name="getTillDateForDataCorrectionScreen" result-class="java.util.LinkedHashMap"> 
+        select 
+        case WHEN AMC_TO_DT IS NULL THEN
+        ADD_MONTHS(LAST_FINANCIAL_YEAR_END,12)
+        ELSE
+        AMC_TO_DT
+        END AS CALC_DT  
+        from PARAMETERS
+    </mapped-statement>
+    
+    <mapped-statement name="updateCashTransActNumAfterCorrection" inline-parameters="true"> 
+        UPDATE CASH_TRANS SET ACT_NUM = #ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+        
+    <mapped-statement name="updateTransferTransActNumAfterCorrection" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS SET ACT_NUM = #ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    
+    <mapped-statement name="callAcctNoChangeTransRefGLUpdate" result-class="java.util.LinkedHashMap">
+        call TRANSFERGL_INSERTION(#TRANS_ID:VARCHAR#, #TRANS_DT:DATE#)
+    </mapped-statement>   
+    
+     <mapped-statement name="OperativeAccountMasterUpdation" result-class="java.util.LinkedHashMap">      
+         call SAVPASSBOOK4APERIOD(#ACCOUNT_NO:VARCHAR#, #TRANS_DT:DATE#)
+    </mapped-statement>  
+    
+     <mapped-statement name="SuspenseAccountMasterUpdation" result-class="java.util.LinkedHashMap">      
+         call SUSPENSEDAYEND4APERIOD(#ACCOUNT_NO:VARCHAR#, #TRANS_DT:DATE#)
+    </mapped-statement>  
+    
+    
+    
+     <mapped-statement name="updateCashTransOtherBankActNumAfterCorrection" inline-parameters="true"> 
+        UPDATE CASH_TRANS SET ACT_NUM = #ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#,
+        AC_HD_ID = #AC_HD_ID:VARCHAR#,
+        PROD_ID  = #AB_PROD_ID:VARCHAR# 
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+        
+    <mapped-statement name="updateTransferTransOtherBankActNumAfterCorrection" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS SET ACT_NUM = #ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#,
+        AC_HD_ID = #AC_HD_ID:VARCHAR# ,
+        PROD_ID  = #AB_PROD_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="OtherBankAccountMasterUpdation" result-class="java.util.LinkedHashMap">      
+         call AB_BAL_UPDATE(#ACCOUNT_NO:VARCHAR#)
+    </mapped-statement> 
+    
+     <result-map name="getAllGoldLoanProductsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map> 
+                    
+    <mapped-statement name="getAllGoldLoanProducts" result-map="getAllGoldLoanProductsResult">
+        select * from LOANS_PRODUCT where AUTHORIZE_REMARK = 'GOLD_LOAN'
+        AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getAllProductActNumBalance" result-class="java.util.LinkedHashMap"> 
+        select * from FUNC_ACT_TRANS_NEGATIVE_BAL(#ACT_NUM#::character varying, #TRANS_DT#::date, #AMOUNT#::numeric)
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTransRefGLEntriesAfterDataCorrection" inline-parameters="true"> 
+      DELETE FROM TRANS_REF_GL WHERE TRANS_DT = #TRANS_DT:DATE# AND TRANS_ID = #BATCH_TRANS_ID:VARCHAR#
+    </mapped-statement>
+    
+    
+    <mapped-statement name="updateCashTransLinkBatchIdAfterCorrection" inline-parameters="true"> 
+        UPDATE CASH_TRANS SET LINK_BATCH_ID = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND LINK_BATCH_ID = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransLinkBatchIdAfterCorrection" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS SET LINK_BATCH_ID = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND LINK_BATCH_ID = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateCashTransGLTransActNumAfterCorrection" inline-parameters="true"> 
+        UPDATE CASH_TRANS SET GL_TRANS_ACT_NUM = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND GL_TRANS_ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransGLTransActNumAfterCorrection" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS SET GL_TRANS_ACT_NUM = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND GL_TRANS_ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    
+      <dynamic-mapped-statement name="getSelectAllTransferAmtDataForCorrection" result-class="java.util.LinkedHashMap">        
+       select trans_id,batch_id,AC_HD_ID,trans_type,act_num,amount,link_batch_id,particulars,narration,
+        prod_id,GET_PROD_DESC(prod_id) as product,screen_name,status_by,authorize_by,prod_type,branch_id  
+        from transfer_trans where trans_dt = #TRANS_DT:DATE# 
+        and initiated_branch = #BRANCH_CODE:VARCHAR# 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    ACT_NUM = #ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_TYPE">
+                    TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BATCH_ID">
+                    BATCH_ID = #BATCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>           
+        </dynamic>
+        order by trans_id       
+    </dynamic-mapped-statement>  
+    
+    
+    <mapped-statement name="getAllTransferBatchDataForUpdation" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">          
+        <!--select * from transfer_trans where trans_dt =  #TRANS_DT:DATE#
+        and batch_id = #BATCH_ID:VARCHAR#
+        and initiated_branch =  #BRANCH_ID:VARCHAR#-->
+        
+        SELECT
+        TRANS_ID AS transId,
+        BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        AC_HD_ID AS acHdId,
+        DECODE(ACT_NUM, NULL, LINK_BATCH_ID, ACT_NUM) AS actNum,
+        INP_AMOUNT AS inpAmount,
+        INP_CURR AS inpCurr,
+        AMOUNT AS amount,
+        TRANS_DT AS transDt,
+        TRANS_TYPE AS transType,
+        INST_TYPE AS instType,
+        INSTRUMENT_NO1 AS instrumentNo1,
+        INSTRUMENT_NO2 AS instrumentNo2,
+        INST_DT AS instDt,            
+        INIT_TRANS_ID AS initTransId,
+        INIT_CHANN_TYPE AS initChannType,
+        PARTICULARS AS particulars,
+        NARRATION AS narration,
+        AUTHORIZE_BY AS authorizeBy,
+        AUTHORIZE_DT AS authorizeDt,
+        AUTHORIZE_STATUS AS authorizeStatus,
+        AUTHORIZE_REMARKS AS authorizeRemarks,
+        BRANCH_ID AS branchId,
+        STATUS_BY AS statusBy,
+        STATUS_DT AS statusDt,
+        LINK_BATCH_ID AS linkBatchId,
+        STATUS AS status,           
+        PROD_TYPE AS prodType,
+        INITIATED_BRANCH AS initiatedBranch    
+        FROM TRANSFER_TRANS
+        where trans_dt =  #TRANS_DT:DATE#
+        and batch_id = #BATCH_ID:VARCHAR#
+        and initiated_branch =  #BRANCH_ID:VARCHAR#
+        
+    </mapped-statement>
+   
+    <mapped-statement name="updateTransferTransAmountAfterCorrection" inline-parameters="true"> 
+        update transfer_trans SET
+        AMOUNT = #AMOUNT:NUMERIC#,
+        INP_AMOUNT = #AMOUNT:NUMERIC#
+        WHERE TRANS_DT = #TRANS_DT:DATE#
+        AND BATCH_ID = #BATCH_ID:VARCHAR#
+        AND INITIATED_BRANCH = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransTypeAfterCorrection" inline-parameters="true"> 
+        update transfer_trans SET
+        TRANS_TYPE = #TRANS_TYPE:VARCHAR#
+        WHERE TRANS_DT = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND INITIATED_BRANCH = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getAccountOpeningDate" result-class="java.util.LinkedHashMap"> 
+       SELECT GET_ACCOUNT_OPENDT(#PROD_TYPE:VARCHAR#,#ACT_NUM:VARCHAR#) as OPEN_DATE from dual
+    </mapped-statement>
+    
+     <mapped-statement name="getOthrBankAccountAcHdAndProdId" result-class="java.util.LinkedHashMap">
+        select P.PRINCIPAL_AC_HD  as PRINCIPAL_AC_HD,M.act_master_id as act_master_id,M.BRANCH_ID,M.PROD_ID from OTHER_BANK_ACCOUNT_PRODUCTS p 
+        join OTHER_BANKS_ACT_MASTER m on P.PROD_ID=M.PROD_ID where M.ACT_REF_NO=#INVESTMENT_ACC_NO:VARCHAR#  
+        UNION
+        select P.PRINCIPAL_AC_HD  as PRINCIPAL_AC_HD,M.act_master_id as act_master_id,M.BRANCH_ID,M.PROD_ID from OTHER_BANK_ACCOUNT_PRODUCTS p 
+        join OTHER_BANKS_ACT_MASTER m on P.PROD_ID=M.PROD_ID where M.ACT_MASTER_ID=#INVESTMENT_ACC_NO:VARCHAR#                    
+    </mapped-statement>
+   
+      <mapped-statement name="updateCashTransActNoProductHeadDetailsAfterCorrection" inline-parameters="true"> 
+        UPDATE CASH_TRANS   
+        SET ACT_NUM = #NEW_ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#,
+        PROD_ID= #NEW_PROD_ID:VARCHAR#,
+        PROD_TYPE = #NEW_PROD_TYPE:VARCHAR#,
+        AC_HD_ID = #NEW_AC_HD_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+      
+    <mapped-statement name="updateCashTransModeTypeAfterCorrection" inline-parameters="true"> 
+        UPDATE CASH_TRANS   
+        SET TRANS_MOD_TYPE = #NEW_PROD_TYPE:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND TRANS_MOD_TYPE = #OLD_PROD_TYPE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransActNoProductHeadDetailsAfterCorrection" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS   
+        SET ACT_NUM = #NEW_ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#,
+        PROD_ID= #NEW_PROD_ID:VARCHAR#,
+        PROD_TYPE = #NEW_PROD_TYPE:VARCHAR#,
+        AC_HD_ID = #NEW_AC_HD_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND ACT_NUM = #OLD_ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+      
+    <mapped-statement name="updateTransferTransModeTypeAfterCorrection" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS   
+        SET TRANS_MOD_TYPE = #NEW_PROD_TYPE:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND TRANS_MOD_TYPE = #OLD_PROD_TYPE:VARCHAR#
+    </mapped-statement>
+   
+ 
+    <mapped-statement name="updateCashTransActNoProductHeadDetailsGLToActNoMapping" inline-parameters="true"> 
+        UPDATE CASH_TRANS   
+        SET ACT_NUM = #NEW_ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#,
+        PROD_ID= #NEW_PROD_ID:VARCHAR#,
+        PROD_TYPE = #NEW_PROD_TYPE:VARCHAR#,
+        AC_HD_ID = #NEW_AC_HD_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransActNoProductHeadDetailsGLToActNoMapping" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS   
+        SET ACT_NUM = #NEW_ACT_NUM:VARCHAR#,
+        BRANCH_ID = #ACT_BRANCH_ID:VARCHAR#,
+        PROD_ID= #NEW_PROD_ID:VARCHAR#,
+        PROD_TYPE = #NEW_PROD_TYPE:VARCHAR#,
+        AC_HD_ID = #NEW_AC_HD_ID:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="updateCashTransLinkBatchIdGLToActNoMapping" inline-parameters="true"> 
+        UPDATE CASH_TRANS SET LINK_BATCH_ID = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND LINK_BATCH_ID is null
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransLinkBatchIdGLToActNoMapping" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS SET LINK_BATCH_ID = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND LINK_BATCH_ID is null
+    </mapped-statement>
+ 
+     
+     <mapped-statement name="updateCashTransGLTransActNumGLToActNoMapping" inline-parameters="true"> 
+        UPDATE CASH_TRANS SET GL_TRANS_ACT_NUM = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND GL_TRANS_ACT_NUM is null
+    </mapped-statement>
+    
+    <mapped-statement name="updateTransferTransGLTransActNumGLToActNoMapping" inline-parameters="true"> 
+        UPDATE TRANSFER_TRANS SET GL_TRANS_ACT_NUM = #ACT_NUM:VARCHAR#
+        WHERE trans_dt = #TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND GL_TRANS_ACT_NUM is null
+    </mapped-statement>
+   
+   
+    <mapped-statement name="updateDailyDepositTransAfterCorrection" inline-parameters="true"> 
+       update daily_deposit_trans set acc_num = #NEW_ACT_NO:VARCHAR#
+       where acc_num  = #OLD_ACT_NO:VARCHAR#
+       and trn_dt = #TRANS_DT:DATE#
+       and batch_id = #BATCH_ID:VARCHAR#
+    </mapped-statement>
+       
+   
+     <mapped-statement name="updateCashTransNarration" inline-parameters="true">
+        update cash_trans set narration = #NARRATION:VARCHAR# where trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR#       
+    </mapped-statement>
+    
+     <mapped-statement name="updateTransferTransNarration" inline-parameters="true">
+        update transfer_trans set narration = #NARRATION:VARCHAR# where trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR#       
+    </mapped-statement>
+   
+   
+    <dynamic-mapped-statement name="getSelectIRIDForDataCorrection" result-class="java.util.LinkedHashMap"> 
+        select ir.irid ,ir.trans_type,ir.depid,dm.depo_name ,ir.purchase_amt,ir.amount,ir.remark,ir.store_name  
+        from indend_register ir,depo_master dm  
+        where dm.depid = ir.depid 
+        and ir.branch_code = #BRANCH_CODE:VARCHAR# 
+        and tran_date = #TRANS_DT:DATE#
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectIRIDDetails" result-class="java.util.LinkedHashMap"> 
+        select ir.irid ,ir.trans_type,ir.depid,dm.depo_name ,
+        ir.purchase_amt,ir.amount,ir.remark,ir.store_name  
+        from indend_register ir,depo_master dm  
+        where dm.depid = ir.depid 
+        and ir.branch_code = #BRANCH_CODE:VARCHAR# 
+        and tran_date = #TRANS_DT:DATE#
+        and ir.irid = #IR_ID:VARCHAR# 
+    </dynamic-mapped-statement>
+     
+    <mapped-statement name="updateTransactionPassBookNarrationCorrectedData" inline-parameters="true">      
+        update pass_book set narration = #NARRATION:VARCHAR# where act_num = #ACT_NUM:VARCHAR# 
+        and trans_dt = #TRANS_DT:DATE#
+        and trans_id = #TRANS_ID:VARCHAR#   
+    </mapped-statement>  
+     
+     
+</sql-map>

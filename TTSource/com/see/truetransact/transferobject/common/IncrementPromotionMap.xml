@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="IncrementPromotionMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name = "insertIncrementTO" inline-parameters = "true">
+        INSERT INTO INCREMENT_DETAILS (SL_NO,EMP_ID,EFFECTIVE_DATE,CREATED_DATE,EMPLOYEE_STAGE,STATUS,STATUS_BY,STATUS_DT,EMP_NAME,DESIGNATION,PRESENT_BASIC,INCREMENT_AMOUNT,NEW_BASIC,INCREMENT_ID,NO_OF_INCREMENTS
+        )VALUES(
+        #slNo:VARCHAR#,#empId:VARCHAR#,#effectiveDate:DATE#,#createdDate:DATE#,#employeeStage:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#txtIncrementEmpName:VARCHAR#,
+        #txtIncrementDesignation:VARCHAR#,#txtBasicSalary:VARCHAR#,#txtIncrementAmount:VARCHAR#,#txtNewBasic:VARCHAR#,#incrementID:VARCHAR#,#txtIncrementNo:VARCHAR#)
+    </mapped-statement>
+        
+    <result-map name="getIncrementTOResult" class="com.see.truetransact.transferobject.common.IncrementTO">
+        <property name = "slNo" column = "SL_NO"/>
+        <property name = "incrementID" column = "INCREMENT_ID"/>
+        <property name = "empId" column = "EMP_ID"/>
+        <property name = "effectiveDate" column = "EFFECTIVE_DATE"/>
+        <property name = "createdDate" column = "CREATED_DATE"/>
+        <property name = "employeeStage" column = "EMPLOYEE_STAGE"/>
+        <property name = "tdtIncrementDate" column = "LAST_INCREMENT_DATE"/>
+        <property name = "status" column = "STATUS"/>
+        <property name = "statusBy" column = "STATUS_BY"/>
+        <property name = "statusDt" column = "STATUS_DT"/>
+        <property name = "txtIncrementEmpName" column = "EMP_NAME"/>
+        <property name = "txtIncrementDesignation" column = "DESIGNATION"/>
+        <property name = "txtBasicSalary" column = "PRESENT_BASIC"/>
+        <property name = "txtIncrementAmount" column = "INCREMENT_AMOUNT"/>
+        <property name = "txtNewBasic" column = "NEW_BASIC"/>
+        <property name = "txtIncrementNo" column = "NO_OF_INCREMENTS"/>
+    </result-map>
+        
+    <mapped-statement name = "getSelectMaxofSlNoIncRec" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SLNO),0) AS TEMP_SLNO,NVL(MIN(SL_NO),0) AS SL_NO FROM INCREMENT_DETAILS
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectIncrementEditTO" result-map="getIncrementTOResult" >
+        SELECT IDS.*,LAST_INCREMENT_DATE FROM INCREMENT_DETAILS IDS,EMPLOYEE_PRESENT_DETAILS EPD WHERE 
+        IDS.EMP_ID = EPD.SYS_ID AND EMP_ID = #EMPLOYEE_ID:VARCHAR# AND IDS.STATUS!='DELETED'
+    </mapped-statement>    
+    <mapped-statement name="getEmployeesFromSalID" result-class="java.util.LinkedHashMap">
+            <!--SELECT DISTINCT SMD.SALARY_ID,EMPLOYEE_ID,AMOUNT as BASIC,SALARY_FROM_DT,CREATED_DATE,SM.SALARY_STATUS,EPD.PRESENT_BRANCH_CODE,
+            EPD.ZONAL_CODE FROM EMPLOYEE_PRESENT_DETAILS EPD,SALARY_MASTER_DETAILS SMD,SALARY_MASTER SM
+            WHERE SMD.SALARY_ID = #SALARY_ID# AND SALARY_TYPE='BASIC'
+            AND SMD.SALARY_ID = SM.SALARY_ID
+            AND EPD.SYS_ID = SMD.EMPLOYEE_ID
+            ORDER BY EMPLOYEE_ID -->
+        SELECT DISTINCT SMD.SALARY_ID,EM.FIRST_NAME,EMPLOYEE_ID,AMOUNT as BASIC,SALARY_FROM_DT,SM.CREATED_DATE
+        ,SM.SALARY_STATUS,EPD.PRESENT_BRANCH_CODE,EPD.PRESENT_DISGNATION,
+        EPD.ZONAL_CODE FROM EMPLOYEE_PRESENT_DETAILS EPD,SALARY_MASTER_DETAILS SMD,SALARY_MASTER SM,EMPLOYEE_MASTER EM
+        WHERE SMD.SALARY_ID = #SALARY_ID:VARCHAR# AND SALARY_TYPE='BASIC'
+        AND SMD.SALARY_ID = SM.SALARY_ID
+        AND EPD.SYS_ID = SMD.EMPLOYEE_ID
+        AND EM.SYS_EMPID = EPD.SYS_ID
+        ORDER BY EMPLOYEE_ID
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectCustandLastIncDate" result-class = "java.util.HashMap">  
+        SELECT get_cust_name(CUST.CUST_ID)  as "Customer",
+        BRANCH_CODE,EPD.LAST_INCREMENT_DATE AS "LAST_INCREMENT_DATE" FROM CUSTOMER CUST,EMPLOYEE_PRESENT_DETAILS EPD WHERE CUST.STAFF_ID = #EMPLOYEE_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectIncrementDetails" result-class = "java.util.LinkedHashMap" >
+        SELECT IDS.EMP_ID,IDS.EFFECTIVE_DATE,IDS.EMPLOYEE_STAGE,EPD.LAST_INCREMENT_DATE FROM INCREMENT_DETAILS IDS,EMPLOYEE_PRESENT_DETAILS EPD WHERE IDS.EMP_ID = EPD.SYS_ID AND IDS.STATUS!='DELETED'
+        AND IDS.AUTHORIZE_STATUS IS NULL
+    </mapped-statement>  
+    <dynamic-mapped-statement name="getSelectPromotionTO" result-map="getPromotionTOResult" >
+        SELECT * FROM PROMOTION_DETAILS  WHERE EMP_ID=#SYS_EMPID:VARCHAR#  
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                (STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSelectPromotionDetails" result-class = "java.util.LinkedHashMap" >
+        SELECT EMP_ID,EFFECTIVE_DATE,EMPLOYEE_STAGE FROM PROMOTION_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>    
+    <mapped-statement name="getSelectIncrementViewDetails" result-class = "java.util.LinkedHashMap" >
+        SELECT IDS.EMP_ID,IDS.EFFECTIVE_DATE,IDS.EMPLOYEE_STAGE,EPD.LAST_INCREMENT_DATE FROM INCREMENT_DETAILS IDS,EMPLOYEE_PRESENT_DETAILS EPD WHERE IDS.EMP_ID = EPD.SYS_ID AND IDS.STATUS!='DELETED'
+    </mapped-statement>  
+    <mapped-statement name="getSelectViewPromotionDetails" result-class = "java.util.LinkedHashMap" >
+        SELECT EMP_ID,EFFECTIVE_DATE,EMPLOYEE_STAGE FROM PROMOTION_DETAILS WHERE STATUS!='DELETED'
+    </mapped-statement>  
+    <mapped-statement name="getSelectSalaryMasterDetails" result-class ="java.util.LinkedHashMap">
+        SELECT DISTINCT SM.SALARY_ID,SALARY_FROM_DT,CREATED_DATE,<!--ZONAL_CODE,BRANCH_CODE, --> SALARY_STATUS FROM SALARY_MASTER SM, SALARY_MASTER_DETAILS SMD 
+        WHERE SALARY_STATUS != 'FINAL'
+        AND SM.SALARY_ID = SMD.SALARY_ID
+    </mapped-statement>
+    <mapped-statement name = "insertPromotionTO" inline-parameters = "true">
+            <!--INSERT INTO PROMOTION_DETAILS(SL_NO,EMP_ID,LAST_DESIGNATION,EFFECTIVE_DATE,CREATED_DATE,EMPLOYEE_STAGE,PRESENT_BASIC,PROMOTION_STATUS,STATUS,
+            STATUS_BY,STATUS_DT,TEMP_SLNO,EMP_NAME,PROMOTION_ID
+            ) VALUES (
+            #slNo:VARCHAR#,#empId:VARCHAR#,#lastDesignation:VARCHAR#,#effectiveDate:DATE#,#createdDate:DATE#,#employeeStage:VARCHAR#,#presentBasic:NUMBER#,
+            #promotionStatus:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#tempSlNO:VARCHAR#,#txtPromotionEmployeeName:VARCHAR#,#promotionID:VARCHAR#) -->
+        INSERT INTO PROMOTION_DETAILS
+        (SL_NO,EMP_ID,PRESENT_DESIGNATION,PROMOTION_DESIGNATION,EFFECTIVE_DATE,CREATED_DATE,PRESENT_BASIC,
+        NEW_BASIC,EMP_NAME,PRESENT_GRADE,PROMOTION_GRADE,STATUS,STATUS_BY,STATUS_DT,TEMP_SLNO,AUTHORIZED_BY,AUTHORIZE_STATUS,
+        AUTHORIZED_DT,REMARKS
+        ) VALUES (
+        #promotionID:VARCHAR#,#empId:VARCHAR#,#lastDesignation:VARCHAR#,#promotionDesignation:VARCHAR#,#effectiveDate:DATE#,
+        #createdDate:DATE#,#presentBasic:VARCHAR#,#txtNewBasic:VARCHAR#,
+        #txtPromotionEmployeeName:VARCHAR#,#txtPromotionLastGrade:VARCHAR#,#promotionGrade:VARCHAR#,#status:VARCHAR#,
+        #statusBy:VARCHAR#,#statusDt:DATE#,#tempSlNO:VARCHAR#,#authorizedBy:VARCHAR#,#authorizeStatus:VARCHAR#,#authorizedDt:DATE#,
+        #txtRemarks:VARCHAR#)
+    </mapped-statement>
+             
+    <result-map name="getPromotionTOResult" class="com.see.truetransact.transferobject.common.PromotionTO">
+        <property name = "promotionID" column = "SL_NO"/>
+        <property name = "empId" column = "EMP_ID"/>
+        <property name = "lastDesignation" column = "PRESENT_DESIGNATION"/>
+        <property name = "promotionDesignation" column = "PROMOTION_DESIGNATION"/>
+        <property name = "effectiveDate" column = "EFFECTIVE_DATE"/>
+        <property name = "createdDate" column = "CREATED_DATE"/>
+        <property name = "presentBasic" column = "PRESENT_BASIC"/>
+        <property name = "txtNewBasic" column = "NEW_BASIC"/>
+        <property name = "txtPromotionEmployeeName" column = "EMP_NAME"/>
+        <property name = "txtPromotionLastGrade" column = "PRESENT_GRADE"/>
+        <property name = "promotionGrade" column = "PROMOTION_GRADE"/>
+        <property name = "status" column = "STATUS"/>
+        <property name = "statusBy" column = "STATUS_BY"/>
+        <property name = "statusDt" column = "STATUS_DT"/>
+        <property name = "tempSlNO" column = "TEMP_SLNO"/>
+        <property name = "authorizedBy" column = "AUTHORIZED_BY"/>
+        <property name = "authorizeStatus" column = "AUTHORIZE_STATUS"/>
+        <property name = "authorizedDt" column = "AUTHORIZED_DT"/>
+        <property name = "txtRemarks" column = "REMARKS"/>
+    </result-map>
+    <mapped-statement name="updatePromotionTO" inline-parameters="true">
+        UPDATE PROMOTION_DETAILS SET 
+        EFFECTIVE_DATE = #effectiveDate:DATE#,
+        PROMOTION_DESIGNATION = #promotionDesignation:VARCHAR#,
+        PROMOTION_GRADE = #promotionGrade:VARCHAR#,
+        REMARKS = #txtRemarks:VARCHAR#,
+        NEW_BASIC = #txtNewBasic:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE EMP_ID = #empId:VARCHAR# AND STATUS !='DELETED'
+        AND SL_NO =#promotionID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getSelectMaxofSlNoIncPro" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SLNO),0) AS TEMP_SLNO,NVL(MIN(SL_NO),0) AS SL_NO FROM PROMOTION_DETAILS
+    </mapped-statement>
+    <mapped-statement name="getSelectPromotionEditTO" result-map="getPromotionTOResult" >
+        SELECT * FROM PROMOTION_DETAILS WHERE EMP_ID = #EMPLOYEE_ID# AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="deleteIncrementTO" inline-parameters="true">
+        UPDATE INCREMENT_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE EMP_ID = #empId:VARCHAR# AND STATUS !='DELETED' AND EFFECTIVE_DATE = #effectiveDate:DATE#
+    </mapped-statement>
+    <mapped-statement name="updateIncrementTO" inline-parameters="true">
+        UPDATE INCREMENT_DETAILS SET 
+        EFFECTIVE_DATE = #effectiveDate:DATE#,
+        CREATED_DATE = #createdDate:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE EMP_ID = #empId:VARCHAR# AND STATUS !='DELETED' 
+    </mapped-statement>
+    <mapped-statement name="deletePromotionTO" inline-parameters="true">
+        UPDATE PROMOTION_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE EMP_ID = #empId:VARCHAR# AND STATUS !='DELETED' 
+        AND SL_NO=#promotionID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectEmployeeFromDetails" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT EMPLOYEE_ID,EM.FIRST_NAME FROM EMPLOYEE_BASIC EB, EMPLOYEE_PRESENT_DETAILS EPD,EMPLOYEE_MASTER EM
+        WHERE EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE# AND
+        EPD.SYS_ID = EB.EMPLOYEE_ID AND
+        EM.SYS_EMPID = EB.EMPLOYEE_ID
+        ORDER BY EMPLOYEE_ID
+    </dynamic-mapped-statement>  
+    <mapped-statement name="getMaxEbidFrmEmpID"  result-class="java.util.HashMap">
+        SELECT EB_ID,PRESENT_BASIC,EMPLOYEE_ID FROM EMPLOYEE_BASIC WHERE  EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE#
+        AND EB_ID IN (SELECT MAX(EB_ID) FROM EMPLOYEE_BASIC WHERE EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE# )
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getEmployeeLstForBranch" result-class="java.util.LinkedHashMap" >   
+        SELECT EB.EMPLOYEE_ID AS EMPLOYEE_ID,EM.FIRST_NAME ,EB.LAST_BASIC,EB.PRESENT_BASIC,EB.EFFECTIVE_DATE,
+        EPD.PRESENT_GRADE,EPD.PRESENT_DISGNATION,EPD.PRESENT_BRANCH_CODE AS BRANCH_CODE FROM SALARY_STRUCTURE MS, EMPLOYEE_BASIC EB,EMPLOYEE_PRESENT_DETAILS EPD,EMPLOYEE_MASTER EM
+        WHERE EM.SYS_EMPID = EPD.SYS_ID AND EB.EMPLOYEE_ID = EPD.SYS_ID AND EM.STATUS !='DELETED'
+        AND MS.STATUS !='DELETED' AND
+        SL_NO = (SELECT MIN (SL_NO) FROM SALARY_STRUCTURE SS
+        WHERE SINGLEROW_TOTAMT > EPD.PRESENT_BASIC AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+        OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+        ) AND SS.GRADE = MS.GRADE)
+        AND (((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+        OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL))        
+        AND EPD.PRESENT_GRADE = MS.GRADE             
+        AND EPD.PRESENT_BRANCH_CODE=#BRANCH_CODE:VARCHAR# 
+        AND EPD.ZONAL_CODE=#REGIONAL_CODE:VARCHAR# 
+    </dynamic-mapped-statement>  
+    <dynamic-mapped-statement name="getSingleEmployeeDetail" result-class="java.util.LinkedHashMap" >   
+        SELECT EM.SYS_EMPID,EM.FIRST_NAME,EB.LAST_BASIC,EB.PRESENT_BASIC,EB.EFFECTIVE_DATE,EPD.PRESENT_DISGNATION,EPD.PRESENT_GRADE,EM.DATE_OF_JOIN,EM.DATE_OF_RETIREMENT,EPD.PRESENT_BRANCH_CODE as BRANCH_CODE,EPD.ZONAL_CODE
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_BASIC EB,EMPLOYEE_PRESENT_DETAILS EPD WHERE 
+        EM.SYS_EMPID = EB.EMPLOYEE_ID AND
+        EB.EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE# AND
+        EPD.SYS_ID = EM.SYS_EMPID AND
+        EPD.SYS_ID = EB.EMPLOYEE_ID AND
+        EB.EB_ID = (SELECT MAX(EB_ID) FROM EMPLOYEE_BASIC WHERE EMPLOYEE_ID = #FROM_EMPLOYEE_CODE:VARCHAR# AND
+        EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE#)
+        ORDER BY EM.SYS_EMPID
+    </dynamic-mapped-statement>         
+    <dynamic-mapped-statement name="getEmployeeListDetail" result-class="java.util.LinkedHashMap" >   
+        SELECT EM.SYS_EMPID,EM.FIRST_NAME,EB.LAST_BASIC,EB.PRESENT_BASIC,EB.EFFECTIVE_DATE,PRESENT_GRADE,EPD.PRESENT_DISGNATION 
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_BASIC EB,EMPLOYEE_PRESENT_DETAILS EPD WHERE 
+        EM.SYS_EMPID = EB.EMPLOYEE_ID AND
+        EB.EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE# AND
+        EPD.PRESENT_GRADE = #BRANCH_CODE:VARCHAR# AND
+        EPD.SYS_ID = EM.SYS_EMPID AND
+        EPD.SYS_ID = EB.EMPLOYEE_ID AND
+        EB.EB_ID = (SELECT MAX(EB_ID) FROM EMPLOYEE_BASIC WHERE EMPLOYEE_ID BETWEEN #FROM_EMPLOYEE_CODE# AND #TO_EMPLOYEE_CODE:VARCHAR# AND
+        EFFECTIVE_DATE &lt;= #CURRENT_DT:DATE#)
+        ORDER BY EM.SYS_EMPID
+    </dynamic-mapped-statement>
+    <mapped-statement name="getEmployeesList"  result-class="java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID FROM EMPLOYEE_BASIC EB,EMPLOYEE_PRESENT_DETAILS EPD WHERE 
+        EB.EMPLOYEE_ID BETWEEN #FROM_EMPLOYEE_CODE:VARCHAR# AND #TO_EMPLOYEE_CODE:VARCHAR# AND
+                        <!--EPD.PRESENT_BRANCH_CODE = #BRANCH_CODE# AND-->
+        EB.EMPLOYEE_ID = EPD.SYS_ID
+        ORDER BY EMPLOYEE_ID
+    </mapped-statement>
+    <mapped-statement name="empIdExistanceCheckIncrement"  result-class="java.util.HashMap">
+        SELECT EMP_NAME from INCREMENT_DETAILS        
+        where STATUS!='DELETED' AND EMP_ID = #EMPLOYEEID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="empIdExistanceCheckPromotion"  result-class="java.util.HashMap">
+        SELECT EMP_NAME from PROMOTION_DETAILS        
+        where STATUS!='DELETED' AND EMP_ID = #EMPLOYEEID:VARCHAR# 
+    </mapped-statement>
+    <dynamic-mapped-statement name="getIncrementAuthorizeMode" result-class="java.util.HashMap" >
+        SELECT INCREMENT_ID,EMP_ID,EMP_NAME,EFFECTIVE_DATE,EMPLOYEE_STAGE,INCREMENT_AMOUNT,STATUS,STATUS_BY 
+        FROM INCREMENT_DETAILS C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY EMP_ID
+    </dynamic-mapped-statement> 
+    <dynamic-mapped-statement name="getPromotionAuthorizeMode" result-class="java.util.HashMap" >
+        SELECT PROMOTION_ID,EMP_ID,EMP_NAME,EFFECTIVE_DATE,EMPLOYEE_STAGE,STATUS,STATUS_BY 
+        FROM PROMOTION_DETAILS C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY EMP_ID
+    </dynamic-mapped-statement>  
+        
+    <mapped-statement name = "updateAuthorizeStatusIncrement" result-class = "java.util.HashMap">
+        UPDATE INCREMENT_DETAILS SET
+        AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZED_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZED_DT=#AUTHORIZE_DATE:DATE#
+        WHERE INCREMENT_ID=#INCREMENT_ID:VARCHAR# AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name = "insertEmployeeBasic" result-class = "java.util.HashMap">
+        INSERT INTO EMPLOYEE_BASIC 
+        (EB_ID,EMPLOYEE_ID,LAST_BASIC,INCREMENT_AMOUNT,PRESENT_BASIC,EFFECTIVE_DATE,INCREMENT_REASON,CREATED_DATE)
+        VALUES
+        (#INCREMENT_ID:VARCHAR#,#EMP_ID:VARCHAR#,#LAST_BASIC:VARCHAR#,#INCREMENT_AMOUNT:VARCHAR#,#NEWBASIC:VARCHAR#,#EFFECTIVEDATE:DATE#,#INCREMENT_REASON:VARCHAR#,#CREATED_DATE:DATE#)
+    </mapped-statement>
+    <mapped-statement name = "updateEmployeePresentDIncrements" result-class = "java.util.HashMap">
+        UPDATE EMPLOYEE_PRESENT_DETAILS SET
+        LAST_INCREMENT_DATE=#EFFECTIVEDATE:DATE#,
+        NEXT_INCREMENT_DATE=#NEW_INCREMENT_DATE:DATE#,
+        NO_OF_INCREMENTS=#NO_OF_INCREMENTS#,
+        PRESENT_BASIC=#NEWBASIC:NUMBER#
+        WHERE SYS_ID= #EMP_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "updateEmpPresentDetPromotion" result-class = "java.util.HashMap">
+        UPDATE EMPLOYEE_PRESENT_DETAILS SET
+        PRESENT_GRADE =#PRESENT_GRADE:VARCHAR#,
+        PRESENT_DISGNATION=#PRESENT_DISGNATION:VARCHAR#,
+        PRESENT_BASIC=#NEWBASIC:NUMBER#
+        WHERE SYS_ID= #EMP_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "updateAuthorizeStatusPromotion" result-class = "java.util.HashMap">
+        UPDATE PROMOTION_DETAILS SET
+        AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZED_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZED_DT=#AUTHORIZE_DATE:DATE#
+        WHERE PROMOTION_ID=#PROMOTION_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "updateEmployeePresentDPromotion" result-class = "java.util.HashMap">
+        UPDATE EMPLOYEE_PRESENT_DETAILS SET
+        PRESENT_GRADE = #PRESENT_GRADE:VARCHAR#
+        WHERE SYS_ID= #EMP_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getGradesFromBranch" result-class = "java.util.HashMap">
+        SELECT DISTINCT GRADE AS PRESENT_GRADE,BRANCH_CODE FROM SALARY_STRUCTURE
+    </mapped-statement>
+    <mapped-statement name = "getHraDetails" result-class ="java.util.HashMap">
+                            <!--SELECT HRAFROM_DATE AS FROM_DATE, HRA_PERCENTAGE AS PERCENT, HRA_MAX_AMOUNT AS MAX FROM HRA_ALLOWANCE WHERE HRAGRADE=#PRESENT_GRADE# 
+                            AND HRACITY_TYPE = '45 LACS AND ABOVE' AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED' -->
+        SELECT HRAFROM_DATE AS FROM_DATE, HRA_PERCENTAGE AS PERCENT, HRA_MAX_AMOUNT AS MAX FROM HRA_ALLOWANCE WHERE HRAGRADE=#PRESENT_GRADE:VARCHAR# 
+        AND HRACITY_TYPE = '45 LACS AND ABOVE' AND BRANCH_CODE= #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(HRAFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(HRATO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(HRAFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(HRATO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>
+    <mapped-statement name= "getCCAllowanceDetails" result-class ="java.util.HashMap">
+        SELECT CCFROM_DATE AS FROM_DATE, CCA_PERCENT AS PERCENT, CCA_MAX AS MAX FROM CC_ALLOWANCE WHERE CCGRADE = #PRESENT_GRADE:VARCHAR# 
+        AND CCCITY_TYPE = '45 LACS AND ABOVE' AND BRANCH_CODE= #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name= "getCCAForCalculation" result-class ="java.util.HashMap">
+        SELECT CCFROM_DATE AS FROM_DATE, CCA_PERCENT AS PERCENT, CCA_MAX AS MAX,PERCENT_OR_FIXED FROM CC_ALLOWANCE WHERE CCGRADE = #PRESENT_GRADE:VARCHAR# 
+        AND CCCITY_TYPE = '45 LACS AND ABOVE' <!-- AND BRANCH_CODE= #BRANCH_CODE# --> AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND (#BASIC_PER_MONTH# BETWEEN FROM_AMOUNT AND TO_AMOUNT)  AND
+        ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(CCFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(CCTO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(CCFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(CCTO_DATE,'YYYY-MM-DD') IS NULL)) 
+    </mapped-statement>
+    <mapped-statement name="getMedAllowanceDetails" result-class ="java.util.HashMap">
+        SELECT MAFROM_DATE AS FROM_DATE, ROUND(MAAMOUNT/12) AS PERCENT, 0 AS MAX FROM MA_ALLOWANCE WHERE BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND MAGRADE= #PRESENT_GRADE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(MAFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(MATO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(MAFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(MATO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>
+    <mapped-statement name="getDADetails" result-class = "java.util.HashMap">
+                           <!-- SELECT DATOTAL_PERCENTAGE AS PERCENT, DAFROM_DATE AS FROM_DATE, 0 AS MAX FROM DEARNESS_ALLOWANCE WHERE BRANCH_CODE = #BRANCH_CODE# AND DAGRADE = #PRESENT_GRADE# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+                            AND DAFROM_DATE = (SELECT MAX(DAFROM_DATE) FROM DEARNESS_aLLOWANCE WHERE BRANCH_CODE = #BRANCH_CODE# AND DAGRADE = #PRESENT_GRADE# AND AUTHORIZE_STATUS = 'AUTHORIZED') -->
+        SELECT DATOTAL_PERCENTAGE AS PERCENT, DAFROM_DATE AS FROM_DATE, 0 AS MAX FROM DEARNESS_ALLOWANCE WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND DAGRADE = #PRESENT_GRADE# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(DAFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(DATO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(DAFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(DATO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>
+        <!--<mapped-statement name="getOtherAllowanceDetails" result-class = "java.util.HashMap">
+                            SELECT OAWASHING_AMT,OACYCLE_AMT,OACYCLE_AMT FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND
+                            #SALARY_DT# > (SELECT MAX(OAFROM_DATE) FROM OTHER_ALLOWANCE WHERE  OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED')
+        </mapped-statement> -->
+    <mapped-statement name= "getWashingAllowanceDetails" result-class ="java.util.HashMap">
+                            <!--SELECT OAFROM_DATE AS FROM_DATE, OAWASHING_AMT AS PERCENT, 0 AS MAX FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND
+                            #SALARY_DT# > (SELECT MAX(OAFROM_DATE) FROM OTHER_ALLOWANCE WHERE  OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED')-->
+                            
+        SELECT OAFROM_DATE AS FROM_DATE, OAFIXED_AMT AS PERCENT, 0 AS MAX FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE:VARCHAR# 
+        AND OALLOWANCE_TYPE ='WASHING ALLOWANCE' AND BRANCH_CODE= #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(OAFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(OATO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(OAFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(OATO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>                    
+        
+    <mapped-statement name= "getCyleAllowanceDetails" result-class ="java.util.HashMap">
+                            <!--SELECT OAFROM_DATE AS FROM_DATE, OACYCLE_AMT AS PERCENT, 0 AS MAX FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND
+                            #SALARY_DT# > (SELECT MAX(OAFROM_DATE) FROM OTHER_ALLOWANCE WHERE  OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED') -->
+        SELECT OAFROM_DATE AS FROM_DATE, OACYCLE_AMT AS PERCENT, 0 AS MAX FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE:VARCHAR# 
+        AND BRANCH_CODE= #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(OAFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(OATO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(OAFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(OATO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>
+
+    <mapped-statement name= "getShiftDutyAllowanceDetails" result-class ="java.util.HashMap">
+                            <!--SELECT OAFROM_DATE AS FROM_DATE, SHIFT_DUTY_AMT AS PERCENT, 0 AS MAX FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND
+                            #SALARY_DT# > (SELECT MAX(OAFROM_DATE) FROM OTHER_ALLOWANCE WHERE  OAGRADE = #PRESENT_GRADE# 
+                            AND BRANCH_CODE= #BRANCH_CODE# AND AUTHORIZE_STATUS = 'AUTHORIZED') -->
+        SELECT OAFROM_DATE AS FROM_DATE, SHIFT_DUTY_AMT AS PERCENT, 0 AS MAX FROM OTHER_ALLOWANCE WHERE OAGRADE = #PRESENT_GRADE:VARCHAR# 
+        AND BRANCH_CODE= #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        ((TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(OAFROM_DATE,'YYYY-MM-DD') AND TO_CHAR(OATO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(OAFROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#SALARY_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(OATO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>
+
+    <mapped-statement name="getIndividualMscDeductionDetails" result-class = "java.util.HashMap">
+        SELECT * FROM MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #MD_GRADE:VARCHAR# AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') AND MD_FROM_DATE = (SELECT MAX(MD_FROM_DATE) FROM 
+        MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #MD_GRADE:VARCHAR# AND STATUS != 'DELETED' AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE#)
+    </mapped-statement>
+        
+    <mapped-statement name="getIndMscDeducDetUsingBasic" result-class = "java.util.HashMap">
+        SELECT * FROM MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #MD_GRADE:VARCHAR# AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') AND MD_FROM_DATE = (SELECT MAX(MD_FROM_DATE) FROM 
+        MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #MD_GRADE:VARCHAR# AND STATUS != 'DELETED' AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR#)
+        AND #BASIC:NUMBER# BETWEEN FROM_AMOUNT AND TO_AMOUNT
+    </mapped-statement>
+    <mapped-statement name="getIndMscDeducDetUsingGross" result-class = "java.util.HashMap">
+        SELECT * FROM MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #MD_GRADE:VARCHAR# AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') AND MD_FROM_DATE = (SELECT MAX(MD_FROM_DATE) FROM 
+        MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #MD_GRADE# AND STATUS != 'DELETED' AND MD_DEDUCTION_TYPE = #MD_DEDUCTION_TYPE:VARCHAR#)
+        AND #GROSS:NUMBER# BETWEEN FROM_AMOUNT AND TO_AMOUNT
+    </mapped-statement>
+    <mapped-statement name="getMisscellaneousDeductionForSalCalc" result-class = "java.util.HashMap">
+        SELECT DISTINCT MD_DEDUCTION_TYPE,MD_FIXED_OR_PERCENT,USING_BASIC FROM MISECLLANIOUS_ALLOWANCE WHERE MD_GRADE = #PRESENT_GRADE:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION')
+    </mapped-statement>
+    <mapped-statement name="getEarningDetailsForSalCalc" result-class = "java.util.HashMap">
+        SELECT * FROM EARNING_DETAILS WHERE EMP_ID = #EMPLOYEE_CODE:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') 
+        AND ALLOWANCE_TYPE NOT IN ('LOP','ADDITIONAL PAY')
+    </mapped-statement>
+    <mapped-statement name="getLossOfPay" result-class = "java.util.HashMap">
+        SELECT * FROM EARNING_DETAILS WHERE EMP_ID = #EMPLOYEE_CODE:VARCHAR# AND STATUS != 'DELETED' AND ALLOWANCE_TYPE = 'LOP'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') AND
+        ((FROM_DATE BETWEEN #FIRST_DATE:DATE# AND #LAST_DATE:DATE#) OR (TO_DATE  BETWEEN #FIRST_DATE:DATE# AND #LAST_DATE:DATE#))
+    </mapped-statement>
+    <mapped-statement name="getAdditionalPay" result-class = "java.util.HashMap">
+        SELECT * FROM EARNING_DETAILS WHERE EMP_ID = #EMPLOYEE_CODE:VARCHAR# AND STATUS != 'DELETED' AND ALLOWANCE_TYPE = 'ADDITIONAL PAY'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION') AND
+        ((FROM_DATE BETWEEN #FIRST_DATE:DATE# AND #LAST_DATE:DATE#) OR (TO_DATE  BETWEEN #FIRST_DATE:DATE# AND #LAST_DATE:DATE#))
+    </mapped-statement>
+    <mapped-statement name="getDeductionDetailsForSalCalc" result-class = "java.util.HashMap">                            
+        SELECT * FROM DEDUCTION_DETAILS WHERE EMPLOYEE_ID = #EMPLOYEE_CODE:VARCHAR# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION')
+    </mapped-statement>
+        
+    <result-map name="getSalaryMasterTOResult" class="com.see.truetransact.transferobject.common.SalaryMasterTO">
+        <property name="salaryId" column="SALARY_ID"/>
+        <property name="salaryDt" column="SALARY_FROM_DT"/>
+        <property name="payMentDt" column="PAYMENT_DATE"/>
+        <property name="createdDate" column="CREATED_DATE"/>
+        <property name="salaryStatus" column="SALARY_STATUS"/>
+    </result-map>
+    <mapped-statement name="insertSalaryMasterTO" inline-parameters="true">
+        INSERT INTO SALARY_MASTER
+        (SALARY_ID, SALARY_FROM_DT, CREATED_DATE, SALARY_STATUS,PAYMENT_DATE
+        ) VALUES (
+        #salaryId:VARCHAR#, #salaryDt:DATE#, #createdDate:DATE#, #salaryStatus:VARCHAR#,#payMentDt:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertSalaryMasterDetails" inline-parameters="true">
+        INSERT INTO SALARY_MASTER_DETAILS
+        (SALARY_ID, EMPLOYEE_ID, SALARY_TYPE, AMOUNT, EARNING_OR_DEDUCTION,ZONAL_CODE,BRANCH_CODE
+        ) VALUES (
+        #salaryId:VARCHAR#, #employeeId:VARCHAR#, #salaryType:VARCHAR#, #amount:VARCHAR#, #earningOrDeduction:VARCHAR#
+        ,#zonalCode:VARCHAR#,#branchCode:VARCHAR#)
+    </mapped-statement>
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SalaryMasterDetailsTO object (JavaBean) properties -->
+    <result-map name="getSalaryMasterDetailsTOResult" class="com.see.truetransact.transferobject.common.SalaryMasterDetailsTO">
+        <property name="salaryId" column="SALARY_ID"/>
+        <property name="employeeId" column="EMPLOYEE_ID"/>
+        <property name="salaryType" column="SALARY_TYPE"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="earningOrDeduction" column="EARNING_OR_DEDUCTION"/>
+        <property name="zonalCode" column="ZONAL_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+    </result-map>
+    <mapped-statement name= "getSalaryMasterDetails" result-class="java.util.LinkedHashMap">
+             <!--SELECT SALARY_TYPE,AMOUNT,EARNING_OR_DEDUCTION FROM SALARY_MASTER_DETAILS 
+            WHERE SALARY_ID=#SALARY_ID# AND EMPLOYEE_ID=#EMPLOYEE_ID# -->
+        SELECT SALARY_TYPE,EM.FIRST_NAME,EPD.PRESENT_DISGNATION,AMOUNT,EARNING_OR_DEDUCTION FROM SALARY_MASTER_DETAILS SMD,EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD
+        WHERE SALARY_ID=#SALARY_ID:VARCHAR#  AND SMD.EMPLOYEE_ID=#EMPLOYEE_ID:VARCHAR# 
+        AND SMD.EMPLOYEE_ID = EM.SYS_EMPID AND
+        EM.SYS_EMPID = EPD.SYS_ID
+            <!-- ORDER BY SALARY_TYPE -->
+    </mapped-statement>
+    <mapped-statement name="UpdateSalaryMaster" inline-parameters="true">
+        UPDATE SALARY_MASTER SET 
+        SALARY_ID = #salaryId:VARCHAR#,
+        SALARY_FROM_DT = #salaryDt:DATE#,
+        CREATED_DATE = #createdDate:DATE#,
+        SALARY_STATUS = #salaryStatus:VARCHAR#
+        WHERE SALARY_ID = #salaryId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryMasterDetails" result-class ="java.util.HashMap">
+        DELETE FROM SALARY_MASTER_DETAILS WHERE SALARY_ID = #SALARY_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryMaster" result-class ="java.util.HashMap">
+        DELETE FROM SALARY_MASTER WHERE SALARY_FROM_DT = #SALARY_FROM_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getAllowanceID" result-class ="java.util.HashMap">
+        SELECT SG.ALLOWANCE_ID,SAT.ALLOWANCE_TYPE,SAT.EARNING_OR_DEDUCTION,SAT.USING_BASIC,SAT.PERCENT_OR_FIXED
+        FROM SALARY_GRADE SG,SALARY_ALLOWANCE_TYPE SAT WHERE 
+        SG.ALLOWANCE_ID = SAT.ALLOWANCE_ID AND
+        SG.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND
+        SG.GRADE_ID = #PRESENT_GRADE:VARCHAR# AND
+        SG.STATUS != 'DELETED' AND
+        SAT.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getAllowanceDetails" result-class ="java.util.HashMap">
+        SELECT ALLOWANCE_ID, ALLOWANCE_TYPE,EARNING_OR_DEDUCTION,USING_BASIC,PERCENT_OR_FIXED 
+        FROM SALARY_ALLOWANCE_TYPE WHERE ALLOWANCE_ID = #ALLOWANCE_ID:VARCHAR#
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getPercentUsingBasic" result-class ="java.util.HashMap">
+        SELECT AMT_OR_PER_ALLOWANCE,MAX_AMOUNT FROM SALARY_DETAILS WHERE #BASIC:VARCHAR# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND ALLOWANCE_ID = #ALLOWANCE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getPercentWithoutUsingBasic" result-class ="java.util.HashMap">
+        SELECT AMT_OR_PER_ALLOWANCE,MAX_AMOUNT FROM SALARY_DETAILS WHERE  ALLOWANCE_ID = #ALLOWANCE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getAllEmployeeFrmEmplBasic" result-class ="java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID FROM EMPLOYEE_BASIC ORDER BY EMPLOYEE_ID
+    </mapped-statement>
+    <mapped-statement name="getBranchFromBranchMaster" result-class ="java.util.HashMap">
+        SELECT DISTINCT BRANCH_CODE FROM BRANCH_MASTER
+    </mapped-statement>
+    <mapped-statement name="getBranchUsingRegionalCode" result-class ="java.util.HashMap">
+        SELECT DISTINCT BRANCH_CODE FROM BRANCH_MASTER WHERE ZONAL_ID = #REGIONAL_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getEmployeesForBranch"  result-class="java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID FROM EMPLOYEE_BASIC EB,EMPLOYEE_PRESENT_DETAILS EPD WHERE 
+        EPD.PRESENT_BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        EB.EMPLOYEE_ID = EPD.SYS_ID
+        ORDER BY EMPLOYEE_ID
+    </mapped-statement>
+    <mapped-statement name="getSalaryIdForDate"  result-class="java.util.HashMap">
+        SELECT SALARY_ID FROM SALARY_MASTER WHERE SALARY_FROM_DT = #SALARY_FROM_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getMaxSalCreatedDate"  result-class="java.util.HashMap">
+        SELECT SALARY_ID,CREATED_DATE FROM SALARY_MASTER WHERE SALARY_FROM_DT = #SALARY_FROM_DT:DATE#
+        AND SALARY_ID IN( SELECT MAX(SALARY_ID) FROM SALARY_MASTER WHERE SALARY_FROM_DT = #SALARY_FROM_DT:DATE#)
+    </mapped-statement>
+    <mapped-statement name="getEmployeeForZonal"  result-class="java.util.HashMap">
+        SELECT DISTINCT SMD.EMPLOYEE_ID FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD WHERE
+        SM.SALARY_ID=SMD.SALARY_ID AND
+        SM.SALARY_ID = #SALARY_ID:VARCHAR# AND
+        SMD.ZONAL_CODE = #ZONAL_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getEmployeeForBranch"  result-class="java.util.HashMap">
+        SELECT DISTINCT SMD.EMPLOYEE_ID FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD WHERE
+        SM.SALARY_ID=SMD.SALARY_ID AND
+        SM.SALARY_ID = #SALARY_ID:VARCHAR# AND
+        SMD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getEmployeeListBtw"  result-class="java.util.HashMap">
+        SELECT DISTINCT SMD.EMPLOYEE_ID FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD WHERE
+        SM.SALARY_ID=SMD.SALARY_ID AND
+        SM.SALARY_ID = #SALARY_ID:VARCHAR# AND
+        SMD.EMPLOYEE_ID BETWEEN #FROM_EMPLOYEE_CODE:VARCHAR# AND #TO_EMPLOYEE_CODE:VARCHAR# 
+        ORDER BY EMPLOYEE_ID
+    </mapped-statement>
+    <mapped-statement name="getAllEmployeeForEnquiry"  result-class="java.util.HashMap">
+        SELECT DISTINCT SMD.EMPLOYEE_ID FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD WHERE
+        SM.SALARY_ID=SMD.SALARY_ID AND
+        SM.SALARY_ID = #SALARY_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getEmpDetailsForEnquiry"  result-class="java.util.HashMap">
+           <!-- SELECT SMD.EMPLOYEE_ID,SMD.ZONAL_CODE,SMD.BRANCH_CODE,SM.SALARY_ID,AMOUNT AS BASIC,SALARY_STATUS FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD
+            WHERE SMD.EMPLOYEE_ID = #EMPLOYEE_ID# AND
+            SM.SALARY_ID= #SALARY_ID# AND
+            SM .SALARY_ID = SMD.SALARY_ID AND
+            SALARY_TYPE = 'BASIC' -->
+        SELECT SMD.EMPLOYEE_ID,EM.FIRST_NAME,SMD.ZONAL_CODE,SMD.BRANCH_CODE,SM.SALARY_ID,EPD.PRESENT_DISGNATION,AMOUNT AS BASIC,SALARY_STATUS 
+        FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD,EMPLOYEE_PRESENT_DETAILS EPD,EMPLOYEE_MASTER EM
+        WHERE SMD.EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND
+        SM.SALARY_ID= #SALARY_ID:VARCHAR# AND
+        SM .SALARY_ID = SMD.SALARY_ID
+        AND EPD.SYS_ID = SMD.EMPLOYEE_ID
+        AND EM.SYS_EMPID = EPD.SYS_ID
+        AND SALARY_TYPE = 'BASIC'
+    </mapped-statement>
+    <mapped-statement name="checkIfSalIDpresent"  result-class="java.util.HashMap">
+        SELECT SALARY_ID FROM SALARY_MASTER WHERE SALARY_FROM_DT = #SALARY_FROM_DT:DATE# AND SALARY_STATUS ='FINAL'
+    </mapped-statement>
+    <mapped-statement name="getsalaryTypeforEnquiry"  result-class="java.util.HashMap">
+        SELECT SALARY_TYPE,AMOUNT,EARNING_OR_DEDUCTION FROM SALARY_MASTER_DETAILS WHERE SALARY_ID = #SALARY_ID:VARCHAR# AND EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateProcessToSalaryMaster" result-class="java.util.HashMap">
+        UPDATE SALARY_MASTER SET 
+        SALARY_STATUS = #SALARY_STATUS:VARCHAR
+        WHERE SALARY_ID = #SALARY_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getEarningOrDeduction" result-class = "java.util.HashMap">
+        SELECT EARNING_OR_DEDUCTION FROM SALARY_ALLOWANCE_TYPE WHERE ALLOWANCE_ID = #value:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getSalIdForEnquiry" result-class = "java.util.HashMap">
+        SELECT  DISTINCT SM.SALARY_ID FROM SALARY_MASTER SM,SALARY_MASTER_DETAILS SMD WHERE
+        SM.SALARY_FROM_DT= #value:VARCHAR# AND
+        SM.SALARY_STATUS='FINAL' AND
+        SM.SALARY_ID=SMD.SALARY_ID
+    </mapped-statement>
+    <mapped-statement name = "getSalaryStatus" result-class = "java.util.HashMap">
+        SELECT SALARY_STATUS FROM SALARY_MASTER WHERE  SALARY_ID = #SALARY_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getPrevDateValue" result-class = "java.util.HashMap">
+        SELECT EFFECTIVE_DATE FROM PROMOTION_DETAILS WHERE 
+        SL_NO = (SELECT MAX(SL_NO) FROM PROMOTION_DETAILS WHERE EMP_ID = #EMP_ID:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED' )
+        AND EMP_ID = #EMP_ID:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name = "chckIfAuthPromotion" result-class = "java.util.HashMap">
+        SELECT * FROM PROMOTION_DETAILS WHERE SL_NO = #SL_NO# AND 
+        AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED'
+        AND EMP_ID = #EMP_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="insertSalaryReport" result-class = "java.util.HashMap">
+        INSERT INTO SALARY_REPORT
+        (ORDER_NO, EARNING_OR_DEDUCTION
+        ) VALUES (
+        #ORDER_NO:NUMBER#, #EARNING_OR_DEDUCTION:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryReport" result-class = "java.util.HashMap">
+        DELETE SALARY_REPORT
+    </mapped-statement>
+</sql-map>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="StaffWorkDiaryMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+         
+    <dynamic-mapped-statement name="StaffWorkDiary.getSelectStaffWorkList" result-class="java.util.LinkedHashMap" >
+        SELECT SWDID, GDATE, STAFF_ID,TRANS_SUMMRY,REMARKS,LOGINOUT FROM STAFF_WORK_DIARY
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+             
+                 
+             
+    <mapped-statement name="insertStaffWorkTO" inline-parameters="true">
+        INSERT INTO STAFF_WORK_DIARY
+        (SWDID,STAFF_ID,GDATE, TRANS_SUMMRY, LOGINOUT, REMARKS,STATUS) 
+        VALUES (
+        #gbid:VARCHAR#,#staffId:VARCHAR#,#gDate:DATE#,#transSummry:INTEGER#,#loginout:VARCHAR#,#remarks:VARCHAR#,#status:VARCHAR#)
+                
+    </mapped-statement>
+        
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateStaffWorkTO" inline-parameters="true">
+        UPDATE STAFF_WORK_DIARY SET 
+        GDATE=#gDate:DATE#,
+        STAFF_ID=#staffId:VARCHAR#,
+        TRANS_SUMMRY=#transSummry:INTEGER#,
+        LOGINOUT=#loginout:VARCHAR#,
+        REMARKS=#remarks:VARCHAR#
+        WHERE SWDID=#gbid:VARCHAR#
+    </mapped-statement>
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteStaffWorkTO" inline-parameters="true">
+        UPDATE STAFF_WORK_DIARY SET 
+        STATUS = #status:VARCHAR#
+        WHERE SWDID = #gbid:VARCHAR#
+    </mapped-statement>
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getStaffWorkDiaryTOResult" class="com.see.truetransact.transferobject.staffworkdiary.StaffWorkDiaryTO">
+        <property name="gDate" column="GDATE"/>
+        <property name="staffId" column="STAFF_ID"/>
+        <property name="transSummry" column="TRANS_SUMMRY"/>
+        <property name="loginout" column="LOGINOUT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="gbid" column="SWDID"/>
+               
+    </result-map>
+	
+    <mapped-statement name="StaffWorkDiary.getSelectStaffWorkDiary" result-map="getStaffWorkDiaryTOResult" >
+        SELECT * FROM STAFF_WORK_DIARY
+        WHERE SWDID = #SWDID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+     <dynamic-mapped-statement name="setEmpDetailsForTransfer1" result-class="java.util.LinkedHashMap">
+        SELECT EMPLOYEEID,EMPLOYEE_NAME FROM EMPLOYEE_MASTER WHERE STATUS='Service'
+         <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+</sql-map>

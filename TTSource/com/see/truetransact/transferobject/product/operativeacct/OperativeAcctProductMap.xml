@@ -1,0 +1,854 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OperativeAcctProductMap">
+	<!-- UaccMaintenance.getAcHeadParamse primitive wrapper type (e.g. Integer) as parameter and allow results to
+	be auto-mapped results to HashMap object -->
+    <dynamic-mapped-statement name="getSelectAcctHeadTOList" result-class="java.util.LinkedHashMap" >
+        SELECT AC_HD_Code, AC_HD_DESC, AC_HD_ID FROM AC_HD
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_Code">
+                    UPPER(AC_HD_Code) LIKE UPPER('%$AC_HD_Code$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_DESC">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$AC_HD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_ID">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$AC_HD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="OperativeAcctProduct.getSelectAcctHeadTOList" result-class="java.util.LinkedHashMap" >
+        SELECT AD.AC_HD_CODE, AD.AC_HD_DESC, AD.AC_HD_ID 
+        FROM AC_HD AD, AC_HD_PARAM  ADP
+        WHERE ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        ADP.AUTHORIZE_STATUS = 'AUTHORIZED' AND                 
+        AD.AC_HD_ID = ADP.AC_HD_ID 
+        <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_CODE">
+                    UPPER(AD.AC_HD_CODE) LIKE UPPER('%$AC_HD_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_DESC">
+                    UPPER(AD.AC_HD_DESC) LIKE UPPER('%$AC_HD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="AC_HD_ID">
+                    UPPER(AD.AC_HD_ID) LIKE UPPER('AC_HD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <!--isNotNull prepend="AND" property="ACCT_HD">
+                    AD.AC_HD_ID = #ACCT_HD:VARCHAR#
+                </isNotNull>-->
+                <isNotNull prepend="AND" property="ACCT_TYPE">
+                    AD.MJR_AC_HD_ID IN 
+                    (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+                    WHERE MJR_AC_HD_TYPE= #ACCT_TYPE:VARCHAR# 
+                    AND STATUS != 'DELETED' OR STATUS IS NULL)
+                            <!-- AND ADP.BALANCETYPE = #BALANCETYPE# --> <!-- Commented for TCBHO Pilot -->
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!--  where behavior = #beh# -->
+    <dynamic-mapped-statement name="getSelectOperativeAcctProductTOList" result-class="java.util.LinkedHashMap" >
+        SELECT Prod_ID, AC_HD_ID,  BEHAVIOR, Prod_desc FROM OP_AC_PRODUCT 
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL)
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Prod_ID" >
+                    UPPER(Prod_ID) LIKE UPPER('%$Prod_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AC_HD_ID" >
+                    UPPER(AC_HD_ID) LIKE UPPER('%$AC_HD_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BEHAVIOR" >
+                    UPPER(BEHAVIOR) LIKE UPPER('%$BEHAVIOR$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Prod_desc" >
+                    UPPER(Prod_desc) LIKE UPPER('%$Prod_desc$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!-- TO CHECK WHETHER THE PROD ID/DESC ALREADY EXIST OR NOT. -->
+    <mapped-statement name="getProdIdCount" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS NO_ID 
+        FROM OP_AC_PRODUCT 
+        WHERE PROD_ID = #prodId:VARCHAR#
+        OR PROD_DESC = #prodDesc:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectAcchdDesc" result-class="java.util.HashMap" >
+        SELECT AC_HD_DESC FROM AC_HD  
+        WHERE AC_HD_ID =#ACCHD_ID:VARCHAR#
+    </mapped-statement> 
+        
+    <mapped-statement name="getProdCountActRec" result-class="java.util.HashMap" >
+        SELECT NVL(COUNT(*),0) AS COUNTS FROM ACT_MASTER WHERE PROD_ID=#PROD_ID:VARCHAR# AND ACT_STATUS_ID !='CLOSED'
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to
+	be auto-mapped results to HashMap object -->
+        <!-- display in the Table -->
+    <mapped-statement name="getSelectIntRateList" result-class="java.util.LinkedHashMap" inline-parameters="true">
+        SELECT P.INT_CAT_ID, M.INT_CAT_DESC, P.INT_DATE, P.INT_RATE, P.AC_HD_ID 
+        FROM OP_AC_INTRATEMAINT_PARAM P, OP_AC_INT_CAT_MASTER M 
+        WHERE P.INT_CAT_ID = M.INT_CAT_ID AND PROD_ID = #PRODID:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use OperativeAcctProductTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <mapped-statement name="insertOperativeAcctProductTO" inline-parameters="true">
+        INSERT INTO OP_AC_PRODUCT
+        (AC_HD_ID, PROD_ID, PROD_DESC, BEHAVIOR, STATUS, SUSER_ID, S_DATE, S_REMARKS, AUTHORIZED_BY, AUTHORIZED_DT, AUTHORIZED_STATUS, BASE_CURRENCY, CREATED_BY, CREATED_DT, AUTHORIZE_REMARK, WITHDRAWAL_CHARGE, WITHDRAWAL_CHARGE_PERIOD
+        ) VALUES (
+        #acHdId:VARCHAR#, #prodId:VARCHAR#, #prodDesc:VARCHAR#, #behavior:VARCHAR#, #status:VARCHAR#, #suserId:VARCHAR#, #sDate:DATE#, #sRemarks:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #authorizedStatus:VARCHAR#, #baseCurrency:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #authorizeRemark:VARCHAR#, #isdebitWithdrawalCharge:VARCHAR#, #chargePeriod:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctProductTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <mapped-statement name="updateOperativeAcctProductTO" inline-parameters="true">
+        UPDATE OP_AC_PRODUCT SET 
+        AC_HD_ID = #acHdId:VARCHAR#,
+        PROD_DESC = #prodDesc:VARCHAR#,
+        BEHAVIOR = #behavior:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        SUSER_ID = #suserId:VARCHAR#,
+        S_DATE = #sDate:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZE_REMARK = #authorizeRemark:VARCHAR#,
+        S_REMARKS=#sRemarks:VARCHAR#,
+        WITHDRAWAL_CHARGE=#isdebitWithdrawalCharge:VARCHAR#,
+        WITHDRAWAL_CHARGE_PERIOD=#chargePeriod:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OperativeAcctProductTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctProductTO" inline-parameters="true">
+        UPDATE OP_AC_PRODUCT SET
+        STATUS = #status:VARCHAR#,
+        SUSER_ID = #suserId:VARCHAR#,
+        S_DATE = #sDate:DATE#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctProductTO object (JavaBean) properties -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <result-map name="getOperativeAcctProductTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctProductTO">
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+        <property name="behavior" column="BEHAVIOR"/>
+        <property name="status" column="STATUS"/>
+        <property name="suserId" column="SUSER_ID"/>
+        <property name="sDate" column="S_DATE"/>
+        <property name="sRemarks" column="S_REMARKS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="baseCurrency" column="BASE_CURRENCY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizeRemark" column="AUTHORIZE_REMARK"/>
+        <property name="isdebitWithdrawalCharge" column="WITHDRAWAL_CHARGE"/>
+        <property name="chargePeriod" column="WITHDRAWAL_CHARGE_PERIOD"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctProductTO" result-map="getOperativeAcctProductTOResult" >
+        SELECT * FROM OP_AC_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getOpAcctProductTOByProdId" result-map="getOperativeAcctProductTOResult" >
+        SELECT * FROM OP_AC_PRODUCT 
+        WHERE PROD_ID = #PRODUCT_ID:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOperativeAcctParamTO" inline-parameters="true">		
+        INSERT INTO OP_AC_ACCOUNT_PARAM
+        (PROD_ID, CHK_ALLOWED, MIN_BAL_W_CHK, MIN_BAL_WT_CHK, INT_REQ, NOMINEE_REQ, NO_OF_NOMINEE, AC_OP_REQ, MIN_PD_NEW, MIN_PD_DORMANT, MIN_PD_INOP, MIN_PD_CLS, STAT_FREQUENCY, FREE_WITHDRAWALS, FREE_WITHDRAWALS_PD, FREE_WITHDRAWAL_FROM, NO_FREE_CHK_LEAVES, FREE_CHK_LEAVES_PD, FREE_CHK_LEAVES_FROM, TAX_INT_APPLICABLE, RATE_OF_INT, LMT_DEFINITION_ALLOWED, TEMP_OD_ALLOWED, STAFF_ACCT_OPENED, COLLECT_INT_CREDIT, DEBIT_INT_CLEARING, CREDIT_INT_UNCLEAR, ISSUE_TOKEN, ALLOW_WITHDRAWAL_SLIP, MAX_ALLOWED_WD_SLIP, FREE_WITHDRAWAL_TYPE, FREE_CHK_LEAVES_TYPE,PROD_NO_PREFIX,PROD_NO_SUFFIX,LAST_ACT_NO
+        ) VALUES (
+        #prodId:VARCHAR#, #chkAllowed:VARCHAR#, #minBalWChk:NUMERIC#, #minBalWtChk:NUMERIC#, #intReq:VARCHAR#, #nomineeReq:VARCHAR#, #noOfNominee:NUMERIC#, #acOpReq:VARCHAR#, #minPdNew:NUMERIC#, #minPdDormant:NUMERIC#, #minPdInop:NUMERIC#, #minPdCls:NUMERIC#, #statFrequency:NUMERIC#, #freeWithdrawals:NUMERIC#, #freeWithdrawalsPd:NUMERIC#, #freeWithdrawalFrom:DATE#, #noFreeChkLeaves:NUMERIC#, #freeChkLeavesPd:NUMERIC#, #freeChkLeavesFrom:DATE#, #taxIntApplicable:VARCHAR#, #rateOfInt:NUMERIC#, #lmtDefinitionAllowed:VARCHAR#, #tempOdAllowed:VARCHAR#, #staffAcctOpened:VARCHAR#, #collectIntCredit:VARCHAR#, #debitIntClearing:VARCHAR#, #creditIntUnclear:VARCHAR#, #issueToken:VARCHAR#, #allowWithdrawalSlip:VARCHAR#, #maxAllowedWdSlip:NUMERIC#, #freeWithdrawalType:VARCHAR#, #freeChkLeavesType:VARCHAR#, #numPatternFollowedPrefix:VARCHAR#, #numPatternFollowedSuffix:NUMERIC#, #lastAccNum:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOperativeAcctParamTO" inline-parameters="true">
+        UPDATE OP_AC_ACCOUNT_PARAM SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        CHK_ALLOWED = #chkAllowed:VARCHAR#,
+        MIN_BAL_W_CHK = #minBalWChk:NUMERIC#,
+        MIN_BAL_WT_CHK = #minBalWtChk:NUMERIC#,
+        INT_REQ = #intReq:VARCHAR#,
+        NOMINEE_REQ = #nomineeReq:VARCHAR#,
+        NO_OF_NOMINEE = #noOfNominee:NUMERIC#,
+        AC_OP_REQ = #acOpReq:VARCHAR#,
+        MIN_PD_NEW = #minPdNew:NUMERIC#,
+        MIN_PD_DORMANT = #minPdDormant:NUMERIC#,
+        MIN_PD_INOP = #minPdInop:NUMERIC#,
+        MIN_PD_CLS = #minPdCls:NUMERIC#,
+        STAT_FREQUENCY = #statFrequency:NUMERIC#,
+        FREE_WITHDRAWALS = #freeWithdrawals:NUMERIC#,
+        FREE_WITHDRAWALS_PD = #freeWithdrawalsPd:NUMERIC#,
+        FREE_WITHDRAWAL_FROM = #freeWithdrawalFrom:DATE#,
+        NO_FREE_CHK_LEAVES = #noFreeChkLeaves:NUMERIC#,
+        FREE_CHK_LEAVES_PD = #freeChkLeavesPd:NUMERIC#,
+        FREE_CHK_LEAVES_FROM = #freeChkLeavesFrom:DATE#,
+        TAX_INT_APPLICABLE = #taxIntApplicable:VARCHAR#,
+        RATE_OF_INT = #rateOfInt:NUMERIC#,
+        LMT_DEFINITION_ALLOWED = #lmtDefinitionAllowed:VARCHAR#,
+        TEMP_OD_ALLOWED = #tempOdAllowed:VARCHAR#,
+        STAFF_ACCT_OPENED = #staffAcctOpened:VARCHAR#,
+        COLLECT_INT_CREDIT = #collectIntCredit:VARCHAR#,
+        DEBIT_INT_CLEARING = #debitIntClearing:VARCHAR#,
+        CREDIT_INT_UNCLEAR = #creditIntUnclear:VARCHAR#,
+        ISSUE_TOKEN = #issueToken:VARCHAR#,
+        ALLOW_WITHDRAWAL_SLIP = #allowWithdrawalSlip:VARCHAR#,
+        MAX_ALLOWED_WD_SLIP = #maxAllowedWdSlip:NUMERIC#,
+        FREE_WITHDRAWAL_TYPE = #freeWithdrawalType:VARCHAR#,
+        FREE_CHK_LEAVES_TYPE = #freeChkLeavesType:VARCHAR#,
+        PROD_NO_PREFIX = #numPatternFollowedPrefix:VARCHAR#,
+        PROD_NO_SUFFIX =#numPatternFollowedSuffix:NUMERIC#,
+        LAST_ACT_NO = #lastAccNum:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OperativeAcctParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctParamTO" inline-parameters="true">
+        DELETE FROM OP_AC_ACCOUNT_PARAM 
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDate" result-class="java.util.HashMap" >
+        select trans_id from cash_trans where trans_dt = #From_Date:DATE# and authorize_status ='AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getTransDate" result-class="java.util.HashMap" >
+        select batch_id from  TRANSFER_TRANS where trans_dt = #From_Date:DATE# and authorize_status ='AUTHORIZED'
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctParamTO object (JavaBean) properties -->
+    <result-map name="getOperativeAcctParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="chkAllowed" column="CHK_ALLOWED"/>
+        <property name="minBalWChk" column="MIN_BAL_W_CHK"/>
+        <property name="minBalWtChk" column="MIN_BAL_WT_CHK"/>
+        <property name="intReq" column="INT_REQ"/>
+        <property name="nomineeReq" column="NOMINEE_REQ"/>
+        <property name="noOfNominee" column="NO_OF_NOMINEE"/>
+        <property name="acOpReq" column="AC_OP_REQ"/>
+        <property name="minPdNew" column="MIN_PD_NEW"/>
+        <property name="minPdDormant" column="MIN_PD_DORMANT"/>
+        <property name="minPdInop" column="MIN_PD_INOP"/>
+        <property name="minPdCls" column="MIN_PD_CLS"/>
+        <property name="statFrequency" column="STAT_FREQUENCY"/>
+        <property name="freeWithdrawals" column="FREE_WITHDRAWALS"/>
+        <property name="freeWithdrawalsPd" column="FREE_WITHDRAWALS_PD"/>
+        <property name="freeWithdrawalFrom" column="FREE_WITHDRAWAL_FROM"/>
+        <property name="noFreeChkLeaves" column="NO_FREE_CHK_LEAVES"/>
+        <property name="freeChkLeavesPd" column="FREE_CHK_LEAVES_PD"/>
+        <property name="freeChkLeavesFrom" column="FREE_CHK_LEAVES_FROM"/>
+        <property name="taxIntApplicable" column="TAX_INT_APPLICABLE"/>
+        <property name="rateOfInt" column="RATE_OF_INT"/>
+        <property name="lmtDefinitionAllowed" column="LMT_DEFINITION_ALLOWED"/>
+        <property name="tempOdAllowed" column="TEMP_OD_ALLOWED"/>
+        <property name="staffAcctOpened" column="STAFF_ACCT_OPENED"/>
+        <property name="collectIntCredit" column="COLLECT_INT_CREDIT"/>
+        <property name="debitIntClearing" column="DEBIT_INT_CLEARING"/>
+        <property name="creditIntUnclear" column="CREDIT_INT_UNCLEAR"/>
+        <property name="issueToken" column="ISSUE_TOKEN"/>
+        <property name="allowWithdrawalSlip" column="ALLOW_WITHDRAWAL_SLIP"/>
+        <property name="maxAllowedWdSlip" column="MAX_ALLOWED_WD_SLIP"/>
+        <property name="freeWithdrawalType" column="FREE_WITHDRAWAL_TYPE"/>
+        <property name="freeChkLeavesType" column="FREE_CHK_LEAVES_TYPE"/>
+        <property name="numPatternFollowedPrefix" column="PROD_NO_PREFIX"/>
+        <property name="numPatternFollowedSuffix" column="PROD_NO_SUFFIX"/>
+        <property name="lastAccNum" column="LAST_ACT_NO"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctParamTO" result-map="getOperativeAcctParamTOResult" >
+        SELECT * FROM OP_AC_ACCOUNT_PARAM 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctIntRecvParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOperativeAcctIntRecvParamTO" inline-parameters="true">
+        INSERT INTO OP_AC_INTRECV_PARAM
+        (PROD_ID, DEBIT_INT_CHARGED, MIN_DEBIT_INT_RATE, MAX_DEBIT_INT_RATE, APPL_DEBIT_INT_RATE, MIN_DEBIT_INT_AMT, MAX_DEBIT_INT_AMT, DEBIT_INT_CALC_FREQ, DEBIT_INT_APPL_FREQ, DEBIT_COMPOUND, DEBIT_COMPINT_CALC_FREQ, DEBIT_PRODUCT_ROUNDOFF, DEBIT_INT_ROUNDOFF, LAST_INT_CALCDT_DEBIT, LAST_INT_APPLDT_DEBIT, PRODUCT_FREQ, PENAL_INT_DEBIT_BALACCT, PENAL_INT_CHARGE_STDAY, STARTDAY_INT_CALC, ENDDAY_INT_CALC, STARTMON_INT_CALC, ENDMON_INT_CALC, STARTDAY_PROD_CALC, ENDDAY_PROD_CALC, STARTMON_PROD_CALC, ENDMON_PROD_CALC
+        ) VALUES (
+        #prodId:VARCHAR#, #debitIntCharged:VARCHAR#, #minDebitIntRate:NUMERIC#, #maxDebitIntRate:NUMERIC#, #applDebitIntRate:NUMERIC#, #minDebitIntAmt:NUMERIC#, #maxDebitIntAmt:NUMERIC#, #debitIntCalcFreq:NUMERIC#, #debitIntApplFreq:NUMERIC#, #debitCompound:VARCHAR#, #debitCompintCalcFreq:NUMERIC#, #debitProductRoundoff:VARCHAR#, #debitIntRoundoff:VARCHAR#, #lastIntCalcdtDebit:DATE#, #lastIntAppldtDebit:DATE#, #productFreq:NUMERIC#, #penalIntDebitBalacct:NUMERIC#, #penalIntChargeStday:NUMERIC#, #startdayIntCalc:NUMERIC#, #enddayIntCalc:NUMERIC#, #startmonIntCalc:VARCHAR#, #endmonIntCalc:VARCHAR#, #startdayProdCalc:NUMERIC#, #enddayProdCalc:NUMERIC#, #startmonProdCalc:VARCHAR#, #endmonProdCalc:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctIntRecvParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOperativeAcctIntRecvParamTO" inline-parameters="true">
+        UPDATE OP_AC_INTRECV_PARAM SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        DEBIT_INT_CHARGED = #debitIntCharged:VARCHAR#,
+        MIN_DEBIT_INT_RATE = #minDebitIntRate:NUMERIC#,
+        MAX_DEBIT_INT_RATE = #maxDebitIntRate:NUMERIC#,
+        APPL_DEBIT_INT_RATE = #applDebitIntRate:NUMERIC#,
+        MIN_DEBIT_INT_AMT = #minDebitIntAmt:NUMERIC#,
+        MAX_DEBIT_INT_AMT = #maxDebitIntAmt:NUMERIC#,
+        DEBIT_INT_CALC_FREQ = #debitIntCalcFreq:NUMERIC#,
+        DEBIT_INT_APPL_FREQ = #debitIntApplFreq:NUMERIC#,
+        DEBIT_COMPOUND = #debitCompound:VARCHAR#,
+        DEBIT_COMPINT_CALC_FREQ = #debitCompintCalcFreq:NUMERIC#,
+        DEBIT_PRODUCT_ROUNDOFF = #debitProductRoundoff:VARCHAR#,
+        DEBIT_INT_ROUNDOFF = #debitIntRoundoff:VARCHAR#,
+        LAST_INT_CALCDT_DEBIT = #lastIntCalcdtDebit:DATE#,
+        LAST_INT_APPLDT_DEBIT = #lastIntAppldtDebit:DATE#,
+        PRODUCT_FREQ = #productFreq:NUMERIC#,
+        PENAL_INT_DEBIT_BALACCT = #penalIntDebitBalacct:NUMERIC#,
+        PENAL_INT_CHARGE_STDAY = #penalIntChargeStday:NUMERIC#,
+        STARTDAY_INT_CALC = #startdayIntCalc:NUMERIC#,
+        ENDDAY_INT_CALC = #enddayIntCalc:NUMERIC#,
+        STARTMON_INT_CALC = #startmonIntCalc:VARCHAR#,
+        ENDMON_INT_CALC = #endmonIntCalc:VARCHAR#,
+        STARTDAY_PROD_CALC = #startdayProdCalc:NUMERIC#,
+        ENDDAY_PROD_CALC = #enddayProdCalc:NUMERIC#,
+        STARTMON_PROD_CALC = #startmonProdCalc:VARCHAR#,
+        ENDMON_PROD_CALC = #endmonProdCalc:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OperativeAcctIntRecvParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctIntRecvParamTO" inline-parameters="true">
+        DELETE FROM OP_AC_INTRECV_PARAM 
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctIntRecvParamTO object (JavaBean) properties -->
+    <result-map name="getOperativeAcctIntRecvParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctIntRecvParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="debitIntCharged" column="DEBIT_INT_CHARGED"/>
+        <property name="minDebitIntRate" column="MIN_DEBIT_INT_RATE"/>
+        <property name="maxDebitIntRate" column="MAX_DEBIT_INT_RATE"/>
+        <property name="applDebitIntRate" column="APPL_DEBIT_INT_RATE"/>
+        <property name="minDebitIntAmt" column="MIN_DEBIT_INT_AMT"/>
+        <property name="maxDebitIntAmt" column="MAX_DEBIT_INT_AMT"/>
+        <property name="debitIntCalcFreq" column="DEBIT_INT_CALC_FREQ"/>
+        <property name="debitIntApplFreq" column="DEBIT_INT_APPL_FREQ"/>
+        <property name="debitCompound" column="DEBIT_COMPOUND"/>
+        <property name="debitCompintCalcFreq" column="DEBIT_COMPINT_CALC_FREQ"/>
+        <property name="debitProductRoundoff" column="DEBIT_PRODUCT_ROUNDOFF"/>
+        <property name="debitIntRoundoff" column="DEBIT_INT_ROUNDOFF"/>
+        <property name="lastIntCalcdtDebit" column="LAST_INT_CALCDT_DEBIT"/>
+        <property name="lastIntAppldtDebit" column="LAST_INT_APPLDT_DEBIT"/>
+        <property name="productFreq" column="PRODUCT_FREQ"/>
+        <property name="penalIntDebitBalacct" column="PENAL_INT_DEBIT_BALACCT"/>
+        <property name="penalIntChargeStday" column="PENAL_INT_CHARGE_STDAY"/>
+        <property name="startdayIntCalc" column="STARTDAY_INT_CALC"/>
+        <property name="enddayIntCalc" column="ENDDAY_INT_CALC"/>
+        <property name="startmonIntCalc" column="STARTMON_INT_CALC"/>
+        <property name="endmonIntCalc" column="ENDMON_INT_CALC"/>
+        <property name="startdayProdCalc" column="STARTDAY_PROD_CALC"/>
+        <property name="enddayProdCalc" column="ENDDAY_PROD_CALC"/>
+        <property name="startmonProdCalc" column="STARTMON_PROD_CALC"/>
+        <property name="endmonProdCalc" column="ENDMON_PROD_CALC"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctIntRecvParamTO" result-map="getOperativeAcctIntRecvParamTOResult" >
+        SELECT * FROM OP_AC_INTRECV_PARAM 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctIntPayParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOperativeAcctIntPayParamTO" inline-parameters="true">
+        INSERT INTO OP_AC_INTPAY_PARAM
+        (PROD_ID, MIN_CR_INT_RATE, MAX_CR_INT_RATE, APPL_CR_INT_RATE, MIN_CR_INT_AMT, MAX_CR_INT_AMT, CR_INT_CALC_FREQ, CR_INT_APPL_FREQ, STARTMON_INT_CALC, ENDMON_INT_CALC, LAST_INT_CALCDT_CR, LAST_INT_APPLDT_CR, CR_COMPOUND, CR_COMPOUND_CALC_FREQ, CR_PRODUCT_ROUNDOFF, CR_INT_ROUNDOFF, STARTDAY_PROD_CALC, ENDDAY_PROD_CALC, CALC_CRITERIA, PRODUCT_FREQ_INT_PAY, CREDIT_INT_GIVEN, STARTDAY_INT_CALC, ENDDAY_INT_CALC, STARTMON_PROD_CALC, ENDMON_PROD_CALC,MIN_BAL_FOR_INT_CALC
+        ) VALUES (
+        #prodId:VARCHAR#, #minCrIntRate:NUMERIC#, #maxCrIntRate:NUMERIC#, #applCrIntRate:NUMERIC#, #minCrIntAmt:NUMERIC#, #maxCrIntAmt:NUMERIC#, #crIntCalcFreq:NUMERIC#, #crIntApplFreq:NUMERIC#, #startmonIntCalc:VARCHAR#, #endmonIntCalc:VARCHAR#, #lastIntCalcdtCr:DATE#, #lastIntAppldtCr:DATE#, #crCompound:VARCHAR#, #crCompoundCalcFreq:NUMERIC#, #crProductRoundoff:VARCHAR#, #crIntRoundoff:VARCHAR#, #startdayProdCalc:NUMERIC#, #enddayProdCalc:NUMERIC#, #calcCriteria:VARCHAR#, #productFreqIntPay:VARCHAR#, #creditIntGiven:VARCHAR#, #startdayIntCalc:NUMERIC#, #enddayIntCalc:NUMERIC#, #startmonProdCalc:VARCHAR#, #endmonProdCalc:VARCHAR#,#minBalforIntCalc:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctIntPayParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOperativeAcctIntPayParamTO" inline-parameters="true">
+        UPDATE OP_AC_INTPAY_PARAM SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        MIN_CR_INT_RATE = #minCrIntRate:NUMERIC#,
+        MAX_CR_INT_RATE = #maxCrIntRate:NUMERIC#,
+        APPL_CR_INT_RATE = #applCrIntRate:NUMERIC#,
+        MIN_CR_INT_AMT = #minCrIntAmt:NUMERIC#,
+        MAX_CR_INT_AMT = #maxCrIntAmt:NUMERIC#,
+        CR_INT_CALC_FREQ = #crIntCalcFreq:NUMERIC#,
+        CR_INT_APPL_FREQ = #crIntApplFreq:NUMERIC#,
+        STARTMON_INT_CALC = #startmonIntCalc:VARCHAR#,
+        ENDMON_INT_CALC = #endmonIntCalc:VARCHAR#,
+        LAST_INT_CALCDT_CR = #lastIntCalcdtCr:DATE#,
+        LAST_INT_APPLDT_CR = #lastIntAppldtCr:DATE#,
+        CR_COMPOUND = #crCompound:VARCHAR#,
+        CR_COMPOUND_CALC_FREQ = #crCompoundCalcFreq:NUMERIC#,
+        CR_PRODUCT_ROUNDOFF = #crProductRoundoff:VARCHAR#,
+        CR_INT_ROUNDOFF = #crIntRoundoff:VARCHAR#,
+        STARTDAY_PROD_CALC = #startdayProdCalc:NUMERIC#,
+        ENDDAY_PROD_CALC = #enddayProdCalc:NUMERIC#,
+        CALC_CRITERIA = #calcCriteria:VARCHAR#,
+        PRODUCT_FREQ_INT_PAY = #productFreqIntPay:VARCHAR#,
+        CREDIT_INT_GIVEN = #creditIntGiven:VARCHAR#,
+        STARTDAY_INT_CALC = #startdayIntCalc:NUMERIC#,
+        ENDDAY_INT_CALC = #enddayIntCalc:NUMERIC#,
+        STARTMON_PROD_CALC = #startmonProdCalc:VARCHAR#,
+        ENDMON_PROD_CALC = #endmonProdCalc:VARCHAR#,
+        MIN_BAL_FOR_INT_CALC=#minBalforIntCalc:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OperativeAcctIntPayParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctIntPayParamTO" inline-parameters="true">
+        DELETE FROM OP_AC_INTPAY_PARAM 
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctIntPayParamTO object (JavaBean) properties -->
+    <result-map name="getOperativeAcctIntPayParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctIntPayParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="minCrIntRate" column="MIN_CR_INT_RATE"/>
+        <property name="maxCrIntRate" column="MAX_CR_INT_RATE"/>
+        <property name="applCrIntRate" column="APPL_CR_INT_RATE"/>
+        <property name="minCrIntAmt" column="MIN_CR_INT_AMT"/>
+        <property name="maxCrIntAmt" column="MAX_CR_INT_AMT"/>
+        <property name="crIntCalcFreq" column="CR_INT_CALC_FREQ"/>
+        <property name="crIntApplFreq" column="CR_INT_APPL_FREQ"/>
+        <property name="startmonIntCalc" column="STARTMON_INT_CALC"/>
+        <property name="endmonIntCalc" column="ENDMON_INT_CALC"/>
+        <property name="lastIntCalcdtCr" column="LAST_INT_CALCDT_CR"/>
+        <property name="lastIntAppldtCr" column="LAST_INT_APPLDT_CR"/>
+        <property name="crCompound" column="CR_COMPOUND"/>
+        <property name="crCompoundCalcFreq" column="CR_COMPOUND_CALC_FREQ"/>
+        <property name="crProductRoundoff" column="CR_PRODUCT_ROUNDOFF"/>
+        <property name="crIntRoundoff" column="CR_INT_ROUNDOFF"/>
+        <property name="startdayProdCalc" column="STARTDAY_PROD_CALC"/>
+        <property name="enddayProdCalc" column="ENDDAY_PROD_CALC"/>
+        <property name="calcCriteria" column="CALC_CRITERIA"/>
+        <property name="productFreqIntPay" column="PRODUCT_FREQ_INT_PAY"/>
+        <property name="creditIntGiven" column="CREDIT_INT_GIVEN"/>
+        <property name="startdayIntCalc" column="STARTDAY_INT_CALC"/>
+        <property name="enddayIntCalc" column="ENDDAY_INT_CALC"/>
+        <property name="startmonProdCalc" column="STARTMON_PROD_CALC"/>
+        <property name="endmonProdCalc" column="ENDMON_PROD_CALC"/>
+        <property name="minBalforIntCalc" column="MIN_BAL_FOR_INT_CALC"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctIntPayParamTO" result-map="getOperativeAcctIntPayParamTOResult" >
+        SELECT * FROM OP_AC_INTPAY_PARAM 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctChargesParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <mapped-statement name="insertOperativeAcctChargesParamTO" inline-parameters="true">
+        INSERT INTO OP_AC_CHARGES_PARAM
+        (PROD_ID, INOPERATIVE_AC_CHARGES, INOPERATIVE_AC_CHARGE_PD, CHG_PREMATURE_CLOSURE, ACCT_CLOSING_CHG, MISC_SERVICE_CHG, NONMAIN_MIN_BAL_CHG, AMT_NONMAIN_MINBAL, AMT_NONMAIN_MINBAL_PD, STAT_CHARGE, AMT_CHARGE_STAT, AMT_CHARGE_STAT_TYPE, CHK_ISSUE_CHG, CHK_ISSUE_CHGPERLEAF, STOP_PAYMENT_CHG, STOP_PAYMENT_AMTCHG, CHK_RETURN_CHG_OUTWARD, CHK_RETURN_CHG_INWARD, ACCT_OPENING_CHG, FOLIO_CHG_APPLICABLE, NO_ENTRIESPER_FOLIO, RATE_PER_FOLIO, TO_CHARGE_ON, FOLIO_CHG_APPL_FREQ, TO_COLLECT_FOLIO_CHG, TO_CHARGE_ON_TYPE, INCOMPLETE_FOLIO_ROUND_FREQ, CHG_EXCESSFREEWD_PERTRANS, OUTST_CHK_CHARGES,LAST_FOLIO_CHRG_APPLIED,NEXT_FOLIO_CHG_DUE,DEBIT_CHARGE_RATE_TYPE,DEBIT_CHARGE_RATE,FOLIO_CHARGE_TYPE,FOLIO_RESTRICTION_FRQ,FOLIO_RESTRICTION_PERIOD
+        ) VALUES (
+        #prodId:VARCHAR#, #inoperativeAcCharges:NUMERIC#, #inoperativeAcChargePd:NUMERIC#, #chgPrematureClosure:NUMERIC#, #acctClosingChg:NUMERIC#, #miscServiceChg:NUMERIC#, #nonmainMinBalChg:VARCHAR#, #amtNonmainMinbal:NUMERIC#, #amtNonmainMinbalPd:VARCHAR#, #statCharge:VARCHAR#, #amtChargeStat:NUMERIC#, #amtChargeStatType:VARCHAR#, #chkIssueChg:VARCHAR#, #chkIssueChgperleaf:NUMERIC#, #stopPaymentChg:VARCHAR#, #stopPaymentAmtchg:NUMERIC#, #chkReturnChgOutward:NUMERIC#, #chkReturnChgInward:NUMERIC#, #acctOpeningChg:NUMERIC#, #folioChgApplicable:VARCHAR#, #noEntriesperFolio:NUMERIC#, #ratePerFolio:NUMERIC#, #toChargeOn:VARCHAR#, #folioChgApplFreq:NUMERIC#, #toCollectFolioChg:VARCHAR#, #toChargeOnType:VARCHAR#, #incompleteFolioRoundFreq:VARCHAR#, #chgExcessfreewdPertrans:NUMERIC#, #outstChkCharges:VARCHAR#,#lastFolioChargedt:TIMESTAMP#,#nextFolioChargedt:TIMESTAMP#,#debitWithdrawalChargeType:VARCHAR#,#debitWithdrawalChargeRate:NUMERIC#,
+        #txtFolioChargeType:VARCHAR#,#cboFolioChargeRestrictionFrq:VARCHAR#,#txtFolioChargeRestrictionPeriod:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctChargesParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <mapped-statement name="updateOperativeAcctChargesParamTO" inline-parameters="true">
+        UPDATE OP_AC_CHARGES_PARAM SET 		
+        INOPERATIVE_AC_CHARGES = #inoperativeAcCharges:NUMERIC#,
+        INOPERATIVE_AC_CHARGE_PD = #inoperativeAcChargePd:NUMERIC#,
+        CHG_PREMATURE_CLOSURE = #chgPrematureClosure:NUMERIC#,
+        ACCT_CLOSING_CHG = #acctClosingChg:NUMERIC#,
+        MISC_SERVICE_CHG = #miscServiceChg:NUMERIC#,
+        NONMAIN_MIN_BAL_CHG = #nonmainMinBalChg:VARCHAR#,
+        AMT_NONMAIN_MINBAL = #amtNonmainMinbal:NUMERIC#,
+        AMT_NONMAIN_MINBAL_PD = #amtNonmainMinbalPd:VARCHAR#,
+        STAT_CHARGE = #statCharge:VARCHAR#,
+        AMT_CHARGE_STAT = #amtChargeStat:NUMERIC#,
+        AMT_CHARGE_STAT_TYPE = #amtChargeStatType:VARCHAR#,
+        CHK_ISSUE_CHG = #chkIssueChg:VARCHAR#,
+        CHK_ISSUE_CHGPERLEAF = #chkIssueChgperleaf:NUMERIC#,
+        STOP_PAYMENT_CHG = #stopPaymentChg:VARCHAR#,
+        STOP_PAYMENT_AMTCHG = #stopPaymentAmtchg:NUMERIC#,
+        CHK_RETURN_CHG_OUTWARD = #chkReturnChgOutward:NUMERIC#,
+        CHK_RETURN_CHG_INWARD = #chkReturnChgInward:NUMERIC#,
+        ACCT_OPENING_CHG = #acctOpeningChg:NUMERIC#,
+        FOLIO_CHG_APPLICABLE = #folioChgApplicable:VARCHAR#,
+        NO_ENTRIESPER_FOLIO = #noEntriesperFolio:NUMERIC#,
+        RATE_PER_FOLIO = #ratePerFolio:NUMERIC#,
+        TO_CHARGE_ON = #toChargeOn:VARCHAR#,
+        FOLIO_CHG_APPL_FREQ = #folioChgApplFreq:NUMERIC#,
+        TO_COLLECT_FOLIO_CHG = #toCollectFolioChg:VARCHAR#,
+        TO_CHARGE_ON_TYPE = #toChargeOnType:VARCHAR#,
+        INCOMPLETE_FOLIO_ROUND_FREQ = #incompleteFolioRoundFreq:VARCHAR#,
+        CHG_EXCESSFREEWD_PERTRANS = #chgExcessfreewdPertrans:NUMERIC#,
+        OUTST_CHK_CHARGES = #outstChkCharges:VARCHAR#,
+        LAST_FOLIO_CHRG_APPLIED=#lastFolioChargedt:TIMESTAMP#,
+        NEXT_FOLIO_CHG_DUE=#nextFolioChargedt:TIMESTAMP#,
+        DEBIT_CHARGE_RATE_TYPE=#debitWithdrawalChargeType:VARCHAR#,
+        DEBIT_CHARGE_RATE=#debitWithdrawalChargeRate:NUMERIC#,
+        FOLIO_CHARGE_TYPE= #txtFolioChargeType:VARCHAR#,
+        FOLIO_RESTRICTION_FRQ=#cboFolioChargeRestrictionFrq:VARCHAR#,
+        FOLIO_RESTRICTION_PERIOD=#txtFolioChargeRestrictionPeriod:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use OperativeAcctChargesParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctChargesParamTO" inline-parameters="true">
+        DELETE FROM OP_AC_CHARGES_PARAM 
+        WHERE PROD_ID = #prodId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctChargesParamTO object (JavaBean) properties -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <result-map name="getOperativeAcctChargesParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctChargesParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="inoperativeAcCharges" column="INOPERATIVE_AC_CHARGES"/>
+        <property name="inoperativeAcChargePd" column="INOPERATIVE_AC_CHARGE_PD"/>
+        <property name="chgPrematureClosure" column="CHG_PREMATURE_CLOSURE"/>
+        <property name="acctClosingChg" column="ACCT_CLOSING_CHG"/>
+        <property name="miscServiceChg" column="MISC_SERVICE_CHG"/>
+        <property name="nonmainMinBalChg" column="NONMAIN_MIN_BAL_CHG"/>
+        <property name="amtNonmainMinbal" column="AMT_NONMAIN_MINBAL"/>
+        <property name="amtNonmainMinbalPd" column="AMT_NONMAIN_MINBAL_PD"/>
+        <property name="statCharge" column="STAT_CHARGE"/>
+        <property name="amtChargeStat" column="AMT_CHARGE_STAT"/>
+        <property name="amtChargeStatType" column="AMT_CHARGE_STAT_TYPE"/>
+        <property name="chkIssueChg" column="CHK_ISSUE_CHG"/>
+        <property name="chkIssueChgperleaf" column="CHK_ISSUE_CHGPERLEAF"/>
+        <property name="stopPaymentChg" column="STOP_PAYMENT_CHG"/>
+        <property name="stopPaymentAmtchg" column="STOP_PAYMENT_AMTCHG"/>
+        <property name="chkReturnChgOutward" column="CHK_RETURN_CHG_OUTWARD"/>
+        <property name="chkReturnChgInward" column="CHK_RETURN_CHG_INWARD"/>
+        <property name="acctOpeningChg" column="ACCT_OPENING_CHG"/>
+        <property name="folioChgApplicable" column="FOLIO_CHG_APPLICABLE"/>
+        <property name="noEntriesperFolio" column="NO_ENTRIESPER_FOLIO"/>
+        <property name="ratePerFolio" column="RATE_PER_FOLIO"/>
+        <property name="toChargeOn" column="TO_CHARGE_ON"/>
+        <property name="folioChgApplFreq" column="FOLIO_CHG_APPL_FREQ"/>
+        <property name="toCollectFolioChg" column="TO_COLLECT_FOLIO_CHG"/>
+        <property name="toChargeOnType" column="TO_CHARGE_ON_TYPE"/>
+        <property name="incompleteFolioRoundFreq" column="INCOMPLETE_FOLIO_ROUND_FREQ"/>
+        <property name="chgExcessfreewdPertrans" column="CHG_EXCESSFREEWD_PERTRANS"/>
+        <property name="outstChkCharges" column="OUTST_CHK_CHARGES"/>
+        <property name="lastFolioChargedt" column="LAST_FOLIO_CHRG_APPLIED"/>
+        <property name="nextFolioChargedt" column="NEXT_FOLIO_CHG_DUE"/>
+        <property name="debitWithdrawalChargeType" column="DEBIT_CHARGE_RATE_TYPE"/>
+        <property name="debitWithdrawalChargeRate" column="DEBIT_CHARGE_RATE"/>
+        <property name="txtFolioChargeType" column="FOLIO_CHARGE_TYPE"/>
+        <property name="cboFolioChargeRestrictionFrq" column="FOLIO_RESTRICTION_FRQ"/>
+        <property name="txtFolioChargeRestrictionPeriod" column="FOLIO_RESTRICTION_PERIOD"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctChargesParamTO" result-map="getOperativeAcctChargesParamTOResult" >
+        SELECT * FROM OP_AC_CHARGES_PARAM 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctSpclitemParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOperativeAcctSpclitemParamTO" inline-parameters="true">
+        INSERT INTO OP_AC_SPCLITEM_PARAM
+        (PROD_ID, LINKED_FLEXI_ACCT, MIN_BAL1_FLEXIDEPOSIT, MIN_BAL2_FLEXIDEPOSIT, FLEXI_HAPPEN, ATM_CARD_ISSUED, MIN_BAL_ATM, CR_CARD_ISSUED, MIN_BAL_CR_CARD, DR_CARD_ISSUED, MIN_BAL_DR_CARD, IVRS_PROVIDED, MIN_BAL_IVRS, MOBILE_BANKING, MIN_BAL_MOBILE, ANY_BRANCH_BANKING, MIN_BAL_ABB, FLEXI_PROD_ID,IMPS_TXN_LIMIT
+        ) VALUES (
+        #prodId:VARCHAR#, #linkedFlexiAcct:VARCHAR#, #minBal1Flexideposit:NUMERIC#, #minBal2Flexideposit:NUMERIC#, #flexiHappen:VARCHAR#, #atmCardIssued:VARCHAR#, #minBalAtm:NUMERIC#, #crCardIssued:VARCHAR#, #minBalCrCard:NUMERIC#, #drCardIssued:VARCHAR#, #minBalDrCard:NUMERIC#, #ivrsProvided:VARCHAR#, #minBalIvrs:NUMERIC#, #mobileBanking:VARCHAR#, #minBalMobile:NUMERIC#, #anyBranchBanking:VARCHAR#, #minBalAbb:NUMERIC#, #flexiProdId:VARCHAR#,#impsLimit:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctSpclitemParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOperativeAcctSpclitemParamTO" inline-parameters="true">
+        UPDATE OP_AC_SPCLITEM_PARAM SET 		
+        LINKED_FLEXI_ACCT = #linkedFlexiAcct:VARCHAR#,
+        MIN_BAL1_FLEXIDEPOSIT = #minBal1Flexideposit:NUMERIC#,
+        MIN_BAL2_FLEXIDEPOSIT = #minBal2Flexideposit:NUMERIC#,
+        FLEXI_HAPPEN = #flexiHappen:VARCHAR#,
+        ATM_CARD_ISSUED = #atmCardIssued:VARCHAR#,
+        MIN_BAL_ATM = #minBalAtm:NUMERIC#,
+        CR_CARD_ISSUED = #crCardIssued:VARCHAR#,
+        MIN_BAL_CR_CARD = #minBalCrCard:NUMERIC#,
+        DR_CARD_ISSUED = #drCardIssued:VARCHAR#,
+        MIN_BAL_DR_CARD = #minBalDrCard:NUMERIC#,
+        IVRS_PROVIDED = #ivrsProvided:VARCHAR#,
+        MIN_BAL_IVRS = #minBalIvrs:NUMERIC#,
+        MOBILE_BANKING = #mobileBanking:VARCHAR#,
+        MIN_BAL_MOBILE = #minBalMobile:NUMERIC#,
+        ANY_BRANCH_BANKING = #anyBranchBanking:VARCHAR#,
+        MIN_BAL_ABB = #minBalAbb:NUMERIC#,
+        FLEXI_PROD_ID = #flexiProdId:VARCHAR#,
+        IMPS_TXN_LIMIT = #impsLimit:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use OperativeAcctSpclitemParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctSpclitemParamTO" inline-parameters="true">
+        DELETE FROM OP_AC_SPCLITEM_PARAM 
+        WHERE PROD_ID = #prodId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctSpclitemParamTO object (JavaBean) properties -->
+    <result-map name="getOperativeAcctSpclitemParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctSpclitemParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="linkedFlexiAcct" column="LINKED_FLEXI_ACCT"/>
+        <property name="minBal1Flexideposit" column="MIN_BAL1_FLEXIDEPOSIT"/>
+        <property name="minBal2Flexideposit" column="MIN_BAL2_FLEXIDEPOSIT"/>
+        <property name="flexiHappen" column="FLEXI_HAPPEN"/>
+        <property name="atmCardIssued" column="ATM_CARD_ISSUED"/>
+        <property name="minBalAtm" column="MIN_BAL_ATM"/>
+        <property name="crCardIssued" column="CR_CARD_ISSUED"/>
+        <property name="minBalCrCard" column="MIN_BAL_CR_CARD"/>
+        <property name="drCardIssued" column="DR_CARD_ISSUED"/>
+        <property name="minBalDrCard" column="MIN_BAL_DR_CARD"/>
+        <property name="ivrsProvided" column="IVRS_PROVIDED"/>
+        <property name="minBalIvrs" column="MIN_BAL_IVRS"/>
+        <property name="mobileBanking" column="MOBILE_BANKING"/>
+        <property name="minBalMobile" column="MIN_BAL_MOBILE"/>
+        <property name="anyBranchBanking" column="ANY_BRANCH_BANKING"/>
+        <property name="minBalAbb" column="MIN_BAL_ABB"/>
+        <property name="flexiProdId" column="FLEXI_PROD_ID"/>
+        <property name="impsLimit" column="IMPS_TXN_LIMIT"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctSpclitemParamTO" result-map="getOperativeAcctSpclitemParamTOResult" >
+        SELECT * FROM OP_AC_SPCLITEM_PARAM 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctHeadParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <mapped-statement name="insertOperativeAcctHeadParamTO" inline-parameters="true">
+        INSERT INTO OP_AC_ACHEAD_PARAM
+        (PROD_ID, INOP_AC_CHRG, PREMATCLOSE_CHRG, ACCLOSE_CHRG, MISSER_CHRG, STAT_CHRG, FREEWITHD_CHRG, DEBIT_INT, CREDIT_INT, CLR_INT, CHQ_ISSUE_CHRG, STOP_PMT_CHRG, CHQ_RET_OUT, CHQ_RET_IN, ACT_OP_CHRG, EXCESS_FREE_WITHD, TAX, NONMNT_MIN_CHRG, INOPT, FOLIO_CHRG, DEBIT_CHARGE_HD,ATM_GL
+        ) VALUES (
+        #prodId:VARCHAR#, #inopAcChrg:VARCHAR#, #prematcloseChrg:VARCHAR#, #accloseChrg:VARCHAR#, #misserChrg:VARCHAR#, #statChrg:VARCHAR#, #freewithdChrg:VARCHAR#, #debitInt:VARCHAR#, #creditInt:VARCHAR#, #clrInt:VARCHAR#, #chqIssueChrg:VARCHAR#, #stopPmtChrg:VARCHAR#, #chqRetOut:VARCHAR#, #chqRetIn:VARCHAR#, #actOpChrg:VARCHAR#, #excessFreeWithd:VARCHAR#, #tax:VARCHAR#, #nonmntMinChrg:VARCHAR#, #inopt:VARCHAR#, #folioChrg:VARCHAR#, #debitWithdrawalCharge:VARCHAR#, #atmGL:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use OperativeAcctHeadParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <mapped-statement name="updateOperativeAcctHeadParamTO" inline-parameters="true">
+        UPDATE OP_AC_ACHEAD_PARAM SET 		
+        INOP_AC_CHRG = #inopAcChrg:VARCHAR#,
+        PREMATCLOSE_CHRG = #prematcloseChrg:VARCHAR#,
+        ACCLOSE_CHRG = #accloseChrg:VARCHAR#,
+        MISSER_CHRG = #misserChrg:VARCHAR#,
+        STAT_CHRG = #statChrg:VARCHAR#,
+        FREEWITHD_CHRG = #freewithdChrg:VARCHAR#,
+        DEBIT_INT = #debitInt:VARCHAR#,
+        CREDIT_INT = #creditInt:VARCHAR#,
+        CLR_INT = #clrInt:VARCHAR#,
+        CHQ_ISSUE_CHRG = #chqIssueChrg:VARCHAR#,
+        STOP_PMT_CHRG = #stopPmtChrg:VARCHAR#,
+        CHQ_RET_OUT = #chqRetOut:VARCHAR#,
+        CHQ_RET_IN = #chqRetIn:VARCHAR#,
+        ACT_OP_CHRG = #actOpChrg:VARCHAR#,
+        EXCESS_FREE_WITHD = #excessFreeWithd:VARCHAR#,
+        TAX = #tax:VARCHAR#,
+        NONMNT_MIN_CHRG = #nonmntMinChrg:VARCHAR#,
+        INOPT = #inopt:VARCHAR#,
+        FOLIO_CHRG = #folioChrg:VARCHAR#,
+        DEBIT_CHARGE_HD = #debitWithdrawalCharge:VARCHAR#,
+        ATM_GL = #atmGL:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use OperativeAcctHeadParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOperativeAcctHeadParamTO" inline-parameters="true">
+        DELETE FROM OP_AC_ACHEAD_PARAM 
+        WHERE PROD_ID = #prodId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctHeadParamTO object (JavaBean) properties -->
+             <!--Modified by nithya on 17-03-2016 for 0004021-->
+    <result-map name="getOperativeAcctHeadParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctHeadParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="inopAcChrg" column="INOP_AC_CHRG"/>
+        <property name="prematcloseChrg" column="PREMATCLOSE_CHRG"/>
+        <property name="accloseChrg" column="ACCLOSE_CHRG"/>
+        <property name="misserChrg" column="MISSER_CHRG"/>
+        <property name="statChrg" column="STAT_CHRG"/>
+        <property name="freewithdChrg" column="FREEWITHD_CHRG"/>
+        <property name="debitInt" column="DEBIT_INT"/>
+        <property name="creditInt" column="CREDIT_INT"/>
+        <property name="clrInt" column="CLR_INT"/>
+        <property name="chqIssueChrg" column="CHQ_ISSUE_CHRG"/>
+        <property name="stopPmtChrg" column="STOP_PMT_CHRG"/>
+        <property name="chqRetOut" column="CHQ_RET_OUT"/>
+        <property name="chqRetIn" column="CHQ_RET_IN"/>
+        <property name="actOpChrg" column="ACT_OP_CHRG"/>
+        <property name="excessFreeWithd" column="EXCESS_FREE_WITHD"/>
+        <property name="tax" column="TAX"/>
+        <property name="nonmntMinChrg" column="NONMNT_MIN_CHRG"/>
+        <property name="inopt" column="INOPT"/>
+        <property name="folioChrg" column="FOLIO_CHRG"/>   
+        <property name="atmGL" column="ATM_GL"/>
+        <property name="debitWithdrawalCharge" column="DEBIT_CHARGE_HD"/>
+    </result-map>
+    <mapped-statement name="getSelectOperativeAcctHeadParamTO" result-map="getOperativeAcctHeadParamTOResult" >
+        SELECT * FROM OP_AC_ACHEAD_PARAM 
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+	<!-- Use OperativeAcctIntRateParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="insertOperativeAcctIntRateParamTO" inline-parameters="true">
+		INSERT INTO OP_AC_INTRATEMAINT_PARAM
+		(PROD_ID, INT_CAT_ID, INT_DATE, INT_RATE, AC_HD_ID
+		) VALUES (
+		#prodId:VARCHAR#, #intCatId:VARCHAR#, #intDate:DATE#, #intRate:NUMERIC#, #acHdId:VARCHAR#)
+	</mapped-statement -->
+        
+	<!-- Use OperativeAcctIntRateParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="updateOperativeAcctIntRateParamTO" inline-parameters="true">
+		UPDATE OP_AC_INTRATEMAINT_PARAM SET 		
+		INT_CAT_ID = #intCatId:VARCHAR#,
+		INT_DATE = #intDate:DATE#,
+		INT_RATE = #intRate:NUMERIC#,
+		AC_HD_ID = #acHdId:VARCHAR#
+                WHERE PROD_ID = #prodId# 
+	</mapped-statement -->
+
+	<!-- Use OperativeAcctIntRateParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!-- mapped-statement name="deleteOperativeAcctIntRateParamTO" inline-parameters="true">
+		DELETE FROM OP_AC_INTRATEMAINT_PARAM 
+		WHERE PROD_ID = #prodId# 
+	</mapped-statement -->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OperativeAcctIntRateParamTO object (JavaBean) properties -->
+	<!-- result-map name="getOperativeAcctIntRateParamTOResult" class="com.see.truetransact.transferobject.product.operativeacct.OperativeAcctIntRateParamTO">
+		<property name="prodId" column="PROD_ID"/>
+		<property name="intCatId" column="INT_CAT_ID"/>
+		<property name="intDate" column="INT_DATE"/>
+		<property name="intRate" column="INT_RATE"/>
+		<property name="acHdId" column="AC_HD_ID"/>
+	</result-map -->
+	<!--mapped-statement name="getSelectOperativeAcctIntRateParamTO" result-map="getOperativeAcctIntRateParamTOResult" >
+		SELECT * FROM OP_AC_INTRATEMAINT_PARAM 	
+		WHERE PROD_ID = #value# 
+	</mapped-statement -->
+        
+        <!-- result-map name="getOperativeAcctIntRateTOsResult" class="java.util.HashMap">
+		<property name="intCatId" column="INT_CAT_ID"/>
+		<property name="intDate" column="INT_DATE"/>
+		<property name="intRate" column="INT_RATE"/>
+		<property name="acHdId" column="AC_HD_ID"/>
+                <property name="intCatDesc" column="LOOKUP_DESC"/>
+	</result-map -->
+	<!-- mapped-statement name="getSelectOperativeAcctIntRateTOs" result-map="getOperativeAcctIntRateTOsResult" >
+		SELECT distinct PROD_ID,INT_CAT_ID,INT_DATE,INT_RATE,AC_HD_ID,LOOKUP_DESC
+                FROM OP_AC_INTRATEMAINT_PARAM,LOOKUP_MASTER 	
+		WHERE PROD_ID = #value# AND  
+                        LOOKUP_REF_ID = INT_CAT_ID
+        </mapped-statement -->   
+        
+        <!-- To Know Which Charges are Applicable to The Specific Product -->
+    <mapped-statement name="SelectChargesType" result-class="java.util.HashMap">
+        SELECT * FROM OP_AC_CHARGES_PARAM
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+<!-- =================================================================================== -->
+    <dynamic-mapped-statement name="getSelectOperativeAcctProductAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT Prod_ID, AC_HD_ID,  BEHAVIOR, Prod_desc FROM OP_AC_PRODUCT 
+        WHERE (STATUS NOT IN ('DELETED')OR STATUS IS NULL) AND SUSER_ID != #USER_ID:VARCHAR# 
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS = 'EXCEPTION' 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS IS NULL
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+        <!--dynamic-mapped-statement name="getSelectOperativeAcctProductAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+		SELECT Prod_ID, AC_HD_ID,  BEHAVIOR, Prod_desc FROM OP_AC_PRODUCT 
+                <dynamic prepend="where">
+                ((STATUS NOT IN ('DELETED', 'AUTHORIZED', 'REJECTED', 'EXCEPTION')) 
+                OR STATUS IS NULL) 
+                <isNotNull prepend="AND" property="BEHAVIOR">
+                    BEHAVIOR = #BEHAVIOR#
+                </isNotNull>
+            </dynamic>
+        </dynamic-mapped-statement-->
+	<!-- Use authorizeOperativeAcctProduct object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="authorizeOperativeAcctProduct" result-class="java.util.HashMap">
+        UPDATE OP_AC_PRODUCT SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:DATE#
+        WHERE PROD_ID = #PROD_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getOperativeProduct" result-class="java.util.LinkedHashMap">
+        SELECT  PROD_ID ,BEHAVIOR AS BEHAVES_LIKE FROM OP_AC_PRODUCT WHERE <!--AUTHORIZED_STATUS='AUTHORIZED' AND --> STATUS !='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getCountIntConfig" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "COUNT" FROM DEPOSIT_ROI_GROUP DRG, 
+        DEPOSIT_ROI_GROUP_PROD DRGP, 
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR
+        WHERE DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND 
+        DRGP.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND 
+        DRG.STATUS != 'DELETED' AND DRG.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        DRGTR.STATUS != 'DELETED' AND DRGP.STATUS != 'DELETED' AND 
+        DRGP.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getProdidStatus" result-class="java.util.HashMap">
+        SELECT S_REMARKS FROM OP_AC_PRODUCT WHERE PROD_ID=#PROD_ID:VARCHAR# AND STATUS!='DELETED'
+        AND AUTHORIZED_STATUS='AUTHORIZED'
+    </mapped-statement>
+<!-- =================================================================================== -->
+</sql-map>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ShareResolutionTOMap">
+
+	<!-- Use ShareResolutionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShareResolutionTO" inline-parameters="true">
+        INSERT INTO SHARE_RESOLUTION
+        (RESOLUTION_NO, RESOLUTION_DT, STATUS, STATUS_DT, STATUS_BY, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #resolutionNo:VARCHAR#, #resolutionDt:DATE#, #status:VARCHAR#, #statusDt:DATE#, #statusBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateIdIssDtShareAcct" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        ID_ISSUE_DT = #SHARE_CERT_ISSUE_DT:DATE#
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR# AND ID_ISSUE_DT IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="updateIdIssDtShareApp" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET SHARE_ACCT_NO= #SHARE ACCOUNT NO:VARCHAR#,STATUS_DT=#CURR_DT:DATE#,
+        ID_ISSUE_DT = #SHARE_CERT_ISSUE_DT:DATE#
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR# AND ID_ISSUE_DT IS NULL
+    </mapped-statement>
+    <mapped-statement name="getShareFeeDetails" result-class="java.util.HashMap">
+        SELECT SHARE_VALUE,SHARE_FEE, SHARE_APPL_FEE, SHARE_MEM_FEE FROM SHARE_ACCT_DETAILS
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR#
+    </mapped-statement>
+       
+        
+        
+        
+	<!-- Use ShareResolutionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="updateShareResolutionTO" inline-parameters="true">
+		UPDATE SHARE_RESOLUTION SET 
+		RESOLUTION_NO = #resolutionNo:VARCHAR#,
+		RESOLUTION_DT = #resolutionDt:DATE#,
+		STATUS = #status:VARCHAR#,
+		STATUS_DT = #statusDt:DATE#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use ShareResolutionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--mapped-statement name="deleteShareResolutionTO" inline-parameters="true">
+		UPDATE SHARE_RESOLUTION SET 
+		STATUS = #STATUS:VARCHAR#, 
+		STATUS_BY = #USER_ID:VARCHAR#, 
+		STATUS_DT = (SELECT SYS_DATE() FROM DUAL) 
+		WHERE 
+	</mapped-statement-->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareResolutionTO object (JavaBean) properties -->
+	<!--result-map name="getShareResolutionTOResult" class="com.see.truetransact.transferobject.share.shareresolution.ShareResolutionTO">
+		<property name="resolutionNo" column="RESOLUTION_NO"/>
+		<property name="resolutionDt" column="RESOLUTION_DT"/>
+		<property name="status" column="STATUS"/>
+		<property name="statusDt" column="STATUS_DT"/>
+		<property name="statusBy" column="STATUS_BY"/>
+		<property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+		<property name="authorizeBy" column="AUTHORIZE_BY"/>
+		<property name="authorizeDt" column="AUTHORIZE_DT"/>
+	</result-map>
+	<mapped-statement name="getSelectShareResolutionTO" result-map="getShareResolutionTOResult" >
+		SELECT * FROM SHARE_RESOLUTION 
+		WHERE 
+	</mapped-statement-->
+
+      
+<!-- ==============================ShareNo.From To.Generation QUERIES===================================================== -->
+        <!--mapped-statement name="getInventoryDetails.TransOut" result-class="java.util.LinkedHashMap" >
+                SELECT * FROM INVENTORY_DETAILS WHERE ITEM_ID IN (SELECT ITEM_ID FROM INVENTORY_MASTER  WHERE ITEM_TYPE = 'SHARE_CERT' AND ITEM_SUB_TYPE = #ITEM_SUB_TYPE# 
+                AND AUTHORIZE_STATUS = 'AUTHORIZED' AND  ( STATUS NOT IN ('DELETED') OR STATUS IS NULL)) AND TRANS_TYPE = 'TRANS_OUT' ORDER BY TRANS_ID DESC
+ 	</mapped-statement>
+        
+        <mapped-statement name="getInventoryDetails.TransIn" result-class="java.util.LinkedHashMap" >
+                SELECT * FROM INVENTORY_DETAILS WHERE ITEM_ID IN (SELECT ITEM_ID FROM INVENTORY_MASTER  WHERE ITEM_TYPE = 'SHARE_CERT' AND ITEM_SUB_TYPE = #ITEM_SUB_TYPE# 
+                AND AUTHORIZE_STATUS = 'AUTHORIZED' AND  ( STATUS NOT IN ('DELETED') OR STATUS IS NULL)) AND TRANS_TYPE = 'TRANS_IN' 
+                AND (BOOK_SERIES_OVER NOT IN 'N' OR BOOK_SERIES_OVER IS NULL ) ORDER BY BOOK_SLNO_FROM
+ 	</mapped-statement-->
+        
+    <mapped-statement name="getCurrentShareNo" result-class="java.util.HashMap" >
+        SELECT NVL(LAST_SHARE_NO, 0) as "LAST_SHARE_NO" 
+        FROM SHARE_CONF_DETAILS 
+        WHERE SHARE_TYPE = #SHARE TYPE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateShareNoGenerated" result-class="java.util.HashMap" >
+        UPDATE SHARE_CONF_DETAILS SET 
+        LAST_SHARE_NO = #NO_OF_SHARES:NUMBER# + NVL(LAST_SHARE_NO, 0) WHERE SHARE_TYPE = #SHARE TYPE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updatesharecustomer"  result-class="java.util.HashMap" >        
+        UPDATE CUSTOMER SET MEMBERSHIP_NO = #SHARE_ACCOUNT_NO:VARCHAR#, MEMBERSHIP_CLASS = #SHARE_ACCOUNT_CLASS:VARCHAR# WHERE CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+<!-- ==============================End of ShareNo.From To.Generation QUERIES===================================================== -->
+
+<!-- ==============================RESOLUTION QUERIES===================================================== -->
+      <!--  <dynamic-mapped-statement name="getSelectResolutionTOList" result-class="java.util.LinkedHashMap" >
+                SELECT SA.SHARE_ACCT_NO AS "Share Account No", SHARE_ACCT_DET_NO as "Share Account Detail No", SA.BRANCH_CODE AS "Branch Code",
+                (SELECT FNAME ||' '|| LNAME FROM CUSTOMER WHERE CUSTOMER.CUST_ID = SA.CUST_ID AND (STATUS NOT IN ('DELETED'))) AS "Customer Name", SHARE_TYPE AS "Share Type",
+                NO_OF_SHARES AS "No. of Shares"
+                FROM SHARE_ACCT_DETAILS SACD, SHARE_ACCT SA
+                WHERE (SA.STATUS NOT IN ('DELETED')) AND  (SACD.STATUS NOT IN ('DELETED')) AND SHARE_STATUS = 'SENDTORESOLUTION' 
+                AND SA.SHARE_ACCT_NO = SACD.SHARE_ACCT_NO ORDER BY SA.SHARE_ACCT_NO, SHARE_ACCT_DET_NO
+ 	</dynamic-mapped-statement>  -->
+	<!--mapped-statement name="updateResolutionStatus" result-class="java.util.HashMap">
+		UPDATE SHARE_ACCT_DETAILS SET 
+		SHARE_STATUS = #STATUS#
+		WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO#
+                AND SHARE_ACCT_DET_NO = #SERIAL NO#
+	</mapped-statement-->
+        
+    <dynamic-mapped-statement name="updateShareAccReject" result-class="java.util.LinkedHashMap">
+        UPDATE SHARE_ACCT SET AUTHORIZE='REJECTED' WHERE SHARE_APPL_NO = #value:VARCHAR# 
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="updateShareAccDetReject" result-class="java.util.LinkedHashMap">
+        UPDATE SHARE_ACCT SET AUTHORIZE='REJECTED' WHERE SHARE_APPL_NO = #value:VARCHAR# 
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectResolutionTOList" result-class="java.util.LinkedHashMap" >
+        SELECT SA.SHARE_APPL_NO AS "Share Application No", SHARE_ACCT_DET_NO as "Share Account Detail No", SA.BRANCH_CODE AS "Branch Code",
+        (SELECT  get_cust_name(CUSTOMER.CUST_ID) FROM CUSTOMER WHERE CUSTOMER.CUST_ID = SA.CUST_ID AND (STATUS NOT IN ('DELETED'))) AS "Customer Name", SHARE_TYPE AS "Share Type",
+        NO_OF_SHARES AS "No. of Shares",SA.CUST_ID AS "CUST_ID"
+        FROM SHARE_ACCT_DETAILS SACD, SHARE_ACCT SA
+        WHERE  SA.SHARE_ACCT_NO IS NULL AND  SA.AUTHORIZE ='AUTHORIZED' AND SACD.AUTHORIZE ='AUTHORIZED' AND (SA.STATUS NOT IN ('DELETED')) AND  (SACD.STATUS NOT IN ('DELETED')) 
+        AND SA.SHARE_APPL_NO = SACD.SHARE_APPL_NO ORDER BY SA.SHARE_APPL_NO, SHARE_ACCT_DET_NO
+    </dynamic-mapped-statement> 
+<!-- ==============================END OF RESOLUTION QUERIES===================================================== -->
+
+    <mapped-statement name="CheckDrfApplicable" result-class="java.util.HashMap" >
+        select DRF_APPLICABLE,DRF_PRODUCT,SHARE_TYPE from share_acct where
+        SHARE_APPL_NO=#SHARE_APPL_NO:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getDrfDts" result-class="java.util.HashMap" >
+        select d.DRF_PAYMENT_ACHD,p.amount from drf_product d,drf_prod_details p where d.prod_id=#DRF_PRODUCT:VARCHAR#
+    </mapped-statement>
+        
+
+
+
+
+
+
+</sql-map>

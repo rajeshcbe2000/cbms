@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ElectronicPaymentMap">
+
+<!-- =================================================================================== -->
+<!-- DEPOSIT ACINFO  Queries (Begin) -->
+   
+   <dynamic-mapped-statement name="getElectronicPaymentDetails" result-class="java.util.HashMap" >
+        SELECT ACCT_NUM, AMOUNT, TRANS_DT, CUST_NAME NAME, TRANS_ID, PARTICUALRS,IFSC_CODE,ACCOUNT_NO,EMAIL_ID,NEFC.SOURCE SCREEN_NAME,
+        BRANCH_CODE, BRANCH_NAME, BANK_NAME, BANK_CODE, UTR_NUMBER,INST_TYPE FROM NEFT_ECS_FILE_CREATION NEFC, DEPOSIT_OTHER_BANK_DETAILS DOBD WHERE 
+        NEFC.ACCT_NUM = DOBD.DEPOSIT_NO AND PAYMENT_STATUS IS NULL AND INQUIRY_STATUS IS NULL AND DOBD.ACCOUNT_NO IS NOT NULL AND
+        NEFC.INST_TYPE IS NOT NULL AND CREATED_DT IS NOT NULL AND DOBD.IFSC_CODE IS NOT NULL AND NEFC.STATUS IN('CREATED') AND
+        NEFC.INST_TYPE IN('RTGS','NEFT','DIRECT','IMPS') AND NEFC.BANK_ACT_NUM = DOBD.ACCOUNT_NO AND 
+        NEFC.IFS_CODE = DOBD.IFSC_CODE AND DOBD.STATUS NOT IN('DELETED') AND DOBD.CUST_NAME IS NOT NULL AND
+        NEFC.UTR_NUMBER NOT IN (SELECT UTR_NUMBER FROM ELECTRONIC_PAYMENT_HISTORY WHERE API_TYPE = 'PAYMENT')
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NUM">
+                    ACCT_NUM = #ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BATCH_DT">
+                    TRANS_DT = #BATCH_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SOURCE_SCREEN">
+                    SOURCE = #SOURCE_SCREEN:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="UTR_NUMBER">
+                    UTR_NUMBER = #UTR_NUMBER:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SENDER_ACT_NUM">
+                    DOBD.ACCOUNT_NO = #SENDER_ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="IFSC_CODE">
+                    DOBD.IFSC_CODE = #IFSC_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>
+        
+   </dynamic-mapped-statement>    
+   
+    <mapped-statement name="getElectronicPaymentInquiryListDeatils" result-class="java.util.HashMap" >
+        SELECT rownum rno, RH.*, MAX(API_REFERENCE_NUM) OVER (PARTITION BY B.UTR_NUMBER ORDER BY B.UTR_NUMBER) API_REFERENCE_NUM 
+        FROM NEFT_ECS_FILE_CREATION RH, ELECTRONIC_PAYMENT_HISTORY b WHERE RH.UTR_NUMBER=B.UTR_NUMBER AND 
+        RH.PAYMENT_STATUS = 'ACCEPTED' AND (RH.INQUIRY_STATUS IS NULL OR RH.INQUIRY_STATUS='In Progress') AND 
+        API_TYPE = 'PAYMENT' AND API_RESPONSE_STATUS = 'ACCEPTED' order by INQUIRY_STATUS DESC
+    </mapped-statement>            
+   
+    <mapped-statement name="updatePaymentRequestStatus" inline-parameters="true">
+        UPDATE NEFT_ECS_FILE_CREATION SET PAYMENT_STATUS = #PAYMENT_REQUEST_STATUS:VARCHAR#,INST_TYPE = #INST_TYPE:VARCHAR#, INQUIRY_STATUS = #INQUIRY_REQUEST_STATUS:VARCHAR#,
+        PAYMENT_ACCEPTED_DT = #PAYMENT_ACCEPTED_DT:DATE# WHERE UTR_NUMBER = #UTR_NUMBER:NUMERIC# AND PAYMENT_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="updateInquiryRequestStatus" inline-parameters="true">
+        UPDATE NEFT_ECS_FILE_CREATION SET INQUIRY_STATUS = #INQUIRY_STATUS:VARCHAR# WHERE UTR_NUMBER = #UTR_NUMBER:NUMERIC#        
+    </mapped-statement>
+    
+    <mapped-statement name="insertElectronicPaymentHistory" inline-parameters="true">
+<!--        INSERT INTO ELECTRONIC_PAYMENT_HISTORY ( ACCEPTED_DT, API_TYPE, BATCH_NUMBER, API_REFERENCE_NUM, 
+        UTR_NUMBER, BANK_REF_NUM, API_RESPONSE_STATUS, BANK_INQUIRY_REF_NO, BANK_INQUIRY_RES_DT ) VALUES (
+        (SELECT SYSDATE FROM DUAL), #API_TYPE:VARCHAR#, #BATCH_NUMBER:NUMBER#, #API_REFERENCE_NUM:NUMBER#, 
+        #UTR_NUMBER:VARCHAR#, #BANK_REF_NUM:VARCHAR#, #API_RESPONSE_STATUS:VARCHAR#, #BANK_INQUIRY_REF_NO:VARCHAR#, #BANK_INQUIRY_RES_DT:VARCHA#)-->
+        {CALL ELECTRONIC_HISTORY_REQUEST(#API_TYPE:VARCHAR#, #BATCH_NUMBER:VARCHAR#, #API_REFERENCE_NUM:VARCHAR#, 
+        #UTR_NUMBER:VARCHAR#, #BANK_REF_NUM:VARCHAR#, #API_RESPONSE_STATUS:VARCHAR#, #BANK_INQUIRY_REF_NO:VARCHAR#, 
+        #BANK_INQUIRY_RES_DT:VARCHAR#)}
+    </mapped-statement>
+    
+    <mapped-statement name="deleteElectronicPaymentHistory" inline-parameters="true">
+        DELETE  FROM ELECTRONIC_PAYMENT_HISTORY WHERE UTR_NUMBER = #UTR_NUMBER:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getElectronicPaymentList" result-class="java.util.LinkedHashMap" >
+       SELECT DISTINCT TRANS_ID,TRANS_DT,SOURCE SOURCE_SCREEN, SUM(AMOUNT) TOTAL_AMOUNT, COUNT(*) TOTAL_COUNT
+       FROM NEFT_ECS_FILE_CREATION WHERE PAYMENT_STATUS IS NULL AND INQUIRY_STATUS IS NULL AND STATUS NOT IN('DELETED') 
+       GROUP BY TRANS_ID,TRANS_DT,SOURCE
+   </mapped-statement> 
+   
+   <dynamic-mapped-statement name="getSelectECSNEFTRecordAvailable" result-class="java.util.HashMap" >
+        SELECT * FROM NEFT_ECS_FILE_CREATION WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# AND 
+        TRANS_DT = #TRANS_DT:DATE# AND AMOUNT = #AMOUNT:NUMERIC# AND SOURCE = #SOURCE:VARCHAR#
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement>     
+   
+    <mapped-statement name="getSelectNextUTRNumber" result-class="java.util.HashMap" >
+        select GETFDSEQNO UTR_NUMBER from dual
+   </mapped-statement>                
+   
+   <mapped-statement name="updateInquiryRejectedStatus" inline-parameters="true">
+       UPDATE NEFT_ECS_FILE_CREATION SET REJECTED_STATUS = #REJECTED_STATUS:VARCHAR# WHERE UTR_NUMBER = #UTR_NUMBER:NUMERIC# AND
+       ACCT_NUM = #ACCT_NUM:NUMERIC#       
+    </mapped-statement>
+   
+   <mapped-statement name="getElectronicPaymentDebitHead" result-class="java.util.HashMap" >
+        SELECT AC_HD_ID,TRANS_ID,NARRATION FROM TRANSFER_TRANS WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE# AND TRANS_TYPE = 'DEBIT'
+       AND LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+   </mapped-statement>
+   
+   <mapped-statement name="getMultipleDepositOtherBankDetails" result-class="java.util.HashMap" >
+        SELECT * FROM DEPOSIT_OTHER_BANK_DETAILS WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# AND STATUS NOT IN('DELETED')
+   </mapped-statement>
+   
+   <mapped-statement name="getMultipleDepositOldOtherBankDetails" result-class="java.util.HashMap" >
+        SELECT * FROM MULTIPLE_DEP_RENEWAL_SUBINFO MDRS, DEPOSIT_OTHER_BANK_DETAILS DOBD,MULTIPLE_DEP_RENEWAL_INFO MDRI 
+        WHERE NEW_DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# AND DOBD.DEPOSIT_NO = MDRS.NEW_DEPOSIT_NO AND WITHDRAW_INST_TYPE in('NEFT/RTGS','IMPS','DIRECT')
+        AND MDRI.MULTIPLE_RENEWAL_ID = MDRS.MULTIPLE_RENEWAL_ID AND ROWNUM = 1
+   </mapped-statement>
+
+    <mapped-statement name="getMultipleDepositShadowDebitAmt" result-class="java.util.HashMap" >
+        SELECT PROD_ID, TOTAL_BALANCE, PENAL_RATE, TOTAL_INT_CREDIT, TOTAL_INT_DRAWN, DSA.TOT_INT_AMT,DA.DEPOSIT_STATUS,
+        ACCT_STATUS, DSA.MATURITY_DT, SHADOW_DEBIT, MDRS.BROKEN_AMT SB_INT_AMT, INTEREST_AMT, DEPOSIT_SUB_NO,
+        LAST_INT_APPL_DT, DSA.DEPOSIT_DT FROM DEPOSIT_SUB_ACINFO DSA, DEPOSIT_ACINFO DA,MULTIPLE_DEP_RENEWAL_SUBINFO MDRS
+        WHERE DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND MDRS.DEPOSIT_NO = DA.DEPOSIT_NO AND DSA.DEPOSIT_NO = #DEPOSIT NO# 
+    </mapped-statement> 
+    
+    <mapped-statement name="getSelectRecordExistDepositLien" result-class="java.util.HashMap" >
+        SELECT * FROM deposit_lien WHERE LIEN_AC_NO = #LIEN_AC_NO:VARCHAR#
+   </mapped-statement>
+   
+   <mapped-statement name="getElectronicInquiryList" result-class="java.util.LinkedHashMap" >
+       SELECT ACCT_NUM, TRANS_ID, TRANS_DT, SOURCE SOURCE_SCREEN
+       FROM NEFT_ECS_FILE_CREATION WHERE PAYMENT_STATUS IS NULL AND INQUIRY_STATUS IS NULL 
+       GROUP BY TRANS_ID,TRANS_DT,SOURCE,ACCT_NUM
+   </mapped-statement> 
+   
+   <dynamic-mapped-statement name="getElectronicPaymentInquiryWithDescDeatils" result-class="java.util.HashMap" >
+        SELECT RH.*, MAX(API_REFERENCE_NUM) OVER (PARTITION BY B.UTR_NUMBER ORDER BY B.UTR_NUMBER) API_REFERENCE_NUM,
+        CUST_NAME AS CUSTOMER_NAME,API_RESPONSE_STATUS,B.BANK_INQUIRY_REF_NO FROM NEFT_ECS_FILE_CREATION RH, 
+        ELECTRONIC_PAYMENT_HISTORY b,DEPOSIT_OTHER_BANK_DETAILS DOBD WHERE RH.UTR_NUMBER=B.UTR_NUMBER 
+        AND DOBD.DEPOSIT_NO = RH.ACCT_NUM AND DOBD.ACCOUNT_NO = RH.BANK_ACT_NUM AND PAYMENT_ACCEPTED_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE# AND 
+        RH.PAYMENT_STATUS = 'ACCEPTED' AND RH.INQUIRY_STATUS IN ($INQUIRY_STATUS$) AND B.API_TYPE = 'INQUIRY' 
+<!--       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INQUIRY_STATUS_REJECTED">
+                    REP.CREDITS = A.AMOUNT
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INQUIRY_STATUS_SUCCESS">
+                    REP.DEBITS = A.AMOUNT      
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>-->
+       
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+       ORDER BY RH.UTR_NUMBER,CREATED_DT DESC
+    </dynamic-mapped-statement> 
+    
+    <dynamic-mapped-statement name="getElectronicPaymentInquiryDeatils" result-class="java.util.HashMap" >
+       SELECT RH.*, MAX(API_REFERENCE_NUM) OVER (PARTITION BY B.UTR_NUMBER ORDER BY B.UTR_NUMBER) API_REFERENCE_NUM,
+       CUST_NAME AS CUSTOMER_NAME,API_RESPONSE_STATUS,B.BANK_INQUIRY_REF_NO 
+       FROM NEFT_ECS_FILE_CREATION RH, ELECTRONIC_PAYMENT_HISTORY b,DEPOSIT_OTHER_BANK_DETAILS DOBD WHERE RH.UTR_NUMBER=B.UTR_NUMBER 
+       AND DOBD.DEPOSIT_NO = RH.ACCT_NUM AND DOBD.ACCOUNT_NO = RH.BANK_ACT_NUM
+       AND PAYMENT_ACCEPTED_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE# AND RH.PAYMENT_STATUS = #PAYMENT_STATUS:VARCHAR#
+       AND API_RESPONSE_STATUS = #PAYMENT_STATUS:VARCHAR# AND RH.INQUIRY_STATUS IS NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+       ORDER BY RH.UTR_NUMBER,CREATED_DT DESC
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getDepositNoBasedBehavesLike" result-class="java.util.HashMap" >
+        SELECT BEHAVES_LIKE,INT_TYPE FROM DEPOSITS_PRODUCT DPT, DEPOSIT_SUB_ACINFO DSA, DEPOSIT_ACINFO DA,DEPOSITS_PROD_INTPAY DPI
+        WHERE DA.PROD_ID = DPT.PROD_ID AND DPI.PROD_ID = DPT.PROD_ID AND
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getElectronicPaymentSchedulerDetails" result-class="java.util.HashMap" >
+        SELECT ACCT_NUM, AMOUNT, TRANS_DT, CUST_NAME NAME, TRANS_ID, PARTICUALRS,IFSC_CODE,ACCOUNT_NO,EMAIL_ID,
+        BRANCH_CODE, BRANCH_NAME, BANK_NAME, BANK_CODE, UTR_NUMBER,INST_TYPE,CREATED_DT FROM NEFT_ECS_FILE_CREATION NEFC, 
+        DEPOSIT_OTHER_BANK_DETAILS DOBD WHERE NEFC.ACCT_NUM = DOBD.DEPOSIT_NO AND PAYMENT_STATUS IS NULL AND 
+        INQUIRY_STATUS IS NULL AND DOBD.ACCOUNT_NO IS NOT NULL AND NEFC.INST_TYPE IS NOT NULL AND CREATED_DT IS NOT NULL AND
+        DOBD.IFSC_CODE IS NOT NULL AND source NOT IN ('MaturityDepositTask','INTEREST_APPLICATION') AND NEFC.STATUS IN('CREATED') AND
+        NEFC.BANK_ACT_NUM = DOBD.ACCOUNT_NO AND NEFC.IFS_CODE = DOBD.IFSC_CODE AND DOBD.STATUS NOT IN('DELETED') AND DOBD.CUST_NAME IS NOT NULL AND
+        NEFC.UTR_NUMBER NOT IN (SELECT UTR_NUMBER FROM ELECTRONIC_PAYMENT_HISTORY WHERE API_TYPE = 'PAYMENT')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INST_TYPE">
+                    INST_TYPE = #INST_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement>   
+   
+   <dynamic-mapped-statement name="getElectronicPaymentNotProcessedInquiryDeatils" result-class="java.util.HashMap" >
+        SELECT RH.*,PKGREPORTS.GETCUSTNAME (RH.ACCT_NUM) AS CUSTOMER_NAME
+        FROM NEFT_ECS_FILE_CREATION RH WHERE TRANS_DT BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+        AND RH.INQUIRY_STATUS IS NULL AND RH.PAYMENT_STATUS IS NULL AND CREATED_DT IS NOT NULL 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+        ORDER BY RH.UTR_NUMBER, CREATED_DT DESC
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="getMultipleRenewalOldAccounts" result-class="java.util.HashMap" >
+        SELECT * FROM MULTIPLE_DEP_RENEWAL_SUBINFO MDRS, MULTIPLE_DEP_RENEWAL_INFO MDRI WHERE 
+        MDRS.MULTIPLE_RENEWAL_ID = MDRI.MULTIPLE_RENEWAL_ID AND MDRI.MULTIPLE_RENEWAL_ID = #LINK_BATCH_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getAdvanceClosingOldAccounts" result-class="java.util.HashMap" >
+        SELECT TRANS_AMT,PARTICULARS,INST_TYPE FROM REMIT_ISSUE_TRANS RIT,DEPOSIT_SUB_ACINFO DSA WHERE RIT.BATCH_ID = DSA.DEPOSIT_NO||'_1' AND 
+        BATCH_ID = #LINK_BATCH_ID:VARCHAR# AND RIT.STATUS != 'DELETED' AND INST_TYPE IN('NEFT/RTGS','IMPS','DIRECT')
+    </mapped-statement> 
+    
+    <mapped-statement name="getCustNameBasedonAccounts" result-class="java.util.HashMap" >
+        SELECT PKGREPORTS.GETCUSTNAMEAC(#DEPOSIT_NO:VARCHAR#) CUST_NAME FROM DUAL
+    </mapped-statement> 
+    
+    <mapped-statement name="getSelectSenderAccounts" result-class="java.util.HashMap" >
+        SELECT ACCOUNT_NO FROM deposit_other_bank_details WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement> 
+    
+    <mapped-statement name="deleteDepositOtherBankDetails" result-class="java.util.HashMap">
+        DELETE FROM DEPOSIT_OTHER_BANK_DETAILS WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# AND ACCOUNT_NO = #ACCOUNT_NO:VARCHAR#
+    </mapped-statement>
+   
+   <mapped-statement name="getAutoReconciliationList" result-class="java.util.LinkedHashMap" >
+        SELECT TT.BATCH_ID,NEFC.PAYMENT_ACCEPTED_DT TRANS_DT,
+        NEFC.ACCT_NUM,
+        NVL (
+           PKG_DEPOSIT.GETDEPINTCRCNAME (ACCT_NUM),
+           PKG_CUSTOMER.GETCUSTFULLNAME (
+              PKGCUSTOMER.GETCUSTIDBYACCOUNTNO (NEFC.ACCT_NUM),
+              1))
+           CUST_NAME,
+        NEFC.AMOUNT,
+        SOURCE PURPOSE,
+        BANK_INQUIRY_REF_NO,
+        API_RESPONSE_STATUS,
+        rep.description
+        FROM NEFT_ECS_FILE_CREATION NEFC
+          JOIN ELECTRONIC_PAYMENT_HISTORY EPH
+             ON NEFC.UTR_NUMBER = EPH.UTR_NUMBER
+          JOIN
+          RECON_ELECTRONIC_PAYMENT REP
+             ON     EPH.BANK_INQUIRY_REF_NO = REP.REFERENCE_NO
+             JOIN
+             TRANSFER_TRANS TT
+             ON TT.LINK_BATCH_ID = NEFC.ACCT_NUM 
+                AND REP.TRANS_DT = NEFC.PAYMENT_ACCEPTED_DT
+                AND NEFC.AMOUNT = REP.DEBITS
+                AND TT.AMOUNT = NEFC.AMOUNT
+                AND TT.TRANS_DT = NEFC.PAYMENT_ACCEPTED_DT 
+                AND TT.TRANS_TYPE = 'CREDIT'
+                AND TT.SCREEN_NAME = 'Electronic Payment'
+        WHERE EPH.BANK_INQUIRY_REF_NO = REP.REFERENCE_NO
+          AND ACCEPTED_DT = PKGREPORTS.FNGETUTRACCEPTDT(BANK_INQUIRY_REF_NO)
+          AND NEFC.UTR_NUMBER = EPH.UTR_NUMBER
+          AND EPH.API_TYPE = 'INQUIRY'
+          AND NEFC.INQUIRY_STATUS IN( 'SUCCESS','BANK NOT RESPONDED')
+   </mapped-statement> 
+   
+   <dynamic-mapped-statement name="getNEFTProcessedRecords" result-class="java.util.LinkedHashMap" >
+        select TRANS_DT,BRANCH,DESCRIPTION,REFERENCE_NO,DEBITS,CREDITS,RECONB_ID from RECONB_SYSTEM_CLASIFIED 
+        WHERE TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE#
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLASIFIED_CAT">
+                    CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER(('%$CUST_NAME$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT">
+                    (TO_NUMBER(DEBITS) = #REJECT_AMOUNT:VARCHAR# or TO_NUMBER(CREDITS) = #REJECT_AMOUNT:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT_DEBIT">
+                    TO_NUMBER(DEBITS) > 0
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT_CREDIT">
+                    TO_NUMBER(CREDITS) >0
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement> 
+   
+   <dynamic-mapped-statement name="getHDFCProcessedRecords" result-class="java.util.LinkedHashMap" >
+        select TRANS_DT,BRANCH,DESCRIPTION,REFERENCE_NO,DEBITS,CREDITS,'' IFS_CODE,'' BANK_ACT_NUM,CUST_NAME,RECONB_ID from RECONB_BANK_CLASIFIED 
+        WHERE TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLASIFIED_CAT">
+                    CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER(('%$CUST_NAME$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT">
+                    (TO_NUMBER(DEBITS) = #REJECT_AMOUNT:VARCHAR# or TO_NUMBER(CREDITS) = #REJECT_AMOUNT:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT_DEBIT">
+                    TO_NUMBER(DEBITS) >0
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT_CREDIT">
+                    TO_NUMBER(CREDITS) >0
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement> 
+   
+   <dynamic-mapped-statement name="getMatchStatusHDFCNEFTRTGSNEFTPayment" result-class="java.util.LinkedHashMap" >
+        SELECT TRANS_DT,DESCRIPTION,REFERENCE_NO,DEBITS,CREDITS,IFS_CODE,BANK_ACT_NUM,CUST_NAME,RECONB_ID,BRANCH FROM RECONB_MATCH_CONS_DATA WHERE 
+        TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE# AND MATCH_STATUS = 'M' AND MATCH_CONDITION = #MATCH_CONDITION:VARCHAR# AND
+        REFERENCE_NO NOT IN(SELECT REFERENCE_NO FROM RECONB_MATCH_CONS_DATA WHERE MATCH_STATUS = 'REV')
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLASIFIED_CAT">
+                    CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER(('%$CUST_NAME$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT">
+                    (TO_NUMBER(DEBITS) = #REJECT_AMOUNT:VARCHAR# or TO_NUMBER(CREDITS) = #REJECT_AMOUNT:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT_DEBIT">
+                    TO_NUMBER(DEBITS) >0
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT_CREDIT">
+                    TO_NUMBER(CREDITS) >0
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement> 
+   
+   <mapped-statement name="getUnMatchStatusHDFCRTGSNEFTPayment" result-class="java.util.LinkedHashMap" >
+        SELECT TRANS_DT,NULL AS BRANCH,DESCRIPTION,REFERENCE_NO,DEBITS,CREDITS,RECONB_ID FROM RECONB_MATCH_CONS_DATA 
+        WHERE TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE# and MATCH_STATUS = 'U' AND REJECTED_REPROCESS_STATUS = 'N' AND 
+        MATCH_CONDITION =#MATCH_CONDITION:VARCHAR# AND CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+   </mapped-statement> 
+   
+   <dynamic-mapped-statement name="getRejectedHDFCNEFTRTGSNEFTPayment" result-class="java.util.LinkedHashMap" >      
+        SELECT TRANS_DT,DESCRIPTION,REFERENCE_NO,DEBITS,CREDITS,RECONB_ID,BRANCH,ACCT_NUM,CUST_NAME,CUST_MOBILE FROM RECONB_MATCH_CONS_DATA
+        WHERE REJECTED_REPROCESS_STATUS = 'N' AND TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE# AND 
+        MATCH_STATUS = #MATCH_STATUS:VARCHAR# AND MATCH_CONDITION =#MATCH_CONDITION:VARCHAR# AND CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER(('%$CUST_NAME$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT">
+                    (TO_NUMBER(DEBITS) = #REJECT_AMOUNT:VARCHAR# OR TO_NUMBER(CREDITS) = #REJECT_AMOUNT:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement>
+   
+   <dynamic-mapped-statement name="getPaymentRejectedAccountList" result-class="java.util.LinkedHashMap" >    
+        SELECT RMCD.*,NVL(PKG_DEPOSIT.GETOTH_IFSC (ACCT_NUM),PKG_DEPOSIT.GETOTH_IFSC (BANK_ACT_NUM)) NEW_IFS_CODE,
+        NVL (PKG_DEPOSIT.GETOTH_ACTNO (ACCT_NUM),PKG_DEPOSIT.GETOTH_ACTNO (BANK_ACT_NUM)) ACCOUNT_NUMBER,
+        NVL (PKG_DEPOSIT.getDepIntCrcname (ACCT_NUM),'') NEW_CUSTOMER_NAME, FUN_SOURCE_REFNO(REFERENCE_NO) SOURCE,
+        FUN_PARTICULARS_REFNO(REFERENCE_NO) PARTICULARS FROM RECONB_MATCH_CONS_DATA RMCD WHERE ACCT_NUM IS NOT NULL AND IFS_CODE IS NOT NULL AND 
+        FUN_SOURCE_REFNO (REFERENCE_NO) IS NOT NULL AND BANK_ACT_NUM IS NOT NULL AND REJECTION_REASON IS NOT NULL AND 
+        MATCH_REFENRENC_ID IS NOT NULL AND TRANS_DT IN (
+        SELECT MAX(TRANS_DT) FROM RECONB_MATCH_CONS_DATA RMCC WHERE RMCC.ACCT_NUM = RMCD.ACCT_NUM AND RMCD.REFERENCE_NO = RMCC.REFERENCE_NO)AND
+        TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE# AND 
+        REJECTED_REPROCESS_STATUS = 'N' AND MATCH_STATUS = #MATCH_STATUS:VARCHAR# AND 
+        MATCH_CONDITION = #MATCH_CONDITION:VARCHAR# AND CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+       <dynamic>
+           <isParameterPresent>
+                <isNotNull prepend="AND" property="TRANS_SOURCE">
+                    SOURCE = #TRANS_SOURCE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECTION_REASON">
+                    REJECTION_REASON = #REJECTION_REASON:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER(('%$CUST_NAME$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REJECT_AMOUNT">
+                    (TO_NUMBER(DEBITS) = #REJECT_AMOUNT:VARCHAR# OR TO_NUMBER(CREDITS) = #REJECT_AMOUNT:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+   </dynamic-mapped-statement>
+
+   <mapped-statement name="updateRconBMatchConDataRecord" inline-parameters="true">
+        UPDATE RECONB_MATCH_CONS_DATA SET REJECTED_REPROCESS_STATUS = 'Y', REPROCESS_STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        REPROCESS_STATUS_BY = #REPROCESS_STATUS_BY:VARCHAR#, NEW_UTR_NUMBER = #NEW_UTR_NUMBER:VARCHAR#, REPROCESS_ID = #REPROCESS_ID:VARCHAR#  
+        WHERE MATCH_REFENRENC_ID = #UTR_NUMBER:VARCHAR# AND ACCT_NUM = #ACCT_NUM:VARCHAR# AND REFERENCE_NO = #REFERENCE_NO:VARCHAR# AND
+        MATCH_STATUS IN('REV','REJ')  
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectRejectedList" result-class="java.util.HashMap" >
+        SELECT ACCT_NUM FROM RECONB_MATCH_CONS_DATA WHERE NEW_UTR_NUMBER = #NEW_UTR_NUMBER:VARCHAR# AND 
+        REJECTED_REPROCESS_STATUS = 'Y' 
+    </mapped-statement> 
+    
+    <mapped-statement name="getDepositFDRDetails" result-class="java.util.HashMap" >
+        SELECT DA.CUST_ID, DA.DEPOSIT_NO, DEPOSIT_AMT, DEPOSIT_DT, MATURITY_DT,RENEWAL_FROM_DEPOSIT FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA
+        WHERE DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND DA.DEPOSIT_NO=#DEPOSIT_NO#
+    </mapped-statement>
+    
+    <mapped-statement name="updateFDRSMSFlag" result-class="java.util.HashMap" >
+        UPDATE DEPOSIT_ACINFO SET EFDR_SMS='Y' WHERE DEPOSIT_NO=#DEPOSIT_NO#
+    </mapped-statement>
+    
+    <mapped-statement name="getNEFTSourceDetails" result-class="java.util.HashMap" >
+        SELECT DISTINCT SOURCE AS "KEY" , SOURCE AS "VALUE" FROM RECONB_MATCH_CONS_DATA
+    </mapped-statement>
+    
+    <mapped-statement name="getInterestRunTDSAmount" result-class="java.util.HashMap" >
+        SELECT * FROM DEPOSIT_INT_TRIAL WHERE APPL_DT = #APPL_DT:DATE# AND ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteReconElectronicPaymentMT940" result-class="java.util.HashMap" >
+        DELETE FROM RECON_ELECTRONIC_PAYMENT_MT940 WHERE TRANS_DT = (select to_date(#TRANS_DT:DATE#,'YYMMDD') from dual)
+    </mapped-statement>
+    
+    <mapped-statement name="insertReconElectronicPaymentMT940" result-class="java.util.HashMap" >
+        INSERT INTO RECON_ELECTRONIC_PAYMENT_MT940(TRANS_DT, BRANCH, DESCRIPTION, REFERENCE_NO, VALUE,  DEBITS,  CREDITS,  BALANCE) VALUES 
+        ((select to_date(#TRANS_DT:DATE#,'YYMMDD') from dual), #BRANCH:VARCHAR#, #DESCRIPTION:VARCHAR#, #REFERENCE_NO:VARCHAR#, 
+        (select to_date(#VALUE:VARCHAR#,'YYMMDD') from dual), #DEBITS:VARCHAR#, #CREDITS:VARCHAR#, #BALANCE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getElectronicPaymentSuccessList" result-class="java.util.HashMap" >
+<!--        SELECT TRANS_DT, DESCRIPTION, REFERENCE_NO, DEBITS, CREDITS, IFS_CODE, BANK_ACT_NUM, ACCT_NUM, CUST_NAME, MATCH_REFENRENC_ID,
+        FUN_SOURCE_REFNO(REFERENCE_NO) SOURCE, RMCD.BANK_ACT_NUM, RECONB_ID, BRANCH FROM RECONB_MATCH_CONS_DATA RMCD WHERE 
+        MATCH_STATUS = 'M' AND MATCH_CONDITION = 'HDFC_RTGS' AND REFERENCE_NO NOT IN (SELECT REFERENCE_NO FROM RECONB_MATCH_CONS_DATA 
+        WHERE MATCH_STATUS = 'REV') AND ACCT_NUM IN(SELECT ACCT_NUM FROM NEFT_ECS_FILE_CREATION NEFC JOIN ELECTRONIC_PAYMENT_HISTORY EPH
+        ON NEFC.UTR_NUMBER = EPH.UTR_NUMBER AND EPH.API_TYPE = 'INQUIRY' AND SMS_STATUS = 'N' WHERE RMCD.TRANS_DT = NEFC.PAYMENT_ACCEPTED_DT AND 
+        RMCD.REFERENCE_NO = EPH.BANK_INQUIRY_REF_NO AND RMCD.MATCH_REFENRENC_ID = EPH.UTR_NUMBER AND RMCD.DEBITS = NEFC.AMOUNT) AND 
+        FUN_SOURCE_REFNO(REFERENCE_NO) IS NOT NULL AND BANK_ACT_NUM IS NOT NULL-->
+        SELECT TRANS_DT,DESCRIPTION,REFERENCE_NO,DEBITS,CREDITS,IFS_CODE,BANK_ACT_NUM,ACCT_NUM,CUST_NAME,MATCH_REFENRENC_ID,
+		FUN_SOURCE_REFNO (REFERENCE_NO) SOURCE,RMCD.BANK_ACT_NUM,RECONB_ID,BRANCH FROM RECONB_MATCH_CONS_DATA RMCD
+		WHERE     MATCH_STATUS = 'M' AND MATCH_CONDITION = 'HDFC_RTGS' AND REFERENCE_NO NOT IN (SELECT REFERENCE_NO
+		FROM RECONB_MATCH_CONS_DATA WHERE MATCH_STATUS = 'REV') AND ACCT_NUM IN (SELECT ACCT_NUM
+		FROM NEFT_ECS_FILE_CREATION NEFC JOIN ELECTRONIC_PAYMENT_HISTORY EPH ON     NEFC.UTR_NUMBER = EPH.UTR_NUMBER
+		AND EPH.API_TYPE = 'INQUIRY' AND SMS_STATUS = 'N' WHERE     RMCD.TRANS_DT = NEFC.PAYMENT_ACCEPTED_DT
+		AND RMCD.REFERENCE_NO = EPH.BANK_INQUIRY_REF_NO AND RMCD.MATCH_REFENRENC_ID = EPH.UTR_NUMBER
+		AND RMCD.DEBITS = NEFC.AMOUNT) AND FUN_SOURCE_REFNO (REFERENCE_NO) IS NOT NULL AND BANK_ACT_NUM IS NOT NULL
+		AND RMCD.ACCT_NUM NOT IN (SELECT DEPOSIT_NO FROM (SELECT DEPOSIT_NO, TO_NUMBER (CREDITS) AMOUNT,RBC.REFERENCE_NO REFERENCE_NO,
+		TRANS_DT PAYMENT_ACCEPTED_DT FROM RECONB_BANK_CLASIFIED RBC, DEPOSIT_OTHER_BANK_DETAILS DOBD WHERE     TO_NUMBER (CREDITS) > 0
+		AND REFERENCE_NO NOT IN ('NONREF') AND DESCRIPTION NOT LIKE '%TNPFCL%' AND DESCRIPTION NOT LIKE 'CMS-TN74PWRFCV%'
+		AND DESCRIPTION NOT LIKE '%SIMPLIFIED%' AND RBC.DESCR_IFSC = DOBD.IFSC_CODE AND RBC.DESCR_NAME = DOBD.CUST_NAME
+		AND DOBD.DEPOSIT_NO IN (SELECT ACCT_NUM FROM NEFT_ECS_FILE_CREATION NEFC WHERE     RBC.CREDITS = NEFC.AMOUNT 
+		AND NEFC.PAYMENT_ACCEPTED_DT = RBC.TRANS_DT AND DOBD.DEPOSIT_NO = NEFC.ACCT_NUM AND DOBD.IFSC_CODE = NEFC.IFS_CODE
+		AND DOBD.ACCOUNT_NO = NEFC.BANK_ACT_NUM) 
+		UNION ALL
+		SELECT ACCT_NUM,AMOUNT, EPH.BANK_INQUIRY_REF_NO REFERENCE_NO, PAYMENT_ACCEPTED_DT FROM NEFT_ECS_FILE_CREATION NEFC,
+		ELECTRONIC_PAYMENT_HISTORY EPH WHERE     EPH.UTR_NUMBER = NEFC.UTR_NUMBER AND EPH.API_TYPE = 'INQUIRY'AND BANK_INQUIRY_REF_NO IN
+		(SELECT REFERENCE_NO FROM RECON_ELECTRONIC_PAYMENT WHERE     TO_NUMBER (CREDITS) > 0 AND REFERENCE_NO NOT IN ('NONREF')
+		AND DESCRIPTION NOT LIKE '%TNPFCL%' AND DESCRIPTION NOT LIKE 'CMS-TN74PWRFCV%' AND DESCRIPTION NOT LIKE '%SIMPLIFIED%'
+		AND (   BANK_INQUIRY_REF_NO LIKE 'N%' OR BANK_INQUIRY_REF_NO LIKE 'HDFCR%')) 
+		UNION ALL 
+		SELECT ACCT_NUM, AMOUNT, EPH.BANK_INQUIRY_REF_NO REFERENCE_NO, PAYMENT_ACCEPTED_DT FROM NEFT_ECS_FILE_CREATION NEFC,
+		ELECTRONIC_PAYMENT_HISTORY EPH WHERE     EPH.UTR_NUMBER = NEFC.UTR_NUMBER AND EPH.API_TYPE = 'INQUIRY' AND BANK_INQUIRY_REF_NO IN
+		(SELECT REP.DESCRIPTION FROM RECON_ELECTRONIC_PAYMENT REP WHERE     NVL (REP.DEBITS, 0) = NVL (NEFC.AMOUNT, 0) 
+		AND REP.DESCRIPTION = EPH.BANK_INQUIRY_REF_NO AND REP.REFERENCE_NO IN
+		(SELECT REP1.REFERENCE_NO FROM RECON_ELECTRONIC_PAYMENT REP1 WHERE     NVL (REP.DEBITS, 0) = NVL ( REP1.CREDITS,0) AND REP1.TRANS_DT =
+		REP.TRANS_DT AND (REP1.DESCRIPTION LIKE 'REV: 50200048841874%' OR DESCRIPTION LIKE'%REV-NULL%'))))) AND RMCD.TRANS_DT BETWEEN '01 SEP 2020' AND '02 SEP 2020'
+    </mapped-statement>
+    
+    <mapped-statement name="updateElectronicPaymentSMSStatus" result-class="java.util.HashMap" >
+        UPDATE NEFT_ECS_FILE_CREATION SET SMS_STATUS = 'Y', INQUIRY_STATUS = #INQUIRY_STATUS:VARCHAR# WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# and 
+        UTR_NUMBER = #MATCH_REFENRENC_ID:VARCHAR# AND PAYMENT_ACCEPTED_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getElectronicPaymentRejectList" result-class="java.util.HashMap" >
+        SELECT TRANS_DT, DESCRIPTION, REFERENCE_NO, DEBITS, CREDITS, RECONB_ID, BRANCH,ACCT_NUM,MATCH_REFENRENC_ID,REJECTION_REASON SMS_DESCRIPTION,
+        RMCD.BANK_ACT_NUM,FUN_SOURCE_REFNO(REFERENCE_NO) SOURCE,ACCT_NUM, CUST_NAME, CUST_MOBILE FROM RECONB_MATCH_CONS_DATA RMCD WHERE 
+        REJECTED_REPROCESS_STATUS = 'N' AND MATCH_STATUS = 'REV' AND MATCH_CONDITION = 'REV_HDFC_C' AND ACCT_NUM IN(SELECT ACCT_NUM FROM 
+        NEFT_ECS_FILE_CREATION NEFC JOIN ELECTRONIC_PAYMENT_HISTORY EPH ON NEFC.UTR_NUMBER = EPH.UTR_NUMBER AND EPH.API_TYPE = 'INQUIRY' AND 
+        NEFC.SMS_STATUS = 'N' WHERE RMCD.TRANS_DT = NEFC.PAYMENT_ACCEPTED_DT AND RMCD.REFERENCE_NO = EPH.BANK_INQUIRY_REF_NO AND 
+        RMCD.MATCH_REFENRENC_ID = EPH.UTR_NUMBER AND RMCD.CREDITS = NEFC.AMOUNT) AND REJECTION_REASON IS NOT NULL AND 
+        FUN_SOURCE_REFNO(REFERENCE_NO) IS NOT NULL AND BANK_ACT_NUM IS NOT NULL
+    </mapped-statement>   
+    
+    <dynamic-mapped-statement name="getONLINEProcessedRecords" result-class="java.util.LinkedHashMap" >
+        SELECT TRANS_DT, TRANS_REMARKS DESCRIPTION, TRANSACTION_ID REFERENCE_NO, RECEIVED_AMOUNT AMOUNT,
+        BANK_REF_ID, TRANS_STATUS, CUST_ID, CUST_NAME, MOBILE_NO, DEPOSIT_NO FROM RECONB_DEPOSITS_CONS_DATA WHERE TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MATCH_STATUS">
+                    MATCH_STATUS = #MATCH_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MULTI_MATCH_STATUS">
+                    MATCH_STATUS IN($MULTI_MATCH_STATUS$)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MATCH_CONDINTION">
+                    MATCH_CONDINTION IN($MATCH_CONDINTION$)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLASIFIED_CAT">
+                    CLASIFIED_CAT = #CLASIFIED_CAT:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_NAME">
+                    UPPER(CUST_NAME) LIKE UPPER(('%$CUST_NAME$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REMARKS">
+                    UPPER(TRANS_REMARKS) LIKE UPPER(('%$REMARKS$%'))
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SYS_ID">
+                    TRANSACTION_ID = #SYS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BANK_REF_ID">
+                    BANK_REF_ID = #BANK_REF_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    CUST_ID = #CUST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AMOUNT">
+                    (TO_NUMBER(RECEIVED_AMOUNT) = #AMOUNT:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DEP_PROCESS_BATCH">
+                    DEP_PROCESS_BATCH IS NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateHDFCManualMatch" result-class="java.util.HashMap" >
+        UPDATE RECONB_MATCH_CONS_DATA SET MATCH_REFENRENC_ID = #OUR_UTR_NUMBER:VARCHAR#, MATCH_STATUS = 'M',RECONB_ID = #RECONB_ID:VARCHAR#
+        WHERE REFERENCE_NO = #HDFC_REFERENCE_NO:VARCHAR# AND TRANS_DT = #PAYMENT_TRANS_DT:DATE# AND MATCH_STATUS = 'U'
+    </mapped-statement>
+    
+     <mapped-statement name="updateNEFTManualMatch" result-class="java.util.HashMap" >
+        UPDATE RECONB_MATCH_CONS_DATA SET MATCH_REFENRENC_ID = #HDFC_REFERENCE_NO:VARCHAR#, MATCH_STATUS = 'M',RECONB_ID = #RECONB_ID:VARCHAR#
+        WHERE REFERENCE_NO = #OUR_UTR_NUMBER:VARCHAR# AND TRANS_DT = #INITIATED_TRANS_DT:DATE# AND MATCH_STATUS = 'U'
+    </mapped-statement>
+   
+</sql-map>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AcNoMaintenanceTOMap">
+
+    <result-map name="getAllProductsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="getAllProducts" result-map="getAllProductsResult">
+        SELECT PROD_ID, PROD_DESC 
+        FROM OP_AC_PRODUCT
+        UNION
+        SELECT PROD_ID, PROD_DESC 
+        FROM DEPOSITS_PRODUCT
+        UNION
+        SELECT PROD_ID, PROD_DESC 
+        FROM LOANS_PRODUCT 
+        UNION
+        SELECT PROD_ID, PROD_DESC 
+        FROM SUSPENSE_PRODUCT
+        ORDER BY 1
+    </mapped-statement>
+
+    <result-map name="getAllBranchesResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BRANCH_CODE" />
+        <property name="lookUpDesc" column="BRANCH_NAME" />
+    </result-map>                 
+    <mapped-statement name="getAllBranchesIDs" result-map="getAllBranchesResult">
+        SELECT BRANCH_CODE, BRANCH_NAME 
+        FROM BRANCH_MASTER ORDER BY 1
+    </mapped-statement>
+        
+<!-- Use BranchAcNoMaintenanceTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchAcNoMaintenanceTO" inline-parameters="true">
+        INSERT INTO BRANCH_ACNO_MAINTENANCE
+        (BRANCH_ID, PROD_ID, LAST_AC_NO, NEXT_AC_NO, 
+        CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT, 
+        AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, GROUP_NO
+        ) VALUES (
+        #branchId:VARCHAR#, #prodId:VARCHAR#, #lastAcNo:VARCHAR#, #nextAcNo:VARCHAR#, 
+        #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#,
+        #authorizedStatus:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #groupNo:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use BranchAcNoMaintenanceTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchAcNoMaintenanceTO" inline-parameters="true">
+        UPDATE BRANCH_ACNO_MAINTENANCE SET 
+        LAST_AC_NO = #lastAcNo:DATE#,
+        NEXT_AC_NO = #nextAcNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizedDt:DATE#,
+        GROUP_NO = #groupNo:VARCHAR#
+        WHERE BRANCH_ID = #branchId:VARCHAR# AND PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use BranchAcNoMaintenanceTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchAcNoMaintenanceTO" inline-parameters="true">
+        UPDATE BRANCH_ACNO_MAINTENANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE BRANCH_ID = #branchId:VARCHAR# AND PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to CalenderHolidaysTO object (JavaBean) properties -->
+    <result-map name="getBranchAcNoMaintenanceTOResult" class="com.see.truetransact.transferobject.sysadmin.branchacnomaintenance.AcNoMaintenanceTO">
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="lastAcNo" column="LAST_AC_NO"/>
+        <property name="nextAcNo" column="NEXT_AC_NO"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZE_BY"/>
+        <property name="authorizedDt" column="AUTHORIZE_DT"/>
+        <property name="groupNo" column="GROUP_NO"/>
+    </result-map>
+
+    <mapped-statement name="getSelectAllBranchAcNoMaintenanceTO" result-map="getBranchAcNoMaintenanceTOResult" >
+        SELECT * FROM BRANCH_ACNO_MAINTENANCE WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR# ORDER BY PROD_ID
+    </mapped-statement>
+
+    <mapped-statement name="getSelectBranchAcNoMaintenanceTO" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_ID, PROD_ID, 
+        LAST_AC_NO, NEXT_AC_NO FROM BRANCH_ACNO_MAINTENANCE 
+        WHERE STATUS NOT IN ('DELETED') 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getSelectBranchAcNoMaintenanceAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_ID AS "Branch ID", PROD_ID AS "Product ID", 
+        LAST_AC_NO AS "Last Ac No", NEXT_AC_NO AS "Next Ac No", 
+        AUTHORIZE_STATUS as "Authorized Status", AUTHORIZE_BY as "Authorized by",
+        AUTHORIZE_DT as "Authorized date"
+        FROM BRANCH_ACNO_MAINTENANCE 
+        WHERE (STATUS NOT IN ('DELETED')) 
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION' 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS IS NULL
+            </isNotEqual>
+        </dynamic>
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        ORDER BY BRANCH_ID, PROD_ID
+    </dynamic-mapped-statement>
+    
+    <!-- Use BranchAcNoMaintenanceTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="authorizeBranchAcNoMaintenance" inline-parameters="true">
+        UPDATE BRANCH_ACNO_MAINTENANCE SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:DATE#
+        WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getCoreBankNextActNum" result-class="java.util.HashMap">  
+        SELECT LPAD(BRANCH_ID,4,'0')||LPAD(PROD_ID,3,'0')
+        <dynamic>
+              <isParameterPresent>
+                <isNotNull prepend="||"  property="GROUP_NO">
+                    LPAD(GROUP_NO,3,'0')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AS PREFIX, 
+        NEXT_AC_NO AS LAST_VALUE FROM BRANCH_ACNO_MAINTENANCE WHERE 
+        PROD_ID=#PROD_ID:VARCHAR# AND BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        <dynamic>
+        <isParameterPresent>
+                <isNotNull prepend="AND" property="GROUP_NO">
+                    GROUP_NO = #GROUP_NO:VARCHAR#
+                </isNotNull>
+        </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectNextAccNo" result-class="java.lang.String" >
+        SELECT BRANCH_ID || PROD_ID || LPAD(NEXT_AC_NO,6,'0') AS NEXT_AC_NO FROM BRANCH_ACNO_MAINTENANCE WHERE BRANCH_ID= #BRANCH_ID:VARCHAR# AND PROD_ID= #PRODUCT_ID:VARCHAR#
+    </mapped-statement>   
+  
+    <dynamic-mapped-statement name="updateCoreBankNextActNum" result-class="java.util.HashMap" >
+        UPDATE BRANCH_ACNO_MAINTENANCE SET NEXT_AC_NO = #VALUE:VARCHAR# 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        <dynamic>
+        <isParameterPresent>
+                <isNotNull prepend="AND" property="GROUP_NO">
+                    GROUP_NO = #GROUP_NO:VARCHAR#
+                </isNotNull>
+        </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+     <mapped-statement name="getSelectNextAccNoForGroupDeposit" result-class="java.lang.String" >
+        SELECT BRANCH_ID || PROD_ID || GROUP_NO || LPAD(NEXT_AC_NO,3,'0') AS NEXT_AC_NO FROM BRANCH_ACNO_MAINTENANCE WHERE BRANCH_ID= #BRANCH_ID:VARCHAR# AND PROD_ID= #PROD_ID:VARCHAR#
+        and group_no = #GROUP_NO:VARCHAR#
+    </mapped-statement>
+
+   <mapped-statement name="getAllDepositGroup" result-class="java.util.HashMap" > 
+      select G.GROUP_NO as GROUP_NO,G.GROUP_NO as GROUP_DESC from GROUP_DEPOSIT g where G.PROD_TYPE = #PROD_ID:VARCHAR#
+      and G.BRANCH_ID = #BRANCH_ID:VARCHAR#
+   </mapped-statement> 
+    
+    <mapped-statement name="getAllMajorAccountHeads" result-class="java.util.LinkedHashMap" > 
+        SELECT SUM(1) OVER (ORDER BY MJR_AC_ORDER,
+        CASE WHEN MJR_AC_HD_TYPE ='LIABILITY' THEN 1 WHEN MJR_AC_HD_TYPE ='ASSETS' THEN 2
+        WHEN MJR_AC_HD_TYPE ='INCOME' THEN 3 WHEN MJR_AC_HD_TYPE ='EXPENDITURE'  THEN 4 END ,MJR_AC_HD_ID) 
+        AS SLSNO,MJR_AC_HD_TYPE,MJR_AC_HD_DESC,MJR_AC_HD_ID  FROM MJR_AC_HD WHERE STATUS NOT IN('DELETED') AND  AUTHORIZE_STATUS='AUTHORIZED'  ORDER BY  MJR_AC_ORDER,
+        CASE WHEN MJR_AC_HD_TYPE ='LIABILITY' THEN 1 WHEN MJR_AC_HD_TYPE ='ASSETS' THEN 2
+        WHEN MJR_AC_HD_TYPE ='INCOME' THEN 3 WHEN MJR_AC_HD_TYPE ='EXPENDITURE'  THEN 4 END ,MJR_AC_HD_ID
+    </mapped-statement> 
+    
+     <mapped-statement name="udateMajorAcctHeadOrder" inline-parameters="true">
+        update MJR_AC_HD  set MJR_AC_ORDER = cast(#MJR_AC_ORDER# as numeric) where MJR_AC_HD_ID = #MJR_AC_HD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAllAccountHeads" result-class="java.util.LinkedHashMap" >         
+        SELECT SUM(1) OVER (ORDER BY AC_HD_ORDER,SUB_AC_HD_ID,AC_HD_ID) AS SLNO,AC_HD_DESC,AC_HD_ID
+        FROM AC_HD WHERE MJR_AC_HD_ID = #MJR_AC_HD_ID:VARCHAR# AND  
+        STATUS NOT IN('DELETED') AND  AUTHORIZE_STATUS='AUTHORIZED'   ORDER BY AC_HD_ORDER,SUB_AC_HD_ID,AC_HD_ID
+    </mapped-statement> 
+    
+    <mapped-statement name="udateAcctHeadOrder" inline-parameters="true">
+        update AC_HD  set AC_HD_ORDER = cast(#AC_HD_ORDER# as numeric) where AC_HD_ID = #AC_HD_ID:VARCHAR#
+    </mapped-statement>    
+    
+</sql-map>

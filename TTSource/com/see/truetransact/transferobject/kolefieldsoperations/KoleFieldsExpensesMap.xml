@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="KoleFieldsExpensesMap">
+    
+ <result-map name="getAllSuspenseProdBehavesLikeLoanResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="getAllSuspenseProdBehavesLikeLoan" result-map="getAllSuspenseProdBehavesLikeLoanResult">
+        SELECT PROD_ID, PROD_DESC 
+        FROM SUSPENSE_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and 
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+        AND BEHAVES_LIKE_LOAN = 'Y'
+    </mapped-statement>	
+    
+    <mapped-statement name="getLoanBehavesSuspenseAccounts" result-class="java.util.LinkedHashMap" >   
+        SELECT sa.SUSPENSE_ACCT_NUM,
+        sa.SUSPENSE_NAME,
+        sa.TOTAL_BALANCE,
+        sa.INT_CALC_UPTO_DT,
+        sa.TOTAL_BALANCE
+        FROM SUSPENSE_ACCOUNT_MASTER sa
+        WHERE sa.SUSPENSE_PROD_ID = #PROD_ID:VARCHAR# 
+        AND sa.authorize_status = 'AUTHORIZED'
+        and sa.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>  
+    
+    
+     <mapped-statement name="getSuspenseIntHead" result-class="java.util.LinkedHashMap" > 
+          select sp.AC_HD_ID,sp.INT_AC_HD from SUSPENSE_PRODUCT sp where sp.prod_id = #PROD_ID:VARCHAR#
+     </mapped-statement>  
+    
+    
+     <mapped-statement name="insertSuspenseTransDetailsTO" inline-parameters="true">
+        insert into SUSPENSE_TRANS_DETAILS(TRANS_ID,INT_TRANS_ID,BATCH_ID,KOLE_FIELD_EXPENSE_ID,PROD_ID,TRN_DT,ACC_NUM,TRANS_MODE,TRANS_TYPE,AMOUNT,INT_AMOUNT,TOTAL_AMOUNT
+        ,CREATED_BY,CREATED_DT, AUTHORIZE_BY,AUTHORIZE_DT,STATUS,AUTHORIZE_STATUS,INITIATED_BRANCH,LAST_INT_CALC_DT)       
+         values(#transId:VARCHAR#,#intTransId:VARCHAR#,#batchId:VARCHAR#,#koleFieldExpenseId:VARCHAR#,#prodId:VARCHAR#,#transDt:DATE#,#acctNum:VARCHAR#,#transMode:VARCHAR#,
+         #transType:VARCHAR#,#transAmount:NUMERIC#,#intAmount:NUMERIC#,#totalAmount:NUMERIC#,#createdBy:VARCHAR#,#createdDt:DATE#
+        ,#authorizeBy:VARCHAR#,#authorizeDt:DATE#,#status:VARCHAR#,#authorizedStatus:VARCHAR#, #branchId:VARCHAR#,#lastIntCalcDt:DATE#)
+    </mapped-statement> 
+    
+    
+    <dynamic-mapped-statement name="getKoleFieldExpensTransAuthorizeList" result-class="java.util.LinkedHashMap">
+        select st.KOLE_FIELD_EXPENSE_ID,st.trans_id,st.int_trans_id,st.ACC_NUM,st.AMOUNT,st.INT_AMOUNT 
+        from SUSPENSE_TRANS_DETAILS st where
+        st.trn_dt = #TRANS_DT:DATE#  
+        and st.STATUS in ('CREATED')             
+        AND st.CREATED_BY != #USER_ID:VARCHAR#  
+        AND ( st.AUTHORIZE_STATUS IS NULL
+        OR st.AUTHORIZE_STATUS NOT IN('AUTHORIZED', 'REJECTED', 'EXCEPTION')) 
+        order by st.KOLE_FIELD_EXPENSE_ID
+    </dynamic-mapped-statement>
+    
+     
+    <mapped-statement name="getSelectSuspenseAcctTransDetails"  result-class="java.util.LinkedHashMap">      
+        select TRN_DT,TRANS_TYPE,AMOUNT,INT_AMOUNT from SUSPENSE_TRANS_DETAILS where 
+        ACC_NUM = #ACT_NUM:VARCHAR#
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND STATUS IN('CREATED','MODIFIED')   
+        order by TRN_DT desc     
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectKoleFieldsExpensesTO" result-map="getKoleFieldsExpensesTOResult" >
+        SELECT * FROM SUSPENSE_TRANS_DETAILS st 
+        WHERE st.KOLE_FIELD_EXPENSE_ID =#KOLE_FIELD_EXPENSE_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+    
+    <result-map name="getKoleFieldsExpensesTOResult" class="com.see.truetransact.transferobject.kolefieldsoperations.KoleFieldsExpensesTO">
+        <property name="acctNum" column="ACC_NUM"/>
+        <property name="transAmount" column="AMOUNT"/>
+        <property name="intAmount" column="INT_AMOUNT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="lastIntCalcDt" column="LAST_INT_CALC_DT"/>
+        <property name="koleFieldExpenseId" column="KOLE_FIELD_EXPENSE_ID"/>
+        <property name="transType" column="TRANS_TYPE"/>
+    </result-map>
+    
+    <mapped-statement name="authorizeKoleFieldExpenses" result-class="java.util.HashMap">
+        UPDATE SUSPENSE_TRANS_DETAILS  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  KOLE_FIELD_EXPENSE_ID = #KOLE_FIELD_EXPENSE_ID:VARCHAR#
+        AND TRN_DT = #TRN_DT:DATE#
+    </mapped-statement>
+    
+     <mapped-statement name="getSelectKoleFieldExpenseInterest" result-class="java.util.HashMap" >       
+         SELECT GET_SUSPENSE_INTEREST(#PROD_ID:VARCHAR#, #ACCT_NUM:VARCHAR#) AS INT_AMOUNT FROM DUAL
+    </mapped-statement>
+     
+     <mapped-statement name="updateSuspenceIntCalcUpToDt" result-class="java.util.HashMap">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET
+        INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+        WHERE  SUSPENSE_ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    
+</sql-map>

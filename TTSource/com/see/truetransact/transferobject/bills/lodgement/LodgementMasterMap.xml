@@ -1,0 +1,861 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LodgementMasterTOMap">
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLodgementMasterTO" inline-parameters="true">
+        INSERT INTO BILLS_LODGEMENT_MASTER
+        (PROD_ID, RECEIVED_FROM, REC_BRANCH_ID, REC_OTHER_BANK, REC_OTHER_BRANCH, REC_NAME, REC_ADDR, REC_CITY, REC_STATE, REC_COUNTRY, REC_PINCODE, 
+        REFERENCE, PROD_TYPE, BORROW_PROD_ID, BORROW_ACCT_NUM, DRAWEE_NO, SENDING_TO, DRAWEE_BANK_CODE, DRAWEE_BRANCH_CODE, DRAWEE_NAME, DRAWEE_ADDR, 
+        DRAWEE_CITY, DRAWEE_STATE, DRAWEE_COUNTRY, DRAWEE_PINCODE, INSTRUMENT_TYPE, CREATED_BY, CREATED_DT, STATUS, LODGEMENT_ID, BILLS_TYPE, BILL_STATUS, 
+        CUST_CATEGORY,  STATUS_BY, STATUS_DT, TRANSTYPE, DELAY_RATE, CBP_PROD_ID, CBP_ACT_NUM,DRAWEE_BANK_NAME,REMITTED_DT,OBC_OTHER,BILLS_CLEARING,BRANCH_CODE,
+        IS_MULTIPLE_LODGEMENT) VALUES (
+        #prodId:VARCHAR#, #receivedFrom:VARCHAR#, #recBranchId:VARCHAR#, #recOtherBank:VARCHAR#, #recOtherBranch:VARCHAR#, #recName:VARCHAR#, 
+        #recAddr:VARCHAR#, #recCity:VARCHAR#, #recState:VARCHAR#, #recCountry:VARCHAR#, #recPincode:VARCHAR#, #reference:VARCHAR#, #prodType:VARCHAR#, 
+        #borrowProdId:VARCHAR#, #borrowAcctNum:VARCHAR#, #draweeNo:VARCHAR#, #sendingTo:VARCHAR#, #draweeBankCode:VARCHAR#, #draweeBranchCode:VARCHAR#, 
+        #draweeName:VARCHAR#, #draweeAddr:VARCHAR#, #draweeCity:VARCHAR#, #draweeState:VARCHAR#, #draweeCountry:VARCHAR#, #draweePincode:VARCHAR#, 
+        #instrumentType:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #status:VARCHAR#, #lodgementId:VARCHAR#, #billsType:VARCHAR#, #billsStatus:VARCHAR#, 
+        #custCategory:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #tranType:VARCHAR#, #rateForDelay:NUMERIC#, #cbpProdID:VARCHAR#, #cbpActNum:VARCHAR#
+        ,#draweeBankName:VARCHAR#,#tdtRemittedDt:DATE#,#obcOther:VARCHAR#,#billsClearing:VARCHAR#,#branchCode:VARCHAR#,#isMultipleLodgement:isMultipleLodgement#)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementMasterTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_MASTER SET 
+        PROD_ID = #prodId:VARCHAR#,
+        RECEIVED_FROM = #receivedFrom:VARCHAR#,
+        REC_BRANCH_ID = #recBranchId:VARCHAR#,
+        REC_OTHER_BANK = #recOtherBank:VARCHAR#,
+        REC_OTHER_BRANCH = #recOtherBranch:VARCHAR#,
+        REC_NAME = #recName:VARCHAR#,
+        REC_ADDR = #recAddr:VARCHAR#,
+        REC_CITY = #recCity:VARCHAR#,
+        REC_STATE = #recState:VARCHAR#,
+        REC_COUNTRY = #recCountry:VARCHAR#,
+        REC_PINCODE = #recPincode:VARCHAR#,
+        REFERENCE = #reference:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        BORROW_PROD_ID = #borrowProdId:VARCHAR#,
+        BORROW_ACCT_NUM = #borrowAcctNum:VARCHAR#,
+        DRAWEE_NO = #draweeNo:VARCHAR#,
+        SENDING_TO = #sendingTo:VARCHAR#,
+        DRAWEE_BANK_CODE = #draweeBankCode:VARCHAR#,
+        DRAWEE_BRANCH_CODE = #draweeBranchCode:VARCHAR#,
+        DRAWEE_NAME = #draweeName:VARCHAR#,
+        DRAWEE_ADDR = #draweeAddr:VARCHAR#,
+        DRAWEE_CITY = #draweeCity:VARCHAR#,
+        DRAWEE_STATE = #draweeState:VARCHAR#,
+        DRAWEE_COUNTRY = #draweeCountry:VARCHAR#,
+        DRAWEE_PINCODE = #draweePincode:VARCHAR#,
+        INSTRUMENT_TYPE = #instrumentType:VARCHAR#,
+        DRAWEE_BANK_NAME = #draweeBankName:VARCHAR#,
+		<!--CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        LODGEMENT_ID = #lodgementId:VARCHAR#,
+        BILLS_TYPE = #billsType:VARCHAR#,
+        BILL_STATUS = #billsStatus:VARCHAR#,
+        CUST_CATEGORY = #custCategory:VARCHAR#,
+        TRANSTYPE = #tranType:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        DELAY_RATE = #rateForDelay:NUMERIC#,
+        CBP_PROD_ID = #cbpProdID:VARCHAR#,
+        CBP_ACT_NUM = #cbpActNum:VARCHAR#,
+        REMITTED_DT=#tdtRemittedDt:DATE#,
+        OBC_OTHER=#obcOther:VARCHAR#,
+        BILLS_CLEARING=#billsClearing:VARCHAR#
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementMasterTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="insertLodgementMasterHistoryTO" inline-parameters="true">
+        INSERT INTO BILLS_LODGEMENT_MASTER_HISTORY
+        (PROD_ID, RECEIVED_FROM, REC_BRANCH_ID, REC_OTHER_BANK, REC_OTHER_BRANCH, REC_NAME, REC_ADDR, REC_CITY, REC_STATE, REC_COUNTRY, REC_PINCODE, REFERENCE, 
+        PROD_TYPE, BORROW_PROD_ID, BORROW_ACCT_NUM, DRAWEE_NO, SENDING_TO, DRAWEE_BANK_CODE, DRAWEE_BRANCH_CODE, DRAWEE_NAME, DRAWEE_ADDR, DRAWEE_CITY, 
+        DRAWEE_STATE, DRAWEE_COUNTRY, DRAWEE_PINCODE, INSTRUMENT_TYPE, CREATED_BY, CREATED_DT, STATUS, LODGEMENT_ID, BILLS_TYPE, BILL_STATUS, CUST_CATEGORY,  
+        STATUS_BY, STATUS_DT, TRANSTYPE, DELAY_RATE, CBP_PROD_ID, CBP_ACT_NUM,DRAWEE_BANK_NAME
+        ) VALUES (
+        #prodId:VARCHAR#, #receivedFrom:VARCHAR#, #recBranchId:VARCHAR#, #recOtherBank:VARCHAR#, #recOtherBranch:VARCHAR#, #recName:VARCHAR#, #recAddr:VARCHAR#, 
+        #recCity:VARCHAR#, #recState:VARCHAR#, #recCountry:VARCHAR#, #recPincode:VARCHAR#, #reference:VARCHAR#, #prodType:VARCHAR#, #borrowProdId:VARCHAR#, 
+        #borrowAcctNum:VARCHAR#, #draweeNo:VARCHAR#, #sendingTo:VARCHAR#, #draweeBankCode:VARCHAR#, #draweeBranchCode:VARCHAR#, #draweeName:VARCHAR#, 
+        #draweeAddr:VARCHAR#, #draweeCity:VARCHAR#, #draweeState:VARCHAR#, #draweeCountry:VARCHAR#, #draweePincode:VARCHAR#, #instrumentType:VARCHAR#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#, #status:VARCHAR#, #lodgementId:VARCHAR#, #billsType:VARCHAR#, #billsStatus:VARCHAR#, #custCategory:VARCHAR#, 
+        #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #tranType:VARCHAR#, #rateForDelay:NUMERIC#, #cbpProdID:VARCHAR#, #cbpActNum:VARCHAR#,#draweeBankName:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementMasterHistoryTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_MASTER_HISTORY SET 
+        PROD_ID = #prodId:VARCHAR#,
+        RECEIVED_FROM = #receivedFrom:VARCHAR#,
+        REC_BRANCH_ID = #recBranchId:VARCHAR#,
+        REC_OTHER_BANK = #recOtherBank:VARCHAR#,
+        REC_OTHER_BRANCH = #recOtherBranch:VARCHAR#,
+        REC_NAME = #recName:VARCHAR#,
+        REC_ADDR = #recAddr:VARCHAR#,
+        REC_CITY = #recCity:VARCHAR#,
+        REC_STATE = #recState:VARCHAR#,
+        REC_COUNTRY = #recCountry:VARCHAR#,
+        REC_PINCODE = #recPincode:VARCHAR#,
+        REFERENCE = #reference:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        BORROW_PROD_ID = #borrowProdId:VARCHAR#,
+        BORROW_ACCT_NUM = #borrowAcctNum:VARCHAR#,
+        DRAWEE_NO = #draweeNo:VARCHAR#,
+        SENDING_TO = #sendingTo:VARCHAR#,
+        DRAWEE_BANK_CODE = #draweeBankCode:VARCHAR#,
+        DRAWEE_BRANCH_CODE = #draweeBranchCode:VARCHAR#,
+        DRAWEE_NAME = #draweeName:VARCHAR#,
+        DRAWEE_ADDR = #draweeAddr:VARCHAR#,
+        DRAWEE_CITY = #draweeCity:VARCHAR#,
+        DRAWEE_STATE = #draweeState:VARCHAR#,
+        DRAWEE_COUNTRY = #draweeCountry:VARCHAR#,
+        DRAWEE_PINCODE = #draweePincode:VARCHAR#,
+        INSTRUMENT_TYPE = #instrumentType:VARCHAR#,
+        DRAWEE_BANK_NAME = #draweeBankName:VARCHAR#,
+		<!--CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        LODGEMENT_ID = #lodgementId:VARCHAR#,
+        BILLS_TYPE = #billsType:VARCHAR#,
+        BILL_STATUS = #billsStatus:VARCHAR#,
+        CUST_CATEGORY = #custCategory:VARCHAR#,
+        TRANSTYPE = #tranType:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        DELAY_RATE = #rateForDelay:NUMERIC#,
+        CBP_PROD_ID = #cbpProdID:VARCHAR#,
+        CBP_ACT_NUM = #cbpActNum:VARCHAR#
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND BILL_STATUS = #billsStatus:VARCHAR# and (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementMasterHistoryTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_MASTER_HISTORY SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND BILL_STATUS = #billsStatus:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LodgementInstructionsTO object (JavaBean) properties -->
+    <result-map name="getLodgementMasterTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementMasterTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="receivedFrom" column="RECEIVED_FROM"/>
+        <property name="recBranchId" column="REC_BRANCH_ID"/>
+        <property name="recOtherBank" column="REC_OTHER_BANK"/>
+        <property name="recOtherBranch" column="REC_OTHER_BRANCH"/>
+        <property name="recName" column="REC_NAME"/>
+        <property name="recAddr" column="REC_ADDR"/>
+        <property name="recCity" column="REC_CITY"/>
+        <property name="recState" column="REC_STATE"/>
+        <property name="recCountry" column="REC_COUNTRY"/>
+        <property name="recPincode" column="REC_PINCODE"/>
+        <property name="reference" column="REFERENCE"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="borrowProdId" column="BORROW_PROD_ID"/>
+        <property name="borrowAcctNum" column="BORROW_ACCT_NUM"/>
+        <property name="draweeNo" column="DRAWEE_NO"/>
+        <property name="sendingTo" column="SENDING_TO"/>
+        <property name="draweeBankCode" column="DRAWEE_BANK_CODE"/>
+        <property name="draweeBranchCode" column="DRAWEE_BRANCH_CODE"/>
+        <property name="draweeName" column="DRAWEE_NAME"/>
+        <property name="draweeBankName" column="DRAWEE_BANK_NAME"/>
+        <property name="draweeAddr" column="DRAWEE_ADDR"/>
+        <property name="draweeCity" column="DRAWEE_CITY"/>
+        <property name="draweeState" column="DRAWEE_STATE"/>
+        <property name="draweeCountry" column="DRAWEE_COUNTRY"/>
+        <property name="draweePincode" column="DRAWEE_PINCODE"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="lodgementId" column="LODGEMENT_ID"/>
+        <property name="billsType" column="BILLS_TYPE"/>
+        <property name="billsStatus" column="BILL_STATUS"/>
+        <property name="custCategory" column="CUST_CATEGORY"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tranType" column="TRANSTYPE"/>
+        <property name="rateForDelay" column="DELAY_RATE"/>
+        <property name="cbpProdID" column="CBP_PROD_ID"/>
+        <property name="cbpActNum" column="CBP_ACT_NUM"/>
+        <property name="tdtRemittedDt" column="REMITTED_DT"/>
+        <property name="obcOther" column="OBC_OTHER"/>
+                
+    </result-map>
+        
+    <result-map name="getLodgementMasterHistoryTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementMasterTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="receivedFrom" column="RECEIVED_FROM"/>
+        <property name="recBranchId" column="REC_BRANCH_ID"/>
+        <property name="recOtherBank" column="REC_OTHER_BANK"/>
+        <property name="recOtherBranch" column="REC_OTHER_BRANCH"/>
+        <property name="recName" column="REC_NAME"/>
+        <property name="recAddr" column="REC_ADDR"/>
+        <property name="recCity" column="REC_CITY"/>
+        <property name="recState" column="REC_STATE"/>
+        <property name="recCountry" column="REC_COUNTRY"/>
+        <property name="recPincode" column="REC_PINCODE"/>
+        <property name="reference" column="REFERENCE"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="borrowProdId" column="BORROW_PROD_ID"/>
+        <property name="borrowAcctNum" column="BORROW_ACCT_NUM"/>
+        <property name="draweeNo" column="DRAWEE_NO"/>
+        <property name="sendingTo" column="SENDING_TO"/>
+        <property name="draweeBankCode" column="DRAWEE_BANK_CODE"/>
+        <property name="draweeBranchCode" column="DRAWEE_BRANCH_CODE"/>
+        <property name="draweeName" column="DRAWEE_NAME"/>
+        <property name="draweeBankName" column="DRAWEE_BANK_NAME"/>
+        <property name="draweeAddr" column="DRAWEE_ADDR"/>
+        <property name="draweeCity" column="DRAWEE_CITY"/>
+        <property name="draweeState" column="DRAWEE_STATE"/>
+        <property name="draweeCountry" column="DRAWEE_COUNTRY"/>
+        <property name="draweePincode" column="DRAWEE_PINCODE"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="lodgementId" column="LODGEMENT_ID"/>
+        <property name="billsType" column="BILLS_TYPE"/>
+        <property name="billsStatus" column="BILL_STATUS"/>
+        <property name="custCategory" column="CUST_CATEGORY"/>
+        <property name="tranType" column="TRANSTYPE"/>
+        <property name="rateForDelay" column="DELAY_RATE"/>
+        <property name="cbpProdID" column="CBP_PROD_ID"/>
+        <property name="cbpActNum" column="CBP_ACT_NUM"/>
+                                
+    </result-map>
+    <mapped-statement name="getSelectLodgementMasterTO" result-map="getLodgementMasterTOResult" >
+        SELECT * FROM BILLS_LODGEMENT_MASTER 
+        WHERE LODGEMENT_ID = #value:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLodgementMasterHistoryTO" result-map="getLodgementMasterHistoryTOResult" >
+        SELECT * FROM BILLS_LODGEMENT_MASTER_HISTORY
+        WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# AND BILL_STATUS = #BILL_STATUS:VARCHAR# AND AUTHORIZE_STATUS in ('AUTHORIZED','REJECTED')
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLodgementMaster" result-class="java.util.LinkedHashMap" >
+        SELECT BLM.LODGEMENT_ID,BLM.BORROW_ACCT_NUM,
+        (select get_cust_name(C.CUST_ID) from act_master am,customer c where am.ACT_NUM = BLM.BORROW_ACCT_NUM and c.cust_id = am.cust_id) as act_name,
+        BLC.INSTRUMENT_AMOUNT,BLM.CREATED_DT,BLM.BILLS_TYPE,BLM.PROD_TYPE,BLM.INSTRUMENT_TYPE, BLM.DRAWEE_BANK_CODE, BLM.BILL_STATUS, 
+        BLM.AUTHORIZE_STATUS, BLM.TRANSTYPE, BLM.DELAY_RATE FROM BILLS_LODGEMENT_MASTER BLM,BILLS_LODGEMENT_CHEQUE BLC WHERE OBC_OTHER IS NULL AND
+        ((BLM.BILL_STATUS != 'REALIZE' AND BLM.AUTHORIZE_STATUS != 'AUTHORIZED') OR 
+        (BLM.BILL_STATUS != 'DISHONOUR' AND BLM.AUTHORIZE_STATUS != 'AUTHORIZED') OR 
+        (BLM.BILL_STATUS != 'CLOSURE' AND BLM.AUTHORIZE_STATUS != 'AUTHORIZED') OR
+        (BLM.BILL_STATUS = 'LODGEMENT' AND (BLM.AUTHORIZE_STATUS = 'AUTHORIZED' OR BLM.AUTHORIZE_STATUS IS NULL)) OR
+        (BLM.BILL_STATUS = 'DISHONOUR' AND BLM.AUTHORIZE_STATUS IS NULL) OR
+        (BLM.BILL_STATUS = 'CLOSURE' AND BLM.AUTHORIZE_STATUS IS NULL) OR
+        (BLM.BILL_STATUS = 'REALIZE' AND BLM.AUTHORIZE_STATUS IS NULL) OR 
+        (BLM.BILL_STATUS = 'PROCEEDS_RECEIVED'
+        AND (BLM.AUTHORIZE_STATUS = 'AUTHORIZED' OR BLM.AUTHORIZE_STATUS IS NULL))) AND BLM.STATUS != 'DELETED'
+        AND (BLM.AUTHORIZE_STATUS != 'REJECTED' or BLM.AUTHORIZE_STATUS is NULL) AND BLM.LODGEMENT_ID = BLC.LODGEMENT_ID
+        AND BLM.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        AND BLM.IS_MULTIPLE_LODGEMENT = 'N'
+        ORDER BY  BLM.LODGEMENT_ID
+    </mapped-statement>        
+        
+         <!-- Product Data from BILLS_PRODUCT Table -->
+    <result-map name="billsproduct_ger-ProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>        
+        
+    <mapped-statement name="billsproduct_getProdId" result-map="billsproduct_ger-ProdId-result" >
+        SELECT PROD_ID, PROD_DESC FROM BILLS_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED')
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBranch_Master" result-class="java.util.LinkedHashMap" >
+            <!--SELECT BRANCH_CODE, BRANCH_NAME, BRANCH_SHORT_NAME FROM BRANCH_MASTER
+            WHERE STATUS NOT IN ('DELETED')-->
+        SELECT BRANCH_CODE, BRANCH_NAME, BRANCH_SHORT_NAME,
+        (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.CITY' AND LOOKUP_MASTER.LOOKUP_REF_ID = BRANCH_MASTER.CITY) AS "CITY"
+        ,(SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.STATE' AND LOOKUP_MASTER.LOOKUP_REF_ID = BRANCH_MASTER.STATE) AS "STATE",
+        (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.COUNTRY' AND LOOKUP_MASTER.LOOKUP_REF_ID = BRANCH_MASTER.COUNTRY_CODE) AS "COUNTRY",
+        PIN_CODE, BANK_CODE, STREET, MICR_CODE FROM BRANCH_MASTER
+        WHERE STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectOther_Bank" result-class="java.util.LinkedHashMap" >
+        SELECT BANK_CODE, BANK_NAME, BANK_SHORT_NAME FROM OTHER_BANK 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED')
+    </mapped-statement> 
+        
+    <mapped-statement name="getSelectOther_Bank_Branch" result-class="java.util.LinkedHashMap" >
+            <!--SELECT BRANCH_CODE, BRANCH_SHORT_NAME, BRANCH_NAME  FROM OTHER_BANK_BRANCH
+            WHERE STATUS NOT IN ('DELETED') AND BANK_CODE = #BANK_CODE#-->
+        SELECT BRANCH_NAME AS "NAME",
+        (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.CITY' AND LOOKUP_MASTER.LOOKUP_REF_ID = OTHER_BANK_BRANCH.CITY) AS "CITY"
+        ,(SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.STATE' AND LOOKUP_MASTER.LOOKUP_REF_ID = OTHER_BANK_BRANCH.STATE) AS "STATE",
+        (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.COUNTRY' AND LOOKUP_MASTER.LOOKUP_REF_ID = OTHER_BANK_BRANCH.COUNTRY) AS "COUNTRY",
+        (SELECT ACT_REF_NO FROM OTHER_BANKS_ACT_MASTER WHERE
+        other_banks_act_master.ACT_MASTER_ID = other_bank_branch.ACCOUNT_HEAD) AS "ACT_REF_NO",
+        ADDRESS, PINCODE,BANK_CODE, BRANCH_CODE, MICR,ACCOUNT_HEAD FROM OTHER_BANK_BRANCH WHERE STATUS!='DELETED' AND BANK_CODE = #BANK_CODE:VARCHAR#
+    </mapped-statement> 
+             
+      
+    <mapped-statement name="getBranchName" result-class="java.util.LinkedHashMap" >    
+        SELECT BRANCH_NAME AS "NAME" FROM BRANCH_MASTER WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getBillsBranchName" result-class="java.util.LinkedHashMap" >    
+        SELECT BRANCH_NAME AS "NAME" FROM BRANCH_MASTER WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        UNION
+        SELECT BRANCH_NAME AS "NAME" FROM OTHER_BANK_BRANCH WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getBankName" result-class="java.util.LinkedHashMap" >    
+        SELECT BANK_NAME AS "NAME" FROM OTHER_BANK WHERE BANK_CODE = #BRANCH_CODE#
+    </mapped-statement>
+        
+    <mapped-statement name="getOtherBankBranchName" result-class="java.util.LinkedHashMap" >    
+        SELECT BRANCH_NAME AS "NAME" FROM OTHER_BANK_BRANCH WHERE BRANCH_CODE = #BRANCH_CODE# AND
+        BANK_CODE = #BANK_CODE#
+    </mapped-statement>
+        
+       
+    <result-map name="getBillsTypeResultMap" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+               
+    <mapped-statement name="getBillsType" result-map="getBillsTypeResultMap">
+        SELECT  PROD_ID, PROD_DESC  FROM BILLS_PRODUCT WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED')
+    </mapped-statement>
+        
+    <result-map name="getBillsChargeTypeResultMap" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="CHARGE_TYPE" />
+        <property name="lookUpDesc" column="CHARGE_TYPE_DESC" />
+    </result-map>
+        
+    <mapped-statement name="getBillsChargeType" result-map="getBillsChargeTypeResultMap">
+        SELECT DISTINCT CHARGE_TYPE, (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM 
+        LOOKUP_MASTER WHERE LOOKUP_MASTER.LOOKUP_ID = 'LODGEMENT.CHARGES' AND 
+        LOOKUP_MASTER.LOOKUP_REF_ID = BILLS_CHARGES.CHARGE_TYPE) AS CHARGE_TYPE_DESC FROM BILLS_CHARGES WHERE 
+        STATUS NOT IN ('DELETED') AND PROD_ID  = #PROD_ID:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="getOperatingType" result-class="java.util.LinkedHashMap">
+        SELECT OPERATES_LIKE, SUB_REG_TYPE, AT_PAR_LIMIT, CONTRA_AC_HD_YN, 
+        CONTRA_AC_HD AS CONTRA_CR_AC_HD, CONTRA_DR_AC_HD FROM BILLS_PRODUCT WHERE PROD_ID  = #PROD_ID:VARCHAR# AND
+        STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+           <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getLodgementMasterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT B.LODGEMENT_ID, B.BORROW_ACCT_NUM, 
+        (select get_cust_name(C.CUST_ID) from act_master am,customer c where am.ACT_NUM = B.BORROW_ACCT_NUM and c.cust_id = am.cust_id) as act_name,
+        BLC.INSTRUMENT_AMOUNT,B.CREATED_DT, B.BILL_STATUS, B.BILLS_TYPE, B.PROD_TYPE,B.INSTRUMENT_TYPE, B.DRAWEE_BANK_CODE, B.STATUS_BY, B.DELAY_RATE FROM BILLS_LODGEMENT_MASTER B,BILLS_LODGEMENT_CHEQUE BLC
+        WHERE OBC_OTHER IS NULL AND ( B.STATUS = 'CREATED' OR B.STATUS = 'UPDATED' OR B.STATUS = 'MODIFIED' )
+        AND  B.BRANCH_CODE =#BRANCH_CODE:VARCHAR#
+        AND (B.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR B.AUTHORIZE_STATUS IS NULL) 
+        AND B.STATUS_BY != #USER_ID:VARCHAR# AND B.LODGEMENT_ID = BLC.LODGEMENT_ID
+        AND B.IS_MULTIPLE_LODGEMENT = 'N'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = B.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                B.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (B.AUTHORIZE_STATUS IS NULL OR 
+                B.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  B.LODGEMENT_ID
+    </dynamic-mapped-statement>
+     
+    <mapped-statement name="authorizeLodgementMaster" result-class="java.util.HashMap">
+        UPDATE BILLS_LODGEMENT_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# 
+    </mapped-statement> 
+      
+    <mapped-statement name="authorizeLodgementMasterHistory" result-class="java.util.HashMap">
+        UPDATE BILLS_LODGEMENT_MASTER_HISTORY SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# AND
+        BILL_STATUS = #BILL_STATUS# AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>   
+       
+    <mapped-statement name="getBillsAccountHeads" result-class="java.util.HashMap" >
+        SELECT GL_AC_HD, INT_AC_HD, CHRG_AC_HD, DD_AC_HD, MARGIN_AC_HD, COMM_AC_HD,
+        POSTAGE_AC_HD,CONTRA_AC_HD, IBR_AC_HD , BILLS_REALISED_HD,TELEPHONE_CHRG_HD,
+        OTHER_HD,SERVICE_TAX_HD,COLL_OBC_FROM_CUST,CREDIT_OBC_TO,OBC_AC_HD,CONT_EXP_BNK_CHRG_DR_HD,MISC_INC_BNK_CHRG_CR_HD,BANK_CHARGE_HEAD,DEBIT_BANK_CHRG_HEAD FROM BILLS_PRODUCT WHERE PROD_ID = #value:VARCHAR# AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+      
+    <mapped-statement name="getSelLodMatAuth" result-class="java.util.HashMap" >
+        select nvl(AUTHORIZE_STATUS,'N') as AUTHORIZE_STATUS from BILLS_LODGEMENT_MASTER where LODGEMENT_ID=#LOD_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getBillsId" result-class="java.util.HashMap" >
+        select * FROM BRANCH_ACNO_MAINTENANCE where prod_id=#BILLS_TYPE:VARCHAR# and branch_id=#BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="geUpdatedBillsId" result-class="java.lang.String" >
+        select GET_CURR_BILLS_ID(#BILLS_TYPE:VARCHAR#,#BRANCH_ID:VARCHAR#) AS CURR_VALUE from dual
+    </mapped-statement>  
+    
+    <mapped-statement name="updateBillsBranchNo" result-class="java.util.HashMap" >
+        update BRANCH_ACNO_MAINTENANCE set LAST_AC_NO =#OLD_SUFFIX:VARCHAR# ,NEXT_AC_NO=#NEW_SUFFIX:VARCHAR# where prod_id=#BILLS_TYPE:VARCHAR# and branch_id=#BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelTranRealAuth" result-class="java.util.HashMap" >
+        select nvl(AUTHORIZE_STATUS,'N') as AUTHORIZE_STATUS from TRANSFER_TRANS where LINK_BATCH_ID=#LOD_ID:VARCHAR# and INST_TYPE=#REALIZE:VARCHAR# and (authorize_status != 'REJECTED' or authorize_status is null)
+    </mapped-statement>
+    <mapped-statement name="getProdIdTyp" result-class="java.util.HashMap" >
+        select PROD_ID,PROD_TYPE from BILLS_LODGEMENT_MASTER where BILLS_TYPE=#BILLS_TYP:VARCHAR# and LODGEMENT_ID=#LODGE_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="getProdIdTyp1" result-class="java.util.HashMap" >
+        select REC_OTHER_BANK from BILLS_LODGEMENT_MASTER where LODGEMENT_ID=#LODGE_ID:VARCHAR# and BILLS_TYPE=#BILLS_TYP:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="getAccountHeadProd1" result-class="java.util.HashMap" >
+        select PRINCIPAL_AC_HD from OTHER_BANK_ACCOUNT_PRODUCTS 
+        where PROD_ID = #REC_OTHER_BANK:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAccountHeadProdForPayRoll" result-class="java.util.HashMap" >
+        select PRINCIPAL_AC_HD as AC_HD_ID from OTHER_BANK_ACCOUNT_PRODUCTS 
+        where PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+      
+      
+    <dynamic-mapped-statement name="getBillsExchange" result-class="java.util.LinkedHashMap">  
+        SELECT FIX_RATE AS "CHARGE", FROM_SLAB as FROM_AMT, 
+        TO_SLAB as TO_AMT, FOR_EVERY_AMT, 
+        FOR_EVERY_RATE, FOR_EVERY_TYPE, COMMISION,START_DT,END_DT
+        FROM  BILLS_CHARGES WHERE PROD_ID = #PROD_ID:VARCHAR#
+                <!--AND (#AMOUNT# BETWEEN FROM_SLAB AND TO_SLAB  OR 
+                #AMOUNT# > (SELECT MAX(TO_SLAB) FROM 
+                BILLS_CHARGES WHERE PROD_ID = #PROD_ID#
+                AND CHARGE_TYPE = #CHARGE_TYPE#
+                AND CUST_CATEGORY = #CUST_CATEGORY# AND ( STATUS != 'DELETED'OR STATUS IS NULL )
+                ))-->
+         <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="AMOUNT_CHECKING">
+                   (cast(#AMOUNT# as numeric) BETWEEN FROM_SLAB AND TO_SLAB)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND CHARGE_TYPE = #CHARGE_TYPE:VARCHAR#
+        AND CUST_CATEGORY = #CUST_CATEGORY:VARCHAR# AND ( STATUS != 'DELETED'OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+      
+    <mapped-statement name="getBillsServiceTax" result-class="java.util.LinkedHashMap"> 
+        SELECT SERVICE_TAX AS "SERVICE_TAX" FROM  bills_charges WHERE PROD_ID = #PROD_ID:VARCHAR#              
+                <!--AND (#AMOUNT# BETWEEN FROM_SLAB AND TO_SLAB OR #AMOUNT# > (SELECT MAX(TO_SLAB) FROM   
+                bills_charges WHERE PROD_ID = #PROD_ID#   AND CHARGE_TYPE = #CHARGE_TYPE#
+                AND CUST_CATEGORY = #CUST_CATEGORY# AND ( STATUS != 'DELETED'OR STATUS IS NULL ))) -->
+        AND (cast(#AMOUNT# as numeric) BETWEEN FROM_SLAB AND TO_SLAB)       
+        AND CHARGE_TYPE = #CHARGE_TYPE:VARCHAR#    AND CUST_CATEGORY = #CUST_CATEGORY:VARCHAR# AND 
+        ( STATUS != 'DELETED'OR STATUS IS NULL )
+    </mapped-statement>
+      
+    <mapped-statement name="getBillsRealHead" result-class="java.util.HashMap"> 
+        SELECT BP.BILLS_REALISED_HD, AH.AC_HD_DESC FROM BILLS_PRODUCT BP, AC_HD AH WHERE BP.PROD_ID = #PROD_ID:VARCHAR# AND BP.STATUS != 'DELETED'
+        AND BP.AUTHORIZE_STATUS = 'AUTHORIZED' AND AH.AC_HD_ID = BP.BILLS_REALISED_HD
+    </mapped-statement>
+      
+    <mapped-statement name="getBillsExtInst" result-class="java.util.HashMap"> 
+        SELECT INSTRUCTION FROM BILLS_LODGEMENT_INSTRUCTION WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR#
+        AND INSTRUCTION = #INSTRUCTION:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+      
+    <mapped-statement name="getBillsOverDueIntDetails" result-class="java.util.HashMap"> 
+        SELECT (TO_DATE(#CUR_DATE:DATE#) - TO_DATE(BLM.CREATED_DT)) AS DIFF_DATE, BLM.BILL_STATUS, BLM.BILLS_TYPE,
+        BP.TRANS_PERIOD, BP.INT_AC_HD,
+        ((TO_DATE(#CUR_DATE:DATE#) - TO_DATE(BLM.CREATED_DT))-BP.TRANS_PERIOD) AS INT_PERIOD
+        FROM BILLS_LODGEMENT_MASTER_HISTORY BLM, BILLS_PRODUCT BP
+        WHERE BLM.LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# 
+        AND BLM.STATUS != 'DELETED' AND BLM.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        BLM.BILLS_TYPE = BP.PROD_ID AND (TO_DATE(#CUR_DATE:DATE#) - TO_DATE(BLM.CREATED_DT)) > BP.TRANS_PERIOD AND
+        BP.AUTHORIZE_STATUS = 'AUTHORIZED' AND BP.STATUS != 'DELETED' AND BLM.BILL_STATUS = 'LODGEMENT'
+    </mapped-statement>
+      
+    <mapped-statement name="getBillsOverDueIntDetailsForICC" result-class="java.util.HashMap"> 
+        SELECT (TO_DATE(#CUR_DATE#) - TO_DATE(BLM.CREATED_DT)) AS DIFF_DATE, BLM.BILL_STATUS, BLM.BILLS_TYPE,
+        BP.TRANS_PERIOD, BP.INT_AC_HD,
+        ((TO_DATE(#CUR_DATE#) - TO_DATE(BLM.CREATED_DT))-BP.TRANS_PERIOD) AS INT_PERIOD
+        FROM BILLS_LODGEMENT_MASTER_HISTORY BLM, BILLS_PRODUCT BP
+        WHERE BLM.LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# 
+        AND BLM.STATUS != 'DELETED' AND BLM.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        BLM.BILLS_TYPE = BP.PROD_ID AND
+        BP.AUTHORIZE_STATUS = 'AUTHORIZED' AND BP.STATUS != 'DELETED' AND BLM.BILL_STATUS = 'LODGEMENT'
+    </mapped-statement>
+      
+    <mapped-statement name="getBillsTransPrd" result-class="java.util.HashMap"> 
+        SELECT BLM.BILL_STATUS, BLM.BILLS_TYPE,
+        BP.TRANS_PERIOD, BP.INT_AC_HD
+        FROM BILLS_LODGEMENT_MASTER BLM, BILLS_PRODUCT BP
+        WHERE BLM.LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# 
+        AND BLM.STATUS != 'DELETED' AND
+        BLM.BILLS_TYPE = BP.PROD_ID AND
+        BP.AUTHORIZE_STATUS = 'AUTHORIZED' AND BP.STATUS != 'DELETED'
+    </mapped-statement>
+      
+      <!--<result-map name="getBillsProdIDResultMap" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+	        <property name="lookUpRefID" column="PROD_ID" />
+	        <property name="lookUpDesc" column="PROD_DESC" />
+	</result-map>-->
+      
+    <mapped-statement name="getBillsProdID" result-class="java.util.HashMap"> 
+        SELECT LP.PROD_ID, LP.PROD_DESC FROM LOANS_PRODUCT LP, LOANS_PROD_INTREC LPI WHERE LP.BEHAVES_LIKE = #BEHAVES_LIKE:VARCHAR#         
+        AND (LP.STATUS = 'CREATED' OR LP.STATUS = 'MODIFIED') AND LP.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        LP.PROD_ID = LPI.PROD_ID AND LPI.BILL_BY_BILL = 'Y'
+    </mapped-statement>
+      
+    <mapped-statement name="getBillsRates" result-class="java.util.HashMap"> 
+        select TRANS_PERIOD,AT_PAR_LIMIT, DISCOUNT_RATE_BD,OVERDUE_RATE_BD, INTEREST_RATE_CBP, OVERDUE_RATE_CBP,
+        POSTAGE_RATE,DELAYED_RATE_CHQ, NO_INT_DAYS, INT_FOR_ICC from BILLS_PRODUCT where SUB_REG_TYPE = #SUB_REG_TYPE:VARCHAR#
+        AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' AND PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>  
+      
+    <mapped-statement name="getBillsRatesAct" result-class="java.util.HashMap"> 
+        select TRANS_PERIOD,AT_PAR_LIMIT, DISCOUNT_RATE_BD,OVERDUE_RATE_BD, INTEREST_RATE_CBP, OVERDUE_RATE_CBP,
+        POSTAGE_RATE,DELAYED_RATE_CHQ, NO_INT_DAYS, INT_FOR_ICC from bills_rates where
+        STATUS != 'DELETED' AND LODGE_ID = #LODGE_ID:VARCHAR#
+    </mapped-statement> 
+              
+    <dynamic-mapped-statement name="viewBillsLodgementHistory" result-class="java.util.LinkedHashMap"> 
+        SELECT BLH.LODGEMENT_ID, BLH.BORROW_ACCT_NUM, 
+        (select get_cust_name(C.CUST_ID) from act_master am,customer c where am.ACT_NUM = BLH.BORROW_ACCT_NUM and c.cust_id = am.cust_id) as act_name,
+        BLC.INSTRUMENT_AMOUNT, BLH.CREATED_DT, BLH.BILLS_TYPE,BLH.PROD_TYPE,BLH.INSTRUMENT_TYPE, BLH.DRAWEE_BANK_CODE, BLH.BILL_STATUS, 
+        BLH.AUTHORIZE_STATUS, BLH.TRANSTYPE, BLH.DELAY_RATE FROM BILLS_LODGEMENT_MASTER_history BLH, BILLS_LODGEMENT_CHEQUE BLC WHERE BLH.AUTHORIZE_STATUS IN ('AUTHORIZED','REJECTED')
+        AND BLH.LODGEMENT_ID = BLC.LODGEMENT_ID
+          <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="LODGEMENT_ID">
+                    UPPER(BLH.LODGEMENT_ID) LIKE UPPER('%$LODGEMENT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="BORROW_ACCT_NUM">
+                    UPPER(BLH.BORROW_ACCT_NUM) LIKE UPPER('%$BORROW_ACCT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_AMOUNT">
+                    UPPER(BLC.INSTRUMENT_AMOUNT) LIKE UPPER('%$INSTRUMENT_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(BLH.CREATED_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BILLS_TYPE">
+                    UPPER(BLH.BILLS_TYPE) LIKE UPPER('%$BILLS_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_TYPE">
+                    UPPER(BLH.INSTRUMENT_TYPE) LIKE UPPER('%$INSTRUMENT_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DRAWEE_BANK_CODE">
+                    UPPER(BLH.DRAWEE_BANK_CODE) LIKE UPPER('%$DRAWEE_BANK_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BILL_STATUS">
+                    UPPER(BLH.BILL_STATUS) LIKE UPPER('%$BILL_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZE_STATUS">
+                    UPPER(BLH.AUTHORIZE_STATUS) LIKE UPPER('%$AUTHORIZE_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANSTYPE">
+                    UPPER(BLH.TRANSTYPE) LIKE UPPER('%$TRANSTYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DELAY_RATE">
+                    UPPER(BLH.DELAY_RATE) LIKE UPPER('%$DELAY_RATE$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY BLH.LODGEMENT_ID,BLH.CREATED_DT
+    </dynamic-mapped-statement> 
+      
+    <mapped-statement name="checkBillsLodgementHistory" result-class="java.util.HashMap"> 
+        select LODGEMENT_ID from BILLS_LODGEMENT_MASTER_history where bill_status = #BILL_STATUS:VARCHAR#
+        and LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# and status != 'DELETED' and (authorize_status != 'REJECTED' or authorize_status is null)
+    </mapped-statement>  
+     
+    <mapped-statement name="checkOutwardLodged" result-class="java.util.HashMap"> 
+        select OUTWARD_ID, STATUS, AUTHORIZE_STATUS from OUTWARD_CLEARING where INSTRUMENT_TYPE = #INSTRUMENT_TYPE:VARCHAR# and
+        INSTRUMENT_DT = (TO_DATE(#REMIT_INST_DT#,'DD-MM-YYYY')) and AMOUNT = #AMOUNT:NUMBER# and BANK_CODE = #BANK_CODE:VARCHAR#
+        and BRANCH_CODE = #BRANCH_CODE:VARCHAR# and INSTRUMENT_NO2 = #INST_NO2:VARCHAR# and status != 'DELETED'
+    </mapped-statement> 
+     
+     <!--<dynamic-mapped-statement name="getBillStatus" result-class="java.util.HashMap" >
+            SELECT LODGEMENT_ID, BILL_STATUS, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_DT FROM bills_lodgement_master
+            <dynamic>
+                <isParameterPresent>
+                    <isNotEmpty prepend= "" property = "STATUS_DT" >
+                        AS OF TIMESTAMP #STATUS_DT#
+                    </isNotEmpty>
+                </isParameterPresent>
+            </dynamic>
+            WHERE LODGEMENT_ID=#LODGEMENT_ID#
+        </dynamic-mapped-statement>-->
+        
+    <mapped-statement name="getBillStatus" result-class="java.util.HashMap">
+        select BILL_STATUS, AUTHORIZE_STATUS, AUTHORIZE_DT, CUST_CATEGORY,LODGEMENT_ID from bills_lodgement_master_history
+        where status_dt = (select max(status_dt) from bills_lodgement_master_history where 
+        bill_status!= #BILL_STATUS:VARCHAR# and lodgement_id = #LODGEMENT_ID:VARCHAR# and authorize_status != 'REJECTED') and
+        bill_status!= #BILL_STATUS:VARCHAR# and lodgement_id = #LODGEMENT_ID:VARCHAR#
+        and authorize_status != 'REJECTED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateBillStatus" inline-parameters="true">
+        UPDATE bills_lodgement_master SET 
+        BILL_STATUS = #BILL_STATUS:VARCHAR#,
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:DATE#
+        WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# AND
+        BILL_STATUS = #CUR_STATUS:VARCHAR#
+    </mapped-statement>	
+        
+    <mapped-statement name="checkPayInSlip" result-class="java.util.HashMap">
+        SELECT BATCH_ID from pay_in_slip where remarks = #LODGEMENT_ID:VARCHAR# and status != 'DELETED'
+        AND AUTHORIZE_STATUS is null
+    </mapped-statement>	
+        
+    <mapped-statement name="updateOutwardClearing" inline-parameters="true">
+        UPDATE OUTWARD_CLEARING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #STATUS_BY:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:VARCHAR#-->
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# 
+        and STATUS!='DELETED' and 
+        AUTHORIZE_STATUS is null
+        and INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        and OUTWARD_DT = #OUTWARD_DT:DATE#
+    </mapped-statement>	
+       
+    <mapped-statement name="updatePIS" inline-parameters="true">
+        UPDATE pay_in_slip SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #STATUS_BY:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:VARCHAR#-->
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# 
+        and STATUS!='DELETED' and 
+        AUTHORIZE_STATUS is null
+        and BRANCH_ID = #INITIATED_BRANCH:VARCHAR#
+        and PAY_IN_SLIP_DT = #OUTWARD_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getBillsExtRecord" result-class="java.util.HashMap"> 
+        SELECT LODGEMENT_ID FROM BILLS_LODGEMENT_MASTER WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR#
+        AND BILL_STATUS = #BILL_STATUS:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getDebitAmountCPD" result-class="java.util.HashMap"> 
+        select AMOUNT from transfer_trans where link_batch_id = #LINK_BATCH_ID:VARCHAR# and inst_type = 'LODGEMENT' and
+        trans_type = 'DEBIT' AND ACT_NUM = #ACT_NUM:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement>
+      
+    <mapped-statement name="getSelectOtherBankBranchAccHead" result-class="java.util.HashMap"> 
+        SELECT ACCOUNT_HEAD,PROD_TYPE FROM OTHER_BANK OB,OTHER_BANK_BRANCH OBB WHERE OBB.STATUS!='DELETED' AND OB.AUTHORIZE_STATUS='AUTHORIZED'
+        AND OB.BANK_CODE=OBB.BANK_CODE AND OBB.BANK_CODE=#BANK_CODE:VARCHAR# AND OBB.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="getSelInvAcHd" result-class="java.util.HashMap"> 
+        select C.IINVESTMENT_AC_HD
+        from INVESTMENT_MASTER m
+        join INVESTMENT_CONF_DETAILS c on C.INVESTMENT_PROD_ID = M.INVESTMENT_PROD_ID
+        where M.INVESTMENT_REF_NO = #ACCOUNT_HEAD:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelRefNo" result-class="java.util.HashMap">
+        select ACT_REF_NO from OTHER_BANKS_ACT_MASTER where ACT_MASTER_ID= #ACCOUNT_HEAD:VARCHAR#
+    </mapped-statement>    
+    <mapped-statement name="getLodgementBillWithoutBankDetails" result-class="java.util.HashMap"> 
+        SELECT BLM.LODGEMENT_ID,BLM.CREATED_DT,BLC.INSTRUMENT_AMOUNT AS AMOUNT,BLC.INSTRUMENT_NO,BLM.BORROW_ACCT_NUM
+        FROM BILLS_LODGEMENT_MASTER BLM,BILLS_LODGEMENT_CHEQUE BLC WHERE BLM.STATUS!='DELETED' AND BLM.AUTHORIZE_STATUS!='REJECTED' and BILL_STATUS!='REALIZE'
+        AND REC_OTHER_BANK is NULL AND BLM.LODGEMENT_ID=BLC.LODGEMENT_ID
+    </mapped-statement>
+      
+    <mapped-statement name="updateOBCDetails" result-class="java.util.HashMap"> 
+        UPDATE BILLS_LODGEMENT_MASTER SET REC_OTHER_BANK=#OBC_CODE:VARCHAR#, REC_OTHER_BRANCH=#BRANCH_CODE:VARCHAR#,AUTHORIZE_STATUS='',AUTHORIZE_BY='',
+        AUTHORIZE_DT='',REMITTED_DT=#REMIT_DATE:DATE#,OBC_OTHER=#OBC_OTHER:VARCHAR#
+        WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS!='REJECTED' AND LODGEMENT_ID=#LODGEMENT_N0:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="getUnAuthorizedOBCRecords" result-class="java.util.HashMap"> 
+        SELECT BLM.LODGEMENT_ID,BLM.CREATED_DT,BLC.INSTRUMENT_AMOUNT AS AMOUNT,BLC.INSTRUMENT_NO,BLM.BORROW_ACCT_NUM,BLM.REC_OTHER_BANK,BLM.REC_OTHER_BRANCH,BLM.REMITTED_DT
+        FROM BILLS_LODGEMENT_MASTER BLM,BILLS_LODGEMENT_CHEQUE BLC WHERE BLM.STATUS!='DELETED' AND BLM.AUTHORIZE_STATUS is null  and BILL_STATUS!='REALIZE'
+        AND BLM.LODGEMENT_ID=BLC.LODGEMENT_ID AND REC_OTHER_BANK is NOT NULL and OBC_OTHER='Y'
+    </mapped-statement>
+       
+    <mapped-statement name="authorizeOBC" result-class="java.util.HashMap"> 
+        UPDATE BILLS_LODGEMENT_MASTER SET AUTHORIZE_STATUS=#AUTHORIZED:VARCHAR# , AUTHORIZE_BY=#USER:VARCHAR#,AUTHORIZE_DT=#DATE:DATE# WHERE LODGEMENT_ID=#LODGEMENT_ID:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+      
+    <mapped-statement name="getOtherBankBranchDetailsForDishonour" result-class="java.util.HashMap"> 
+        SELECT PROD_TYPE FROM OTHER_BANK_BRANCH WHERE BRANCH_NAME=#value:VARCHAR# and STATUS!='DELETED'
+    </mapped-statement>
+      
+      
+    <mapped-statement name="getCountTransferTrans" result-class="java.util.LinkedHashMap"> 
+        SELECT count(*)  as NUM from transfer_trans where link_batch_id=#LINK:VARCHAR# and authorize_status='AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="chkalreadyLodged" result-class="java.util.LinkedHashMap"> 
+        select count(*) as NUM from ALL_TRANS a where A.LINK_BATCH_ID=#LINK_BATCHID:VARCHAR#
+        and A.STATUS!='DELETED' and A.AUTHORIZE_STATUS!='REJECTED'
+    </mapped-statement>
+    
+    <!-- Added by nithya for bills multiple lodgement -->
+    
+    <mapped-statement name="insertMultipleLodgementMasterTO" inline-parameters="true">
+        INSERT INTO BILLS_MULTI_LODGEMENT_MASTER
+        (PROD_ID, PROD_TYPE, BORROW_ACCT_NUM, BORROW_NAME, INDIVIDUAL_AMOUNT, LODGEMENT_ID, STATUS, INSTRUCTION, INST_AMT, SERVICE_TAX
+        ) VALUES (
+        #productId:VARCHAR#, #productType:VARCHAR#, #acctNo:VARCHAR#, #borrowName:VARCHAR#, #individualAmt:NUMBER#, #lodgementId:VARCHAR# , #status:VARCHAR#,
+        #instruction:VARCHAR#, #instAmount:NUMBER#, #serviceTax:NUMBER#
+	)
+    </mapped-statement>
+
+    <mapped-statement name="getSelectMultipleLodgementMasterTO" result-class="java.util.LinkedHashMap" >
+        SELECT BM.LODGEMENT_ID,BM.INSTRUCTION,BM.INST_AMT,BM.SERVICE_TAX,BM.BORROW_ACCT_NUM,BM.PROD_ID,BM.PROD_TYPE,BM.INDIVIDUAL_AMOUNT
+        FROM BILLS_MULTI_LODGEMENT_MASTER bm
+        WHERE BM.LODGEMENT_ID = #LODGEMENT_ID:VARCHAR# AND BM.STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateMultipleLodgementMasterTO" inline-parameters="true">
+        UPDATE BILLS_MULTI_LODGEMENT_MASTER SET 
+        PROD_ID = #productId:VARCHAR#,
+	PROD_TYPE = #productType:VARCHAR#,
+	BORROW_ACCT_NUM = #acctNo:VARCHAR#,
+	INDIVIDUAL_AMOUNT = #individualAmt:NUMBER#,
+	LODGEMENT_ID = #lodgementId:VARCHAR#,
+	STATUS = #status:VARCHAR#,
+	INSTRUCTION = #instruction:VARCHAR#,
+	INST_AMT = #instAmount:NUMBER#,
+	SERVICE_TAX  = #serviceTax:NUMBER#
+	WHERE LODGEMENT_ID = #lodgementId:VARCHAR# 
+        AND INSTRUCTION = #instruction:VARCHAR#
+        AND STATUS NOT IN ('DELETED')
+        AND BORROW_ACCT_NUM = #acctNo:VARCHAR#
+    </mapped-statement>          
+    
+    <mapped-statement name="updateMultipleLodgementInstructions" result-class="java.util.HashMap">     
+     UPDATE BILLS_MULTI_LODGEMENT_MASTER SET       
+     STATUS = 'DELETED'	
+     WHERE LODGEMENT_ID = #LODGEMENT_ID:VARCHAR#         
+    </mapped-statement>      
+   
+    <!-- End -->
+    
+     <dynamic-mapped-statement name="getMultiLodgementMasterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT B.LODGEMENT_ID, B.BORROW_ACCT_NUM, 
+        (select get_cust_name(C.CUST_ID) from act_master am,customer c where am.ACT_NUM = B.BORROW_ACCT_NUM and c.cust_id = am.cust_id) as act_name,
+        BLC.INSTRUMENT_AMOUNT,B.CREATED_DT, B.BILL_STATUS, B.BILLS_TYPE, B.PROD_TYPE,B.INSTRUMENT_TYPE, B.DRAWEE_BANK_CODE, B.STATUS_BY, B.DELAY_RATE FROM BILLS_LODGEMENT_MASTER B,BILLS_LODGEMENT_CHEQUE BLC
+        WHERE OBC_OTHER IS NULL AND ( B.STATUS = 'CREATED' OR B.STATUS = 'UPDATED' OR B.STATUS = 'MODIFIED' )
+        AND  B.BRANCH_CODE =#BRANCH_CODE:VARCHAR#
+        AND (B.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR B.AUTHORIZE_STATUS IS NULL) 
+        AND B.STATUS_BY != #USER_ID:VARCHAR# AND B.LODGEMENT_ID = BLC.LODGEMENT_ID
+        AND B.IS_MULTIPLE_LODGEMENT = 'Y'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = B.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                B.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (B.AUTHORIZE_STATUS IS NULL OR 
+                B.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  B.LODGEMENT_ID
+    </dynamic-mapped-statement>
+     
+    <mapped-statement name="getSelectMultiLodgementMaster" result-class="java.util.LinkedHashMap" >
+        SELECT BLM.LODGEMENT_ID,BLM.BORROW_ACCT_NUM,
+        (select get_cust_name(C.CUST_ID) from act_master am,customer c where am.ACT_NUM = BLM.BORROW_ACCT_NUM and c.cust_id = am.cust_id) as act_name,
+        BLC.INSTRUMENT_AMOUNT,BLM.CREATED_DT,BLM.BILLS_TYPE,BLM.PROD_TYPE,BLM.INSTRUMENT_TYPE, BLM.DRAWEE_BANK_CODE, BLM.BILL_STATUS, 
+        BLM.AUTHORIZE_STATUS, BLM.TRANSTYPE, BLM.DELAY_RATE FROM BILLS_LODGEMENT_MASTER BLM,BILLS_LODGEMENT_CHEQUE BLC WHERE OBC_OTHER IS NULL AND
+        ((BLM.BILL_STATUS != 'REALIZE' AND BLM.AUTHORIZE_STATUS != 'AUTHORIZED') OR 
+        (BLM.BILL_STATUS != 'DISHONOUR' AND BLM.AUTHORIZE_STATUS != 'AUTHORIZED') OR 
+        (BLM.BILL_STATUS != 'CLOSURE' AND BLM.AUTHORIZE_STATUS != 'AUTHORIZED') OR
+        (BLM.BILL_STATUS = 'LODGEMENT' AND (BLM.AUTHORIZE_STATUS = 'AUTHORIZED' OR BLM.AUTHORIZE_STATUS IS NULL)) OR
+        (BLM.BILL_STATUS = 'DISHONOUR' AND BLM.AUTHORIZE_STATUS IS NULL) OR
+        (BLM.BILL_STATUS = 'CLOSURE' AND BLM.AUTHORIZE_STATUS IS NULL) OR
+        (BLM.BILL_STATUS = 'REALIZE' AND BLM.AUTHORIZE_STATUS IS NULL) OR 
+        (BLM.BILL_STATUS = 'PROCEEDS_RECEIVED'
+        AND (BLM.AUTHORIZE_STATUS = 'AUTHORIZED' OR BLM.AUTHORIZE_STATUS IS NULL))) AND BLM.STATUS != 'DELETED'
+        AND (BLM.AUTHORIZE_STATUS != 'REJECTED' or BLM.AUTHORIZE_STATUS is NULL) AND BLM.LODGEMENT_ID = BLC.LODGEMENT_ID
+        AND BLM.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        AND BLM.IS_MULTIPLE_LODGEMENT = 'Y'
+        ORDER BY  BLM.LODGEMENT_ID
+    </mapped-statement>
+
+    <mapped-statement name="getIbrAcHead" result-class="java.util.HashMap"> 
+        SELECT IBR_AC_HD,BILLS_REALISED_HD FROM BILLS_PRODUCT WHERE PROD_ID=#PROD_ID# 
+    </mapped-statement>
+      
+    <mapped-statement name="getAcHeadDesc" result-class="java.util.HashMap"> 
+        SELECT AC_HD_DESC FROM AC_HD WHERE AC_HD_ID=#IBR_AC_HD# 
+    </mapped-statement> 
+     
+     
+</sql-map>

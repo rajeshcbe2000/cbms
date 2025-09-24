@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.  
+ * 
+ *
+    Document   : HeadMap.xml
+    Created on : August 18, 2003, 3:20 PM
+    Author     : annamalai
+    Description:
+        Purpose of the document follows.
+            To provide a XML file that gives the reference ID and Description if the ID is given.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="HeadMap">
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to
+	be auto-mapped results to AccountCreationTO object (JavaBean) properties -->
+    
+    <mapped-statement name="insertMajorHead" inline-parameters="true">
+        INSERT INTO MJR_AC_HD
+        (MJR_AC_HD_ID, MJR_AC_HD_DESC, MJR_AC_HD_TYPE, STATUS, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, STATUS_BY, STATUS_DT, MJR_AC_ORDER,SPLIT_SUB_HEADS,FINAL_ACCOUNT_TYPE,SUB_ACCOUNT_TYPE
+        ) VALUES (
+        #mjrAcHdId:VARCHAR#, #mjrAcHdDesc:VARCHAR#, #mjrAcHdType:VARCHAR#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, 
+        #authorizeDt:TIMESTAMP#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#,#mjrAcHdId#, #glConsolidated:VARCHAR#,#finalActType:VARCHAR#,#subActType:VARCHAR#)
+    </mapped-statement>	
+        
+    <mapped-statement name="updateMajorHead" inline-parameters="true">
+        UPDATE MJR_AC_HD SET 
+<!--		MJR_AC_HD_ID = #mjrAcHdId:VARCHAR#,-->
+        MJR_AC_HD_DESC = #mjrAcHdDesc:VARCHAR#,
+        SPLIT_SUB_HEADS = #glConsolidated:VARCHAR#,
+		<!--MJR_AC_HD_TYPE = #mjrAcHdType:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        FINAL_ACCOUNT_TYPE = #finalActType:VARCHAR#,
+        SUB_ACCOUNT_TYPE = #subActType:VARCHAR#
+        WHERE MJR_AC_HD_ID = cast(#mjrAcHdId:VARCHAR# as varchar) AND STATUS !='DELETED' 
+    </mapped-statement>	
+        
+    <mapped-statement name="deleteMajorHead" inline-parameters="true">
+        UPDATE MJR_AC_HD SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE MJR_AC_HD_ID = #mjrAcHdId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertSubHead" inline-parameters="true">
+        INSERT INTO SUB_AC_HD
+        (MJR_AC_HD_ID, SUB_AC_HD_ID, SUB_AC_HD_DESC, STATUS, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #mjrAcHdId:VARCHAR#, #subAcHdId:VARCHAR#, #subAcHdDesc:VARCHAR#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateSubHead" inline-parameters="true">
+        UPDATE SUB_AC_HD SET 
+        MJR_AC_HD_ID = #mjrAcHdId:VARCHAR#,
+        SUB_AC_HD_ID = #subAcHdId:VARCHAR#,
+        SUB_AC_HD_DESC = #subAcHdDesc:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE SUB_AC_HD_ID = #subAcHdId:VARCHAR# AND MJR_AC_HD_ID = #mjrAcHdId:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="deleteSubHead" inline-parameters="true">
+        UPDATE SUB_AC_HD SET STATUS = #status:VARCHAR# WHERE SUB_AC_HD_ID = #subAcHdId:VARCHAR# AND MJR_AC_HD_ID = #mjrAcHdId:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="deleteManySubHead" inline-parameters="true">
+        UPDATE SUB_AC_HD SET STATUS = 'DELETED' WHERE MJR_AC_HD_ID = #mjrAcHdId:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAllMajorHead" result-class="java.util.LinkedHashMap" >
+        SELECT MJR_AC_HD_TYPE as "Account Type", MJR_AC_HD_ID as "Major Account Head",
+        MJR_AC_HD_DESC  as "Major Account HEAD DESCRIPTION" 
+        FROM MJR_AC_HD  
+        WHERE STATUS != 'DELETED' 
+          <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account Type">
+                    UPPER(MJR_AC_HD_TYPE) LIKE UPPER('%$Account Type$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Major Account Head">
+                    UPPER(MJR_AC_HD_ID) LIKE UPPER('%$Major Account Head$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Major Account HEAD DESCRIPTION">
+                    UPPER(MJR_AC_HD_DESC) LIKE UPPER('%$Major Account Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY MJR_AC_HD_ID
+    </dynamic-mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to MajorHeadTO object (JavaBean) properties -->
+    <result-map name="getMajorHeadTOResult" class="com.see.truetransact.transferobject.generalledger.HeadTO">
+        <property name="mjrAcHdId" column="MJR_AC_HD_ID"/>
+        <property name="mjrAcHdDesc" column="MJR_AC_HD_DESC"/>
+        <property name="mjrAcHdType" column="MJR_AC_HD_TYPE"/>
+        <property name="glConsolidated" column="SPLIT_SUB_HEADS"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="finalActType" column="FINAL_ACCOUNT_TYPE"/>
+        <property name="subActType" column="SUB_ACCOUNT_TYPE"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectMajorHeadTO" result-map="getMajorHeadTOResult" >
+        SELECT * FROM MJR_AC_HD 
+        WHERE MJR_AC_HD_ID = #value:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SubHeadTO object (JavaBean) properties -->
+    <result-map name="getSubHeadTOResult" class="com.see.truetransact.transferobject.generalledger.SubHeadTO">
+        <property name="mjrAcHdId" column="MJR_AC_HD_ID"/>
+        <property name="subAcHdId" column="SUB_AC_HD_ID"/>
+        <property name="subAcHdDesc" column="SUB_AC_HD_DESC"/>
+        
+		<!--<property name="status" column="STATUS"/>-->
+    </result-map>   
+    
+    <mapped-statement name="getSelectSubHeadTO" result-map="getSubHeadTOResult" >
+        SELECT MJR_AC_HD_ID,SUB_AC_HD_ID,SUB_AC_HD_DESC FROM SUB_AC_HD WHERE MJR_AC_HD_ID = #value:VARCHAR# AND STATUS  NOT IN ('DELETED') ORDER BY SUB_AC_HD_ID
+    </mapped-statement>  
+    
+    <mapped-statement name="chkMjrAcHdExistance" result-class= "java.lang.Integer" >
+        SELECT COUNT (*) AS "COUNT" FROM MJR_AC_HD WHERE MJR_AC_HD_ID = #MJR_CODE:VARCHAR# AND STATUS !='DELETED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getMjrAcHdList" result-class= "java.util.LinkedHashMap" >
+        SELECT MJR_AC_HD_TYPE AS "A/C Type",MJR_AC_HD_ID AS "Major A/C HEAD Code",MJR_AC_HD_DESC AS "Description" FROM MJR_AC_HD WHERE STATUS NOT IN ('DELETED')
+            
+        <dynamic>        
+            <isNotEmpty prepend = "AND" property = "MJR_AC_HD_TYPE" >
+                MJR_AC_HD_TYPE = #MJR_AC_HD_TYPE:VARCHAR# 
+            </isNotEmpty>      
+        </dynamic>
+            
+        ORDER BY MJR_AC_HD_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="ctAcHd_SubHd" result-class= "java.lang.Integer" >
+        SELECT COUNT(*) FROM AC_HD WHERE MJR_AC_HD_ID = #MJR_HD:VARCHAR# AND SUB_AC_HD_ID = #SUB_HD:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getDet" result-class= "java.util.HashMap" >
+        select a.ACT_NUM,B.PROD_TYPE,a.FNAME
+        from ALL_CUSTOMER a join ALL_PRODUCT_ACCTS B
+        on (a.ACT_NUM=B.ACT_NUM or a.ACT_NUM=B.ACT_NUM ||'_1')
+        where a.cust_id='C010003072' 
+    </mapped-statement>
+        
+<!-- ======================================Autorization==============================================  -->        
+
+
+    <dynamic-mapped-statement name="getHeadAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT MJR_AC_HD_TYPE as "Account Type", MJR_AC_HD_ID as "Major Account Head", 
+        MJR_AC_HD_DESC  as "Major Account HEAD DESCRIPTION", STATUS as "Status"
+        FROM MJR_AC_HD M 
+        WHERE (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = M.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                M.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (M.AUTHORIZE_STATUS IS NULL OR 
+                M.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY MJR_AC_HD_ID
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authorizeHeadData" result-class="java.util.HashMap">
+        UPDATE MJR_AC_HD SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE MJR_AC_HD_ID = #MAJOR ACCOUNT HEAD:VARCHAR#  
+    </mapped-statement>
+        
+</sql-map>

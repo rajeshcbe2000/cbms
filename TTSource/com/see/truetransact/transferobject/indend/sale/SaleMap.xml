@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BorrowingsMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <dynamic-mapped-statement name="Sale.getSelectSaleList" result-class="java.util.LinkedHashMap" >
+        SELECT SMID, NAME ,SEC_AMT FROM SALES_MASTER  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="insertSaleTO" inline-parameters="true">
+        INSERT INTO SALES_MASTER
+        (SMID, NAME, ADDRESS, SEC_AMT,REMARK,
+        AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,STATUS
+        ) VALUES 
+        (#smId:VARCHAR#, #name:VARCHAR#, #address:VARCHAR#, #sec_amt:NUMBER#, 
+        #remarks:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#)
+    </mapped-statement> 
+    <mapped-statement name="updateSaleTO" inline-parameters="true">
+        UPDATE SALES_MASTER SET 
+        NAME = #name:VARCHAR#,
+        ADDRESS= #address:VARCHAR#,
+        SEC_AMT= #sec_amt:NUMBER#,
+        REMARK = #remarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#
+        WHERE SMID = #smId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deleteSaleTO" inline-parameters="true">
+        UPDATE SALES_MASTER SET 
+        STATUS = #status:VARCHAR# 
+        WHERE SMID = #smId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getSaleAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  SMID, NAME ,SEC_AMT FROM SALES_MASTER TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+         <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  SMID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeSale" result-class="java.util.HashMap">
+        UPDATE SALES_MASTER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  SMID = #SMID:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getSaleTOResult" class="com.see.truetransact.transferobject.indend.sale.SaleTO">
+        <property name="smId" column="SMID"/>
+        <property name="name" column="NAME"/>
+        <property name="address" column="ADDRESS"/>
+        <property name="sec_amt" column="SEC_AMT"/>
+        <property name="remarks" column="REMARK"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+               
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="Sale.getSelectSale" result-map="getSaleTOResult" >
+        SELECT * FROM SALES_MASTER 
+        WHERE STATUS NOT IN ('DELETED') AND SMID = #SMID:VARCHAR#
+    </mapped-statement>
+        
+      
+        
+</sql-map>

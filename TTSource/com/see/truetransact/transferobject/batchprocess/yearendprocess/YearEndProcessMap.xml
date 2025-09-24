@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="YearEndProcessMap">
+    <dynamic-mapped-statement name="YearEndProcess.getSelectAcctHeadList" result-class="java.util.LinkedHashMap" >
+        SELECT AD.AC_HD_DESC, AD.AC_HD_ID, AD.AC_HD_CODE
+        FROM AC_HD AD, AC_HD_PARAM  ADP
+        WHERE ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        ADP.AUTHORIZE_STATUS = 'AUTHORIZED' AND                 
+        AD.AC_HD_ID = ADP.AC_HD_ID 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_TYPE">
+                    AD.MJR_AC_HD_ID IN 
+                    (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+                    WHERE MJR_AC_HD_TYPE= #ACCT_TYPE:VARCHAR# 
+                    AND STATUS != 'DELETED' OR STATUS IS NULL)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="YearEndProcess.getSelectAcctHeadTableList" result-class="java.util.LinkedHashMap" >
+        SELECT AD.AC_HD_ID, AD.AC_HD_DESC, 
+        DECODE(#ACCT_TYPE:VARCHAR#, 'INCOME', DECODE(ADP.BALANCE_TYPE, 'CREDIT', ADP.CUR_BAL, -1*ADP.CUR_BAL), 
+        DECODE(ADP.BALANCE_TYPE, 'DEBIT', ADP.CUR_BAL, -1*ADP.CUR_BAL)) AS BALANCE
+        FROM AC_HD AD, GL  ADP
+        WHERE BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        AD.AC_HD_ID = ADP.AC_HD_ID AND NVL(ADP.CUR_BAL,0)!=0
+        AND AD.MJR_AC_HD_ID IN 
+        (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+        WHERE MJR_AC_HD_TYPE= #ACCT_TYPE:VARCHAR# 
+        AND STATUS != 'DELETED' OR STATUS IS NULL)
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="YearEndProcess.getProfitOrLoss" result-class="java.util.LinkedHashMap" >
+        SELECT INCOME, EXPENDITURE, INCOME-EXPENDITURE AS PROFIT_OR_LOSS FROM (
+        SELECT 
+        SUM(BALANCE) AS INCOME FROM 
+        (SELECT DECODE(ADP.BALANCE_TYPE, 'CREDIT', ADP.CUR_BAL, -1*ADP.CUR_BAL) AS BALANCE
+        FROM AC_HD AD, GL  ADP
+        WHERE BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        AD.AC_HD_ID = ADP.AC_HD_ID AND NVL(ADP.CUR_BAL,0)!=0
+        AND AD.MJR_AC_HD_ID IN 
+        (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+        WHERE MJR_AC_HD_TYPE= 'INCOME' 
+        AND STATUS != 'DELETED' OR STATUS IS NULL)
+        )) A,
+        (SELECT 
+        SUM(BALANCE) AS EXPENDITURE FROM 
+        (SELECT DECODE(ADP.BALANCE_TYPE, 'DEBIT', ADP.CUR_BAL, -1*ADP.CUR_BAL) AS BALANCE
+        FROM AC_HD AD, GL  ADP
+        WHERE BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        AD.AC_HD_ID = ADP.AC_HD_ID AND NVL(ADP.CUR_BAL,0)!=0
+        AND AD.MJR_AC_HD_ID IN 
+        (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+        WHERE MJR_AC_HD_TYPE= 'EXPENDITURE' 
+        AND STATUS != 'DELETED' OR STATUS IS NULL)
+        )) B
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="insertYearEndProcessMaster" inline-parameters="true">
+        Insert into YEAR_END_PROCESS_MASTER
+        (PROCESS_DT, PROFIT_AC_HEAD, LOSS_AC_HEAD, TOTAL_INCOME, TOTAL_EXPENDITURE,
+        PROFIT_OR_LOSS, PROFIT_OR_LOSS_VALUE, STATUS_BY, STATUS_DT, BRANCH_CODE)
+        Values
+        (#PROCESS_DT:DATE#, #PROFIT_AC_HEAD:VARCHAR#, #LOSS_AC_HEAD:VARCHAR#, #TOTAL_INCOME:NUMBER#, #TOTAL_EXPENDITURE:NUMBER#,
+        #PROFIT_OR_LOSS:VARCHAR#, #PROFIT_OR_LOSS_VALUE:NUMBER#, #STATUS_BY:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertYearEndProcessAcHeads" inline-parameters="true">
+        Insert into YEAR_END_PROCESS_ACHD
+        (PROCESS_DT, AC_HD_ID, MJR_AC_HD_TYPE, AMOUNT, BRANCH_CODE)
+        Values
+        (#PROCESS_DT:DATE#, #AC_HD_ID:VARCHAR#, #MJR_AC_HD_TYPE:VARCHAR#, #AMOUNT:NUMBER#, #BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateYearEndGLBalance" inline-parameters="true">
+        UPDATE GL SET CUR_BAL = #AMOUNT:NUMBER# WHERE AC_HD_ID=#AC_HD_ID:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateYearEndGLAbstactBalance" inline-parameters="true">
+        UPDATE GL_ABSTRACT SET OPN_BAL = #AMOUNT:NUMBER# WHERE AC_HD_ID=#AC_HD_ID:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND DT=#PROCESS_DT:DATE#
+    </mapped-statement>
+
+</sql-map>

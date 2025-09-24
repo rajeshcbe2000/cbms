@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AuthorizeListMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+
+    <mapped-statement name="getUnAuthorizedListForCustomer" result-class="java.util.LinkedHashMap" >        
+        SELECT C.CUST_ID, get_cust_name(C.CUST_ID) AS CUST_NAME,
+        CA.STREET AS HOUSE_NAME, CA.AREA AS ADDRESS FROM CUSTOMER C, CUST_ADDR CA
+        WHERE C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE 
+        AND C.AUTHORIZE_STATUS IS NULL AND 
+        CUST_TYPE = 'INDIVIDUAL' AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND 
+        (C.AUTHORIZE_STATUS IS NULL OR C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND 
+        C.STATUS_BY != #USER_ID:VARCHAR# AND C.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY C.CUST_ID
+    </mapped-statement>      
+
+    <dynamic-mapped-statement name="getUnAuthorizeMasterTransferTO" result-class="java.util.LinkedHashMap">
+        SELECT
+        P.BATCH_ID,
+        P.INIT_TRANS_ID as CREATED_BY,
+        A.INST_CR,
+        A.AMOUNT_CR,
+        B.INST_DR,
+        B.AMOUNT_DR,
+        P.TRANS_DT,
+        P.INITIATED_BRANCH
+        FROM
+        (
+        SELECT TT1.BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        FROM TRANSFER_TRANS TT1
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET1
+            </isEqual>
+        </dynamic>
+                
+        where INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT1.STATUS_BY != #USER_ID:VARCHAR# AND
+        TT1.TRANS_DT = #TRANS_DT:DATE# AND TT1.STATUS !='DELETED' AND
+                <!--AND LINK_BATCH_ID IS NULL -->
+        (TT1.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT1.AUTHORIZE_STATUS_2 IS NULL)
+        AND (cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT1.STATUS_BY)OR (TT1.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT1.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET1.BATCH_ID=TT1.BATCH_ID AND 
+                ET1.EXCEPTION_DT IS NULL AND ET1.EXCEPTION_BY IS NULL 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT1.AUTHORIZE_STATUS IS NULL OR 
+                TT1.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED','EXCEPTION','DAILY'))
+            </isNotEqual>
+        </dynamic>
+        AND TT1.SCREEN_NAME != 'MDS Commencement/Closure'
+        GROUP BY TT1.BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        ) P left join
+        (
+        SELECT TT2.BATCH_ID, COUNT(*) INST_CR, SUM(AMOUNT) AMOUNT_CR
+        FROM TRANSFER_TRANS TT2
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET2
+            </isEqual>
+        </dynamic>
+        WHERE TRANS_TYPE = 'CREDIT' and  TT2.STATUS NOT IN ('DELETED')  AND            
+        INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT2.STATUS_BY != #USER_ID:VARCHAR# AND
+        TT2.TRANS_DT = #TRANS_DT:DATE# AND TT2.STATUS !='DELETED' AND
+                <!--AND LINK_BATCH_ID IS NULL -->
+        (TT2.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT2.AUTHORIZE_STATUS_2 IS NULL)
+        AND (cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT2.STATUS_BY) OR (TT2.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT2.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET2.BATCH_ID=TT2.BATCH_ID AND 
+                ET2.EXCEPTION_DT IS NULL AND ET2.EXCEPTION_BY IS NULL
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT2.AUTHORIZE_STATUS IS NULL OR 
+                TT2.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED','EXCEPTION','DAILY'))
+            </isNotEqual>
+        </dynamic>
+        AND TT2.SCREEN_NAME != 'MDS Commencement/Closure'
+        GROUP BY TT2.BATCH_ID
+        ) A on P.BATCH_ID = A.BATCH_ID join
+        (
+        SELECT TT3.BATCH_ID, COUNT(*) INST_DR, SUM(AMOUNT) AMOUNT_DR
+        FROM TRANSFER_TRANS TT3
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET3
+            </isEqual>
+        </dynamic>
+        WHERE TRANS_TYPE = 'DEBIT' and TT3.STATUS NOT IN ('DELETED')  AND               
+        INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT3.STATUS_BY != #USER_ID:VARCHAR# AND
+        TT3.TRANS_DT = #TRANS_DT:DATE# AND TT3.STATUS !='DELETED' AND
+                <!--AND LINK_BATCH_ID IS NULL --> 
+        (TT3.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT3.AUTHORIZE_STATUS_2 IS NULL)
+        AND (cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT3.STATUS_BY) OR (TT3.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT3.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET3.BATCH_ID=TT3.BATCH_ID AND 
+                ET3.EXCEPTION_DT IS NULL AND ET3.EXCEPTION_BY IS NULL
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT3.AUTHORIZE_STATUS IS NULL OR 
+                TT3.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED','EXCEPTION','DAILY'))
+            </isNotEqual>
+        </dynamic>
+        AND TT3.SCREEN_NAME != 'MDS Commencement/Closure'
+        GROUP BY TT3.BATCH_ID
+        ) B on  P.BATCH_ID = B.BATCH_ID
+        --WHERE P.BATCH_ID = A.BATCH_ID(+) and P.BATCH_ID = B.BATCH_ID(+)
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getSelectCurrCashBal" result-class="java.util.HashMap" >        
+        select cur_bal from gl where ac_hd_id in (select cash_ac_hd from parameters) 
+    </mapped-statement>  
+    
+    <mapped-statement name="getUnAuthorizedTransactionTree" result-class="java.util.LinkedHashMap" >        
+        SELECT AT.SCREEN_NAME FROM ALL_TRANS AT WHERE AT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.INITIATED_BRANCH =  #BRANCH_CODE:VARCHAR#
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.SCREEN_NAME IS NOT NULL
+        AND AT.SCREEN_NAME != 'LOAN_NOTICE'
+        AND AT.STATUS_BY !=#USER_ID:VARCHAR#
+        UNION
+        SELECT AT.SCREEN_NAME FROM ALL_TRANS AT WHERE AT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.INITIATED_BRANCH =  #BRANCH_CODE:VARCHAR#
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.SCREEN_NAME IS NOT NULL
+        AND AT.SCREEN_NAME = 'LOAN_NOTICE'
+        and (select cbms_value from CBMS_PARAMETERS where cbms_key = 'LOAN_NOTICE_AUTO_AUTHORIZE') = 'N'   
+        AND AT.STATUS_BY !=#USER_ID:VARCHAR#
+        GROUP BY AT.SCREEN_NAME
+    </mapped-statement>  
+    
+    <mapped-statement name="getUnAuthorizedListForCorpCustomer" result-class="java.util.LinkedHashMap" >        
+        SELECT C.CUST_ID, C.COMP_NAME AS CUST_NAME,
+        CA.STREET AS HOUSE_NAME, CA.AREA AS ADDRESS FROM CUSTOMER C, CUST_ADDR CA
+        WHERE C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE 
+        AND C.AUTHORIZE_STATUS IS NULL AND 
+        CUST_TYPE != 'INDIVIDUAL' AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND 
+        (C.AUTHORIZE_STATUS IS NULL OR C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND 
+        C.STATUS_BY != #USER_ID:VARCHAR# AND C.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY C.CUST_ID
+    </mapped-statement>
+    
+    <mapped-statement name="showInterbranchTransaction" result-class="java.util.LinkedHashMap" >  
+        SELECT BATCH_ID,TRANS_ID,AC_HD_ID,AC_HD_DESC,ACT_NUM,AMOUNT,PARTICULARS,TRANS_DT,TRANS_TYPE,BRANCH_ID,INITIATED_BRANCH, 
+        TRANS_MODE,PROD_ID,PROD_TYPE FROM ALL_INTERBRANCH_VIEW WHERE TRANS_DT=#TRANS_DT:TIMESTAMP#   AND BATCH_ID=#BATCH_ID#
+        AND INTERBRANCH_FLAG = 'Y' AND INITIATED_BRANCH=#INITIATED_BRANCH#  ORDER BY TRANS_ID,BRANCH_ID,AMOUNT
+	</mapped-statement>
+        
+</sql-map>

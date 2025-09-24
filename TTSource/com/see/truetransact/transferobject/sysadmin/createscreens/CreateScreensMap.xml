@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="sysadminMap">
+
+	<!-- Use sysadmin object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDEPTT_MASTER" inline-parameters="true">
+        INSERT INTO DEPTT_MASTER
+        (DEPTT_ID, DEPTT_NAME, STATUS
+        ) VALUES (
+        #DEPTT_ID:VARCHAR#, #DEPTT_NAME:VARCHAR#, 'CREATED')
+    </mapped-statement>
+
+	<!-- Use sysadmin object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDEPTT_MASTER" inline-parameters="true">
+        UPDATE DEPTT_MASTER SET 
+<!--		DEPTT_ID = #DEPTT_ID:VARCHAR#,-->
+        DEPTT_NAME = #DEPTT_NAME:VARCHAR#,
+        STATUS = 'MODIFIED'
+        WHERE DEPTT_ID = #DEPTT_ID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use sysadmin object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDEPTT_MASTER" inline-parameters="true">
+<!--		DELETE FROM DEPTT_MASTER -->
+        UPDATE DEPTT_MASTER SET 
+        STATUS = 'DELETED'
+        WHERE DEPTT_ID = #DEPTT_ID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to sysadmin object (JavaBean) properties -->
+	<!--result-map name="getDeptResult" result-class="java.util.HashMap">
+		<property name="depttId" column="DEPTT_ID"/>
+		<property name="depttName" column="DEPTT_NAME"/>
+	</result-map-->
+    <mapped-statement name="getSelectDEPTT_MASTER" result-class="java.util.HashMap">
+        SELECT DEPTT_ID, DEPTT_NAME FROM DEPTT_MASTER 
+        WHERE DEPTT_ID = #DEPTT_ID:VARCHAR#
+    </mapped-statement>
+<!--=========================================-->
+        <!-- Use sysadmin object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDESIG_MASTER" inline-parameters="true">
+        INSERT INTO DESIG_MASTER
+        (DESIG_ID, DESIG_DESCIP, STATUS
+        ) VALUES (
+        #DESIG_ID:VARCHAR#, #DESIG_DESCIP:VARCHAR#, 'CREATED')
+    </mapped-statement>
+
+	<!-- Use sysadmin object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDESIG_MASTER" inline-parameters="true">
+        UPDATE DESIG_MASTER SET 
+<!--		DESIG_ID = #DESIG_ID:VARCHAR#,-->
+        DESIG_DESCIP = #DESIG_DESCIP:VARCHAR#,
+        STATUS = 'MODIFIED'
+        WHERE DESIG_ID = #DESIG_ID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use sysadmin object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDESIG_MASTER" inline-parameters="true">
+<!--		DELETE FROM DESIG_MASTER -->
+        UPDATE DESIG_MASTER SET 
+        STATUS = 'DELETED'
+        WHERE DESIG_ID = #DESIG_ID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to sysadmin object (JavaBean) properties -->
+	<!--result-map name="getDesigResult" class="com.see.truetransact.transferobject.sysadmin">
+		<property name="desigId" column="DESIG_ID"/>
+		<property name="desigDescip" column="DESIG_DESCIP"/>
+	</result-map-->
+    <mapped-statement name="getSelectDESIG_MASTER" result-class="java.util.HashMap">
+        SELECT DESIG_ID, DESIG_DESCIP FROM DESIG_MASTER
+        WHERE DESIG_ID = #DESIG_ID:VARCHAR#
+    </mapped-statement>
+<!--=============================================================================-->        
+    <mapped-statement name="getScreenName" result-class="java.util.HashMap">
+        SELECT * FROM LOOKUP_MASTER WHERE LOOKUP_ID = #LOOKUPID:VARCHAR#
+    </mapped-statement>  
+        
+    <mapped-statement name="getDEPTT_MASTER" result-class="java.util.HashMap">
+        SELECT DEPTT_ID, DEPTT_NAME FROM DEPTT_MASTER WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+    </mapped-statement>  
+    
+    <mapped-statement name="getDESIG_MASTER" result-class="java.util.HashMap">
+        SELECT DESIG_ID, DESIG_DESCIP FROM DESIG_MASTER WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+    </mapped-statement>  
+        
+</sql-map>

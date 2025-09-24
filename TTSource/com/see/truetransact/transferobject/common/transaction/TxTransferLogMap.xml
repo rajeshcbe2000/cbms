@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TxTransferLog">
+
+    <mapped-statement name="getBatchTxTransferLogTOs" result-class="com.see.truetransact.transferobject.common.transaction.FailureTxTransferTO">
+        SELECT
+        TRANS_LOG_ID AS transLogId,
+        PROD_ID AS prodId,
+        AC_HD_ID AS acHdId,
+        ACT_NUM AS actNum,
+        INP_AMOUNT AS inpAmount,
+        INP_CURR AS inpCurr,
+        AMOUNT AS amount,
+        TRANS_DT AS transDt,
+        TRANS_TYPE AS transType,
+        INST_TYPE AS instType,
+        INSTRUMENT_NO1 AS instrumentNo1,
+        INSTRUMENT_NO2 AS instrumentNo2,
+        INST_DT AS instDt,            
+        INIT_TRANS_ID AS initTransId,
+        INIT_CHANN_TYPE AS initChannType,
+        PARTICULARS AS particulars,
+        AUTHORIZE_BY AS authorizeBy,
+        AUTHORIZE_DT AS authorizeDt,
+        AUTHORIZE_STATUS AS authorizeStatus,
+        AUTHORIZE_REMARKS AS authorizeRemarks,
+        BRANCH_ID AS branchId,
+        STATUS_BY AS statusBy,
+        STATUS_DT AS statusDt,
+        STATUS AS status,           
+        PROD_TYPE AS prodType,
+        BATCH_TYPE AS batchType,
+        FAILURE_REMARKS as failureRemarks    
+        FROM TRANSFER_TRANS_LOG
+        WHERE STATUS!='FAILURE' OR STATUS IS NULL
+    </mapped-statement>
+    
+        
+    <!-- Use TxTransferTO object (JavaBean) properties as parameters for insert.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTxTransferLogTO" inline-parameters="true">
+        INSERT INTO TRANSFER_TRANS_LOG
+        (TRANS_LOG_ID, AC_HD_ID, ACT_NUM, 
+        INP_AMOUNT, INP_CURR, AMOUNT, TRANS_DT, 
+        TRANS_TYPE, INST_TYPE, INST_DT, PROD_TYPE, INIT_TRANS_ID, 
+        INIT_CHANN_TYPE, PARTICULARS, STATUS, INSTRUMENT_NO1, 
+        INSTRUMENT_NO2, PROD_ID, AUTHORIZE_STATUS, AUTHORIZE_BY, 
+        AUTHORIZE_DT, AUTHORIZE_REMARKS, STATUS_BY, BRANCH_ID, STATUS_DT,
+        BATCH_TYPE, FAILURE_REMARKS
+        ) VALUES (
+        #transLogId:VARCHAR#, #acHdId:VARCHAR#, #actNum:VARCHAR#,
+        #inpAmount:NUMERIC#, #inpCurr:VARCHAR#, #amount:NUMERIC#, #transDt:DATE#,
+        #transType:VARCHAR#, #instType:VARCHAR#, #instDt:DATE#, #prodType:VARCHAR#,
+        #initTransId:VARCHAR#, #initChannType:VARCHAR#, #particulars:VARCHAR#,
+        #status:VARCHAR#, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#,
+        #prodId:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, 
+        #authorizeDt:DATE#, #authorizeRemarks:VARCHAR#, #statusBy:VARCHAR#, 
+        #branchId:VARCHAR#, #statusDt:DATE#, #batchType:VARCHAR#, 
+        #failureRemarks:VARCHAR#)
+    </mapped-statement>
+   
+    <mapped-statement name="getChargesFailureLogIdList" result-class="java.lang.String">
+        SELECT DISTINCT TRANS_LOG_ID FROM ACT_CHARGES 
+        WHERE TRANS_LOG_ID IS NOT NULL AND CHRG_TYPE = #value:VARCHAR#
+    </mapped-statement>
+   
+    <mapped-statement name="getChargesFailureList" result-class="com.see.truetransact.transferobject.common.transaction.FailureTxTransferTO">
+        SELECT TTL.TRANS_LOG_ID AS transLogId,
+        TTL.PROD_ID AS prodId,
+        TTL.AC_HD_ID AS acHdId,
+        TTL.ACT_NUM AS actNum,
+        TTL.INP_AMOUNT AS inpAmount,
+        TTL.INP_CURR AS inpCurr,
+        TTL.AMOUNT AS amount,
+        TTL.TRANS_DT AS transDt,
+        TTL.TRANS_TYPE AS transType,
+        TTL.INST_TYPE AS instType,
+        TTL.INSTRUMENT_NO1 AS instrumentNo1,
+        TTL.INSTRUMENT_NO2 AS instrumentNo2,
+        TTL.INST_DT AS instDt,            
+        TTL.INIT_TRANS_ID AS initTransId,
+        TTL.INIT_CHANN_TYPE AS initChannType,
+        TTL.PARTICULARS AS particulars,
+        TTL.AUTHORIZE_BY AS authorizeBy,
+        TTL.AUTHORIZE_DT AS authorizeDt,
+        TTL.AUTHORIZE_STATUS AS authorizeStatus,
+        TTL.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TTL.BRANCH_ID AS branchId,
+        TTL.STATUS_BY AS statusBy,
+        TTL.STATUS_DT AS statusDt,
+        TTL.STATUS AS status,           
+        TTL.PROD_TYPE AS prodType,
+        TTL.BATCH_TYPE AS batchType,
+        TTL.FAILURE_REMARKS as failureRemarks FROM TRANSFER_TRANS_LOG TTL, ACT_CHARGES AC
+        WHERE AC.TRANS_LOG_ID = TTL.TRANS_LOG_ID AND TTL.TRANS_LOG_ID=#value:VARCHAR#
+    </mapped-statement>
+</sql-map>

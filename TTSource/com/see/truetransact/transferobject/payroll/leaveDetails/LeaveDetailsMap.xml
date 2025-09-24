@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LeaveDetailsMap">
+
+    <dynamic-mapped-statement name="getEmpDetails"  result-class="java.util.LinkedHashMap">
+        SELECT E.EMPLOYEEID, E.EMPLOYEE_NAME, E.GENDER,E.EMP_STATUS FROM EMPLOYEE_MASTER E 
+        where E.AUTHORIZE_STATUS='AUTHORIZED' AND E.EMP_STATUS='Service' AND E.STATUS !='DELETED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMPLOYEEID">
+                    UPPER(E.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMPLOYEE_NAME">
+                    UPPER(E.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="GENDER">
+                    UPPER(E.GENDER) LIKE UPPER('%$GENDER$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_STATUS">
+                    UPPER(E.EMP_STATUS) LIKE UPPER('%$EMP_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="insertLeaveDetailsTo" inline-parameters="true">
+        INSERT INTO LEAVE_DETAILS
+        (LEAVE_DETAILS_ID, LEAVE_ID, EMP_ID, LEAVE_DATE, LEAVE_REMARKS
+        ) VALUES (#leaveDetailsId:varchar#,
+        #leaveID:VARCHAR#, #employeeId:VARCHAR#, #leaveDate:DATE#, #remarks:VARCHAR#
+        ) 
+    </mapped-statement>
+    
+    <mapped-statement name="selectLeaveDesc"  result-class="java.util.HashMap">
+        SELECT DISTINCT(LEAVE_ID) AS "KEY", LEAVE_DESC AS "VALUE" FROM LEAVE_MASTER
+    </mapped-statement>
+    
+    <mapped-statement name="getLeaveId"  result-class="java.util.HashMap">
+        SELECT L.LEAVE_ID FROM LEAVE_MASTER L WHERE L.LEAVE_DESC=#LEAVEDESC:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getLeaveDetails"  result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_ID,EMP_ID,LEAVE_DATE,LEAVE_REMARKS FROM LEAVE_DETAILS
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Agent Name">
+                    UPPER(LEAVE_ID) LIKE UPPER('%$LEAVE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_ID">
+                    UPPER(EMP_ID) LIKE UPPER('%$EMP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEAVE_DATE">
+                    UPPER(LEAVE_DATE) LIKE UPPER('%$LEAVE_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEAVE_REMARKS">
+                    UPPER(LEAVE_REMARKS) LIKE UPPER('%$LEAVE_REMARKS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getAllLeaveDetails"  result-class="java.util.LinkedHashMap">
+        SELECT LD.LEAVE_ID, LD.LEAVE_DETAILS_ID, LD.EMP_ID, LM.LEAVE_DESC, LD.LEAVE_DATE, LD.LEAVE_REMARKS FROM LEAVE_MASTER LM JOIN LEAVE_DETAILS LD 
+        ON LM.LEAVE_ID = LD.LEAVE_ID AND LD.LEAVE_DETAILS_ID = #LEAVE_DETAILS_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteLeaveDetails"  inline-parameters="true">
+        DELETE FROM LEAVE_DETAILS WHERE LEAVE_DETAILS_ID = #leaveDetailsId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateLeaveDetails"  inline-parameters="true">
+        UPDATE LEAVE_DETAILS SET 
+        LEAVE_DATE = #leaveDate:DATE#,
+        LEAVE_REMARKS = #remarks:VARCHAR#,
+        LEAVE_ID = #leaveID:VARCHAR#
+        WHERE EMP_ID = #employeeId:VARCHAR# AND LEAVE_DETAILS_ID = #leaveDetailsId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="chkLeaveExists"  result-class="java.util.LinkedHashMap">
+        SELECT LM.LEAVE_ID FROM LEAVE_MASTER LM JOIN LEAVE_DETAILS LD 
+        ON LM.LEAVE_ID=LD.LEAVE_ID AND LD.EMP_ID = #EMPID:VARCHAR# AND LM.LEAVE_DESC = #LEAVEDESC:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="chkDateExists"  result-class="java.util.LinkedHashMap">
+        SELECT LD.EMP_ID, LM.LEAVE_DESC FROM LEAVE_MASTER LM JOIN LEAVE_DETAILS LD 
+        ON LM.LEAVE_ID=LD.LEAVE_ID AND LD.EMP_ID = #EMPID:VARCHAR# AND
+        LD.LEAVE_DATE  between #LEAVEDATE:DATE#  and #LEAVEToDATE:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="insertLeaveMasterTo" inline-parameters="true">
+        INSERT INTO LEAVE_MASTER
+        (LEAVE_ID, LEAVE_DESC, LEAVE_DED_PER_DAY
+        ) VALUES (
+        #leaveID:VARCHAR#, #leaveDescription:VARCHAR#, #leaveDedPerDay:NUMBER#
+        ) 
+    </mapped-statement>
+    
+    <mapped-statement name="checkLeaveExists"  result-class="java.util.LinkedHashMap">
+        SELECT L.LEAVE_DESC FROM LEAVE_MASTER L WHERE L.LEAVE_DESC = #LEAVEDESC:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getAllLeaveTypes"  result-class="java.util.LinkedHashMap">
+        SELECT * FROM LEAVE_MASTER L WHERE L.LEAVE_ID = #LEAVEID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateLeaveMaster"  inline-parameters="true">
+        UPDATE LEAVE_MASTER SET 
+        LEAVE_DED_PER_DAY = #leaveDedPerDay:NUMBER#
+        WHERE LEAVE_ID = #leaveID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteLeaveMaster"  inline-parameters="true">
+        DELETE FROM LEAVE_MASTER WHERE LEAVE_ID = #leaveID:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAllLeaves"  result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_ID,LEAVE_DESC,LEAVE_DED_PER_DAY FROM LEAVE_MASTER
+             <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEAVE_ID">
+                    UPPER(LEAVE_ID) LIKE UPPER('%$LEAVE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEAVE_DESC">
+                    UPPER(LEAVE_DESC) LIKE UPPER('%$LEAVE_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEAVE_DED_PER_DAY">
+                    UPPER(LEAVE_DED_PER_DAY) LIKE UPPER('%$LEAVE_DED_PER_DAY$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+</sql-map>

@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RemittanceIssueTOMap">
+
+    <!-- Use RemittanceIssueTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRTGSRemittanceTO" inline-parameters="true">
+        INSERT INTO RTGS_REMIT_ISSUE
+        (RTGS_ID , BATCH_ID, BATCH_DT, PROD_ID , SENDER_IFSC_CODE ,BANK_CODE, BANK_NAME, 
+        BRANCH_CODE, BRANCH_NAME, IFSC_CODE, NAME, AMOUNT,
+        ACCOUNT_NO, REMARKS ,EX_CALCULATED , EX_COLLECTED, SERVICE_TAX , CHARGES, TOTAL_AMT ,  
+        TRANS_TYPE, STATUS, STATUS_BY , STATUS_DT,FILE_STATUS,PROCESS_DT,INITIATED_BRANCH, RTGS_UNIQUE_ID,GST
+        ) VALUES (      
+        #rtgs_ID:VARCHAR#, #batchId:VARCHAR#, #batchDt:DATE#, #prodId:VARCHAR#, #ifsc_Code:VARCHAR#, 
+        #beneficiary_Bank:VARCHAR#, #beneficiary_Bank_Name:VARCHAR#, #beneficiary_Branch:VARCHAR#, 
+        #beneficiary_Branch_Name:VARCHAR#, #beneficiary_IFSC_Code:VARCHAR#, #beneficiary_Name:VARCHAR#, 
+        #amount:NUMERIC#, #account_No:VARCHAR#, #remarks:VARCHAR#, #ex_Calculated:NUMERIC#, 
+        #ex_Collected:NUMERIC#, #service_Tax:NUMERIC#, #charges:NUMERIC#, #totalAmt:NUMERIC#, #trans_type:VARCHAR#, 
+        #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL),#fileStatus:VARCHAR#,
+        #n06processDt:DATE#, #initiatedBranch:VARCHAR#, #rtgs_Unique_ID:VARCHAR#,#totalGstAmt:NUMERIC#)
+    </mapped-statement>
+
+    <!-- Use RemittanceIssueTO object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateRTGSRemittanceTO" inline-parameters="true">
+        UPDATE REMIT_ISSUE SET 
+        <!--BATCH_ID = #batchId:VARCHAR#,
+        BATCH_DT = #batchDt:DATE#,
+        ISSUE_ID = #issueId:VARCHAR#,-->
+        PROD_ID = #prodId:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        DRAWEE_BANK = #draweeBank:VARCHAR#,
+        DRAWEE_BRANCH_CODE = #draweeBranchCode:VARCHAR#,
+        FAVOURING = #favouring:VARCHAR#,
+        REMIT_TYPE = #remitType:VARCHAR#,
+        AMOUNT = #amount:NUMERIC#,
+        PAN_GIR_NO = #panGirNo:VARCHAR#,
+        CATEGORY = #category:VARCHAR#,
+        EXCHANGE = #exchange:NUMERIC#,
+        POSTAGE = #postage:NUMERIC#,
+        OTHER_CHARGES = #otherCharges:NUMERIC#,
+        TOTAL_AMT = #totalAmt:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        PAYEE_ACCT_HEAD = #payeeAcctHead:VARCHAR#,
+        CROSSING = #crossing:VARCHAR#,
+        PAYEE_ACCT_NO = #payeeAcctNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        INSTRUMENT_NO1 = #instrumentNo1:VARCHAR#,
+        INSTRUMENT_NO2 = #instrumentNo2:VARCHAR#,
+        VARIABLE_NO = #variableNo:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        AUTHORIZE_REMARK = #authorizeRemark:VARCHAR#,
+        REVALIDATE_DT = #revalidateDt:DATE#,
+        REVALIDATE_CHARGE = #revalidateCharge:NUMERIC#,
+        REVALIDATE_EXPIRY_DT = #revalidateExpiryDt:DATE#,
+        REVALIDATE_REMARKS = #revalidateRemarks:VARCHAR#,
+        DUPLICATE_DT = #duplicateDt:DATE#,
+        DUPLICATE_CHARGE = #duplicateCharge:NUMERIC#,
+        DUPLICATE_REMARKS = #duplicateRemarks:VARCHAR#,
+        CANCEL_DT = #cancelDt:DATE#,
+        CANCEL_CHARGE = #cancelCharge:NUMERIC#,
+        CANCEL_REMARKS = #cancelRemarks:VARCHAR#,
+        PAID_STATUS = #paidStatus:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        REVALIDATE_TRANS = #revalidateTrans:VARCHAR#,
+        DUPLICATE_TRANS = #duplicateTrans:VARCHAR#,
+        PAYEE_PROD_TYPE = #payeeProdType:VARCHAR#,  
+        PAYEE_PROD_ID = #payeeProdId:VARCHAR#,
+        DUP_SERV_TAX = #dupServTax:NUMERIC#,
+        REV_SERV_TAX = #revServTax:NUMERIC#,
+        REMITED_FOR_FLAG=#remitForFlag:VARCHAR#,
+        EXG_CALCULATED = #exgCal:NUMERIC#
+        WHERE BATCH_ID = #batchId:VARCHAR# AND ISSUE_ID = #issueId:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use RemittanceIssueTO object (JavaBean) properties as parameters for delete. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteRTGSRemittanceTO" inline-parameters="true">
+        UPDATE REMIT_ISSUE SET STATUS ='DELETED'
+        WHERE BATCH_ID = #batchId:VARCHAR# AND ISSUE_ID =#issueId:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to RemittanceIssueTO object (JavaBean) properties -->
+    <result-map name="getRTGSRemittanceTOResult" class="com.see.truetransact.transferobject.remittance.rtgs.RtgsRemittanceTO">
+        <property name="rtgs_ID" column="RTGS_ID"/>
+        <property name="rtgs_Unique_ID" column="RTGS_UNIQUE_ID"/>
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="batchDt" column="BATCH_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="ifsc_Code" column="SENDER_IFSC_CODE"/>
+        <property name="beneficiary_Bank" column="BANK_CODE"/>
+        <property name="beneficiary_Bank_Name" column="BANK_NAME"/>
+        <property name="beneficiary_Branch" column="BRANCH_CODE"/>
+        <property name="beneficiary_Branch_Name" column="BRANCH_NAME"/>
+        <property name="beneficiary_IFSC_Code" column="IFSC_CODE"/>
+        <property name="beneficiary_Name" column="NAME"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="account_No" column="ACCOUNT_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="ex_Calculated" column="EX_CALCULATED"/>
+        <property name="ex_Collected" column="EX_COLLECTED"/>
+        <property name="service_Tax" column="SERVICE_TAX"/>
+        <property name="charges" column="CHARGES"/>
+        <property name="totalAmt" column="TOTAL_AMT"/>
+        <property name="trans_type" column="TRANS_TYPE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="utrNumber" column="UTR_NUMBER"/>
+        <property name="sequnceNo" column="SEQUNCE_NO"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <!--<property name="sgstAmt" column="SGST"/>
+        <property name="cgstAmt" column="CGST"/>-->
+        <property name="totalGstAmt" column="GST"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getRTGSRemittanceTO" result-map="getRTGSRemittanceTOResult" >
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    SELECT ROWNUM AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND 
+                    RTGS_ID=#RTGS_ID# ORDER BY RTGS_UNIQUE_ID
+                </isEqual>
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    SELECT ROW_NUMBER()OVER() AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND 
+                    RTGS_ID=#RTGS_ID# ORDER BY RTGS_UNIQUE_ID
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getRTGSRemittanceTODetails" result-map="getRTGSRemittanceTOResult" >
+        <dynamic> 
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    SELECT ROWNUM AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND UTR_NUMBER IS NULL AND
+                    RTGS_ID=#RTGS_ID# ORDER BY RTGS_UNIQUE_ID
+                </isEqual>
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    SELECT ROW_NUMBER()OVER() AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND UTR_NUMBER IS NULL AND
+                    RTGS_ID=#RTGS_ID# ORDER BY RTGS_UNIQUE_ID
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic> 
+    </dynamic-mapped-statement>
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to RemittanceIssueTO object (JavaBean) properties -->
+    <result-map name="getRTGSRemittanceTOFileCreationResult" class="com.see.truetransact.transferobject.remittance.rtgs.RtgsRemittanceTO">
+        <property name="rtgs_ID" column="RTGS_ID"/>
+        <property name="rtgs_Unique_ID" column="RTGS_UNIQUE_ID"/>
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="batchDt" column="BATCH_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="ifsc_Code" column="SENDER_IFSC_CODE"/>
+        <property name="beneficiary_Bank" column="BANK_CODE"/>
+        <property name="beneficiary_Bank_Name" column="BANK_NAME"/>
+        <property name="beneficiary_Branch" column="BRANCH_CODE"/>
+        <property name="beneficiary_Branch_Name" column="BRANCH_NAME"/>
+        <property name="beneficiary_IFSC_Code" column="IFSC_CODE"/>
+        <property name="beneficiary_Name" column="NAME"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="account_No" column="ACCOUNT_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="ex_Calculated" column="EX_CALCULATED"/>
+        <property name="ex_Collected" column="EX_COLLECTED"/>
+        <property name="service_Tax" column="SERVICE_TAX"/>
+        <property name="charges" column="CHARGES"/>
+        <property name="totalAmt" column="TOTAL_AMT"/>
+        <property name="trans_type" column="TRANS_TYPE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="utrNumber" column="UTR_NUMBER"/>
+        <property name="sequnceNo" column="SEQUNCE_NO"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="debitAcNum" column="DEBIT_AC_NUM"/>
+        <property name="debitProdId" column="DEBIT_PROD_ID"/>
+        <property name="debitProdType" column="DEBIT_PROD_TYPE" />
+    </result-map>
+    
+    <mapped-statement name="getRTGSRemittanceTOForFileCreation" result-map="getRTGSRemittanceTOFileCreationResult" >
+        SELECT  RRI.* ,RIT.PRODUCT_TYPE AS DEBIT_PROD_TYPE,RIT.PROD_ID AS DEBIT_PROD_ID,RIT.DEBIT_ACCT_NO AS DEBIT_AC_NUM,RIT.APPL_NAME FROM RTGS_REMIT_ISSUE RRI  ,REMIT_ISSUE_TRANS RIT  WHERE RIT.BATCH_ID = RRI.RTGS_ID AND 
+        RRI.STATUS!='DELETED' AND RRI.FILE_STATUS ='PROGRESS' AND RRI.AUTHORIZE_STATUS='AUTHORIZED'
+        ORDER BY RTGS_UNIQUE_ID
+    </mapped-statement>
+
+    <!--f27  getRTGSRemittransReturnTO-->
+    <mapped-statement name="getRTGSRemittransReturnTO" result-map="getRTGSRemittanceTOResult" >
+        SELECT ROWNUM AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND SEQUNCE_NO=#SEQUNCE_NO# AND ( RRI.FILE_STATUS ='DELIVERED')
+    </mapped-statement>
+    <!--N09  getRTGSRemittransReturnTO-->
+    <mapped-statement name="getRTGSRemittransOtherBankReturnTO" result-map="getRTGSRemittanceTOResult" >
+        SELECT ROWNUM AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND UTR_NUMBER=#UTR_NUMBER# AND 
+        ( RRI.FILE_STATUS !='COMPLETED' AND RRI.FILE_STATUS !='FAIL')
+    </mapped-statement>
+    
+    <mapped-statement name="getRTGSRemittransDetailsTO" result-map="getRTGSRemittanceTOResult" >
+        SELECT row_number() over() AS SL_NO, RRI.* FROM RTGS_REMIT_ISSUE RRI  WHERE STATUS!='DELETED' AND UTR_NUMBER=#UTR_NUMBER# AND 
+        RRI.FILE_STATUS IS NOT NULL AND RRI.FILE_STATUS ='DELIVERED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateOutwardResponseFileStatus" result-class="java.util.LinkedHashMap">
+        UPDATE RTGS_REMIT_ISSUE SET FILE_STATUS=#FILE_STATUS#
+        WHERE UTR_NUMBER= #UTR_NUMBER# AND FILE_STATUS IS NOT NULL AND FILE_STATUS ='DELIVERED'
+    </mapped-statement>
+
+    <mapped-statement name="getRTGSAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT RTGS_ID,RRI.BATCH_ID, RRI.PROD_ID, NVL(SUM(TOTAL_AMT),0) AS AMOUNT FROM RTGS_REMIT_ISSUE RRI,  REMIT_ISSUE_TRANS RIT 
+        WHERE RRI.STATUS!='DELETED' AND RIT.BATCH_ID= RTGS_ID AND RRI.STATUS!='DELETED' AND RIT.STATUS!='DELETED'  AND  RIT.BRANCH_CODE=#BRANCH_CODE#
+        AND RRI.AUTHORIZE_STATUS IS NULL AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = RRI.STATUS_BY)
+        AND RRI.STATUS_BY!= #USER_ID# GROUP BY RTGS_ID, RRI.BATCH_ID, RRI.PROD_ID ORDER BY RTGS_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getRTGSEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT RTGS_ID,RRI.BATCH_ID, RRI.PROD_ID, NVL(SUM(TOTAL_AMT),0) AS AMOUNT FROM RTGS_REMIT_ISSUE RRI WHERE 
+        RRI.STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL AND INITIATED_BRANCH = #BRANCH_CODE# 
+        GROUP BY RTGS_ID,RRI.BATCH_ID, RRI.PROD_ID ORDER BY RTGS_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getRTGSHeadDetails" result-class="java.util.LinkedHashMap">
+        SELECT BANK_CODE, RTGS_GL FROM BANK,PARAMETERS
+    </mapped-statement>
+    
+    <result-map name="get-IssueProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+    
+    <mapped-statement name="getRTGSProdId" result-map="get-IssueProdId-result">
+        SELECT PROD_ID,PROD_DESC FROM REMITTANCE_PRODUCT 
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' AND EFT_PRODUCT='Y'
+    </mapped-statement>
+    <result-map name="get-RTGSBank-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+
+    <dynamic-mapped-statement name="getRTGSBankDetails" result-class="java.util.LinkedHashMap">
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER
+        WHERE STATUS != 'DELETED' AND
+        LOOKUP_ID='RTGS.IFSC_BANK_NAME'  AND AUTHORIZED='Y' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="BANK_CODE">
+                    LOOKUP_REF_ID = #BANK_CODE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="ICICI_FT">
+                    LOOKUP_DESC = 'ICICI BANK'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY LOOKUP_DESC
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeRTGSDetails" result-class="java.util.HashMap">
+        UPDATE RTGS_REMIT_ISSUE SET
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZED_BY:VARCHAR#,
+        UTR_NUMBER   = #UTR_NUMBER:VARCHAR#,
+        SEQUNCE_NO   = #SEQUNCE_NO:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND RTGS_ID = #RTGS_ID:VARCHAR# AND RTGS_UNIQUE_ID = #RTGS_UNIQUE_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateOutwardRTGSNEFTStatus" result-class="java.util.HashMap">
+        UPDATE RTGS_REMIT_ISSUE SET
+        FILE_STATUS   = #FILE_STATUS:VARCHAR#,
+        PROCESS_DT =  #PROCESS_DT#
+        WHERE STATUS != 'DELETED' AND  UTR_NUMBER IN($UTR_NUMBER$)
+    </mapped-statement>
+    
+    <mapped-statement name="rejectRTGSDetails" result-class="java.util.HashMap">
+        UPDATE RTGS_REMIT_ISSUE SET
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZED_BY:VARCHAR#,
+        UTR_NUMBER   = #UTR_NUMBER:VARCHAR#,
+        SEQUNCE_NO   = #SEQUNCE_NO:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND RTGS_ID = #RTGS_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateRTGSBatchID" result-class="java.util.HashMap">
+        UPDATE RTGS_REMIT_ISSUE SET BATCH_ID = #TRANS_ID:VARCHAR# WHERE STATUS != 'DELETED' AND RTGS_ID = #RTGS_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getRTGSAccountHeads" result-class="java.util.HashMap" >
+        SELECT ISSUE_HD, EXCHANGE_HD, OTHER_CHRG_HD, POSTAGE_HD, PAY_HD, CANCELL_CHRG_HD, RTGS_NEFT_GL_TYPE, RTGS_NEFT_PROD_TYPE, 
+        RTGS_NEFT_PROD_ID, RTGS_NEFT_ACT_NUM, REVAL_CHRG_HD, DUPL_CHRG_HD, NEW_PROC_ISSUE_HD,MAX_AMOUNT, MIN_AMOUNT,
+        NEFT_RTGS_SUSPENCE_HD,SGST_HD,CGST_HD  FROM REMITTANCE_PRODUCT WHERE PROD_ID = #PROD_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="getRTGSCharges" result-class="java.util.HashMap" >
+        SELECT * FROM  REMITTANCE_PROD_CHARGES WHERE PROD_ID = #PROD_ID# AND CAST(#AMOUNT# AS NUMERIC) BETWEEN AMT_RANGE_FROM AND AMT_RANGE_TO
+        AND CHARGE_TYPE = 'EXCHANGE' AND STATUS != 'DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="getCreditAcctDetails" result-class="java.util.HashMap" >
+        SELECT * FROM REMIT_ISSUE_TRANS WHERE BATCH_ID =#RTGS_ID# AND BATCH_DT=#BATCH_DT#  AND STATUS != 'DELETED'
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getRTGSTransactionDetails" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM (SELECT 'OUTWARD' AS TYPE, RTGS_ID ,RRI.BATCH_ID,RRI.BATCH_DT,RRI.PROD_ID,SENDER_IFSC_CODE,DEBIT_ACCT_NO AS SENDER_ACT_NO,APPL_NAME AS SENDER_NAME,AMOUNT,
+        BANK_CODE AS BENEFICIARY_BANK_CODE, RRI.BRANCH_CODE AS BENEFICIARY_BRANCH_CODE ,IFSC_CODE AS BENEFICIARY_IFSC_CODE,
+        ACCOUNT_NO AS  BENEFICIARY_ACCT_NO, NAME as BENEFICIARY_NAME,UTR_NUMBER ,SEQUNCE_NO, FILE_STATUS AS PROCESS_STATUS,AUTHORIZE_DT AS "STATUS_DATE",'' AS "INWARD_FAIL_ACK_UTR",
+        F27_STATUS_DT, N09_STATUS_DT, N10_STATUS_DT FROM RTGS_REMIT_ISSUE RRI, REMIT_ISSUE_TRANS RIT  WHERE RRI.STATUS!='DELETED' 
+        AND RIT.STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' AND RRI.RTGS_ID=RIT.BATCH_ID AND RIT.BATCH_DT=RRI.BATCH_DT
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACT_NO">
+                    DEBIT_ACCT_NO &gt;= #FROM_ACT_NO#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACT_NO">
+                    DEBIT_ACCT_NO &lt;= #TO_ACT_NO#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_CODE">
+                    INITIATED_BRANCH = #BRANCH_CODE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        UNION
+        SELECT 'INWARD' AS TYPE,NULL AS RTGS_ID , BATCH_ID AS BATCH_ID,ACK_DATE AS BATCH_DT, PROD_ID,OTHER_BANK_IFS_CODE AS SENDER_IFSC_CODE,
+        SENDER_ACT_NO,BENEFICIARY_NAME AS SENDER_NAME,AMOUNT, NULL AS BENEFICIARY_BANK_CODE,NULL AS BENEFICIARY_BRANCH_CODE,HOME_IFS_CODE AS BENEFICIARY_IFSC_CODE,
+        ACCT_NUM AS  BENEFICIARY_ACCT_NO, BENEFICIARY_NAME, UTR_NUMBER ,NULL AS SEQUNCE_NO, ACCT_STATUS AS PROCESS_STATUS,STATUS_DT AS "STATUS_DATE",INWARD_FAIL_ACK_UTR,
+        NULL AS F27_STATUS_DT, NULL AS N09_STATUS_DT, NULL AS N10_STATUS_DT FROM RTGS_NEFT_ACKNOWLEDGEMENT WHERE STATUS!='DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACT_NO">
+                    ACCT_NUM &gt;= #FROM_ACT_NO#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACT_NO">
+                    ACCT_NUM &lt;= #TO_ACT_NO#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_CODE">
+                    SUBSTR(ACCT_NUM,1,4) = #BRANCH_CODE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        )a
+        WHERE AMOUNT IS NOT NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TYPE">
+                    PROD_ID=#TYPE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="CLEARING_TYPE">
+                    TYPE=#CLEARING_TYPE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DATE">
+                    BATCH_DT &gt;= #FROM_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_DATE">
+                    BATCH_DT &lt;= #TO_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_UTR_NO">
+                    UTR_NUMBER &gt;= #FROM_UTR_NO#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_UTR_NO">
+                    UTR_NUMBER &lt;= #TO_UTR_NO#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_AMOUNT">
+                    AMOUNT &gt;= cast(#FROM_AMOUNT# as numeric)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_AMOUNT">
+                    AMOUNT &lt;= cast(#TO_AMOUNT# as numeric)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FILE_STATUS">
+                    PROCESS_STATUS = #FILE_STATUS#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY BATCH_DT,BATCH_ID
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement  name="getUTRNumber" result-class="java.util.HashMap" >
+        SELECT UTR_NUMBER, TYPE, RTGS_ID, BATCH_ID, BATCH_DT, PROD_ID, AMOUNT
+        FROM (SELECT UTR_NUMBER, 'OUTWARD' AS TYPE, RTGS_ID ,RRI.BATCH_ID,RRI.BATCH_DT,RRI.PROD_ID,AMOUNT FROM
+        RTGS_REMIT_ISSUE RRI, REMIT_ISSUE_TRANS RIT  WHERE RRI.STATUS!='DELETED' AND RIT.STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND RRI.RTGS_ID=RIT.BATCH_ID AND RIT.BATCH_DT=RRI.BATCH_DT
+        UNION
+        SELECT UTR_NUMBER, 'INWARD' AS TYPE,NULL AS RTGS_ID , NULL AS BATCH_ID,ACK_DATE AS BATCH_DT, PROD_ID,AMOUNT FROM
+        RTGS_NEFT_ACKNOWLEDGEMENT)a WHERE UTR_NUMBER IS NOT NULL AND PROD_ID=#PRODUCT_ID# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="UTR_NO">
+                    UTR_NUMBER = #UTR_NO#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+        <dynamic> 
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            
+            <isPropertyAvailable prepend = "AND" property="UTR_NUMBER">
+                UPPER(UTR_NUMBER) LIKE UPPER('%$UTR_NUMBER$%')
+            </isPropertyAvailable>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TYPE">
+                    UPPER(TYPE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="RTGS_ID">
+                    UPPER(RTGS_ID) LIKE UPPER('%$RTGS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="BATCH_ID">
+                    UPPER(BATCH_ID) LIKE UPPER('%$BATCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="BATCH_DT">
+                    UPPER(BATCH_DT) LIKE UPPER('%$BATCH_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY UTR_NUMBER,BATCH_DT,BATCH_ID
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+
+    <dynamic-mapped-statement name="updateFileStatus" result-class="java.util.HashMap" >
+        UPDATE RTGS_REMIT_ISSUE SET FILE_STATUS=#FILE_STATUS#
+        <dynamic>
+            <isNotNull prepend="," property="F27_STATUS_DT">
+                F27_STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+            </isNotNull>
+            <isNotNull prepend="," property="N09_STATUS_DT">
+                N09_STATUS_DT= (SELECT SYS_DATE() FROM DUAL)
+            </isNotNull>
+            <isNotNull prepend="," property="N10_STATUS_DT">
+                N10_STATUS_DT= (SELECT SYS_DATE() FROM DUAL)
+            </isNotNull>
+            <isNotNull prepend="" property="SEQUNCE_NO">
+                WHERE SEQUNCE_NO= #SEQUNCE_NO# AND (FILE_STATUS !='COMPLETED' AND FILE_STATUS !='FAIL')
+            </isNotNull>
+            <isNotNull prepend="" property="UTR_NUMBER">
+                WHERE UTR_NUMBER= #UTR_NUMBER# AND (FILE_STATUS !='COMPLETED' AND FILE_STATUS !='FAIL')
+            </isNotNull>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="updateFileStatusf27N09" result-class="java.util.HashMap" >
+        UPDATE RTGS_REMIT_ISSUE SET FILE_STATUS=#FILE_STATUS#
+        <dynamic>
+            <isNotNull prepend="," property="F27_STATUS_DT"  >
+                F27_STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+            </isNotNull>
+            <isNotNull prepend="," property="N09_STATUS_DT"  >
+                N09_STATUS_DT= (SELECT SYS_DATE() FROM DUAL)
+            </isNotNull>
+            <isNotNull prepend="," property="N10_STATUS_DT"  >
+                N10_STATUS_DT= (SELECT SYS_DATE() FROM DUAL)
+            </isNotNull>
+            <isNotNull prepend="" property="SEQUNCE_NO"  >
+                WHERE SEQUNCE_NO= #SEQUNCE_NO#  AND (FILE_STATUS !='COMPLETED' AND FILE_STATUS !='FAIL')
+            </isNotNull>
+            <isNotNull prepend="" property="UTR_NUMBER"  >
+                WHERE UTR_NUMBER= #UTR_NUMBER#   AND (FILE_STATUS !='COMPLETED' AND FILE_STATUS !='FAIL')
+            </isNotNull>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getAllBranchDayendList" result-class="java.util.HashMap" >
+        SELECT CURR_APPL_DT FROM DAY_END GROUP BY CURR_APPL_DT
+    </mapped-statement>
+    
+    <mapped-statement name="updateRTGSRemittance" result-class="java.util.HashMap" >
+        DELETE from RTGS_REMIT_ISSUE WHERE STATUS!='DELETED' AND RTGS_ID=#RTGS_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteRemittanceIssueTrans" result-class="java.util.HashMap" >
+        DELETE from REMIT_ISSUE_TRANS WHERE BATCH_ID=#BATCH_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="getInwardFileData" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM RTGS_NEFT_ACKNOWLEDGEMENT WHERE FILE_NAME=#FILE_NAME# AND ACK_DATE=#CURR_DT:DATE#
+    </mapped-statement>
+    
+</sql-map>

@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : GahanCustomerMap.xml
+    Created on : April 23, 2012, 1:15 PM
+    Author     : admin
+    Description:
+        Purpose of the document follows.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GahanCustomerMap">
+
+<!-- Use CustomerAddressTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertGahanCustomerDetailsTO" inline-parameters="true">
+        INSERT INTO GAHAN_CUSTOMER_DETAILS
+        (DOCUMENT_NO, CUST_ID, CONSTITUTION, STATUS, STATUS_BY, STATUS_DT,DOCUMENT_GEN_ID,AUTHORIZE_STATUS, AUTHORIZED_BY,AUTHORIZED_DT,DOCUMENTS_SUBMITTED
+        ) VALUES (
+        #documentNo:VARCHAR#, #custId:VARCHAR#, #constitution:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:VARCHAR#,#documentGenId:VARCHAR#, 
+        #authStatus:VARCHAR# , #authorizedBy:VARCHAR# , #authorizedDt:DATE#,#itemsSubmitting:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertGahanCustomerJointDetailsTO" inline-parameters="true">
+        INSERT INTO GAHAN_JOINT
+        (CUST_ID, CONSTITUTION, STATUS, DOCUMENT_GEN_ID
+        ) VALUES (
+        #custId:VARCHAR#, #constitution:VARCHAR#, #status:VARCHAR#,#documentGenId:VARCHAR#)
+    </mapped-statement>
+        
+	<!-- Use CustomerAddressTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateGahanCustomerDetailsTO" inline-parameters="true">
+        UPDATE GAHAN_CUSTOMER_DETAILS SET 
+        DOCUMENT_NO = #documentNo:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        CONSTITUTION =  #constitution:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:VARCHAR#,
+        AUTHORIZE_STATUS = #authStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#
+        WHERE  DOCUMENT_GEN_ID = #documentGenId:VARCHAR#
+    </mapped-statement>
+        
+         
+    <mapped-statement name="updateGahanCustomerJointDetailsTO" inline-parameters="true">
+        UPDATE GAHAN_JOINT SET 
+        CUST_ID = #custId:VARCHAR#,
+        CONSTITUTION =  #constitution:VARCHAR#,
+        STATUS = #status:VARCHAR#    
+        WHERE  DOCUMENT_GEN_ID = #documentGenId:VARCHAR# AND CUST_ID = #custId:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="deleteGahanCustomerJointDetailsTO" inline-parameters="true">
+        UPDATE GAHAN_JOINT SET 
+        STATUS =  'DELETED'  
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR# AND CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getCustJoint" result-class="java.util.HashMap">
+        SELECT CUST_ID FROM GAHAN_JOINT
+        WHERE  DOCUMENT_GEN_ID = #value:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSecurityDetails" result-class="java.util.HashMap">
+        SELECT RECORD_NO FROM GAHAN_PROPERTY_DETAILS
+        WHERE  DOCUMENT_GEN_ID = #value:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+       
+    <mapped-statement name="AuthorizeGahanaCust" result-class="java.util.HashMap">
+        UPDATE GAHAN_CUSTOMER_DETAILS SET 
+        AUTHORIZE_STATUS = 'AUTHORIZED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="RejectGahanaCust" result-class="java.util.HashMap">
+        UPDATE GAHAN_CUSTOMER_DETAILS SET 
+        AUTHORIZE_STATUS = 'REJECTED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+        
+         
+        
+    <mapped-statement name="AuthorizeGahanaDoc" result-class="java.util.HashMap">
+        UPDATE GAHAN_DOCUMENT_DETAILS SET 
+        AUTHORIZE_STATUS = 'AUTHORIZED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="AuthorizeGahanaDocTab" result-class="java.util.HashMap">
+        UPDATE GAHAN_DOC_TABLE  SET 
+        AUTHORIZE_STATUS = 'AUTHORIZED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="RejectGahanaDoc" result-class="java.util.HashMap">
+        UPDATE GAHAN_DOCUMENT_DETAILS SET 
+        AUTHORIZE_STATUS = 'REJECTED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="RejectGahanaDocTab" result-class="java.util.HashMap">
+        UPDATE GAHAN_DOC_TABLE SET 
+        AUTHORIZE_STATUS = 'REJECTED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+          
+    <mapped-statement name="getCustAddr" result-class="java.util.HashMap">
+        SELECT C.STREET,C.AREA,C.CITY,C.PIN_CODE,SH.SHARE_TYPE FROM CUST_ADDR C,SHARE_ACCT SH
+        WHERE C.CUST_ID = #CUST_ID:VARCHAR# 
+        AND C.CUST_ID=SH.CUST_ID
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerAddressTO object (JavaBean) properties -->
+    <result-map name="getGahanCustomerDetailsTOResult" class="com.see.truetransact.transferobject.customer.gahan.GahanCustomerDetailsTO">
+        <property name="documentNo" column="DOCUMENT_NO"/>
+        <property name="documentGenId" column="DOCUMENT_GEN_ID"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="constitution" column="CONSTITUTION"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+                
+    </result-map>
+        
+    <result-map name="getGahanCustomerJointDetailsTOResult" class="com.see.truetransact.transferobject.customer.gahan.GahanCustomerDetailsTO">
+        <property name="documentGenId" column="DOCUMENT_GEN_ID"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="constitution" column="CONSTITUTION"/>
+        <property name="status" column="STATUS"/>
+		
+    </result-map>
+        
+    <mapped-statement name="getSelectGahanCustomerDetailsTO" result-map="getGahanCustomerDetailsTOResult" >
+        SELECT * FROM GAHAN_CUSTOMER_DETAILS WHERE DOCUMENT_NO=#DOCUMENT_NO:VARCHAR#
+    </mapped-statement>
+        
+        
+<!-- Use CustomerAddressTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertGahanDocumentDetailsTO" inline-parameters="true">
+        INSERT INTO GAHAN_DOCUMENT_DETAILS
+        ( PLEDGE, PLEDGE_DT,PLEDGE_NO,PLEDGE_AMT,NATURE,"right",REMARKS,
+        STATUS,STATUS_BY,STATUS_DT,BRANCH_CODE,INITIATED_BRANCH,DOCUMENT_GEN_ID,GAHAN_RELEASE,GAHAN_EXP_DT,GAHAN_RELEASE_DT,AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,GAHAN_YESNO
+        ) VALUES (
+        #pledge:VARCHAR#, #pledgeDt:DATE#,#pledgeNo:VARCHAR#,
+        #pledgeAmt:NUMERIC#,
+        #nature:VARCHAR#, #right:VARCHAR#,#remarks:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#, #statusDt:VARCHAR#,
+        #branchCode:VARCHAR#,#initiatedBranch:VARCHAR#,#documentGenId:VARCHAR#,#gahanRelease:VARCHAR#,#tdtGahanExpDate:DATE#,#tdtGahanReleasExpDate:DATE#, #authorizeStatus:VARCHAR# , #authorizeBy:VARCHAR# , #authorizeDt:DATE#,#gahanYesNo:VARCHAR#)
+    </mapped-statement>
+        
+        
+    <mapped-statement name="insertGahanDocTO" inline-parameters="true">
+        INSERT INTO GAHAN_DOC_TABLE
+        (DOCUMENT_NO,DOCUMENT_TYPE,DOCUMENT_DT,REGISTRED_OFFICE,SL_NO,
+        STATUS,STATUS_BY,STATUS_DT,DOCUMENT_GEN_ID,AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT
+        ) VALUES (
+        #documentNo:VARCHAR#, #documentType:VARCHAR#, #documentDt:DATE#,#registredOffice:VARCHAR#,#slno:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#, #statusDt:VARCHAR#,
+        #documentGenId:VARCHAR#, #authorizeStatus:VARCHAR# , #authorizeBy:VARCHAR# , #authorizeDt:DATE#)
+    </mapped-statement>   
+        
+        
+        
+        
+    <dynamic-mapped-statement name="getGahanCustomerList" result-class="java.util.LinkedHashMap" >
+        SELECT GS.CUST_ID AS "Customer ID",GS.CONSTITUTION AS Constitution, get_cust_name(C.CUST_ID) AS "Name", GD.DOCUMENT_GEN_ID, GC.OWNER_MEMBER
+        FROM GAHAN_CUSTOMER_DETAILS GS,CUSTOMER C ,GAHAN_DOCUMENT_DETAILS GD WHERE (GS.STATUS NOT IN ('DELETED')) AND (GS.AUTHORIZE_STATUS IS NULL OR(GS.AUTHORIZE_STATUS!='AUTHORIZED' AND GS.AUTHORIZE_STATUS!='REJECTED')) 
+        AND C.CUST_ID = GS.CUST_ID  AND GS.DOCUMENT_GEN_ID = GD.DOCUMENT_GEN_ID   
+    </dynamic-mapped-statement>
+         
+        <!--  <mapped-statement name="getGahanCustomer" result-class="java.util.LinkedHashMap">
+               SELECT GC.CUST_ID,  get_cust_name(C.CUST_ID) AS "Name", GC.DOCUMENT_NO,GD.PLEDGE_NO,GD.DOCUMENT_GEN_ID,MEMBERSHIP_NO FROM GAHAN_CUSTOMER_DETAILS GC , CUSTOMER C,GAHAN_DOCUMENT_DETAILS GD,GAHAN_DOC_TABLE GT
+                WHERE GC.STATUS NOT IN ('DELETED') AND  GD.STATUS !='DELETED' AND GC.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND GT.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND
+                GC.DOCUMENT_NO = GT.DOCUMENT_NO AND GC.CUST_ID = C.CUST_ID 
+           </mapped-statement>-->
+           
+    <mapped-statement name="getGahanCustomer" result-class="java.util.LinkedHashMap">
+        SELECT distinct GC.CUST_ID,  get_cust_name(C.CUST_ID) AS "Name",GD.PLEDGE_NO,GD.DOCUMENT_GEN_ID,MEMBERSHIP_NO FROM GAHAN_CUSTOMER_DETAILS GC , CUSTOMER C,GAHAN_DOCUMENT_DETAILS GD,GAHAN_DOC_TABLE GT
+        WHERE GC.STATUS NOT IN ('DELETED') AND  GD.STATUS !='DELETED' AND GC.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND GT.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND
+        GC.CUST_ID = C.CUST_ID 
+    </mapped-statement>
+           
+           
+         
+    <mapped-statement name="getGahanCustomerForDelete" result-class="java.util.LinkedHashMap">
+        SELECT GC.CUST_ID,  get_cust_name(C.CUST_ID) AS "Name", GC.DOCUMENT_NO,GD.PLEDGE_NO ,GD.DOCUMENT_GEN_ID
+        FROM GAHAN_CUSTOMER_DETAILS GC , CUSTOMER C,GAHAN_DOCUMENT_DETAILS GD WHERE GC.STATUS NOT IN ('DELETED') AND  GC.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND
+        GC.DOCUMENT_NO = GD.DOCUMENT_NO AND GC.CUST_ID = C.CUST_ID AND
+        (GC.AUTHORIZE_STATUS IS NULL OR (GC.AUTHORIZE_STATUS!='AUTHORIZED' AND GC.AUTHORIZE_STATUS!='REJECTED'))
+    </mapped-statement>
+         
+    <mapped-statement name="insertGahanPropertyDetailsTO" inline-parameters="true">
+        INSERT INTO GAHAN_PROPERTY_DETAILS 
+        (VILLAGE,SARVEY_NO,TOTAL_AREA,DOCUMENT_GEN_ID,STATUS,RECORD_NO,NATURE,"right",RESARVEY_NO,OWNER_NO,ARS,OWNER_NO2) VALUES 
+        (#village:VARCHAR#,#surveyNo:VARCHAR#,#totalArea:VARCHAR#,#documentGenId:VARCHAR#,#status:VARCHAR#,#sno:VARCHAR#,#nature:VARCHAR#,#right:VARCHAR#,#resurveyNo:VARCHAR#,#ownerNo:VARCHAR#,#ars:VARCHAR#,#ownerNo2:VARCHAR#)
+    </mapped-statement>
+         
+    <mapped-statement name="getGahanDocDetails" result-class="java.util.HashMap" >
+        SELECT gt.DOCUMENT_NO,gt.DOCUMENT_TYPE, gt.DOCUMENT_DT,gt.REGISTRED_OFFICE,PLEDGE, PLEDGE_DT,PLEDGE_NO,PLEDGE_AMT,
+        NATURE, "right",REMARKS,GAHAN_RELEASE,GAHAN_EXP_DT,GAHAN_RELEASE_DT,GAHAN_RELEASE_NO FROM GAHAN_DOCUMENT_DETAILS gdd,gahan_doc_table gt  where
+        gdd.DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID# and gt.DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID:VARCHAR#
+    </mapped-statement>
+         
+    <dynamic-mapped-statement name="getCustdetails" result-class="java.util.HashMap" >
+        SELECT GS.CUST_ID ,GS.CONSTITUTION , get_cust_name(C.CUST_ID) AS "Name",SH.SHARE_TYPE
+        FROM GAHAN_CUSTOMER_DETAILS GS,CUSTOMER C,SHARE_ACCT SH  WHERE GS.STATUS NOT IN ('DELETED') 
+        AND C.CUST_ID = GS.CUST_ID AND
+        GS.DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID:VARCHAR#
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="getCustdetailsForTable" result-class="java.util.HashMap" >
+        SELECT GJ.CUST_ID ,GJ.CONSTITUTION , get_cust_name(C.CUST_ID) AS "Name"
+        FROM GAHAN_JOINT GJ,CUSTOMER C  WHERE GJ.STATUS NOT IN ('DELETED') 
+        AND C.CUST_ID = GJ.CUST_ID AND
+        GJ.DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID:VARCHAR#
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="getMainCustdetailsForTable" result-class="java.util.HashMap" >
+        SELECT GC.CUST_ID ,GC.CONSTITUTION , get_cust_name(C.CUST_ID) AS "Name"
+        FROM GAHAN_CUSTOMER_DETAILS GC,CUSTOMER C  WHERE GC.STATUS NOT IN ('DELETED') 
+        AND C.CUST_ID = GC.CUST_ID AND
+        GC.DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID:VARCHAR#
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="getPropDetails" result-class="java.util.HashMap" >
+        SELECT VILLAGE,SARVEY_NO,ARS,TOTAL_AREA,RECORD_NO,NATURE,"right",RESARVEY_NO,OWNER_NO,ARS,OWNER_NO2
+        FROM GAHAN_PROPERTY_DETAILS  WHERE
+        DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID:VARCHAR# AND STATUS != 'DELETED'
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="getDocDetails" result-class="java.util.LinkedHashMap" >
+        SELECT DOCUMENT_NO, DOCUMENT_TYPE,
+        DOCUMENT_DT,REGISTRED_OFFICE,SL_NO FROM GAHAN_DOC_TABLE  WHERE
+        DOCUMENT_GEN_ID =#DOCUMENT_GEN_ID:VARCHAR# AND STATUS != 'DELETED' ORDER BY SL_NO
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="getSelectLoanScurityDetails" result-class="java.util.HashMap" >
+        SELECT LFD.LOAN_BALANCE_PRINCIPAL,LFD.ACCT_NUM,LSL.PLEDGE_AMOUNT,LSD.LIMIT, LSD.PRODUCT_ID,LSD.TO_DT,MEMBER_NAME FROM 
+        LOANS_SANCTION_DETAILS LSD,LOANS_FACILITY_DETAILS LFD,LOANS_SECURITY_LAND LSL ,
+        GAHAN_DOCUMENT_DETAILS GDD
+        WHERE LFD.BORROW_NO=LSD.BORROW_NO AND LFD.ACCT_NUM=LSL.ACCT_NUM AND GDD.GAHAN_YESNO = #GAHAN_YESNO# AND LSL.DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR# AND 
+        GDD.DOCUMENT_GEN_ID=LSL.DOCUMENT_GEN_ID  AND
+        LFD.ACCT_STATUS !='CLOSED' AND LSL.STATUS !='DELETED' AND LSL.AUTHORIZED_STATUS='AUTHORIZED' AND GDD.STATUS !='DELETED' 
+    </dynamic-mapped-statement>
+         
+        <!--  <dynamic-mapped-statement name="getSelectGahanaAuthList" result-class="java.util.LinkedHashMap" >
+              SELECT GD.DOCUMENT_GEN_ID ,GC.CUST_ID,  get_cust_name(C.CUST_ID) AS "Name", GC.DOCUMENT_NO,GD.PLEDGE_NO FROM GAHAN_CUSTOMER_DETAILS GC, GAHAN_DOCUMENT_DETAILS GD,GAHAN_DOC_TABLE GT,CUSTOMER C WHERE  
+               GC.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND GT.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND GC.DOCUMENT_NO = GT.DOCUMENT_NO AND GC.CUST_ID = C.CUST_ID AND GC.STATUS NOT IN ('DELETED')  AND
+              (GC.AUTHORIZE_STATUS IS NULL OR(GC.AUTHORIZE_STATUS!='AUTHORIZED' AND GC.AUTHORIZE_STATUS!='REJECTED')) AND GC.STATUS_BY != #USER_ID#  ORDER BY GD.DOCUMENT_GEN_ID
+         </dynamic-mapped-statement>  -->  
+         
+    <dynamic-mapped-statement name="getSelectGahanaAuthList" result-class="java.util.LinkedHashMap" >
+        SELECT GD.DOCUMENT_GEN_ID ,GC.CUST_ID,  get_cust_name(C.CUST_ID) AS "Name", GD.PLEDGE_NO FROM GAHAN_CUSTOMER_DETAILS GC, GAHAN_DOCUMENT_DETAILS GD,GAHAN_DOC_TABLE GT,CUSTOMER C WHERE  
+        GC.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID AND GT.DOCUMENT_GEN_ID=GD.DOCUMENT_GEN_ID  AND GC.CUST_ID = C.CUST_ID AND GC.STATUS NOT IN ('DELETED') AND gd.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# AND
+        (GC.AUTHORIZE_STATUS IS NULL OR(GC.AUTHORIZE_STATUS!='AUTHORIZED' AND GC.AUTHORIZE_STATUS!='REJECTED')) AND GC.STATUS_BY != #USER_ID:VARCHAR#  ORDER BY GD.DOCUMENT_GEN_ID
+    </dynamic-mapped-statement>
+                         
+                                         
+        
+	<!-- Use CustomerAddressTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateGahanCustomerDocumentTO" inline-parameters="true">
+        UPDATE GAHAN_DOCUMENT_DETAILS SET 
+        PLEDGE = #pledge:VARCHAR#,
+        PLEDGE_DT = #pledgeDt:DATE#,
+        PLEDGE_NO = #pledgeNo:VARCHAR#,
+        PLEDGE_AMT = #pledgeAmt:NUMERIC#,
+        NATURE = #nature:VARCHAR#,
+        "right" = #right:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:VARCHAR#,
+        GAHAN_RELEASE = #gahanRelease:VARCHAR#,
+        GAHAN_EXP_DT = #tdtGahanExpDate:DATE#,
+        GAHAN_RELEASE_DT = #tdtGahanReleasExpDate:DATE#,
+        GAHAN_RELEASE_NO = #gahanReleaseNo:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#,
+        GAHAN_YESNO = #gahanYesNo:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+        WHERE  DOCUMENT_GEN_ID = #documentGenId:VARCHAR#
+    </mapped-statement>
+       
+       
+    <mapped-statement name="deleteGhanDocTable" inline-parameters="true">
+        delete  from gahan_doc_table where DOCUMENT_GEN_ID=#documentGenId:VARCHAR#
+    </mapped-statement>
+       
+       
+    <mapped-statement name="updateGahanPropertyDetails" inline-parameters="true">
+             
+        UPDATE GAHAN_PROPERTY_DETAILS SET
+        RECORD_NO = #sno:VARCHAR#,
+        VILLAGE = #village:VARCHAR#,
+        SARVEY_NO = #surveyNo:VARCHAR#,
+        TOTAL_AREA = #totalArea:VARCHAR#,
+        NATURE = #nature:VARCHAR#,
+        "right" = #right:VARCHAR#,
+        RESARVEY_NO = #resurveyNo:VARCHAR#,
+        OWNER_NO = #ownerNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        ARS= #ars:VARCHAR#,
+        OWNER_NO2=#ownerNo2:VARCHAR#
+        WHERE DOCUMENT_GEN_ID = #documentGenId:VARCHAR# AND RECORD_NO = #sno:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteGahanPropertyDetails" result-class="java.util.HashMap">
+        UPDATE GAHAN_PROPERTY_DETAILS SET
+               <!--STATUS = 'DELETED'-->
+        STATUS = 'MODIFIED'
+        WHERE DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR# AND RECORD_NO = #RECORD_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAuthorized" result-class="java.util.HashMap">
+        SELECT AUTHORIZE_STATUS FROM GAHAN_DOCUMENT_DETAILS
+        WHERE DOCUMENT_GEN_ID = #DOCUMENT_GEN_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerAddressTO object (JavaBean) properties -->
+    <result-map name="getGahanCustomerDocumentTOResult" class="com.see.truetransact.transferobject.customer.gahan.GahanDocumentDetailsTO">
+        <property name="pledge" column="PLEDGE"/>
+        <property name="pledgeDt" column="PLEDGE_DT"/>
+        <property name="pledgeNo" column="PLEDGE_NO"/>
+        <property name="pledgeAmt" column="PLEDGE_AMT"/>
+        <property name="village" column="VILLAGE"/>
+        <property name="surveyNo" column="SURVEY_NO"/>
+        <property name="totalArea" column="TOTAL_AREA"/>
+        <property name="nature" column="NATURE"/>
+        <property name="right" column="RIGHT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="status" column="STATUS"/>
+                
+    </result-map>
+    <mapped-statement name="getSelectGahanDocumentDetailsTO" result-map="getGahanCustomerDocumentTOResult" >
+        SELECT * FROM GAHAN_DOCUMENT_DETAILS WHERE DOCUMENT_NO=#DOCUMENT_NO:VARCHAR#
+               
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectGahanDocumentDetails" result-class="java.util.HashMap" >
+
+            <!--SELECT * FROM GAHAN_CUSTOMER_DETAILS GCD,GAHAN_DOCUMENT_DETAILS GDD,GAHAN_PROPERTY_DETAILS GPD,gahan_doc_table gt
+            WHERE gt.DOCUMENT_NO=#DOCUMENT_NO# AND GDD.STATUS !='DELETED' AND GDD.AUTHORIZE_STATUS ='AUTHORIZED'   
+            AND GCD.DOCUMENT_GEN_ID=GDD.DOCUMENT_GEN_ID AND GCD.DOCUMENT_GEN_ID=#DOCUMENT_GEN_ID#
+            AND GAHAN_RELEASE ='N' AND
+            GPD.DOCUMENT_GEN_ID=GDD.DOCUMENT_GEN_ID and gt.document_gen_id=GDD.DOCUMENT_GEN_ID
+            -->
+            
+            
+        SELECT GCD.CUST_ID,gcd.constitution,gcd.document_gen_id,
+        gdd.pledge,gdd.pledge_dt,gdd.pledge_no,gdd.pledge_amt,gdd.remarks,gdd.document_gen_id,gdd.gahan_release,gdd.gahan_release_dt,gdd.gahan_release_no,gdd.gahan_exp_dt
+        ,gpd.village,gpd.sarvey_no as SARVEY_NO,gpd.ars,gpd.total_area,gpd.document_gen_id,gpd.record_no,gpd.resarvey_no,gpd.owner_no,gpd.right,gpd.nature,
+        gt.document_no,gt.document_type,gt.document_dt,gt.registred_office,gt.sl_no,gt.document_gen_id
+        FROM GAHAN_CUSTOMER_DETAILS GCD,GAHAN_DOCUMENT_DETAILS GDD,GAHAN_PROPERTY_DETAILS GPD,gahan_doc_table gt  
+        WHERE gt.DOCUMENT_NO=#DOCUMENT_NO:VARCHAR# AND GDD.STATUS !='DELETED' AND GDD.AUTHORIZE_STATUS ='AUTHORIZED'           
+        AND GCD.DOCUMENT_GEN_ID=GDD.DOCUMENT_GEN_ID AND GCD.DOCUMENT_GEN_ID=#DOCUMENT_GEN_ID#        
+        AND GAHAN_RELEASE ='N' AND        
+        GPD.DOCUMENT_GEN_ID=GDD.DOCUMENT_GEN_ID and gt.document_gen_id=GDD.DOCUMENT_GEN_ID
+    </mapped-statement>
+       
+       
+       
+     <!--  SELECT distinct GDD.*,GT.* FROM GAHAN_DOCUMENT_DETAILS GDD,GAHAN_CUSTOMER_DETAILS GCD,GAHAN_PROPERTY_DETAILS GPD,gahan_doc_table GT
+            WHERE GT.DOCUMENT_NO='1' AND GDD.STATUS !='DELETED' AND GDD.AUTHORIZE_STATUS ='AUTHORIZED'   
+            AND GCD.DOCUMENT_GEN_ID=GDD.DOCUMENT_GEN_ID AND GCD.DOCUMENT_GEN_ID='DOC_ID0003' 
+            AND GT.DOCUMENT_GEN_ID='DOC_ID0003'
+            AND GAHAN_RELEASE ='N' AND
+            GPD.DOCUMENT_GEN_ID=GDD.DOCUMENT_GEN_ID-->
+       
+       
+       
+    <mapped-statement name="checkingLoanOutStanding" result-class="java.util.HashMap">
+        SELECT * FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=(SELECT ACCT_NUM FROM LOANS_SECURITY_LAND WHERE DOCUMENT_GEN_ID=#DOC_GEN_ID:VARCHAR#
+        AND MEMBER_NO=(SELECT MEMBERSHIP_NO FROM CUSTOMER WHERE CUST_ID=#CUST_ID:VARCHAR#) AND STATUS!='CLOSED' AND AUTHORIZED_STATUS='AUTHORIZED')
+        AND ACCT_STATUS!='CLOSED' AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="checkingMdsOutStanding" result-class="java.util.HashMap">
+        <!--SELECT * FROM MDS_SCHEME_DETAILS WHERE SCHEME_NAME=(SELECT SCHEME_NAME FROM MDS_MASTER_MAINTENANCE WHERE CHITTAL_NO=(SELECT
+        CHITTAL_NO FROM MDS_SECURITY_LAND WHERE DOCUMENT_GEN_ID=#DOC_GEN_ID:VARCHAR#
+        AND MEMBER_NO=(SELECT MEMBERSHIP_NO FROM CUSTOMER WHERE CUST_ID=#CUST_ID:VARCHAR#) AND STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED')
+        AND STATUS!='CLOSED' AND AUTHORIZED_STATUS='AUTHORIZED')
+        AND STATUS!='CLOSED' AND STATUS!='DELETED' -->
+        
+        SELECT *
+        FROM MDS_APPLICATION MA
+        WHERE  CHITTAL_NO =
+              (SELECT CHITTAL_NO
+                 FROM MDS_MASTER_MAINTENANCE MM
+                WHERE     MM.CHITTAL_NO =
+                             (SELECT CHITTAL_NO
+                                FROM MDS_SECURITY_LAND
+                               WHERE     DOCUMENT_GEN_ID = #DOC_GEN_ID:VARCHAR#
+                                     AND MEMBER_NO =
+                                            (SELECT MEMBERSHIP_NO
+                                               FROM CUSTOMER
+                                              WHERE CUST_ID = #CUST_ID:VARCHAR#)
+                                     AND STATUS != 'DELETED'
+                                     AND AUTHORIZED_STATUS = 'AUTHORIZED')
+                      AND MM.CHIT_CLOSE_DT IS NULL
+                      AND AUTHORIZED_STATUS = 'AUTHORIZED')
+       AND ma.STATUS != 'DELETED'
+       
+    </mapped-statement>
+       
+        
+</sql-map>

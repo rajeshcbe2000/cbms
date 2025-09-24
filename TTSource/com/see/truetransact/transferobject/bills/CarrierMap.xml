@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CarrierTOMap">
+
+	<!-- Use CarrierTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCarrierTO" inline-parameters="true">
+        INSERT INTO BILLS_CARRIER
+        (CARRIER_CODE, CARRIER_NAME, ADDRESS, CITY, STATE, COUNTRY, CARRIER_TYPE, APPROVED, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_DT, AUTHORIZE_BY, PINCODE
+        ) VALUES (
+        #carrierCode:VARCHAR#, #carrierName:VARCHAR#, #address:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #country:VARCHAR#, #carrierType:VARCHAR#, #approved:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeDt:DATE#, #authorizeBy:VARCHAR#, #pincode:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use CarrierTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCarrierTO" inline-parameters="true">
+        UPDATE BILLS_CARRIER SET 		
+        CARRIER_NAME = #carrierName:VARCHAR#,
+        ADDRESS = #address:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        COUNTRY = #country:VARCHAR#,
+        CARRIER_TYPE = #carrierType:VARCHAR#,
+        APPROVED = #approved:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        PINCODE = #pincode:VARCHAR#
+        WHERE CARRIER_CODE = #carrierCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use CarrierTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCarrierTO" inline-parameters="true">
+        UPDATE BILLS_CARRIER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE# 
+        WHERE CARRIER_CODE = #carrierCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CarrierTO object (JavaBean) properties -->
+    <result-map name="getCarrierTOResult" class="com.see.truetransact.transferobject.bills.CarrierTO">
+        <property name="carrierCode" column="CARRIER_CODE"/>
+        <property name="carrierName" column="CARRIER_NAME"/>
+        <property name="address" column="ADDRESS"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="country" column="COUNTRY"/>
+        <property name="carrierType" column="CARRIER_TYPE"/>
+        <property name="approved" column="APPROVED"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="pincode" column="PINCODE"/>
+    </result-map>
+    <mapped-statement name="getSelectCarrierTO" result-map="getCarrierTOResult" >
+        SELECT * FROM BILLS_CARRIER 
+        WHERE CARRIER_CODE = #value:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="viewCarrier" result-class = "java.util.LinkedHashMap" >
+        SELECT CARRIER_CODE AS "CARRIER_CODE", CARRIER_NAME AS "CARRIER_NAME", CARRIER_TYPE AS "CARRIER_TYPE" FROM BILLS_CARRIER WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND
+        (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <dynamic-mapped-statement name="viewAuthorizeCarrier" result-class = "java.util.LinkedHashMap" >
+        SELECT CARRIER_CODE AS "CARRIER_CODE", CARRIER_NAME AS "CARRIER_NAME", 
+        CARRIER_TYPE AS "CARRIER_TYPE", AUTHORIZE_STATUS AS "AUTHORIZE_STATUS" 
+        FROM BILLS_CARRIER BC WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND
+        BC.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = BC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                BC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (BC.AUTHORIZE_STATUS IS NULL OR 
+                BC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="authorizeCarrier" result-class="java.util.HashMap">
+        UPDATE BILLS_CARRIER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:DATE#
+        WHERE CARRIER_CODE = #CARRIER_CODE# 
+    </mapped-statement>
+        
+    <mapped-statement name="countCarrierCode" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(CARRIER_CODE) AS "COUNT" FROM BILLS_CARRIER WHERE CARRIER_CODE = #CARRIER_CODE:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+</sql-map>

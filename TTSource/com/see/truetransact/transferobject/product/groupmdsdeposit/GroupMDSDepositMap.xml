@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GroupMDSDepositMap">
+
+	<!-- Use LoanProductAccountTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+           
+    <mapped-statement name="insertGroupMDSDepositTO" inline-parameters="true">
+       INSERT INTO GROUP_DEPOSIT
+        (GROUP_NO, GROUP_NAME, SCHEME_COUNT, GROUP_TYPE, START_DT, END_DT,AUTHORIZED_BY, AUTHORIZED_DT, AUTHORIZE_STATUS, 
+        CREATED_BY, CREATED_DT, STATUS_BY, STATUS_DT, BRANCH_ID, INTEREST_AMOUNT_TYPE, INTEREST_AMOUNT, 
+        PENAL_CALCULATION_TYPE, PRIZED_PENAL, NON_PRIZED_PENAL, INTEREST_RECOVERY_TYPE, INTEREST_RECOVERY, PROD_TYPE, STATUS,
+         DEPOSIT_AMT, PREMATURE_INT_REC_CALC_TYPE, PREMATURE_INT_REC_CALC_AMOUNT,NEXT_GDS_NO,IS_INTEREST_RECOVERY,INT_CALC_BEFORE_FULL_PAYMENT,
+         INT_CALC_RATE_BEFORE_PAYMENT,INT_BEFORE_FULL_PAYMENT_TYPE
+        ) VALUES (
+        #groupNo:VARCHAR#, #groupName:VARCHAR#, #schemeCount:NUMERIC#, #groupType:VARCHAR#, #startDate:DATE#, #endDate:DATE#, 
+        #authorizedBy:VARCHAR#, #authorizedDate:DATE#, #authorizedStatus:VARCHAR#, #createdBy:VARCHAR#, #createdDate:DATE#,
+        #statusBy:VARCHAR#, #statusDt:DATE#, #branchId:VARCHAR#,
+        #interestAmountType:VARCHAR#,
+        #interestAmount:NUMERIC#,
+        #penalCalculationType:VARCHAR#,
+        #prizedPenal:NUMERIC#,
+        #nonPrizedPenal:NUMERIC#,
+        #interestRecoveryType:VARCHAR#,
+        #interestRecovery:NUMERIC#,
+        #productType:VARCHAR#, 
+        #status:VARCHAR#,
+        #depositAmt:NUMERIC#,
+        #prematureIntRecType:VARCHAR#,
+        #prematureIntRecAmt:NUMERIC#,
+        #nextGDSNo:NUMERIC#,
+        #isIntRecovery:VARCHAR#,
+        #isIntCalcIfdue:VARCHAR#,
+        #intCalcRateForDue:NUMERIC#,
+        #isIntCalcIfdueType:VARCHAR#       
+        )
+    </mapped-statement>  
+    
+     <mapped-statement name="getAllSelectGroupMDSDepositTO" result-map="getGroupMDSDepositTOResult" >
+        SELECT * FROM GROUP_DEPOSIT WHERE GROUP_NO = #GROUP_NO:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectGroupMDSDepositTO" result-class="java.util.HashMap" >
+        SELECT GROUP_NO, GROUP_NAME, SCHEME_COUNT, GROUP_TYPE, PROD_TYPE, START_DT, END_DT, 
+        INTEREST_AMOUNT_TYPE, INTEREST_AMOUNT, PENAL_CALCULATION_TYPE, PRIZED_PENAL, NON_PRIZED_PENAL,
+        INTEREST_RECOVERY_TYPE, INTEREST_RECOVERY FROM GROUP_DEPOSIT WHERE AUTHORIZE_STATUS ='AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_ID">
+                    BRANCH_ID = #BRANCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY GROUP_NO
+    </dynamic-mapped-statement>
+    
+    
+    <mapped-statement name="getGroupMDSAuthorizeTOList" result-class="java.util.HashMap" >
+        SELECT GROUP_NO, GROUP_NAME, SCHEME_COUNT, GROUP_TYPE, PROD_TYPE
+        <!--, START_DT, END_DT, 
+        INTEREST_AMOUNT_TYPE, INTEREST_AMOUNT, PENAL_CALCULATION_TYPE, PRIZED_PENAL, NON_PRIZED_PENAL,
+        INTEREST_RECOVERY_TYPE, INTEREST_RECOVERY, DEPOSIT_AMT, PREMATURE_INT_REC_CALC_TYPE, 
+        PREMATURE_INT_REC_CALC_AMOUNT 
+        -->FROM GROUP_DEPOSIT WHERE AUTHORIZE_STATUS IS NULL and STATUS_BY != #USER_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateAuthorizeGroupMDSTO" inline-parameters="true" >
+        UPDATE GROUP_DEPOSIT SET 
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDate:DATE#,
+        AUTHORIZE_STATUS = #authorizedStatus:VARCHAR#
+        WHERE GROUP_NO = #groupNo:VARCHAR# 
+    </mapped-statement>
+    
+    
+    <mapped-statement name="updateGroupMDSDepositTO" inline-parameters="true">
+        UPDATE GROUP_DEPOSIT SET 
+        STATUS = #status:VARCHAR#,
+        GROUP_NAME = #groupName:VARCHAR#,
+        SCHEME_COUNT = #schemeCount:NUMERIC#,
+        GROUP_TYPE = #groupType:VARCHAR#,
+        START_DT = #startDate:DATE#,
+        END_DT = #endDate:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDate:DATE#,
+        AUTHORIZE_STATUS = #authorizedStatus:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        INTEREST_AMOUNT_TYPE = #interestAmountType:VARCHAR#,
+        INTEREST_AMOUNT = #interestAmount:NUMERIC#,
+        PENAL_CALCULATION_TYPE = #penalCalculationType:VARCHAR#,
+        PRIZED_PENAL = #prizedPenal:NUMERIC#,
+        NON_PRIZED_PENAL = #nonPrizedPenal:NUMERIC#,
+        INTEREST_RECOVERY_TYPE = #interestRecoveryType:VARCHAR#,
+        INTEREST_RECOVERY = #interestRecovery:NUMERIC#,
+        PROD_TYPE = #productType:VARCHAR#,
+        DEPOSIT_AMT=#depositAmt:NUMERIC#,
+        PREMATURE_INT_REC_CALC_TYPE= #prematureIntRecType:VARCHAR#,
+        PREMATURE_INT_REC_CALC_AMOUNT=#prematureIntRecAmt:NUMERIC#,
+        IS_INTEREST_RECOVERY = #isIntRecovery:VARCHAR#,
+        INT_CALC_BEFORE_FULL_PAYMENT = #isIntCalcIfdue:VARCHAR#,
+        INT_CALC_RATE_BEFORE_PAYMENT = #intCalcRateForDue:NUMERIC#,
+        INT_BEFORE_FULL_PAYMENT_TYPE = #isIntCalcIfdueType:VARCHAR#            
+        WHERE GROUP_NO = #groupNo:VARCHAR# 
+    </mapped-statement>
+    
+    <result-map name="getGroupMDSDepositTOResult" class="com.see.truetransact.transferobject.product.groupmdsdeposit.GroupMDSDepositTO">
+        <property name="groupNo" column="GROUP_NO"/>
+        <property name="groupName" column="GROUP_NAME"/>
+        <property name="schemeCount" column="SCHEME_COUNT"/>
+        <property name="groupType" column="GROUP_TYPE"/>
+        <property name="startDate" column="START_DT"/>
+        <property name="endDate" column="END_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDate" column="AUTHORIZED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZE_STATUS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDate" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="interestAmountType" column="INTEREST_AMOUNT_TYPE"/>
+        <property name="interestAmount" column="INTEREST_AMOUNT"/>
+        <property name="penalCalculationType" column="PENAL_CALCULATION_TYPE"/>
+        <property name="prizedPenal" column="PRIZED_PENAL"/>
+        <property name="nonPrizedPenal" column="NON_PRIZED_PENAL"/>
+        <property name="interestRecoveryType" column="INTEREST_RECOVERY_TYPE"/>
+        <property name="interestRecovery" column="INTEREST_RECOVERY"/>
+        <property name="depositAmt" column="DEPOSIT_AMT"/>
+        <property name="prematureIntRecType" column="PREMATURE_INT_REC_CALC_TYPE"/>
+        <property name="prematureIntRecAmt" column="PREMATURE_INT_REC_CALC_AMOUNT"/>
+        <property name="productType" column="PROD_TYPE"/>        
+        <property name="isIntRecovery" column="IS_INTEREST_RECOVERY"/>
+        <property name="isIntCalcIfdue" column="INT_CALC_BEFORE_FULL_PAYMENT"/>
+        <property name="intCalcRateForDue" column="INT_CALC_RATE_BEFORE_PAYMENT"/>
+        <property name="isIntCalcIfdueType" column="INT_BEFORE_FULL_PAYMENT_TYPE"/>         
+    </result-map>
+
+     <mapped-statement name="getAllGDSProdIds" result-class="java.util.HashMap"> 
+        SELECT PROD_ID as PROD_ID,PROD_ID as PROD_DESC FROM MDS_PRODUCT_GENERAL_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+     </mapped-statement>
+    
+     <mapped-statement name="getAllGroupDepositProducts" result-class="java.util.HashMap"> 
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+     </mapped-statement>
+
+     <mapped-statement name="getGroupDepositAutoGenerateCount" result-class="java.util.HashMap"> 
+       select count(*) as CNT from ID_GENERATION where id_key = 'GDS_MDS_GROUPID'
+     </mapped-statement> 
+     
+      <mapped-statement name="getGroupDepositNoAlreadyExists" result-class="java.util.HashMap">  
+        SELECT * FROM GROUP_DEPOSIT WHERE GROUP_NO = #GROUP_NO:VARCHAR#
+      </mapped-statement> 
+   
+</sql-map>
+
+

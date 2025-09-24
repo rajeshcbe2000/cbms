@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ServiceTaxDetailsMap">
+         
+    <result-map name="getServiceTaxDetailsTO" class="com.see.truetransact.transferobject.servicetax.servicetaxdetails.ServiceTaxDetailsTO">
+        <property name="serviceTaxDet_Id" column="SERVICETAX_DET_ID"/>
+        <property name="acct_Num" column="ACCT_NUM"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="serviceTaxAmt" column="SERVICE_TAX_AMT"/>
+        <property name="educationCess" column="EDUCATION_CESS"/>
+        <property name="higherCess" column="HIGHER_EDU_CESS"/>
+        <property name="totalTaxAmt" column="TOTAL_TAX_AMOUNT"/>
+        <property name="roundVal" column="ROUND_VAL"/>
+        <property name="branchID" column="BRANCH_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>  
+        <property name="createdDt" column="CREATED_DT"/>   
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>   
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DATE"/>  
+        <property name="status" column="STATUS"/>
+        <property name="trans_type" column="TRANS_TYPE"/>
+              
+    </result-map>
+    <mapped-statement name="getSelectServiceTaxDetailsTO" result-map="getServiceTaxDetailsTO" >
+        SELECT * FROM SERVICE_TAX_DETAILS 
+        WHERE SERVICETAX_DET_ID = #SERVICETAX_DET_ID:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+    </mapped-statement>
+         
+   <mapped-statement name="insertServiceTaxDetailsTO" inline-parameters="true">
+        INSERT INTO SERVICE_TAX_DETAILS
+        (SERVICETAX_DET_ID, ACCT_NUM, PARTICULARS,SERVICE_TAX_AMT, EDUCATION_CESS, HIGHER_EDU_CESS,TOTAL_TAX_AMOUNT,ROUND_VAL, BRANCH_ID, CREATED_DT, CREATED_BY, STATUS, 
+        STATUS_BY, STATUS_DT,TRANS_TYPE,SWACHH_CESS,KRISHI_KALYAN_CESS
+        ) VALUES (
+        #serviceTaxDet_Id:VARCHAR#, #acct_Num:VARCHAR#,#particulars:VARCHAR#, #serviceTaxAmt:NUMBER#, #educationCess:NUMBER#,#higherCess:NUMBER#,#totalTaxAmt:NUMBER#,#roundVal:VARCHAR#, 
+        #branchID:VARCHAR#, #createdDt:DATE#, #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#,#trans_type:VARCHAR#,#swachhCess:NUMBER#,#krishiKalyan:NUMBER#)
+    </mapped-statement>
+    <mapped-statement name="authorizeServiceTaxDetails" result-class="java.util.HashMap">
+        UPDATE SERVICE_TAX_DETAILS  SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DATE = #AUTHORIZEDT:DATE#
+        WHERE  ACCT_NUM = #ACCT_NUM:VARCHAR# AND AUTHORIZED_STATUS IS NULL and STATUS != 'DELETED'
+    </mapped-statement>
+   <mapped-statement name="getServiceTaxAmount" result-class="java.util.HashMap">
+        SELECT TOTAL_TAX_AMOUNT FROM SERVICE_TAX_DETAILS WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="deleteServiceTaxDetails" result-class="java.util.HashMap">
+        DELETE  FROM SERVICE_TAX_DETAILS WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# AND CREATED_DT =#CREATED_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getServiceTaxDetailsForUpdation" result-class="java.util.HashMap">
+        SELECT SERVICETAX_DET_ID,SERVICE_TAX_AMT,EDUCATION_CESS,HIGHER_EDU_CESS,ROUND_VAL,TOTAL_TAX_AMOUNT  FROM SERVICE_TAX_DETAILS WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# AND STATUS != 'DELETED' AND AUTHORIZED_STATUS != 'REJECTED'
+    </mapped-statement>
+      <dynamic-mapped-statement name="updateServiceTaxDetails" result-class="java.util.HashMap">
+        UPDATE SERVICE_TAX_DETAILS  SET 
+        SERVICE_TAX_AMT=#SERVICE_TAX_AMT:NUMBER#,HIGHER_EDU_CESS=#HIGHER_EDU_CESS:NUMBER#,
+        EDUCATION_CESS=#EDUCATION_CESS:NUMBER#,TOTAL_TAX_AMOUNT=#TOTAL_TAX_AMOUNT:NUMBER#,
+        ROUND_VAL=#ROUND_VAL:VARCHAR#,
+        STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_STATUS = null,
+        AUTHORIZED_BY = null,
+        AUTHORIZED_DATE =null
+        WHERE  ACCT_NUM = #ACCT_NUM:VARCHAR# AND  STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AUTHORIZED_STATUS">
+                AUTHORIZED_STATUS IS NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getRoundOffAmount" result-class="java.util.HashMap">
+        SELECT #AMOUNT# - REMAINDER(cast(#AMOUNT# as NUMERIC),.50) AS ROUND_OFF_AMOUNT
+    </mapped-statement>
+     
+</sql-map>
+

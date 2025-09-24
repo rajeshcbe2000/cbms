@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ViewPhotoSignMap">
+
+<!--
+    Document   : ViewPhotoSignMap.xml
+    Created on : August 11, 2004, 11:53 AM
+    Author     : shanmuga
+    Description:
+        Purpose of the document follows.
+--> 
+    <mapped-statement name="getAcctPhotoSignDetailsOA" result-class="java.util.LinkedHashMap" >
+      <!--  SELECT ACM.CUST_ID, C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM ACT_MASTER ACM, CUSTOMER C WHERE ACM.ACT_NUM = #ACTNUM:VARCHAR# AND (ACM.CUST_ID = C.CUST_ID)
+        AND CUST_TYPE='INDIVIDUAL' 
+        UNION 
+        SELECT ACT.CUST_ID, C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "CUSTOMER NAME", 'JOINT' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM ACT_JOINT ACT, CUSTOMER C WHERE ACT.ACT_NUM = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)
+        UNION 
+        SELECT ACT.CUST_ID, C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "CUSTOMER NAME", 'AUTHORIZED SIGNATORY' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM ACT_AUTHORIZE ACT, CUSTOMER C WHERE ACT.ACT_NUM = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)
+        UNION 
+        SELECT ACT.CUST_ID, C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "CUSTOMER NAME", 'POA' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM ACT_POA ACT, CUSTOMER C WHERE ACT.ACT_NUM = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)-->
+        
+        SELECT acm.cust_id,
+       get_cust_name(c.cust_id) AS "CUSTOMER NAME",
+       'MAIN' AS "CATEGORY", c.comp_name,
+       '' AS designation,
+       c.email_id, c.branch_code
+  FROM act_master acm, customer c
+ WHERE acm.act_num = #ACTNUM:VARCHAR#
+   AND (acm.cust_id = c.cust_id)
+   AND cust_type = 'INDIVIDUAL'
+UNION
+SELECT act.cust_id,
+       get_cust_name(c.cust_id) AS "CUSTOMER NAME",
+       'JOINT' AS "CATEGORY", c.comp_name,
+       '' AS designation,
+       c.email_id, c.branch_code
+  FROM act_joint act, customer c
+ WHERE act.act_num = #ACTNUM:VARCHAR# AND (act.cust_id = c.cust_id)
+UNION
+SELECT act.cust_id,
+       get_cust_name(c.cust_id) AS "CUSTOMER NAME",
+       'AUTHORIZED SIGNATORY' AS "CATEGORY", c.comp_name,
+       (Act.DESIGNATION) AS designation,
+       c.email_id, c.branch_code
+  FROM act_authorize act, customer c
+ WHERE act.act_num = #ACTNUM:VARCHAR# AND (act.cust_id = c.cust_id) and ACT.STATUS !='DELETED' 
+UNION
+SELECT act.cust_id,
+       get_cust_name(c.cust_id) AS "CUSTOMER NAME",
+       'POA' AS "CATEGORY", c.comp_name,
+       '' AS designation,
+       c.email_id, c.branch_code
+  FROM act_poa act, customer c
+ WHERE act.act_num = #ACTNUM:VARCHAR#
+        
+    </mapped-statement>
+    
+    <mapped-statement name="getAcctPhotoSignDetailsTD" result-class="java.util.LinkedHashMap" >
+        SELECT ACM.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE 
+        FROM DEPOSIT_ACINFO ACM, DEPOSIT_SUB_ACINFO SACM, CUSTOMER C
+        WHERE ACM.DEPOSIT_NO = SACM.DEPOSIT_NO AND
+        ACM.DEPOSIT_NO || '_' || SACM.DEPOSIT_SUB_NO = #ACTNUM:VARCHAR# AND
+        (ACM.CUST_ID = C.CUST_ID) AND C.CUST_TYPE='INDIVIDUAL'         
+        UNION
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'JOINT' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE 
+        FROM DEPOSIT_JOINTACT ACT, CUSTOMER C WHERE 
+        #ACTNUM:VARCHAR# LIKE ACT.DEPOSIT_NO || '%' AND (ACT.CUST_ID = C.CUST_ID)
+        UNION 
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'AUTHORIZED SIGNATORY' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM DEPOSIT_AUTHORIZE ACT, CUSTOMER C WHERE ACT.DEPOSIT_NO = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)
+        UNION 
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'POA' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM DEPOSIT_POA ACT, CUSTOMER C WHERE ACT.DEPOSIT_NO = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)
+    </mapped-statement>
+    <mapped-statement name="getAcctPhotoSignDetailsSH" result-class="java.util.LinkedHashMap" >
+        SELECT ACM.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM SHARE_ACCT ACM, CUSTOMER C WHERE ACM.SHARE_ACCT_NO = #ACTNUM:VARCHAR# AND (ACM.CUST_ID = C.CUST_ID)
+        AND CUST_TYPE='INDIVIDUAL' 
+        UNION 
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'JOINT' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM SHARE_JOINT ACT, CUSTOMER C WHERE ACT.SHARE_ACCT_NO = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)      
+    </mapped-statement>
+
+    <mapped-statement name="getAcctPhotoSignDetailsLOCKER" result-class="java.util.LinkedHashMap" >
+        SELECT ACM.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM LOCKER_MASTER ACM, CUSTOMER C WHERE ACM.REMARKS = #ACTNUM:VARCHAR# AND (ACM.CUST_ID = C.CUST_ID)
+        AND CUST_TYPE='INDIVIDUAL' 
+        UNION 
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'JOINT' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM LOCKER_ISSUE_JOINT ACT, CUSTOMER C WHERE ACT.LOC_NUM = #ACTNUM:VARCHAR# AND (ACT.CUST_ID = C.CUST_ID)      
+    </mapped-statement>
+            
+    <mapped-statement name="getAcctPhotoSignDetailsTL" result-class="java.util.LinkedHashMap" >
+        SELECT ACM.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE 
+        FROM LOANS_BORROWER ACM, LOANS_FACILITY_DETAILS SACM, CUSTOMER C
+        WHERE ACM.BORROW_NO = SACM.BORROW_NO AND
+        SACM.ACCT_NUM = #ACTNUM:VARCHAR# <!--SUBSTR(#ACTNUM#, 0, (INSTR(#ACTNUM#, '_')-1))--> AND (ACM.CUST_ID = C.CUST_ID)
+        AND CUST_TYPE='INDIVIDUAL' 
+        UNION
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'JOINT' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID , C.BRANCH_CODE
+        FROM LOANS_JOINT ACT, LOANS_FACILITY_DETAILS LFD, CUSTOMER C 
+        WHERE 
+        ACT.BORROW_NO = LFD.BORROW_NO AND LFD.ACCT_NUM = #ACTNUM#<!--SUBSTR(#ACTNUM#, 0, (INSTR(#ACTNUM#, '_')-1))-->  
+        AND ACT.STATUS NOT IN ('DELETED') 
+        AND (ACT.CUST_ID = C.CUST_ID)
+        UNION 
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'AUTHORIZED SIGNATORY' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM LOANS_AUTHORIZE ACT, CUSTOMER C ,LOANS_BORROWER LB, LOANS_FACILITY_DETAILS LFD 
+        WHERE LFD.ACCT_NUM =  #ACTNUM:VARCHAR#
+        AND (ACT.CUST_ID = C.CUST_ID)
+        AND LB.BORROW_NO=ACT.BORROW_NO AND LFD.BORROW_NO=LB.BORROW_NO
+        UNION 
+        SELECT ACT.CUST_ID, get_cust_name(c.cust_id) AS "CUSTOMER NAME", 'POA' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM LOANS_POA ACT, CUSTOMER C 
+        WHERE ACT.BORROW_NO =#ACTNUM:VARCHAR# 
+        AND (ACT.CUST_ID = C.CUST_ID)
+    </mapped-statement>
+    
+    <mapped-statement name="getCustPhotoSignFile" result-class="java.util.HashMap" >
+        SELECT PHOTO_FILE, SIGNATURE_FILE FROM CUSTOMER WHERE CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizedInstructionOA" result-class="java.util.LinkedHashMap" >
+        SELECT FROM_AMT as "From Amt", TO_AMT as "To Amt", INSTRUCTION as "Instruction" 
+        FROM ACT_AUTHORIZE_INSTRUCTION 
+        WHERE ACT_NUM = #ACTNUM:VARCHAR#  AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizedInstructionTD" result-class="java.util.LinkedHashMap" >
+        SELECT FROM_AMT as "From Amt", TO_AMT as "To Amt", INSTRUCTION as "Instruction" 
+        FROM DEPOSIT_AUTHORIZE_INSTRUCTION  
+        WHERE #ACTNUM:VARCHAR# LIKE DEPOSIT_NO || '%' AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizedInstructionTL" result-class="java.util.LinkedHashMap" >
+        SELECT FROM_AMT as "From Amt", TO_AMT as "To Amt", INSTRUCTION as "Instruction" 
+        FROM LOANS_AUTHORIZE_INSTRUCTION LAI, LOANS_FACILITY_DETAILS LFD
+        WHERE LFD.BORROW_NO = LAI.BORROW_NO AND LFD.ACCT_NUM = #ACTNUM:VARCHAR#
+        AND LFD.STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizedInstructionAD" result-class="java.util.LinkedHashMap" >
+        SELECT FROM_AMT as "From Amt", TO_AMT as "To Amt", INSTRUCTION as "Instruction" 
+        FROM LOANS_AUTHORIZE_INSTRUCTION LAI, LOANS_FACILITY_DETAILS LFD
+        WHERE LFD.BORROW_NO = LAI.BORROW_NO AND LFD.ACCT_NUM = #ACTNUM:VARCHAR#
+        AND LFD.STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizedInstructionBILLS" result-class="java.util.LinkedHashMap" >
+        SELECT FROM_AMT as "From Amt", TO_AMT as "To Amt", INSTRUCTION as "Instruction" 
+        FROM BILLS_AUTHORIZE_INSTRUCTION LAI, BILLS_FACILITY_DETAILS LFD
+        WHERE LFD.BORROW_NO = LAI.BORROW_NO AND LFD.ACCT_NUM = #ACTNUM:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+     <mapped-statement name="getAcctPhotoSignDetailsNewActOpening" result-class="java.util.LinkedHashMap" >               
+        SELECT C.CUST_ID, C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE
+        FROM  CUSTOMER C WHERE C.CUST_ID = #ACTNUM:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="getCustomerCustTypeForAllProducts" result-class="java.util.LinkedHashMap" >     
+        SELECT CUST_TYPE FROM CUSTOMER C WHERE EXISTS (SELECT CUST_ID FROM ALL_CUSTOMER ac 
+        WHERE AC.ACT_NUM = #ACT_NUM:VARCHAR# AND ac.CUST_ID = C.CUST_ID)
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getAcctPhotoSignDetailsSA" result-class="java.util.LinkedHashMap" >               
+        SELECT sa.SUSPENSE_CUSTOMER_ID AS CUST_ID,sa.SUSPENSE_NAME AS "CUSTOMER NAME", 'MAIN' AS "CATEGORY",
+        C.COMP_NAME, C.EMAIL_ID, C.BRANCH_CODE 
+        FROM SUSPENSE_ACCOUNT_MASTER SA, CUSTOMER C
+        WHERE sa.SUSPENSE_ACCT_NUM = #ACTNUM:VARCHAR# 
+        AND sa.SUSPENSE_CUSTOMER_ID = C.CUST_ID
+        AND C.CUST_TYPE='INDIVIDUAL'
+    </mapped-statement>
+    
+    
+</sql-map>

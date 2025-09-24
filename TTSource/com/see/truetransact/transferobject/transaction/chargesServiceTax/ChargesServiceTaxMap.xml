@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ChargesServiceTaxMap">
+
+	<!-- Use ChargesServiceTaxTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertChargesServiceTaxTO" inline-parameters="true">
+        INSERT INTO SERVICE_TAX_TRANS
+        (PROD_TYPE,PROD_ID,ACCT_NUM,PARTICULARS,AMOUNT,SERVICE_TAX_AMT,TOTAL_AMT,TRANS_ID,TRANS_DT,CREATED_BY,CREATED_DT,
+        STATUS,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,AC_HEAD,BRANCH_CODE
+        ) VALUES (
+        #prod_type:VARCHAR#,#prod_id:VARCHAR#,#acct_num:VARCHAR#,#particulars:VARCHAR#,#amount:NUMERIC#, 
+        #service_tax_amt:NUMERIC#,#total_amt:NUMERIC#,#trans_id:VARCHAR#, #trans_dt:DATE#,#created_by:VARCHAR#, 
+        #created_dt:VARCHAR#, #status:VARCHAR#, #authorize_status:VARCHAR#, #authorize_by:VARCHAR#, #authorize_dt:DATE#,#ac_Head:VARCHAR#,#branchCode:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateChargesServiceTaxTO" result-class ="java.util.HashMap">
+        UPDATE SERVICE_TAX_TRANS SET 
+        PARTICULARS = #PARTICULARS:VARCHAR#,
+        AMOUNT = #AMOUNT:NUMERIC#,
+        SERVICE_TAX_AMT = #SERVICE_TAX_AMT:NUMERIC#,
+        TOTAL_AMT = #TOTAL_AMT:NUMERIC#,
+        STATUS = #STATUS:VARCHAR#
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR# 
+        AND TRANS_DT = #TRANS_DT:DATE# AND
+        BRANCH_CODE = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getChargesServiceTaxTOResult" class="com.see.truetransact.transferobject.transaction.chargesServiceTax.ChargesServiceTaxTO">
+        <property name="prod_type" column="PROD_TYPE"/>
+        <property name="prod_id" column="PROD_ID"/>
+        <property name="acct_num" column="ACCT_NUM"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="service_tax_amt" column="SERVICE_TAX_AMT"/>
+        <property name="total_amt" column="TOTAL_AMT"/>
+        <property name="trans_id" column="TRANS_ID"/>
+        <property name="trans_dt" column="TRANS_DT"/>
+        <property name="created_by" column="CREATED_BY"/>
+        <property name="created_dt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorize_status" column="AUTHORIZE_STATUS"/>
+        <property name="authorize_by" column="AUTHORIZE_BY"/>
+        <property name="authorize_dt" column="AUTHORIZE_DT"/>
+        <property name="ac_Head" column="AC_HEAD"/>                
+        <property name="branchCode" column="BRANCH_CODE"/>    
+    </result-map>
+        
+<!--        <mapped-statement name = "getSelectBatchIDfromTansfer" result-class = "java.util.HashMap">
+            SELECT BATCH_ID FROM TRANSFER_TRANS WHERE ACT_NUM = #ACT_NUM# AND STATUS!= 'DELETED'
+            AND AUTHORIZE_STATUS IS NULL AND STATUS_DT IN(SELECT MAX(STATUS_DT) FROM TRANSFER_TRANS
+            WHERE ACT_NUM = #ACT_NUM#) AND TRANS_TYPE = 'DEBIT'
+        </mapped-statement>
+        
+        <mapped-statement name = "getSelectTransIDfromCash" result-class = "java.util.HashMap">
+            SELECT TRANS_ID FROM CASH_TRANS WHERE LINK_BATCH_ID = #ACT_NUM# AND STATUS!= 'DELETED'
+            AND AUTHORIZE_STATUS IS NULL AND STATUS_DT IN(SELECT MAX(STATUS_DT) FROM CASH_TRANS 
+            WHERE ACT_NUM = #ACT_NUM#)
+        </mapped-statement> -->
+        
+    <mapped-statement name = "getSelectChargesServiceTaxTO" result-map = "getChargesServiceTaxTOResult">
+        SELECT * FROM SERVICE_TAX_TRANS WHERE STATUS !='DELETED'AND AUTHORIZE_STATUS IS NULL 
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND TRANS_DT = #TRANS_DT:DATE# AND
+        BRANCH_CODE = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectServiceTaxHead" result-class = "java.util.HashMap">
+        SELECT OTHER_CHRG_HD FROM REMITTANCE_PRODUCT WHERE BEHAVES_LIKE = 'PO'
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectChargesServiceAuthorizeTOList" result-class = "java.util.LinkedHashMap">
+        SELECT TRANS_ID,TOTAL_AMT,SERVICE_TAX_AMT,AMOUNT,AC_HEAD,PARTICULARS FROM SERVICE_TAX_TRANS WHERE 
+        STATUS != 'DELETED' AND AUTHORIZE_STATUS IS NULL ORDER BY TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name = "updateRemitIssueTableBatchId" result-class = "java.util.HashMap">
+        UPDATE REMIT_ISSUE_TRANS SET BATCH_ID = #BATCH_ID:VARCHAR#, BATCH_DT = #BATCH_DT:DATE#
+        WHERE DEBIT_ACCT_NO = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectTransactionAmt" result-class = "java.util.HashMap">
+        SELECT TOTAL_AMT,AMOUNT,SERVICE_TAX_AMT FROM SERVICE_TAX_TRANS WHERE 
+        TRANS_ID = #TRANS_ID#
+        AND TRANS_DT = #TRANS_DT:DATE# AND
+        BRANCH_CODE = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectRemitTransactionAmt" result-class = "java.util.HashMap">
+        SELECT DEBIT_ACCT_NO,TRANS_TYPE,BATCH_ID,PRODUCT_TYPE,PROD_ID FROM 
+        REMIT_ISSUE_TRANS WHERE BATCH_ID = #TRANS_ID:VARCHAR# AND BRANCH_CODE=#INITIATED_BRANCH:VARCHAR# AND BATCH_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectMaxTransIdForCash" result-class = "java.util.HashMap">       
+        SELECT MAX(TRANS_ID) AS TRANS_ID FROM REMIT_ISSUE_TRANS WHERE STATUS != 'DELETED'
+        AND CHEQUE_NO = 'SERVICE_TAX'
+    </mapped-statement>
+        
+    <mapped-statement name = "updateRemitIssueTableCashBatchId" result-class = "java.util.HashMap">       
+        UPDATE REMIT_ISSUE_TRANS SET BATCH_ID = #BATCH_ID:VARCHAR#, BATCH_DT = #BATCH_DT:DATE# 
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateAuthorizeTransaction" result-class = "java.util.HashMap">       
+        UPDATE SERVICE_TAX_TRANS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#, AUTHORIZE_DT = #AUTHORIZE_DT:DATE#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR# WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+        AND TRANS_DT = #TRANS_DT:DATE# AND
+        BRANCH_CODE = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateLinkBatchIdCash" result-class = "java.util.HashMap">       
+        UPDATE CASH_TRANS SET LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+        AND TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateAmountForRemitIssueTransTable" result-class = "java.util.HashMap">       
+        UPDATE REMIT_ISSUE_TRANS SET TRANS_AMT = #TRANS_AMT:NUMBER# WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+
+    <mapped-statement name = "updateLinkBatchIdTransfer" result-class = "java.util.HashMap">       
+        UPDATE TRANSFER_TRANS SET LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# WHERE BATCH_ID = #BATCH_ID:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ServiceWiseLoanIssueConfigurationMap">
+
+    <mapped-statement name="getProductIdDesc" result-class="java.util.LinkedHashMap" >    
+        select PROD_ID,PROD_DESC from loans_product where STATUS!='DELETED' and AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+
+    <mapped-statement name="insertELSI_ID" inline-parameters="true">
+        INSERT INTO EMP_SERVICEWISE_LOAN_PROD
+        (ESLI_ID,PROD_ID) 
+        VALUES (
+        #elsi_id:VARCHAR#,#prodID:VARCHAR#)
+                
+    </mapped-statement>	
+    <mapped-statement name="insertELSI_MASTER" inline-parameters="true">
+        INSERT INTO EMP_SERVICEWISE_LOAN_ISSUE
+        (ESLI_ID, EFFECT_FROM,PAST_SERVICE_PERIOD,NO_OF_SURETIES_REQUIRED,ELIGIBLE_FROM_AMOUNT,ELIGIBLE_TO_AMOUNT) 
+        VALUES (
+        #elsi_id:VARCHAR#,#effectFrom:DATE#,#pastServicePeriod:INTEGER#,#noOfsuretiesReq:INTEGER#,#fromAmt:INTEGER#,#toAmt:INTEGER#)
+                
+    </mapped-statement>   
+    <dynamic-mapped-statement name="getSelectESLIDetails" result-class="java.util.LinkedHashMap" >
+        select ESLI_ID,to_char(EFFECT_FROM,'dd-mm-yyyy') as EFFECT_FROM,PAST_SERVICE_PERIOD,NO_OF_SURETIES_REQUIRED,ELIGIBLE_FROM_AMOUNT,ELIGIBLE_TO_AMOUNT from EMP_SERVICEWISE_LOAN_ISSUE
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSelectESLI" result-map="getSelectESLIResult" >
+        SELECT * FROM EMP_SERVICEWISE_LOAN_ISSUE
+        WHERE ESLI_ID = #ESLIID:VARCHAR# 
+    </mapped-statement>
+    <result-map name="getSelectESLIResult" class="com.see.truetransact.transferobject.termloan.personalSuretyConfiguration.serviceWiseLoanIssue.ServiceWiseLoanIssueConfigurationTO">
+        <property name="effectFrom" column="EFFECT_FROM"/>
+        <property name="pastServicePeriod" column="PAST_SERVICE_PERIOD"/>
+        <property name="fromAmt" column="ELIGIBLE_FROM_AMOUNT"/>
+        <property name="toAmt" column="ELIGIBLE_TO_AMOUNT"/>
+        <property name="noOfsuretiesReq" column="NO_OF_SURETIES_REQUIRED"/>
+        <property name="elsi_id" column="ESLI_ID"/>
+               
+    </result-map>
+    <mapped-statement name="getSelectESLIProdDesc" result-class="java.util.LinkedHashMap">
+        select lp.PROD_ID,lp.PROD_DESC 
+        from LOANS_PRODUCT lp,EMP_SERVICEWISE_LOAN_PROD eslp where 
+        eslp.PROD_ID=lp.PROD_ID
+        and eslp.ESLI_ID=#ESLIID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="updateELSIprod" inline-parameters="true">
+        update EMP_SERVICEWISE_LOAN_ISSUE set EFFECT_FROM=#effectFrom:DATE#,
+        PAST_SERVICE_PERIOD=#pastServicePeriod:INTEGER#,
+        NO_OF_SURETIES_REQUIRED=#noOfsuretiesReq:INTEGER#,
+        ELIGIBLE_FROM_AMOUNT=#fromAmt:INTEGER#,
+        ELIGIBLE_TO_AMOUNT=#toAmt:INTEGER# WHERE ESLI_ID = #elsi_id:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="deleteELSIIssue" inline-parameters="true">
+        delete from EMP_SERVICEWISE_LOAN_PROD  WHERE ESLI_ID = #elsi_id:VARCHAR# 
+    </mapped-statement>
+
+</sql-map>

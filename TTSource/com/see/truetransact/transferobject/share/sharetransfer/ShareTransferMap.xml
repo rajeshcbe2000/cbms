@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ShareTransferTOMap">
+
+	<!-- Use ShareTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShareTransferTO" inline-parameters="true">
+        INSERT INTO SHARE_TRANSFER
+        (SHARE_TRANS_ID, TRANSFER_FROM, TRANSFER_TO, SHARE_NO_FROM, SHARE_NO_TO, REMARKS, CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #shareTransId:VARCHAR#, #transferFrom:VARCHAR#, #transferTo:VARCHAR#, #shareNoFrom:VARCHAR#, #shareNoTo:VARCHAR#, #remarks:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use ShareTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateShareTransferTO" inline-parameters="true">
+        UPDATE SHARE_TRANSFER SET 
+<!--		SHARE_TRANS_ID = #shareTransId:VARCHAR#, -->
+        TRANSFER_FROM = #transferFrom:VARCHAR#,
+        TRANSFER_TO = #transferTo:VARCHAR#,
+        SHARE_NO_FROM = #shareNoFrom:VARCHAR#,
+        SHARE_NO_TO = #shareNoTo:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+<!--		CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#, -->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+<!--		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE# -->
+        WHERE SHARE_TRANS_ID = #shareTransId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use ShareTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteShareTransferTO" inline-parameters="true">
+        UPDATE SHARE_TRANSFER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SHARE_TRANS_ID = #shareTransId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareTransferTO object (JavaBean) properties -->
+    <result-map name="getShareTransferTOResult" class="com.see.truetransact.transferobject.share.sharetransfer.ShareTransferTO">
+        <property name="shareTransId" column="SHARE_TRANS_ID"/>
+        <property name="transferFrom" column="TRANSFER_FROM"/>
+        <property name="transferTo" column="TRANSFER_TO"/>
+        <property name="shareNoFrom" column="SHARE_NO_FROM"/>
+        <property name="shareNoTo" column="SHARE_NO_TO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectShareTransferTO" result-map="getShareTransferTOResult" >
+        SELECT * FROM SHARE_TRANSFER 
+        WHERE SHARE_TRANS_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="viewShareTransferData" result-class="java.util.HashMap" >
+        SELECT SHARE_TRANS_ID AS "Share Transfer ID", get_cust_name(tf.cust_id) AS "Customer From", SHARE_NO_FROM AS "Share No From", SHARE_NO_TO AS "Share No To",  get_cust_name(tt.cust_id) AS "Customer TO"
+        FROM SHARE_TRANSFER ST, SHARE_ACCT SA1, SHARE_ACCT SA2, CUSTOMER TF, CUSTOMER TT
+        WHERE SA1.SHARE_ACCT_NO = ST.TRANSFER_FROM 
+        AND  SA1.SHARE_ACCT_NO = ST.TRANSFER_FROM 
+        AND SA2.SHARE_ACCT_NO = ST.TRANSFER_TO 
+        AND SA1.CUST_ID = TF.CUST_ID 
+        AND SA2.CUST_ID = TT.CUST_ID 
+        AND ST.STATUS != 'DELETED'
+        AND (ST.AUTHORIZE_STATUS NOT IN ('AUTHORIZED' ,  'REJECTED') OR   ST.AUTHORIZE_STATUS  IS NULL)
+        AND SA1.STATUS != 'DELETED'
+        AND SA1.AUTHORIZE = 'AUTHORIZED'
+        AND SA2.STATUS != 'DELETED'
+        AND SA2.AUTHORIZE = 'AUTHORIZED'
+        AND TF.STATUS != 'DELETED'
+        AND TF.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND TT.STATUS != 'DELETED'
+        AND TT.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+        
+        
+    <dynamic-mapped-statement name="getShareTransData" result-class="java.util.LinkedHashMap" >
+        SELECT get_cust_name(c.cust_id) AS "Name", SHARE_ACCT_NO AS "Share Acct No"
+        FROM CUSTOMER C, SHARE_ACCT SA
+        WHERE SA.STATUS != 'DELETED'
+        AND SA.AUTHORIZE = 'AUTHORIZED'
+        AND C.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND C.STATUS != 'DELETED'
+        AND C.CUST_ID = SA.CUST_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHAREACCTNO">
+                    SHARE_ACCT_NO != #SHAREACCTNO:VARCHAR# 
+                    AND SHARE_TYPE = (SELECT SHARE_TYPE FROM SHARE_ACCT WHERE SHARE_ACCT_NO = 'SH000001') <!-- This line included by Rajesh -->
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Name">
+                    UPPER(get_cust_name(c.cust_id)) LIKE UPPER('%$Name$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Share Acct No">
+                    UPPER(SHARE_ACCT_NO) LIKE UPPER('%$Share Acct No$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+        <!--mapped-statement name="validateShareData" result-class="java.util.HashMap" >
+            SELECT NO_OF_SHARES FROM SHARE_ACCT_DETAILS
+            WHERE SHARE_ACCT_NO = #SHEREACTNO#
+            AND ( #SHAREFROM# BETWEEN  SHARE_NO_FROM AND SHARE_NO_TO) 
+            AND (#SHARETO# BETWEEN SHARE_NO_FROM AND SHARE_NO_TO)
+            AND STATUS  != 'DELETED'
+            AND AUTHORIZE = 'AUTHORIZED'
+        </mapped-statement -->
+
+    <mapped-statement name="getShareAcctData" result-class="java.util.HashMap" >
+        SELECT SHARE_ACCT_DET_NO, SHARE_NO_FROM, SHARE_NO_TO, NO_OF_SHARES 
+        FROM SHARE_ACCT_DETAILS
+        WHERE SHARE_ACCT_NO = #SHAREACCTNO:VARCHAR#
+        AND STATUS!= 'DELETED'
+        AND AUTHORIZE = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="getShareAcctRowDataResult" class="com.see.truetransact.transferobject.share.ShareAcctDetailsTO">
+        <property name="shareAcctNo" column="SHARE_ACCT_NO"/>
+        <property name="shareAcctDetNo" column="SHARE_ACCT_DET_NO"/>
+        <property name="noOfShares" column="NO_OF_SHARES"/>
+        <property name="shareNoFrom" column="SHARE_NO_FROM"/>
+        <property name="shareNoTo" column="SHARE_NO_TO"/>
+        <property name="shareCertIssueDt" column="SHARE_CERT_ISSUE_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorize" column="AUTHORIZE"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="resolutionNo" column="SHARE_STATUS"/>
+    </result-map>
+        
+    <mapped-statement name="getShareAcctRowData" result-map="getShareAcctRowDataResult"  >
+        SELECT * FROM SHARE_ACCT_DETAILS
+        WHERE (#SHARE NO FROM:VARCHAR# BETWEEN SHARE_NO_FROM AND SHARE_NO_TO)
+        AND SHARE_ACCT_NO = #TRANSFER FROM:VARCHAR#
+        AND AUTHORIZE = 'AUTHORIZED'
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+        <!-- ========================================================================================================== -->
+
+   
+
+    <dynamic-mapped-statement name="getShareTransferAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT SHARE_TRANS_ID AS "Share Transfer ID", get_cust_name(tf.cust_id) AS "Customer From", 
+        SHARE_NO_FROM AS "Share No From", SHARE_NO_TO AS "Share No To",  get_cust_name(tt.cust_id) AS "Customer TO",
+        ST.TRANSFER_FROM AS "Transfer From", ST.TRANSFER_TO AS "Transfer To"
+        FROM SHARE_TRANSFER ST, SHARE_ACCT SA1, SHARE_ACCT SA2, CUSTOMER TF, CUSTOMER TT
+        WHERE SA1.SHARE_ACCT_NO = ST.TRANSFER_FROM 
+        AND  SA1.SHARE_ACCT_NO = ST.TRANSFER_FROM 
+        AND SA2.SHARE_ACCT_NO = ST.TRANSFER_TO 
+        AND SA1.CUST_ID = TF.CUST_ID 
+        AND SA2.CUST_ID = TT.CUST_ID 
+        AND ST.STATUS != 'DELETED'
+<!--            AND (ST.AUTHORIZE_STATUS NOT IN ('AUTHORIZED' ,  'REJECTED') OR   ST.AUTHORIZE_STATUS  IS NULL)-->
+        AND SA1.STATUS != 'DELETED'
+        AND SA1.AUTHORIZE = 'AUTHORIZED'
+        AND SA2.STATUS != 'DELETED'
+        AND SA2.AUTHORIZE = 'AUTHORIZED'
+        AND TF.STATUS != 'DELETED'
+        AND TF.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND TT.STATUS != 'DELETED'
+        AND TT.AUTHORIZE_STATUS = 'AUTHORIZED'
+            
+        AND ST.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ST.STATUS_BY)
+                                    
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ST.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (ST.AUTHORIZE_STATUS IS NULL OR 
+                ST.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY SHARE_TRANS_ID
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authorizeShareTransferData" result-class="java.util.HashMap">
+        UPDATE SHARE_TRANSFER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE SHARE_TRANS_ID = #SHARE TRANSFER ID:VARCHAR#
+    </mapped-statement >
+                
+    <mapped-statement name="ShareTransfer.getMaxSerialNo" result-class="java.util.LinkedHashMap">
+        SELECT MAX(SHARE_ACCT_DET_NO) AS SERIAL_NO
+        FROM SHARE_ACCT_DETAILS
+        WHERE SHARE_ACCT_NO = #value:VARCHAR#
+<!--            AND STATUS != 'DELETED' -->
+    </mapped-statement >
+        
+    <mapped-statement name="ShareTransfer.getLoanActStatus" result-class="java.util.HashMap">      
+        SELECT LFD.ACCT_STATUS FROM LOANS_FACILITY_DETAILS LFD, LOANS_BORROWER LB,  SHARE_ACCT SA WHERE  
+        SA.CUST_ID = LB.CUST_ID AND SA.CUST_ID=(SELECT CUST_ID FROM SHARE_ACCT  WHERE SHARE_ACCT_NO=#SHAREACCTNO#) AND 
+        LB.BORROW_NO=LFD.BORROW_NO AND LFD.ACCT_STATUS != 'CLOSED'
+    </mapped-statement >
+        
+
+</sql-map>

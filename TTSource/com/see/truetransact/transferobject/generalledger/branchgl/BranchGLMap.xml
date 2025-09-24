@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BranchGLT0Map">
+
+    <!-- Use BranchGLT0 object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchGLT0" inline-parameters="true">
+        INSERT INTO BRANCH_GL
+        (GROUP_ID, AC_HD_ID, STATUS
+        ) VALUES (
+        #groupId:VARCHAR#, #acHdId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+        
+        <!-- Use BranchGLGroupTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchGLGroupTO" inline-parameters="true">
+        INSERT INTO BRANCH_GL_GROUP
+        (GROUP_ID, GROUP_DESC, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #groupId:VARCHAR#, #groupDesc:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+        
+	<!-- Use BranchGLTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchGLTO" inline-parameters="true">
+        INSERT INTO BRANCH_GL
+        (GROUP_ID, AC_HD_ID, STATUS
+        ) VALUES (
+        #groupId:VARCHAR#, #acHdId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+        <!-- Use BranchGLGroupTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchGLGroupTO" inline-parameters="true">
+        UPDATE BRANCH_GL_GROUP SET 
+        GROUP_DESC = #groupDesc:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE GROUP_ID = #groupId:VARCHAR#
+    </mapped-statement>
+	<!-- Use BranchGLT0 object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchGLT0" inline-parameters="true">
+        UPDATE BRANCH_GL SET 
+        STATUS = #status:VARCHAR#
+        WHERE GROUP_ID = #groupId:VARCHAR# AND AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>
+        <!-- Use BranchGLGroupTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchGLGroupTO" inline-parameters="true">
+        UPDATE BRANCH_GL_GROUP SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE GROUP_ID = #groupId:VARCHAR# 
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchGLT0 object (JavaBean) properties -->
+    <result-map name="getBranchGLT0Result" class="com.see.truetransact.transferobject.generalledger.branchgl.BranchGLT0">
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectBranchGL" result-class="java.util.LinkedHashMap" >
+         <!--SELECT * FROM BRANCH_GL WHERE BRANCH_CODE = #value# AND STATUS != 'DELETED'-->
+        SELECT B.AC_HD_ID || '(' ||  AC_HD_DESC || ')' AS "AC_HD_ID"
+        FROM AC_HD  A, BRANCH_GL B 
+        WHERE A.AC_HD_ID = B.AC_HD_ID AND B.GROUP_ID = #GROUP_ID:VARCHAR# 
+        AND B.STATUS != 'DELETED'
+    </mapped-statement>
+       <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchGLGroupTO object (JavaBean) properties -->
+    <result-map name="getBranchGLGroupTOResult" class="com.see.truetransact.transferobject.generalledger.branchgl.BranchGLGroupTO">
+        <property name="groupId" column="GROUP_ID"/>
+        <property name="groupDesc" column="GROUP_DESC"/>
+    </result-map>
+    <mapped-statement name="getSelectBranchGLGroupTO" result-map="getBranchGLGroupTOResult" >
+        SELECT DISTINCT GROUP_ID, GROUP_DESC FROM BRANCH_GL_GROUP 
+        WHERE GROUP_ID = #value:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+       
+       <!-- This statement will return all the AvailableAcHeads in a bank -->
+    <mapped-statement name="getAcctHeadIDs" result-class= "java.util.HashMap" >
+        SELECT  AC_HD_ID || ' (' || AC_HD_DESC || ')' AS "AC_HD_CODES" FROM AC_HD A
+        WHERE (A.STATUS  NOT IN ('DELETED')) AND (A.AC_HD_ID IN 
+        (SELECT AC_HD_ID FROM AC_HD_PARAM WHERE (STATUS  NOT IN ('DELETED')) 
+        AND (AUTHORIZE_STATUS IN ('AUTHORIZED')))) AND 
+        <!--AC_HD_ID NOT IN (SELECT AC_HD_ID FROM BRANCH_GL 
+        WHERE GROUP_ID = #GROUP_ID# AND STATUS != 'DELETED') -->
+        NOT EXISTS(SELECT AC_HD_ID FROM BRANCH_GL 
+        WHERE GROUP_ID = #GROUP_ID# AND STATUS != 'DELETED' AND AC_HD_ID=A.AC_HD_ID)
+    </mapped-statement>
+      
+       <!--This will return all the ACHeads that a bank can use -->
+    <mapped-statement name="getNewAcctHeadIDs" result-class= "java.util.HashMap" >
+        SELECT  AC_HD_ID || ' (' || AC_HD_DESC || ')' AS "AC_HD_CODES" FROM AC_HD A
+        WHERE (A.STATUS  NOT IN ('DELETED')) AND (A.AC_HD_ID IN 
+        (SELECT AC_HD_ID FROM AC_HD_PARAM WHERE (STATUS  NOT IN ('DELETED')) 
+        AND (AUTHORIZE_STATUS IN ('AUTHORIZED'))))  
+    </mapped-statement>
+          
+    <dynamic-mapped-statement name="getSelectBranchGLGroup" result-class= "java.util.LinkedHashMap" >
+        SELECT GROUP_ID, GROUP_DESC FROM BRANCH_GL_GROUP WHERE STATUS != 'DELETED'
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="GROUP_DESC">
+                    UPPER(GROUP_DESC) LIKE UPPER('%$GROUP_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+                  
+    <mapped-statement name="getSelectActHeadDetails" result-class="java.util.LinkedHashMap" >
+        SELECT A.AC_HD_ID , A.AC_HD_DESC, M.MJR_AC_HD_TYPE, AP.FLOAT_ACT, 0 AS BALANCE  FROM AC_HD A, AC_HD_PARAM AP, MJR_AC_HD M
+        WHERE 
+        (A.AC_HD_ID = AP.AC_HD_ID) AND (AP.STATUS NOT IN ('DELETED')) AND (AP.AUTHORIZE_STATUS  IN ('AUTHORIZED'))
+        AND (A.AC_HD_ID IN (SELECT AC_HD_ID FROM BRANCH_GL WHERE STATUS NOT IN ('DELETED'))) 
+           <!--AND A.AC_HD_ID NOT IN (SELECT AC_HD_ID FROM GL WHERE BRANCH_CODE = #BRANCH_CODE#) AND A.MJR_AC_HD_ID = M.MJR_AC_HD_ID -->
+        AND  NOT EXISTS (SELECT AC_HD_ID FROM GL WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND A.AC_HD_ID=GL.AC_HD_ID) AND A.MJR_AC_HD_ID = M.MJR_AC_HD_ID
+        UNION
+        SELECT A.AC_HD_ID , A.AC_HD_DESC, M.MJR_AC_HD_TYPE, AP.FLOAT_ACT, G.CUR_BAL AS BALANCE FROM AC_HD A, AC_HD_PARAM AP, GL G, MJR_AC_HD M
+        WHERE
+        (A.AC_HD_ID = AP.AC_HD_ID) AND (AP.STATUS NOT IN ('DELETED')) AND (AP.AUTHORIZE_STATUS  IN ('AUTHORIZED'))
+        AND G.AC_HD_ID = A.AC_HD_ID AND AP.AC_HD_ID = G.AC_HD_ID
+        AND (A.AC_HD_ID IN (SELECT AC_HD_ID FROM BRANCH_GL WHERE STATUS NOT IN ('DELETED'))) 
+        AND G.BRANCH_CODE = #BRANCH_CODE:VARCHAR#  AND A.MJR_AC_HD_ID = M.MJR_AC_HD_ID
+
+    </mapped-statement>  
+       <!-- Quereis used for GLEntry modules -->
+       
+    <mapped-statement name="getSelectImplStatus" result-class= "java.util.LinkedHashMap" >
+        SELECT IMPL_STATUS, SHADOW_CREDIT, SHADOW_DEBIT  FROM GL WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND (STATUS IS NULL  OR STATUS NOT IN ('DELETED'))
+    </mapped-statement>
+         
+    <dynamic-mapped-statement name="getSelectAcHdParam" result-class="java.util.LinkedHashMap">
+        SELECT AP.AC_HD_ID, A.AC_HD_DESC, AP.GLBALANCE, AP.BALANCETYPE FROM AC_HD_PARAM AP, AC_HD A
+        WHERE AP.AC_HD_ID = A.AC_HD_ID AND 
+       <!-- (AP.AC_HD_ID NOT IN (SELECT AC_HD_ID FROM GL
+            WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+            AND BRANCH_CODE = #BRANCH_CODE#) OR -->
+        ( NOT EXISTS (SELECT AC_HD_ID FROM GL
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND GL.AC_HD_ID=AP.AC_HD_ID) OR
+        ((SELECT COUNT(*) FROM GL
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#) = 0))
+        AND AP.STATUS NOT IN ('DELETED')
+        AND (AP.AUTHORIZE_STATUS IS NULL OR
+        AP.AUTHORIZE_STATUS IN ('AUTHORIZED'))
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AC_HD_ID" >
+                    UPPER(AP.AC_HD_ID) LIKE UPPER('%$AC_HD_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AC_HD_DESC" >
+                    UPPER(A.AC_HD_DESC) LIKE UPPER('%$AC_HD_DESC$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "GLBALANCE" >
+                    UPPER(AP.GLBALANCE) LIKE UPPER('%$GLBALANCE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BALANCETYPE" >
+                    UPPER(AP.BALANCETYPE) LIKE UPPER('%$BALANCETYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY AP.AC_HD_ID,A.AC_HD_DESC     
+    </dynamic-mapped-statement>
+       
+    <dynamic-mapped-statement name="getSelectGL" result-class="java.util.LinkedHashMap">
+        SELECT G.AC_HD_ID, A.AC_HD_DESC,G.CUR_BAL AS AVAILABLE_BALANCE  FROM AC_HD A, GL G
+        WHERE (G.STATUS IS NULL OR G.STATUS NOT IN ('DELETED')) 
+        AND (G.AUTHORIZE_STATUS IS NULL OR G.AUTHORIZE_STATUS NOT IN ('AUTHORIZED'))
+        AND G.AC_HD_ID = A.AC_HD_ID AND G.BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY G.AC_HD_ID, A.AC_HD_DESC
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AC_HD_ID" >
+                    UPPER(G.AC_HD_ID) LIKE UPPER('%$AC_HD_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AC_HD_DESC" >
+                    UPPER(A.AC_HD_DESC) LIKE UPPER('%$AC_HD_DESC$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AVAILABLE_BALANCE" >
+                    UPPER(G.CUR_BAL) LIKE UPPER('%$AVAILABLE_BALANCE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+       
+    <mapped-statement name="getSelectBalanceType" result-class="java.util.LinkedHashMap">
+        SELECT BALANCETYPE FROM AC_HD_PARAM WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND 
+        (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+    </mapped-statement>
+       
+    <mapped-statement name="updateGLShadowCredit" inline-parameters="true">
+        UPDATE GL SET
+        SHADOW_CREDIT = #shadowCredit:NUMERIC#,
+        LAST_TRANS_DT = #lastTransDt:DATE#,
+        IMPL_STATUS = #implStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE AC_HD_ID = #acHdId:VARCHAR# AND (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+        AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="updateGLShadowDebit" inline-parameters="true">
+        UPDATE GL SET
+        SHADOW_DEBIT = #shadowDebit:NUMERIC#,
+        LAST_TRANS_DT = #lastTransDt:DATE#,
+        IMPL_STATUS = #implStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE AC_HD_ID = #acHdId:VARCHAR# AND (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+        AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="deleteGL" inline-parameters="true">
+        UPDATE GL SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE AC_HD_ID = #acHdId:VARCHAR# AND (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+        AND BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+       
+    <dynamic-mapped-statement name="getGLAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT G.AC_HD_ID, A.AC_HD_DESC, G.SHADOW_CREDIT, G.SHADOW_DEBIT,G.CUR_BAL, G.STATUS_BY FROM GL G,AC_HD A
+        WHERE  G.AC_HD_ID = A.AC_HD_ID AND (G.STATUS != 'DELETED' OR G.STATUS IS NULL)
+        AND G.STATUS_BY != #USER_ID:VARCHAR# AND G.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = G.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                G.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (G.AUTHORIZE_STATUS IS NULL OR 
+                G.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+      
+    <mapped-statement name="authorizeGL" result-class="java.util.HashMap">
+        UPDATE GL  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="rejectGL" result-class="java.util.HashMap">
+        UPDATE GL  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateGLCredit" result-class="java.util.HashMap">
+        UPDATE GL  SET 
+        CUR_BAL = #AMOUNT:NUMBER#,
+        SHADOW_CREDIT = #SHADOW_CREDIT:NUMBER#
+        WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+        AND BRANCH_CODE = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="updateGLDebit" result-class="java.util.HashMap">
+        UPDATE GL  SET 
+        CUR_BAL = #AMOUNT:NUMBER#,
+        SHADOW_DEBIT = #SHADOW_DEBIT:NUMBER#
+        WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+        AND BRANCH_CODE = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+      
+  <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getBranchGLAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID, GROUP_DESC, AUTHORIZE_STATUS, AUTHORIZE_BY, STATUS_BY FROM BRANCH_GL_GROUP BG
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = BG.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeBranchGL" result-class="java.util.HashMap">
+        UPDATE BRANCH_GL_GROUP  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE GROUP_ID = #GROUP_ID:VARCHAR#  AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+    </mapped-statement>
+
+</sql-map>

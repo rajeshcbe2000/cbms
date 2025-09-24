@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ComplaintsMap">
+
+	<!-- Use VisitorsDiaryTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertComplaintTO" inline-parameters="true">
+        INSERT INTO COMPLAINT_REGISTER
+        (COMPLAIN_ID, DATE_OF_COMPLAINT, CUST_ID,
+        NAME_AND_ADDRESS,COMMENTS,STATUS,
+        STATUS_BY, STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE) VALUES (
+        #complaintid:VARCHAR#, #dateofComplaint:DATE#,                
+        #employeeid:VARCHAR#, #nameAddress:VARCHAR#,
+        #comments:VARCHAR#, #status:VARCHAR#,
+        #statusBy:VARCHAR#, #statusDt:DATE#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#,
+        #branCode:VARCHAR#)
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to VisitorsDiaryTO object (JavaBean) properties -->
+	
+     <dynamic-mapped-statement name="setCustId" result-class="java.util.LinkedHashMap">
+        SELECT CUST_ID,FNAME FROM CUSTOMER
+        WHERE STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FNAME">
+                    UPPER(FNAME) LIKE UPPER('%$FNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+
+   
+</sql-map>

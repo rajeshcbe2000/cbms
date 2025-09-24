@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TDSExemptionTOMap">
+
+	<!-- Use TDSExemptionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTDSExemptionTO" inline-parameters="true">
+        INSERT INTO TDS_EXEMPTION
+        (CUST_ID, EXEM_REC_DT, CERT_REF_NO, EXEM_START_DT, EXEM_END_DT, STATUS, EXEM_ID, BRANCH_ID, PAN_NO, REMARKS,STATUS_BY, STATUS_DT, INITIATED_BRANCH
+        ) VALUES (
+        #custId:VARCHAR#, #exemRecDt:DATE#, #certRefNo:VARCHAR#, #exemStartDt:DATE#, #exemEndDt:DATE#, #status:VARCHAR#, #exemId:VARCHAR#, #branchId:VARCHAR#,  #panNo:VARCHAR#, #remarks:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use TDSExemptionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTDSExemptionTO" inline-parameters="true">
+        UPDATE TDS_EXEMPTION SET 
+        CUST_ID = #custId:VARCHAR#,
+        EXEM_REC_DT = #exemRecDt:DATE#,
+        CERT_REF_NO = #certRefNo:VARCHAR#,
+        EXEM_START_DT = #exemStartDt:DATE#,
+        EXEM_END_DT = #exemEndDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        EXEM_ID = #exemId:VARCHAR#,
+        PAN_NO = #panNo:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+        WHERE EXEM_ID = #exemId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use TDSExemptionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTDSExemptionTO" inline-parameters="true">
+        UPDATE TDS_EXEMPTION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE EXEM_ID = #exemId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TDSExemptionTO object (JavaBean) properties -->
+    <result-map name="getTDSExemptionTOResult" class="com.see.truetransact.transferobject.tds.tdsexemption.TDSExemptionTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="exemRecDt" column="EXEM_REC_DT"/>
+        <property name="certRefNo" column="CERT_REF_NO"/>
+        <property name="exemStartDt" column="EXEM_START_DT"/>
+        <property name="exemEndDt" column="EXEM_END_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="exemId" column="EXEM_ID"/>
+        <property name="panNo" column="PAN_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+    <mapped-statement name="getSelectTDSExemptionTO" result-map="getTDSExemptionTOResult" >
+        SELECT * FROM TDS_EXEMPTION 
+        WHERE EXEM_ID = #EXEM_ID:VARCHAR# AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+        <!-- Statement used to show already inserted data -->
+    <dynamic-mapped-statement name="getSelectTDSExemption" result-class="java.util.LinkedHashMap" >
+        SELECT EXEM_ID, CUST_ID, CERT_REF_NO, EXEM_START_DT, EXEM_END_DT FROM TDS_EXEMPTION 
+        WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+           <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EXEM_ID">
+                 UPPER(EXEM_ID) LIKE UPPER('%$EXEM_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                 UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="EXEM_START_DT">
+                 UPPER(EXEM_START_DT) LIKE UPPER('%$EXEM_START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EXEM_END_DT">
+                 UPPER(EXEM_END_DT) LIKE UPPER('%$EXEM_END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+         <!-- Statement used to show Customer data -->
+    <dynamic-mapped-statement name="getSelectCustomerMaster" result-class="java.util.LinkedHashMap" >
+		<!--SELECT CUST_ID, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", CUSTOMER_STATUS, BRANCH_CODE 
+                FROM CUSTOMER WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') AND CUSTOMER_STATUS NOT IN 'DECEASED' 
+                AND BRANCH_CODE = #BRANCH_ID# AND CUST_ID NOT IN (SELECT CUST_ID FROM TDS_EXEMPTION WHERE STATUS NOT IN ('DELETED'))-->
+        SELECT CUST_ID, get_cust_name(CUSTOMER.CUST_ID) AS "CUSTOMER NAME", CUSTOMER_STATUS, BRANCH_CODE 
+        FROM CUSTOMER WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') AND (CUSTOMER_STATUS NOT IN 'DECEASED'  OR CUSTOMER_STATUS is NUll)
+        AND BRANCH_CODE = #BRANCH_ID:VARCHAR# AND  NOT EXISTS (SELECT CUST_ID FROM TDS_EXEMPTION WHERE STATUS NOT IN ('DELETED') AND CUSTOMER.CUST_ID = CUST_ID)
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                 UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER NAME">
+                 UPPER(get_cust_name(CUSTOMER.CUST_ID)) LIKE UPPER('%$CUSTOMER NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_STATUS">
+                 UPPER(CUSTOMER_STATUS) LIKE UPPER('%$CUSTOMER_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_CODE">
+                 UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getCustomerDetail" result-class="java.util.LinkedHashMap" >
+        SELECT  get_cust_name(CUSTOMER.CUST_ID) AS "CUSTOMERNAME"
+        FROM CUSTOMER WHERE CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+          <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getTDSExemptionAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT EXEM_ID, CUST_ID, BRANCH_ID, CERT_REF_NO, EXEM_START_DT, EXEM_END_DT FROM TDS_EXEMPTION TE
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TE.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  EXEM_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeTDSExemption" result-class="java.util.HashMap">
+        UPDATE TDS_EXEMPTION SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  EXEM_ID = #EXEM_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>  
+      
+</sql-map>

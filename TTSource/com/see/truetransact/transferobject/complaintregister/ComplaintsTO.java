@@ -1,0 +1,339 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.  
+ * 
+ * ComplaintsTO.java
+ *
+ * Created on 16 September, 2011, 2:24 PM
+ */
+package com.see.truetransact.transferobject.complaintregister;
+
+import java.io.Serializable;
+import com.see.truetransact.transferobject.TransferObject;
+import java.util.Date;
+import java.util.*;
+
+/**
+ *
+ * @author aravind
+ */
+public class ComplaintsTO extends TransferObject implements Serializable {
+
+    private String complaintid = "";
+    private Date dateofComplaint = null;
+    private String nameAddress = "";
+    private String employeeid = "";
+    private String comments = "";
+    private String statusBy = "";
+    private Date statusDt = null;
+    private String status = "";
+    private Date createdDt = null;
+    private String currBranName = "";
+    private String branCode = "";
+    private String createdBy = "";
+    private HashMap _authorizeMap;
+    private Integer result;
+
+    /**
+     * toString method which returns this TO as a String.
+     */
+    public String toString() {
+        StringBuffer strB = new StringBuffer(getTOStringStart(this.getClass().getName()));
+        //strB.append(getTOStringKey(getKeyData()));
+        strB.append(getTOString("complaintid", complaintid));
+        strB.append(getTOString("dateofComplaint", dateofComplaint));
+        strB.append(getTOString("nameAddress", nameAddress));
+        strB.append(getTOString("employeeid", employeeid));
+        strB.append(getTOString("comments", comments));
+        strB.append(getTOString("statusBy", statusBy));
+        strB.append(getTOString("status", status));
+        strB.append(getTOString("createdDt", createdDt));
+        strB.append(getTOString("currBranName", currBranName));
+        strB.append(getTOString("branCode", branCode));
+        strB.append(getTOStringEnd());
+        return strB.toString();
+    }
+
+    /**
+     * toXML method which returns this TO as a XML output.
+     */
+    public String toXML() {
+        StringBuffer strB = new StringBuffer(getTOXmlStart(this.getClass().getName()));
+        //strB.append(getTOXmlKey(getKeyData()));
+        strB.append(getTOXml("complaintid", complaintid));
+        strB.append(getTOXml("dateofComplaint", dateofComplaint));
+        strB.append(getTOXml("nameAddress", nameAddress));
+        strB.append(getTOXml("employeeid", employeeid));
+        strB.append(getTOXml("comments", comments));
+        strB.append(getTOXml("statusBy", statusBy));
+        strB.append(getTOXml("status", status));
+        strB.append(getTOXml("createdDt", createdDt));
+        strB.append(getTOXml("currBranName", currBranName));
+        strB.append(getTOXml("branCode", branCode));
+        strB.append(getTOXmlEnd());
+        return strB.toString();
+    }
+
+    /**
+     * Getter for property nameAddress.
+     *
+     * @return Value of property nameAddress.
+     */
+    public java.lang.String getNameAddress() {
+        return nameAddress;
+    }
+
+    /**
+     * Setter for property nameAddress.
+     *
+     * @param nameAddress New value of property nameAddress.
+     */
+    public void setNameAddress(java.lang.String nameAddress) {
+        this.nameAddress = nameAddress;
+    }
+
+    /**
+     * Getter for property instNameAddress.
+     *
+     * @return Value of property instNameAddress.
+     */
+    /**
+     * Getter for property statusBy.
+     *
+     * @return Value of property statusBy.
+     */
+    public java.lang.String getStatusBy() {
+        return statusBy;
+    }
+
+    /**
+     * Setter for property statusBy.
+     *
+     * @param statusBy New value of property statusBy.
+     */
+    public void setStatusBy(java.lang.String statusBy) {
+        this.statusBy = statusBy;
+    }
+
+    /**
+     * Getter for property status.
+     *
+     * @return Value of property status.
+     */
+    public java.lang.String getStatus() {
+        return status;
+    }
+
+    /**
+     * Setter for property status.
+     *
+     * @param status New value of property status.
+     */
+    public void setStatus(java.lang.String status) {
+        this.status = status;
+    }
+
+    /**
+     * Getter for property createdDt.
+     *
+     * @return Value of property createdDt.
+     */
+    /**
+     * Getter for property currBranName.
+     *
+     * @return Value of property currBranName.
+     */
+    public java.lang.String getCurrBranName() {
+        return currBranName;
+    }
+
+    /**
+     * Setter for property currBranName.
+     *
+     * @param currBranName New value of property currBranName.
+     */
+    public void setCurrBranName(java.lang.String currBranName) {
+        this.currBranName = currBranName;
+    }
+
+    /**
+     * Getter for property _authorizeMap.
+     *
+     * @return Value of property _authorizeMap.
+     */
+    public java.util.HashMap get_authorizeMap() {
+        return _authorizeMap;
+    }
+
+    /**
+     * Setter for property _authorizeMap.
+     *
+     * @param _authorizeMap New value of property _authorizeMap.
+     */
+    public void set_authorizeMap(java.util.HashMap _authorizeMap) {
+        this._authorizeMap = _authorizeMap;
+    }
+
+    /**
+     * Getter for property result.
+     *
+     * @return Value of property result.
+     */
+    public Integer getResult() {
+        return result;
+    }
+
+    /**
+     * Setter for property result.
+     *
+     * @param result New value of property result.
+     */
+    public void setResult(Integer result) {
+        this.result = result;
+    }
+
+    /**
+     * Getter for property statusDt.
+     *
+     * @return Value of property statusDt.
+     */
+    public java.util.Date getStatusDt() {
+        return statusDt;
+    }
+
+    /**
+     * Setter for property statusDt.
+     *
+     * @param statusDt New value of property statusDt.
+     */
+    public void setStatusDt(java.util.Date statusDt) {
+        this.statusDt = statusDt;
+    }
+
+    /**
+     * Getter for property cratedDt.
+     *
+     * @return Value of property cratedDt.
+     */
+    public java.util.Date getCreatedDt() {
+        return createdDt;
+    }
+
+    /**
+     * Setter for property cratedDt.
+     *
+     * @param cratedDt New value of property cratedDt.
+     */
+    public void setCreatedDt(java.util.Date createdDt) {
+        this.createdDt = createdDt;
+    }
+
+    /**
+     * Getter for property createdBy.
+     *
+     * @return Value of property createdBy.
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     * Setter for property createdBy.
+     *
+     * @param createdBy New value of property createdBy.
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     * Getter for property branCode.
+     *
+     * @return Value of property branCode.
+     */
+    public java.lang.String getBranCode() {
+        return branCode;
+    }
+
+    /**
+     * Setter for property branCode.
+     *
+     * @param branCode New value of property branCode.
+     */
+    public void setBranCode(java.lang.String branCode) {
+        this.branCode = branCode;
+    }
+
+    /**
+     * Getter for property complaintid.
+     *
+     * @return Value of property complaintid.
+     */
+    public java.lang.String getComplaintid() {
+        return complaintid;
+    }
+
+    /**
+     * Setter for property complaintid.
+     *
+     * @param complaintid New value of property complaintid.
+     */
+    public void setComplaintid(java.lang.String complaintid) {
+        this.complaintid = complaintid;
+    }
+
+    /**
+     * Getter for property dateofComplaint.
+     *
+     * @return Value of property dateofComplaint.
+     */
+    public java.util.Date getDateofComplaint() {
+        return dateofComplaint;
+    }
+
+    /**
+     * Setter for property dateofComplaint.
+     *
+     * @param dateofComplaint New value of property dateofComplaint.
+     */
+    public void setDateofComplaint(java.util.Date dateofComplaint) {
+        this.dateofComplaint = dateofComplaint;
+    }
+
+    /**
+     * Getter for property employeeid.
+     *
+     * @return Value of property employeeid.
+     */
+    public java.lang.String getEmployeeid() {
+        return employeeid;
+    }
+
+    /**
+     * Setter for property employeeid.
+     *
+     * @param employeeid New value of property employeeid.
+     */
+    public void setEmployeeid(java.lang.String employeeid) {
+        this.employeeid = employeeid;
+    }
+
+    /**
+     * Getter for property comments.
+     *
+     * @return Value of property comments.
+     */
+    public java.lang.String getComments() {
+        return comments;
+    }
+
+    /**
+     * Setter for property comments.
+     *
+     * @param comments New value of property comments.
+     */
+    public void setComments(java.lang.String comments) {
+        this.comments = comments;
+    }
+}

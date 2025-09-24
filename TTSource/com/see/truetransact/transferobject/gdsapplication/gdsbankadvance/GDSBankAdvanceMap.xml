@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GDSBankAdvanceMap">
+
+    <mapped-statement name = "getGDSBankAdvanceDetailsForNormal" result-class = "java.util.HashMap">
+        SELECT MA.GROUP_NO, ma.division_no, MA.GDS_NO as CHITTAL_NO, ma.sub_no,
+        ma.member_no, ma.member_name, a.curr_inst_no, a.inst_date,
+        (ma.inst_amt*#SCHEME_COUNT:NUMERIC#) AS inst_amt,
+        SUM ((a.next_bonus_amount / b.total_no_of_members))*#SCHEME_COUNT:NUMERIC# AS bonus
+        FROM mds_application ma,
+        mds_master_maintenance mm,
+        (SELECT DISTINCT a.scheme_name, a.inst_date, a.curr_inst_no,
+        a.next_bonus_amount
+        FROM (SELECT   scheme_name,
+        draw_auction_date AS inst_date,
+        sl_no AS curr_inst_no,
+        (SELECT SUM
+        (total_bonus_amount
+        )
+        FROM mds_prized_money_details md
+        WHERE md.sl_no = mpd.sl_no - 1
+        AND md.scheme_name = mpd.scheme_name
+        AND authorized_status != 'REJECTED'
+        AND status != 'DELETED')
+        AS next_bonus_amount
+        FROM mds_prized_money_details mpd
+        WHERE status != 'DELETED'
+        AND draw_auction_date &lt;= #CURRENT_DT:DATE#
+        GROUP BY scheme_name, draw_auction_date, sl_no) a,
+        (SELECT   scheme_name,
+        MAX (draw_auction_date) AS inst_date,
+        MAX (sl_no) AS curr_inst_no
+        FROM mds_prized_money_details
+        WHERE status != 'DELETED'
+        AND draw_auction_date &lt;= #CURRENT_DT:DATE#
+        GROUP BY scheme_name) b
+        WHERE a.scheme_name = b.scheme_name
+        AND a.inst_date = b.inst_date
+        AND a.curr_inst_no = b.curr_inst_no) a,
+        (SELECT scheme_name, installment_amount, total_no_of_members
+        FROM mds_scheme_details) b,
+        (SELECT   scheme_name, chittal_no, sub_no,
+        SUM (no_of_inst_paid) no_of_inst_paid
+        FROM (SELECT   scheme_name, chittal_no, sub_no,
+        SUM (no_of_inst) AS no_of_inst_paid
+        FROM mds_trans_details
+        WHERE status != 'DELETED'
+        AND authorize_status IS NOT NULL
+        AND authorize_status = 'AUTHORIZED'
+        GROUP BY scheme_name, chittal_no, sub_no
+        UNION
+        SELECT   scheme_name, chittal_no, sub_no,
+        COUNT (*) AS no_of_inst_paid
+        FROM mds_bank_advance
+        WHERE status != 'DELETED' AND repaid = 'N'
+        GROUP BY scheme_name, chittal_no, sub_no)
+        GROUP BY scheme_name, chittal_no, sub_no) c
+        WHERE ma.scheme_name = a.scheme_name
+        AND ma.scheme_name = b.scheme_name
+        AND ma.scheme_name = c.scheme_name
+        AND ma.scheme_name = #SCHEME_NAME:VARCHAR#
+        AND ma.chittal_no = c.chittal_no
+        AND ma.sub_no = c.sub_no
+        AND ma.chittal_no = mm.chittal_no
+        AND ma.sub_no = mm.sub_no
+        AND ma.scheme_name = mm.scheme_name
+        AND NVL (mm.lock_status, 'N') = 'N'
+        AND a.curr_inst_no > c.no_of_inst_paid
+        GROUP BY MA.GROUP_NO,
+        ma.division_no,
+        MA.GDS_NO,
+        ma.sub_no,
+        ma.member_no,
+        ma.member_name,
+        a.curr_inst_no,
+        a.inst_date,
+        ma.inst_amt,
+        b.total_no_of_members
+        ORDER BY MA.GDS_NO       
+      
+    </mapped-statement>   
+    
+    
+    <mapped-statement name="insertGDSBankAdvanceTO" inline-parameters="true">
+        INSERT INTO MDS_BANK_ADVANCE
+        (BANK_ADV_ID, BANK_ADV_DT, SCHEME_NAME, CHITTAL_NO, DIVISION_NO, INSTALLMENT_NO, INSTALLMENT_DT, INST_AMT, BONUS_AMT, REPAID, 
+        REPAID_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT,SUB_NO,GDS_NO,FORFEITED_AMT
+        ) VALUES (
+        #bankAdvId:VARCHAR#, #bankAdvDt:DATE#, #schemeName:VARCHAR#, #chittalNo:VARCHAR#, #divisionNo:NUMERIC#, #installmentNo:NUMERIC#, 
+        #installmentDt:DATE#, #instAmt:NUMERIC#, #bonusAmt:NUMERIC#, #repaid:VARCHAR#, #repaidDt:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, 
+        #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#,#subNo:NUMERIC#,#gdsNo:VARCHAR#,#forfeitAmt:NUMERIC#)
+    </mapped-statement>
+    
+    <mapped-statement name="getGDSBankAdvDetailsEdit" result-class="java.util.LinkedHashMap">
+       
+        SELECT  distinct MBD.GDS_NO AS CHITTAL_NO, mbd.sub_no, ma.member_no, ma.member_name,
+        mbd.inst_amt, mbd.bonus_amt
+        FROM mds_bank_advance mbd, mds_application ma
+        WHERE mbd.status != 'DELETED'
+        AND mbd.chittal_no = ma.chittal_no
+        AND mbd.sub_no = ma.sub_no
+        AND mbd.bank_adv_id = #BANK_ADV_ID:VARCHAR#
+        ORDER BY MBD.GDS_NO
+        
+    </mapped-statement>
+    
+    <mapped-statement name="getGDSBankAdvanceAuthorize" result-class="java.util.LinkedHashMap">
+        <!-- SELECT DISTINCT BANK_ADV_ID,STATUS,AUTHORIZE_STATUS FROM MDS_BANK_ADVANCE C WHERE STATUS!='DELETED' 
+        AND AUTHORIZE_STATUS IS NULL AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# ORDER BY C.BANK_ADV_ID -->
+        SELECT DISTINCT c.bank_adv_id, c.status, c.authorize_status
+           FROM mds_bank_advance c, MDS_SCHEME_DETAILS msd
+          WHERE c.status != 'DELETED'
+            AND c.authorize_status IS NULL
+            and MSD.SCHEME_NAME = C.SCHEME_NAME
+            AND #HIERARCHY_ID# &gt;=
+                   (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                            'Y', hierarchy_id,
+                                            hierarchy_id + 1
+                                           )
+                               FROM user_master um, role_master rm
+                              WHERE rm.role_id = um.user_role
+                                AND rm.GROUP_ID = um.user_group
+                                AND um.user_id = c.status_by)
+            AND c.status_by != #USER_ID:VARCHAR#
+            and MSD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+       ORDER BY c.bank_adv_id
+    </mapped-statement>
+    
+    <mapped-statement name="getGDSGroupForChittal" result-class="java.util.LinkedHashMap"> 
+        select distinct MA.GROUP_NO as GROUP_NO from MDS_APPLICATION ma 
+        where MA.GDS_NO in (select MB.GDS_NO from MDS_BANK_ADVANCE mb where MB.BANK_ADV_ID = #BANK_ADV_ID:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectGDSBankAdvanceDetailsData" result-class = "java.util.LinkedHashMap">       
+        SELECT *
+        FROM mds_bank_advance
+        WHERE repaid = 'N'
+        AND scheme_name IN (SELECT MSD.SCHEME_NAME FROM MDS_SCHEME_DETAILS MSD WHERE MSD.GROUP_NO = #GROUP_NO:VARCHAR#)
+        AND GDS_NO = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO:NUMBER#
+        AND installment_no &gt;= #INSTALLMENT_NO:NUMBER#
+        AND status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        ORDER BY bank_adv_id
+    </mapped-statement>
+    
+    
+     <mapped-statement name="updateGDSBankAdvanceRepaidStatus" result-class="java.util.HashMap">
+        UPDATE MDS_BANK_ADVANCE SET REPAID=#REPAID:VARCHAR#,REPAID_DT=#REPAID_DT:DATE# WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS=#AUTH_STATUS:VARCHAR# AND 
+        INSTALLMENT_NO &lt;= #INSTALLMENT_NO:NUMBER# AND GDS_NO = #GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER#
+    </mapped-statement>
+        
+    <mapped-statement name="updateGDSBankAdvanceRepaidStatusSelected" result-class="java.util.HashMap">
+        UPDATE MDS_BANK_ADVANCE SET REPAID=#REPAID:VARCHAR#,REPAID_DT=#REPAID_DT:DATE# WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS=#AUTH_STATUS:VARCHAR# AND 
+        INSTALLMENT_NO &lt;= #INSTALLMENT_NO:NUMBER# AND GDS_NO = #GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER# AND BANK_ADV_ID=#BANK_ADV_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getGDSPendingBankAdv" result-class="java.util.LinkedHashMap">
+        select DISTINCT BANK_ADV_ID,BANK_ADV_DT from mds_bank_advance 
+        where repaid='N' and GDS_NO = #GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER# and authorize_status='AUTHORIZED' order by bank_adv_dt
+    </mapped-statement>
+    
+    
+    <mapped-statement name = "getGDSBankAdvanceDetails" result-class = "java.util.HashMap">
+        <!--SELECT MA.GROUP_NO, ma.division_no, MA.GDS_NO as CHITTAL_NO, ma.sub_no,
+        ma.member_no, ma.member_name, a.curr_inst_no, a.inst_date,
+        (ma.inst_amt*#SCHEME_COUNT:NUMERIC#) AS inst_amt,
+        SUM ((a.next_bonus_amount / b.total_no_of_members))*#SCHEME_COUNT:NUMERIC# AS bonus
+        FROM mds_application ma,
+        mds_master_maintenance mm,
+        (SELECT DISTINCT a.scheme_name, a.inst_date, a.curr_inst_no,
+        a.next_bonus_amount
+        FROM (SELECT   scheme_name,
+        NEXT_INSTALLMENT_DATE AS inst_date,
+        sl_no AS curr_inst_no,
+        (SELECT SUM
+        (total_bonus_amount
+        )
+        FROM mds_prized_money_details md
+        WHERE md.sl_no = mpd.sl_no
+        AND md.scheme_name = mpd.scheme_name
+        AND authorized_status != 'REJECTED'
+        AND status != 'DELETED')
+        AS next_bonus_amount
+        FROM mds_prized_money_details mpd
+        WHERE status != 'DELETED'
+        AND NEXT_INSTALLMENT_DATE &lt;= #CURRENT_DT:DATE#
+        GROUP BY scheme_name, NEXT_INSTALLMENT_DATE, sl_no) a,
+        (SELECT   scheme_name,
+        MAX (NEXT_INSTALLMENT_DATE) AS inst_date,
+        MAX (sl_no) AS curr_inst_no
+        FROM mds_prized_money_details
+        WHERE status != 'DELETED'
+        AND NEXT_INSTALLMENT_DATE &lt;= #CURRENT_DT:DATE#
+        GROUP BY scheme_name) b
+        WHERE a.scheme_name = b.scheme_name
+        AND a.inst_date = b.inst_date
+        AND a.curr_inst_no = b.curr_inst_no) a,
+        (SELECT scheme_name, installment_amount, total_no_of_members
+        FROM mds_scheme_details) b,
+        (SELECT   scheme_name, chittal_no, sub_no,
+        SUM (no_of_inst_paid) no_of_inst_paid
+        FROM (SELECT   scheme_name, chittal_no, sub_no,
+        SUM (no_of_inst) AS no_of_inst_paid
+        FROM mds_trans_details
+        WHERE status != 'DELETED'
+        AND authorize_status IS NOT NULL
+        AND authorize_status = 'AUTHORIZED'
+        GROUP BY scheme_name, chittal_no, sub_no
+        UNION
+        SELECT   scheme_name, chittal_no, sub_no,
+        COUNT (*) AS no_of_inst_paid
+        FROM mds_bank_advance
+        WHERE status != 'DELETED' AND repaid = 'N'
+        GROUP BY scheme_name, chittal_no, sub_no)
+        GROUP BY scheme_name, chittal_no, sub_no) c
+        WHERE ma.scheme_name = a.scheme_name
+        AND ma.scheme_name = b.scheme_name
+        AND ma.scheme_name = c.scheme_name
+        AND ma.scheme_name = #SCHEME_NAME:VARCHAR#
+        AND ma.chittal_no = c.chittal_no
+        AND ma.sub_no = c.sub_no
+        AND ma.chittal_no = mm.chittal_no
+        AND ma.sub_no = mm.sub_no
+        AND ma.scheme_name = mm.scheme_name
+        AND NVL (mm.lock_status, 'N') = 'N'
+        AND a.curr_inst_no > c.no_of_inst_paid
+        GROUP BY MA.GROUP_NO,
+        ma.division_no,
+        MA.GDS_NO,
+        ma.sub_no,
+        ma.member_no,
+        ma.member_name,
+        a.curr_inst_no,
+        a.inst_date,
+        ma.inst_amt,
+        b.total_no_of_members
+        ORDER BY MA.GDS_NO-->
+        
+         <!--SELECT   GROUP_NO,
+         division_no,
+         CHITTAL_NO ,
+         sub_no,
+         member_no,
+         member_name,
+         curr_inst_no,
+         inst_date,
+         inst_amt,
+         bonus  FROM TABLE(PKGGDS.GET_GDSBNKADV_DET (#SCHEME_COUNT:NUMERIC#,#SCHEME_COUNT:NUMERIC#, #CURRENT_DT:DATE#, #CURRENT_DT:DATE#, #SCHEME_NAME:VARCHAR#)) -->
+         
+         WITH  
+         ADVINST AS(
+          SELECT SCHEME_NAME,MAX(sl_no) AS SLNO,MAX(NEXT_INSTALLMENT_DATE) AS inst_date  FROM mds_prized_money_details MP WHERE  MP.SCHEME_NAME = #SCHEME_NAME:VARCHAR#
+          AND  MP.status  IN ('CREATED','MODIFIED')  AND MP.AUTHORIZED_STATUS = 'AUTHORIZED' AND MP.NEXT_INSTALLMENT_DATE &lt;= #CURRENT_DT:DATE# GROUP BY MP.SCHEME_NAME ), 
+         PRIZEDET AS 
+          (SELECT MP.SCHEME_NAME,SUM(total_bonus_amount) AS TOTBONUS FROM mds_prized_money_details MP ,ADVINST ADI WHERE  MP.SCHEME_NAME = #SCHEME_NAME:VARCHAR#
+          AND  MP.status  IN ('CREATED','MODIFIED')  AND MP.AUTHORIZED_STATUS = 'AUTHORIZED' AND MP.NEXT_INSTALLMENT_DATE &lt;= #CURRENT_DT:DATE#
+          AND  MP.SCHEME_NAME =  ADI.SCHEME_NAME AND sl_no =ADI.SLNO  GROUP BY MP.SCHEME_NAME),
+         REMITDET AS(
+          SELECT MT.scheme_name, MT.chittal_no,MT.sub_no, SUM (MT.no_of_inst) AS no_of_inst_paid
+          FROM mds_trans_details MT  WHERE   MT.SCHEME_NAME= #SCHEME_NAME:VARCHAR#  AND  MT.status  = 'CREATED'
+          AND MT.authorize_status = 'AUTHORIZED'  GROUP BY MT.scheme_name, MT.chittal_no, MT.sub_no), 
+         BNKADV AS (
+         SELECT  MA.GROUP_NO, MA.division_no, MA.GDS_NO AS CHITTAL_NO, MA.sub_no,
+          MA.member_no, MA.member_name, AI.SLNO AS curr_inst_no, AI.inst_date,
+          (MA.inst_amt * #SCHEME_COUNT:NUMERIC#) AS inst_amt,
+           (PT.TOTBONUS / MS.TOTAL_NO_OF_MEMBERS) * #SCHEME_COUNT:NUMERIC# AS bonus,MA.scheme_name  AS scheme_name 
+           FROM mds_application MA, ADVINST AI, REMITDET RT,mds_scheme_details MS,PRIZEDET PT  
+          WHERE  RT.no_of_inst_paid &lt;  AI.SLNO 
+          AND MA.scheme_name =  RT.scheme_name   AND ma.chittal_no = RT.chittal_no
+          AND MA.sub_no = RT.sub_no 
+          AND MS.SCHEME_NAME  =MA.scheme_name 
+          AND MS.SCHEME_NAME  =PT.scheme_name)  
+         SELECT BA.GROUP_NO,BA.division_no,BA.CHITTAL_NO,BA.sub_no,  BA.member_no, BA.member_name,  BA.curr_inst_no, BA.inst_date,BA.inst_amt,BA.bonus
+          FROM BNKADV BA 
+          LEFT JOIN MDS_BANK_ADVANCE MBA ON  MBA.SCHEME_NAME =BA.scheme_name  AND MBA.INSTALLMENT_NO = BA.curr_inst_no
+          AND MBA.INSTALLMENT_NO IS NULL ORDER BY BA.CHITTAL_NO
+      
+    </mapped-statement>   
+    
+     <mapped-statement name="checkBankAdvanceAlreadyDone" result-class="java.util.LinkedHashMap" > 
+         select CHECK_GDS_BANK_ADVANCE_DONE(#GROUP_NO:VARCHAR#,#BRANCH_CODE:VARCHAR#) as BANK_ADVANCE_STATUS from dual
+      </mapped-statement>
+      
+      <mapped-statement name="getGDSBankAdvCntForInstNo" result-class="java.util.LinkedHashMap" > 
+         select * from MDS_BANK_ADVANCE where gds_no = #GDS_NO:VARCHAR# and installment_no = #SL_NO:NUMBER#
+         and forfeited_amt > 0 
+      </mapped-statement>
+      
+    <mapped-statement name="getPrizedChitalListForfiet" result-class="java.util.LinkedHashMap" >         
+        <!-- select distinct gds_no from MDS_PRIZED_MONEY_DETAILS mds 
+        where MDS.DRAW_AUCTION_DATE &lt;= (SELECT max (draw_auction_date + NVL (mpo.bonus_prized_grace_period, 0))
+        FROM mds_prized_money_details m,
+        mds_product_general_details mp,
+        mds_product_other_details mpo,
+        mds_scheme_details ms
+        WHERE mp.prod_id = mpo.prod_id
+        AND ms.scheme_name = m.scheme_name
+        AND ms.prod_id = mpo.prod_id
+        AND m.scheme_name = #SCHEME_NAME:VARCHAR#)
+        and MDS.SCHEME_NAME = #SCHEME_NAME:VARCHAR# -->
+        
+        SELECT DISTINCT gds_no
+           FROM (SELECT m.gds_no, m.chittal_no, mpd.chittal_no AS pychitno,
+                        CASE
+                           WHEN (    mp.after_cash_payment = 'Y'
+                                 AND mpd.chittal_no IS NOT NULL
+                                )
+                              THEN 1
+                           WHEN (mp.after_cash_payment = 'N')
+                              THEN 1
+                           ELSE 0
+                        END AS prized
+                   FROM mds_product_general_details mp JOIN mds_scheme_details ms
+                        ON ms.prod_id = mp.prod_id
+                        JOIN mds_prized_money_details m
+                        ON m.scheme_name = ms.scheme_name
+                        LEFT JOIN
+                        (SELECT pd.scheme_name, pd.chittal_no,
+                                'Y' AS exist_tag
+                           FROM mds_money_payment_details pd
+                          WHERE pd.authorized_status = 'AUTHORIZED'
+                            AND pd.scheme_name = #SCHEME_NAME:VARCHAR#) mpd
+                        ON mpd.chittal_no = m.chittal_no
+                  WHERE ms.scheme_name = #SCHEME_NAME:VARCHAR#
+                    AND m.authorized_status = 'AUTHORIZED')a
+          WHERE prized = 1
+    </mapped-statement>
+
+</sql-map>

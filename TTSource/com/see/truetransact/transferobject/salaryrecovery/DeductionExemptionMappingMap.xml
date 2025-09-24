@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="DeductionExemptionMappingMap">
+
+<!--
+    Document   : DeductionExcemptionMappingMap.xml
+    Created on : Feb 10, 2013, 1:39 PM
+    Author     : 
+    Description:
+        Purpose of the document follows.
+-->
+  
+    
+    <mapped-statement name="insertDeductionExemptionMapping" inline-parameters="true">
+        INSERT INTO DEDUCTION_EXEMPTION_MAPPING (EMP_REF_NO,EXEMPTION_MODE,MAP_PROD_TYPE,MAP_PROD_ID,MAP_ACT_NUM,STATUS,STATUS_BY,STATUS_DT,
+        AUTHORIZE_BY,AUTHORIZE_DT,AUTHORIZE_STATUS,CREATED_BY,CREATED_DT,BRANCH_CODE,
+        EXEMPTION_MODE_TEMP, MAP_PROD_TYPE_TEMP, MAP_PROD_ID_TEMP, MAP_ACT_NUM_TEMP) 
+        VALUES 
+        (#employerRefNo:VARCHAR#, #exemptionMode:VARCHAR#, #prodType:VARCHAR#, #prodId:VARCHAR# , #actNum:VARCHAR# , #status:VARCHAR# , 
+        #statusBy:VARCHAR#, #statusDt:VARCHAR# , #authorizeBy:VARCHAR# , #authorizeDt:DATE# , #authorizeStatus:VARCHAR#,
+        #createdBy:VARCHAR# , #createdDt:DATE#,#branchId:VARCHAR#, null, null, null, null)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getEditExemption" result-class="java.util.LinkedHashMap">
+        select SD.EMP_REF_NO, get_cust_name(C.CUST_ID) as "NAME", SD.EXEMPTION_MODE, SD.MAP_PROD_ID, SD.MAP_ACT_NUM  
+        from DEDUCTION_EXEMPTION_MAPPING SD, CUSTOMER C, SHARE_ACCT SH
+        WHERE SD.EMP_REF_NO=SH.EMP_REFNO_NEW AND 
+        SH.CUST_ID=C.CUST_ID and SD.STATUS != 'DELETED' and (SD.AUTHORIZE_STATUS is null or(SD.AUTHORIZE_STATUS ='AUTHORIZED' and SD.AUTHORIZE_STATUS !='REJECTED')) and
+        SH.STATUS !='DELETED' AND SH.STATUS!='CLOSED' AND SH.AUTHORIZE='AUTHORIZED' AND SD.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_REF_NO">
+                    UPPER(SD.EMP_REF_NO) LIKE UPPER('%$EMP_REF_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(get_cust_name(C.CUST_ID)) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EXEMPTION_MODE">
+                    UPPER(SD.EXEMPTION_MODE) LIKE UPPER('%$EXEMPTION_MODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="MAP_PROD_ID">
+                    UPPER(SD.MAP_PROD_ID) LIKE UPPER('%$MAP_PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="MAP_ACT_NUM">
+                    UPPER(SD.MAP_ACT_NUM) LIKE UPPER('%$MAP_ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SD.EMP_REF_NO
+        
+        <!-- select DEM.EMP_REF_NO, get_cust_name(C.CUST_ID) as "NAME", DEM.EXEMPTION_MODE, DEM.MAP_PROD_ID, DEM.MAP_ACT_NUM 
+        from DEDUCTION_EXEMPTION_MAPPING DEM, 
+        CUSTOMER C, SHARE_ACCT SA
+        WHERE DEM.EMP_REF_NO = SA.EMP_REFNO_NEW AND 
+        SA.CUST_ID = C.CUST_ID and DEM.STATUS != 'DELETED' and DEM.AUTHORIZE_STATUS!='REJECTED' and
+        SA.STATUS !='DELETED' AND SA.STATUS!='CLOSED' AND SA.AUTHORIZE='AUTHORIZED' AND DEM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+        ORDER BY DEM.EMP_REF_NO-->
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getDeductionMapping" result-class="java.util.HashMap">
+       <!-- SELECT emp_ref_no, map_prod_type, map_prod_id, exemption_mode, map_act_num,
+        fname
+        FROM deduction_exemption_mapping sh, customer am,share_acct ss
+        WHERE emp_ref_no = #EMP_REF_NO:VARCHAR# AND SH.EMP_REF_NO = SS.EMP_REFNO_NEW and AM.CUST_ID = SS.CUST_ID and SS.STATUS != 'CLOSED' 
+        and SH.STATUS != 'DELETED' -->
+        SELECT dem.emp_ref_no, DEM.MAP_PROD_TYPE, dem.map_prod_id, DEM.EXEMPTION_MODE, dem.map_act_num, c.fname
+        FROM deduction_exemption_mapping dem, customer c, share_acct sa
+        WHERE dem.emp_ref_no = #EMP_REF_NO:VARCHAR#
+        AND dem.emp_ref_no = sa.emp_refno_new
+        AND c.cust_id = sa.cust_id
+        AND sa.status != 'CLOSED'
+        <!--AND DEM.AUTHORIZE_STATUS IS NULL
+        AND DEM.status != 'DELETED'-->
+    </mapped-statement>
+    
+    <mapped-statement name="getCustomerAccounts" result-class="java.util.HashMap">
+        select APA.ACT_NUM,APA.PROD_TYPE from ALL_PRODUCT_ACCTS1 apa where 
+        APA.CUST_ID = (select SA.CUST_ID from share_acct sa where SA.EMP_REFNO_NEW = #EMP_REFNO:VARCHAR# and SA.STATUS != 'CLOSED') 
+        and APA.PROD_TYPE IN ('TD','MDS','AD','SA','TL')
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalRecTD" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO DSA SET DSA.SALARY_RECOVERY = 'N' WHERE DSA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalRecLoans" inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS LFA SET LFA.SALARY_RECOVERY = 'N' WHERE LFA.ACCT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalRecMDS" inline-parameters="true">
+        UPDATE MDS_MASTER_MAINTENANCE MMM SET MMM.SALARY_RECOVERY = 'N' WHERE MMM.CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalRecSA" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SAM SET SAM.SALARY_RECOVERY = 'N' WHERE SAM.SUSPENSE_ACCT_NUM = #SUSPENSE_ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateDeductionExemptionMapping" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET
+        EMP_REF_NO = #employerRefNo:VARCHAR#,
+        EXEMPTION_MODE=#exemptionMode:VARCHAR#,
+        MAP_PROD_TYPE= #prodType:VARCHR#,
+        MAP_PROD_ID = #prodId:VARCHAR#,
+        MAP_ACT_NUM = #actNum:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:VARCHAR#,
+        <!--AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#-->
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = null,
+        AUTHORIZE_DT = null
+        WHERE EMP_REF_NO= #employerRefNo:VARCHAR#  AND STATUS!='DELETED' AND BRANCH_CODE = #branchId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDeductionExemptionMapping" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET 
+        STATUS ='DELETED',
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = null,
+        AUTHORIZE_DT = null
+        WHERE EMP_REF_NO = #employerRefNo:VARCHAR# AND BRANCH_CODE = #branchId:VARCHAR#
+        <!--AND MAP_ACT_NUM = #actNum:VARCHAR#-->
+    </mapped-statement>    
+    
+         
+    <mapped-statement name="getDeductionMappingAuthList" result-class="java.util.LinkedHashMap">
+        SELECT DEM.EMP_REF_NO, get_cust_name(c.cust_id) AS "NAME", DEM.MAP_PROD_ID, DEM.MAP_PROD_TYPE, DEM.MAP_ACT_NUM
+        FROM DEDUCTION_EXEMPTION_MAPPING DEM, CUSTOMER C, SHARE_ACCT SH
+        WHERE DEM.EMP_REF_NO = SH.EMP_REFNO_NEW AND SH.CUST_ID = C.CUST_ID
+        AND DEM.STATUS_BY != #USER_ID:VARCHAR# AND DEM.BRANCH_CODE = #BRANCH_CODE# AND DEM.AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    
+    <mapped-statement name="authorizeDeductionMapping" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET 
+        AUTHORIZE_STATUS = 'AUTHORIZED',
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE EMP_REF_NO = #EMP_REF_NO:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="rejectDeductionMapping" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET 
+        AUTHORIZE_STATUS = #AUTH_STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE EMP_REF_NO = #EMP_REF_NO:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+
+    <mapped-statement name="getExemptionDetails" result-class="java.util.HashMap">
+        SELECT DEM.EXEMPTION_MODE, DEM.MAP_ACT_NUM, DEM.MAP_PROD_ID, DEM.MAP_PROD_TYPE FROM DEDUCTION_EXEMPTION_MAPPING DEM 
+        WHERE DEM.EMP_REF_NO = #EMP_REF_NO:VARCHAR# AND DEM.STATUS!='DELETED' AND (DEM.AUTHORIZE_STATUS!='REJECTED' OR DEM.AUTHORIZE_STATUS IS NULL)
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+   
+      <mapped-statement name="updateExemptionDetails_Temp" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET 
+        EXEMPTION_MODE_TEMP = #exemptionMode_Temp:VARCHAR#, 
+        MAP_PROD_TYPE_TEMP = #prodType_Temp:VARCHAR#, 
+        MAP_PROD_ID_TEMP = #prodId_Temp:VARCHAR#, 
+        MAP_ACT_NUM_TEMP = #actNum_Temp:VARCHAR#
+        WHERE EMP_REF_NO = #employerRefNo:VARCHAR# AND BRANCH_CODE = #branchId:VARCHAR#
+      </mapped-statement>
+   
+   <mapped-statement name="getOldExemptionDetails" result-class="java.util.HashMap">
+        SELECT DEM.EXEMPTION_MODE_TEMP, DEM.MAP_ACT_NUM_TEMP, DEM.MAP_PROD_ID_TEMP, DEM.MAP_PROD_TYPE_TEMP
+        FROM DEDUCTION_EXEMPTION_MAPPING DEM 
+        WHERE DEM.EMP_REF_NO = #EMP_REF_NO:VARCHAR# 
+        <!--AND DEM.STATUS!='DELETED' -->
+        AND (DEM.AUTHORIZE_STATUS!='REJECTED' OR DEM.AUTHORIZE_STATUS IS NULL)
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateExemptionDetails" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET 
+        EXEMPTION_MODE = #EXEMPTION_MODE:VARCHAR#, 
+        MAP_PROD_TYPE = #MAP_PROD_TYPE:VARCHAR#, 
+        MAP_PROD_ID = #MAP_PROD_ID:VARCHAR#, 
+        MAP_ACT_NUM = #MAP_ACT_NUM:VARCHAR#,
+        EXEMPTION_MODE_TEMP = null, 
+        MAP_PROD_TYPE_TEMP = null, 
+        MAP_PROD_ID_TEMP = null, 
+        MAP_ACT_NUM_TEMP = null
+        WHERE EMP_REF_NO = #EMP_REF_NO:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+      </mapped-statement>
+        
+</sql-map>

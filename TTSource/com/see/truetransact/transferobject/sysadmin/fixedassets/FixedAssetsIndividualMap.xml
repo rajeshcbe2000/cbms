@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="FixedAssetsIndividualTOMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertFixedIndividualTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_INDIVIDUAL
+        (FID_ID,INVOICE_NO,ASSET_TYPE, ASSET_DESC, QUANTITY,WARRANTY,WARRANTY_TIME, ORDERED_DT, PURCHASED_DT,
+        BRANCH_CODE,STATUS,STATUS_DT,STATUS_BY,CREATED_BY,CREATED_DT,AUTHORIZED_STATUS,AUTHORIZED_DT,AUTHORIZED_BY,COMPANY
+        ) VALUES (
+        #assetIndID:VARCHAR#,#invoiceNo:VARCHAR#,#assetType:VARCHAR#, #assetDesc:VARCHAR#, #quantity:VARCHAR#,#warranty:VARCHAR#,#warrantyVal:VARCHAR#, 
+        #orderedDt:TIMESTAMP#,#purchasedDt:TIMESTAMP#,#branCode:VARCHAR#,#status:VARCHAR#,#statusDt:TIMESTAMP#,
+        #statusBy:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeDt:TIMESTAMP#,#authorizeBy:VARCHAR#,#company:VARCHAR#
+        ) 
+    </mapped-statement>
+        
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateFixedIndividualTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL SET 
+        INVOICE_NO = #invoiceNo:VARCHAR#,
+        WARRANTY = #warranty:VARCHAR#,
+        WARRANTY_TIME = #warrantyVal:VARCHAR#,
+        QUANTITY = #quantity:VARCHAR#,
+        ORDERED_DT =#orderedDt:TIMESTAMP#,
+        PURCHASED_DT =#purchasedDt:TIMESTAMP#,
+        COMPANY = #company:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:TIMESTAMP#
+        WHERE FID_ID = #assetIndID:VARCHAR#
+    </mapped-statement>
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteFixedIndividualTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE FID_ID = #assetIndID:VARCHAR#
+    </mapped-statement>
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getFixedIndividualTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetsIndividualTO">
+        <property name="assetIndID" column="FID_ID"/>
+        <property name="assetType" column="ASSET_TYPE"/>
+        <property name="assetDesc" column="ASSET_DESC"/>
+        <property name="quantity" column="QUANTITY"/>
+        <property name="orderedDt" column="ORDERED_DT"/>
+        <property name="purchasedDt" column="PURCHASED_DT"/>
+        <property name="branCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="company" column="COMPANY"/>
+        <property name="invoiceNo" column="INVOICE_NO"/>
+        <property name="warranty" column="WARRANTY"/>
+        <property name="warrantyVal" column="WARRANTY_TIME"/>
+    </result-map>
+        
+    <result-map name="getFixedIndividualDetailsTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetsIndividualTO">
+        <property name="assetIndID" column="FID_ID"/>
+        <property name="faceVal" column="FACE_VALUE"/>  
+        <property name="currVal" column="CURR_VALUE"/>
+        <property name="floor" column="FLOOR"/>
+        <property name="cboDepart" column="DEPARTMENT"/>
+        <property name="assetNum" column="ASSET_NUM"/>
+        <property name="assetIndID" column="FID_ID"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="assetTabStatus" column="AI_STATUS"/>
+        <property name="assetTabStatusDt" column="AI_STATUS_DT"/>
+        <property name="assetTabStatusBy" column="AI_STATUS_BY"/>
+        <property name="assetTabCreatedBy" column="AI_CREATED_BY"/>
+        <property name="assetTabCreatedDt" column="AI_CREATED_DT"/>
+        <property name="assetTabAuthorizedStatus" column="AI_AUTHORIZED_STATUS"/>
+        <property name="assetTabAuthorizeDt" column="AI_AUTHORIZED_DT"/>
+        <property name="assetTabAuthorizeBy" column="AI_AUTHORIZED_BY"/>
+        <property name="branchId" column="SUPPLIED_BRANCH_ID"/>
+        <property name="faIndId" column="FA_ID"/>                
+    </result-map>
+	
+    <mapped-statement name="getSelectFixedIndividualTO" result-map="getFixedIndividualTOResult" >
+        SELECT * FROM FIXED_ASSET_INDIVIDUAL 
+        WHERE FID_ID = #FID_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="insertFixedIndividualDetailsTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_INDIVIDUAL_DETAILS
+        (FID_ID, SL_NO,FACE_VALUE, CURR_VALUE, ASSET_NUM, AI_STATUS, AI_STATUS_DT, AI_STATUS_BY, AI_CREATED_BY, AI_CREATED_DT,SUPPLIED_BRANCH_ID,FLOOR,DEPARTMENT,FA_ID
+        ) VALUES (
+        #assetIndID:VARCHAR#,#slNo:VARCHAR#,#faceVal:NUMERIC#,#currVal:NUMERIC#,#assetNum:VARCHAR#,
+        #assetTabStatus:VARCHAR#,#assetTabStatusDt:DATE#,
+        #assetTabStatusBy:VARCHAR#,#assetTabCreatedBy:VARCHAR#,#assetTabCreatedDt:TIMESTAMP#,#branchId:VARCHAR#,#floor:VARCHAR#,#cboDepart:VARCHAR#,#faIndId:VARCHAR#
+        ) 
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedIndividualDetailsTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET 
+        FACE_VALUE =#faceVal:NUMERIC#,
+        CURR_VALUE =#currVal:NUMERIC#,
+        FLOOR =#floor:VARCHAR#,
+        DEPARTMENT =#cboDepart:VARCHAR#,
+        ASSET_NUM = #assetNum:VARCHAR#,
+        SUPPLIED_BRANCH_ID = #branchId:VARCHAR#,
+        AI_STATUS = #assetTabStatus:VARCHAR#,
+        AI_AUTHORIZED_STATUS = #assetTabAuthorizedStatus:VARCHAR#,
+        AI_AUTHORIZED_BY = #assetTabAuthorizeBy:VARCHAR#,
+        AI_AUTHORIZED_DT = #assetTabAuthorizeDt:TIMESTAMP#
+        WHERE FID_ID = #assetIndID:VARCHAR#
+        AND SL_NO=#slNo:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteFixedIndividualDetailsTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET 
+        AI_STATUS = #assetTabStatus:VARCHAR#
+        WHERE FID_ID = #assetIndID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteFixedIndividualDetailsSlNoTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET 
+        AI_STATUS = #assetTabStatus:VARCHAR#
+        WHERE FID_ID = #assetIndID:VARCHAR# AND SL_NO=#slNo:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="countNoOfDetails" result-class = "java.lang.Integer">
+        SELECT COUNT(FID_ID) AS "COUNT" FROM FIXED_ASSET_INDIVIDUAL_DETAILS WHERE SL_NO = #slNo:VARCHAR# 
+        AND FID_ID=#assetIndID:VARCHAR# AND AI_STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedIndividualDetails" result-map="getFixedIndividualDetailsTOResult" >
+        SELECT * FROM FIXED_ASSET_INDIVIDUAL_DETAILS 
+        WHERE FID_ID = #FID_ID:VARCHAR# AND AI_STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedIndividualDetailsAuth" result-map="getFixedIndividualDetailsTOResult" >
+        SELECT * FROM FIXED_ASSET_INDIVIDUAL_DETAILS 
+        WHERE FID_ID = #FID_ID:VARCHAR# AND AI_STATUS != 'DELETED' AND AI_AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeFixedIndividual" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_INDIVIDUAL SET
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE FID_ID = #FID_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeFixedIndividualDetails" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET 
+        AI_AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AI_AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AI_AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE FID_ID = #FID_ID:VARCHAR#
+        AND SL_NO=#SL_NO#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getFixedIndividualDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT FID_ID,INVOICE_NO,ASSET_TYPE,ASSET_DESC,ORDERED_DT,PURCHASED_DT,AUTHORIZED_STATUS FROM FIXED_ASSET_INDIVIDUAL
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY  FID_ID
+    </mapped-statement>
+    <mapped-statement name="getPurchaseAcHdData" result-class="java.util.LinkedHashMap" >
+        SELECT purchase_debit FROM fixed_assets_product where asset_type= #ASSET_TYPE:VARCHAR#  
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedIndividualDetailsDelete" result-class="java.util.LinkedHashMap">
+        SELECT  FID_ID,INVOICE_NO,ASSET_TYPE,ASSET_DESC,ORDERED_DT,PURCHASED_DT,AUTHORIZED_STATUS FROM FIXED_ASSET_INDIVIDUAL  
+        WHERE STATUS!='DELETED' AND  AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY  FID_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedIndividualDetailsView" result-class="java.util.LinkedHashMap">
+        SELECT FID_ID,INVOICE_NO,ASSET_TYPE,ASSET_DESC,ORDERED_DT,PURCHASED_DT,AUTHORIZED_STATUS FROM FIXED_ASSET_INDIVIDUAL
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY  FID_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedIndividualAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT FID_ID,INVOICE_NO,ASSET_TYPE,ASSET_DESC,ORDERED_DT,PURCHASED_DT FROM FIXED_ASSET_INDIVIDUAL
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        ORDER BY  FID_ID
+    </mapped-statement>
+
+    <mapped-statement name="getFixedAssetDescValue" result-class="java.util.HashMap">
+        SELECT ASSET_SUB_TYPE AS "KEY",ASSET_SUB_TYPE AS "VALUE" FROM FIXED_ASSET_DESCRIPTION WHERE ASSET_STATUS!='DELETED'
+        AND ASSET_AUTHORIZED_STATUS='AUTHORIZED' AND ASSET_TYPE=#ASSET_TYPE:VARCHAR#    
+    </mapped-statement>
+        
+    <mapped-statement name="getBranchId" result-class="java.util.HashMap">
+        SELECT BRANCH_CODE AS "KEY", BRANCH_CODE AS "VALUE" FROM BRANCH_MASTER WHERE STATUS!='DELETED'
+    </mapped-statement>
+        
+        
+</sql-map>

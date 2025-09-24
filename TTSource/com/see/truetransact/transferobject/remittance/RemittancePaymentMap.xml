@@ -1,0 +1,815 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RemittancePaymentTOMap">
+
+	<!-- Use RemittancePaymentTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRemittancePaymentTO" inline-parameters="true">
+        INSERT INTO REMIT_PAYMENT
+        (REMIT_PAY_ID, REMIT_PAY_DT, INSTRUMENT_TYPE, SERIAL_NO, ADDRESS, PAY_STATUS, PAY_AMT, CHARGES, REMARKS, STATUS, BRANCH_ID, CREATED_BY, CREATED_DT,INSTRUMENT_NO1,INSTRUMENT_NO2, STATUS_BY, STATUS_DT, SERVICE_TAX
+        ) VALUES (
+        #remitPayId:VARCHAR#, #remitPayDt:DATE#, #instrumentType:VARCHAR#, #serialNo:VARCHAR#, #address:VARCHAR#, #payStatus:VARCHAR#, #payAmt:NUMERIC#, #charges:NUMERIC#, #remarks:VARCHAR#, #status:VARCHAR#,  #branchId:VARCHAR#,  #createdBy:VARCHAR#, #createdDt:DATE#, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #serviceTax:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use RemittancePaymentTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateRemittancePaymentTO" inline-parameters="true">
+        UPDATE REMIT_PAYMENT SET
+        INSTRUMENT_TYPE = #instrumentType:VARCHAR#,
+        SERIAL_NO = #serialNo:VARCHAR#,
+        ADDRESS = #address:VARCHAR#,
+        PAY_STATUS = #payStatus:VARCHAR#,
+        PAY_AMT = #payAmt:NUMERIC#,
+        CHARGES = #charges:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        INSTRUMENT_NO1 = #instrumentNo1:VARCHAR#,
+        INSTRUMENT_NO2 = #instrumentNo2:VARCHAR#,
+        SERVICE_TAX = #serviceTax:NUMERIC#
+        WHERE REMIT_PAY_ID = #remitPayId:VARCHAR#
+                
+    </mapped-statement>
+
+	<!-- Use RemittancePaymentTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteRemittancePaymentTO" inline-parameters="true">
+        UPDATE REMIT_PAYMENT SET 
+        STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE REMIT_PAY_ID = #remitPayId:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to RemittancePaymentTO object (JavaBean) properties -->
+    <result-map name="getRemittancePaymentTOResult" class="com.see.truetransact.transferobject.remittance.RemittancePaymentTO">
+        <property name="remitPayId" column="REMIT_PAY_ID"/>
+        <property name="remitPayDt" column="REMIT_PAY_DT"/>
+        <property name="instrumentType" column="INSTRUMENT_TYPE"/>
+        <property name="serialNo" column="SERIAL_NO"/>
+        <property name="address" column="ADDRESS"/>
+        <property name="payStatus" column="PAY_STATUS"/>
+        <property name="payAmt" column="PAY_AMT"/>
+        <property name="charges" column="CHARGES"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="instrumentNo1" column="INSTRUMENT_NO1"/>
+        <property name="instrumentNo2" column="INSTRUMENT_NO2"/>
+        <property name="issueDt" column="BATCH_DT"/>
+        <property name="favouring" column="FAVOURING"/>
+        <property name="draweeBank" column="DRAWEE_BANK"/>
+        <property name="draweeBranch" column="DRAWEE_BRANCH_CODE"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>
+                
+    </result-map>
+    <mapped-statement name="getSelectRemittancePaymentTO"  result-map="getRemittancePaymentTOResult">  
+        SELECT RP.*, RI.BATCH_DT, RI.FAVOURING, RI.DRAWEE_BANK, 
+        RI.DRAWEE_BRANCH_CODE FROM REMIT_PAYMENT RP, REMIT_ISSUE RI WHERE 
+        RI.VARIABLE_NO = RP.SERIAL_NO AND REMIT_PAY_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+   <dynamic-mapped-statement name="ViewAllRemittancePaymentTO" result-class="java.util.LinkedHashMap" >
+        <!--SELECT RP.REMIT_PAY_ID,RP.BRANCH_ID,RP.SERIAL_NO, RI.CATEGORY FROM 
+        REMIT_PAYMENT RP, REMIT_ISSUE RI WHERE RP.STATUS != 'DELETED' AND 
+        RP.AUTHORIZE_STATUS IS NULL AND RP.SERIAL_NO = RI.VARIABLE_NO-->
+        SELECT RP.REMIT_PAY_ID, RP.REMIT_PAY_DT, RP.BRANCH_ID,RP.SERIAL_NO, RI.CATEGORY, RP.INSTRUMENT_NO1, RP.INSTRUMENT_NO2, 
+        RP.PAY_AMT FROM REMIT_PAYMENT RP, REMIT_ISSUE RI WHERE RP.STATUS != 'DELETED' AND 
+        RP.AUTHORIZE_STATUS IS NULL AND RP.SERIAL_NO = RI.VARIABLE_NO
+        <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REMIT_PAY_ID">
+                    UPPER(RP.REMIT_PAY_ID) LIKE UPPER('%$REMIT_PAY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REMIT_PAY_DT">
+                    UPPER(RP.REMIT_PAY_DT) LIKE UPPER('%$REMIT_PAY_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_ID">
+                    UPPER(RP.BRANCH_ID) LIKE UPPER('%$BRANCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SERIAL_NO">
+                    UPPER(RP.SERIAL_NO) LIKE UPPER('%$SERIAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY">
+                    UPPER(RI.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_NO1">
+                    UPPER(RP.INSTRUMENT_NO1) LIKE UPPER('%$INSTRUMENT_NO1$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_NO2">
+                    UPPER(RP.INSTRUMENT_NO2) LIKE UPPER('%$INSTRUMENT_NO2$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PAY_AMT">
+                    UPPER(RP.PAY_AMT) LIKE UPPER('%$PAY_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+               
+     <dynamic-mapped-statement name="RemittancePayment.getSelectAccoutHead"  result-class="java.util.LinkedHashMap"> 
+        SELECT  AC_HD_ID AS "ACCOUNT HEAD ID",AC_HD_DESC AS " ACCOUNT HEAD DESC"
+        FROM  AC_HD
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+        <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT HEAD ID">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$ACCOUNT HEAD ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT HEAD DESC">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$ACCOUNT HEAD DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!-- This is used to select the Name of the Person who is issuing the Instrument -->
+    <mapped-statement name="getFavouring" result-class="java.util.LinkedHashMap" >
+        SELECT FAVOURING, AMOUNT FROM REMIT_ISSUE WHERE VARIABLE_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+        <!-- This is used to select the SerialNo of the Instrument which is in the Remit_Payment table -->
+        <!-- 
+            Start of deleteable maps.
+            The below three maps are Not used in Remittance Payment 
+            due to code changes on 21st June 2005  
+            Need to be deleted after verification
+        -->
+    <mapped-statement name="getSerialNo" result-class="java.util.LinkedHashMap" >
+        SELECT SERIAL_NO  FROM REMIT_PAYMENT WHERE 
+        ( STATUS !='DELETED' OR STATUS IS NULL )  
+        AND INSTRUMENT_TYPE = #PROD_ID:VARCHAR# AND SERIAL_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getVariableNo" result-class="java.lang.Integer" >
+        SELECT COUNT(*) FROM REMIT_ISSUE 
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND PROD_ID = #PROD_ID:VARCHAR# AND VARIABLE_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getIssueBankCode" result-class="java.util.LinkedHashMap" >
+        SELECT RP.BANK_CODE  FROM REMIT_ISSUE RI, REMITTANCE_PROD_BRANCH RP WHERE RI.VARIABLE_NO = #VARIABLE_NO:VARCHAR#  AND RI.PROD_ID = RP.PROD_ID
+    </mapped-statement>
+         <!--
+            The above three maps are to be deleted.
+            End of deleteable maps.
+         -->
+         
+         <!-- This is used to Get the BankCode from Bank table to check out whether the bank issuing the instrument
+               has Correspondent or agent -->
+    <mapped-statement name="getBankCode" result-class="java.util.LinkedHashMap" >
+        SELECT BANK_CODE FROM BANK
+    </mapped-statement>
+        
+         <!-- This statemement is used to update the Remittance_Issue Table's Field PAID_STATUS AS PAID DURING AUTHORIZATION -->
+    <mapped-statement name="setAuthorizeStatusPaid" inline-parameters="true" >
+        UPDATE REMIT_ISSUE SET AUTHORIZE_STATUS = 'PAID' WHERE VARIABLE_NO = #VARIABLE_NO# AND ( STATUS !='DELETED' OR STATUS IS NULL )
+    </mapped-statement>
+       
+        <!-- This is used to get the IssueBank and Branccode based on the SerialNumber the user was entering --> 
+    <mapped-statement name="getBankDetails" result-class="java.util.LinkedHashMap" >
+        SELECT RI.BRANCH_ID, BM.BRANCH_NAME FROM REMIT_ISSUE RI, BRANCH_MASTER BM 
+        WHERE RI.BRANCH_ID =BM.BRANCH_CODE AND RI.VARIABLE_NO = #VARIABLE_NO:VARCHAR# AND 
+        BM.STATUS != 'DELETED' AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        RI.STATUS != 'DELETED'
+    </mapped-statement>
+        
+        <!-- This is used to get the Elapsed Period allowed for an Issued Instrument for payment -->
+    <mapped-statement name="getElapsedPeriod" result-class="java.util.LinkedHashMap" >
+        SELECT LAPSE_PERIOD FROM REMIT_ISSUE RI, REMITTANCE_PRODUCT RP WHERE RI.VARIABLE_NO = #VARIABLE_NO:VARCHAR#   AND RI.PROD_ID = RP.PROD_ID AND  RI.STATUS != 'DELETED' AND  RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND RP.STATUS != 'DELETED' AND RP.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+        <!-- This is used to get Instrument_No1, Instrument_No2 from Remit_issue to fill up the PrintedNumber field -->
+    <mapped-statement name="getIssueDetails" result-class="java.util.LinkedHashMap" >
+        SELECT INSTRUMENT_NO1, INSTRUMENT_NO2, BATCH_DT, DUPLICATE_DT FROM REMIT_ISSUE 
+        WHERE VARIABLE_NO = #VARIABLE_NO:VARCHAR# AND STATUS != 'DELETED' AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED'  
+    </mapped-statement>
+        
+    <mapped-statement name="updateRemittanceIssue" inline-parameters="true">
+        UPDATE REMIT_ISSUE SET
+        PAID_STATUS = #REMIT_STATUS:VARCHAR#,
+        REMIT_PAY_DT = #TODAY_DT:DATE#
+        WHERE 
+        VARIABLE_NO = #VARIABLE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getPaymentCancelCharge" result-class="java.lang.String" >
+        SELECT RPC.CHARGE FROM REMITTANCE_PROD_CHARGES RPC, REMIT_ISSUE RI WHERE
+        RI.DRAWEE_BANK = RPC.BANK_CODE AND RI.DRAWEE_BRANCH_CODE = RPC.BRANCH_CODE AND 
+        (#AMOUNT:NUMBER# BETWEEN RPC.AMT_RANGE_FROM AND RPC.AMT_RANGE_TO) AND 
+        RI.PROD_ID = #INSTRUMENTTYPE:VARCHAR# AND RI.INSTRUMENT_NO1 = #INSTRUMENTNO1:VARCHAR# AND 
+        RPC.CHARGE_TYPE='CANCEL' AND
+        RI.INSTRUMENT_NO2 = #INSTRUMENTNO2:VARCHAR# AND RI.VARIABLE_NO = #SERIALNO:VARCHAR#
+    </mapped-statement>
+        
+        <!-- get Account heads for the transaction block..... 
+        <mapped-statement name="getPaymentAccountHeads" result-class="java.util.HashMap" >
+            SELECT PAY_HD, CANCELL_CHRG_HD FROM REMITTANCE_PRODUCT  
+            WHERE PROD_ID = #value# 
+	</mapped-statement> -->
+        
+        <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getRemitPaymentAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT REMIT_PAY_ID,BRANCH_ID,SERIAL_NO FROM REMIT_PAYMENT RP
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND RP.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = RP.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                RP.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (RP.AUTHORIZE_STATUS IS NULL OR 
+                RP.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeRemitPayment" result-class="java.util.HashMap">
+        UPDATE REMIT_PAYMENT  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #TODAY_DT:NUMBER#
+        WHERE REMIT_PAY_ID = #REMIT_PAY_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="rejectRemitPayment" result-class="java.util.HashMap">
+        UPDATE REMIT_PAYMENT  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #TODAY_DT:NUMBER#
+        WHERE REMIT_PAY_ID = #REMIT_PAY_ID:VARCHAR# 
+    </mapped-statement>
+        
+    
+    <dynamic-mapped-statement name="getPayableIssues" result-class="java.util.LinkedHashMap">
+            <!--SELECT BATCH_ID, BATCH_DT, AMOUNT, VARIABLE_NO, INSTRUMENT_NO1, INSTRUMENT_NO2,
+            DRAWEE_BANK, DRAWEE_BRANCH_CODE, FAVOURING
+            FROM REMIT_ISSUE RI 
+            WHERE 
+            RI.PROD_ID = #PROD_ID# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+            RI.PROD_ID IN 
+            (
+                SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+                PAY_ISSUE_BRANCH IN ('ISSU_BRANCH', 'ANY_BRANCH_BANK') AND
+                DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',  DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+                DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',  #BRANCH_CODE#, PAY_ISSUE_BRANCH)
+            )
+            AND VARIABLE_NO NOT IN (SELECT SERIAL_NO FROM REMIT_PAYMENT)
+            AND DRAWEE_BANK = #BANK_CODE#
+            UNION
+            SELECT BATCH_ID, BATCH_DT, AMOUNT, VARIABLE_NO, INSTRUMENT_NO1, INSTRUMENT_NO2,
+            DRAWEE_BANK, DRAWEE_BRANCH_CODE, FAVOURING
+            FROM REMIT_ISSUE RI 
+            WHERE 
+            RI.PROD_ID = #PROD_ID# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+            RI.PROD_ID IN 
+            (
+                SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+                PAY_ISSUE_BRANCH IN ('DESIG_OTHER_BANK_BRAN', 'ANY_BANK_BRANCH') AND
+                DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',  DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+                DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',  #BRANCH_CODE#, PAY_ISSUE_BRANCH)
+            )
+            AND VARIABLE_NO NOT IN (SELECT SERIAL_NO FROM REMIT_PAYMENT)
+            AND DRAWEE_BANK != #BANK_CODE#-->
+           
+            <!--SELECT BATCH_ID, BATCH_DT, AMOUNT, VARIABLE_NO, INSTRUMENT_NO1, INSTRUMENT_NO2,
+            DRAWEE_BANK, DRAWEE_BRANCH_CODE, FAVOURING
+            FROM REMIT_ISSUE RI 
+            WHERE 
+            RI.PROD_ID = #PROD_ID# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+            RI.PROD_ID IN 
+            (
+                SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+                PAY_ISSUE_BRANCH IN ('ISSU_BRANCH', 'ANY_BRANCH_BANK') AND
+                DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',  DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+                DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',  #BRANCH_CODE#, PAY_ISSUE_BRANCH)
+            )
+            AND VARIABLE_NO NOT IN (select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS != 'REJECTED' AND BRANCH_ID = #BRANCH_CODE#
+            UNION select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL AND BRANCH_ID = #BRANCH_CODE#
+            UNION SELECT SERIAL_NO FROM REMIT_PAYMENT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') AND BRANCH_ID = #BRANCH_CODE#
+            AND VARIABLE_NO NOT IN (SELECT START_VARIABLE_NO FROM DD_STOP_PAYMENT-->
+            <!--AND  NOT EXISTS (SELECT SERIAL_NO FROM REMIT_PAYMENT WHERE VARIABLE_NO=SERIAL_NO)              
+            AND  NOT EXISTS (SELECT START_VARIABLE_NO FROM DD_STOP_PAYMENT-->              
+            <!--WHERE (STOP_STATUS = 'STOPPED' 
+            AND  AUTHORIZE_STATUS = 'AUTHORIZED') OR
+            (STOP_STATUS = 'REVOKED' AND AUTHORIZE_STATUS IS NULL) OR
+            (STOP_STATUS = 'REVOKED' AND AUTHORIZE_STATUS = 'REJECTED'))
+            AND DRAWEE_BANK = #BANK_CODE#
+            AND RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL
+            UNION
+            SELECT BATCH_ID, BATCH_DT, AMOUNT, VARIABLE_NO, INSTRUMENT_NO1, INSTRUMENT_NO2,
+            DRAWEE_BANK, DRAWEE_BRANCH_CODE, FAVOURING
+            FROM REMIT_ISSUE RI  
+            WHERE 
+            RI.PROD_ID = #PROD_ID# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+            RI.PROD_ID IN 
+            (
+                SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+                PAY_ISSUE_BRANCH IN ('DESIG_OTHER_BANK_BRAN', 'ANY_BANK_BRANCH') AND
+                DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',  DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+                DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',  #BRANCH_CODE#, PAY_ISSUE_BRANCH)
+            )
+            AND VARIABLE_NO NOT IN (select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS != 'REJECTED' AND BRANCH_ID = #BRANCH_CODE#
+            UNION select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL AND BRANCH_ID = #BRANCH_CODE#
+            UNION SELECT SERIAL_NO FROM REMIT_PAYMENT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED' AND BRANCH_ID = #BRANCH_CODE#)
+            AND VARIABLE_NO NOT IN (SELECT START_VARIABLE_NO FROM DD_STOP_PAYMENT-->
+            <!--AND  NOT EXISTS(SELECT SERIAL_NO FROM REMIT_PAYMENT WHERE VARIABLE_NO=SERIAL_NO)             
+            AND  NOT EXISTS (SELECT START_VARIABLE_NO FROM DD_STOP_PAYMENT-->
+            <!--WHERE (STOP_STATUS = 'STOPPED' 
+            AND  AUTHORIZE_STATUS = 'AUTHORIZED') OR
+            (STOP_STATUS = 'REVOKED' AND AUTHORIZE_STATUS IS NULL) OR
+            (STOP_STATUS = 'REVOKED' AND AUTHORIZE_STATUS = 'REJECTED') OR
+            (STOP_STATUS = 'STOPPED' AND AUTHORIZE_STATUS = 'REJECTED')) 
+            AND DRAWEE_BANK != #BANK_CODE#
+            AND RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL-->
+            
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE,
+        RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID:VARCHAR# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE PAY_ISSUE_BRANCH IN ('ISSU_BRANCH', 'ANY_BRANCH_BANK') 
+        AND DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+        DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH)) 
+        AND (RI.PAID_STATUS IS NULL or ri.paid_status = 'LAPSED') AND
+        VARIABLE_NO NOT IN 
+        (select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND 
+        AUTHORIZE_STATUS != 'REJECTED'  UNION select serial_no FROM remit_payment where status in 
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION SELECT SERIAL_NO FROM 
+        REMIT_PAYMENT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK = #BANK_CODE:VARCHAR# 
+        AND RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.DRAWEE_BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+
+        OR AUTHORIZE_STATUS IS NULL))
+
+
+        UNION 
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, 
+        RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE, RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID:VARCHAR# AND
+        RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+        PAY_ISSUE_BRANCH IN ('DESIG_OTHER_BANK_BRAN', 'ANY_BANK_BRANCH') AND 
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) =
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH) ) 
+        AND (RI.PAID_STATUS IS NULL or ri.paid_status = 'LAPSED') AND
+        VARIABLE_NO NOT IN (select serial_no FROM remit_payment where status in
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS != 'REJECTED' UNION select serial_no FROM 
+        remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION 
+        SELECT SERIAL_NO FROM REMIT_PAYMENT
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK != #BANK_CODE:VARCHAR# AND 
+        RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.DRAWEE_BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+       <dynamic> 
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isPropertyAvailable prepend = "AND" property="INSTRUMENT_NO2">
+                UPPER(INSTRUMENT_NO2) LIKE UPPER('%$INSTRUMENT_NO2$%')
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend = "AND" property="INSTRUMENT_NO1">
+                    UPPER(INSTRUMENT_NO1) LIKE UPPER('%$INSTRUMENT_NO1$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(INSTRUMENT_NO2) LIKE UPPER('%$INSTRUMENT_NO2$%')
+                </isNotNull>
+            </isParameterPresent>
+                      
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="DRAWEE_BANK">
+                    UPPER(DRAWEE_BANK) LIKE UPPER('%$DRAWEE_BANK$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="DRAWEE_BRANCH_CODE">
+                    UPPER(DRAWEE_BRANCH_CODE) LIKE UPPER('%$DRAWEE_BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>                                 
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_ID">
+                    UPPER(BRANCH_ID) LIKE UPPER('%$BRANCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>                        
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="FAVOURING">
+                    UPPER(FAVOURING) LIKE UPPER('%$FAVOURING$%')
+                </isNotNull>
+            </isParameterPresent>            
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY">
+                    UPPER(CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CITY">
+                    UPPER(CITY) LIKE UPPER('%$CITY$%')
+                </isNotNull>
+            </isParameterPresent>                                                
+            <isParameterPresent>
+                <isNotNull prepend="AND"    property="VARIABLE_NO">
+                    UPPER(VARIABLE_NO) LIKE UPPER('%$VARIABLE_NO$%')
+                </isNotNull>
+            </isParameterPresent>    
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="BATCH_ID">
+                    UPPER(BATCH_ID) LIKE UPPER('%$BATCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>           
+        </dynamic>
+       </dynamic-mapped-statement>
+        
+    <mapped-statement name="getPayableIssuesValid" result-class="java.util.LinkedHashMap">
+            
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE,
+        RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID:VARCHAR# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE PAY_ISSUE_BRANCH IN ('ISSU_BRANCH', 'ANY_BRANCH_BANK') 
+        AND DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+        DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH)) 
+        AND (RI.PAID_STATUS IS NULL or ri.paid_status = 'LAPSED') AND
+        VARIABLE_NO NOT IN 
+        (select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND 
+        AUTHORIZE_STATUS != 'REJECTED'  UNION select serial_no FROM remit_payment where status in 
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION SELECT SERIAL_NO FROM 
+        REMIT_PAYMENT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK = #BANK_CODE:VARCHAR# 
+        AND RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.DRAWEE_BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND RI.INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR# AND INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+        UNION 
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, 
+        RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE, RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID# AND
+        RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+        PAY_ISSUE_BRANCH IN ('DESIG_OTHER_BANK_BRAN', 'ANY_BANK_BRANCH') AND 
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) =
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH) ) 
+        AND (RI.PAID_STATUS IS NULL or ri.paid_status = 'LAPSED') AND
+        VARIABLE_NO NOT IN (select serial_no FROM remit_payment where status in
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS != 'REJECTED' UNION select serial_no FROM 
+        remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION 
+        SELECT SERIAL_NO FROM REMIT_PAYMENT
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK != #BANK_CODE:VARCHAR# AND 
+        RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.DRAWEE_BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND RI.INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR# AND INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+            
+            
+    </mapped-statement>
+        
+    <mapped-statement name="getCancelIssues" result-class="java.util.LinkedHashMap">
+          
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE,
+        RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID:VARCHAR# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE PAY_ISSUE_BRANCH IN ('ISSU_BRANCH', 'ANY_BRANCH_BANK') 
+        AND DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+        DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH)) 
+        AND RI.PAID_STATUS IS NULL AND
+        VARIABLE_NO NOT IN 
+        (select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND 
+        AUTHORIZE_STATUS != 'REJECTED' UNION select serial_no FROM remit_payment where status in 
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION SELECT SERIAL_NO FROM 
+        REMIT_PAYMENT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK = #BANK_CODE:VARCHAR# 
+        AND RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+        UNION 
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, 
+        RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE, RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID# AND
+        RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+        PAY_ISSUE_BRANCH IN ('DESIG_OTHER_BANK_BRAN', 'ANY_BANK_BRANCH') AND 
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) =
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH) ) 
+        AND RI.PAID_STATUS IS NULL AND
+        VARIABLE_NO NOT IN (select serial_no FROM remit_payment where status in
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS != 'REJECTED' UNION select serial_no FROM 
+        remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION 
+        SELECT SERIAL_NO FROM REMIT_PAYMENT
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK != #BANK_CODE# AND 
+        RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+            
+    </mapped-statement>
+        
+    <mapped-statement name="getCancelIssuesValid" result-class="java.util.LinkedHashMap">
+          
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE,
+        RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID:VARCHAR# AND RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE PAY_ISSUE_BRANCH IN ('ISSU_BRANCH', 'ANY_BRANCH_BANK') 
+        AND DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) = 
+        DECODE(PAY_ISSUE_BRANCH, 'ISSU_BRANCH',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH)) 
+        AND RI.PAID_STATUS IS NULL AND
+        VARIABLE_NO NOT IN 
+        (select serial_no FROM remit_payment where status in ('CREATED', 'MODIFIED') AND 
+        AUTHORIZE_STATUS != 'REJECTED' UNION select serial_no FROM remit_payment where status in 
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION SELECT SERIAL_NO FROM 
+        REMIT_PAYMENT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK = #BANK_CODE:VARCHAR# 
+        AND RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND RI.INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR# AND INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+        UNION 
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, 
+        RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE, RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID, RI.REMARKS FROM REMIT_ISSUE RI WHERE RI.PROD_ID = #PROD_ID# AND
+        RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND RI.PROD_ID IN( SELECT PROD_ID FROM REMITTANCE_PRODUCT WHERE 
+        PAY_ISSUE_BRANCH IN ('DESIG_OTHER_BANK_BRAN', 'ANY_BANK_BRANCH') AND 
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',DRAWEE_BRANCH_CODE, PAY_ISSUE_BRANCH) =
+        DECODE(PAY_ISSUE_BRANCH, 'DESIG_OTHER_BANK_BRAN',#BRANCH_CODE:VARCHAR#, PAY_ISSUE_BRANCH) ) 
+        AND RI.PAID_STATUS IS NULL AND
+        VARIABLE_NO NOT IN (select serial_no FROM remit_payment where status in
+        ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS != 'REJECTED' UNION select serial_no FROM 
+        remit_payment where status in ('CREATED', 'MODIFIED') AND AUTHORIZE_STATUS IS NULL UNION 
+        SELECT SERIAL_NO FROM REMIT_PAYMENT
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED') 
+        AND NOT EXISTS (SELECT START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'STOPPED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND DSP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) 
+        AND NOT EXISTS (SELECT DSP.START_DD_NO1,DSP.START_DD_NO2 FROM DD_STOP_PAYMENT DSP WHERE
+        DSP.STATUS !=  'DELETED' AND DSP.STOP_STATUS = 'REVOKED' AND
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1) AND (RI.INSTRUMENT_NO2 = DSP.START_DD_NO2 )) OR 
+        (((RI.INSTRUMENT_NO1 = DSP.START_DD_NO1 AND RI.INSTRUMENT_NO1 = DSP.END_DD_NO1)) AND 
+        (RI.INSTRUMENT_NO2 BETWEEN DSP.START_DD_NO2  AND DSP.END_DD_NO2)))  AND (DSP.AUTHORIZE_STATUS IS NULL
+        OR DSP.AUTHORIZE_STATUS = 'REJECTED') and DSP.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND DRAWEE_BANK != #BANK_CODE:VARCHAR# AND 
+        RI.INSTRUMENT_NO1 IS NOT NULL AND RI.INSTRUMENT_NO2 IS NOT NULL AND RI.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND RI.INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR# AND INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR#
+        AND VARIABLE_NO NOT IN (SELECT  ACCT_NO FROM INWARD_CLEARING WHERE status in ('CREATED', 'MODIFIED') AND (AUTHORIZE_STATUS != 'REJECTED'
+        OR AUTHORIZE_STATUS IS NULL))
+    </mapped-statement>
+        
+    <mapped-statement name="getVariableNum" result-class="java.util.HashMap" >
+        SELECT * FROM REMIT_ISSUE 
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND VARIABLE_NO = #VARIABLE_NO:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getLapsePrd" result-class="java.util.HashMap" >
+        SELECT LAPSE_PERIOD from REMITTANCE_PRODUCT
+        where PROD_ID = #PROD_ID:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND STATUS != 'DELETED' AND LAPSE_APPL IN ('Y','y')
+    </mapped-statement>
+        
+   <dynamic-mapped-statement name="getRevalidateList" result-class="java.util.HashMap" >
+        SELECT RI.BATCH_ID, RI.BATCH_DT, RI.AMOUNT, RI.VARIABLE_NO, RI.INSTRUMENT_NO1, RI.INSTRUMENT_NO2, 
+        RI.DRAWEE_BANK, RI.DRAWEE_BRANCH_CODE, RI.FAVOURING, RI.CITY, RI.CATEGORY, RI.AUTHORIZE_STATUS, RI.PROD_ID 
+        FROM REMIT_ISSUE RI,REMITTANCE_PRODUCT RP WHERE (RI.PAID_STATUS IS NULL or RI.PAID_STATUS IN ('LAPSED')) AND RI.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND RI.STATUS != 'DELETED' AND RI.PROD_ID = #PROD_ID:VARCHAR# AND RI.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND RP.PROD_ID = #PROD_ID:VARCHAR# AND RP.STATUS != 'DELETED' AND RP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND (TO_DATE(#CUR_DT#) - TO_DATE(RI.BATCH_DT)) > RP.LAPSE_PERIOD
+          <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BATCH_ID">
+                    UPPER(RI.BATCH_ID) LIKE UPPER('%$BATCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BATCH_DT">
+                    UPPER(RI.BATCH_DT) LIKE UPPER('%$BATCH_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(RI.AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="VARIABLE_NO">
+                    UPPER(RI.VARIABLE_NO) LIKE UPPER('%$VARIABLE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_NO1">
+                    UPPER(RI.INSTRUMENT_NO1) LIKE UPPER('%$INSTRUMENT_NO1$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="DRAWEE_BANK">
+                    UPPER(RI.DRAWEE_BANK) LIKE UPPER('%$DRAWEE_BANK$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DRAWEE_BRANCH_CODE">
+                    UPPER(RI.DRAWEE_BRANCH_CODE) LIKE UPPER('%$DRAWEE_BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FAVOURING">
+                    UPPER(RI.FAVOURING) LIKE UPPER('%$FAVOURING$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="CITY">
+                    UPPER(RI.CITY) LIKE UPPER('%$CITY$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY">
+                    UPPER(RI.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(RI.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="checkStopPayment" result-class="java.util.HashMap" >
+                <!--SELECT STOP_PAYMENT_ID,STOP_STATUS,AUTHORIZE_STATUS FROM DD_STOP_PAYMENT
+                WHERE ((START_VARIABLE_NO = #VARIABLE_NO#) OR (END_VARIABLE_NO = #VARIABLE_NO#)
+                OR (#VARIABLE_NO# BETWEEN START_VARIABLE_NO AND END_VARIABLE_NO)) 
+                AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')
+                AND (STOP_STATUS = 'STOPPED' OR (STOP_STATUS = 'REVOKED' AND AUTHORIZE_STATUS IS NULL ))-->
+        SELECT STOP_PAYMENT_ID,STOP_STATUS,AUTHORIZE_STATUS FROM DD_STOP_PAYMENT
+        WHERE ((START_VARIABLE_NO = #VARIABLE_NO:VARCHAR#) OR (END_VARIABLE_NO = #VARIABLE_NO:VARCHAR#)
+        OR (#VARIABLE_NO:VARCHAR# BETWEEN START_VARIABLE_NO AND END_VARIABLE_NO)) 
+        AND ((STOP_STATUS = 'STOPPED' AND AUTHORIZE_STATUS != 'REJECTED' ) or (STOP_STATUS = 'REVOKED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'REJECTED'))) 
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+        
+    <dynamic-mapped-statement name="getPaidIssues" result-class="java.util.LinkedHashMap">
+        SELECT REMIT_PAY_ID, SERIAL_NO, INSTRUMENT_NO1, INSTRUMENT_NO2, REMIT_PAY_DT,PAY_AMT FROM REMIT_PAYMENT WHERE AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND STATUS != 'DELETED' AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND INSTRUMENT_TYPE = #INSTRU_TYPE:VARCHAR#             
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAY_STATUS">
+                    PAY_STATUS = #PAY_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>             
+        </dynamic> 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAYMENT_DT">
+                    REMIT_PAY_DT = #PAYMENT_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>  
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="REMIT_PAY_ID">
+                    UPPER(REMIT_PAY_ID) LIKE UPPER('%$REMIT_PAY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="SERIAL_NO">
+                    UPPER(SERIAL_NO) LIKE UPPER('%$SERIAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_NO1">
+                    UPPER(INSTRUMENT_NO1) LIKE UPPER('%$INSTRUMENT_NO1$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INSTRUMENT_NO2">
+                    UPPER(INSTRUMENT_NO2) LIKE UPPER('%$INSTRUMENT_NO2$%')
+                </isNotNull>
+            </isParameterPresent>
+            <!-- <isParameterPresent>
+                <isNotNull prepend="AND"      property="REMIT_PAY_DT">
+                    UPPER(REMIT_PAY_DT) LIKE UPPER('%$REMIT_PAY_DT$%')
+                </isNotNull>
+            </isParameterPresent>-->
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="PAY_AMT">
+                    UPPER(PAY_AMT) LIKE UPPER('%$PAY_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>	
+        
+<!-- =================================================================================== -->
+        
+</sql-map>

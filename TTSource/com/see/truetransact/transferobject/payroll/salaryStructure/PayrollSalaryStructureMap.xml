@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="PayrollSalaryStructureMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <mapped-statement name="getSalStructScaleId" result-class="java.util.LinkedHashMap">
+        SELECT SCALE_ID FROM SCALE_MASTER WHERE upper(DESIGNATION)=upper(#DESG:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getSalStructVersionNo" result-class="java.util.LinkedHashMap">
+        SELECT nvl(MAX(VERSION_NO),0)+1 AS VERSION_NO FROM SCALE_MASTER where upper(DESIGNATION)=upper(#DESG:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="insertScaleMasterTO" inline-parameters="true">
+        INSERT INTO SCALE_MASTER (SCALE_ID, VERSION_NO, DESIGNATION, EFF_DATE, SCALE_START_AMOUNT, 
+        SCALE_END_AMOUNT, STAGNATION_REQUIRED, STAGNATION_PERIOD, STAGNATION_AMOUNT, STAGNATION_COUNT,
+        STATUS_BY, STATUS, CREATED_BY, CREATED_DATE, TO_DATE, STATUS_DATE)
+        VALUES(#scaleId:NUMBER#, #versionNo:NUMBER#, #designation:VARCHAR#, #fromDate:DATE#, #startingAmount:NUMBER#, 
+        #endingAmount:NUMBER#, #stagReqd:VARCHAR#, #stagPeriod:VARCHAR#, #stagAmount:NUMBER#, #stagCount:NUMBER#, 
+        #statusBy:VARCHAR#, #status:VARCHAR#, #createdBy:VARCHAR#, #createdDate:DATE#, #toDate:DATE#, #statusDate:DATE# )
+    </mapped-statement>
+
+    <mapped-statement name="insertScaleDetailsTO" inline-parameters="true">
+        INSERT INTO SCALE_DETAILS (SCALE_ID, VERSION_NO, SRL_NO, INCREAMENT_AMOUNT, INCREAMENT_COUNT, COUNT_FREQUENCY) 
+        VALUES(#scale_id:NUMBER#, #version_no:NUMBER#, #srl_no:NUMBER#, 
+        #incr_amount:NUMBER#, #incr_count:NUMBER#, #count_freq:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="checkScaleId" result-class="java.util.LinkedHashMap">
+        SELECT SCALE_ID, VERSION_NO FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER# AND VERSION_NO = #VERSION:NUMBER#
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getScaleDetails" result-class="java.util.LinkedHashMap">
+        SELECT SCALE_ID, VERSION_NO, DESIGNATION, SCALE_START_AMOUNT, SCALE_END_AMOUNT FROM SCALE_MASTER
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCALE_ID">
+                    UPPER(SCALE_ID) LIKE UPPER('%$SCALE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="VERSION_NO">
+                    UPPER(VERSION_NO) LIKE UPPER('%$VERSION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DESIGNATION">
+                    UPPER(DESIGNATION) LIKE UPPER('%$DESIGNATION$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCALE_START_AMOUNT">
+                    UPPER(SCALE_START_AMOUNT) LIKE UPPER('%$SCALE_START_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCALE_END_AMOUNT">
+                    UPPER(SCALE_END_AMOUNT) LIKE UPPER('%$SCALE_END_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SCALE_ID, VERSION_NO
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="deleteScaleMasterTO" result-class="java.util.LinkedHashMap">
+        DELETE FROM SCALE_MASTER WHERE SCALE_ID = #scaleId:NUMBER# AND VERSION_NO = #versionNo:NUMBER#
+    </mapped-statement>
+
+    <mapped-statement name="deleteScaleDetailsTO" result-class="java.util.LinkedHashMap">
+        DELETE FROM SCALE_DETAILS WHERE SCALE_ID = #scale_id:NUMBER# AND VERSION_NO = #version_no:NUMBER#
+    </mapped-statement>
+
+    <mapped-statement name="getAllScaleDetails" result-class="java.util.LinkedHashMap">
+        SELECT SM.SCALE_ID, SM.VERSION_NO, SM.SCALE_START_AMOUNT, SD.INCREAMENT_AMOUNT, 
+        SD.INCREAMENT_COUNT, SD.COUNT_FREQUENCY, SM.SCALE_END_AMOUNT, SM.DESIGNATION, SM.EFF_DATE, SM.TO_DATE, 
+        SM.STAGNATION_AMOUNT, SM.STAGNATION_COUNT,
+        SM.STAGNATION_PERIOD, SM.STAGNATION_REQUIRED 
+        FROM SCALE_MASTER SM , SCALE_DETAILS SD 
+        WHERE SM.SCALE_ID=SD.SCALE_ID AND SM.VERSION_NO=SD.VERSION_NO 
+        AND SM.SCALE_ID = #SCALE:NUMBER# AND SM.VERSION_NO = #VERSION:NUMBER#
+    </mapped-statement>
+
+</sql-map>

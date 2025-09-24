@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanRecoveryListGenerationMap">
+           
+    <dynamic-mapped-statement name="checkingSameDateLoanRecord" result-class="java.util.HashMap">
+        SELECT * FROM SALARY_RECOVERY_LIST_MASTER WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="EXPORT_LIST">
+                    EXPORT_LIST='Y'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INST_ID">
+                    INSTITUTION_ID=#INST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+ 
+
+    <mapped-statement name="updateLoanVoucherReleaseDetails" inline-parameters="true">
+        UPDATE salary_recovery_list_detail 
+        SET voucher_release_date = #VOUCHER_RELEASE_DATE:DATE#,VOUCHER_RELEASE_BATCH_ID=#VOUCHER_RELEASE_BATCH_ID:VARCHAR#,
+        PROCESS_STATUS='COMPLETED',RECOVERED_AMOUNT=#RECOVERED_AMOUNT:NUMBER#
+        WHERE act_num = #ACT_NUM:VARCHAR# AND int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getInstitutionList" result-class="java.util.LinkedHashMap" >
+        select INST_ID,INST_NAME,INST_BRANCH_NAME,ADRESS,ADDRESS1,ADDRESS2,PINCODE,STATUS_BY,STATUS_DT,CREATED_BY,CREATE_DT,STATUS 
+        FROM INSTITUTION_MASTER WHERE STATUS NOT IN ('DELETED')
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="INST_NAME">
+                    UPPER(INST_NAME) LIKE UPPER('%$INST_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="INST_BRANCH_NAME">
+                    UPPER(INST_BRANCH_NAME) LIKE UPPER('%$INST_BRANCH_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ADRESS">
+                    UPPER(ADRESS) LIKE UPPER('%$ADRESS$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ADDRESS1">
+                    UPPER(ADDRESS1) LIKE UPPER('%$ADDRESS1$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ADDRESS2">
+                    UPPER(ADDRESS1) LIKE UPPER('%$ADDRESS1$%')
+                </isNotNull>
+            </isParameterPresent>        
+        </dynamic>
+        order by INST_ID
+    </dynamic-mapped-statement>
+    <!-- LC  -->
+    <mapped-statement name="insertOtherSalaryRecoveryListDetailTO" inline-parameters="true">
+        INSERT INTO SALARY_RECOVERY_LIST_DETAIL
+        (INT_CALC_UPTO_DT, EMP_REF_NO, MEMBER_NAME, SCHEME_NAME, ACT_NUM, TOTAL_DEMAND, PRINCIPAL, INTEREST, 
+        PENAL, CHARGES, PROD_ID, PROD_TYPE, STATUS,PARTICULARS,RECOVERY_ID,MDS_BONUS,INST_NO,FORFEIT_BONUS
+        ) VALUES (
+        #intCalcUptoDt:DATE#, #empRefNo:VARCHAR#, #memberName:VARCHAR#, #schemeName:VARCHAR#, #actNum:VARCHAR#, #totalDemand:NUMERIC#, 
+        #principal:NUMERIC#, #interest:NUMERIC#, #penal:NUMERIC#, #charges:NUMERIC#, #prod_ID:VARCHAR#, #prod_Type:VARCHAR#, #status:VARCHAR#
+        ,#particulars:VARCHAR#,#recoveryId:VARCHAR#,#mdsBonus:NUMERIC#,#instNo:VARCHAR#,#forfeitBonus:NUMERIC#)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSalaryRecoveryDetail" result-class="java.util.LinkedHashMap" > 
+        SELECT S.RECOVERY_ID,S.INT_CALC_UPTO_DT,S.ACT_NUM,S.TOTAL_DEMAND,M.INSTITUTION_ID
+        FROM SALARY_RECOVERY_LIST_MASTER M JOIN SALARY_RECOVERY_LIST_DETAIL S ON M.RECOVERY_ID=S.RECOVERY_ID
+        WHERE S.STATUS NOT IN ('DELETED') AND M.STATUS ='PROCESSED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="RECOVERY_ID">
+                    UPPER(S.RECOVERY_ID) LIKE UPPER('%$RECOVERY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(S.ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent> 
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="INSTITUTION_ID">
+                    UPPER(M.INSTITUTION_ID) LIKE UPPER('%$INSTITUTION_ID$%')
+                </isNotNull>
+            </isParameterPresent> 
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_TYPE">
+                    S.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        order by S.RECOVERY_ID
+    </dynamic-mapped-statement>
+    
+    <!-- <mapped-statement name="getSalaryRecoveryDetailsProcessingEdit" result-class="java.util.LinkedHashMap">
+        SELECT L.RECOVERY_ID,L.PROD_ID,L.PROD_TYPE,L.ACT_NUM,L.MEMBER_NAME,L.SCHEME_NAME,L.TOTAL_DEMAND,L.PRINCIPAL,L.INTEREST,L.PENAL,L.CHARGES,L.TOTAL_DEMAND AS RECOVERED_AMOUNT
+        ,C.DIVISION FROM  SALARY_RECOVERY_LIST_DETAIL L JOIN CUSTOMER C ON L.EMP_REF_NO=C.CUST_ID WHERE RECOVERY_ID = #RECOVERY_ID:VARCHAR#
+        AND  L.PROCESS_STATUS IS NULL
+    </mapped-statement>  --> 
+    
+    
+    <dynamic-mapped-statement name="getSalaryRecoveryDetailsProcessingEdit" result-class="java.util.LinkedHashMap">
+     SELECT L.RECOVERY_ID,L.PROD_ID,L.PROD_TYPE,L.ACT_NUM,L.MEMBER_NAME,L.SCHEME_NAME,L.TOTAL_DEMAND,
+     L.PRINCIPAL,L.INTEREST,L.PENAL,L.CHARGES,L.TOTAL_DEMAND AS RECOVERED_AMOUNT,
+      C.DIVISION,LC.TOTAL_RECOVERY_AMT,LC.CUST_ID
+       FROM SALARY_RECOVERY_LIST_DETAIL  L
+       JOIN SALARY_RECOVERY_LIST_CUST_DATA LC ON LC.RECOVERY_ID = L.RECOVERY_ID 
+       JOIN CUSTOMER C ON L.EMP_REF_NO = C.CUST_ID AND LC.CUST_ID = C.CUST_ID  
+       WHERE L.RECOVERY_ID = #RECOVERY_ID:VARCHAR#     
+       AND LC.RECOVERY_ID = #RECOVERY_ID:VARCHAR#   
+       <dynamic>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_TYPE">
+                    L.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        AND  L.PROCESS_STATUS IS NULL
+        AND GET_ACCT_CURRENT_STATUS(L.ACT_NUM,L.PROD_TYPE) != 'CLOSED'
+    </dynamic-mapped-statement> 
+    
+    
+    
+   <dynamic-mapped-statement name="getMDSSalaryRecoveryDetailsProcessingEdit" result-class="java.util.LinkedHashMap">
+       SELECT L.RECOVERY_ID,
+       L.PROD_ID,
+       L.PROD_TYPE,
+       L.ACT_NUM,
+       L.MEMBER_NAME,
+       L.SCHEME_NAME,
+       L.INST_NO,
+       L.TOTAL_DEMAND,
+       L.PRINCIPAL,
+       L.INTEREST,
+       L.PENAL,
+       L.CHARGES,
+       L.MDS_BONUS,
+       l.FORFEIT_BONUS,
+       L.TOTAL_DEMAND   AS RECOVERED_AMOUNT,
+       C.DIVISION,LC.TOTAL_RECOVERY_AMT,LC.CUST_ID
+       FROM SALARY_RECOVERY_LIST_DETAIL  L
+       JOIN SALARY_RECOVERY_LIST_CUST_DATA LC ON LC.RECOVERY_ID = L.RECOVERY_ID 
+       JOIN CUSTOMER C ON L.EMP_REF_NO = C.CUST_ID AND LC.CUST_ID = C.CUST_ID  
+       WHERE L.RECOVERY_ID = #RECOVERY_ID:VARCHAR#  
+       AND LC.RECOVERY_ID = #RECOVERY_ID:VARCHAR#     
+       <dynamic>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_TYPE">
+                    L.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        AND  L.PROCESS_STATUS IS NULL
+        ORDER BY L.ACT_NUM,L.INST_NO
+    </dynamic-mapped-statement> 
+    
+    
+    
+    <mapped-statement name="deleteLoanRecoveryDetailsData" result-class="java.util.HashMap" >
+        DELETE FROM SALARY_RECOVERY_LIST_DETAIL WHERE RECOVERY_ID=#RECOVERY_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getDueDetailsForLoanRecoveryList" result-class = "java.util.LinkedHashMap">
+        <!-- Select * from table(Load_getDueForRecoveryList(#INTEREST_UP_TO_DT:DATE#,#INST_ID:VARCHAR#)) -->        
+        SELECT * 
+        FROM Load_getDueForRecoveryList(#INTEREST_UP_TO_DT:DATE#,#INST_ID:VARCHAR#)        
+    </mapped-statement>
+    
+    <mapped-statement name="insertLoanRecoveryListGeneration" inline-parameters="true">
+        INSERT INTO SALARY_RECOVERY_LIST_MASTER
+        (INT_CALC_UPTO_DT, CREATED_BY, CREATED_DT,RECOVERY_ID,STATUS,INSTITUTION_ID) VALUES (
+        #intCalcUptoDt:DATE#, #createdBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL),#recoveryId:VARCHAR#,#status:VARCHAR#,#instId:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateLoanRecoveryListGeneration" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_MASTER SET
+        CREATED_BY = #createdBy:VARCHAR#,CREATED_DT = (SELECT SYS_DATE() FROM DUAL),
+        RECOVERY_ID=#recoveryId:VARCHAR#
+        WHERE INT_CALC_UPTO_DT = #intCalcUptoDt:DATE# AND INSTITUTION_ID =#instId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectLoanRecoveryListGenerationProcessed" result-class="java.util.HashMap">
+        SELECT * FROM SALARY_RECOVERY_LIST_MASTER WHERE INT_CALC_UPTO_DT = #CALC_INT_UPTO_DT:DATE# AND INSTITUTION_ID=#INST_ID:varchar#
+    </mapped-statement> 
+    <mapped-statement name="getLoanRecoveryListGenerationProcessed" result-class="java.util.HashMap">
+        SELECT * FROM SALARY_RECOVERY_LIST_DETAIL WHERE RECOVERY_ID=#RECOVERY_ID:varchar# AND PROCESS_STATUS IS NULL
+    </mapped-statement> 
+    
+    <mapped-statement name="updateLoanRecoveryListGenerationMaster" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_MASTER SET STATUS='COMPLETED'
+        WHERE  RECOVERY_ID =#RECOVERY_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertLoanSalaryRecoveryListCustDataTO" inline-parameters="true">
+        INSERT INTO SALARY_RECOVERY_LIST_CUST_DATA
+        (INT_CALC_UPTO_DT, CUST_ID,CREATED_BY, CREATED_DT,RECOVERY_ID,STATUS,INSTITUTION_ID) VALUES (
+        #intCalcUptoDt:DATE#,#custId:VARCHAR#, #createdBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL),#recoveryId:VARCHAR#,#status:VARCHAR#,#instId:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getChittalRecoveryDetails" result-class="java.util.HashMap">
+        select ma.division_no,ma.chit_start_dt,ma.chit_end_dt,ma.inst_amt,ma.sub_no,ma.member_name, 
+        GET_MDS_INSTPAID(ma.chittal_no,#CURRDT:DATE#) as inst_paid,
+        GET_MDS_NARRATION(ma.scheme_name, 1, GET_MDS_INSTPAID(ma.chittal_no,#CURRDT:DATE#), ma.division_no) as narration
+        from MDS_APPLICATION ma
+        where chittal_no = #CHITTAL_NO:varchar# 
+    </mapped-statement>    
+    
+     <mapped-statement name="updateMDSVoucherReleaseDetails" inline-parameters="true">
+        UPDATE salary_recovery_list_detail 
+        SET voucher_release_date = #VOUCHER_RELEASE_DATE:DATE#,VOUCHER_RELEASE_BATCH_ID=#VOUCHER_RELEASE_BATCH_ID:VARCHAR#,
+        PROCESS_STATUS='COMPLETED',RECOVERED_AMOUNT=#RECOVERED_AMOUNT:NUMBER#
+        WHERE act_num = #ACT_NUM:VARCHAR# AND int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE# AND INST_NO = #INST_NO:NUMERIC#
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerTotalRecoveryAmount" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_CUST_DATA  set TOTAL_RECOVERY_AMT = #BALANCE_RECOVERED_AMOUNT:NUMBER#
+        where recovery_id = #RECOVERY_ID:VARCHAR# and INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE# and 
+        CUST_ID = (SELECT DISTINCT SL.EMP_REF_NO FROM SALARY_RECOVERY_LIST_DETAIL SL WHERE 
+        sl.recovery_id = #RECOVERY_ID:VARCHAR#  and sl.INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE# and sl.ACT_NUM = #ACT_NUM:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getCustomerRecoveryBalance" result-class="java.util.HashMap">
+        SELECT SC.TOTAL_RECOVERY_AMT as TOTAL_RECOVERY_AMT
+        FROM SALARY_RECOVERY_LIST_CUST_DATA SC
+        WHERE     SC.RECOVERY_ID = #RECOVERY_ID:VARCHAR#
+        AND SC.CUST_id = #CUST_ID:VARCHAR#
+        AND sc.INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getRDRecoveryDueDetails" result-class="java.util.HashMap">
+        select DEPOSIT_NO_SUB,SL_NO,ceil(MONTHS_BETWEEN(trunc((cast(#ASON:DATE# as DATE))),due_date + #GRACE_PERIOD:NUMERIC#)) AS DELAYED_MONTHS,DUE_DATE
+        from DEPOSIT_RECURRING where DEPOSIT_NO_SUB = #DEPOSIT_NO:VARCHAR#||'_1' and trans_dt is null and due_date &lt;= trunc((cast(#ASON:DATE# as DATE)))+ GET_RD_REC_GRACE_DAYS('')
+        order by sl_no
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getRDSalaryRecoveryDetailsProcessingEdit" result-class="java.util.LinkedHashMap">
+       SELECT L.RECOVERY_ID,
+       L.PROD_ID,
+       L.PROD_TYPE,
+       L.ACT_NUM,
+       L.MEMBER_NAME,
+       L.INST_NO,
+       L.TOTAL_DEMAND,
+       L.PRINCIPAL,
+       L.INTEREST,
+       L.PENAL,
+       L.CHARGES,
+       L.TOTAL_DEMAND   AS RECOVERED_AMOUNT,
+       C.DIVISION,LC.TOTAL_RECOVERY_AMT,LC.CUST_ID
+       FROM SALARY_RECOVERY_LIST_DETAIL  L
+       JOIN SALARY_RECOVERY_LIST_CUST_DATA LC ON LC.RECOVERY_ID = L.RECOVERY_ID 
+       JOIN CUSTOMER C ON L.EMP_REF_NO = C.CUST_ID AND LC.CUST_ID = C.CUST_ID  
+       WHERE L.RECOVERY_ID = #RECOVERY_ID:VARCHAR#  
+       AND LC.RECOVERY_ID = #RECOVERY_ID:VARCHAR#     
+       <dynamic>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_TYPE">
+                    L.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        AND  L.PROCESS_STATUS IS NULL
+        AND GET_ACCT_CURRENT_STATUS(L.ACT_NUM,L.PROD_TYPE) != 'CLOSED'
+        AND get_deposit_beyond_maturity (L.ACT_NUM) = 'Y'
+        ORDER BY L.ACT_NUM,L.INST_NO
+    </dynamic-mapped-statement> 
+    
+    <dynamic-mapped-statement name="getAllRecoveryProcessedData" result-class="java.util.LinkedHashMap">
+        SELECT sc.cust_id                   AS "CUSTOMER ID",
+        GET_CUST_MEMBER_NO (sc.cust_id)     AS "MEMBER NO",
+        GET_CUST_NAME (sc.cust_id)          AS "NAME",
+        sc.TOTAL_RECOVERY_AMT               AS "RECOVERY AMOUNT"
+        FROM SALARY_RECOVERY_LIST_CUST_DATA sc
+        WHERE sc.RECOVERY_ID = #RECOVERY_ID:VARCHAR# 
+        AND sc.STATUS = 'PROCESSED'
+    </dynamic-mapped-statement>    
+    
+    <mapped-statement name="updateAllCustomerTotalRecoveryAmount" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_CUST_DATA  SET 
+        TOTAL_RECOVERY_AMT = #RECOVERY_AMOUNT:NUMBER#, 
+        INITIAL_RECOVERY_AMT = #RECOVERY_AMOUNT:NUMBER# 
+        WHERE RECOVERY_ID = #RECOVERY_ID:VARCHAR# 
+        AND INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+        AND CUST_ID = #CUST_ID:VARCHAR# 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getProcessedPostAmtDetails" result-class="java.util.LinkedHashMap">  
+        SELECT SUM (NVL (lc.INITIAL_RECOVERY_AMT, 0))
+        AS TOTAL_INSTITUTION_REC_AMT,
+        SUM (NVL (lc.TOTAL_RECOVERY_AMT, 0))
+        AS POSTED_AMT
+        FROM SALARY_RECOVERY_LIST_CUST_DATA lc
+        WHERE     lc.recovery_id = #RECOVERY_ID:VARCHAR# 
+        AND lc.INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE# 
+        AND lc.status = 'PROCESSED'   
+    </dynamic-mapped-statement>   
+    
+     <mapped-statement name="getLoanRecoveryCurrentStatus" result-class="java.util.LinkedHashMap">  
+        SELECT * FROM GET_LOAN_STATUS_DETAILS(#ACT_NUM:VARCHAR#,#ASON:DATE#)
+    </mapped-statement>
+    
+</sql-map>

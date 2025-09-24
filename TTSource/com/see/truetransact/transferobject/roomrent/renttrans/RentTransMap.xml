@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RentTransMap">
+
+    <dynamic-mapped-statement name="RentTrans.getSelectRentTransList" result-class="java.util.LinkedHashMap" >
+        SELECT RTID,BUILDING_NO,ROOM_NO FROM RENT_TRANS 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) and (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS!='REJECTED')
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "IRID" >
+                    UPPER(IRID) LIKE UPPER('%$IRID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BUILDING_NO" >
+                    UPPER(BUILDING_NO) LIKE UPPER('%$BUILDING_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "ROOM_NO" >
+                    UPPER(ROOM_NO) LIKE UPPER('%$ROOM_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getRentDate" result-class="java.util.HashMap">
+        select RENT_DATE,ACCOUNT_STATUS,CLOSES_DATE from rent_register where BUILDING_NO=#BUILDING_NO:VARCHAR# and ROOM_NO=#ROOM_NO:VARCHAR#
+        AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL) AND RRID=#RRID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getRentPrevDate" result-class="java.util.HashMap">
+        select MAX(RENT_DATE+1) RENT_DATE from RENT_TRANS where BUILDING_NO=#BUILDING_NO:VARCHAR# and ROOM_NO=#ROOM_NO:VARCHAR#
+        AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+ 
+    <mapped-statement name="getRentTotal" result-class="java.util.HashMap">
+        SELECT sum(RENT_TOTAL) AS TOTAL FROM RENT_TRANS WHERE  BUILDING_NO=#BUILDING_NO:VARCHAR# and ROOM_NO=#ROOM_NO:VARCHAR#
+        AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="getprevRntPrdTo" result-class="java.util.HashMap">
+        Select max(RENT_PERIOD_TO) as RENT_PERIOD_TO from RENT_TRANS where 
+        BUILDING_NO = #BUILDING_NO# and ROOM_NO = #ROOM_NO:VARCHAR# and RRID = #RRID:VARCHAR#
+        AND STATUS !='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getRentPreviousDate" result-class="java.util.HashMap">
+        select MAX(RENT_DATE) FROM RENT_TRANS WHERE BUILDING_NO=#BUILDING_NO:VARCHAR# and ROOM_NO=#ROOM_NO:VARCHAR#
+        AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="insertRentTransTO" inline-parameters="true">
+        INSERT INTO RENT_TRANS
+        (RTID,BUILDING_NO,ROOM_NO,RENT_DATE,TRANS_DATE,RENT_PERIOD_FROM,RENT_PERIOD_TO,DUE_AMOUNT,RENT_AMOUNT,PENAL_AMOUNT,NOTICE_AMOUNT,LEGAL_AMOUNT,
+        ARBIT_AMOUNT,COURT_AMOUNT,EXE_AMOUNT,IS_CLOSURE,CLOSES_DATE,
+        AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,STATUS,RENT_TOTAL,RRID,STATUS_BY,STATUS_DT               
+        ) 
+        VALUES 
+        (
+        #rrId:VARCHAR#, #buildingNo:VARCHAR#, #roomNo:VARCHAR#,#rentCDate:DATE#,#transDate:DATE#,#rentPFrm:DATE#,#rentPto:DATE#,
+        #dueAmt:NUMBER#,#rentAmt:NUMBER#,#penelAmt:NUMBER#,#noticeAmt:NUMBER#,#legalAmt:NUMBER#,#arbAmt:NUMBER#,#courtAmt:NUMBER#,#exeAmt:NUMBER#,
+        #closure:VARCHAR#,#closedDate:DATE#
+        ,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#rentTotal:NUMBER#,#accNumber:NUMBER#,
+         #statusBy:VARCHAR#,#statusDate:VARCHAR#        
+        )
+    </mapped-statement> 
+        
+    <mapped-statement name="insertRentTransRentDetails" inline-parameters="true">
+        Update RENT_DETAILS set
+        ROOM_STATUS=#roomStatus:VARCHAR#
+        where ROOMNUM=#roomNo:VARCHAR# and RMNUMBER=#rmNumber:VARCHAR#
+    </mapped-statement> 
+       
+        
+    <mapped-statement name="updateRentTransTO" inline-parameters="true">
+        UPDATE RENT_TRANS SET 
+        BUILDING_NO=#buildingNo:VARCHAR#,
+        ROOM_NO=#roomNo:VARCHAR#,
+        RENT_DATE=#rentCDate:DATE#,
+        TRANS_DATE=#transDate:DATE#,
+        RENT_PERIOD_FROM=#rentPFrm:DATE#,
+        RENT_PERIOD_TO=#rentPto:DATE#,
+        DUE_AMOUNT=#dueAmt:NUMBER#,
+        RENT_AMOUNT=#rentAmt:NUMBER#,
+        PENAL_AMOUNT=#penelAmt:NUMBER#,
+        NOTICE_AMOUNT=#noticeAmt:NUMBER#,
+        LEGAL_AMOUNT=#legalAmt:NUMBER#,
+        ARBIT_AMOUNT=#arbAmt:NUMBER#,
+        COURT_AMOUNT=#courtAmt:NUMBER#,
+        EXE_AMOUNT=#exeAmt:NUMBER#,
+        IS_CLOSURE=#closure:VARCHAR#,
+        CLOSES_DATE=#closedDate:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+        RENT_TOTAL=#rentTotal:NUMBER#
+        WHERE RTID =#rrId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deleteRentTransTO" inline-parameters="true">
+        UPDATE RENT_TRANS SET 
+        STATUS = #status:VARCHAR# 
+        WHERE RTID =#rrId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+     
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getRentTransAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT   DISTINCT CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN AT.BATCH_ID
+                   ELSE MAX(AT.TRANS_ID)
+                END AS TRANS_ID,RT.RTID, RT.BUILDING_NO, RT.ROOM_NO,SUM(AT.AMOUNT) AS AMOUNT
+        FROM RENT_TRANS RT, ALL_TRANS AT
+        WHERE  AT.LINK_BATCH_ID =  RT.RTID
+        AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND (   RT.STATUS = 'CREATED'
+          OR RT.STATUS = 'UPDATED'
+          OR RT.STATUS = 'MODIFIED'
+         )
+        AND RT.STATUS_BY != #USER_ID:VARCHAR#
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND UM.USER_ID = RT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                RT.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (RT.AUTHORIZE_STATUS IS NULL OR 
+                RT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        GROUP BY AT.TRANS_MODE,AT.BATCH_ID,RT.RTID, RT.BUILDING_NO, RT.ROOM_NO
+        ORDER BY TRANS_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getRentTransCashierAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT   DISTINCT CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN AT.BATCH_ID
+                   ELSE MAX(AT.TRANS_ID)
+                END AS TRANS_ID,RT.RTID, RT.BUILDING_NO, RT.ROOM_NO,SUM(AT.AMOUNT) AS AMOUNT
+        FROM RENT_TRANS RT, ALL_TRANS AT
+        WHERE  AT.LINK_BATCH_ID =  RT.RTID
+        AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND (RT.STATUS = 'CREATED'
+          OR RT.STATUS = 'UPDATED'
+          OR RT.STATUS = 'MODIFIED'
+         )
+        AND RT.STATUS_BY != #USER_ID:VARCHAR#
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND CASE
+                   WHEN AT.TRANS_MODE = 'TRANSFER'
+                      THEN 'AUTHORIZED'
+                   ELSE AT.PAYMENT_STATUS
+                END IS NOT NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND UM.USER_ID = RT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                RT.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (RT.AUTHORIZE_STATUS IS NULL OR 
+                RT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        GROUP BY AT.TRANS_MODE,AT.BATCH_ID,RT.RTID, RT.BUILDING_NO, RT.ROOM_NO
+        ORDER BY TRANS_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeRentTrans" result-class="java.util.HashMap">
+        UPDATE RENT_TRANS  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  RTID = #RTID:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getRentTransTOResult" class="com.see.truetransact.transferobject.roomrent.renttrans.RentTransTO">
+        <property name="rrId" column="RTID"/>
+        <property name="buildingNo" column="BUILDING_NO"/>
+        <property name="roomNo" column="ROOM_NO"/>
+        <property name="rentDate" column="RENT_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="transDate" column="TRANS_DATE"/>
+        <property name="rentPFrm" column="RENT_PERIOD_FROM"/>
+        <property name="rentPto" column="RENT_PERIOD_TO"/>
+        <property name="dueAmt" column="DUE_AMOUNT"/>
+        <property name="rentAmt" column="RENT_AMOUNT"/>
+        <property name="penelAmt" column="PENAL_AMOUNT"/>
+        <property name="noticeAmt" column="NOTICE_AMOUNT"/>
+        <property name="legalAmt" column="LEGAL_AMOUNT"/>
+        <property name="arbAmt" column="ARBIT_AMOUNT"/>
+        <property name="courtAmt" column="COURT_AMOUNT"/>
+        <property name="exeAmt" column="EXE_AMOUNT"/>
+        <property name="closure" column="IS_CLOSURE"/>
+        <property name="closedDate" column="CLOSES_DATE"/>
+        <property name="rentTotal" column="RENT_TOTAL"/>
+                
+    </result-map>
+     
+    <mapped-statement name="RentTrans.getSelectRentTrans" result-map="getRentTransTOResult" >
+        SELECT * 
+        FROM RENT_TRANS WHERE STATUS NOT IN ('DELETED') 
+        and (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS!='REJECTED') AND RTID = #RTID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getRentTransTotalAmount" result-class="java.util.HashMap">
+        SELECT SUM(RENT_AMOUNT) TOTAL_AMOUNT FROM RENT_TRANS WHERE ROOM_NO = #ROOM_NO:VARCHAR# AND BUILDING_NO = #BUILDING_NO:VARCHAR#
+        AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="RentTrans.getAcHeads" result-class="java.util.HashMap">
+        SELECT RENT_AC_HD_ID,PENEL_AC_HD_ID,NOTICE_AC_HD_ID,LEGAL_AC_HD_ID,ARB_AC_HD_ID,COURT_AC_HD_ID,EXE_AC_HD_ID FROM RENT_PROFILE 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND BUILDING_NUM= #BUILDING_NO:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="getGracePeriod" result-class="java.util.HashMap">
+        select PENAL_GR_PERIOD from rent_register where BUILDING_NO=#BUILDING_NO:VARCHAR# and ROOM_NO=#ROOM_NO:VARCHAR#
+        AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="getPenalRate1" result-class="java.util.HashMap">
+           <!-- select PENEL_RATE,RENT_AMT from vw_rent_details where BUILDING_NUM=#BUILDING_NUM:VARCHAR# and ROOMNUM=#ROOMNUM:VARCHAR#-->
+        select PENEL_RATE,RENT_AMT from RENT_DETAILS where ROOMNUM=#ROOMNUM:VARCHAR# and rmnumber=#RMNUM:VARCHAR#
+        AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getSelInstPendInMonths" result-class="java.util.HashMap">
+        select round(months_between(to_date (#RENT_PRD_TO:DATE#, 'yyyy/mm/dd'), 
+        to_date (#RENT_PRD_FRM:DATE#, 'yyyy/mm/dd')),2) as INST_PEND from dual
+    </mapped-statement>
+       
+    <mapped-statement name="UpdateRentRegisterAccStatusUpdate" inline-parameters="true">
+        UPDATE RENT_REGISTER SET
+        ACCOUNT_STATUS=#accStatus:VARCHAR#,CLOSES_DATE= cast(#closedDate# as date)
+        WHERE RRID=#accNumber:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="RentTrans.AuthorizationPendingChecking" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS COUNT FROM ALL_TRANS AT 
+        JOIN RENT_TRANS RT ON RT.RTID = AT.LINK_BATCH_ID
+        WHERE RT.RRID = #RRID:VARCHAR# AND AT.TRANS_DT = #CURDATE:DATE# AND  AT.AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getRoomRentAmount" result-class="java.util.HashMap">
+        SELECT ROOM_RENT_DUE(#BRANCH_CODE:VARCHAR#,#RM_NO:VARCHAR#,#ROOM_NO:VARCHAR#,#ASONDT:DATE#)  as DUE_AMOUNT,
+        ROOM_RENT_PENAL(#BRANCH_CODE:VARCHAR#,#RM_NO:VARCHAR#,#ROOM_NO:VARCHAR#,#ASONDT:DATE#) AS PENAL_AMOUNT,
+        GET_ROOM_ARC_AMT(#ROOM_NO:VARCHAR#) AS ARC_COST
+        FROM DUAL
+    </mapped-statement>
+    
+    
+     <mapped-statement name="updateArcCostRoomChargeDetails" result-class="java.util.HashMap">
+        UPDATE LOANS_ACCT_CHARGE_DETAILS SET
+        PAID_AMT=#PAID_AMT:NUMERIC#
+        WHERE CHARGE_TYPE=#CHARGE_TYPE:VARCHAR# 
+        AND ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+    
+    
+</sql-map>

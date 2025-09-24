@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DepositAutoCreationMap">   
+    
+    <mapped-statement name="getMobileAppDataForCustomerCreation" result-class="java.util.HashMap" >
+        SELECT MM.MOB_DEP_ID,
+        MD.CUST_NAME,
+        MD.DOB,
+        GENDER,
+        MD.MARITAL_STATUS,
+        MD.HOUSE_NAME,
+        MD.PLACE,
+        MD.CITY,
+        MD.PINCODE,
+        MD.MOBILE_NO,
+        MD.IDENTITY_PROOF,
+        MD.UNIQUE_ID,
+        MD.SHARE_TYPE,
+        MM.SHARE_NO
+        FROM MOB_DEPOSIT_DETAILS MD, MOB_DEPOSIT_MASTER MM
+        WHERE MM.MOB_DEP_ID = MD.MOB_DEP_ID
+        AND MM.AGENT_ID = #AGENT_ID:VARCHAR#
+        AND MM.SHARE_NO IS NULL
+        AND MM.CUST_ID IS NULL 
+        AND MM.STATUS NOT IN ('DELETED')
+        ORDER BY MM.MOB_DEP_ID
+        <!--SELECT DISTINCT MD.MOB_DEPDETAIL_ID AS MOB_DEP_ID,
+        MD.CUST_NAME,
+        MD.DOB,
+        GENDER,
+        MD.MARITAL_STATUS,
+        MD.HOUSE_NAME,
+        MD.PLACE,
+        MD.CITY,
+        MD.PINCODE,
+        MD.MOBILE_NO,
+        MD.IDENTITY_PROOF,
+        MD.UNIQUE_ID,
+        MD.SHARE_TYPE,
+        MM.SHARE_NO
+        FROM MOB_DEPOSIT_DETAILS MD, MOB_DEPOSIT_MASTER MM
+        WHERE     MM.MOB_DEP_ID = MD.MOB_DEP_ID
+        AND MM.AGENT_ID = #AGENT_ID:VARCHAR#
+        AND MM.SHARE_NO IS NULL
+        AND MM.CUST_ID IS NULL-->
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerIdInMobileAppData" inline-parameters="true">
+        UPDATE MOB_DEPOSIT_MASTER M SET M.CUST_ID = #CUST_ID:VARCHAR# WHERE M.MOB_DEP_ID = #MOB_DEP_ID:NUMERIC#       
+        <!--UPDATE MOB_DEPOSIT_MASTER M SET M.CUST_ID = #CUST_ID:VARCHAR# WHERE M.MOB_DEP_ID IN (
+        SELECT MOB_DEP_ID FROM MOB_DEPOSIT_DETAILS WHERE MOB_DEPDETAIL_ID = #MOB_DEP_ID:NUMERIC#) -->               
+    </mapped-statement>
+    
+    <mapped-statement name="getMobileAppDataForShareOpening" result-class="java.util.HashMap" >          
+        SELECT DISTINCT MM.MOB_DEP_ID,
+        MD.MOB_DEPDETAIL_ID,
+        C.CUST_ID,
+        C.FNAME,
+        MD.SHARE_TYPE,
+        MD.SHARE_AMOUNT
+        FROM MOB_DEPOSIT_DETAILS MD, MOB_DEPOSIT_MASTER MM, CUSTOMER C
+        WHERE     MM.MOB_DEP_ID = MD.MOB_DEP_ID
+        AND C.CUST_ID = MM.CUST_ID
+        AND MM.AGENT_ID = #AGENT_ID:VARCHAR#
+        AND MM.SHARE_NO IS NULL
+        AND MM.CUST_ID IS NOT NULL
+        AND MM.STATUS NOT IN ('DELETED')
+        AND MD.SHARE_TYPE IS NOT NULL
+        ORDER BY MM.MOB_DEP_ID
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerPhotoInMobileAppData" inline-parameters="true">
+        UPDATE customer c
+        SET c.PHOTO_FILE =
+        (SELECT md.PHOTO
+        FROM MOB_DEPOSIT_DETAILS md
+        WHERE md.MOB_DEP_ID = #MOB_DEP_ID:VARCHAR#),
+        c.signature_file =  (SELECT md.SIGN
+        FROM MOB_DEPOSIT_DETAILS md
+        WHERE md.MOB_DEP_ID = #MOB_DEP_ID:VARCHAR#)
+        WHERE c.cust_id = #CUST_ID:VARCHAR#
+    </mapped-statement>    
+    
+    
+    <mapped-statement name="getAllShareFeeDetails" result-class="java.util.HashMap">
+      select sc.SHARE_TYPE,sc.FACE_VALUE,sc.ADMISSION_FEE,sc.APPLICATION_FEE,sc.RATIFICATION_REQUIRED from SHARE_CONF_DETAILS sc
+    </mapped-statement>  
+    
+    <mapped-statement name="getAgentAccountDetails" result-class="java.util.HashMap">
+        select am.AGENT_ID,am.DP_PROD_ID,am.DP_PROD_TYPE,am.DP_ACT_NUM,cm.FNAME
+        from AGENT_MASTER am
+        join CUSTOMER cm
+        on am.AGENT_ID = cm.CUST_ID
+        where am.AGENT_ID = #AGENT_ID:VARCHAR#
+    </mapped-statement>  
+    
+     <mapped-statement name="updateShareNoInMobileAppData" inline-parameters="true">
+        UPDATE MOB_DEPOSIT_MASTER M SET M.SHARE_NO = #SHARE_NO:VARCHAR# WHERE M.MOB_DEP_ID = #MOB_DEP_ID:NUMERIC#  
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getMobileAppDataForDepositOpening" result-class="java.util.HashMap" > 
+        SELECT MM.MOB_DEP_ID,
+        GET_CUSTID_MOBAPP (MM.SHARE_NO)                      AS CUST_ID,
+        GET_CUST_NAME(GET_CUSTID_MOBAPP (MM.SHARE_NO))       AS CUST_NAME,
+        MM.SHARE_NO,
+        MM.DEPOSIT_TYPE                               AS PROD_ID,
+        GET_PROD_DESC (MM.DEPOSIT_TYPE)               AS PRODUCT,
+        GET_PRODUCT_BEHAVESLIKE (MM.DEPOSIT_TYPE)     AS BEHAVES_LIKE,
+        MM.DEPOSIT_AMOUNT,
+        MM.DEPOSIT_PERIOD,
+        MM.DEPOSIT_PERIOD_TYPE,
+        get_cust_mobileNo(GET_CUSTID_MOBAPP (MM.SHARE_NO)) AS MOBILE_NO,
+        MM.NOMINEE_NAME,
+        MM.RELATIONSHIP,
+        MM.REMARKS
+        FROM MOB_DEPOSIT_MASTER MM WHERE
+        MM.SHARE_NO IS NOT NULL
+        AND MM.BANK_STATUS IS NULL
+        AND MM.STATUS NOT IN ('DELETED')
+        AND MM.AGENT_ID = #AGENT_ID:VARCHAR#      
+        AND GET_PRODUCT_BEHAVESLIKE (MM.DEPOSIT_TYPE) IN ('DAILY','RECURRING')
+    </mapped-statement>
+    
+    <mapped-statement name="getMobileAppDepositMaturityDt" result-class="java.util.HashMap" >  
+      <!--select to_date(#DEPOSIT_DT:DATE#) + #ADD_DAYS:NUMBER# AS MATURITY_DT from dual -->
+        select trunc((cast(#DEPOSIT_DT:DATE# as DATE))) + #ADD_DAYS:NUMBER# as MATURITY_DT from dual
+    </mapped-statement>
+    
+    
+     <mapped-statement name="updateBankDepositCreationStatus" inline-parameters="true">    
+        UPDATE MOB_DEPOSIT_MASTER m set m.BANK_STATUS = 'Y' WHERE M.MOB_DEP_ID = #MOB_DEP_ID:VARCHAR#
+     </mapped-statement>    
+    
+     <mapped-statement name="getAgentIDDetailsForDepositCreation" result-class="java.util.HashMap">
+         <!--SELECT AGENT_ID AS "KEY" , AGENT_ID AS "VALUE"
+         FROM AGENT_MASTER AM,CUSTOMER C
+         WHERE C.CUST_ID = AM.AGENT_ID
+         AND AM.TYPE = 'A'
+         AND AM.AUTHORIZED_STATUS = 'AUTHORIZED'
+         AND AM.STATUS !='DELETED'-->          
+         SELECT AGENT_ID AS "KEY" , get_cust_name(AGENT_ID) AS "VALUE"  FROM AGENT_MASTER AM,CUSTOMER C         
+         WHERE C.CUST_ID = AM.AGENT_ID  AND AM.TYPE = 'A'         
+         AND AM.AUTHORIZED_STATUS = 'AUTHORIZED'  AND AM.STATUS !='DELETED'
+     </mapped-statement> 
+    
+       <mapped-statement name="getMobileAppDataForSBOpening" result-class="java.util.HashMap" > 
+        SELECT MM.MOB_DEP_ID,
+        GET_CUSTID_MOBAPP (MM.SHARE_NO)                      AS CUST_ID,
+        GET_CUST_NAME(GET_CUSTID_MOBAPP (MM.SHARE_NO))       AS CUST_NAME,
+        MM.SHARE_NO,
+        MM.DEPOSIT_TYPE                               AS PROD_ID,
+        GET_PROD_DESC (MM.DEPOSIT_TYPE)               AS PRODUCT,
+        GET_PRODUCT_BEHAVESLIKE (MM.DEPOSIT_TYPE)     AS BEHAVES_LIKE,
+        NVL(MM.DEPOSIT_AMOUNT,0) AS DEPOSIT_AMOUNT,
+        MM.DEPOSIT_PERIOD,
+        MM.DEPOSIT_PERIOD_TYPE,
+        get_cust_mobileNo(GET_CUSTID_MOBAPP (MM.SHARE_NO)) AS MOBILE_NO,
+        MM.NOMINEE_NAME,
+        MM.RELATIONSHIP,
+        MM.REMARKS   
+        FROM MOB_DEPOSIT_MASTER MM WHERE
+        MM.SHARE_NO IS NOT NULL
+        AND MM.BANK_STATUS IS NULL
+        AND MM.STATUS NOT IN ('DELETED')
+        AND MM.AGENT_ID = #AGENT_ID:VARCHAR#      
+        AND GET_PRODUCT_BEHAVESLIKE (MM.DEPOSIT_TYPE) IN ('SB')
+    </mapped-statement>
+    
+  
+    
+     <mapped-statement name="updateRecteStatusForCustomer" inline-parameters="true">     
+         update MOB_DEPOSIT_MASTER M set M.status = 'DELETED' WHERE M.MOB_DEP_ID = #MOB_DEP_ID:VARCHAR#
+     </mapped-statement>    
+    
+    
+    
+</sql-map>

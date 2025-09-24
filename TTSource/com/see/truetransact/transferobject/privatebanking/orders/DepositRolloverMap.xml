@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DepositRolloverTOMap">
+
+	<!-- Use DepositRolloverTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositRolloverTO" inline-parameters="true">  
+        INSERT INTO PVT_ORDER_MASTER
+        (ORD_ID, MEMBER, RELATIONSHIP, ORDER_TYPE, CONTACT_MODE, CONTACT_DT, CONTACT_HR, CONTACT_MINS, CLIENT_CONTACT, PHONE_EXT, INSTRUCTION_FROM, SOLICITED, SOUR_DOC_DT, DESCRIPTION, AUTH_SOUR_DOC, SOUR_DOC_DETAILS, VIEW_VISUAL, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_USER, AUTHORIZE_DT, AUTHORIZE_REMARK
+        ) VALUES (
+        #ordId:VARCHAR#, #member:VARCHAR#, #relationship:VARCHAR#, #orderType:VARCHAR#, #contactMode:VARCHAR#, #contactDt:DATE#, #contactHr:VARCHAR#, #contactMins:VARCHAR#, #clientContact:VARCHAR#, #phoneExt:VARCHAR#, #instructionFrom:VARCHAR#, #solicited:VARCHAR#, #sourDocDt:DATE#, #description:VARCHAR#, #authSourDoc:VARCHAR#, #sourDocDetails:VARCHAR#, #viewVisual:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, TODAY_DT, #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#, #authorizeRemark:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use DepositRolloverTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositRolloverTO" inline-parameters="true">
+        UPDATE PVT_ORDER_MASTER SET 
+<!--	ORD_ID = #ordId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+	STATUS_DT = #statusDt:DATE#
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+	AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+	AUTHORIZE_DT = #authorizeDt:DATE#,
+	AUTHORIZE_REMARK = #authorizeRemark:VARCHAR# -->
+        MEMBER = #member:VARCHAR#,
+        RELATIONSHIP = #relationship:VARCHAR#,
+        ORDER_TYPE = #orderType:VARCHAR#,
+        CONTACT_MODE = #contactMode:VARCHAR#,
+        CONTACT_DT = #contactDt:DATE#,
+        CONTACT_HR = #contactHr:VARCHAR#,
+        CONTACT_MINS = #contactMins:VARCHAR#,
+        CLIENT_CONTACT = #clientContact:VARCHAR#,
+        PHONE_EXT = #phoneExt:VARCHAR#,
+        INSTRUCTION_FROM = #instructionFrom:VARCHAR#,
+        SOLICITED = #solicited:VARCHAR#,
+        SOUR_DOC_DT = #sourDocDt:DATE#,
+        DESCRIPTION = #description:VARCHAR#,
+        AUTH_SOUR_DOC = #authSourDoc:VARCHAR#,
+        SOUR_DOC_DETAILS = #sourDocDetails:VARCHAR#,
+        VIEW_VISUAL = #viewVisual:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE ORD_ID = #ordId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use DepositRolloverTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositRolloverTO" inline-parameters="true">
+<!--	DELETE FROM PVT_ORDER_MASTER 
+	WHERE -->
+        UPDATE PVT_ORDER_MASTER SET 
+        STATUS = #status:VARCHAR#
+        WHERE ORD_ID = #ordId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositRolloverTO object (JavaBean) properties -->
+    <result-map name="getDepositRolloverTOResult" class="com.see.truetransact.transferobject.privatebanking.orders.DepositRolloverTO">
+        <property name="ordId" column="ORD_ID"/>
+        <property name="member" column="MEMBER"/>
+        <property name="relationship" column="RELATIONSHIP"/>
+        <property name="orderType" column="ORDER_TYPE"/>
+        <property name="contactMode" column="CONTACT_MODE"/>
+        <property name="contactDt" column="CONTACT_DT"/>
+        <property name="contactHr" column="CONTACT_HR"/>
+        <property name="contactMins" column="CONTACT_MINS"/>
+        <property name="clientContact" column="CLIENT_CONTACT"/>
+        <property name="phoneExt" column="PHONE_EXT"/>
+        <property name="instructionFrom" column="INSTRUCTION_FROM"/>
+        <property name="solicited" column="SOLICITED"/>
+        <property name="sourDocDt" column="SOUR_DOC_DT"/>
+        <property name="description" column="DESCRIPTION"/>
+        <property name="authSourDoc" column="AUTH_SOUR_DOC"/>
+        <property name="sourDocDetails" column="SOUR_DOC_DETAILS"/>
+        <property name="viewVisual" column="VIEW_VISUAL"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZE_USER"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeRemark" column="AUTHORIZE_REMARK"/>
+    </result-map>
+
+    <mapped-statement name="getSelectDepositRolloverTO" result-map="getDepositRolloverTOResult" >
+        SELECT * FROM PVT_ORDER_MASTER 
+        WHERE ORD_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="ViewAllDepositRolloverTO" result-class="java.util.LinkedHashMap" >
+        SELECT  ACTUAL.ORD_ID AS "Order ID", ACTUAL.MEMBER AS "Member",  RELATION.MEMBER AS "Member Relation", ACTUAL.ORDER_TYPE AS "Order Type"
+        FROM PVT_ORDER_MASTER ACTUAL, PVT_ORDER_MASTER RELATION
+        WHERE  ACTUAL.RELATIONSHIP = RELATION.ORD_ID (+) AND ACTUAL.STATUS NOT IN ('DELETED')
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Order ID" >
+                    UPPER(ACTUAL.ORD_ID) LIKE UPPER('%$Order ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Member" >
+                    UPPER(ACTUAL.MEMBER) LIKE UPPER('%$Member$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Member Relation" >
+                    UPPER(RELATION.MEMBER) LIKE UPPER('%$Member Relation$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Order Type" >
+                    UPPER(ACTUAL.ORDER_TYPE) LIKE UPPER('%$Order Type$%')
+                </isNotEmpty>
+            </isParameterPresent>
+    </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="ViewAllMemberRelationship" result-class="java.util.LinkedHashMap" >
+        SELECT MEMBER, RELATIONSHIP
+        FROM PVT_ORDER_MASTER
+        WHERE RELATIONSHIP = #MEMBER:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    
+<!-- =================================================================================== -->        
+<!--Authorization Queries -->
+    <mapped-statement name="getDepositRolloverAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT ORD_ID AS "Order ID", MEMBER AS "Member", RELATIONSHIP AS "Member Relation", ORDER_TYPE AS "Order Type"
+        FROM PVT_ORDER_MASTER
+        WHERE STATUS NOT IN ('DELETED') AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+    <mapped-statement name="authorizeDepositRollover" result-class="java.util.HashMap">
+        UPDATE PVT_ORDER_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = TODAY_DT
+        WHERE ORD_ID = #ORDER ID:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== --> 
+
+</sql-map>

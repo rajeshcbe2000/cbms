@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="PFMasterMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+ 
+    <dynamic-mapped-statement name="getEmployeeDet" result-class="java.util.LinkedHashMap">
+        SELECT EM.EMPLOYEEID, EM.EMPLOYEE_NAME,EP.DESIGNATION, EP.SCALE_ID,
+        MAX(SD.VERSION_NO) AS VERSION_NO
+        FROM  EMPLOYEE_PRESENT_DETAILS EP,EMPLOYEE_MASTER EM,SCALE_MASTER SD 
+        WHERE EP.EMPLOYEEID=EM.EMPLOYEEID AND EP.SRL_NO = (SELECT MAX(EPD.SRL_NO) FROM EMPLOYEE_PRESENT_DETAILS EPD WHERE EPD.EMPLOYEEID = EP.EMPLOYEEID)
+        AND EP.SCALE_ID=SD.SCALE_ID AND EM.EMP_STATUS='Service' AND EM.AUTHORIZE_STATUS='AUTHORIZED'
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EM.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(EM.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="DESIGNATION">
+                    UPPER(EP.DESIGNATION) LIKE UPPER('%$DESIGNATION$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCALE_ID">
+                    UPPER(EP.SCALE_ID) LIKE UPPER('%$SCALE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY EM.EMPLOYEEID,EM.EMPLOYEE_NAME,EP.DESIGNATION,EP.SCALE_ID
+        ORDER BY EM.EMPLOYEEID 
+    </dynamic-mapped-statement>
+ 
+    <mapped-statement name="insertPFMasterTO" inline-parameters="true">
+        INSERT INTO PAY_PF_MASTER (PF_ACT_NO, EMP_ID, PF_DT, PF_ROI, PF_NOM, PF_OP_BAL, PF_OP_DT, PF_INT_DT, PF_NOM_RL, CREATED_BY, 
+        CREATED_DATE, PRN_BAL, BRANCHID, EMPLOYER_CONTRI, STATUS, STATUS_BY, STATUS_DATE, PF_ID)
+        VALUES(#pfActNo:VARCHAR#, #empId:VARCHAR#, #pfDate:DATE#, #pfRate:NUMBER#, #pfNominee:VARCHAR#, #pfOpenBal:NUMBER#, 
+        #pfOpenDate:DATE#, #pfIntDate:DATE#, #pfNomineeRelation:VARCHAR#, #createdBy:VARCHAR#, #createdDate:DATE#, #prnBal:NUMBER#, 
+        #branchId:VARCHAR#, #employerContri:NUMBER#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDate:DATE#, #pfId:VARCHAR#)
+    </mapped-statement>
+      
+    <mapped-statement name="getEmplDetails" result-class="java.util.LinkedHashMap">
+        SELECT C.CUST_ID, get_cust_name(C.CUST_ID)
+        AS FNAME, DOB, STREET, AREA,(SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.CITY' 
+        AND LOOKUP_MASTER.LOOKUP_REF_ID = CA.CITY) AS CITY, (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.STATE' AND LOOKUP_MASTER.LOOKUP_REF_ID = CA.STATE) AS STATE, PIN_CODE, 
+        (SELECT LOOKUP_MASTER.LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_MASTER.LOOKUP_ID = 'CUSTOMER.COUNTRY' 
+        AND LOOKUP_MASTER.LOOKUP_REF_ID = CA.COUNTRY_CODE) AS COUNTRY_CODE FROM CUSTOMER C, CUST_ADDR CA WHERE CA.CUST_ID = C.CUST_ID 
+        AND C.COMM_ADDR_TYPE = CA.ADDR_TYPE AND C.CUST_ID = (SELECT CM.CUST_ID FROM CUSTOMER CM JOIN EMPLOYEE_MASTER EM 
+        ON CM.STAFF_ID =  EM.EMPLOYEEID AND EM.EMPLOYEEID = #EMP_ID:VARCHAR# AND EM.STATUS!='Deleted')  
+    </mapped-statement>
+   
+    <dynamic-mapped-statement name="getEmpPfDetails" result-class="java.util.LinkedHashMap">
+        SELECT EMP_ID, PF_ACT_NO, PF_OP_DT, PF_DT, PF_OP_BAL, EMPLOYER_CONTRI FROM PAY_PF_MASTER
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMP_ID">
+                    UPPER(EMP_ID) LIKE UPPER('%$EMP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PF_ACT_NO">
+                    UPPER(PF_ACT_NO) LIKE UPPER('%$PF_ACT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PF_OP_DT">
+                    UPPER(PF_OP_DT) LIKE UPPER('%$PF_OP_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PF_OP_BAL">
+                    UPPER(PF_OP_BAL) LIKE UPPER('%$PF_OP_BAL$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYER_CONTRI">
+                    UPPER(EMPLOYER_CONTRI) LIKE UPPER('%$EMPLOYER_CONTRI$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="updatePFMasterTO" inline-parameters="true">
+        UPDATE PAY_PF_MASTER SET 
+        PF_ACT_NO = #pfActNo:VARCHAR#,
+        PF_DT = #pfDate:DATE#, 
+        PF_ROI = #pfRate:NUMBER#,
+        PF_NOM = #pfNominee:VARCHAR#,
+        PF_OP_BAL = #pfOpenBal:NUMBER#,
+        PF_OP_DT = #pfOpenDate:DATE#,
+        PF_INT_DT = #pfIntDate:DATE#,
+        PF_NOM_RL = #pfNomineeRelation:VARCHAR#,
+        CREATED_BY = #createdBy:VARCHAR#, 
+        CREATED_DATE = #createdDate:DATE#, 
+        PRN_BAL = #prnBal:NUMBER#, 
+        BRANCHID = #branchId:VARCHAR#, 
+        EMPLOYER_CONTRI = #employerContri:NUMBER#, 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#
+        WHERE EMP_ID = #empId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deletePFMasterTO" result-class="java.util.HashMap">
+        DELETE FROM PAY_PF_MASTER WHERE EMP_ID = #empId:VARCHAR# AND PF_ACT_NO = #pfActNo:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="checkPFActNo" result-class="java.util.LinkedHashMap">
+        SELECT PF_ACT_NO FROM PAY_PF_MASTER WHERE PF_ACT_NO = #PF_ACT_NO:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="chkEmpId" result-class="java.util.HashMap">
+        SELECT EMP_ID FROM PAY_PF_MASTER WHERE EMP_ID = #EMPID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getPFEmployeeDetails" result-class="java.util.HashMap">
+        SELECT PM.PF_ACT_NO, PM.PF_DT, PM.PF_INT_DT, PM.PF_NOM, PM.PF_NOM_RL, PM.PF_OP_BAL, PM.PF_OP_DT, PM.PF_ROI, PM.EMPLOYER_CONTRI 
+        FROM PAY_PF_MASTER PM WHERE PM.EMP_ID = #EMPLOYEEID:VARCHAR#
+    </mapped-statement>
+    
+    <result-map name="getPFTransferTOResult" class="com.see.truetransact.transferobject.payroll.PFTransferTO">
+        <property name = "PfNo" column = "PF_NO"/>
+        <property name = "Balance" column = "BALANCE"/>
+        <property name = "Amount" column = "AMOUNT"/>
+    </result-map>  
+  
+    <mapped-statement name="InsertPfTransTo" inline-parameters="true">
+        INSERT INTO PAY_PF_TRANS (PF_NO, TRAN_DT, TRANS_ID, BATCH_ID, TRANS_MODE, AMOUNT, STATUS, REMARK, PROD_TYPE, CREATED_BY, CREATED_DATE, 
+        AUTHORIZED_BY, AUTHORIZE_STATUS, BRANCHID, PF_TRANS_TYPE, PROD_ID, TRANS_TYPE, PF_ID)
+        values(#PF_NO:VARCHAR#, #TRAN_DT:DATE#, #TRANS_ID:VARCHAR#, #BATCH_ID:VARCHAR#, #TRANS_MODE:VARCHAR#, #AMOUNT:NUMBER#,
+        #STATUS:VARCHAR2#, #REMARK:VARCHAR2#, #PROD_TYPE:VARCHAR#, #CREATED_BY:VARCHAR#, #CREATED_DATE:DATE#, #AUTHORIZED_BY:VARCHAR#,
+        null, #BRANCHID:VARCHAR#, #PF_TRANS_TYPE:VARCHAR#, #PROD_ID:VARCHAR#, #TRANS_TYPE:VARCHAR#, #PF_ID:VARCHAR#)
+    </mapped-statement>
+  
+    <dynamic-mapped-statement name="updatepfmasterbalance" result-class="java.util.HashMap">
+        UPDATE PAY_PF_MASTER SET
+        <dynamic>
+            <isEqual prepend="" property="PF_TRANS_TYPE" compareValue="PF" >
+                PRN_BAL=NVL(PRN_BAL,0)+#AMOUNT:NUMBER#
+            </isEqual>
+            <isEqual prepend="" property="PF_TRANS_TYPE" compareValue="EPF" >
+                EMPLOYER_CONTRI=NVL(EMPLOYER_CONTRI,0)+#AMOUNT:NUMBER#
+            </isEqual>
+        </dynamic>
+        WHERE PF_ACT_NO = #PF_NO:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="updateprnbalcash" result-class="java.util.HashMap">
+        UPDATE PAY_PF_MASTER SET
+        <dynamic>
+            <isEqual prepend="" property="TRANS_TYPE" compareValue="DEBIT" >
+                PRN_BAL=#BALANCE:NUMBER#-#AMOUNT:NUMBER#
+            </isEqual>
+            <isEqual prepend="" property="TRANS_TYPE" compareValue="CREDIT" >
+                PRN_BAL=#BALANCE:NUMBER#+#AMOUNT:NUMBER#
+            </isEqual>
+        </dynamic>
+        WHERE PF_ACT_NO = #LINK_BATCH_ID:VARCHAR#
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="updateprnbalcashforPayRollIndividual" result-class="java.util.HashMap">
+        UPDATE PAY_PF_MASTER SET
+        <dynamic>
+            <isEqual prepend="" property="TRANS_TYPE" compareValue="DEBIT" >
+                PRN_BAL=NVL(PRN_BAL,0)-#AMOUNT:NUMBER#
+            </isEqual>
+            <isEqual prepend="" property="TRANS_TYPE" compareValue="CREDIT" >
+                PRN_BAL=NVL(PRN_BAL,0)+#AMOUNT:NUMBER#
+            </isEqual>
+        </dynamic>
+        WHERE PF_ACT_NO = #PF_NO:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="updateprnbaltransfer" result-class="java.util.HashMap">
+        UPDATE PAY_PF_MASTER SET
+        <dynamic>
+            <isEqual prepend="" property="TRANS_TYPE" compareValue="DEBIT" >
+                PRN_BAL=#BALANCE:NUMBER#-#AMOUNT:NUMBER#
+            </isEqual>
+            <isEqual prepend="" property="TRANS_TYPE" compareValue="CREDIT" >
+                PRN_BAL=#BALANCE:NUMBER#+#AMOUNT:NUMBER#
+            </isEqual>
+        </dynamic>
+        WHERE PF_ACT_NO = #LINK_BATCH_ID:VARCHAR#
+    </dynamic-mapped-statement>
+     
+    <dynamic-mapped-statement name = "getPFTransData" result-class = "java.util.LinkedHashMap">
+        SELECT E.EMPLOYEEID, E.EMPLOYEE_NAME, P.PF_ACT_NO,
+        NVL (P.PF_OP_BAL, 0) AS OPEN_BAL, NVL (P.PRN_BAL, 0) AS TOTAL
+        FROM EMPLOYEE_MASTER E JOIN PAY_PF_MASTER P ON E.EMPLOYEEID = P.EMP_ID
+        WHERE E.EMP_STATUS = 'Service'
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(E.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(E.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="PF_ACT_NO">
+                    UPPER(P.PF_ACT_NO) LIKE UPPER('%$PF_ACT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="OPEN_BAL">
+                    UPPER(NVL (P.PF_OP_BAL, 0)::varchar) LIKE UPPER('%$OPEN_BAL$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="TOTAL">
+                    UPPER(NVL (P.PRN_BAL, 0)) LIKE UPPER('%$TOTAL$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY P.PF_ACT_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getPFAccHead" result-class = "java.util.LinkedHashMap">
+        select PM.PAYCODE_ID,PM.PAY_CODE,P.ACC_HD as PAY_ACC_NO from PAYCODES_MASTER pm join PAY_ACCOUNT p on
+        PM.PAYCODE_ID=P.PAYCODE_ID where PM.PAY_MODULE_TYPE='PF' AND PM.PAY_EARNDEDU='DEDUCTIONS'
+    </mapped-statement> 
+    
+    <mapped-statement name = "getPFAuthorizeList" result-class = "java.util.LinkedHashMap">
+        SELECT P.PF_NO, P.AMOUNT, P.TRANS_MODE, P.TRANS_TYPE, P.PF_TRANS_TYPE, P.TRAN_DT, 
+        NVL(PM.PRN_BAL,0) AS BALANCE, P.AUTHORIZE_STATUS , P.BATCH_ID, PM.PF_ID
+        FROM PAY_PF_TRANS P JOIN PAY_PF_MASTER PM ON P.PF_NO=PM.PF_ACT_NO 
+        WHERE P.STATUS != 'DELETED' AND UPPER (P.CREATED_BY) != UPPER (#USER_ID:VARCHAR#) AND P.AUTHORIZE_STATUS IS NULL 
+        AND P.TRAN_DT = #TRAN_DT:DATE# 
+    </mapped-statement> 
+    
+   <dynamic-mapped-statement name = "viewPFData" result-class = "java.util.LinkedHashMap">
+        SELECT E.EMPLOYEEID, E.EMPLOYEE_NAME, P.PF_ACT_NO, NVL(P.PF_OP_BAL,0) AS OPEN_BAL, 
+        NVL(P.PRN_BAL,0) AS AMOUNT, NVL(P.PRN_BAL,0) AS BALANCE 
+        FROM EMPLOYEE_MASTER E JOIN PAY_PF_MASTER P ON E.EMPLOYEEID=P.EMP_ID WHERE E.STATUS='Service'
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(E.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEE_NAME">
+                    UPPER(E.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PF_ACT_NO">
+                    UPPER(P.PF_ACT_NO) LIKE UPPER('%$PF_ACT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="OPEN_BAL">
+                    UPPER(NVL(P.PF_OP_BAL,0)) LIKE UPPER('%$OPEN_BAL$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(NVL(P.PRN_BAL,0)) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BALANCE">
+                    UPPER(NVL(P.PRN_BAL,0)) LIKE UPPER('%$BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+           </dynamic>
+        ORDER BY P.PF_ACT_NO
+   </dynamic-mapped-statement>
+    
+    <mapped-statement name = "updatePFTransTo" result-class = "java.util.LinkedHashMap">
+        UPDATE PAY_PF_TRANS SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#
+        WHERE STATUS != 'DELETED' AND  PF_NO= #PF_NO:VARCHAR# 
+    </mapped-statement> 
+    
+    <mapped-statement name="PFTrans.getSelectPFTrans"  result-class = "java.util.LinkedHashMap" >
+        SELECT P.PF_NO, P.AMOUNT, NVL(PM.PRN_BAL,0) AS BALANCE FROM PAY_PF_TRANS P JOIN PAY_PF_MASTER PM ON P.PF_NO = PM.PF_ACT_NO 
+        WHERE P.AUTHORIZE_STATUS IS NULL AND P.PF_NO = #PfNo:VARCHAR# AND P.TRAN_DT = #TRAN_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getPFAuthDetails"  result-class = "java.util.HashMap" >
+        SELECT P.PF_NO, P.AUTHORIZE_STATUS FROM PAY_PF_TRANS P WHERE P.PF_NO = #PFNO:VARCHAR# AND P.AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+ 
+    <mapped-statement name="getPFId"  result-class = "java.util.HashMap" >
+        SELECT PM.PF_ID, PM.EMP_ID FROM PAY_PF_MASTER PM WHERE PM.PF_ACT_NO=#PF_ACT_NO:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="getPFNo"  result-class = "java.util.HashMap" >
+        select P.PF_ACT_NO from PAY_PF_MASTER p where P.EMP_ID=#EMP_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getMaxSlNoFromPayRoll"  result-class = "java.util.HashMap" >
+        SELECT nvl(MAX(SRL_NO),0) + 1 AS SL_NO
+        FROM PAYROLL WHERE PAY_CODE = #payCode:VARCHAR# AND MONTH_YEAR = #month:DATE# AND EMPLOYEEID = #employeeId:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DetailTransfer">
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow
+    results to be auto-mapped results to TxTransferTO object (JavaBean) properties -->
+    <!--
+    <mapped-statement name="getDetailTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.DetailTransferTO">
+        SELECT
+            TRANSFER_TRANS.TRANS_ID AS transId,
+            AC_HD.AC_HD_DESC AS acHdDesc,
+            TRANSFER_TRANS.ACT_NUM AS actNum,
+            CUSTOMER.FNAME AS actFName,
+            CUSTOMER.MNAME AS actMName,
+            CUSTOMER.LNAME AS actLName,
+            TRANSFER_TRANS.TRANS_TYPE AS transType,
+            TRANSFER_TRANS.AMOUNT AS amount,
+            TRANSFER_TRANS.STATUS AS status,
+            TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, ACT_MASTER, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+            TRANSFER_TRANS.ACT_NUM = ACT_MASTER.ACT_NUM(+) AND
+            ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID(+) and 
+            TRANSFER_TRANS.BATCH_ID = #value# and
+           (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)
+            and TRANSFER_TRANS.status!='DELETED'                 
+    </mapped-statement>
+    
+     <mapped-statement name="getAuthorizeDetailTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.DetailTransferTO">
+        SELECT
+            TRANSFER_TRANS.TRANS_ID AS transId,
+            AC_HD.AC_HD_DESC AS acHdDesc,
+            TRANSFER_TRANS.ACT_NUM AS actNum,
+            CUSTOMER.FNAME AS actFName,
+            CUSTOMER.MNAME AS actMName,
+            CUSTOMER.LNAME AS actLName,
+            TRANSFER_TRANS.TRANS_TYPE AS transType,
+            TRANSFER_TRANS.AMOUNT AS amount,
+            TRANSFER_TRANS.STATUS AS status,
+            TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, ACT_MASTER, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+            TRANSFER_TRANS.ACT_NUM = ACT_MASTER.ACT_NUM(+) AND
+            ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID(+) AND
+            TRANSFER_TRANS.BATCH_ID = #value# and
+           (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)            
+    </mapped-statement>
+-->
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow
+    results to be auto-mapped results to TxTransferTO object (JavaBean) properties -->
+    <!--
+    <mapped-statement name="getDetailTransferTOForStatus" result-class="com.see.truetransact.transferobject.transaction.transfer.DetailTransferTO">
+        SELECT
+            TRANSFER_TRANS.TRANS_ID AS transId,
+            AC_HD.AC_HD_DESC AS acHdDesc,
+            TRANSFER_TRANS.ACT_NUM AS actNum,
+            CUSTOMER.FNAME AS actFName,
+            CUSTOMER.MNAME AS actMName,
+            CUSTOMER.LNAME AS actLName,
+            TRANSFER_TRANS.TRANS_TYPE AS transType,
+            TRANSFER_TRANS.AMOUNT AS amount,
+            TRANSFER_TRANS.STATUS AS status
+        FROM TRANSFER_TRANS, AC_HD, ACT_MASTER, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+            TRANSFER_TRANS.ACT_NUM = ACT_MASTER.ACT_NUM AND
+            ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID AND
+            TRANSFER_TRANS.BATCH_ID = #batchId# AND
+            TRANSFER_TRANS.STATUS =  #status#
+    </mapped-statement>
+    -->
+    
+    <!-- Use DetailTransferTO object (JavaBean) properties as parameters for update.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <!--
+    <mapped-statement name="updateDetailTransferTO" inline-parameters="true">
+	UPDATE TRANSFER_TRANS
+	SET
+            AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+            AUTHORIZE_DT= #TODAY_DT#,
+            AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+            AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#
+        WHERE TRANS_ID = #transId#            
+    </mapped-statement>
+    -->
+    
+    <!-- Use DetailTransfer object (JavaBean) ï¿½idï¿½ properties as parameters for delete.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <dynamic-mapped-statement name="deleteDetailTransferTO" inline-parameters="true">
+        UPDATE TRANSFER_TRANS
+        SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="authorizeStatus">
+                   AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull  property="authorizeBy">   
+                    AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull  property="authorizeDt">
+                    AUTHORIZE_DT = #authorizeDt:DATE#, 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:DATE#-->
+        WHERE BATCH_ID = #batchId:VARCHAR# AND
+        TRANS_DT = #transDt:DATE# AND
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#            
+    </dynamic-mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="deleteBackDatedDetailTransferTO" inline-parameters="true">
+        UPDATE TRANSFER_TRANS
+        SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="authorizeStatus">
+                   AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull  property="authorizeBy">   
+                    AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull  property="authorizeDt">
+                    AUTHORIZE_DT = #authorizeDt:DATE#, 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:DATE#-->
+        WHERE TRANS_DT = #transDt:DATE# AND
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+        AND BATCH_ID = #batchId:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="rejectTransferTransaction" inline-parameters="true">
+        UPDATE TRANSFER_TRANS
+        SET
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = null,
+        AUTHORIZE_DT = null,
+        AUTHORIZE_REMARKS = null
+        WHERE TRANS_ID = #transId:VARCHAR# AND
+        TRANS_DT = #transDt:DATE# AND
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#            
+    </mapped-statement>
+   
+    <mapped-statement name="getSelectAcctHeadDesc" result-class="java.util.HashMap">
+        SELECT AH.AC_HD_ID,AC_HD_DESC
+        FROM AC_HD AH WHERE AH.AC_HD_ID = #ACHDID:VARCHAR#
+    </mapped-statement> 
+   
+   
+    <mapped-statement name="batchTallying" result-class="java.util.HashMap">
+       <!-- select distinct batch_id,nvl(
+        (select sum(amount) from transfer_trans where batch_id =#BATCH_ID# and 
+        status!='DELETED' and TRANS_TYPE='CREDIT' AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null) 
+        group by batch_id) - (select sum(amount) from transfer_trans where batch_id = #BATCH_ID# 
+        and status!='DELETED' and TRANS_TYPE='DEBIT' and 
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or 
+        AUTHORIZE_STATUS is null) group by batch_id),0) as difference 
+        from transfer_trans where batch_id = #BATCH_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#-->        
+        select distinct batch_id,nvl(
+       (select sum(amount) from transfer_trans where batch_id =#BATCH_ID# and 
+       status!='DELETED' and TRANS_TYPE='CREDIT' AND
+       TRANS_DT = #TRANS_DT:DATE# AND
+       INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and
+       (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null) 
+       group by batch_id),0) - nvl((select sum(amount) from transfer_trans where batch_id = #BATCH_ID# 
+       and status!='DELETED' and TRANS_TYPE='DEBIT' and 
+       TRANS_DT = #TRANS_DT:DATE# AND
+       INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or 
+       AUTHORIZE_STATUS is null) group by batch_id),0) as difference 
+       from transfer_trans where batch_id = #BATCH_ID# AND
+       TRANS_DT = #TRANS_DT:DATE# AND
+       INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#    
+    </mapped-statement>      
+   
+<!-- ========================After Product Type ==============================- -->
+   
+    <mapped-statement name="getDetailTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.DetailTransferTO"> 
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        CUSTOMER.FNAME AS actFName,
+        CUSTOMER.MNAME AS actMName,
+        CUSTOMER.LNAME AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, ACT_MASTER, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+        TRANSFER_TRANS.ACT_NUM = ACT_MASTER.ACT_NUM AND
+        ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID and 
+        TRANSFER_TRANS.BATCH_ID = #value:VARCHAR# and
+        (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)
+        and TRANSFER_TRANS.status!='DELETED'
+        AND TRANSFER_TRANS.INITIATED_BRANCH=#value:VARCHAR#
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value#)   
+        union
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        CUSTOMER.FNAME AS actFName,
+        CUSTOMER.MNAME AS actMName,
+        CUSTOMER.LNAME AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, DEPOSIT_ACINFO DA,DEPOSIT_SUB_ACINFO DS, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+        TRANSFER_TRANS.ACT_NUM = DS.DEPOSIT_NO || '_'|| DEPOSIT_SUB_NO
+        and DA.DEPOSIT_NO = DS.DEPOSIT_NO
+        AND DA.CUST_ID = CUSTOMER.CUST_ID and 
+        TRANSFER_TRANS.BATCH_ID = #value:VARCHAR# and
+        (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)
+        and TRANSFER_TRANS.status!='DELETED'
+        AND TRANSFER_TRANS.INITIATED_BRANCH=#value:VARCHAR#
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value#)
+        union
+        SELECT 
+        TRANSFER_TRANS.TRANS_ID AS transId, 
+        AC_HD.AC_HD_DESC AS acHdDesc, 
+        TRANSFER_TRANS.ACT_NUM AS actNum, 
+        CUSTOMER.FNAME AS actFName, 
+        CUSTOMER.MNAME AS actMName, 
+        CUSTOMER.LNAME AS actLName, 
+        TRANSFER_TRANS.TRANS_TYPE AS transType, 
+        TRANSFER_TRANS.AMOUNT AS amount, 
+        TRANSFER_TRANS.STATUS AS status, 
+        TRANSFER_TRANS.STATUS_BY AS statusBy 
+        FROM TRANSFER_TRANS, AC_HD, LOANS_BORROWER LB, LOANS_FACILITY_DETAILS LFD, CUSTOMER 
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND 
+        TRANSFER_TRANS.ACT_NUM = LFD.ACCT_NUM 
+        and LB.BORROW_NO = LFD.BORROW_NO AND 
+        LB.CUST_ID = CUSTOMER.CUST_ID and 
+        TRANSFER_TRANS.BATCH_ID = #value:VARCHAR# 
+        and (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+        and TRANSFER_TRANS.status!='DELETED'
+        AND TRANSFER_TRANS.INITIATED_BRANCH=#value:VARCHAR#
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value#)
+        union         
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        DECODE(TRANSFER_TRANS.ACT_NUM, NULL, TRANSFER_TRANS.LINK_BATCH_ID, TRANSFER_TRANS.ACT_NUM) AS actNum,
+        '' AS actFName,
+        '' AS actMName,
+        '' AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+        TRANSFER_TRANS.ACT_NUM is null and 
+        TRANSFER_TRANS.BATCH_ID = #value:VARCHAR# and
+        (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)
+        and TRANSFER_TRANS.status!='DELETED'
+        AND TRANSFER_TRANS.INITIATED_BRANCH=#value:VARCHAR#
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value#)
+        ORDER BY  1 DESC        
+    </mapped-statement>         
+    
+    <dynamic-mapped-statement name="getAuthorizeDetailTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.DetailTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        CUSTOMER.FNAME AS actFName,
+        CUSTOMER.MNAME AS actMName,
+        CUSTOMER.LNAME AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, ACT_MASTER, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+        TRANSFER_TRANS.ACT_NUM = ACT_MASTER.ACT_NUM AND
+        ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID AND
+        TRANSFER_TRANS.BATCH_ID = #SELECTED_BATCH:VARCHAR# AND
+        TRANSFER_TRANS.TRANS_DT = #TRANS_DT:DATE# AND
+        TRANSFER_TRANS.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# 
+        <dynamic>
+            
+            <isEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION" >
+                (TRANSFER_TRANS.authorize_status not in ('REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isEqual>
+            <isNotEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION">
+                (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isNotEqual>
+        </dynamic>
+           <!--(TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null) -->
+        and TRANSFER_TRANS.status!='DELETED' 
+        union
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        CUSTOMER.FNAME AS actFName,
+        CUSTOMER.MNAME AS actMName,
+        CUSTOMER.LNAME AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, DEPOSIT_ACINFO  DA,DEPOSIT_SUB_ACINFO  DS, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND	
+        TRANSFER_TRANS.ACT_NUM = DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO AND
+        DA.DEPOSIT_NO = DS.DEPOSIT_NO and
+        DA.CUST_ID = CUSTOMER.CUST_ID AND
+        TRANSFER_TRANS.BATCH_ID = #SELECTED_BATCH:VARCHAR# AND
+        TRANSFER_TRANS.TRANS_DT = #TRANS_DT:DATE# AND
+        TRANSFER_TRANS.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# 
+        <dynamic>
+            
+            <isEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION" >
+                (TRANSFER_TRANS.authorize_status not in ('REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isEqual>
+            <isNotEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION">
+                (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isNotEqual>
+        </dynamic>
+           <!--(TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)         -->
+        and TRANSFER_TRANS.status!='DELETED' 
+        union
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        CUSTOMER.FNAME AS actFName,
+        CUSTOMER.MNAME AS actMName,
+        CUSTOMER.LNAME AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD, LOANS_BORROWER  LB, LOANS_FACILITY_DETAILS LFD, CUSTOMER
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND	
+        TRANSFER_TRANS.ACT_NUM = LFD.ACCT_NUM  AND
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LB.CUST_ID = CUSTOMER.CUST_ID AND
+        TRANSFER_TRANS.BATCH_ID = #SELECTED_BATCH:VARCHAR# AND
+        TRANSFER_TRANS.TRANS_DT = #TRANS_DT:DATE# AND
+        TRANSFER_TRANS.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# 
+        <dynamic>
+            
+            <isEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION" >
+                (TRANSFER_TRANS.authorize_status not in ('REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isEqual>
+            <isNotEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION">
+                (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isNotEqual>
+        </dynamic>
+           <!--(TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)         -->
+        and TRANSFER_TRANS.status!='DELETED' 
+        union
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        AC_HD.AC_HD_DESC AS acHdDesc,
+        DECODE(TRANSFER_TRANS.ACT_NUM, NULL, TRANSFER_TRANS.LINK_BATCH_ID, TRANSFER_TRANS.ACT_NUM) AS actNum,
+        '' AS actFName,
+        '' AS actMName,
+        '' AS actLName,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.STATUS AS status,
+        TRANSFER_TRANS.STATUS_BY AS statusBy
+        FROM TRANSFER_TRANS, AC_HD
+        WHERE TRANSFER_TRANS.AC_HD_ID = AC_HD.AC_HD_ID AND
+        TRANSFER_TRANS.ACT_NUM is null AND
+        TRANSFER_TRANS.BATCH_ID = #SELECTED_BATCH:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        TRANSFER_TRANS.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# 
+        <dynamic>
+            
+            <isEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION" >
+                (TRANSFER_TRANS.authorize_status not in ('REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isEqual>
+            <isNotEqual prepend ="AND" property="EXCEPTION" compareValue="EXCEPTION">
+                (TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null) 
+            </isNotEqual>
+        </dynamic>
+           <!--(TRANSFER_TRANS.authorize_status not in ('AUTHORIZED','REJECTED') or TRANSFER_TRANS.authorize_status is null)  -->                            
+        and TRANSFER_TRANS.status!='DELETED' 
+    </dynamic-mapped-statement>
+</sql-map>

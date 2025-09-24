@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BranchMasterMap">
+
+	<!-- Use BranchMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchMasterTO" inline-parameters="true">
+        INSERT INTO BRANCH_MASTER
+        (BRANCH_CODE, BRANCH_NAME, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE, AREA_CODE, CREATED_DT, DELETED_DT, STATUS, IP_ADDR, PORT, CHK_BALANCE_LIMIT, MAX_CASH_STOCK, AVG_CASH_STOCK, BRANCH_DB_NAME, BRANCH_DB_IP, BRANCH_DB_PORT, DB_USER_ID, DB_PASSWORD, DB_DRIVER, DB_URL, BRANCH_SHORT_NAME, OPENING_DT, BRANCH_MANAGER_NO, RO, MICR_CODE, BSR_CODE, WORKING_HOURS_FROM, WORKING_HOURS_TO, WORKING_MINS_FROM, WORKING_MINS_TO, BRANCH_GROUP, GL_GROUP_ID, AUTHORIZE_STATUS_1, AUTHORIZE_BY_1, AUTHORIZE_DT_1, AUTHORIZE_STATUS_2, AUTHORIZE_BY_2, AUTHORIZE_DT_2, STATUS_BY, STATUS_DT, BANK_CODE,SHIFT_STATUS,TRANSAUTH_TIME
+        ) VALUES (
+        #branchCode:VARCHAR#, #branchName:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #pinCode:VARCHAR#, #countryCode:VARCHAR#, #areaCode:VARCHAR#, #createdDt:DATE#, #deletedDt:DATE#, #status:VARCHAR#, #ipAddr:VARCHAR#, #port:NUMERIC#, #chkBalanceLimit:VARCHAR#, #maxCashStock:NUMERIC#, #avgCashStock:NUMERIC#, #branchDbName:VARCHAR#, #branchDbIp:VARCHAR#, #branchDbPort:NUMERIC#, #dbUserId:VARCHAR#, #dbPassword:VARCHAR#, #dbDriver:VARCHAR#, #dbUrl:VARCHAR#, #branchShortName:VARCHAR#, #openingDt:DATE#, #branchManagerNo:VARCHAR#, #ro:VARCHAR#, #micrCode:VARCHAR#, #bsrCode:VARCHAR#, #workingHoursFrom:VARCHAR#, #workingHoursTo:VARCHAR#, #workingMinsFrom:VARCHAR#, #workingMinsTo:VARCHAR#, #branchGroup:VARCHAR#, #glGroupId:VARCHAR#, #authorizeStatus1:VARCHAR#, #authorizeBy1:VARCHAR#, #authorizeDt1:DATE#, #authorizeStatus2:VARCHAR#, #authorizeBy2:VARCHAR#, 
+        #authorizeDt2:DATE#, #statusBy:VARCHAR#, #statusDt:DATE#, #bankCode:VARCHAR#, #rdoTransAuth:VARCHAR#,#chkShift:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use BranchMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchMasterTO" inline-parameters="true">
+        UPDATE BRANCH_MASTER SET 
+        BRANCH_NAME = #branchName:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        PIN_CODE = #pinCode:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        AREA_CODE = #areaCode:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        DELETED_DT = #deletedDt:DATE#,		
+        IP_ADDR = #ipAddr:VARCHAR#,
+        PORT = #port:NUMERIC#,
+        CHK_BALANCE_LIMIT = #chkBalanceLimit:VARCHAR#,
+        MAX_CASH_STOCK = #maxCashStock:NUMERIC#,
+        AVG_CASH_STOCK = #avgCashStock:NUMERIC#,
+        BRANCH_DB_NAME = #branchDbName:VARCHAR#,
+        BRANCH_DB_IP = #branchDbIp:VARCHAR#,
+        BRANCH_DB_PORT = #branchDbPort:NUMERIC#,
+        DB_USER_ID = #dbUserId:VARCHAR#,
+        DB_PASSWORD = #dbPassword:VARCHAR#,
+        DB_DRIVER = #dbDriver:VARCHAR#,
+        DB_URL = #dbUrl:VARCHAR#,
+        BRANCH_SHORT_NAME = #branchShortName:VARCHAR#,
+        OPENING_DT = #openingDt:DATE#,
+        BRANCH_MANAGER_NO = #branchManagerNo:VARCHAR#,
+        RO = #ro:VARCHAR#,
+        MICR_CODE = #micrCode:VARCHAR#,
+        BSR_CODE = #bsrCode:VARCHAR#,
+        WORKING_HOURS_FROM = #workingHoursFrom:VARCHAR#,
+        WORKING_HOURS_TO = #workingHoursTo:VARCHAR#,
+        WORKING_MINS_FROM = #workingMinsFrom:VARCHAR#,
+        WORKING_MINS_TO = #workingMinsTo:VARCHAR#,
+        BRANCH_GROUP = #branchGroup:VARCHAR#,
+        STATUS = 'MODIFIED',
+        GL_GROUP_ID = #glGroupId:VARCHAR#,
+        AUTHORIZE_STATUS_1 = #authorizeStatus1:VARCHAR#,
+        AUTHORIZE_BY_1 = #authorizeBy1:VARCHAR#,
+        AUTHORIZE_DT_1 = #authorizeDt1:DATE#,
+        AUTHORIZE_STATUS_2 = #authorizeStatus2:VARCHAR#,
+        AUTHORIZE_BY_2 = #authorizeBy2:VARCHAR#,
+        AUTHORIZE_DT_2 = #authorizeDt2:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        SHIFT_STATUS=#chkShift:VARCHAR#, 
+        TRANSAUTH_TIME=#rdoTransAuth:VARCHAR#
+        WHERE BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+	<!-- Use BranchMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchMasterTO" inline-parameters="true">
+        UPDATE BRANCH_MASTER SET STATUS ='DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectBranchList" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_CODE as "Branch Code", BRANCH_NAME as "Branch Name",  City, State from branch_master 
+        where (status='CREATED' or status='MODIFIED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "CURRENT_BRANCH">
+                    BRANCH_CODE != #CURRENT_BRANCH:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANSFER_OUT_BRANCH_CODE">
+                    BRANCH_CODE = #TRANSFER_OUT_BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Branch Code">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$Branch Code$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Branch Name">
+                    UPPER(BRANCH_NAME) LIKE UPPER('%$Branch Name$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="City">
+                    UPPER(City) LIKE UPPER('%$City$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="State">
+                    UPPER(State) LIKE UPPER('%$State$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>            
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectBranchIPDetails" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_CODE as "Branch Code", BRANCH_NAME as "Branch Name", City, IP_ADDR, PORT 
+        FROM BRANCH_MASTER 
+        WHERE (status='CREATED' or status='MODIFIED')
+    </mapped-statement>
+    
+    <mapped-statement name="getBranchUserInfo" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT B.* FROM BRANCH_MASTER B, USER_MASTER U 
+        WHERE U.BRANCH_CODE = B.BRANCH_CODE AND U.USER_ID=#USERID:VARCHAR# AND 
+        (B.STATUS='CREATED' OR B.STATUS='MODIFIED')
+    </mapped-statement>
+    <mapped-statement name="getBranchManagerID" result-class="java.util.LinkedHashMap" >
+        SELECT EMPLOYEE_CODE AS "BRANCH MANAGER ID",TITLE ||' '||LNAME||' '||FNAME AS "NAME" FROM BANK_EMPLOYEE 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+    </mapped-statement>
+    <mapped-statement name="getDisplayBranchManagerID" result-class="java.util.LinkedHashMap" >
+        SELECT TITLE ||' '||LNAME||' '||FNAME AS "NAME" FROM BANK_EMPLOYEE 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND EMPLOYEE_CODE = #EMPLOYEE_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDisplayRegionalOffice" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_NAME AS "BRANCH NAME"  FROM BRANCH_MASTER
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND BRANCH_CODE = #BRANCH_CODE:VARCHARE#
+    </mapped-statement>
+    
+   <dynamic-mapped-statement name="getRegionalOffice" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_CODE AS "BRANCH CODE", BRANCH_SHORT_NAME AS "BRANCH SHORT NAME", BRANCH_NAME AS "BRANCH NAME"  FROM BRANCH_MASTER
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+           <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH SHORT NAME">
+                    UPPER(BRANCH_SHORT_NAME) LIKE UPPER('%$BRANCH SHORT NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH NAME">
+                    UPPER(BRANCH_NAME) LIKE UPPER('%$BRANCH NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getBranchDayEndExist" result-class="java.lang.Integer" >
+        SELECT count(*) FROM DAY_END
+        WHERE BRANCH_CODE = #value:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="insertBranchDayEnd" result-class="java.lang.Integer" >
+        INSERT INTO DAY_END (CURR_APPL_DT, END_DAY_STATUS, BRANCH_CODE) VALUES 
+        (#CURR_APPL_DT:DATE#, #END_DAY_STATUS:VARCHAR#, #BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+         
+    <mapped-statement name="updateBranchDayEnd" result-class="java.lang.Integer" >
+        UPDATE DAY_END SET CURR_APPL_DT = #CURR_APPL_DT:DATE#
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="deleteBranchDayEnd" result-class="java.lang.Integer" >
+        DELETE DAY_END WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchMasterTO object (JavaBean) properties -->
+    <result-map name="getBranchMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.branch.BranchMasterTO">
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="branchName" column="BRANCH_NAME"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pinCode" column="PIN_CODE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="areaCode" column="AREA_CODE"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="deletedDt" column="DELETED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="ipAddr" column="IP_ADDR"/>
+        <property name="port" column="PORT"/>
+        <property name="chkBalanceLimit" column="CHK_BALANCE_LIMIT"/>
+        <property name="maxCashStock" column="MAX_CASH_STOCK"/>
+        <property name="avgCashStock" column="AVG_CASH_STOCK"/>
+        <property name="branchDbName" column="BRANCH_DB_NAME"/>
+        <property name="branchDbIp" column="BRANCH_DB_IP"/>
+        <property name="branchDbPort" column="BRANCH_DB_PORT"/>
+        <property name="dbUserId" column="DB_USER_ID"/>
+        <property name="dbPassword" column="DB_PASSWORD"/>
+        <property name="dbDriver" column="DB_DRIVER"/>
+        <property name="dbUrl" column="DB_URL"/>
+        <property name="branchShortName" column="BRANCH_SHORT_NAME"/>
+        <property name="openingDt" column="OPENING_DT"/>
+        <property name="branchManagerNo" column="BRANCH_MANAGER_NO"/>
+        <property name="ro" column="RO"/>
+        <property name="micrCode" column="MICR_CODE"/>
+        <property name="bsrCode" column="BSR_CODE"/>
+        <property name="workingHoursFrom" column="WORKING_HOURS_FROM"/>
+        <property name="workingHoursTo" column="WORKING_HOURS_TO"/>
+        <property name="workingMinsFrom" column="WORKING_MINS_FROM"/>
+        <property name="workingMinsTo" column="WORKING_MINS_TO"/>
+        <property name="branchGroup" column="BRANCH_GROUP"/>
+        <property name="glGroupId" column="GL_GROUP_ID"/>
+        <property name="authorizeStatus1" column="AUTHORIZE_STATUS_1"/>
+        <property name="authorizeBy1" column="AUTHORIZE_BY_1"/>
+        <property name="authorizeDt1" column="AUTHORIZE_DT_1"/>
+        <property name="authorizeStatus2" column="AUTHORIZE_STATUS_2"/>
+        <property name="authorizeBy2" column="AUTHORIZE_BY_2"/>
+        <property name="authorizeDt2" column="AUTHORIZE_DT_2"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="bankCode" column="BANK_CODE"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectBranchMasterTO" result-map="getBranchMasterTOResult" >
+        SELECT * FROM BRANCH_MASTER 
+        WHERE BRANCH_CODE = #BRANCHCODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="countBranchCode" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) as COUNT FROM BRANCH_MASTER 
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        (STATUS='CREATED' OR STATUS='MODIFIED')
+    </mapped-statement>
+        
+    <mapped-statement name="getBankOpeningDate" result-class="java.util.HashMap" >
+        SELECT OPENING_DT FROM BANK
+    </mapped-statement>
+        
+<!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getBranchSetupAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_CODE as "Branch Code", BRANCH_NAME as "Branch Name",  City, State, 
+        AUTHORIZE_STATUS_1, AUTHORIZE_BY_1, AUTHORIZE_DT_1<!--, 
+        AUTHORIZE_STATUS_2, AUTHORIZE_BY_2, AUTHORIZE_DT_2 -->
+        FROM BRANCH_MASTER
+        WHERE STATUS NOT IN ('DELETED') AND 
+        (STATUS_BY != #STATUS_BY:VARCHAR# AND 
+        ((AUTHORIZE_BY_1 IS NULL OR AUTHORIZE_BY_1 != #STATUS_BY:VARCHAR#) 
+        <!--(AUTHORIZE_BY_2 IS NULL  OR AUTHORIZE_BY_2 != #STATUS_BY#)-->)) 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = BRANCH_MASTER.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS_1 = 'EXCEPTION') <!--OR AUTHORIZE_STATUS_2 = 'EXCEPTION')--> 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS_1 IS NULL OR 
+                AUTHORIZE_STATUS_1 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+                         <!--OR 
+                         (AUTHORIZE_STATUS_2 IS NULL OR 
+                         AUTHORIZE_STATUS_2 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))-->
+            </isNotEqual>
+        </dynamic>
+        ORDER BY BRANCH_CODE
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeBranchSetup" result-class="java.util.HashMap">
+        UPDATE BRANCH_MASTER SET 
+        AUTHORIZE_STATUS_1 = DECODE (AUTHORIZE_STATUS_1, NULL, DECODE(AUTHORIZE_STATUS_2, NULL, #STATUS:VARCHAR#), AUTHORIZE_STATUS_1),
+       <!-- AUTHORIZE_STATUS_2 = DECODE (AUTHORIZE_STATUS_2, NULL, DECODE(AUTHORIZE_STATUS_1, NULL, NULL, #STATUS#), AUTHORIZE_STATUS_2),-->
+        AUTHORIZE_BY_1 = DECODE (AUTHORIZE_BY_1, NULL, DECODE(AUTHORIZE_BY_2, NULL, #USER_ID:VARCHAR#), AUTHORIZE_BY_1),
+        <!--AUTHORIZE_BY_2 = DECODE (AUTHORIZE_BY_2, NULL, DECODE(AUTHORIZE_BY_1, NULL, NULL, #USER_ID#), AUTHORIZE_BY_2),-->
+        AUTHORIZE_DT_1 = DECODE (AUTHORIZE_DT_1, NULL, DECODE(AUTHORIZE_DT_2, NULL, #AUTHORIZEDT:TIMESTAMP#), AUTHORIZE_DT_1),
+        AUTHORIZE_DT_2 = DECODE (AUTHORIZE_DT_2, NULL, DECODE(AUTHORIZE_DT_1, NULL, NULL, #AUTHORIZEDT:TIMESTAMP#), AUTHORIZE_DT_2)
+        WHERE BRANCH_CODE = #BRANCH CODE:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->    
+
+    <mapped-statement name="insertScreenAccessHistory" result-class="java.util.HashMap">
+        INSERT INTO SCREEN_ACCESS_HISTORY (USER_ID, APPL_DT, MODULE, SCREEN, BRANCH_ID , IP_ADDR, OPEN_TIME) 
+        VALUES (#USER_ID:VARCHAR#,(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#BRANCH_CODE#),
+        #MODULE:VARCHAR#, #SCREEN:VARCHAR#, #BRANCH_CODE:VARCHAR#, #IP_ADDR:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="updateScreenAccessHistory" result-class="java.util.HashMap">
+        UPDATE SCREEN_ACCESS_HISTORY SET CLOSE_TIME=(SELECT SYS_DATE() FROM DUAL) WHERE USER_ID=#USER_ID# AND MODULE=#MODULE#
+        AND SCREEN=#SCREEN# AND BRANCH_ID=#BRANCH_CODE# AND APPL_DT=#APPL_DT:DATE# AND CLOSE_TIME IS NULL
+    </mapped-statement>
+        
+</sql-map>

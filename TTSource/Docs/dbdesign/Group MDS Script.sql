@@ -1,0 +1,369 @@
+ALTER TABLE MDS_APPLICATION ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_APPLICATION ADD GROUP_NO VARCHAR2(20);
+
+ALTER TABLE MDS_RECEIPT_ENTRY ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_MASTER_MAINTENANCE ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_CHANGE_MEMBER ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_MONEY_PAYMENT_DETAILS ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_PRIZED_MONEY_DETAILS ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_TRANS_DETAILS ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_SCHEME_DETAILS ADD GROUP_NO VARCHAR2(15);
+
+ALTER TABLE MDS_PRODUCT_GENERAL_DETAILS add IS_BONUS_TRANSFER VARCHAR2(1) DEFAULT 'Y';
+
+ALTER TABLE MDS_BANK_ADVANCE ADD GDS_NO VARCHAR2(20);
+
+ALTER TABLE MDS_PRODUCT_GENERAL_DETAILS ADD IS_GDS VARCHAR2(1) DEFAULT 'N';
+
+ALTER TABLE MDS_MONEY_PAYMENT_DETAILS  ADD  GROUP_NO VARCHAR2(20);
+
+ALTER TABLE MDS_CLOSURE_DETAILS ADD GROUP_NO VARCHAR2(20);
+
+
+SET DEFINE OFF;
+Insert into ID_GENERATION
+   (ID_KEY, CURR_VALUE, PREFIX, LAST_UPDATED, ID_LENGTH, 
+    BRANCH_CODE)
+ Values
+   ('GDS_MDS_GROUPID', 52, 'GDS', TO_DATE('09/11/2017 00:00:00', 'MM/DD/YYYY HH24:MI:SS'), 6, 
+    '0001');
+COMMIT;
+
+SET DEFINE OFF;
+Insert into MODULE_MASTER
+   (MODULE_ID, MODULE_NAME, CREATED_DT, SL_NO, STATUS)
+ Values
+   ('36', 'GDS', TO_DATE('09/22/2017 00:00:00', 'MM/DD/YYYY HH24:MI:SS'), 42, 'CREATED');
+COMMIT;
+
+SET DEFINE OFF;
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR01254', '96', 'GDS Master Maintenance', 'APP01', 'DONE', 
+    '36', 'com.see.truetransact.ui.gdsapplication.gdsprizedmoneypayment.GDSPrizedMoneyPaymentUI', 42, 'CREATED', NULL, 
+    NULL, 'GDS Master Maintenance');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SRC01257', '97', 'GDS Closed Receipt Entry', 'APP01', 'DONE', 
+    '36', NULL, 42, 'CREATED', NULL, 
+    NULL, 'GDS Closed Receipt Entry');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR01248', '241', 'GDSApplication', 'APP01', 'DONE', 
+    '36', 'com.see.truetransact.ui.gdsapplication.GDSApplicationUI', 42, 'CREATED', NULL, 
+    NULL, 'GDS Application');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR01249', '93', 'GDSReceiptEntry', 'APP01', 'DONE', 
+    '36', 'com.see.truetransact.ui.gdsapplication.GDSReceiptEntry.GDSReceiptEntryUI', 42, 'CREATED', NULL, 
+    NULL, 'GDS ReceiptEntry');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR01252', '94', 'GDSCommencement', 'APP01', 'DONE', 
+    '36', 'com.see.truetransact.ui.gdsapplication.GDSCommencementUI', 42, 'CREATED', NULL, 
+    NULL, 'GDS Commencement');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR01250', '93', 'GDS Prized Money Details Entry', 'APP01', 'DONE', 
+    '36', NULL, 42, 'CREATED', NULL, 
+    NULL, 'GDS Prized Money Details Entry');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR01253', '95', 'GDS Prized Money Payment', 'APP01', 'DONE', 
+    '36', 'com.see.truetransact.ui.gdsapplication.gdsprizedmoneypayment.GDSPrizedMoneyPaymentUI', 42, 'CREATED', NULL, 
+    NULL, 'GDS Prized Money Payment');
+
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SRC01255', '97', 'GDS Standing Instruction', 'APP01', 'DONE', 
+    '36', 'com.see.truetransact.ui.gdsapplication.gdsStandingInstruction.GDSStandingInstructionUI', 42, 'CREATED', NULL, 
+    NULL, 'GDS Standing Instruction');
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SRC01256', '97', 'GDS Bank Advance', 'APP01', 'DONE', 
+    '36', NULL, 42, 'CREATED', NULL, 
+    NULL, 'GDS Bank Advance');
+COMMIT;
+
+SET DEFINE OFF;
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR03113', '99', 'Group MDS Deposit Product', 'APP01', 'DONE', 
+    '3', 'com.see.truetransact.ui.product.groupmdsdeposit.GroupMDSDepositUI', 8, 'CREATED', NULL, 
+    NULL, 'Group MDS Deposit Product');
+COMMIT;
+
+----------------------------------------------------------- PKGGDS -------------------------------------------------------------
+
+
+DROP TYPE TYPE_GDS_BNKADV;
+
+CREATE OR REPLACE TYPE TYPE_GDS_BNKADV AS OBJECT (
+ GROUP_NO  VARCHAR2(15),
+ division_no  INT,
+ CHITTAL_NO   VARCHAR2(15),
+ sub_no   VARCHAR2(1),
+ member_no   VARCHAR2(15), 
+ member_name   VARCHAR2(150), 
+ curr_inst_no INT, 
+ inst_date  DATE,
+ inst_amt NUMBER(19,2),
+ bonus NUMBER(19,2)
+ );
+/
+
+
+DROP TYPE TYPE_GDS_BNKADV;
+
+CREATE OR REPLACE TYPE TYPE_GDS_BNKADV AS OBJECT (
+ GROUP_NO  VARCHAR2(15),
+ division_no  INT,
+ CHITTAL_NO   VARCHAR2(15),
+ sub_no   VARCHAR2(1),
+ member_no   VARCHAR2(15), 
+ member_name   VARCHAR2(150), 
+ curr_inst_no INT, 
+ inst_date  DATE,
+ inst_amt NUMBER(19,2),
+ bonus NUMBER(19,2)
+ );
+/
+
+
+
+DROP TYPE TAB_TYPE_GDS_BNKADV;
+
+CREATE OR REPLACE TYPE TAB_TYPE_GDS_BNKADV
+ AS TABLE OF TYPE_GDS_BNKADV;
+/
+
+
+CREATE OR REPLACE PACKAGE PKGGDS
+AS
+   FUNCTION  GET_GDSBNKADV_DET(NOGRPCNT IN INT,NOGRPCNT1 IN INT,FRDT DATE,DT DATE,SCHEME  VARCHAR) RETURN TAB_TYPE_GDS_BNKADV;
+
+END PKGGDS;
+/
+
+CREATE OR REPLACE PACKAGE BODY PKGGDS
+ AS
+ FUNCTION  GET_GDSBNKADV_DET(NOGRPCNT IN INT,NOGRPCNT1 IN INT,FRDT DATE,DT DATE,SCHEME  VARCHAR   ) RETURN TAB_TYPE_GDS_BNKADV
+  AS
+  TABGDS_BNKADV  TAB_TYPE_GDS_BNKADV;
+  BEGIN
+   SELECT  TYPE_GDS_BNKADV (
+         GROUP_NO ,
+         division_no ,
+         CHITTAL_NO  ,
+         sub_no   ,
+         member_no   ,
+         member_name   ,
+         curr_inst_no ,
+         inst_date  ,
+         inst_amt ,
+         bonus 
+         )
+        BULK COLLECT INTO TABGDS_BNKADV FROM
+        (   
+        WITH  
+         ADVINST AS(
+          SELECT SCHEME_NAME,MAX(sl_no) AS SLNO,MAX(NEXT_INSTALLMENT_DATE) AS inst_date  FROM mds_prized_money_details MP WHERE  MP.SCHEME_NAME = SCHEME
+          AND  MP.status  IN ('CREATED','MODIFIED')  AND MP.AUTHORIZED_STATUS = 'AUTHORIZED' AND MP.NEXT_INSTALLMENT_DATE <=FRDT GROUP BY MP.SCHEME_NAME ), 
+         PRIZEDET AS 
+          (SELECT MP.SCHEME_NAME,SUM(total_bonus_amount) AS TOTBONUS FROM mds_prized_money_details MP ,ADVINST ADI WHERE  MP.SCHEME_NAME = SCHEME
+          AND  MP.status  IN ('CREATED','MODIFIED')  AND MP.AUTHORIZED_STATUS = 'AUTHORIZED' AND MP.NEXT_INSTALLMENT_DATE <= FRDT
+          AND  MP.SCHEME_NAME =  ADI.SCHEME_NAME AND sl_no =ADI.SLNO  GROUP BY MP.SCHEME_NAME),
+         REMITDET AS(
+          SELECT MT.scheme_name, MT.chittal_no,MT.sub_no, SUM (MT.no_of_inst) AS no_of_inst_paid
+          FROM mds_trans_details MT  WHERE   MT.SCHEME_NAME=SCHEME  AND  MT.status  = 'CREATED'
+          AND MT.authorize_status = 'AUTHORIZED'  GROUP BY MT.scheme_name, MT.chittal_no, MT.sub_no), 
+         BNKADV AS (
+         SELECT  MA.GROUP_NO, MA.division_no, MA.GDS_NO AS CHITTAL_NO, MA.sub_no,
+          MA.member_no, MA.member_name, AI.SLNO AS curr_inst_no, AI.inst_date,
+          (MA.inst_amt * NOGRPCNT) AS inst_amt,
+           (PT.TOTBONUS / MS.TOTAL_NO_OF_MEMBERS) * NOGRPCNT1 AS bonus,MA.scheme_name  AS scheme_name 
+           FROM mds_application MA, ADVINST AI, REMITDET RT,mds_scheme_details MS,PRIZEDET PT  
+          WHERE  RT.no_of_inst_paid <  AI.SLNO 
+          AND MA.scheme_name =  RT.scheme_name   AND ma.chittal_no = RT.chittal_no
+          AND MA.sub_no = RT.sub_no 
+          AND MS.SCHEME_NAME  =MA.scheme_name 
+          AND MS.SCHEME_NAME  =PT.scheme_name)  
+         SELECT BA.GROUP_NO,BA.division_no,BA.CHITTAL_NO,BA.sub_no,  BA.member_no, BA.member_name,  BA.curr_inst_no, BA.inst_date,BA.inst_amt,BA.bonus
+          FROM BNKADV BA 
+          LEFT JOIN MDS_BANK_ADVANCE MBA ON  MBA.SCHEME_NAME =BA.scheme_name  AND MBA.INSTALLMENT_NO = BA.curr_inst_no
+          AND MBA.INSTALLMENT_NO IS NULL ORDER BY BA.CHITTAL_NO);
+    
+    RETURN TABGDS_BNKADV;
+    END; 
+ END PKGGDS;
+/
+
+
+
+-- Postgress Script for Group MDS
+
+ALTER TABLE MDS_APPLICATION ADD GDS_NO VARCHAR(20);
+
+ALTER TABLE MDS_APPLICATION ADD GROUP_NO VARCHAR(20);
+
+ALTER TABLE MDS_MASTER_MAINTENANCE ADD GDS_NO VARCHAR(20);
+
+  ALTER TABLE MDS_TRANS_DETAILS ADD GDS_NO VARCHAR(20);
+
+  ALTER TABLE MDS_MONEY_PAYMENT_DETAILS ADD GDS_NO VARCHAR(20);
+
+  ALTER TABLE MDS_PRIZED_MONEY_DETAILS ADD GDS_NO VARCHAR(20);
+
+ALTER TABLE MDS_BANK_ADVANCE ADD GDS_NO VARCHAR(20);
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12345', '236', 'GDSApplication', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDSApplication');
+
+  SET DEFINE OFF;
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12346', '236', 'GDSCommencement', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDSCommencement');
+COMMIT;
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12347', '236', 'GDS Prized Money Details Entry', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDS Prized Money Details Entry');
+
+ALTER TABLE mds_bank_advance  ADD FORFEITED_AMT NUMERIC (19,2);
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12348', '236', 'GDS Bank Advance', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDS Bank Advance');
+
+ALTER TABLE mds_receipt_entry  ADD GDS_NO VARCHAR(20);
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12349', '236', 'GDSReceiptEntry', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDSReceiptEntry');
+
+ALTER TABLE MDS_CLOSURE_DETAILS ADD GROUP_NO VARCHAR(20);
+
+ALTER TABLE MDS_CHANGE_MEMBER ADD GDS_NO VARCHAR(20);
+
+Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12350', '236', 'GDS Master Maintenance', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDS Master Maintenance');
+
+ALTER TABLE MDS_MONEY_PAYMENT_DETAILS ADD GDS_NO VARCHAR(20);
+
+  Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12352', '236', 'GDS Prized Money Payment', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDS Prized Money Payment');
+   
+     Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12351', '236', 'GDS Change of Member', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDS Change of Member');
+
+  ALTER TABLE MDS_MONEY_PAYMENT_DETAILS ADD GROUP_NO VARCHAR(20);
+
+
+   Insert into SCREEN_MASTER
+   (SCREEN_ID, MENU_ID, SCREEN_NAME, APP_ID, WF_STATUS, 
+    MODULE_ID, SCREEN_CLASS, SL_NO, STATUS, SCREEN_TYPE, 
+    RECORD_KEY_COL, SCREEN_DESC)
+ Values
+   ('SCR12353', '236', 'GDS Standing Instruction', 'APP01', 'DONE', 
+    '44', NULL, 1, 'CREATED', NULL, 
+    NULL, 'GDS Standing Instruction');
+
+
+
+-- End

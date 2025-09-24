@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MultiLevelMasterTOMap">
+
+	<!-- Use MultiLevelMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertMultiLevelMasterTO" inline-parameters="true">
+        INSERT INTO LEVEL_MULTI
+        (LEVEL_MULTI_ID, AMOUNT, CONDITION, CASH_CREDIT, CASH_DEBIT, TRANSFER_CREDIT, 
+        TRANSFER_DEBIT, CLEARING_CREDIT, CLEARING_DEBIT, CREATED_BY, CREATED_DT, 
+        STATUS, STATUS_BY, STATUS_DT, AUTHORIZED_BY, AUTHORIZED_DT, AUTHORIZE_STATUS, POSTFIX_FORMULA
+        ) VALUES (
+        #levelMultiId:VARCHAR#, #amount:NUMERIC#, #condition:VARCHAR#, #cashCredit:VARCHAR#, 
+        #cashDebit:VARCHAR#, #transferCredit:VARCHAR#, #transferDebit:VARCHAR#, #clearingCredit:VARCHAR#, 
+        #clearingDebit:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, 
+        #statusDt:DATE#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #authorizeStatus:VARCHAR#, 
+        #postfixFormula:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use MultiLevelMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateMultiLevelMasterTO" inline-parameters="true">
+        UPDATE LEVEL_MULTI SET 
+        AMOUNT = #amount:NUMERIC#,
+        CONDITION = #condition:VARCHAR#,
+        CASH_CREDIT = #cashCredit:VARCHAR#,
+        CASH_DEBIT = #cashDebit:VARCHAR#,
+        TRANSFER_CREDIT = #transferCredit:VARCHAR#,
+        TRANSFER_DEBIT = #transferDebit:VARCHAR#,
+        CLEARING_CREDIT = #clearingCredit:VARCHAR#,
+        CLEARING_DEBIT = #clearingDebit:VARCHAR#,		
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,		
+        POSTFIX_FORMULA = #postfixFormula:VARCHAR#
+        WHERE LEVEL_MULTI_ID = #levelMultiId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use MultiLevelMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteStatusMultiLevelMasterTO" inline-parameters="true">
+        UPDATE LEVEL_MULTI SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE LEVEL_MULTI_ID = #levelMultiId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to MultiLevelMasterTO object (JavaBean) properties -->
+    <result-map name="getMultiLevelMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.levelcontrol.multilevel.MultiLevelMasterTO">
+        <property name="levelMultiId" column="LEVEL_MULTI_ID"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="condition" column="CONDITION"/>
+        <property name="cashCredit" column="CASH_CREDIT"/>
+        <property name="cashDebit" column="CASH_DEBIT"/>
+        <property name="transferCredit" column="TRANSFER_CREDIT"/>
+        <property name="transferDebit" column="TRANSFER_DEBIT"/>
+        <property name="clearingCredit" column="CLEARING_CREDIT"/>
+        <property name="clearingDebit" column="CLEARING_DEBIT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="postfixFormula" column="POSTFIX_FORMULA"/>
+    </result-map>
+    <mapped-statement name="getSelectMultiLevelMasterTO" result-map="getMultiLevelMasterTOResult" >
+        SELECT * FROM LEVEL_MULTI 
+        WHERE LEVEL_MULTI_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+        <!-- Use MultiLevelTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertMultiLevelTO" inline-parameters="true">
+        INSERT INTO LEVEL_MULTI_DETAILS
+        (LEVEL_MULTI_ID, LEVEL_ORDER, LEVEL_ID, NO_OF_PERSONS, LEVEL_CONDITION, STATUS, 
+        STATUS_BY, STATUS_DT
+        ) VALUES (
+        #levelMultiId:VARCHAR#, #levelOrder:VARCHAR#, #levelId:VARCHAR#, #noOfPersons:NUMERIC#, 
+        #levelCondition:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use MultiLevelTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateMultiLevelTO" inline-parameters="true">
+        UPDATE LEVEL_MULTI_DETAILS SET 		
+        LEVEL_ID = #levelId:VARCHAR#,
+        NO_OF_PERSONS = #noOfPersons:NUMERIC#,
+        LEVEL_CONDITION = #levelCondition:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE LEVEL_MULTI_ID = #levelMultiId:VARCHAR# and
+        LEVEL_ORDER = #levelOrder:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use MultiLevelTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteMultiLevelTO" inline-parameters="true">
+        UPDATE LEVEL_MULTI_DETAILS SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE LEVEL_MULTI_ID = #levelMultiId:VARCHAR# and
+        LEVEL_ORDER = #levelOrder:VARCHAR#
+    </mapped-statement>
+        
+        <!--
+        <mapped-statement name="deleteStatusMultiLevelTO" inline-parameters="true">
+		UPDATE LEVEL_MULTI_DETAILS SET
+                STATUS = #status:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		STATUS_DT = 
+		WHERE LEVEL_MULTI_ID = #levelMultiId:VARCHAR# and 
+                STATUS!='DELETED'
+	</mapped-statement>
+        -->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to MultiLevelTO object (JavaBean) properties -->
+    <result-map name="getMultiLevelTOResult" class="com.see.truetransact.transferobject.sysadmin.levelcontrol.multilevel.MultiLevelTO">
+        <property name="levelMultiId" column="LEVEL_MULTI_ID"/>
+        <property name="levelOrder" column="LEVEL_ORDER"/>
+        <property name="levelId" column="LEVEL_ID"/>
+        <property name="noOfPersons" column="NO_OF_PERSONS"/>
+        <property name="levelCondition" column="LEVEL_CONDITION"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectMultiLevelTO" result-map="getMultiLevelTOResult" >
+        SELECT * FROM LEVEL_MULTI_DETAILS 
+        WHERE LEVEL_MULTI_ID=#value:VARCHAR# and STATUS!='DELETED'
+    </mapped-statement>        
+        
+    <dynamic-mapped-statement name="Multi.viewLevelControl" result-class="java.util.LinkedHashMap">                
+        SELECT LEVEL_ID as "LEVEL_ID", LEVEL_NAME as "Level Name", 
+        LEVEL_DESC as "Level Description" FROM LEVEL_MASTER 
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        <dynamic>
+            <iterate prepend="AND LEVEL_ID NOT IN" property="LEVEL ID" open = "(" close=")" conjunction="," >
+                #LEVEL ID[]#
+            </iterate>
+        </dynamic>
+        <dynamic>
+           <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Level Name">
+                    UPPER(LEVEL_NAME) LIKE UPPER('%$Level Name$%')
+                </isNotNull>
+            </isParameterPresent>   
+          <isParameterPresent>
+                <isNotNull prepend="AND"   property="Level Description">
+                    UPPER(LEVEL_DESC) LIKE UPPER('%$Level Description$%')
+                </isNotNull>
+            </isParameterPresent>   
+        </dynamic>
+    </dynamic-mapped-statement>
+      
+    <mapped-statement name="Multi.getLevelName" result-class="java.util.HashMap" >
+        SELECT  LEVEL_NAME as "LEVEL_NAME" 
+        FROM LEVEL_MASTER 
+        WHERE LEVEL_ID = #LEVELID:VARCHAR#
+    </mapped-statement>      
+     
+    <dynamic-mapped-statement name="selectMultiLevel" result-class="java.util.LinkedHashMap" >
+        SELECT LEVEL_MULTI_ID,AMOUNT,CONDITION,POSTFIX_FORMULA 
+        FROM LEVEL_MULTI 
+        where status!='DELETED' and 
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+           <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="LEVEL_MULTI_ID">
+                    UPPER(LEVEL_MULTI_ID) LIKE UPPER('%$LEVEL_MULTI_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="AMOUNT">
+                    UPPER(AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CONDITION">
+                    UPPER(CONDITION) LIKE UPPER('%$CONDITION$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="POSTFIX_FORMULA">
+                    UPPER(POSTFIX_FORMULA) LIKE UPPER('%$POSTFIX_FORMULA$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>           
+            
+    <mapped-statement name="getMaxLevelOrder" result-class="java.lang.Integer" >
+        SELECT count(*) FROM LEVEL_MULTI_DETAILS
+        WHERE LEVEL_MULTI_ID = #value:VARCHAR#
+    </mapped-statement>     
+     
+    <mapped-statement name="selectMultiLevelAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT LEVEL_MULTI_ID,AMOUNT,CONDITION,POSTFIX_FORMULA,STATUS, AUTHORIZED_BY,
+        AUTHORIZED_DT, AUTHORIZE_STATUS
+        FROM LEVEL_MULTI 
+        where (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or 
+        AUTHORIZE_STATUS is null) AND STATUS_BY != #USER_ID:VARCHAR#
+    </mapped-statement>     
+     
+    <mapped-statement name="authorizeMultiLevelMasterTO" inline-parameters="true">
+        UPDATE LEVEL_MULTI SET      
+        AUTHORIZE_STATUS = #AUTHO_STATUS:VARCHAR#,
+        AUTHORIZED_DT = #AUTHO_DATE:TIMESTAMP#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        STATUS = #STATUS:VARCHAR#
+        WHERE LEVEL_MULTI_ID = #LEVEL_MULTI_ID:VARCHAR#
+    </mapped-statement>    
+    
+    <!--
+     <mapped-statement name="checkDuplicatMultiLevelMasterTO" inline-parameters="true" 
+                result-class="java.util.HashMap">
+            select LEVEL_MULTI_ID from LEVEL_MULTI where
+            AMOUNT=#AMOUNT:VARCHAR# and CONDITION=#CONDITION:VARCHAR# and 
+            CASH_CREDIT=#CASH_CREDIT:VARCHAR# and 
+            CASH_DEBIT=#CASH_DEBIT:VARCHAR#
+            and TRANSFER_CREDIT=#TRANS_CREDIT:VARCHAR# and 
+            TRANSFER_DEBIT=#TRANS_DEBIT:VARCHAR# and 
+            CLEARING_CREDIT=#CLEARING_CREDIT:VARCHAR# and 
+            CLEARING_DEBIT=#CLEARING_DEBIT:VARCHAR# and STATUS!='DELETED'
+            and (AUTHORIZE_STATUS!='REJECTED' or AUTHORIZE_STATUS is null) and
+            LEVEL_MULTI_ID!=nvl(#LEVEL_MULTI_ID:VARCHAR#,' ')
+     </mapped-statement>    
+     -->
+     
+     <!--select this query if deleted and authorized entries shuld only be consider. 
+            otherwise deleted rejected will be give duplicate entries.-->      
+    <mapped-statement name="checkDuplicatMultiLevelMasterTO" inline-parameters="true" 
+                        result-class="java.util.HashMap">
+        select LEVEL_MULTI_ID from LEVEL_MULTI where
+        AMOUNT=#AMOUNT:VARCHAR# and CONDITION=#CONDITION:VARCHAR# and 
+        (CASH_CREDIT = decode(#CASH_CREDIT:VARCHAR#,'N','','Y') or
+        CASH_DEBIT = decode(#CASH_DEBIT:VARCHAR#,'N','','Y') or 
+        TRANSFER_CREDIT = decode(#TRANS_CREDIT:VARCHAR#,'N','','Y') or
+        TRANSFER_DEBIT = decode(#TRANS_DEBIT:VARCHAR#,'N','','Y') or
+        CLEARING_CREDIT = decode(#CLEARING_CREDIT:VARCHAR#,'N','','Y') or
+        CLEARING_DEBIT = decode(#CLEARING_DEBIT:VARCHAR#,'N','','Y') ) and (
+        (STATUS!='DELETED' and (AUTHORIZE_STATUS!='REJECTED' or AUTHORIZE_STATUS is null)) or
+        (STATUS='DELETED' and (AUTHORIZE_STATUS is null or AUTHORIZE_STATUS!='AUTHORIZED')) 
+        )      and      	
+        LEVEL_MULTI_ID!=nvl(#LEVEL_MULTI_ID:VARCHAR#,' ')
+    </mapped-statement>    
+        
+</sql-map>

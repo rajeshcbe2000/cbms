@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BorrowingsMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <dynamic-mapped-statement name="Indend.getSelectIndendList" result-class="java.util.LinkedHashMap" >
+        SELECT IRID, TRANS_TYPE ,AMOUNT FROM INDEND_REGISTER  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL ) AND AUTHORIZE_STATUS IS NULL
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "IRID" >
+                    UPPER(IRID) LIKE UPPER('%$IRID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AMOUNT" >
+                    UPPER(AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRANS_TYPE" >
+                    UPPER(TRANS_TYPE) LIKE UPPER('%$TRANS_TYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Indend.getSelectIndendListforEdit" result-class="java.util.LinkedHashMap" >
+        SELECT IRID, TRANS_TYPE,TRAN_DATE as TRANS_DT,NAME  FROM INDEND_REGISTER left outer join
+        INDEND_SUPPLIER_MASTER on supplier_id=supply_id
+        WHERE (INDEND_REGISTER.STATUS != 'DELETED' OR INDEND_REGISTER.STATUS IS NULL ) AND (INDEND_REGISTER.AUTHORIZE_STATUS IS NULL OR
+        (INDEND_REGISTER.AUTHORIZE_STATUS !='REJECTED'))
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "IRID" >
+                    UPPER(IRID) LIKE UPPER('%$IRID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRANS_DT" >
+                    UPPER(TRAN_DATE) LIKE UPPER('%$TRANS_DT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRANS_TYPE" >
+                    UPPER(TRANS_TYPE) LIKE UPPER('%$TRANS_TYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "NAME" >
+                    UPPER(NAME) LIKE UPPER('%$NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Indend.getIndendDepos" result-class="java.util.HashMap" >
+        SELECT DEPID,DEPO_NAME FROM DEPO_MASTER  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL )
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DEPID" >
+                    UPPER(DEPID) LIKE UPPER('%$DEPID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DEPO_NAME" >
+                    UPPER(DEPO_NAME) LIKE UPPER('%$DEPO_NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="Indend.getStoreName" result-class="java.util.HashMap" >
+        SELECT sm.NAME,sm.GEN_TRANS FROM DEPO_MASTER  dm ,STORE_MASTER sm 
+        WHERE (dm.STATUS != 'DELETED' OR dm.STATUS IS NULL ) AND dm.STORE_ID=sm.STNUMBER AND dm.DEPID=#DEPID# 
+    </mapped-statement> 
+    <mapped-statement name="getIndendTableData" result-class="java.util.HashMap" >
+        SELECT DEPID,TRANS_TYPE,STORE_NAME,PURCHASE_AMT,AMOUNT FROM INDEND_REGISTER
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL )
+    </mapped-statement> 
+     
+    <mapped-statement name="getIndendSalesmanName" result-class="java.util.HashMap" >
+        select sm.name as salesname from sales_master sm,depo_master dm where sm.smid=dm.sales_id and dm.depid = #DEP_ID:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="insertIndendTO" inline-parameters="true">
+        INSERT INTO INDEND_REGISTER
+        (IRID, DEPID, TRANS_TYPE, PURCHASE_AMT,AMOUNT,TRAN_DATE,REMARK, 
+        AUTHORIZE_STATUS, AUTHORIZED_BY, AUTHORIZED_DT, STATUS,STORE_NAME,VAT_AMT,PURCH_BILL_NO,TIN_NO,SALES_DATE,
+        OTHER_EXP_INCOME, MISC_INCOME, COMM_RECIEVED, VAT_IND_AMT, SUPPLIER_ID,BILL_DATE,NARRATION,STORE_INDENT_NO,SL_NO,STATUS_BY,
+        BRANCH_CODE,OTHER_INCOME,SGST_AMT,CGST_AMT,INDENT_HEADS,ROUND_OFF) VALUES         
+        (#strIRNo:VARCHAR#, #depoId:VARCHAR#, #transType:VARCHAR#, #purAmount:NUMBER#, 
+        #amount:NUMBER#, #dateIndand:DATE#,#strIRNo:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#storeName:VARCHAR#,#vatAmt:NUMBER#,#purchBillNo:VARCHAR#,
+        #tinNo:VARCHAR#,#salesDate:DATE#,#othrExpAmt:NUMBER#,#miscAmt:NUMBER#,#commRecvdAmt:NUMBER#,#vatIndAmt:NUMBER#,#supplier:VARCHAR#,
+        #billDate:DATE#,#narration:VARCHAR#,#stIndentNo:VARCHAR#,#slNo:NUMBER#,#statusBy:VARCHAR#,#branch:VARCHAR#,#otherIncome:NUMBER#,#sgstAmt:NUMBER#,#cgstAmt:NUMBER#,#cboIndentHeads:varchar#,#roundOffAmt:NUMBER#)
+    </mapped-statement> 
+    <mapped-statement name="updateIndendTO" inline-parameters="true">
+        UPDATE INDEND_REGISTER SET 
+        DEPID = #depoId:VARCHAR#,
+        TRANS_TYPE = #transType:VARCHAR#,
+        PURCHASE_AMT= #purAmount:NUMBER#,
+        AMOUNT= #amount:NUMBER#,
+        TRAN_DATE = #dateIndand:DATE#,
+        REMARK =#strIRNo:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+        STORE_NAME=#storeName:VARCHAR#,
+        VAT_AMT=#vatAmt:NUMBER#,
+        PURCH_BILL_NO=#purchBillNo:VARCHAR#,
+        TIN_NO=#tinNo:VARCHAR#,
+        SALES_DATE=#salesDate:DATE#,
+        VAT_IND_AMT=#vatIndAmt:NUMBER#,
+        NARRATION=#narration:VARCHAR#,
+        STORE_INDENT_NO=#stIndentNo#,
+        STATUS_BY=#statusBy:VARCHAR#,
+        INDENT_HEADS=#cboIndentHeads:varchar#
+        WHERE IRID = #strIRNo:VARCHAR# AND SL_NO = #slNo:NUMBER# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deleteIndendTO" inline-parameters="true">
+        UPDATE INDEND_REGISTER SET 
+        STATUS = #status:VARCHAR#,STATUS_BY=#statusBy:VARCHAR# 
+        WHERE IRID = #strIRNo:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+       
+    <result-map name="get-getRoleSupp-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SUPPLY_ID" />
+        <property name="lookUpDesc" column="NAME" />
+    </result-map> 
+    <mapped-statement name="getAllSupplierName" result-map="get-getRoleSupp-result"> 
+        select SUPPLY_ID,name from indend_supplier_master order by name 
+    </mapped-statement>
+        
+        
+        
+    <mapped-statement name="getAllSupplierName1" result-class="java.util.LinkedHashMap"> 
+        select name as NAME,supply_id as KEY from indend_supplier_master where status!='DELETED'
+    </mapped-statement>
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getIndendAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  DISTINCT CASE
+        WHEN AT.TRANS_MODE = 'TRANSFER'
+        THEN AT.BATCH_ID
+        ELSE AT.TRANS_ID
+        END AS TRANS_ID,AC.IRID, AC.TRANS_TYPE ,AT.AMOUNT FROM INDEND_REGISTER AC ,ALL_TRANS AT
+        WHERE  AT.LINK_BATCH_ID=AC.IRID
+        AND AT.TRANS_DT=#TRANS_DT:DATE#
+        AND ( AC.STATUS = 'CREATED' OR AC.STATUS = 'UPDATED' OR AC.STATUS = 'MODIFIED' )
+        AND AT.BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        AND AC.STATUS_BY!=#USER_ID:VARCHAR# <!--//jiby-->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AC.AUTHORIZE_STATUS IS NULL OR 
+                AC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        and at.INSTRUMENT_NO2 = AC.DEPID     
+        ORDER BY  AC.IRID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getIndendLiabilityAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  ac.irid, ac.trans_type, ac.PURCHASE_AMT,VAT_IND_AMT
+        FROM indend_register ac
+        WHERE ac.status != 'DELETED'
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND ac.status_by != #USER_ID:VARCHAR#
+        AND AC.TRANS_TYPE IN('Purchase','Purchase Return')
+        <!--AND AC.AMOUNT=0-->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AC.AUTHORIZE_STATUS IS NULL OR 
+                AC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        UNION ALL
+        SELECT  ac.irid, ac.trans_type, ac.PURCHASE_AMT,VAT_IND_AMT
+        FROM indend_register ac
+        WHERE ac.status != 'DELETED'
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND ac.status_by != #USER_ID:VARCHAR#
+        AND AC.TRANS_TYPE IN('Sales','Sales Return')
+        AND AC.PURCHASE_AMT='0' 
+        <!--AND AC.AMOUNT!=0-->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AC.AUTHORIZE_STATUS IS NULL OR 
+                AC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY irid      
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getCountForReceiptCashierAuthorize" result-class="java.util.LinkedHashMap"> 
+        SELECT COUNT(link_batch_id) AS COUNT FROM CASH_TRANS WHERE link_batch_id = #IRID:VARCHAR# AND trans_type = 'CREDIT' AND payment_status IS NULL
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getIndendCashierAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  DISTINCT CASE
+        WHEN AT.TRANS_MODE = 'TRANSFER'
+        THEN AT.BATCH_ID
+        ELSE AT.TRANS_ID
+        END AS TRANS_ID,TC.IRID, TC.TRANS_TYPE ,TC.AMOUNT FROM INDEND_REGISTER TC ,ALL_TRANS AT
+        WHERE  AT.TRANS_DT=#TRANS_DT:DATE# AND AT.link_batch_id= TC.IRID AND  
+        CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED' ELSE AT.PAYMENT_STATUS END IS NOT NULL AND ( TC.STATUS = 'CREATED' OR TC.STATUS = 'UPDATED' OR TC.STATUS = 'MODIFIED' )
+        AND TC.STATUS_BY!=#USER_ID:VARCHAR#<!--jiby-->
+        AND AT.BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TC.AUTHORIZE_STATUS IS NULL OR 
+                TC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+
+        
+        UNION 
+        SELECT  DISTINCT CASE
+        WHEN AT.TRANS_MODE = 'TRANSFER'
+        THEN AT.BATCH_ID
+        ELSE AT.TRANS_ID
+        END AS TRANS_ID,TC.IRID, TC.TRANS_TYPE ,TC.AMOUNT FROM INDEND_REGISTER TC ,ALL_TRANS AT
+        WHERE  AT.TRANS_DT=#TRANS_DT:DATE# AND AT.link_batch_id= TC.IRID AND  
+        CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN NULL ELSE AT.PAYMENT_STATUS END IS  NULL AND AT.TRANS_TYPE='DEBIT' AND ( TC.STATUS = 'CREATED' OR TC.STATUS = 'UPDATED' OR TC.STATUS = 'MODIFIED' )
+        AND TC.STATUS_BY!=#USER_ID:VARCHAR# <!--jiby-->
+        AND AT.BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TC.AUTHORIZE_STATUS IS NULL OR 
+                TC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+               
+
+       <!-- ORDER BY  TC.IRID -->
+
+    </dynamic-mapped-statement>   
+    <mapped-statement name="authorizeIndend" result-class="java.util.HashMap">
+        UPDATE INDEND_REGISTER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  IRID = #IRID:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="getSelectTransferTransForauthorize" result-class="java.util.HashMap">
+        SELECT * FROM transfer_trans 
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# AND (AUTHORIZE_STATUS IS NULL
+        OR AUTHORIZE_STATUS = 'EXCEPTION') AND STATUS !='DELETED' AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getIndendTOResult" class="com.see.truetransact.transferobject.indend.IndendTO">
+        <property name="strIRNo" column="IRID"/>
+        <property name="depoId" column="DEPID"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="purAmount" column="PURCHASE_AMT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="dateIndand" column="TRAN_DATE"/>
+        <property name="strIRNo" column="REMARK"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="storeName" column="STORE_NAME"/>
+        <property name="vatIndAmt" column="VAT_IND_AMT"/>
+        <property name="vatAmt" column="VAT_AMT"/>
+        <property name="purchBillNo" column="PURCH_BILL_NO"/>
+        <property name="tinNo" column="TIN_NO"/>
+        <property name="salesDate" column="SALES_DATE"/>
+        <property name="othrExpAmt" column="OTHER_EXP_INCOME"/>
+        <property name="miscAmt" column="MISC_INCOME"/>
+        <property name="commRecvdAmt" column="COMM_RECIEVED"/>
+        <property name="supplier" column="SUPPLIER_ID"/>
+        <property name="billDate" column="BILL_DATE"/>
+        <property name="narration" column="NARRATION"/>
+        <property name="stIndentNo" column="STORE_INDENT_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="branch" column="BRANCH_CODE"/>
+        <property name="netAmount" column="NET_AMOUNT"/>
+        <property name="otherIncome" column="OTHER_INCOME"/>
+        <property name="cgstAmt" column="CGST_AMT"/>
+        <property name="sgstAmt" column="SGST_AMT"/>
+        <property name="cboIndentHeads" column="INDENT_HEADS"/>
+        <property name="roundOffAmt" column="ROUND_OFF"/>
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="Indend.getSelectIndend" result-map="getIndendTOResult" >
+        SELECT INDEND_REGISTER.*,
+        CASE
+        WHEN TRANS_TYPE IN ('Purchase','Sales Return')
+        THEN (  NVL (cast(AMOUNT as numeric), 0)
+        + NVL (VAT_AMT, 0)
+        + NVL(CGST_AMT,0)
+        + NVL(SGST_AMT,0)
+        + NVL(ROUND_OFF,0)
+        + NVL (OTHER_EXP_INCOME, 0)
+        - NVL (COMM_RECIEVED, 0)
+        - NVL (MISC_INCOME, 0)
+        )
+        WHEN TRANS_TYPE IN ('Sales','Purchase Return','Deficite','Damage')
+        THEN (NVL (cast(AMOUNT as numeric), 0) 
+        + NVL (VAT_AMT, 0) 
+        + NVL (MISC_INCOME, 0))+ NVL(CGST_AMT,0) + NVL(SGST_AMT,0) + NVL(ROUND_OFF,0)               
+        END AS NET_AMOUNT FROM INDEND_REGISTER 
+        WHERE STATUS NOT IN ('DELETED') AND IRID = #IRID:VARCHAR#
+        ORDER BY IRID,SL_NO
+		<!--SELECT BORROWING_NO, AGENCY_CODE, BORRWING_REFNO, TYPE, DESCRIPTION,
+                SANCTION_DATE,SANCTION_AMT,AMOUNT_BORRWED,RATE_INTEREST,NO_OF_INSTALLMENTS,
+                PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,SANCTION_EXP_DATE,SECURITY_DET,PRINCIPAL_GRP_HEAD,
+                INT_GRP_HEAD,PENAL_GRP_HEAD,CHARGES_GRP_HEAD FROM BORROWING_MASTER 
+		WHERE STATUS NOT IN ('DELETED')  and AUTHORIZE_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO#-->
+    </mapped-statement>
+    <mapped-statement name="Indend.getAcHeadsVatPur" result-class="java.util.HashMap">
+        SELECT PUR_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsVatPurRtn" result-class="java.util.HashMap">
+        SELECT PUR_RTN_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement>
+    <mapped-statement name="Indend.getAcHeadsVatSale" result-class="java.util.HashMap">
+        SELECT SALE_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement>
+    <mapped-statement name="Indend.getAcHeadsVatSaleRtn" result-class="java.util.HashMap">
+        SELECT SALE_RTN_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement>
+    <mapped-statement name="Indend.getAcHeadsVatDamage" result-class="java.util.HashMap">
+        SELECT DAM_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement>
+    <mapped-statement name="Indend.getAcHeadsVatDeficite" result-class="java.util.HashMap">
+        SELECT DEF_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsMisc" result-class="java.util.HashMap">
+        SELECT MISC_INCOME_HEAD,OTHR_INC_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsComm" result-class="java.util.HashMap">
+        SELECT COMM_RECVD_HEAD FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsOthrExpnse" result-class="java.util.HashMap">
+        SELECT OTHER_EXP_HEAD FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsPurchase" result-class="java.util.HashMap">
+        SELECT PURCHASE_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsSale" result-class="java.util.HashMap">
+        SELECT SALES_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsPurchaseReturn" result-class="java.util.HashMap">
+        SELECT PUR_RET_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsSalesReturn" result-class="java.util.HashMap">
+        SELECT SALES_RET_AC_HD_ID,SALES_RET_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsDamage" result-class="java.util.HashMap">
+        SELECT DAMAGE_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="Indend.getAcHeadsDeficiate" result-class="java.util.HashMap">
+        SELECT DEFICIATE_HC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    <mapped-statement name="getSelectTinNo" result-class="java.util.HashMap">
+        select TIN_NUMBER from indend_supplier_master WHERE NAME = #SUPPLIERNAME:VARCHAR#    
+    </mapped-statement>
+
+    <mapped-statement name="getIndendSupplier" result-class="java.util.HashMap">
+        SELECT NAME FROM INDEND_SUPPLIER_MASTER WHERE  SUPPLY_ID = #SUPPLY_ID:VARCHAR#         
+    </mapped-statement>
+    
+    <mapped-statement name="getIndendSupplierSuspenseAcHd" result-class="java.util.HashMap">
+        SELECT SUSPENSE_ACHD FROM INDEND_SUPPLIER_MASTER WHERE  SUPPLY_ID = #SUPPLY_ID:VARCHAR#         
+    </mapped-statement>
+    
+    <mapped-statement name="deleteCashtransForIndendEdit" result-class="java.util.HashMap">
+        Update cash_trans set status='DELETED' where link_batch_id = #IRID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteTransfertransForIndendEdit" result-class="java.util.HashMap">
+        Update transfer_trans set status='DELETED' where link_batch_id = #IRID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectAuthorizeStatusForIndendEditAfterAuthorize" result-class="java.util.HashMap">
+        select authorize_status from indend_register where irid = #IRID:VARCHAR#  
+    </mapped-statement>
+    <mapped-statement name="updateVatIndAmtAndLiabilityAmtForIndendEditAfterAuthorize" result-class="java.util.HashMap">
+        update indend_register set VAT_IND_AMT = #VATINDAMT:VARCHAR#,purchase_amt = #LIABTY_AMT:VARCHAR# where irid = #IRID:VARCHAR# and sl_no = #SLNO:NUMBER#
+    </mapped-statement>
+    <mapped-statement name="Indend.getAcHeads" result-class="java.util.HashMap">
+        SELECT PURCHASE_AC_HD_ID,PUR_RET_AC_HD_ID,SALES_AC_HD_ID,SALES_RET_AC_HD_ID,
+        DAMAGE_AC_HD_ID,DEFICIATE_HC_HD_ID,DISCOUNT_AC_HD_ID,
+        DISCOUNT_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement>    
+    
+    <mapped-statement name="Indend.getGSTActHeads" result-class="java.util.HashMap">
+        SELECT D.CGST_AC_HD_ID,D.SGST_AC_HD_ID,
+        D.SALES_CGST_AC_HD_ID,D.SALES_SGST_AC_HD_ID
+        FROM DEPO_MASTER d
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getReserveDepreciationHeads" result-class="java.util.HashMap">
+        SELECT AC_HD_ID ||' - '||GETACHD_DESC(AC_HD_ID) AC_HD_ID, INC_AC_HD ||' - '||GETACHD_DESC(INC_AC_HD) INC_AC_HD,
+        EXP_AC_HD ||' - '||GETACHD_DESC(EXP_AC_HD) EXP_AC_HD FROM RESERVE_DEPRECIATION_ACHD 
+        UNION
+        SELECT B.AC_HD_ID||' - '||GETACHD_DESC(B.AC_HD_ID) AC_HD_ID, '' INC_AC_HD,'' EXP_AC_HD  FROM MJR_AC_HD A, AC_HD B WHERE A.STATUS!='DELETED' AND A.AUTHORIZE_STATUS='AUTHORIZED'  AND 
+        B.STATUS!='DELETED' AND B.AUTHORIZE_STATUS='AUTHORIZED' AND A.MJR_AC_HD_ID=B.MJR_AC_HD_ID AND
+        SUB_ACCOUNT_TYPE IN('DEPRECIATION','RESERVE') 
+        AND AC_HD_ID NOT IN(SELECT AC_HD_ID FROM RESERVE_DEPRECIATION_ACHD )
+        ORDER BY 1
+    </mapped-statement>
+    
+    <mapped-statement name="getComboboxAcHDHeads" result-class="java.util.HashMap">
+        SELECT B.AC_HD_ID AS KEY,B.AC_HD_ID||' - '||AC_HD_DESC AS VALUE FROM MJR_AC_HD A, AC_HD B WHERE A.STATUS!='DELETED' AND 
+        A.AUTHORIZE_STATUS='AUTHORIZED' AND B.STATUS!='DELETED' AND B.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        A.MJR_AC_HD_ID=B.MJR_AC_HD_ID AND MJR_AC_HD_TYPE = #MJR_AC_HD_TYPE:VARCHAR# ORDER BY 1
+    </mapped-statement>
+    
+    <mapped-statement name="insertReserveDepAcHdDetails" result-class="java.util.HashMap">
+         call RDACHD_UPDATE(#AC_HD_ID:VARCHAR#, #INC_AC_HD:VARCHAR#, #EXP_AC_HD:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="Indend.getAcHeadsDicount" result-class="java.util.HashMap">
+        SELECT DISCOUNT_AC_HD_ID,DISCOUNT_VAT_AC_HD_ID FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    
+    
+     <mapped-statement name="Indend.getAcHeadsPurchaseSuspenseDicount" result-class="java.util.HashMap">
+        SELECT SUSPENSE_DISCOUNT_ACHD FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#  
+    </mapped-statement> 
+    
+    
+       <mapped-statement name="Indend.getRoundOffActHeads" result-class="java.util.HashMap">
+        SELECT D.ROUND_OFF_AC_HD_ID
+        FROM DEPO_MASTER d
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND DEPID = #DEPID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getPruchaseBillCount" result-class="java.util.HashMap">
+        select count(*) as BILL_CNT from INDEND_REGISTER ir where 
+        ir.INDENT_HEADS = 'Purchase' 
+        and ir.depid = #DEPID:VARCHAR#
+        and ir.SUPPLIER_ID = #SUPPLIER_ID:VARCHAR#
+        and ir.PURCH_BILL_NO = #PURCH_BILL_NO:VARCHAR# 
+        and ir.tran_date &lt; #TRAN_DATE:DATE# 
+    </mapped-statement>
+    
+    
+    
+</sql-map>

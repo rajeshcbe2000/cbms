@@ -1,0 +1,1054 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="DepositsProductMap">
+
+<!-- Use DepositsProductTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductTO" inline-parameters="true">
+        INSERT INTO DEPOSITS_PRODUCT
+        (PROD_ID, PROD_DESC, ACCT_HEAD, BEHAVES_LIKE, REMARKS, STATUS, AUTHORIZE_STATUS, AUTHORIZE_USER, AUTHORIZE_DT, BASE_CURRENCY, CREATED_BY, CREATED_DT, STATUS_BY, STATUS_DT, AUTHORIZE_REMARK, IS_GROUP_DEPOSIT
+        ) VALUES (
+        #prodId:VARCHAR#, #prodDesc:VARCHAR#, #acctHead:VARCHAR#, #behavesLike:VARCHAR#, #remarks:NUMBER#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#, #baseCurrency:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeRemark:NUMBER#, #isGroupDepositProduct:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use DepositsProductTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductTO" inline-parameters="true">
+        UPDATE DEPOSITS_PRODUCT SET 
+        PROD_ID = #prodId:VARCHAR#,
+        PROD_DESC = #prodDesc:VARCHAR#,
+        ACCT_HEAD = #acctHead:VARCHAR#,
+        BEHAVES_LIKE = #behavesLike:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        BASE_CURRENCY = #baseCurrency:VARCHAR#,
+	<!-- CREATED_BY = #createdBy:VARCHAR#,
+	CREATED_DT = #createdDt:DATE#,-->
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_REMARK = #authorizeRemark:VARCHAR#,
+        IS_GROUP_DEPOSIT = #isGroupDepositProduct:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getFD" result-map="getDepositsProductTOResult1" >
+        select PROD_ID,PROD_DESC from DEPOSITS_PRODUCT where BEHAVES_LIKE='FIXED'
+    </mapped-statement>
+    <result-map name="getDepositsProductTOResult1" class="com.see.truetransact.transferobject.product.deposits.DepositsProductTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+    </result-map>
+
+<!-- Use DepositsProductTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductTO" inline-parameters="true">
+        UPDATE DEPOSITS_PRODUCT SET
+        STATUS =  #status:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+        <property name="acctHead" column="ACCT_HEAD"/>
+        <property name="behavesLike" column="BEHAVES_LIKE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZE_USER"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="baseCurrency" column="BASE_CURRENCY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeRemark" column="AUTHORIZE_REMARK"/>
+        <property name="isGroupDepositProduct" column="IS_GROUP_DEPOSIT"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositsProductTO" result-map="getDepositsProductTOResult" >
+        SELECT * FROM DEPOSITS_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectDepositsProductTO1" result-map="getDepositsProductTOResult" >
+        SELECT * FROM DEPOSITS_PRODUCT 
+        WHERE PROD_ID =#PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+ <!--*******************************************************************************-->
+<!-- Use DepositsProductSchemeTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductSchemeTO" inline-parameters="true">
+        INSERT INTO DEPOSITS_PROD_SCHEME
+        (PROD_ID, CALCULATE_TDS, PAYINT_DEP_MATURITY, MATURITY_AMT_ROUND, ROUNDOFF_CRITERIA, INTPAID_AFTERMATURITY, AFTERMATURITY_INTTYPE, AFTERMATURITY_INTRATE, 
+        DEPOSIT_PER_UNIT, MIN_DEPOSIT_PERIOD, MAX_DEPOSIT_PERIOD, PERIOD_MULTIPLES, MIN_DEPOSIT_AMT, MAX_DEPOSIT_AMT, AMT_MULTIPLES, CALC_MATURITY_VALUE, TRANS_MATURED_DEP, 
+        AFTER_DAYS, ADV_MATURITY_GENPD, PROV_INTMATURED_DEP, INT_MATURED_DEP, PARTIAL_WITHDRAWAL, NO_PARTIAL_WITHDRAWAL, MAX_AMT_WITHDRAWAL, MAX_NO_WITHDRAWAL_YR, 
+        MIN_AMT_WITHDRAWAL, WITHDRAWAL_MULTI, WITHDRAWAL_INTEREST, SERVICE_CHARGE_ALLOWED, SERVICE_CHARGE, EXT_DEP_MATURITY, ADJ_MATURITY_LOAN, ADJ_INT_LIEN, ADJ_PRIN_LOAN_LIEN, PREMATURE_WITHDRAWAL, 
+        FLEXI_SB_CA, TD_SECURITY_OD, ACNUM_PATTERN, ALPHA_SUFFIX_TDREC, MAX_AMT_CASH, MIN_AMT_PAN, INTRO_REQUIRED, SCHEME_INTRO_DT, CERTIFICATE_PRINTING, LIMIT_BULK_DEPOSIT, 
+        AFTER_NO_DAYS,DISCOUNTED_RATE,SCHEME_CLOSING_DT,TYPES_OF_DEPOSIT,STAFF_ACCOUNT,DOUBLING_SCHEME,FLOATING_WITH_PERIOD,FD_RENEW_SAMENO_TRAN_PRINC_AMT,EXCLUDE_LIEN_FRM_INTRST_APPL,
+        EXCLUDE_LIEN_FRM_STANDING,CUMM_CERTIFICATE_PRINT,DEPOSIT_UNLIEN,ZERO_BAL_ACT_OPNG,DOUBLING_COUNT,AGENT_COMM_SLAB_REQUIRED,AGENT_COMM_CALC_METHOD
+        ) VALUES (
+        #prodId:VARCHAR#, #calculateTds:VARCHAR#, #payintDepMaturity:VARCHAR#, #maturityAmtRound:VARCHAR#, #roundoffCriteria:VARCHAR#, #intpaidAftermaturity:VARCHAR#, 
+        #aftermaturityInttype:VARCHAR#, #aftermaturityIntrate:VARCHAR#, #depositPerUnit:NUMERIC#, #minDepositPeriod:NUMERIC#, #maxDepositPeriod:NUMERIC#, 
+        #periodMultiples:NUMERIC#, #minDepositAmt:NUMERIC#, #maxDepositAmt:NUMERIC#, #amtMultiples:NUMERIC#, #calcMaturityValue:VARCHAR#, #transMaturedDep:VARCHAR#, 
+        #afterDays:NUMERIC#, #advMaturityGenpd:NUMERIC#, #provIntmaturedDep:VARCHAR#, #intMaturedDep:NUMERIC#, #partialWithdrawal:VARCHAR#, #noPartialWithdrawal:NUMERIC#, 
+        #maxAmtWithdrawal:NUMERIC#, #maxNoWithdrawalYr:NUMERIC#, #minAmtWithdrawal:NUMERIC#, #withdrawalMulti:NUMERIC#, #withdrawalInterest:VARCHAR#, #serviceCharge:VARCHAR#,
+        #serviceChargePer:NUMERIC#, #extDepMaturity:VARCHAR#, #adjMaturityLoan:VARCHAR#, #adjIntLien:VARCHAR#, #adjPrinLoanLien:VARCHAR#, #prematureWithdrawal:NUMERIC#, #flexiSbCa:VARCHAR#, 
+        #tdSecurityOd:VARCHAR#, #acnumPattern:VARCHAR#, #alphaSuffixTdrec:VARCHAR#, #maxAmtCash:NUMERIC#, #minAmtPan:NUMERIC#, #introRequired:VARCHAR#, #schemeIntroDt:DATE#, 
+        #certificatePrint:VARCHAR#, #limitBulkDeposit:NUMERIC#, #afterNoDays:NUMERIC#,#discounted:VARCHAR#,#schemeClosingDt:DATE#,
+        #typesOfDep:VARCHAR#,#staffAccount:VARCHAR#,#rdoDoublingScheme:VARCHAR#,#rdoWithPeriod:VARCHAR#,#fdRenewalSameNoTranPrincAmt:VARCHAR#,#excludeLienIntrstAppl:VARCHAR#,
+        #excludeLienStanding:VARCHAR#,#cummCertPrint:VARCHAR#,#depositUnlien:VARCHAR#,#canZeroBalActOpeng:VARCHAR#,#doubligCount:NUMBER#,#agentcommSlabRequired:VARCHAR#,#agentCommCalcMethod:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use DepositsProductSchemeTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductSchemeTO" inline-parameters="true">
+        UPDATE DEPOSITS_PROD_SCHEME SET 
+<!--	PROD_ID = #prodId:VARCHAR#,-->
+        CALCULATE_TDS = #calculateTds:VARCHAR#,
+        PAYINT_DEP_MATURITY = #payintDepMaturity:VARCHAR#,
+        MATURITY_AMT_ROUND = #maturityAmtRound:VARCHAR#,
+        ROUNDOFF_CRITERIA = #roundoffCriteria:VARCHAR#,
+        INTPAID_AFTERMATURITY = #intpaidAftermaturity:VARCHAR#,
+        AFTERMATURITY_INTTYPE = #aftermaturityInttype:VARCHAR#,
+        AFTERMATURITY_INTRATE = #aftermaturityIntrate:VARCHAR#,
+        DEPOSIT_PER_UNIT = #depositPerUnit:NUMERIC#,
+        MIN_DEPOSIT_PERIOD = #minDepositPeriod:NUMERIC#,
+        MAX_DEPOSIT_PERIOD = #maxDepositPeriod:NUMERIC#,
+        PERIOD_MULTIPLES = #periodMultiples:NUMERIC#,
+        MIN_DEPOSIT_AMT = #minDepositAmt:NUMERIC#,
+        MAX_DEPOSIT_AMT = #maxDepositAmt:NUMERIC#,
+        AMT_MULTIPLES = #amtMultiples:NUMERIC#,
+        CALC_MATURITY_VALUE = #calcMaturityValue:VARCHAR#,
+        TRANS_MATURED_DEP = #transMaturedDep:VARCHAR#,
+        AFTER_DAYS = #afterDays:NUMERIC#,
+        ADV_MATURITY_GENPD = #advMaturityGenpd:NUMERIC#,
+        PROV_INTMATURED_DEP = #provIntmaturedDep:VARCHAR#,
+        INT_MATURED_DEP = #intMaturedDep:NUMERIC#,
+        PARTIAL_WITHDRAWAL = #partialWithdrawal:VARCHAR#,
+        NO_PARTIAL_WITHDRAWAL = #noPartialWithdrawal:NUMERIC#,
+        MAX_AMT_WITHDRAWAL = #maxAmtWithdrawal:NUMERIC#,
+        MAX_NO_WITHDRAWAL_YR = #maxNoWithdrawalYr:NUMERIC#,
+        MIN_AMT_WITHDRAWAL = #minAmtWithdrawal:NUMERIC#,
+        WITHDRAWAL_MULTI = #withdrawalMulti:NUMERIC#,
+        WITHDRAWAL_INTEREST = #withdrawalInterest:VARCHAR#,
+        SERVICE_CHARGE_ALLOWED = #serviceCharge:VARCHAR#,
+        SERVICE_CHARGE = #serviceChargePer:NUMERIC#,
+        EXT_DEP_MATURITY = #extDepMaturity:VARCHAR#,
+        ADJ_MATURITY_LOAN = #adjMaturityLoan:VARCHAR#,
+        ADJ_INT_LIEN = #adjIntLien:VARCHAR#,
+        ADJ_PRIN_LOAN_LIEN = #adjPrinLoanLien:VARCHAR#,
+        PREMATURE_WITHDRAWAL = #prematureWithdrawal:NUMERIC#,
+        FLEXI_SB_CA = #flexiSbCa:VARCHAR#,
+        TD_SECURITY_OD = #tdSecurityOd:VARCHAR#,
+        ACNUM_PATTERN = #acnumPattern:VARCHAR#,
+        ALPHA_SUFFIX_TDREC = #alphaSuffixTdrec:VARCHAR#,
+        MAX_AMT_CASH = #maxAmtCash:NUMERIC#,
+        MIN_AMT_PAN = #minAmtPan:NUMERIC#,
+        INTRO_REQUIRED = #introRequired:VARCHAR#,
+        SCHEME_INTRO_DT = #schemeIntroDt:DATE#,
+        CERTIFICATE_PRINTING = #certificatePrint:VARCHAR#,
+        LIMIT_BULK_DEPOSIT = #limitBulkDeposit:NUMERIC#,
+        AFTER_NO_DAYS = #afterNoDays:NUMERIC#,
+        DISCOUNTED_RATE = #discounted:VARCHAR#,
+        SCHEME_CLOSING_DT = #schemeClosingDt:DATE#,
+        TYPES_OF_DEPOSIT = #typesOfDep:VARCHAR#,
+        STAFF_ACCOUNT = #staffAccount:VARCHAR#,
+        DOUBLING_SCHEME = #rdoDoublingScheme:VARCHAR#,
+        FLOATING_WITH_PERIOD = #rdoWithPeriod:VARCHAR#,
+        FD_RENEW_SAMENO_TRAN_PRINC_AMT=#fdRenewalSameNoTranPrincAmt:VARCHAR#,
+        EXCLUDE_LIEN_FRM_INTRST_APPL=#excludeLienIntrstAppl:VARCHAR#,
+        EXCLUDE_LIEN_FRM_STANDING=#excludeLienStanding:VARCHAR#,
+        CUMM_CERTIFICATE_PRINT=#cummCertPrint:VARCHAR#,
+        DEPOSIT_UNLIEN=#depositUnlien:VARCHAR#,
+        ZERO_BAL_ACT_OPNG=#canZeroBalActOpeng:VARCHAR#,
+        DOUBLING_COUNT=#doubligCount:NUMBER#,
+        AGENT_COMM_SLAB_REQUIRED = #agentcommSlabRequired:VARCHAR#,
+        AGENT_COMM_CALC_METHOD = #agentCommCalcMethod:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+        
+    </mapped-statement>
+
+<!-- Use DepositsProductSchemeTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductSchemeTO" inline-parameters="true">
+        DELETE FROM DEPOSITS_PROD_SCHEME 
+        WHERE 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductSchemeTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductSchemeTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductSchemeTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="calculateTds" column="CALCULATE_TDS"/>
+        <property name="payintDepMaturity" column="PAYINT_DEP_MATURITY"/>
+        <property name="maturityAmtRound" column="MATURITY_AMT_ROUND"/>
+        <property name="roundoffCriteria" column="ROUNDOFF_CRITERIA"/>
+        <property name="intpaidAftermaturity" column="INTPAID_AFTERMATURITY"/>
+        <property name="aftermaturityInttype" column="AFTERMATURITY_INTTYPE"/>
+        <property name="aftermaturityIntrate" column="AFTERMATURITY_INTRATE"/>
+        <property name="depositPerUnit" column="DEPOSIT_PER_UNIT"/>
+        <property name="minDepositPeriod" column="MIN_DEPOSIT_PERIOD"/>
+        <property name="maxDepositPeriod" column="MAX_DEPOSIT_PERIOD"/>
+        <property name="periodMultiples" column="PERIOD_MULTIPLES"/>
+        <property name="minDepositAmt" column="MIN_DEPOSIT_AMT"/>
+        <property name="maxDepositAmt" column="MAX_DEPOSIT_AMT"/>
+        <property name="amtMultiples" column="AMT_MULTIPLES"/>
+        <property name="calcMaturityValue" column="CALC_MATURITY_VALUE"/>
+        <property name="transMaturedDep" column="TRANS_MATURED_DEP"/>
+        <property name="afterDays" column="AFTER_DAYS"/>
+        <property name="advMaturityGenpd" column="ADV_MATURITY_GENPD"/>
+        <property name="provIntmaturedDep" column="PROV_INTMATURED_DEP"/>
+        <property name="intMaturedDep" column="INT_MATURED_DEP"/>
+        <property name="partialWithdrawal" column="PARTIAL_WITHDRAWAL"/>
+        <property name="noPartialWithdrawal" column="NO_PARTIAL_WITHDRAWAL"/>
+        <property name="maxAmtWithdrawal" column="MAX_AMT_WITHDRAWAL"/>
+        <property name="maxNoWithdrawalYr" column="MAX_NO_WITHDRAWAL_YR"/>
+        <property name="minAmtWithdrawal" column="MIN_AMT_WITHDRAWAL"/>
+        <property name="withdrawalMulti" column="WITHDRAWAL_MULTI"/>
+        <property name="withdrawalInterest" column="WITHDRAWAL_INTEREST"/>
+        <property name="serviceCharge" column="SERVICE_CHARGE_ALLOWED"/>
+        <property name="serviceChargePer" column="SERVICE_CHARGE"/>
+        <property name="extDepMaturity" column="EXT_DEP_MATURITY"/>
+        <property name="adjMaturityLoan" column="ADJ_MATURITY_LOAN"/>
+        <property name="adjIntLien" column="ADJ_INT_LIEN"/>
+        <property name="adjPrinLoanLien" column="ADJ_PRIN_LOAN_LIEN"/>
+        <property name="prematureWithdrawal" column="PREMATURE_WITHDRAWAL"/>
+        <property name="flexiSbCa" column="FLEXI_SB_CA"/>
+        <property name="tdSecurityOd" column="TD_SECURITY_OD"/>
+        <property name="acnumPattern" column="ACNUM_PATTERN"/>
+        <property name="alphaSuffixTdrec" column="ALPHA_SUFFIX_TDREC"/>
+        <property name="maxAmtCash" column="MAX_AMT_CASH"/>
+        <property name="minAmtPan" column="MIN_AMT_PAN"/>
+        <property name="introRequired" column="INTRO_REQUIRED"/>
+        <property name="schemeIntroDt" column="SCHEME_INTRO_DT"/>
+        <property name="certificatePrint" column="CERTIFICATE_PRINTING"/>
+        <property name="limitBulkDeposit" column="LIMIT_BULK_DEPOSIT"/>
+        <property name="afterNoDays" column="AFTER_NO_DAYS"/>
+        <property name="discounted" column="DISCOUNTED_RATE"/>
+        <property name ="schemeClosingDt" column="SCHEME_CLOSING_DT"/>
+        <property name ="typesOfDep" column="TYPES_OF_DEPOSIT"/>
+        <property name ="staffAccount" column="STAFF_ACCOUNT"/>
+        <property name ="rdoWithPeriod" column="FLOATING_WITH_PERIOD"/>
+        <property name ="rdoDoublingScheme" column="DOUBLING_SCHEME"/>
+        <property name ="fdRenewalSameNoTranPrincAmt" column="FD_RENEW_SAMENO_TRAN_PRINC_AMT"/>
+        <property name ="excludeLienIntrstAppl" column="EXCLUDE_LIEN_FRM_INTRST_APPL"/>
+        <property name ="excludeLienStanding" column="EXCLUDE_LIEN_FRM_STANDING"/>
+        <property name ="cummCertPrint" column="CUMM_CERTIFICATE_PRINT"/>
+        <property name ="depositUnlien" column="DEPOSIT_UNLIEN"/>
+        <property name ="canZeroBalActOpeng" column="ZERO_BAL_ACT_OPNG"/>
+        <property name ="doubligCount" column="DOUBLING_COUNT"/>
+        <property name ="agentcommSlabRequired" column="AGENT_COMM_SLAB_REQUIRED"/>
+        <property name ="agentCommCalcMethod" column="AGENT_COMM_CALC_METHOD"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositsProductSchemeTO" result-map="getDepositsProductSchemeTOResult">
+        SELECT * FROM DEPOSITS_PROD_SCHEME 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!--*********************************************************************************-->
+        
+<!-- Use DepositsProductIntPayTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductIntPayTO" inline-parameters="true">
+        INSERT INTO DEPOSITS_PROD_INTPAY
+	(PROD_ID, INT_MAINTAIN_PART, INT_CALC_METHOD, INT_PROV_APPL, INT_PROV_FREQ, PROV_LEVEL, NO_DAYS_YEAR, INT_COMP_FREQ, INT_APPL_FREQ, LAST_INT_PROVDT, NEXT_INT_PROVDT, LAST_INT_APPLDT,
+        NEXT_INT_APPLDT, INT_ROUNDOFF_TERMS, MIN_INT_PAID, INT_TYPE,PREMATURE_CLOSURE_APPLY,FIXED_DEPOSIT_PRODUCT,DIFF_ROI_YES_NO,INT_ROUND_AT_INTAPPL,PREMATURE_CLOSURE_WITH_SI,
+        NORMAL_RATE_FOR_SENIOR_CITIZEN,MONTHS_UPTO_NORMAL_RATE,SLAB_WISE_INTEREST,SLAB_WISE_COMMISION,SENIOR_BENIFIT_RATE,PRODUCT_DEFAULT_VALUE,INTRATE_EDITABLE,PRE_MAT_INT_TYPE
+	) VALUES (
+		#prodId:VARCHAR#, #intMaintainPart:VARCHAR#, #intCalcMethod:NUMERIC#, #intProvAppl:VARCHAR#, #intProvFreq:NUMERIC#, #provLevel:VARCHAR#, #noDaysYear:NUMERIC#, #intCompFreq:NUMERIC#, 
+    	#intApplFreq:NUMERIC#, #lastIntProvdt:DATE#, #nextIntProvdt:DATE#, #lastIntAppldt:DATE#, #nextIntAppldt:DATE#, #intRoundoffTerms:VARCHAR#, #minIntPaid:NUMERIC#, #intType:VARCHAR#,
+        #preMatureClosureApply:VARCHAR#,#fixedDepositProduct:VARCHAR#,#chkROI:VARCHAR#,#cbxInterstRoundTime:VARCHAR#,#prematClosSIRat:VARCHAR#,#appNormRate:VARCHAR#,#normPeriod:NUMERIC#
+        ,#slabWiseInterest:VARCHAR#,#slabWiseCommision:VARCHAR#,#categoryBenifitRate:VARCHAR#,'N',#intRateEditable:VARCHAR#,#preMatIntType:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use DepositsProductIntPayTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductIntPayTO" inline-parameters="true">
+        UPDATE DEPOSITS_PROD_INTPAY SET 
+        PROD_ID = #prodId:VARCHAR#,
+        INT_MAINTAIN_PART = #intMaintainPart:VARCHAR#,
+        INT_CALC_METHOD = #intCalcMethod:NUMERIC#,
+        INT_PROV_APPL = #intProvAppl:VARCHAR#,
+        INT_PROV_FREQ = #intProvFreq:NUMERIC#,
+        PROV_LEVEL = #provLevel:VARCHAR#,
+        NO_DAYS_YEAR = #noDaysYear:NUMERIC#,
+        INT_COMP_FREQ = #intCompFreq:NUMERIC#,
+        INT_APPL_FREQ = #intApplFreq:NUMERIC#,
+        LAST_INT_PROVDT = #lastIntProvdt:DATE#,
+        NEXT_INT_PROVDT = #nextIntProvdt:DATE#,
+        LAST_INT_APPLDT = #lastIntAppldt:DATE#,
+        NEXT_INT_APPLDT = #nextIntAppldt:DATE#,
+        INT_ROUNDOFF_TERMS = #intRoundoffTerms:VARCHAR#,
+        MIN_INT_PAID = #minIntPaid:NUMERIC#,
+        INT_TYPE = #intType:VARCHAR#,
+        PREMATURE_CLOSURE_APPLY=#preMatureClosureApply:VARCHAR#,
+        FIXED_DEPOSIT_PRODUCT = #fixedDepositProduct:VARCHAR#,
+        DIFF_ROI_YES_NO = #chkROI:VARCHAR#,
+        INT_ROUND_AT_INTAPPL=#cbxInterstRoundTime:VARCHAR#,
+        PREMATURE_CLOSURE_WITH_SI=#prematClosSIRat:VARCHAR#,
+        NORMAL_RATE_FOR_SENIOR_CITIZEN=#appNormRate:VARCHAR#,
+        MONTHS_UPTO_NORMAL_RATE=#normPeriod:NUMERIC#,
+        SLAB_WISE_INTEREST=#slabWiseInterest:VARCHAR#,
+        SLAB_WISE_COMMISION=#slabWiseCommision:VARCHAR#,
+        SENIOR_BENIFIT_RATE=#categoryBenifitRate:VARCHAR#,
+        INTRATE_EDITABLE=#intRateEditable:VARCHAR#,
+        PRE_MAT_INT_TYPE=#preMatIntType:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use DepositsProductIntPayTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductIntPayTO" inline-parameters="true">
+        DELETE FROM DEPOSITS_PROD_INTPAY 
+        WHERE 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductIntPayTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductIntPayTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductIntPayTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="intMaintainPart" column="INT_MAINTAIN_PART"/>
+        <property name="intCalcMethod" column="INT_CALC_METHOD"/>
+        <property name="intProvAppl" column="INT_PROV_APPL"/>
+        <property name="intProvFreq" column="INT_PROV_FREQ"/>
+        <property name="provLevel" column="PROV_LEVEL"/>
+        <property name="noDaysYear" column="NO_DAYS_YEAR"/>
+        <property name="intCompFreq" column="INT_COMP_FREQ"/>
+        <property name="intApplFreq" column="INT_APPL_FREQ"/>
+        <property name="lastIntProvdt" column="LAST_INT_PROVDT"/>
+        <property name="nextIntProvdt" column="NEXT_INT_PROVDT"/>
+        <property name="lastIntAppldt" column="LAST_INT_APPLDT"/>
+        <property name="nextIntAppldt" column="NEXT_INT_APPLDT"/>
+        <property name="intRoundoffTerms" column="INT_ROUNDOFF_TERMS"/>
+        <property name="minIntPaid" column="MIN_INT_PAID"/>
+        <property name="intType" column="INT_TYPE"/>
+        <property name="preMatureClosureApply" column="PREMATURE_CLOSURE_APPLY"/>
+        <property name="fixedDepositProduct" column="FIXED_DEPOSIT_PRODUCT"/>
+        <property name="chkROI" column="DIFF_ROI_YES_NO"/>
+        <property name="cbxInterstRoundTime" column="INT_ROUND_AT_INTAPPL"/>
+        <property name="prematClosSIRat" column="PREMATURE_CLOSURE_WITH_SI"/>
+        <property name="appNormRate" column="NORMAL_RATE_FOR_SENIOR_CITIZEN"/>
+        <property name="normPeriod" column="MONTHS_UPTO_NORMAL_RATE"/>
+		<property name="categoryBenifitRate" column="SENIOR_BENIFIT_RATE"/>
+        <property name="slabWiseInterest" column="SLAB_WISE_INTEREST"/>
+        <property name="slabWiseCommision" column="SLAB_WISE_COMMISION"/>
+        <property name="intRateEditable" column="INTRATE_EDITABLE"/>
+        <property name="preMatIntType" column="PRE_MAT_INT_TYPE"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositsProductIntPayTO" result-map="getDepositsProductIntPayTOResult" >
+        SELECT * FROM DEPOSITS_PROD_INTPAY 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+    <!-- Following mapped statement added by Rajesh -->
+    <mapped-statement name="getSelectRoundOff" result-class="java.util.LinkedHashMap">
+        SELECT INT_ROUNDOFF_TERMS ROUND_TERMS FROM DEPOSITS_PROD_INTPAY 
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+<!--**********************************************************************-->
+        
+<!-- Use DepositsProductAcHdTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductAcHdTO" inline-parameters="true">
+        INSERT INTO DEPOSITS_PROD_ACHD
+        (PROD_ID, INT_PROV_ACHD, INT_PAY, INT_DEBIT, MATURITY_DEPOSIT, INT_MATURED_DEPOSIT, INT_PROV_MATURED, SERVICE_CHARGE_ACHD, FIXED_DEPOSIT_ACHD, COMMISION_HEAD,DELAYED_ACHD,TRANSFEROUT_ACHD,POSTAGE_ACHD,INT_RECOVERY_HEAD,INT_RESERVE
+        ) VALUES (
+        #prodId:VARCHAR#, #intProvAchd:VARCHAR#, #intPay:VARCHAR#, #intDebit:VARCHAR#, #maturityDeposit:VARCHAR#, #intMaturedDeposit:VARCHAR#, #intProvMatured:VARCHAR#, #achdFloatAc:VARCHAR#, #fixedDepositAchd:VARCHAR#, #commisionAchd:VARCHAR#, #delayedAchd:VARCHAR#,#trasferOutAchd:VARCHAR#,#postageAcHd:VARCHAR#,#interestRecoveryAcHd:VARCHAR#,#benovelentIntReserveHd:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use DepositsProductAcHdTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductAcHdTO" inline-parameters="true">
+        UPDATE DEPOSITS_PROD_ACHD SET 
+        PROD_ID = #prodId:VARCHAR#,
+        INT_PROV_ACHD = #intProvAchd:VARCHAR#,
+        INT_PAY = #intPay:VARCHAR#,
+        INT_DEBIT = #intDebit:VARCHAR#,
+        MATURITY_DEPOSIT = #maturityDeposit:VARCHAR#,
+        INT_MATURED_DEPOSIT = #intMaturedDeposit:VARCHAR#,
+        INT_PROV_MATURED = #intProvMatured:VARCHAR#,
+        SERVICE_CHARGE_ACHD = #achdFloatAc:VARCHAR#,
+        FIXED_DEPOSIT_ACHD = #fixedDepositAchd:VARCHAR#,
+        INT_RECOVERY_HEAD = #interestRecoveryAcHd:VARCHAR#,
+        COMMISION_HEAD = #commisionAchd:VARCHAR#,
+        DELAYED_ACHD = #delayedAchd:VARCHAR#,
+        TRANSFEROUT_ACHD = #trasferOutAchd:VARCHAR#,
+        POSTAGE_ACHD=#postageAcHd:VARCHAR#,
+        INT_RESERVE = #benovelentIntReserveHd:VARCHAR#
+        WHERE  PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use DepositsProductAcHdTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductAcHdTO" inline-parameters="true">
+        DELETE FROM DEPOSITS_PROD_ACHD 
+        WHERE 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductAcHdTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductAcHdTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductAcHdTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="intProvAchd" column="INT_PROV_ACHD"/>
+        <property name="intPay" column="INT_PAY"/>
+        <property name="intDebit" column="INT_DEBIT"/>
+        <property name="maturityDeposit" column="MATURITY_DEPOSIT"/>
+        <property name="intMaturedDeposit" column="INT_MATURED_DEPOSIT"/>
+        <property name="intProvMatured" column="INT_PROV_MATURED"/>
+        <property name="achdFloatAc" column="SERVICE_CHARGE_ACHD"/>
+        <property name="fixedDepositAchd" column="FIXED_DEPOSIT_ACHD"/>
+        <property name="interestRecoveryAcHd" column="INT_RECOVERY_HEAD"/>
+        <property name="commisionAchd" column="COMMISION_HEAD"/>
+        <property name="delayedAchd" column="DELAYED_ACHD"/>
+        <property name="trasferOutAchd" column="TRANSFEROUT_ACHD"/>
+        <property name="postageAcHd" column="POSTAGE_ACHD"/>
+        <property name="benovelentIntReserveHd" column="INT_RESERVE"/>
+        
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositsProductAcHdTO" result-map="getDepositsProductAcHdTOResult" >
+        SELECT * FROM DEPOSITS_PROD_ACHD 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+        <!--*********************************************************************-->
+        
+<!-- Use DepositsProductRenewalTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductRenewalTO" inline-parameters="true">
+	<!--INSERT INTO DEPOSITS_PROD_RENEWAL
+	(PROD_ID, MAX_PDBKDT_RENEWAL, MAX_PD_INTTYPE, MAX_PD_MATURITYDT, INT_CRITERIA, RENEWAL_DEPOSIT_ALLOWED, MIN_DAYS_BKDT_DEPOSITS, AUTO_RENEWAL_ALLOWED, MAX_NO_AUTO_RENEWAL,SAME_NO_ALLOWED,MAX_NO_SAME_RENEWAL,DAILY_INT_CALC,WEEKLY_BASIS,DAILY_INT_CALC_METHOD,PARTIAL_WITHDRAWAL_ALLOWED
+
+	) VALUES (
+	#prodId:VARCHAR#, #maxPdbkdtRenewal:NUMERIC#, #maxPdInttype:VARCHAR#, #maxPdMaturitydt:NUMERIC#, #intCriteria:VARCHAR#, #renewalDepositAllowed:VARCHAR#, #minDaysBkdtDeposits:NUMERIC#, #autoRenewalAllowed:VARCHAR#, #maxNoAutoRenewal:NUMERIC#,#sameNoRenewalAllowed:VARCHAR#,#maxNoSameNoRenewal:NUMBER#,#dailyIntCalc:VARCHAR#,#weeklyBasis:NUMBER#,#cbmMonthlyIntCalcMethod:VARCHAR#,#rdoPartialWithdrawlForDD:VARCHAR#)
+    </mapped-statement> -->
+
+        INSERT INTO DEPOSITS_PROD_RENEWAL
+        (PROD_ID, MAX_PDBKDT_RENEWAL, MAX_PD_INTTYPE, MAX_PD_MATURITYDT, INT_CRITERIA, RENEWAL_DEPOSIT_ALLOWED, MIN_DAYS_BKDT_DEPOSITS, AUTO_RENEWAL_ALLOWED, MAX_NO_AUTO_RENEWAL,SAME_NO_ALLOWED,MAX_NO_SAME_RENEWAL,DAILY_INT_CALC,WEEKLY_BASIS,MINIMUM_PERIOD_OF_RENEWAL,RENEWED_DEPOSIT_CLOSED_BEFORE,MINIMUM_PERIOD_FROMAT,RENEWED_DEPOSIT_FORMAT,RENEWED_DEPOSIT_INT_PAY,RENEWED_DEPOSIT_INT_RECOVERED,INT_RATE_APPLIED_OVERDUE,DATE_OF_RENEWAL,DATE_OF_MATURITY,ELIGIBLE_TWO_RATE,ONE_RATE_AVAIL,BOTH_RATE_NOT_AVAIL,EXTENSION_DEPOSIT_BEYOND,PENAL_INT_WITHDRAWAL_AMT,SBRATE_PRODID,CLOSURE_INT_YN,
+        DEATHMARKED_INT_YN
+        ) VALUES (
+        #prodId:VARCHAR#, #maxPdbkdtRenewal:NUMERIC#, #maxPdInttype:VARCHAR#, #maxPdMaturitydt:NUMERIC#, #intCriteria:VARCHAR#, #renewalDepositAllowed:VARCHAR#, #minDaysBkdtDeposits:NUMERIC#, #autoRenewalAllowed:VARCHAR#, #maxNoAutoRenewal:NUMERIC#,#sameNoRenewalAllowed:VARCHAR#,#maxNoSameNoRenewal:NUMBER#,#dailyIntCalc:VARCHAR#,#weeklyBasis:NUMBER#,#periodOfRenewal:NUMBER#,#renewdDepClosedBefore:NUMBER#,#periodOfFormat:VARCHAR#,#renewedDepositFormat:VARCHAR#,#renewedDepIntPay:VARCHAR#,#renewedDepIntRecovered:VARCHAR#,#intRateAppliedOverdue:VARCHAR#,#dateOfRenewal:VARCHAR#,
+        #dateOfMaturity:VARCHAR#,#eligibleTwoRate:VARCHAR#,#oneRateAvail:VARCHAR#,#bothRateNotAvail:VARCHAR#,#beyondOriginal:VARCHAR#,#extensionPenal:VARCHAR#,#sbRateProdId:VARCHAR#,#closureIntYN:VARCHAR#,#deathMarkedYN:VARCHAR#)
+    </mapped-statement>
+<!-- Use DepositsProductRenewalTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductRenewalTO" inline-parameters="true">
+	<!--UPDATE DEPOSITS_PROD_RENEWAL SET 
+	PROD_ID = #prodId:VARCHAR#,
+	MAX_PDBKDT_RENEWAL = #maxPdbkdtRenewal:NUMERIC#,
+	MAX_PD_INTTYPE = #maxPdInttype:VARCHAR#,
+	MAX_PD_MATURITYDT = #maxPdMaturitydt:NUMERIC#,
+	INT_CRITERIA = #intCriteria:VARCHAR#,
+	RENEWAL_DEPOSIT_ALLOWED = #renewalDepositAllowed:VARCHAR#,
+	MIN_DAYS_BKDT_DEPOSITS = #minDaysBkdtDeposits:NUMERIC#,
+	AUTO_RENEWAL_ALLOWED = #autoRenewalAllowed:VARCHAR#,
+	MAX_NO_AUTO_RENEWAL = #maxNoAutoRenewal:NUMERIC#,
+        SAME_NO_ALLOWED = #sameNoRenewalAllowed:VARCHAR#,
+        MAX_NO_SAME_RENEWAL = #maxNoSameNoRenewal:NUMBER#,
+        DAILY_INT_CALC = #dailyIntCalc:VARCHAR#,
+        PARTIAL_WITHDRAWAL_ALLOWED = #rdoPartialWithdrawlForDD:VARCHAR#,
+        WEEKLY_BASIS = #weeklyBasis:NUMBER#,
+        DAILY_INT_CALC_METHOD = #cbmMonthlyIntCalcMethod:VARCHAR#
+	WHERE PROD_ID = #prodId:VARCHAR# -->      
+        
+        UPDATE DEPOSITS_PROD_RENEWAL SET 
+        PROD_ID = #prodId:VARCHAR#,
+        MAX_PDBKDT_RENEWAL = #maxPdbkdtRenewal:NUMERIC#,
+        MAX_PD_INTTYPE = #maxPdInttype:VARCHAR#,
+        MAX_PD_MATURITYDT = #maxPdMaturitydt:NUMERIC#,
+        INT_CRITERIA = #intCriteria:VARCHAR#,
+        RENEWAL_DEPOSIT_ALLOWED = #renewalDepositAllowed:VARCHAR#,
+        MIN_DAYS_BKDT_DEPOSITS = #minDaysBkdtDeposits:NUMERIC#,
+        AUTO_RENEWAL_ALLOWED = #autoRenewalAllowed:VARCHAR#,
+        MAX_NO_AUTO_RENEWAL = #maxNoAutoRenewal:NUMERIC#,
+        SAME_NO_ALLOWED = #sameNoRenewalAllowed:VARCHAR#,
+        MAX_NO_SAME_RENEWAL = #maxNoSameNoRenewal:NUMBER#,
+        DAILY_INT_CALC = #dailyIntCalc:VARCHAR#,
+        WEEKLY_BASIS = #weeklyBasis:NUMBER#,
+        MINIMUM_PERIOD_OF_RENEWAL = #periodOfRenewal:NUMBER#,
+        RENEWED_DEPOSIT_CLOSED_BEFORE = #renewdDepClosedBefore:NUMBER#,
+        MINIMUM_PERIOD_FROMAT = #periodOfFormat:VARCHAR#,
+        RENEWED_DEPOSIT_FORMAT = #renewedDepositFormat:VARCHAR#,
+        RENEWED_DEPOSIT_INT_PAY = #renewedDepIntPay:VARCHAR#,
+        RENEWED_DEPOSIT_INT_RECOVERED = #renewedDepIntRecovered:VARCHAR#,
+        INT_RATE_APPLIED_OVERDUE = #intRateAppliedOverdue:VARCHAR#,
+        DATE_OF_RENEWAL = #dateOfRenewal:VARCHAR#,
+        DATE_OF_MATURITY = #dateOfMaturity:VARCHAR#,
+        ELIGIBLE_TWO_RATE = #eligibleTwoRate:VARCHAR#,
+        ONE_RATE_AVAIL = #oneRateAvail:VARCHAR#,
+        BOTH_RATE_NOT_AVAIL = #bothRateNotAvail:VARCHAR#,
+        EXTENSION_DEPOSIT_BEYOND=#beyondOriginal:VARCHAR#,
+        PENAL_INT_WITHDRAWAL_AMT=#extensionPenal:VARCHAR#,
+        SBRATE_PRODID=#sbRateProdId:VARCHAR#,
+        CLOSURE_INT_YN=#closureIntYN:VARCHAR#,
+        DEATHMARKED_INT_YN=#deathMarkedYN:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#                
+    </mapped-statement>
+
+<!-- Use DepositsProductRenewalTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductRenewalTO" inline-parameters="true">
+        DELETE FROM DEPOSITS_PROD_RENEWAL 
+        WHERE 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductRenewalTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductRenewalTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductRenewalTO">
+      <!--  <property name="prodId" column="PROD_ID"/>
+	<property name="maxPdbkdtRenewal" column="MAX_PDBKDT_RENEWAL"/>
+	<property name="maxPdInttype" column="MAX_PD_INTTYPE"/>
+	<property name="maxPdMaturitydt" column="MAX_PD_MATURITYDT"/>
+	<property name="intCriteria" column="INT_CRITERIA"/>
+	<property name="renewalDepositAllowed" column="RENEWAL_DEPOSIT_ALLOWED"/>
+	<property name="minDaysBkdtDeposits" column="MIN_DAYS_BKDT_DEPOSITS"/>
+	<property name="autoRenewalAllowed" column="AUTO_RENEWAL_ALLOWED"/>
+	<property name="maxNoAutoRenewal" column="MAX_NO_AUTO_RENEWAL"/>
+        <property name="sameNoRenewalAllowed" column="SAME_NO_ALLOWED"/>
+        <property name="maxNoSameNoRenewal" column="MAX_NO_SAME_RENEWAL"/>
+        <property name="dailyIntCalc" column="DAILY_INT_CALC"/>
+        <property name="rdoPartialWithdrawlForDD" column="PARTIAL_WITHDRAWAL_ALLOWED"/>
+        <property name="weeklyBasis" column="WEEKLY_BASIS"/>
+        <property name="cbmMonthlyIntCalcMethod" column="DAILY_INT_CALC_METHOD"/> -->
+        <property name="prodId" column="PROD_ID"/>
+        <property name="maxPdbkdtRenewal" column="MAX_PDBKDT_RENEWAL"/>
+        <property name="maxPdInttype" column="MAX_PD_INTTYPE"/>
+        <property name="maxPdMaturitydt" column="MAX_PD_MATURITYDT"/>
+        <property name="intCriteria" column="INT_CRITERIA"/>
+        <property name="renewalDepositAllowed" column="RENEWAL_DEPOSIT_ALLOWED"/>
+        <property name="minDaysBkdtDeposits" column="MIN_DAYS_BKDT_DEPOSITS"/>
+        <property name="autoRenewalAllowed" column="AUTO_RENEWAL_ALLOWED"/>
+        <property name="maxNoAutoRenewal" column="MAX_NO_AUTO_RENEWAL"/>
+        <property name="sameNoRenewalAllowed" column="SAME_NO_ALLOWED"/>
+        <property name="maxNoSameNoRenewal" column="MAX_NO_SAME_RENEWAL"/>
+        <property name="dailyIntCalc" column="DAILY_INT_CALC"/>
+        <property name="weeklyBasis" column="WEEKLY_BASIS"/>
+        <property name="periodOfRenewal" column="MINIMUM_PERIOD_OF_RENEWAL"/>
+        <property name="renewdDepClosedBefore" column="RENEWED_DEPOSIT_CLOSED_BEFORE"/>
+        <property name="periodOfFormat" column="MINIMUM_PERIOD_FROMAT"/>
+        <property name="renewedDepositFormat" column="RENEWED_DEPOSIT_FORMAT"/>
+        <property name="renewedDepIntPay" column="RENEWED_DEPOSIT_INT_PAY"/>
+        <property name="renewedDepIntRecovered" column="RENEWED_DEPOSIT_INT_RECOVERED"/>
+        <property name="intRateAppliedOverdue" column="INT_RATE_APPLIED_OVERDUE"/>
+        <property name="dateOfRenewal" column="DATE_OF_RENEWAL"/>
+        <property name="dateOfMaturity" column="DATE_OF_MATURITY"/>
+        <property name="eligibleTwoRate" column="ELIGIBLE_TWO_RATE"/>
+        <property name="oneRateAvail" column="ONE_RATE_AVAIL"/>
+        <property name="bothRateNotAvail" column="BOTH_RATE_NOT_AVAIL"/>    
+        <property name="beyondOriginal" column="EXTENSION_DEPOSIT_BEYOND"/>  
+        <property name="extensionPenal" column="PENAL_INT_WITHDRAWAL_AMT"/>    
+        <property name="sbRateProdId" column="SBRATE_PRODID"/>  
+        <property name="closureIntYN" column="CLOSURE_INT_YN"/> 
+        <property name="deathMarkedYN" column="DEATHMARKED_INT_YN"/> 
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositsProductRenewalTO" result-map="getDepositsProductRenewalTOResult" >
+        SELECT * FROM DEPOSITS_PROD_RENEWAL 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+
+<!--*******************************************************************-->
+<!-- Use DepositsProductRDTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductRDTO" inline-parameters="true">
+        INSERT INTO DEPOSITS_PROD_RD
+        (PROD_ID, LATE_INSTALL_ALLOWED, PENALTY_LATE_INSTALL, INST_BEYOND_MATURITY_DATE, MATURITY_DT_LASTINSTALL, CONVERT_RD_TO_FIXED, INSTALL_RECURRING_DEPAC, 
+        INSTALL_CHARGED, CHANGE_VALUE, RECEIVE_EXCESS_INSTALL, INTPAY_EXCESS_INSTALL, CUTOFF_PAY_INSTALL, FROM_DEPOSIT_DT, LAST_DAY_MONTH, 
+        CHOSEN_DT, CUTOFF_TYPE, DEPOSIT_FREQ,AGENT_COMMISION_PERIOD,PREMATURE_MIN_PERIOD,AGENT_COMMISION_MODE,INTEREST_NOT_PAYING,
+        INTEREST_NOT_PAYING_MODE,RD_IRREGULAR_INSTALLMENTS_DUE,IRREGULAR_RD_APPLY,INT_APP_SLAB,PENAL_ROUNDOFF_REQ,PENAL_ROUNDOFF,WEEKLY_SPEC, INCLUDE_FULL_MONTH,RD_NATURE,GRACE_PERIOD,
+        RD_CLOSING_SB_DEPOSIT_ROI,PRE_CLOSE_INT_METHOD,PRE_CLOSE_INT_PROD_ID,NORMAL_CLOSE_INT_METHOD,NORMAL_CLOSE_INT_PROD_ID,INT_APPLY_FOR_IRREGULAR_RD,SPECIAL_RD,SPECIAL_RD_INST_NO
+        ) VALUES (
+        #prodId:VARCHAR#, #lateInstallAllowed:VARCHAR#, #penaltyLateInstall:VARCHAR#, #insBeyondMaturityDt:VARCHAR#, #maturityDtLastinstall:NUMERIC#, 
+        #convertRdToFixed:VARCHAR#, #installRecurringDepac:VARCHAR#, #installCharged:NUMERIC#, #changeValue:VARCHAR#, 
+        #receiveExcessInstall:VARCHAR#, #intpayExcessInstall:VARCHAR#, #cutoffPayInstall:NUMERIC#, #fromDepositDt:DATE#, 
+        #lastDayMonth:NUMERIC#, #chosenDt:DATE#, #cutoffType:VARCHAR#, #depositFreq:NUMERIC#,#agentCommision:NUMERIC#,
+        #minimumPeriod:NUMERIC#,#agentCommisionMode:VARCHAR#,#txtInterestNotPayingValue:NUMERIC#,#cboInterestNotPayingValue:VARCHAR#,
+        #txtRDIrregularIfInstallmentDue:VARCHAR#,#rdoIncaseOfIrregular:VARCHAR#,#intAppSlab:VARCHAR#,#rdoPenalRound:VARCHAR#,#cboPenalRound:VARCHAR#,#chkWeeklySpec:VARCHAR#,
+        #inclFullMonth:VARCHAR#,#chkRdNature:VARCHAR#,#gracePeriod:NUMERIC#,
+        #rdCloseOtherProdROI:VARCHAR#,#prmatureCloseRate:VARCHAR#,#prmatureCloseProd:VARCHAR#,#irregulareCloseRate:VARCHAR#,#irregularCloseProduct:VARCHAR#,#applyIntForIrregularRD:VARCHAR#,#specialRD:VARCHAR#,#noOfSpecialRDInstallments:NUMBER#)
+    </mapped-statement>
+
+<!-- Use DepositsProductRDTO object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductRDTO" inline-parameters="true">
+        UPDATE DEPOSITS_PROD_RD SET 
+<!--	PROD_ID = #prodId:VARCHAR#,-->
+        LATE_INSTALL_ALLOWED = #lateInstallAllowed:VARCHAR#,
+        PENALTY_LATE_INSTALL = #penaltyLateInstall:VARCHAR#,
+        INST_BEYOND_MATURITY_DATE = #insBeyondMaturityDt:VARCHAR#,
+        MATURITY_DT_LASTINSTALL = #maturityDtLastinstall:NUMERIC#,
+        CONVERT_RD_TO_FIXED = #convertRdToFixed:VARCHAR#,
+        INSTALL_RECURRING_DEPAC = #installRecurringDepac:VARCHAR#,
+        INSTALL_CHARGED = #installCharged:NUMERIC#,
+        CHANGE_VALUE = #changeValue:VARCHAR#,
+        RECEIVE_EXCESS_INSTALL = #receiveExcessInstall:VARCHAR#,
+        INTPAY_EXCESS_INSTALL = #intpayExcessInstall:VARCHAR#,
+        CUTOFF_PAY_INSTALL = #cutoffPayInstall:NUMERIC#,
+        FROM_DEPOSIT_DT = #fromDepositDt:DATE#,
+        LAST_DAY_MONTH = #lastDayMonth:NUMERIC#,
+        CHOSEN_DT = #chosenDt:DATE#,
+        <!-- added for daily deposit scheme -->
+        DEPOSIT_FREQ = #depositFreq:NUMERIC#,
+        CUTOFF_TYPE = #cutoffType:VARCHAR#,
+        AGENT_COMMISION_PERIOD = #agentCommision:NUMERIC#,
+        PREMATURE_MIN_PERIOD = #minimumPeriod:NUMERIC#,
+        AGENT_COMMISION_MODE = #agentCommisionMode:VARCHAR#,
+        INTEREST_NOT_PAYING = #txtInterestNotPayingValue:NUMERIC#,
+        INTEREST_NOT_PAYING_MODE = #cboInterestNotPayingValue:VARCHAR#,
+        RD_IRREGULAR_INSTALLMENTS_DUE=#txtRDIrregularIfInstallmentDue:VARCHAR#,
+        IRREGULAR_RD_APPLY=#rdoIncaseOfIrregular:VARCHAR#,
+        INT_APP_SLAB=#intAppSlab:VARCHAR#,
+        PENAL_ROUNDOFF_REQ=#rdoPenalRound:VARCHAR#,
+        PENAL_ROUNDOFF= #cboPenalRound:VARCHAR#,	
+        WEEKLY_SPEC = #chkWeeklySpec:VARCHAR#,
+        RD_NATURE =#chkRdNature:VARCHAR#,
+		INCLUDE_FULL_MONTH = #inclFullMonth:VARCHAR#,
+        GRACE_PERIOD =#gracePeriod:NUMERIC#,
+        RD_CLOSING_SB_DEPOSIT_ROI=#rdCloseOtherProdROI:VARCHAR#,
+        PRE_CLOSE_INT_METHOD= #prmatureCloseRate:VARCHAR#,	
+        PRE_CLOSE_INT_PROD_ID = #prmatureCloseProd:VARCHAR#,
+        NORMAL_CLOSE_INT_METHOD =#irregulareCloseRate:VARCHAR#,
+        NORMAL_CLOSE_INT_PROD_ID = #irregularCloseProduct:VARCHAR#,
+        INT_APPLY_FOR_IRREGULAR_RD = #applyIntForIrregularRD:VARCHAR#,
+        SPECIAL_RD = #specialRD:VARCHAR#,
+        SPECIAL_RD_INST_NO = #noOfSpecialRDInstallments:NUMBER#
+        WHERE PROD_ID =#prodId:VARCHAR#        
+    </mapped-statement>
+
+<!-- Use DepositsProductRDTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductRDTO" inline-parameters="true">
+        DELETE FROM DEPOSITS_PROD_RD 
+        WHERE 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductRDTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductRDTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductRDTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="lateInstallAllowed" column="LATE_INSTALL_ALLOWED"/>
+        <property name="penaltyLateInstall" column="PENALTY_LATE_INSTALL"/>
+        <property name="insBeyondMaturityDt" column="INST_BEYOND_MATURITY_DATE"/>
+        <property name="maturityDtLastinstall" column="MATURITY_DT_LASTINSTALL"/>
+        <property name="convertRdToFixed" column="CONVERT_RD_TO_FIXED"/>
+        <property name="installRecurringDepac" column="INSTALL_RECURRING_DEPAC"/>
+        <property name="installCharged" column="INSTALL_CHARGED"/>
+        <property name="changeValue" column="CHANGE_VALUE"/>
+        <property name="receiveExcessInstall" column="RECEIVE_EXCESS_INSTALL"/>
+        <property name="intpayExcessInstall" column="INTPAY_EXCESS_INSTALL"/>
+        <property name="cutoffPayInstall" column="CUTOFF_PAY_INSTALL"/>
+        <property name="fromDepositDt" column="FROM_DEPOSIT_DT"/>
+        <property name="lastDayMonth" column="LAST_DAY_MONTH"/>
+        <property name="chosenDt" column="CHOSEN_DT"/>
+        <property name="cutoffType" column="CUTOFF_TYPE"/>
+        <property name="depositFreq" column="DEPOSIT_FREQ"/> 
+        <property name="agentCommision" column="AGENT_COMMISION_PERIOD"/> 
+        <property name="minimumPeriod" column="PREMATURE_MIN_PERIOD"/> 
+        <property name="agentCommisionMode" column="AGENT_COMMISION_MODE"/> 
+        <property name="txtInterestNotPayingValue" column="INTEREST_NOT_PAYING"/> 
+        <property name="cboInterestNotPayingValue" column="INTEREST_NOT_PAYING_MODE"/> 
+        <property name="txtRDIrregularIfInstallmentDue" column="RD_IRREGULAR_INSTALLMENTS_DUE"/> 
+        <property name="rdoIncaseOfIrregular" column="IRREGULAR_RD_APPLY"/> 
+        <property name="intAppSlab" column="INT_APP_SLAB"/> 
+        <property name="rdoPenalRound" column="PENAL_ROUNDOFF_REQ"/> 
+        <property name="cboPenalRound" column="PENAL_ROUNDOFF"/> 	
+        <property name="chkWeeklySpec" column="WEEKLY_SPEC"/> 
+        <property name="chkRdNature" column="RD_NATURE"/> 
+        <property name="gracePeriod" column="GRACE_PERIOD"/> 
+		<property name="inclFullMonth" column="INCLUDE_FULL_MONTH"/>
+        <property name="rdCloseOtherProdROI" column="RD_CLOSING_SB_DEPOSIT_ROI"/> 
+        <property name="prmatureCloseRate" column="PRE_CLOSE_INT_METHOD"/> 	
+        <property name="prmatureCloseProd" column="PRE_CLOSE_INT_PROD_ID"/> 
+        <property name="irregulareCloseRate" column="NORMAL_CLOSE_INT_METHOD"/> 
+        <property name="irregularCloseProduct" column="NORMAL_CLOSE_INT_PROD_ID"/>
+        <property name="applyIntForIrregularRD" column="INT_APPLY_FOR_IRREGULAR_RD"/>
+        <property name="specialRD" column="SPECIAL_RD"/>
+        <property name="noOfSpecialRDInstallments" column="SPECIAL_RD_INST_NO"/>
+    </result-map>
+
+    <mapped-statement name="getSelectDepositsProductRDTO" result-map="getDepositsProductRDTOResult" >
+        SELECT * FROM DEPOSITS_PROD_RD 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!--**********************************************************-->
+<!-- Use DepositsProductTaxTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositsProductTaxTO" inline-parameters="true">
+        INSERT INTO DEPOSITS_PROD_TAX
+        (PROD_ID, TDS_GL_ACHD, RECALC_MATURITY_VALTDS
+        ) VALUES (
+        #prodId:VARCHAR#, #tdsGlAchd:VARCHAR#, #recalcMaturityValtds:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use DepositsProductTaxTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositsProductTaxTO" inline-parameters="true">
+        UPDATE DEPOSITS_PROD_TAX SET 
+        PROD_ID = #prodId:VARCHAR#,
+        TDS_GL_ACHD = #tdsGlAchd:VARCHAR#,
+        RECALC_MATURITY_VALTDS = #recalcMaturityValtds:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use DepositsProductTaxTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositsProductTaxTO" inline-parameters="true">
+        DELETE FROM DEPOSITS_PROD_TAX 
+        WHERE 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositsProductTaxTO object (JavaBean) properties -->
+    <result-map name="getDepositsProductTaxTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsProductTaxTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="tdsGlAchd" column="TDS_GL_ACHD"/>
+        <property name="recalcMaturityValtds" column="RECALC_MATURITY_VALTDS"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositsProductTaxTO" result-map="getDepositsProductTaxTOResult" >
+        SELECT * FROM DEPOSITS_PROD_TAX 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="viewDepositsProduct" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID AS "Product ID", PROD_DESC AS "Product Description", ACCT_HEAD AS "Account Head" ,BEHAVES_LIKE AS "Operates Like" 
+        FROM DEPOSITS_PRODUCT WHERE STATUS  NOT IN ('DELETED') 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Product ID" >
+                    UPPER(PROD_ID) LIKE UPPER('%$Product ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Product Description" >
+                    UPPER(PROD_DESC) LIKE UPPER('%$Product Description$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Account Head" >
+                    UPPER(ACCT_HEAD) LIKE UPPER('%$Account Head$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Operates Like" >
+                    UPPER(BEHAVES_LIKE) LIKE UPPER('%$Operates Like$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY PROD_ID
+    </dynamic-mapped-statement>
+    
+     
+<!--mapped-statement name="product.deposits.getAcctHeadList" result-class="java.util.LinkedHashMap">
+		SELECT AC_HD_ID AS "Account Head",AC_HD_CODE AS "Account Head Code", AC_HD_DESC  AS "Account HEAD DESCRIPTION" FROM AC_HD
+                WHERE (STATUS NOT IN ('DELETED'))
+    </mapped-statement-->
+        
+    <dynamic-mapped-statement name="product.deposits.getAcctHeadList" result-class="java.util.LinkedHashMap" >
+        SELECT AD.AC_HD_ID AS "Account Head",AD.AC_HD_CODE AS "Account Head Code", 
+        AD.AC_HD_DESC  AS "Account HEAD DESCRIPTION" FROM AC_HD AD, AC_HD_PARAM  ADP
+        WHERE ( AD.STATUS != 'DELETED' OR AD.STATUS IS NULL ) AND 
+        AD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        ( ADP.STATUS != 'DELETED' OR ADP.STATUS IS NULL ) AND 
+        ADP.AUTHORIZE_STATUS = 'AUTHORIZED' AND                 
+        AD.AC_HD_ID = ADP.AC_HD_ID 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_HD">
+                    AD.AC_HD_ID = #ACCT_HD:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend="AND" property="ACCT_TYPE">
+                    AD.MJR_AC_HD_ID IN 
+                    (SELECT MJR_AC_HD_ID FROM MJR_AC_HD
+                    WHERE MJR_AC_HD_TYPE= #ACCT_TYPE:VARCHAR# 
+                    AND STATUS != 'DELETED' OR STATUS IS NULL)
+                    AND ADP.BALANCETYPE = #BALANCETYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account Head">
+                    UPPER(AD.AC_HD_ID) LIKE UPPER('%$Account Head$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account Head Code">
+                    UPPER(AD.AC_HD_CODE) LIKE UPPER('%$Account Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account HEAD DESCRIPTION">
+                    UPPER(AD.AC_HD_DESC) LIKE UPPER('%$Account Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+<!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <mapped-statement name="getDepositProductAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID AS "Product ID", PROD_DESC AS "Product Description",
+        ACCT_HEAD AS "Account Head", Behaves_Like AS "Operates Like" FROM DEPOSITS_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND (AUTHORIZE_STATUS NOT IN 
+        ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL) AND STATUS_BY!=#USER_ID:VARCHAR#
+        ORDER BY PROD_ID
+    </mapped-statement>
+
+    <mapped-statement name="authorizeDepositProduct" result-class="java.util.HashMap">
+        UPDATE DEPOSITS_PRODUCT SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:DATE#
+        WHERE PROD_ID = #PRODUCT ID:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->    
+    <mapped-statement name="DepositProductCount" result-class="java.util.HashMap">    
+        SELECT NVL(COUNT(*),0) AS COUNTS FROM DEPOSIT_SUB_ACINFO DSA,
+        DEPOSIT_ACINFO DA WHERE DSA.DEPOSIT_NO=DA.DEPOSIT_NO 
+        AND DSA.ACCT_STATUS !='CLOSED'  AND DA.PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertRdDelayedInstallments" inline-parameters="true">
+        INSERT INTO RD_DELAYED_INSTALLMENT (PROD_ID,FROM_INSTALL_AMT,TO_INSTALL_AMT,CHARGE_AMT)
+        VALUES( PROD_ID = #PROD_ID:VARCHAR#,FROM_INSTALL_AMT = #FROM_INSTALL_AMT:VARCHAR#,TO_INSTALL_AMT = #TO_INSTALL_AMT:VARCHAR#,CHARGE_AMT = #CHARGE_AMT:VARCHAR#)
+    </mapped-statement>
+                       
+    <mapped-statement name="updateRdDelayedInstallments" inline-parameters="true">
+        UPDATE RD_DELAYED_INSTALLMENT SET <!--PROD_ID = #PROD_ID#,-->FROM_INSTALL_AMT = #FROM_INSTALL_AMT:VARCHAR#,
+        TO_INSTALL_AMT = #TO_INSTALL_AMT:VARCHAR#,CHARGE_AMT = #CHARGE_AMT:VARCHAR# WHERE PROD_ID = #PROD_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="getIdForProd" result-class="java.util.HashMap">    
+        SELECT DPS.ACNUM_PATTERN AS PREFIX,NVL(DP.AUTHORIZE_REMARK,0) AS SUFFIX, DP.REMARKS AS LAST_VALUE
+        FROM DEPOSITS_PROD_SCHEME DPS, DEPOSITS_PRODUCT DP WHERE DP.PROD_ID = #PROD_ID:VARCHAR# AND DPS.PROD_ID = #PROD_ID:VARCHAR# 
+        AND DP.REMARKS IS NULL AND DP.STATUS != 'DELETED' AND DP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        UNION
+        SELECT DPS.ACNUM_PATTERN AS PREFIX,NVL(DP.REMARKS,0) AS SUFFIX, DP.REMARKS AS LAST_VALUE
+        FROM DEPOSITS_PROD_SCHEME DPS, DEPOSITS_PRODUCT DP WHERE DP.PROD_ID = #PROD_ID:VARCHAR# AND DPS.PROD_ID = #PROD_ID:VARCHAR# 
+        AND DP.REMARKS IS NOT NULL AND DP.STATUS != 'DELETED' AND DP.AUTHORIZE_STATUS = 'AUTHORIZED'  
+    </mapped-statement>
+    
+    <mapped-statement name="updateNxtDpNum" inline-parameters="true">
+        UPDATE DEPOSITS_PRODUCT DP SET DP.REMARKS = #VALUE:VARCHAR# WHERE DP.PROD_ID = #PROD_ID:VARCHAR#
+        AND DP.STATUS != 'DELETED' AND DP.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name = "getHolidayInterestYesNo" result-class="java.util.HashMap">
+        <!--SELECT PAYINT_DEP_MATURITY FROM DEPOSITS_PROD_SCHEME WHERE PROD_ID = #PROD_ID#-->
+        SELECT PAYINT_DEP_MATURITY,AGENT_COMMISION_PERIOD,PREMATURE_MIN_PERIOD,DAILY_INT_CALC,WEEKLY_BASIS,BEHAVES_LIKE,AGENT_COMMISION_MODE 
+        FROM DEPOSITS_PROD_SCHEME DPS,DEPOSITS_PROD_RD DPR,DEPOSITS_PROD_RENEWAL DPRS,DEPOSITS_PRODUCT DP 
+        WHERE DPS.PROD_ID = DPR.PROD_ID AND DPRS.PROD_ID = DPR.PROD_ID AND DP.PROD_ID = DPRS.PROD_ID AND DPS.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getMaxNoSameNoAllowed" result-class="java.util.HashMap">
+        SELECT NVL(MAX_NO_SAME_RENEWAL,0) AS "MAX_NO_SAME_RENEWAL", SAME_NO_ALLOWED
+        FROM DEPOSITS_PROD_RENEWAL WHERE PROD_ID = #PROD_ID:VARCHAR# AND SAME_NO_ALLOWED = 'Y'
+    </mapped-statement>
+    
+    <mapped-statement name = "getSchemeIntroDate" result-class="java.util.HashMap">
+        SELECT SCHEME_INTRO_DT,SCHEME_CLOSING_DT,NVL(MIN_DEPOSIT_PERIOD,0) AS "MIN_DEPOSIT_PERIOD",
+        NVL(MAX_DEPOSIT_PERIOD,0) AS "MAX_DEPOSIT_PERIOD",NVL(WITHDRAWAL_MULTI,0) AS "WITHDRAWAL_MULTI",STAFF_ACCOUNT,DOUBLING_SCHEME
+        FROM DEPOSITS_PROD_SCHEME WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+
+<!-- Get Prod Details Like Maturity Dt, min/max Deposit mmt according to the Selected Product ID Queries -->       
+    <mapped-statement name="getDepProdDetails" result-class="java.util.HashMap">
+        SELECT * FROM DEPOSITS_PROD_SCHEME WHERE PROD_ID= #PROD_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelCanZeroActOpng" result-class="java.util.HashMap">
+        select nvl(ZERO_BAL_ACT_OPNG,'N') as ZERO_BAL_ACT_OPNG from DEPOSITS_PROD_SCHEME where PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTypeOfDeposits" result-class="java.util.HashMap" >
+        SELECT TYPES_OF_DEPOSIT,STAFF_ACCOUNT,PROD_ID FROM DEPOSITS_PROD_SCHEME WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement> 
+
+  <dynamic-mapped-statement name="getFixedDepositProducts" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' AND BEHAVES_LIKE = 'FIXED'
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getCertificatePrintFrmProdLevel" result-class="java.util.HashMap" >
+        SELECT CERTIFICATE_PRINTING  FROM DEPOSITS_PROD_SCHEME WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getRecurringDepositDetails" result-class="java.util.HashMap" >
+        SELECT * FROM DEPOSITS_PROD_RD WHERE PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>      
+    
+    <mapped-statement name="getSlabWiseInterest" result-class="java.util.HashMap" >
+        select CALCULATE_DAILYDEP_INT_SLAB(#ACNUM#,#ASON#) as interest from dual
+    </mapped-statement>
+    
+    <mapped-statement name="getSlabWiseCommision" result-class="java.util.HashMap" >
+        select CALCULATE_DAILYDEP_COMM_SLAB(#ACNUM#,#ASON#) as commision from dual
+    </mapped-statement>
+
+    <mapped-statement name="getDefaultValue" result-class="java.util.HashMap" >
+    	select D.PROD_ID  from DEPOSITS_PROD_INTPAY d where D.PRODUCT_DEFAULT_VALUE = 'Y' 
+    </mapped-statement>
+    <mapped-statement name="checkIntRateEditable" result-class="java.util.HashMap" >
+        select INTRATE_EDITABLE,PRE_MAT_INT_TYPE,PREMATURE_CLOSURE_APPLY,DIFF_ROI_YES_NO from DEPOSITS_PROD_INTPAY d where PROD_ID =#PROD_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDefaultPayFrequency" result-class="java.util.HashMap" >
+        select DEFAULT_PAY_FREQ from deposits_product dp where DP.BEHAVES_LIKE = 'FIXED' and DP.PROD_ID = #PRODUCT_ID:VARCHAR# and 
+        DP.STATUS != 'DELETED' and DP.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+     <mapped-statement name="insertWeeklyDepositTO" inline-parameters="true">
+        INSERT INTO WEEKLY_INSTALLMENT_SLAB (PROD_ID, TYPE, FROM_INSTALL, TO_INSTALL, INSTALLMENT_NO, PENAL, CREATED_BY, CREATED_DT, STATUS,
+        STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT)
+        VALUES(#prodId:VARCHAR#, #prodType:VARCHAR#, #instFrom:NUMBER#, #instTo:NUMBER#, #instNo:NUMBER#, #penal:NUMBER#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, 
+        #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="getWeeklyDepSlabData" result-class="java.util.HashMap" >
+    	SELECT * FROM WEEKLY_INSTALLMENT_SLAB WIS WHERE WIS.STATUS!='DELETED' AND WIS.PROD_ID = #prodId:VARCHAR# ORDER BY WIS.FROM_INSTALL
+    </mapped-statement>
+    
+    <mapped-statement name="deleteWeeklyDepositTO" inline-parameters="true">
+        DELETE FROM WEEKLY_INSTALLMENT_SLAB
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeWeeklyDepositSlab" inline-parameters="true">
+        UPDATE WEEKLY_INSTALLMENT_SLAB SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:DATE#
+        WHERE PROD_ID = #PRODUCT ID:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="insertAgentCommissionSlabTo" inline-parameters="true">
+        INSERT INTO AGENT_COMMISION_SLAB (PROD_ID, FROM_DT, TO_DT, FROM_AMOUNT, TO_AMOUNT,COMMISSION_AMOUNT, STATUS_DT, STATUS, AUTHORIZE_STATUS)
+        VALUES(#prodId:VARCHAR#, #fromDt:DATE#, #toDt:DATE#, #fromAmount:NUMBER#, 
+        #toAmount:NUMBER#, #commissionAmount:NUMBER#,#statusDt:DATE#, #status:VARCHAR#,#authorizeStatus:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="deleteAgentCommissionSlabTo" inline-parameters="true">
+        DELETE FROM AGENT_COMMISION_SLAB
+        where PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectAgentCommissionSlab" result-map="getSelectAgentCommissionSlabResultTo" >
+    	SELECT * FROM AGENT_COMMISION_SLAB WHERE STATUS !='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <result-map name="getSelectAgentCommissionSlabResultTo" class="com.see.truetransact.transferobject.product.deposits.AgentCommisonSlabTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="fromDt" column="FROM_DT"/>
+        <property name="toDt" column="TO_DT"/>
+        <property name="fromAmount" column="FROM_AMOUNT"/>
+        <property name="toAmount" column="TO_AMOUNT"/>
+        <property name="commissionAmount" column="COMMISSION_AMOUNT"/>     
+    </result-map> 
+    
+    <mapped-statement name="authorizeAgentCommissionSlabTo" inline-parameters="true">
+        UPDATE AGENT_COMMISION_SLAB SET AUTHORIZE_STATUS = 'AUTHORIZED' WHERE PROD_ID = #PRODUCT ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateAgentCommissionSlabTo" inline-parameters="true">
+        UPDATE AGENT_COMMISION_SLAB set TO_DT =#TO_DT:DATE# where TO_DT is null
+    </mapped-statement>
+    
+    <!-- Added by nithya on 02-03-2016 for 0003897  -->
+    
+    <mapped-statement name="insertDepositsThriftBenevolentTO" inline-parameters="true">
+        INSERT INTO DEPO_THRIFTBENEVOLENT_INSTALL
+        (PROD_ID, EFFECTIVE_DATE, INSTALLMENT_AMT, OPERATES_LIKE
+        ) VALUES (
+        #productId:VARCHAR#, #effectiveDate:DATE#, #installmentAmount:NUMBER#, #operatesLike:VARCHAR#)
+    </mapped-statement>    
+    
+    <result-map name="getSelectedDepositsThriftBenevolentTOResult" class="com.see.truetransact.transferobject.product.deposits.DepositsThriftBenevolentTO">
+        <property name="productId" column="PROD_ID"/>
+        <property name="operatesLike" column="OPERATES_LIKE"/>
+        <property name="installmentAmount" column="INSTALLMENT_AMT"/>
+        <property name="effectiveDate" column="EFFECTIVE_DATE"/>
+        
+    </result-map>
+    
+    <mapped-statement name="getSelectedDepositsThriftBenevolentTO" result-map="getSelectedDepositsThriftBenevolentTOResult" >
+        SELECT * FROM DEPO_THRIFTBENEVOLENT_INSTALL 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getEffectiveDateForProduct" result-class="java.util.HashMap" >
+        SELECT EFFECTIVE_DATE FROM DEPO_THRIFTBENEVOLENT_INSTALL WHERE PROD_ID = #PROD_ID:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend='AND' property="EFFECTIVE_DATE">                   
+                    EFFECTIVE_DATE = #EFFECTIVE_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>    
+   
+    <!-- End -->    
+    
+    <mapped-statement name="insertAgentCommissionSlabSettingsTO" inline-parameters="true">
+        INSERT INTO AGENT_COMMISSION_CALC_SLAB (PROD_ID,  FROM_AMT, TO_AMT, COMM_PERCENTAGE, CREATED_BY, CREATED_DT, STATUS,
+        STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT)
+        VALUES(#prodId:VARCHAR#, #amtFrom:NUMBER#, #amtTo:NUMBER#, #commissionPercent:NUMBER#,
+        #createdBy:VARCHAR#, #createdDt:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, 
+        #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="deleteAgentCommissionSlabSettingsTO" inline-parameters="true">
+        UPDATE AGENT_COMMISSION_CALC_SLAB
+        SET STATUS = 'DELETED'
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAgentCommissionCalcSlabData" result-class="java.util.HashMap" >
+        SELECT *
+        FROM AGENT_COMMISSION_CALC_SLAB acs
+        WHERE acs.STATUS != 'DELETED' AND acs.PROD_ID = #prodId:VARCHAR#
+        ORDER BY acs.from_amt
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeAgentCommissionSlab" inline-parameters="true">
+        UPDATE AGENT_COMMISSION_CALC_SLAB SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:DATE#
+        WHERE PROD_ID = #PRODUCT ID:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+    
+</sql-map>

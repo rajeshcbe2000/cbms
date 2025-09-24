@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OutwardClearingTallyMap">
+
+	<!-- Use OutwardClearingTally object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertOutwardClearingTally" inline-parameters="true">
+        INSERT INTO OUTWARD_TALLY
+        (SCHEDULE_NO, CLEARING_TYPE, CLEARING_DT, CLOSING_DT, STATUS, BRANCH_ID, STATUS_BY, STATUS_DT, TALLY_STATUS 
+        ) VALUES (
+        #scheduleNo:VARCHAR#, #clearingType:VARCHAR#, #clearingDt:DATE#, #closingDt:DATE#, #status:VARCHAR#, #branchId:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #tallyStatus:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use OutwardClearingTally object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateOutwardClearingTally" inline-parameters="true">
+        UPDATE OUTWARD_TALLY SET 
+        SCHEDULE_NO = #scheduleNo:VARCHAR#,
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+        CLEARING_DT = #clearingDt:DATE#,
+        CLOSING_DT = #closingDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE SCHEDULE_NO = #scheduleNo:VARCHAR# AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' ) AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OutwardClearingTally object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteOutwardClearingTally" inline-parameters="true">
+        UPDATE OUTWARD_TALLY SET STATUS = 'DELETED' WHERE SCHEDULE_NO = #scheduleNo:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR#		
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OutwardClearingTally object (JavaBean) properties -->
+    <result-map name="getOutwardClearingTallyResult" class="com.see.truetransact.transferobject.clearing.outwardtally.OutwardClearingTallyTO">
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="clearingDt" column="CLEARING_DT"/>
+        <property name="closingDt" column="CLOSING_DT"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectOutwardClearingTally" result-map="getOutwardClearingTallyResult" >
+        SELECT * FROM OUTWARD_TALLY 
+        WHERE SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+    </mapped-statement>
+        
+     <dynamic-mapped-statement  name="viewOutwardClearingTally" result-class = "java.util.LinkedHashMap" >
+        SELECT  OT.SCHEDULE_NO AS "SCHEDULE NO", CLEARING_TYPE AS "CLEARING TYPE",
+        CLEARING_DT AS "CLEARING DATE"
+        FROM OUTWARD_TALLY OT, OUTWARD_TALLY_DETAILS OTD
+        WHERE 
+        OT.SCHEDULE_NO = OTD.SCHEDULE_NO(+) AND
+        OT.STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND OT.TALLY_STATUS != 'CLOSED' 
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEDULE NO">
+                    UPPER(OT.SCHEDULE_NO) LIKE UPPER('%$SCHEDULE NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="CLEARING TYPE">
+                    UPPER(CLEARING_TYPE) LIKE UPPER('%$CLEARING TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CLEARING DATE">
+                    UPPER(CLEARING_DT) LIKE UPPER('%$CLEARING DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY OT.SCHEDULE_NO
+    </dynamic-mapped-statement>
+              
+    <mapped-statement name="countOutwardClearingTally" result-class = "java.util.LinkedHashMap" >
+        SELECT  COUNT(*) AS COUNTCT FROM OUTWARD_TALLY 
+        WHERE CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        AND CLEARING_DT=#CLEARING_DATE:DATE#
+        AND CLOSING_DT IS NULL AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+    <mapped-statement name="sumOutwardClearingTally" result-class = "java.util.LinkedHashMap" >
+        SELECT  COUNT(*) AS NO_OF_INSTRUMENT,SUM(AMOUNT) AS SUM_OF_AMOUNT FROM OUTWARD_CLEARING 
+        WHERE  SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+    </mapped-statement>
+       
+    <mapped-statement name="getCurrentClearingDateForClearingType" result-class="java.util.LinkedHashMap">
+        SELECT MAX(CLEARING_DT) AS CURRENT_CLEARING_DATE FROM OUTWARD_TALLY WHERE CLEARING_TYPE = #CLEARING_TYPE# AND BRANCH_ID = #BRANCH_ID# AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+    </mapped-statement>
+        
+    <mapped-statement name="closeOutwardClearingTallyTO" inline-parameters="true">
+        UPDATE OUTWARD_TALLY SET 
+        TALLY_STATUS = 'CLOSED' 
+        WHERE SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="checkOutwardTallyCount" result-class="java.lang.Integer">
+        SELECT SUM(CNT) FROM 
+        (SELECT  COUNT(*) AS CNT
+        FROM  OUTWARD_CLEARING OC
+        WHERE OC.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# 
+        AND OC.BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND OC.CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND OC.STATUS != 'DELETED'
+        AND (OC.AUTHORIZE_STATUS IS NULL OR 
+        OC.AUTHORIZE_STATUS = 'EXCEPTION')
+        UNION ALL 
+        SELECT COUNT(*) AS CNT FROM INWARD_BOUNCING IB 
+        WHERE IB.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# 
+        AND IB.BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND IB.CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND IB.STATUS != 'DELETED'
+        AND (IB.AUTHORIZE_STATUS IS NULL OR 
+        IB.AUTHORIZE_STATUS = 'EXCEPTION'))
+    </mapped-statement>
+</sql-map>

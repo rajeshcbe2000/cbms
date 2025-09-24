@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CourtExpenseSettingMap">
+
+	
+    <mapped-statement name="insertcourtexpenseTO" inline-parameters="true">
+        INSERT INTO COURT_EXPENSE_SETTINGS(CE_ID,CE_EFFECT_FROM,CE_FROM_AMOUNT,CE_TO_AMOUNT,CE_PERCENTAGE) VALUES(#id:VARCHAR#, #date:DATE#, #fromamt:NUMBER#,#toamt:NUMBER#, #percentage:NUMBER#)
+ 
+    </mapped-statement>
+    <result-map name="getcourtexpenseTOResult" class="com.see.truetransact.transferobject.courtexpensesetting.CourtExpenseSettingTO">
+        <property name="id" column="CE_ID"/>
+        <property name="date" column="CE_EFFECT_FROM"/>
+        <property name="fromamt" column="CE_FROM_AMOUNT"/>
+        <property name="toamt" column="CE_TO_AMOUNT"/>
+        <property name="percentage" column="CE_PERCENTAGE"/>
+    </result-map>
+    <mapped-statement name="getcourtexpenseEdit" result-class="java.util.LinkedHashMap">
+        SELECT CE_ID,CE_EFFECT_FROM,CE_FROM_AMOUNT,CE_TO_AMOUNT,CE_PERCENTAGE FROM COURT_EXPENSE_SETTINGS
+               
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectcourtexpenseTO" result-map="getcourtexpenseTOResult" >
+        SELECT * FROM COURT_EXPENSE_SETTINGS 
+        WHERE CE_ID =#CE_ID:VARCHAR# 
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getLoanproduct" result-class="java.util.LinkedHashMap" >
+        select PROD_ID,PROD_DESC from LOANS_PRODUCT order by PROD_ID
+    </mapped-statement>
+         
+        
+    <mapped-statement name="updatecourtexpenseTO" inline-parameters="true">
+        UPDATE COURT_EXPENSE_SETTINGS SET 
+        CE_EFFECT_FROM = #date:DATE#,  
+        CE_FROM_AMOUNT = #fromamt:NUMBER#,
+        CE_TO_AMOUNT  =#toamt:NUMBER#,
+        CE_PERCENTAGE =#percentage:NUMBER#
+        WHERE CE_ID = #id:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deletecourtexpenseTO" inline-parameters="true">
+        UPDATE DIRECTOR_BOARD_MEETING SET 
+        CE_EFFECT_FROM = #date:DATE#,  
+        CE_FROM_AMOUNT = #fromamt:NUMBER#,
+        CE_TO_AMOUNT  =#toamt:NUMBER#,
+        CE_PERCENTAGE =#percentage:NUMBER#
+        WHERE CE_ID = #id:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="insertcourtexpenseproductTO" inline-parameters="true">
+        INSERT INTO COURT_EXPENSE_SETTINGS_PROD(CE_ID,PROD_ID) VALUES(#id:VARCHAR#,#pid:VARCHAR#)
+    </mapped-statement>
+        
+    <result-map name="getcourtexpenseproductTOResult" class="com.see.truetransact.transferobject.courtexpensesetting.CourtExpenseSettingTO">
+        <property name="id" column="CE_ID"/>
+        <property name="pid" column="PROD_ID"/>
+                
+    </result-map>
+    <mapped-statement name="getcourtexpenseproductEdit" result-class="java.util.LinkedHashMap">
+        SELECT CE_ID,PROD_ID FROM  COURT_EXPENSE_SETTINGS_PROD 
+               
+    </mapped-statement>
+    <mapped-statement name="getSelectcourtexpenseproductTO" result-class="java.util.LinkedHashMap" >
+        SELECT CE_ID,a.PROD_ID,b.prod_desc FROM COURT_EXPENSE_SETTINGS_PROD a,loans_product b 
+        WHERE CE_ID =#CE_ID:VARCHAR#  and a.PROD_ID=b.PROD_ID
+    </mapped-statement>
+       
+        
+    <mapped-statement name="updatecourtexpenseproductTO" inline-parameters="true">
+        UPDATE COURT_EXPENSE_SETTINGS_PROD SET 
+        PROD_ID = #pid:VARCHAR#
+        WHERE CE_ID = #id:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

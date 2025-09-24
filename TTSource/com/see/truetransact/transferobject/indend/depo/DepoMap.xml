@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DepoMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <dynamic-mapped-statement name="Depo.getSelectDepoList" result-class="java.util.LinkedHashMap" >
+        SELECT DEPID, DEPO_NAME ,STORE_ID FROM DEPO_MASTER  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL ) 
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="insertDepoTO" inline-parameters="true">
+        INSERT INTO DEPO_MASTER
+        (DEPID, SALES_ID, STORE_ID,PROFIT_PERCENTAGE,SALES_AC_HD_ID,DEPO_NAME,OPENING_STK,STK_ASON_DATE,REMARK, 
+        AUTHORIZE_STATUS, AUTHORIZED_BY, AUTHORIZED_DT, STATUS,PURCHASE_AC_HD_ID,PUR_RET_AC_HD_ID,SALES_RET_AC_HD_ID,DAMAGE_AC_HD_ID,SERVICE_TAX_AC_HD_ID,
+        VAT_AC_HD_ID,DEFICIATE_HC_HD_ID,OPENING_VAT_STOCK,OTHER_EXP_HEAD,MISC_INCOME_HEAD,COMM_RECVD_HEAD,PUR_VAT_AC_HD_ID,
+        PUR_RTN_VAT_AC_HD_ID,SALE_VAT_AC_HD_ID,
+        SALE_RTN_VAT_AC_HD_ID,DAM_VAT_AC_HD_ID,DEF_VAT_AC_HD_ID,STOCK_AC_HD_ID,DISCOUNT_AC_HD_ID,DISCOUNT_VAT_AC_HD_ID
+        ) VALUES 
+        (#depId:VARCHAR#, #salesId:VARCHAR#, #storeId:VARCHAR#, #profitPercentage:NUMBER#, #salesachdId:VARCHAR#, 
+        #deponame:VARCHAR#,#opngstock:NUMBER#, #stkasondate:DATE#,#remarks:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#purchaseachdId:VARCHAR#,#purretachdId:VARCHAR#,#salretachdId:VARCHAR#,#damageachdId:VARCHAR#,
+        #serviceTaxachdId:VARCHAR#,#vatachdId:VARCHAR#,
+        #deficiateachdId:VARCHAR#,#vatOpngStock:NUMBER# ,#otherExpnsgpHead:VARCHAR#,
+        #misIncomegpHead:VARCHAR#,#comReciedgpHd:VARCHAR#,
+        #purVatTaxgpHead:VARCHAR#,#purRetrnVatgpHead:VARCHAR#,
+        #saleVatTaxgpHead:VARCHAR#,#saleRetrnVatTaxgpHead:VARCHAR#,#damageVatgpHead:VARCHAR#,#deficitVatgpHead:VARCHAR#,#stockHd:VARCHAR#,
+        #discountHead:VARCHAR#,#discountVatHead:VARCHAR#)
+        
+    </mapped-statement> 
+    <mapped-statement name="updateDepoTO" inline-parameters="true">
+       UPDATE DEPO_MASTER SET 
+        SALES_ID = #salesId:VARCHAR#,
+        STORE_ID = #storeId:VARCHAR#,
+        PROFIT_PERCENTAGE = CAST(#profitPercentage# AS NUMERIC),
+        SALES_AC_HD_ID=#salesachdId:VARCHAR#,
+        DEPO_NAME= #deponame:VARCHAR#,
+        OPENING_STK = #opngstock:NUMBER#,
+        OPENING_VAT_STOCK = #vatOpngStock:NUMBER#,
+        STK_ASON_DATE =#stkasondate:DATE#,
+        REMARK=#remarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+        PURCHASE_AC_HD_ID=#purchaseachdId:VARCHAR#,
+        PUR_RET_AC_HD_ID=#purretachdId:VARCHAR#,
+        SALES_RET_AC_HD_ID=#salretachdId:VARCHAR#,
+        DAMAGE_AC_HD_ID=#damageachdId:VARCHAR#,
+        SERVICE_TAX_AC_HD_ID=#serviceTaxachdId:VARCHAR#,
+        VAT_AC_HD_ID=#vatachdId:VARCHAR#,
+        DEFICIATE_HC_HD_ID=#deficiateachdId:VARCHAR#,
+        MISC_INCOME_HEAD=#misIncomegpHead:VARCHAR#,
+        COMM_RECVD_HEAD=#comReciedgpHd:VARCHAR#,
+        PUR_VAT_AC_HD_ID=#purVatTaxgpHead:VARCHAR#,
+        STOCK_AC_HD_ID=#stockHd:VARCHAR#,
+        PUR_RTN_VAT_AC_HD_ID=#purRetrnVatgpHead:VARCHAR#,
+        SALE_VAT_AC_HD_ID=#saleVatTaxgpHead:VARCHAR#,
+        SALE_RTN_VAT_AC_HD_ID=#saleRetrnVatTaxgpHead:VARCHAR#,
+        DAM_VAT_AC_HD_ID=#damageVatgpHead:VARCHAR#,
+        DEF_VAT_AC_HD_ID=#deficitVatgpHead:VARCHAR#,
+        OTHER_EXP_HEAD=#otherExpnsgpHead:VARCHAR#,
+        DISCOUNT_AC_HD_ID = #discountHead:VARCHAR#,
+        DISCOUNT_VAT_AC_HD_ID = #discountVatHead:VARCHAR#
+        WHERE DEPID = #depId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deleteDepoTO" inline-parameters="true">
+        UPDATE DEPO_MASTER SET 
+        STATUS = #status:VARCHAR# 
+        WHERE DEPID = #depId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getDepoAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  DEPID, DEPO_NAME ,OPENING_STK FROM DEPO_MASTER TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+         <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  DEPID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeDepo" result-class="java.util.HashMap">
+        UPDATE DEPO_MASTER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  DEPID = #DEPID:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getDepoTOResult" class="com.see.truetransact.transferobject.indend.depo.DepoTO">
+        <property name="depId" column="DEPID"/>
+        <property name="salesId" column="SALES_ID"/>
+        <property name="storeId" column="STORE_ID"/>
+        <property name="profitPercentage" column="PROFIT_PERCENTAGE"/>
+        <property name="salesachdId" column="SALES_AC_HD_ID"/>
+        <property name="deponame" column="DEPO_NAME"/>
+        <property name="opngstock" column="OPENING_STK"/>
+        <property name="stkasondate" column="STK_ASON_DATE"/>
+        <property name="remarks" column="REMARK"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="purchaseachdId" column="PURCHASE_AC_HD_ID"/>
+        <property name="purretachdId" column="PUR_RET_AC_HD_ID"/>
+        <property name="salretachdId" column="SALES_RET_AC_HD_ID"/>
+        <property name="damageachdId" column="DAMAGE_AC_HD_ID"/>
+        <property name="serviceTaxachdId" column="SERVICE_TAX_AC_HD_ID"/>
+        <property name="vatachdId" column="VAT_AC_HD_ID"/>
+        <property name="deficiateachdId" column="DEFICIATE_HC_HD_ID"/>
+        <property name="vatOpngStock" column="OPENING_VAT_STOCK"/>
+        <property name="misIncomegpHead" column="MISC_INCOME_HEAD"/>
+        <property name="comReciedgpHd" column="COMM_RECVD_HEAD"/>
+        <property name="purVatTaxgpHead" column="PUR_VAT_AC_HD_ID"/>
+        <property name="stockHd" column="STOCK_AC_HD_ID"/>
+        <property name="purRetrnVatgpHead" column="PUR_RTN_VAT_AC_HD_ID"/>
+        <property name="saleVatTaxgpHead" column="SALE_VAT_AC_HD_ID"/>
+        <property name="saleRetrnVatTaxgpHead" column="SALE_RTN_VAT_AC_HD_ID"/>
+        <property name="damageVatgpHead" column="DAM_VAT_AC_HD_ID"/>
+        <property name="deficitVatgpHead" column="DEF_VAT_AC_HD_ID"/>
+        <property name="otherExpnsgpHead" column="OTHER_EXP_HEAD"/>
+        <property name="discountHead" column="DISCOUNT_AC_HD_ID"/>
+        <property name="discountVatHead" column="DISCOUNT_VAT_AC_HD_ID"/>
+               
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="Depo.getSelectDepo" result-map="getDepoTOResult" >
+        SELECT * FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') AND DEPID = #DEPID:VARCHAR#
+		<!--SELECT BORROWING_NO, AGENCY_CODE, BORRWING_REFNO, TYPE, DESCRIPTION,
+                SANCTION_DATE,SANCTION_AMT,AMOUNT_BORRWED,RATE_INTEREST,NO_OF_INSTALLMENTS,
+                PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,SANCTION_EXP_DATE,SECURITY_DET,PRINCIPAL_GRP_HEAD,
+                INT_GRP_HEAD,PENAL_GRP_HEAD,CHARGES_GRP_HEAD FROM BORROWING_MASTER 
+		WHERE STATUS NOT IN ('DELETED')  and AUTHORIZE_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO#-->
+    </mapped-statement>
+        
+    <mapped-statement name="Depo.getSales" result-class="java.util.HashMap" >
+        SELECT SMID,NAME FROM SALES_MASTER  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL )
+    </mapped-statement> 
+    <mapped-statement name="Depo.getStores" result-class="java.util.HashMap" >
+        SELECT STNUMBER,NAME,GEN_TRANS FROM STORE_MASTER  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL )
+    </mapped-statement>    
+     
+    <mapped-statement name="getDepoListForStore" result-class="java.util.LinkedHashMap" >
+        SELECT DEPID, DEPO_NAME FROM DEPO_MASTER 
+        WHERE STATUS NOT IN ('DELETED') AND STORE_ID = #STORE_ID:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

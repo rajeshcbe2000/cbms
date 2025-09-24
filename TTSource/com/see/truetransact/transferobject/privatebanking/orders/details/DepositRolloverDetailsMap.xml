@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DepositRolloverDetailsTOMap">
+
+<!-- Use DepositRolloverDetailsTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositRolloverDetailsTO" inline-parameters="true">
+        INSERT INTO PVT_ORDER_DETAILS
+        (ORD_ID, PORTFOLIO_LOC, ASSET_SUB_CLASS, ACCOUNT, PRINCIPAL, ROLLOVER, INT_EARNED, CSP_MEMO_BALANCE, START_DT, MATURITY_DATE, ROLLOVER_AMOUNT, PHONE_ORDER, TENOR_PERIOD_TYPE, TENOR_DAYS, ROLLOVER_TYPE, CURRENCY, SPREAD, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #ordId:VARCHAR#, #portfolioLoc:VARCHAR#, #assetSubClass:VARCHAR#, #account:VARCHAR#, #principal:NUMERIC#, #rollover:VARCHAR#, #intEarned:NUMERIC#, #cspMemoBalance:NUMERIC#, #startDt:DATE#, #maturityDate:DATE#, #rolloverAmount:NUMERIC#, #phoneOrder:VARCHAR#, #tenorPeriodType:VARCHAR#, #tenorDays:NUMERIC#, #rolloverType:VARCHAR#, #currency:VARCHAR#, #spread:NUMERIC#, #status:VARCHAR#, #statusBy:VARCHAR#, TODAY_DT, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+<!-- Use DepositRolloverDetailsTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDepositRolloverDetailsTO" inline-parameters="true">
+        UPDATE PVT_ORDER_DETAILS SET 
+<!--	ORD_ID = #ordId:VARCHAR#,
+	AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+	AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+	AUTHORIZE_DT = #authorizeDt:DATE# -->
+        PORTFOLIO_LOC = #portfolioLoc:VARCHAR#,
+        ASSET_SUB_CLASS = #assetSubClass:VARCHAR#,
+        ACCOUNT = #account:VARCHAR#,
+        PRINCIPAL = #principal:NUMERIC#,
+        ROLLOVER = #rollover:VARCHAR#,
+        INT_EARNED = #intEarned:NUMERIC#,
+        CSP_MEMO_BALANCE = #cspMemoBalance:NUMERIC#,
+        START_DT = #startDt:DATE#,
+        MATURITY_DATE = #maturityDate:DATE#,
+        ROLLOVER_AMOUNT = #rolloverAmount:NUMERIC#,
+        PHONE_ORDER = #phoneOrder:VARCHAR#,
+        TENOR_PERIOD_TYPE = #tenorPeriodType:VARCHAR#,
+        TENOR_DAYS = #tenorDays:NUMERIC#,
+        ROLLOVER_TYPE = #rolloverType:VARCHAR#,
+        CURRENCY = #currency:VARCHAR#,
+        SPREAD = #spread:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE ORD_ID = #ordId:VARCHAR# 
+    </mapped-statement>
+
+<!-- Use DepositRolloverDetailsTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDepositRolloverDetailsTO" inline-parameters="true">
+<!--	DELETE FROM PVT_ORDER_DETAILS 
+	WHERE -->
+        UPDATE PVT_ORDER_DETAILS SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE ORD_ID = #ordId:VARCHAR# 
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to DepositRolloverDetailsTO object (JavaBean) properties -->
+    <result-map name="getDepositRolloverDetailsTOResult" class="com.see.truetransact.transferobject.privatebanking.orders.details.DepositRolloverDetailsTO">
+        <property name="ordId" column="ORD_ID"/>
+        <property name="portfolioLoc" column="PORTFOLIO_LOC"/>
+        <property name="assetSubClass" column="ASSET_SUB_CLASS"/>
+        <property name="account" column="ACCOUNT"/>
+        <property name="principal" column="PRINCIPAL"/>
+        <property name="rollover" column="ROLLOVER"/>
+        <property name="intEarned" column="INT_EARNED"/>
+        <property name="cspMemoBalance" column="CSP_MEMO_BALANCE"/>
+        <property name="startDt" column="START_DT"/>
+        <property name="maturityDate" column="MATURITY_DATE"/>
+        <property name="rolloverAmount" column="ROLLOVER_AMOUNT"/>
+        <property name="phoneOrder" column="PHONE_ORDER"/>
+        <property name="tenorPeriodType" column="TENOR_PERIOD_TYPE"/>
+        <property name="tenorDays" column="TENOR_DAYS"/>
+        <property name="rolloverType" column="ROLLOVER_TYPE"/>
+        <property name="currency" column="CURRENCY"/>
+        <property name="spread" column="SPREAD"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectDepositRolloverDetailsTO" result-map="getDepositRolloverDetailsTOResult" >
+        SELECT * FROM PVT_ORDER_DETAILS 
+        WHERE ORD_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="ViewAllDepositRollover_EntitlementGroup" result-class="java.util.LinkedHashMap" >
+<!--        SELECT  ORD_ID AS "Order ID", MEMBER AS "Member"
+        FROM PVT_ORDER_MASTER
+        WHERE  STATUS NOT IN ('DELETED') -->
+        
+        SELECT  ORD_ID AS "Order ID", MEMBER AS "Member"
+        FROM PVT_ORDER_MASTER
+        <!--WHERE  STATUS NOT IN ('DELETED') AND ORD_ID NOT IN ( SELECT ORD_ID FROM PVT_ORDER_DETAILS WHERE  STATUS NOT IN ('DELETED'))-->
+        WHERE  STATUS NOT IN ('DELETED') AND  NOT EXISTS( SELECT ORD_ID FROM PVT_ORDER_DETAILS WHERE  STATUS NOT IN ('DELETED') AND ORD_ID=PVT_ORDER_DETAILS.ORD_ID)
+     <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Order ID" >
+                    UPPER(ORD_ID) LIKE UPPER('%$Order ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Member" >
+                    UPPER(MEMBER) LIKE UPPER('%$Member$%')
+                </isNotEmpty>
+            </isParameterPresent>
+    </dynamic>
+    </dynamic-mapped-statement>
+    
+   <dynamic-mapped-statement name="ViewAllDepositRolloverDetailsTO" result-class="java.util.LinkedHashMap" >
+        SELECT ACTUAL.ORD_ID AS "Order ID", RELATION.MEMBER AS "Entitlement Group", PORTFOLIO_LOC AS "Portfolio Locatio", ACCOUNT AS "Acount"
+        FROM PVT_ORDER_DETAILS ACTUAL, PVT_ORDER_MASTER RELATION
+        WHERE  ACTUAL.ORD_ID = RELATION.ORD_ID AND ACTUAL.STATUS NOT IN ('DELETED')
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Order ID" >
+                    UPPER(ACTUAL.ORD_ID) LIKE UPPER('%$Order ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Entitlement Group" >
+                    UPPER(RELATION.MEMBER) LIKE UPPER('%$Entitlement Group$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Portfolio Locatio" >
+                    UPPER(PORTFOLIO_LOC) LIKE UPPER('%$Portfolio Locatio$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Acount" >
+                    UPPER(ACCOUNT) LIKE UPPER('%$Acount$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+<!-- =================================================================================== -->        
+<!--Authorization Queries -->
+    <mapped-statement name="getDepositRolloverDetailsAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT ACTUAL.ORD_ID AS "Order ID", RELATION.MEMBER AS "Entitlement Group", PORTFOLIO_LOC AS "Portfolio Locatio", ACCOUNT AS "Acount"
+        FROM PVT_ORDER_DETAILS ACTUAL, PVT_ORDER_MASTER RELATION
+        WHERE  ACTUAL.ORD_ID = RELATION.ORD_ID AND ACTUAL.STATUS NOT IN ('DELETED') AND (ACTUAL.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR ACTUAL.AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+     
+    <mapped-statement name="authorizeDepositRolloverDetails" result-class="java.util.HashMap">
+        UPDATE PVT_ORDER_DETAILS SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,	
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = TODAY_DT
+        WHERE ORD_ID = #ORDER ID:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== --> 
+
+</sql-map>

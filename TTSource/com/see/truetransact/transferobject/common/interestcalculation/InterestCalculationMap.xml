@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.  
+ * 
+ *
+    Document   : InterestCalculationMap.xml
+    Created on : May 6, 2004, 11:25 AM
+    Author     : hemant
+    Description:
+        Purpose of the document follows.
+            To provide a XML file that gives the reference ID and Description if the ID is given.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LookUpMap">
+	
+        
+    <mapped-statement name="getProdIDKayValue4IC" result-map="get-LookUp-result">
+        SELECT
+        PROD_ID AS LOOKUP_REF_ID, PROD_DESC AS LOOKUP_DESC
+        FROM DEPOSITS_PRODUCT
+        WHERE STATUS IS NULL OR STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectDepositAccounts4ProdID" result-class="java.util.HashMap">
+        select 
+        dsa.DEPOSIT_NO||dsa.DEPOSIT_SUB_NO AS ACC_NO,
+        dsa.DEPOSIT_NO as DEPOSIT_NO,
+        dsa.DEPOSIT_SUB_NO as DEPOSIT_SUB_NO ,
+        OPENING_MODE,
+        CUST_TYPE,
+        CUST_ID
+        FROM DEPOSIT_SUB_ACINFO dsa, DEPOSIT_ACINFO
+        Where PROD_ID= #PROD_ID:VARCHAR#
+        AND dsa.DEPOSIT_NO = DEPOSIT_ACINFO.DEPOSIT_NO
+         <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACC_NO">
+                    UPPER(dsa.DEPOSIT_NO||dsa.DEPOSIT_SUB_NO) LIKE UPPER('%$ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_NO">
+                    UPPER(dsa.DEPOSIT_NO) LIKE UPPER('%$DEPOSIT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_SUB_NO">
+                    UPPER(dsa.DEPOSIT_SUB_NO) LIKE UPPER('%$DEPOSIT_SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="OPENING_MODE">
+                    UPPER(OPENING_MODE) LIKE UPPER('%$OPENING_MODE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_TYPE">
+                    UPPER(CUST_TYPE) LIKE UPPER('%$CUST_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectDepositSubAccountsINFO" result-class="java.util.HashMap">
+        Select
+        DEPOSIT_DT, DEPOSIT_PERIOD_YY,DEPOSIT_PERIOD_MM, DEPOSIT_PERIOD_DD,
+        RATE_OF_INT, DEPOSIT_AMT,
+        INTPAY_MODE, INTPAY_FREQ,MATURITY_DT
+        FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO || DEPOSIT_SUB_NO =#ACC_NO:VARCHAR#
+
+    </mapped-statement>
+    
+   <mapped-statement name="getMonthInBetweenDayes" result-class="java.util.HashMap">
+<!--    select sum(Daydiff) as count from
+    (select 30- Extract(day from dt) as Daydiff from 
+    (select  to_date(#START_DT:DATE#)+level-1 as dt  from dual 
+    connect by level &lt; to_date(#END_DT:DATE#)-to_date(#START_DT:DATE#)+1)
+    where Extract(month from dt)=2  and  Extract(month from (dt+1)) =3 )-->
+    select sum(Daydiff) as count from (select 30- Extract(day from dt) as Daydiff from (select generate_series::date dt 
+    from generate_series ((to_date(#START_DT:DATE#)+1)::date,to_date(#END_DT:DATE#),'1 day')) a
+    where Extract(month from dt)=2 and Extract(month from (dt+1)) =3 ) b
+   </mapped-statement>
+        
+    <dynamic-mapped-statement name="icm.getInterestRates" result-class="java.util.HashMap">
+        SELECT ROI, PENAL_INT, DRGP.PROD_ID, LIMIT_AMOUNT, OD_INT_RATE
+        FROM DEPOSIT_ROI_GROUP DRG, DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR 
+        WHERE DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+        DRG.PRODUCT_TYPE = #PRODUCT_TYPE:VARCHAR# AND
+        DRGP.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DRGC.CATEGORY_ID = #CATEGORY_ID:VARCHAR# AND
+        cast(#AMOUNT# as numeric)  BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+        ((TO_CHAR(cast(#DEPOSIT_DT# as DATE),'YYYY-MM-DD') BETWEEN TO_CHAR(ROI_DATE,'YYYY-MM-DD') AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(ROI_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(cast(#DEPOSIT_DT# as DATE),'YYYY-MM-DD') AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD') IS NULL))
+        AND DRG.STATUS != 'DELETED'   AND DRGC.STATUS != 'DELETED'  AND DRGP.STATUS != 'DELETED'  
+        AND DRGTR.STATUS != 'DELETED' AND DRG.AUTHORIZE_STATUS = 'AUTHORIZED'   
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PERIOD" >
+                    (cast(#PERIOD# as NUMERIC) BETWEEN FROM_PERIOD AND TO_PERIOD)
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INT_TYPE" >
+                    DRGTR.INT_TYPE=#INT_TYPE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getDatesForOperativeInterest" result-class="java.util.Date">
+        SELECT DISTINCT transactiondate
+        FROM (SELECT roi_date AS transactiondate
+        FROM deposit_roi_group drg,
+        deposit_roi_group_cat drgc,
+        deposit_roi_group_prod drgp,
+        deposit_roi_group_type_rate drgtr
+        WHERE drg.roi_group_id = drgc.roi_group_id
+        AND drg.roi_group_id = drgp.roi_group_id
+        AND drg.roi_group_id = drgtr.roi_group_id
+        AND drg.product_type = #PRODUCT_TYPE:VARCHAR#
+        AND drgp.prod_id = #PROD_ID:VARCHAR#
+        AND drgc.category_id = #CATEGORY_ID:VARCHAR#
+        AND roi_date BETWEEN #START:DATE# AND #TODAY_DT:DATE#
+        UNION
+        SELECT #TODAY_DT:DATE#
+        FROM DUAL)a
+        ORDER BY 1
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getProductAmountForInterest" result-class="java.util.HashMap">
+        SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        <dynamic>
+            <isEqual prepend="" property="CALC_MODE" compareValue="INTEREST" >    <!-- For Interest -->
+                AMT
+            </isEqual>
+            <isEqual prepend="" property="CALC_MODE" compareValue="PENAL_INT" >   <!-- For Penal Interest -->
+                AMT+TOD_LIMIT
+            </isEqual>            
+            <isEqual prepend="" property="CALC_MODE" compareValue="LIMIT_AMOUNT" >   <!-- For Penal Interest -->
+                AMT
+            </isEqual>            
+        </dynamic>
+        AS AMT
+        FROM $TABLE_NAME$
+        WHERE DAY_END_DT BETWEEN #START:DATE# AND #END:DATE#
+        AND ACT_NUM=#ACT_NUM:VARCHAR# <!--AND AMT&lt;0  -->
+        <dynamic>
+            <isEqual prepend="AND" property="PROD_TYPE" compareValue="OA"  >   <!-- For Penal Interest -->
+                AMT&lt;0
+            </isEqual>            
+        </dynamic>
+        <dynamic>
+            <isEqual prepend="AND" property="PROD_TYPE" compareValue="AD"  >   <!-- For Penal Interest -->
+                AMT&gt;0
+            </isEqual>            
+        </dynamic>
+        <dynamic>
+            <isEqual prepend="AND" property="CALC_MODE" compareValue="PENAL_INT" >   <!-- For Penal Interest -->
+                AMT+TOD_LIMIT &lt; 0
+            </isEqual>            
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="icm.getDepositMaturityIntRate" result-class="java.util.HashMap">
+        SELECT INTPAID_AFTERMATURITY, INT_MATURED_DEP, AFTERMATURITY_INTTYPE,
+        AFTERMATURITY_INTRATE,CALCULATE_TDS FROM DEPOSITS_PROD_SCHEME WHERE PROD_ID  = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="icm.getProducts" result-class="java.util.HashMap">
+        SELECT  AC_HD_ID, OAP.PROD_ID, DEBIT_INT, CREDIT_INT, CR_INT_APPL_FREQ, MIN_CR_INT_AMT,
+        MAX_CR_INT_AMT, DEBIT_INT_APPL_FREQ, MIN_DEBIT_INT_AMT, MAX_DEBIT_INT_AMT,
+        DECODE(OAIP.LAST_INT_APPLDT_CR, NULL, OAP.CREATED_DT, OAIP.LAST_INT_APPLDT_CR) AS LAST_APPL_DT_CR ,
+        DECODE(OAIR.LAST_INT_APPLDT_DEBIT, NULL, OAP.CREATED_DT, OAIR.LAST_INT_APPLDT_DEBIT) AS LAST_APPL_DT_DR,
+        OAAP. TAX_INT_APPLICABLE AS TAX_INT_APPLICABLE,OAAP.RATE_OF_INT AS NRO_TAX_AMT,OCHP.TAX AS TAX_HEAD
+            
+        FROM OP_AC_PRODUCT OAP, OP_AC_ACHEAD_PARAM OCHP, 
+        OP_AC_INTPAY_PARAM OAIP, OP_AC_INTRECV_PARAM OAIR,
+        OP_AC_ACCOUNT_PARAM OAAP
+        WHERE OAP.STATUS != 'DELETED' 
+        AND OAIP.CALC_CRITERIA IS NOT NULL
+        AND OAP.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND OAP.PROD_ID = OCHP.PROD_ID 
+        AND OAP.PROD_ID = OAIP.PROD_ID
+        AND OCHP.PROD_ID = OAIP.PROD_ID
+        AND OAIP.PROD_ID = OAIR.PROD_ID
+        AND OCHP.PROD_ID = OAAP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PROD_ID" >
+                    OAP.PROD_ID= #PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="icm.getProductsAD" result-class="java.util.HashMap">
+        SELECT LP.ACCT_HEAD AS AC_HD_ID, LP.PROD_ID, AC_CREDIT_INT AS CREDIT_INT,
+        AC_DEBIT_INT AS DEBIT_INT, CR_INT_APPLFREQ AS CR_INT_APPL_FREQ,
+        AI.MIN_CREDIT_INT_AMOUNT AS "MIN_CR_INT_AMT", '999999999' AS "MAX_CR_INT_AMT",
+        LAST_APPL_DT AS "LAST_APPL_DT_CR", 'N' AS "TAX_INT_APPLICABLE",
+        '1' AS "NRO_TAX_AMT", '' AS "TAX_HEAD", '' AS "LAST_APPL_DT_DR"
+        FROM LOANS_PRODUCT LP,
+        ADVANCES_PROD_INTPAY AI,
+        DEPOSIT_PROVISION DP,
+        LOANS_PROD_ACHD LPA
+        WHERE DP.PROD_ID = AI.PROD_ID
+        AND AI.PROD_ID = LP.PROD_ID
+        AND LP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND LP.STATUS != 'DELETED'
+        AND LPA.PROD_ID = LP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PROD_ID" >
+                    LP.PROD_ID= #PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="icm.getAccounts" result-class="java.util.HashMap">
+        SELECT ACT_NUM 
+        FROM ACT_MASTER 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# 
+        AND STATUS != 'DELETED'
+        AND ACT_STATUS_ID != 'CLOSED'  <!-- Removed checking for DORMENT -->
+        AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=#NEXT_DATE:DATE#
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+            
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="icm.getAccountsAD" result-class="java.util.HashMap">
+        SELECT ACCT_NUM AS ACT_NUM ,DECODE(LAST_CR_INT_APPLDT,NULL ,LAST_INT_CALC_DT+1,LAST_CR_INT_APPLDT+1) AS  "START", CATEGORY AS CATEGORY_ID,ACCT_OPEN_DT AS DEPOSIT_DT,BRANCH_ID
+        FROM LOANS_FACILITY_DETAILS LFD ,LOANS_BORROWER LB, ADVANCES_PARAM_DETAILS APD
+        WHERE LFD.PROD_ID = #PROD_ID:VARCHAR# 
+        AND LFD.ACCT_NUM=APD.ACT_NUM
+        AND LFD.STATUS != 'DELETED'
+        AND ACCT_STATUS != 'CLOSED'  <!-- Removed checking for DORMENT -->
+        AND AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND LB.BORROW_NO =LFD.BORROW_NO   
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    ACCT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+       
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NUM">
+                    ACCT_NUM = #ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    ACCT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    (LAST_CR_INT_APPLDT IS NOT NULL AND LAST_CR_INT_APPLDT &lt; #NEXT_DATE:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    BRANCH_ID NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=#NEXT_DATE:DATE#
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+            
+    </dynamic-mapped-statement>
+         
+         
+         <!-- Below qry used in DebitIntTask -->
+    <mapped-statement name="icm.getProdAD" result-class="java.util.HashMap">
+        SELECT LP.PROD_ID, AC_DEBIT_INT AS DEBIT_INT FROM LOANS_PRODUCT LP,
+        LOANS_PROD_ACHD LPA WHERE LPA.PROD_ID = LP.PROD_ID
+        AND BEHAVES_LIKE IN ('OD','CC') ORDER BY LP.PROD_ID
+    </mapped-statement>
+        
+    <mapped-statement name="icm.getProdOA" result-class="java.util.HashMap">
+        SELECT OP.PROD_ID, APPL_DEBIT_INT_RATE AS DEBIT_INT 
+        FROM OP_AC_PRODUCT OP, OP_AC_INTRECV_PARAM OAIP
+        WHERE OP.PROD_ID = OAIP.PROD_ID ORDER BY OP.PROD_ID
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="icm.getODAccountsAD" result-class="java.util.HashMap">
+        SELECT LFD.ACCT_NUM AS ACT_NUM, LB.CATEGORY AS CATEGORY_ID,
+        DECODE(APD.LAST_DR_INT_APPLDT, NULL,LFD.CREATE_DT, APD.LAST_DR_INT_APPLDT) AS DEPOSIT_DT
+        FROM LOANS_FACILITY_DETAILS LFD, ADVANCES_PARAM_DETAILS APD,
+        LOANS_BORROWER LB
+        WHERE LFD.PROD_ID = #PROD_ID:VARCHAR# 
+        AND LB.BORROW_NO = LFD.BORROW_NO 
+        AND LFD.ACCT_NUM = APD.ACT_NUM
+        AND LFD.STATUS != 'DELETED'
+        AND (LFD.ACCT_STATUS NOT IN ('CLOSED', 'DORMANT'))
+        AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+            <!--AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED'-->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    LFD.ACCT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    LFD.ACCT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    LFD.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    LFD.BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=TO_DATE(#NEXT_DATE#)
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(#NEXT_DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE#, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY LFD.ACCT_NUM
+    </dynamic-mapped-statement>
+         
+    <dynamic-mapped-statement name="icm.getODAccountsOA" result-class="java.util.HashMap">
+        SELECT AM.ACT_NUM
+        FROM ACT_MASTER AM
+        WHERE AM.PROD_ID = #PROD_ID:VARCHAR# 
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND AM.CLEAR_BALANCE &lt; 0
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AM.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AM.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    AM.BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=TO_DATE(#NEXT_DATE#)
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(#NEXT_DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE#, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY AM.ACT_NUM
+    </dynamic-mapped-statement>
+         
+    <mapped-statement name="icm.getODAccountAmountOA" result-class="java.util.HashMap">
+        SELECT AD.ACT_NUM, AD.PROD_ID , AD.AMT, AD.DAY_END_DT,
+        OAIP.PENAL_INT_CHARGE_STDAY AS PENAL_START_DAY, 
+        OAIP.PENAL_INT_DEBIT_BALACCT AS PENAL_INT, 
+        OAAP.DEBIT_INT AS DEBIT_AC_HEAD, OAP.AC_HD_ID AS PRODUCT_HEAD,
+        AM.BRANCH_CODE
+        FROM ACT_DAYEND_BALANCE AD, OP_AC_INTRECV_PARAM OAIP,
+        ACT_PARAM_DETAIL APD, OP_AC_ACHEAD_PARAM OAAP,
+        OP_AC_PRODUCT OAP, ACT_MASTER AM 
+        WHERE AD.ACT_NUM = #ACT_NUM# 
+        AND APD.ACT_NUM = AD.ACT_NUM
+        AND APD.ACT_NUM = AM.ACT_NUM
+        AND AM.ACT_NUM = AD.ACT_NUM
+        AND OAIP.PROD_ID = AD.PROD_ID
+        AND OAIP.PROD_ID = OAAP.PROD_ID 
+        AND OAAP.PROD_ID = AD.PROD_ID 
+        AND OAIP.PROD_ID = OAP.PROD_ID
+        AND OAP.PROD_ID = OAAP.PROD_ID 
+        AND OAP.PROD_ID = AD.PROD_ID
+        AND AD.AMT &lt; 0
+        AND AD.DAY_END_DT &gt; APD.LAST_DR_INT_APPLDT 
+        AND TO_CHAR(#TODAY_DT:DATE#, 'DD') &gt;= STARTDAY_PROD_CALC 
+        AND TO_CHAR(#TODAY_DT:DATE#, 'DD') &lt;= ENDDAY_PROD_CALC   
+        ORDER BY AD.DAY_END_DT
+    </mapped-statement>
+         
+    <mapped-statement name="icm.getODAccountAmountAD" result-class="java.util.HashMap">
+        SELECT AD.ACT_NUM, AD.PROD_ID , AD.AMT, AD.DAY_END_DT,
+        NULL AS PENAL_START_DAY,
+        0 AS PENAL_INT,
+        LPA.AC_DEBIT_INT AS DEBIT_AC_HEAD, LP.ACCT_HEAD AS PRODUCT_HEAD,
+        LFD.BRANCH_ID AS BRANCH_CODE
+        FROM ADVANCES_DAYEND_BALANCE AD, LOANS_PROD_INTREC LPI,
+        ADVANCES_PARAM_DETAILS APD, LOANS_PROD_ACHD LPA,
+        LOANS_PRODUCT LP, LOANS_FACILITY_DETAILS LFD
+        WHERE AD.ACT_NUM = #ACT_NUM:VARCHAR#
+        AND APD.ACT_NUM = AD.ACT_NUM
+        AND APD.ACT_NUM = LFD.ACCT_NUM
+        AND LFD.ACCT_NUM = AD.ACT_NUM
+        AND LPI.PROD_ID = AD.PROD_ID
+        AND LPI.PROD_ID = LPA.PROD_ID
+        AND LPA.PROD_ID = AD.PROD_ID
+        AND LPI.PROD_ID = LP.PROD_ID
+        AND LP.PROD_ID = LPA.PROD_ID
+        AND LP.PROD_ID = AD.PROD_ID
+        AND AD.AMT &lt; 0
+        AND AD.DAY_END_DT &gt; APD.LAST_DR_INT_APPLDT
+        ORDER BY AD.DAY_END_DT
+    </mapped-statement>
+         
+    <mapped-statement name="updateLastIntApplOA" inline-parameters="true">
+        UPDATE ACT_PARAM_DETAIL SET LAST_DR_INT_APPLDT = #TODAY_DT:DATE#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="updateLastIntApplAD" inline-parameters="true">
+        UPDATE ADVANCES_PARAM_DETAILS SET LAST_DR_INT_APPLDT = #TODAY_DT:DATE#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getValueDateForIntCalc" result-class="java.util.HashMap" >
+        SELECT TRANS_ID, TRANS_DT, ACT_NUM, AMOUNT, TRANS_TYPE, VALUE_DT FROM TRANS_VALUE_DATE
+        WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND TRANS_DT BETWEEN #START:DATE# AND #END:DATE# <!-- For doddaballapur purpose #START#+1 removed-->
+        AND STATUS!='DELETED' AND REMARKS IS NULL ORDER BY VALUE_DT<!--AND VALUE_DT &lt; #START# -->
+    </mapped-statement>
+
+    <mapped-statement name="updateTransValueDateRemarks" inline-parameters="true">
+        UPDATE TRANS_VALUE_DATE SET REMARKS = 'IC'  <!-- Interest Calculated -->
+        WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND TRANS_ID=#TRANS_ID:VARCHAR# AND TRANS_DT=#TRANS_DT:DATE#
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+</sql-map>

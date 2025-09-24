@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LockerSurrenderTOMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+            
+             
+    <mapped-statement name="getSelectCommForIncr" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT COMMISION FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR# 
+    </mapped-statement> 
+           
+    <mapped-statement name="getSelectCommissionForIncr" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT COMMISION FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR# AND
+        (START_DT &gt;=#BEG_DAT:DATE# AND START_DT &lt;#LAST_DAT:DATE#)
+        order by START_DT
+    </mapped-statement> 
+             
+             
+    <mapped-statement name="getSelectPenalRate" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT NVL(PENAL_RATE_OF_INTEREST,0) PENAL_RATE_OF_INTEREST FROM LOCKER_PRODUCT WHERE 
+        PROD_ID=#PROD_ID:VARCHAR# 
+    </mapped-statement> 
+             
+             
+    <mapped-statement name="getSelectPenalty" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT count(COMMISION) as count_comm FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+    </mapped-statement> 
+  
+    
+    <mapped-statement name="getSelectCommission" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT COMMISION FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        ((#TODAY_DT# BETWEEN START_DT AND END_DT) OR
+        (START_DT&lt;=#TODAY_DT:DATE# AND END_DT IS NULL)) AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+    </mapped-statement> 
+    
+    
+    <mapped-statement name="insertLockerSurTO" inline-parameters="true">
+        INSERT INTO LOCKER_SURRENDER
+        (LOCKER_NUM, CUST_ID, ACCT_NAME, CHARGES, OPT_MODE_ID, CREATED_BY, SURRENDER_DT, STATUS, STATUS_BY,  STATUS_DT, 
+        AUTHORIZED_BY, AUTHORIZATION_STATUS, AUTHORIZED_DT, BRANCH_CODE,PROD_ID,REMARKS,SUR_RENEW,SERVICE_TAX,COLLECT_RENT_MM,
+        COLLECT_RENT_YYYY,NEW_EXP_DATE,BREAKOPEN_REMARKS,BREAKOPEN_DT,REFUND_AMOUNT,CUSTOMER_REQUEST,PENAL_AMOUNT,ACT_NUM,DEFAULTER,NOTRANS,RENEW_BF_EXPDT)
+        VALUES (
+        #locNum:VARCHAR#,#custId:VARCHAR#,#acctName:VARCHAR#,#charges:NUMERIC#,#optMode:VARCHAR#,#createdBy:VARCHAR#,
+        #surDt:TIMESTAMP#,#status:VARCHAR#,#statusBy:VARCHAR#,<!--#statusDt:TIMESTAMP#-->(SELECT SYS_DATE() FROM DUAL),#authorizeBy:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeDt:DATE#,#branchID:VARCHAR#, #prodId:VARCHAR#, #remarks:VARCHAR#, #surRenew:VARCHAR#,#serviceTax:NUMERIC#,#collectRentMM:VARCHAR#,#collectRentYYYY:VARCHAR#,
+        #lblNewExpDateVal:DATE#,#breakOpenRemarks:VARCHAR#,#breakOpenDt:DATE#,#txtRefund:NUMERIC#,#cbCustomer:VARCHAR#,#penalAmount:NUMERIC#,#actNum:VARCHAR#,#chkDefaluterYes:VARCHAR#,
+        #chkNoTrans:VARCHAR#,#bforeExpDt:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateLockerSurTO" inline-parameters="true">
+        UPDATE LOCKER_SURRENDER SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE REMARKS = #remarks:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getLockerAccountHeads" result-class="java.util.HashMap" >
+        SELECT LOC_RENT_AC_HD,LOC_SUSP_AC_HD,LOC_MISC_AC_HD,LOC_BRK_AC_HD_YN,SERV_TAX_AC_HD,PENAL_INTEREST_AC_HEAD 
+        FROM locker_product  
+        WHERE PROD_ID = #value:VARCHAR# 
+    </mapped-statement>
+        
+         
+        
+    <dynamic-mapped-statement name="getSelectLockerSurEdit" result-class="java.util.LinkedHashMap" >
+        SELECT ls.prod_id, ls.locker_num, ls.cust_id, ls.acct_name, ls.surrender_dt,
+        ls.charges, ls.remarks, ls.sur_renew AS sur_or_renew, ls.opt_mode_id, ls.surrender_dt,
+        lm.remarks AS issue_id
+        FROM locker_surrender ls, locker_master lm WHERE  ls.status != 'DELETED'
+        AND lm.locker_status_id !='DEFAULTER'
+        AND ls.locker_num = lm.locker_num
+        AND ls.cust_id = lm.cust_id AND ls.authorization_status IS NULL
+            <!-- WHERE ls.authorization_status IS NULL -->
+              
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="AUTHORIZESTATUS">
+                    ls.STATUS_BY != #USER_ID:VARCHAR#
+                    AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ls.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="AUTHORIZED" >
+                ls.AUTHORIZATION_STATUS IS NULL
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" >
+                ls.AUTHORIZED_DT IS NULL
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ls.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="prod_id">
+                    UPPER(ls.prod_id) LIKE UPPER('%$prod_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="locker_num">
+                    UPPER(ls.locker_num) LIKE UPPER('%$locker_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="cust_id">
+                    UPPER(ls.cust_id) LIKE UPPER('%$cust_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="acct_name">
+                    UPPER(ls.acct_name) LIKE UPPER('%$acct_name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="surrender_dt">
+                    UPPER(ls.surrender_dt) LIKE UPPER('%$surrender_dt$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="issue_id">
+                    UPPER(lm.remarks) LIKE UPPER('%$issue_id$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>  
+    <dynamic-mapped-statement name="getSelectLockerAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT ls.prod_id, ls.locker_num,lm.remarks AS issue_id, ls.cust_id, ls.surrender_dt,
+        ls.charges, ls.sur_renew AS sur_or_renew, ls.remarks, ls.acct_name, ls.opt_mode_id, ls.surrender_dt, 
+        ls.defaulter, LS.NOTRANS       
+        FROM locker_surrender ls, locker_master lm WHERE ls.authorization_status IS NULL AND ls.status != 'DELETED'
+        AND ls.locker_num = lm.locker_num
+        AND ls.cust_id = lm.cust_id 
+        AND ls.act_num = lm.act_num
+        AND lm.branch_code = #BRANCH_CODE:varchar#
+            <!-- WHERE ls.authorization_status IS NULL -->
+              
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="AUTHORIZESTATUS">
+                    ls.STATUS_BY != #USER_ID:VARCHAR#
+                    AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ls.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="AUTHORIZED" >
+                ls.AUTHORIZATION_STATUS IS NULL
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" >
+                ls.AUTHORIZED_DT IS NULL
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ls.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement>  
+         
+    <result-map name="getLockerSurTOResult" class="com.see.truetransact.transferobject.locker.lockersurrender.LockerSurrenderTO">
+        <property name="locNum" column="LOCKER_NUM"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="branchID" column="BRANCH_CODE"/>
+        <property name="optMode" column="OPT_MODE_ID"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZATION_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="acctName" column="ACCT_NAME"/>  
+        <property name="charges" column="CHARGES"/>   
+        <property name="surDt" column="SURRENDER_DT"/>   
+        <property name="prodId" column="PROD_ID"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>  
+        <property name="surRenew" column="SUR_RENEW"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="collectRentMM" column="COLLECT_RENT_MM"/>
+        <property name="collectRentYYYY" column="COLLECT_RENT_YYYY"/>
+        <property name="txtRefund" column="REFUND_AMOUNT"/>
+        <property name="cbCustomer" column="CUSTOMER_REQUEST"/>
+        <property name="breakOpenRemarks" column="BREAKOPEN_REMARKS"/>
+        <property name="lblNewExpDateVal" column="NEW_EXP_DATE"/>
+        <property name="penalAmount" column="PENAL_AMOUNT"/>
+        <property name="bforeExpDt" column="RENEW_BF_EXPDT"/>
+              
+    </result-map>
+    <mapped-statement name="getSelectLockerSurTO" result-map="getLockerSurTOResult" >
+        SELECT * FROM locker_surrender 
+        WHERE LOCKER_NUM = #LOCKER_NUM:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+        AND CUST_ID = #CUST_ID:VARCHAR# AND REMARKS = #SURRENDER_ID:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="authorizeLockerSur" result-class="java.util.HashMap">
+        UPDATE locker_surrender  SET 
+        AUTHORIZATION_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #TODAY_DT:TIMESTAMP#
+        WHERE  PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND LOCKER_NUM = #LOCKER_NUM:VARCHAR# AND CUST_ID = #CUST_ID:VARCHAR#
+        AND REMARKS = #ISSUE_ID:VARCHAR#
+    </mapped-statement>  
+      
+    <mapped-statement name="updateLockerMasterStatus" inline-parameters="true">
+        update locker_master set LOCKER_STATUS_ID = #LOCKER_STATUS_ID:VARCHAR#,CLOSED_BY = #CLOSED_BY:VARCHAR#,
+        CLOSED_DT = #CLOSED_DT:DATE# where LOCKER_NUM = #LOC_NO:VARCHAR# and PROD_ID = #PROD_ID:VARCHAR# and CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="updateLockerMasterStatusRenew" inline-parameters="true">
+        update locker_master set EXP_DT = #EXP_DT:DATE#,
+        COLLECT_RENT_MM = #COLLECT_RENT_MONTH:VARCHAR#,
+        COLLECT_RENT_YYYY = #COLLECT_RENT_YEAR:VARCHAR#
+        where LOCKER_NUM = #LOC_NO:VARCHAR# and PROD_ID = #PROD_ID:VARCHAR# and CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement> 
+    
+    
+    <mapped-statement name="getServiceTaxAndComission" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT SERVICE_TAX,COMMISION,START_DT,END_DT FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        ((#TODAY_DT:DATE# BETWEEN START_DT AND #EXP_DT:DATE#) OR (START_DT BETWEEN #TODAY_DT:DATE# AND #EXP_DT:DATE#) OR
+        (START_DT&lt;=#TODAY_DT:DATE# AND END_DT IS NULL)) AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+    </mapped-statement> 
+   
+    <mapped-statement name="getServiceTaxAndComissionForIssue" result-class="java.util.HashMap">
+        <!--SELECT SERVICE_TAX,COMMISION  FROM LOCKER_PROD_CHARGES WHERE STATUS!='DELETED'
+        AND #TODAY_DT# BETWEEN START_DT AND END_DT AND PROD_ID=#PROD_ID# -->
+        SELECT SERVICE_TAX,COMMISION FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        ((#TODAY_DT:DATE# BETWEEN START_DT AND END_DT) OR
+        (START_DT&lt;=#TODAY_DT:DATE# AND END_DT IS NULL)) AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="startDateforBreakOpen" result-class="java.util.HashMap">
+        SELECT SERVICE_TAX,COMMISION FROM LOCKER_PROD_CHARGES WHERE 
+        STATUS!='DELETED' AND PROD_ID=#PROD_ID:VARCHAR# AND 
+        ((#TODAY_DT:DATE# BETWEEN START_DT AND END_DT) OR 
+        (START_DT&lt;=#TODAY_DT:DATE# AND END_DT IS NULL)) AND 
+        CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement  name="getLockSurList" result-class="java.util.LinkedHashMap" >
+        select LM.PROD_ID,LM.locker_num,LM.cust_id,LM.acct_name as name,LM.OPT_MODE_ID as mode_of_operation,
+        LM.REMARKS AS ISSUE_ID, LM.ISSUE_DT, LM.EXP_DT 
+        from locker_master LM where LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# and LM.LOCKER_STATUS_ID != 'CLOSED' and LM.LOCKER_STATUS_ID != 'DEFAULTER'
+        <!--AND LM.locker_num NOT IN
+        (SELECT LOCKER_NUM FROM LOCKER_SURRENDER WHERE STATUS != 'DELETED' AND AUTHORIZATION_STATUS IS NULL)-->
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PRODUCT_ID" >
+                    PROD_ID = #PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(LM.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="locker_num">
+                    UPPER(LM.locker_num) LIKE UPPER('%$locker_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="cust_id">
+                    UPPER(LM.cust_id) LIKE UPPER('%$cust_id$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="name">
+                   UPPER(LM.acct_name) LIKE UPPER('%$name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="mode_of_operation">
+                   UPPER(LM.OPT_MODE_ID) LIKE UPPER('%$mode_of_operation$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_ID">
+                   UPPER(LM.REMARKS) LIKE UPPER('%$ISSUE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_DT">
+                   UPPER(LM.ISSUE_DT) LIKE UPPER('%$ISSUE_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EXP_DT">
+                   UPPER(LM.EXP_DT) LIKE UPPER('%$EXP_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>    
+    </dynamic-mapped-statement >
+         
+
+    <dynamic-mapped-statement name="getTransIDForLockerSurrender" result-class="java.util.HashMap">
+        SELECT TRANS_ID FROM CASH_TRANS WHERE LINK_BATCH_ID=#LINK_BATCH_ID:VARCHAR#
+        AND STATUS!='DELETED' AND TRANS_DT = #TODAY_DT:TIMESTAMP#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AUTHORIZED_STATUS" >
+                    AUTHORIZE_STATUS IS NULL
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic> 
+     </dynamic-mapped-statement > 
+    <mapped-statement name="getTransDetails" result-class="java.util.HashMap">
+        SELECT CUSTOMER_ID_CR,PRODUCT_ID,CUSTOMER_NAME,PROD_TYPE FROM LOCKER_MASTER  WHERE REMARKS =#REMARKS:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+        
+       
+        
+    
+    <mapped-statement name="getTransIDForLockerSurrenderTrans" result-class="java.util.HashMap">
+        SELECT BATCH_ID AS TRANS_ID FROM TRANSFER_TRANS WHERE LINK_BATCH_ID=#LINK_BATCH_ID:VARCHAR#
+        AND STATUS!='DELETED' AND TRANS_DT = #TODAY_DT:TIMESTAMP#
+    </mapped-statement> 
+    
+    <mapped-statement name="AuthSerTaxFromLockerSurrender" result-class="java.util.HashMap">
+        UPDATE SERVICE_TAX_TRANS SET 
+        AUTHORIZE_STATUS=#SERVICE_AUTH_STATUS:VARCHAR#,
+        AUTHORIZE_BY =#SERVICE_AUTH_BY:VARCHAR#,
+        AUTHORIZE_DT =#SERVICE_AUTH_DT:DATE# 
+        WHERE TRANS_ID=#SERVICE_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getExpiryDtLockerMaster" result-class="java.util.HashMap">
+        SELECT EXP_DT FROM LOCKER_MASTER WHERE LOCKER_NUM=#LOC_NO:VARCHAR#
+        AND PROD_ID=#PROD_ID:VARCHAR# AND CUST_ID=#CUST_ID:VARCHAR# AND LOCKER_STATUS_ID='NEW'
+    </mapped-statement> 
+    
+    <mapped-statement name="getSurrenderRefund" result-class="java.util.HashMap">
+        SELECT LOCKER_SURRENDER_REFUND FROM LOCKER_PRODUCT WHERE PROD_ID=#PROD_ID:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND LOCKER_SURRENDER_REFUND = 'Y'
+        
+    </mapped-statement> 
+
+    <mapped-statement name="getSurrenderAuthorizeStatus" result-class="java.util.HashMap">
+        SELECT AUTHORIZATION_STATUS FROM LOCKER_SURRENDER WHERE
+        PROD_ID = #PROD_ID:VARCHAR# AND LOCKER_NUM = #LOCKER_NUM:VARCHAR#
+        AND CUST_ID = #CUST_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement> 
+            
+    <mapped-statement name="getSurrenderRefundMonths" result-class="java.util.HashMap"> 
+        SELECT TRUNC(MONTHS_BETWEEN(TO_DATE(#EXPIRY_DT#,'dd-mm-yyyy'),TO_DATE(#CURRENT_DATE#,'dd-mm-yyyy'))) MONTHS FROM DUAL
+    </mapped-statement> 
+
+    <mapped-statement name="getLockerRentCollectionDetails" result-class="java.util.HashMap">
+       SELECT LS.COLLECT_RENT_MM,LS.COLLECT_RENT_YYYY,LS.STATUS_DT,LS.NEW_EXP_DATE
+       FROM LOCKER_SURRENDER LS WHERE LS.STATUS_DT=(SELECT MAX(STATUS_DT) FROM LOCKER_SURRENDER WHERE PROD_ID=#PROD_ID:VARCHAR# AND 
+       LOCKER_NUM=#LOCKER_NUM:VARCHAR# AND CUST_ID=#CUST_ID:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+       AND AUTHORIZATION_STATUS='AUTHORIZED' AND STATUS != 'DELETED' AND (DEFAULTER NOT IN ('DEFAULTER') OR DEFAULTER IS NULL) AND ACT_NUM=#ACT_NUM:VARCHAR#)  
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="LockerListClosednDueDtails" result-class="java.util.HashMap" >
+        select LM.PROD_ID,LM.locker_num,LM.cust_id,LM.acct_name as name,LM.OPT_MODE_ID as mode_of_operation,
+        LM.REMARKS AS ISSUE_ID, LM.ISSUE_DT, LM.EXP_DT , LM.LOCKER_STATUS_ID,LM.CLOSED_DT
+        FROM LOCKER_MASTER LM WHERE LM.STATUS != 'DELETED' AND LM.AUTHORIZATION_STATUS = 'AUTHORIZED' 
+        AND LM.BRANCH_CODE = #BRANCH_ID:VARCHAR# and LM.LOCKER_STATUS_ID IN('CLOSED','DEFAULTER')
+         <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(LM.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="locker_num">
+                    UPPER(LM.locker_num) LIKE UPPER('%$locker_num$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="cust_id">
+                    UPPER(LM.cust_id) LIKE UPPER('%$cust_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="name">
+                    UPPER(LM.acct_name) LIKE UPPER('%$name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="mode_of_operation">
+                    UPPER(LM.OPT_MODE_ID) LIKE UPPER('%$mode_of_operation$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_ID">
+                    UPPER(LM.REMARKS) LIKE UPPER('%$ISSUE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_DT">
+                   UPPER(LM.ISSUE_DT) LIKE UPPER('%$ISSUE_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EXP_DT">
+                   UPPER(LM.EXP_DT) LIKE UPPER('%$EXP_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_STATUS_ID">
+                   UPPER(LM.LOCKER_STATUS_ID) LIKE UPPER('%$LOCKER_STATUS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CLOSED_DT">
+                   UPPER(LM.CLOSED_DT) LIKE UPPER('%$CLOSED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectLockerCashierAuthorize" result-class="java.util.LinkedHashMap" >
+       SELECT DISTINCT
+       case 
+       when at.trans_mode = 'TRANSFER'
+       then at.batch_id
+       else at.trans_id
+       end as trans_id, 
+       ls.prod_id, ls.locker_num, lm.remarks AS issue_id, ls.cust_id,
+       ls.surrender_dt, ls.charges, ls.sur_renew AS sur_or_renew, ls.remarks,
+       ls.acct_name, ls.opt_mode_id, ls.surrender_dt, ls.defaulter,
+       ls.notrans
+       FROM locker_surrender ls, locker_master lm, all_trans at
+       WHERE ls.authorization_status IS NULL and AT.LINK_BATCH_ID = LS.REMARKS
+       AND ls.status != 'DELETED'
+       AND ls.locker_num = lm.locker_num
+       AND ls.cust_id = lm.cust_id
+       AND ls.act_num = lm.act_num
+       AND lm.branch_code = #BRANCH_CODE:varchar#
+       AND CASE
+       WHEN AT.TRANS_MODE = 'TRANSFER'
+            THEN 'AUTHORIZED'
+       ELSE AT.PAYMENT_STATUS    
+       END IS NOT NULL
+       AND AT.TRANS_DT = #TRANS_DT:DATE#         
+              
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="AUTHORIZESTATUS">
+                    ls.STATUS_BY != #USER_ID:VARCHAR#
+                    AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ls.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="AUTHORIZED" >
+                ls.AUTHORIZATION_STATUS IS NULL
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" >
+                ls.AUTHORIZED_DT IS NULL
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ls.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    
+    
+</sql-map>

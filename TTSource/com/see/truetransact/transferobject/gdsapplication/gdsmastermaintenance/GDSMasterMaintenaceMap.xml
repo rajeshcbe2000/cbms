@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GDSMasterMaintenaceMap">
+
+      <dynamic-mapped-statement name="getGDSMemberDetailsMaster" result-class="java.util.LinkedHashMap">
+         SELECT cust.membership_no, ma.chittal_no, chit_start_dt, ma.scheme_name,
+         ma.member_name, member_type, inst_count, last_trans_dt, total_balance,
+         ma.remarks, standing_instn, scheme_start_dt, scheme_end_dt,
+         installment_day, nominee, inst_amt,
+         get_cust_name(cust.cust_id) AS "Customer",
+       md.no_of_installments, prod_type, ma.prod_id, dr_act_no,
+       installment_frequency
+       FROM mds_scheme_details md, mds_application ma, customer cust
+       WHERE ma.scheme_name = md.scheme_name
+       AND ma.cust_id = cust.cust_id
+       AND ma.status != 'DELETED'
+       AND ma.authorize_status = 'AUTHORIZED'
+       AND ma.gds_no = #GDS_NO:VARCHAR#
+       AND ma.sub_no = #SUB_NO:NUMBER# 
+      </dynamic-mapped-statement>   
+      
+       <!--<mapped-statement name="getGDSTotalInstAmount" result-class="java.util.HashMap">
+        SELECT SUM(NO_OF_INST/#COUNT:NUMERIC#) NO_INST_PAID, SUM(NO_OF_INST*INST_AMT) PAID_AMT,SUM(BONUS_AMT) AS TOTAL_BONUS_AMT FROM MDS_TRANS_DETAILS WHERE 
+        CHITTAL_NO = #CHITTAL_NO:VARCHAR# AND SUB_NO=#SUB_NO:NUMBER# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NOT NULL AND AUTHORIZE_STATUS='AUTHORIZED'
+      
+       </mapped-statement> -->
+       
+        <mapped-statement name="getGDSSchemeNameDetailsNoOfMember" result-class="java.util.HashMap">
+        SELECT PAYMENT_DATE,PRIZED_AMOUNT FROM MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME = #SCHEME_NAME:VARCHAR# AND GDS_NO = #GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER#
+       </mapped-statement>
+       
+       <mapped-statement name="getSelectGDSMemberTypeTO" result-map="getGDSMemberTypeTOResult" >        
+        SELECT * FROM MDS_MEMBER_TYPE WHERE STATUS!='DELETED' AND CHITTAL_NO = #CHITTAL_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER# AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS='AUTHORIZED')        
+       </mapped-statement>
+              
+    <mapped-statement name="getSelectGDSMasterMaintenanceTO" result-map="getGDSMasterMaintenanceTOResult" >
+        SELECT * FROM MDS_MASTER_MAINTENANCE WHERE STATUS!='DELETED' AND GDS_NO = #GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER# AND (AUTHORIZED_STATUS!='REJECTED'
+        OR  AUTHORIZED_STATUS is null or AUTHORIZED_STATUS='AUTHORIZED')
+    </mapped-statement>
+    
+    <result-map name="getGDSMasterMaintenanceTOResult" class="com.see.truetransact.transferobject.gdsapplication.gdsmastermaintenance.GDSMasterMaintenanceTO">
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="chittalNo" column="CHITTAL_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="chitStartDt" column="CHIT_START_DT"/>
+        <property name="memberNo" column="MEMBER_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="memberType" column="MEMBER_TYPE"/>
+        <property name="nomineeName" column="NOMINEE_NAME"/>
+        <property name="salaryRecovery" column="SALARY_RECOVERY"/>
+        <property name="lockStatus" column="LOCK_STATUS"/>
+        <property name="payDt" column="PAY_DT"/>
+        <property name="prizedAmount" column="PRIZED_AMOUNT"/>
+        <property name="resolutionNo" column="RESOLUTION_NO"/>
+        <property name="resolutionDt" column="RESOLUTION_DT"/>
+        <property name="bondNo" column="BOND_NO"/>
+        <property name="bondDt" column="BOND_DT"/>
+        <property name="lastInstallmentNo" column="LAST_INSTALLMENT_NO"/>
+        <property name="lastInstallmentDt" column="LAST_INSTALLMENT_DT"/>
+        <property name="totalAmount" column="TOTAL_AMOUNT"/>
+        <property name="installmentDue" column="INSTALLMENT_DUE"/>
+        <property name="instalOverdueAmt" column="INSTAL_OVERDUE_AMT"/>
+        <property name="instalRemarks" column="INSTAL_REMARKS"/>
+        <property name="salaryCerficateNo" column="SALARY_CERFICATE_NO"/>
+        <property name="empName" column="EMP_NAME"/>
+        <property name="empAddress" column="EMP_ADDRESS"/>
+        <property name="city" column="CITY"/>
+        <property name="pin" column="PIN"/>
+        <property name="designation" column="DESIGNATION"/>
+        <property name="contactNo" column="CONTACT_NO"/>
+        <property name="retirementDt" column="RETIREMENT_DT"/>
+        <property name="empMemberNo" column="EMP_MEMBER_NO"/>
+        <property name="totalSalary" column="TOTAL_SALARY"/>
+        <property name="networth" column="NETWORTH"/>
+        <property name="salaryRemarks" column="SALARY_REMARKS"/>
+        <property name="securityType" column="SECURITY_TYPE"/>
+        <property name="securityValue" column="SECURITY_VALUE"/>
+        <property name="securityRemarks" column="SECURITY_REMARKS"/>
+        <property name="jewellaryDetails" column="JEWELLARY_DETAILS"/>
+        <property name="grossWeight" column="GROSS_WEIGHT"/>
+        <property name="netWeight" column="NET_WEIGHT"/>
+        <property name="goldValue" column="GOLD_VALUE"/>
+        <property name="goldRemarks" column="GOLD_REMARKS"/>
+        <property name="standingIns" column="STANDING_INSTN"/>
+        <property name="nominee" column="NOMINEE"/>
+        <property name="status" column="STATUS"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="applNo" column="APPLICATION_NO"/>
+        <property name="applDate" column="APPLICATION_DATE"/>
+        <property name="defaulter" column="DEFAULTER"/>
+        <property name="applicationSecurityRemarks" column="APPL_SECURITY_REMARKS"/>
+        <property name="chitCloseDt" column="CHIT_CLOSE_DT"/>
+        <property name="gdsNo" column="GDS_NO"/>        
+    </result-map>
+    
+    <result-map name="getGDSMemberTypeTOResult" class="com.see.truetransact.transferobject.gdsapplication.gdsmastermaintenance.GDSMemberTypeTO">
+        <property name="chittalNo" column="CHITTAL_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="memberNo" column="MEMBER_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="memberType" column="MEMBER_TYPE"/>
+        <property name="contactNo" column="CONTACT_NO"/>
+        <property name="networth" column="NETWORTH"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+    </result-map>
+      
+     <mapped-statement name="getSelectOneChittalNoForGDSNo" result-class="java.util.HashMap">
+        select MA.CHITTAL_NO from MDS_APPLICATION ma 
+        where MA.GDS_NO = #GDS_NO:VARCHAR#
+     </mapped-statement>  
+     
+     <mapped-statement name="getSelectGDSMasterData" result-class="java.util.HashMap">       
+        SELECT *
+        FROM mds_master_maintenance
+        WHERE status != 'DELETED'
+        AND (authorized_status = 'AUTHORIZED' OR authorized_status IS NULL)
+        AND scheme_name in (select scheme_name from MDS_SCHEME_DETAILS where group_no = #GROUP_NO:NUMBER#)
+        AND gds_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO:NUMBER#     
+    </mapped-statement>
+     
+    <mapped-statement name="getGDSMasterMaintenanceAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT MA.GROUP_NO, MM.GDS_NO, mm.sub_no, mm.status
+        FROM mds_master_maintenance mm,
+        MDS_APPLICATION ma
+        where 
+        MM.CHITTAL_NO = MA.CHITTAL_NO
+        AND MM.GDS_NO = MA.GDS_NO
+        AND mm.status != 'DELETED' AND mm.branch_code = #BRANCH_CODE:VARCHAR# AND mm.authorized_status IS NULL
+        ORDER BY MM.GDS_NO
+    </mapped-statement>
+    
+    <mapped-statement name="updateGDSMasterMaintenanceTO" result-class="java.util.HashMap">
+        UPDATE MDS_MASTER_MAINTENANCE set AUTHORIZED_STATUS = 'AUTHORIZED'
+        WHERE CHITTAL_NO IN (SELECT MA.CHITTAL_NO FROM MDS_APPLICATION MA WHERE MA.GDS_NO = #GDS_NO:VARCHAR#)
+    </mapped-statement>
+  
+</sql-map>

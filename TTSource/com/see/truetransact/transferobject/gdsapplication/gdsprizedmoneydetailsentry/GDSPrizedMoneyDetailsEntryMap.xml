@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GDSPrizedMoneyDetailsEntryMap">
+    
+    <dynamic-mapped-statement name = "getSelectEachGDSGroupDetails" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT scheme_start_dt, scheme_end_dt, installment_amount,
+        no_of_divisions, msd.group_no,GD.GROUP_NAME, a.total_amount_scheme,MSD.PROD_ID,
+        MSD.PROD_DESC,MSD.MULTIPLE_MEMBER
+        FROM mds_scheme_details msd,
+        mds_application ma,
+        (SELECT group_no, total_amount_scheme
+        FROM (SELECT   msd.group_no,
+        SUM
+        (msd.total_amount_scheme
+        ) AS total_amount_scheme
+        FROM mds_scheme_details msd
+        WHERE msd.group_no IS NOT NULL
+        GROUP BY msd.group_no)c) a,
+        GROUP_DEPOSIT gd
+        WHERE a.group_no = msd.group_no
+        AND ma.group_no = a.group_no
+        and GD.GROUP_NO = msd.group_no
+        AND a.total_amount_scheme in                          
+        (SELECT SUM (inst_amt)
+        FROM mds_application ma JOIN mds_scheme_details msd
+        ON ma.group_no = msd.group_no
+        AND ma.scheme_name = msd.scheme_name
+        WHERE ma.group_no = msd.group_no                         
+        AND ma.status != 'DELETED'
+        AND (   ma.authorize_status IS NULL
+        OR ma.authorize_status = 'AUTHORIZED'
+        )
+        AND ma.commencement_authorize_status IS not NULL
+        AND ma.commencement_trans_id IS not NULL
+        AND msd.group_no IS NOT NULL      
+        GROUP BY msd.group_no) 
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSPrizedMoneyDetailsEntryAuthorize" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT batch_id, gds_no, sub_no, 
+        draw_auction_date, installment_no, next_installment_date,
+        DECODE (mp.draw,
+        'N', DECODE (mp.auction,
+        'N', 'NO_AUCTION',
+        'AUCTION'
+        ),
+        'DRAW'
+        ) AS prized_type,
+        mp.status_by
+        FROM mds_prized_money_details mp LEFT OUTER JOIN transfer_trans tt
+        ON (    mp.chittal_no = tt.gl_trans_act_num
+        AND tt.screen_name = 'MDS_PRIZED_MONEY_DETAILS'
+        )   
+        AND tt.trans_dt = #TRANS_DT:DATE#
+        WHERE mp.status != 'DELETED'
+        AND mp.branch_id = #BRANCH_CODE:VARCHAR#
+        AND mp.authorized_status IS NULL
+        ORDER BY gds_no
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSSchemeNameDetailsProductLevel" result-class = "java.util.LinkedHashMap"> 
+        <!-- SELECT DISTINCT scheme_start_dt, installment_day, draw_auct_day, day_payment,
+        installments, after_payment, holiday_int, no_of_divisions,
+        (total_amount_division*(select scheme_count from GROUP_DEPOSIT where group_no=#GROUP_NO:VARCHAR#)) as total_amount_division, auction_maxamt, auction_minamt,
+        no_of_member_per_division, commision_rate_amt, commision_rate_type,
+        installment_frequency,
+        (SELECT COUNT (*)
+        FROM mds_prized_money_details
+        WHERE scheme_name in (Select scheme_name from MDS_APPLICATION where GROUP_NO = #GROUP_NO:VARCHAR#)
+        AND status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED'
+        AND GDS_NO in(Select GDS_NO from MDS_APPLICATION where GROUP_NO = #GROUP_NO:VARCHAR#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "DIVISION_NO">
+                    DIVISION_NO = #DIVISION_NO:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>) AS INST_COUNT
+        FROM mds_scheme_details mdsd,
+        mds_product_general_details mpgd,
+        mds_product_other_details mpod
+        WHERE mdsd.prod_id = mpgd.prod_id
+        AND mpod.prod_id = mdsd.prod_id
+        AND mdsd.group_no = #GROUP_NO:VARCHAR#
+        AND mdsd.status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED' -->
+        
+        SELECT DISTINCT scheme_start_dt, installment_day, draw_auct_day, day_payment,
+        installments, after_payment, holiday_int, no_of_divisions,
+        (total_amount_division * gd.scheme_count
+        ) AS total_amount_division,
+        auction_maxamt, auction_minamt, no_of_member_per_division,
+        commision_rate_amt, commision_rate_type,
+        installment_frequency,
+        (SELECT nvl(max (sl_no),0)
+        FROM mds_prized_money_details
+        WHERE  status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED'
+        AND gds_no IN (SELECT distinct gds_no
+        FROM mds_application
+        WHERE group_no = #GROUP_NO:VARCHAR#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "DIVISION_NO">
+                    DIVISION_NO = #DIVISION_NO:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>) AS inst_count
+        FROM mds_scheme_details mdsd,
+        mds_product_general_details mpgd,
+        mds_product_other_details mpod,
+        group_deposit gd
+        WHERE GD.GROUP_NO=#GROUP_NO:VARCHAR# AND
+        mdsd.prod_id = mpgd.prod_id
+        AND mpod.prod_id = mdsd.prod_id
+        AND mdsd.group_no = #GROUP_NO:VARCHAR#
+        AND mdsd.status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED'         
+    </dynamic-mapped-statement> 
+    
+    <dynamic-mapped-statement name = "getDetailsForOneSchemeInGroup" result-class = "java.util.LinkedHashMap">         
+        select * from mds_scheme_details 
+        where GROUP_NO = #GROUP_NO:VARCHAR#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSTotalInstAmount" result-class = "java.util.LinkedHashMap">         
+        SELECT ((SUM (no_of_inst))/( COUNT(DISTINCT(scheme_name)))) no_inst_paid, SUM (no_of_inst * inst_amt) paid_amt,
+        SUM (bonus_amt) AS total_bonus_amt
+        FROM mds_trans_details
+        WHERE gds_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO#
+        AND status != 'DELETED'
+        AND authorize_status IS NOT NULL
+        AND authorize_status = 'AUTHORIZED'
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name = "getSelectGDSRecordForNotEnteredDetailsView" result-class = "java.util.LinkedHashMap">  
+        SELECT   scheme_name, gds_no, sub_no, chit_start_dt, trans_id, appln_no,
+        member_no, member_type, member_name, chit_end_dt, division_no,
+        thalayal
+        FROM mds_application ma
+        WHERE status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        AND group_no = #SCHEME_NAMES:VARCHAR#
+        AND NOT EXISTS (
+        SELECT *
+        FROM mds_prized_money_details
+        WHERE (status != 'DELETED' OR authorized_status = 'REJECTED')
+        AND scheme_name = ma.scheme_name
+        AND chittal_no = ma.chittal_no
+        AND sub_no = ma.sub_no)    
+        UNION
+        SELECT   scheme_name, gds_no, sub_no, chit_start_dt, trans_id, appln_no,
+        member_no, member_type, member_name, chit_end_dt, division_no,
+        thalayal
+        FROM mds_application ma
+        WHERE status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        AND group_no = #SCHEME_NAMES:VARCHAR#
+        AND EXISTS (
+        SELECT *
+        FROM mds_prized_money_details
+        WHERE (status = 'DELETED' OR authorized_status = 'REJECTED')
+        AND scheme_name = ma.scheme_name
+        AND chittal_no = ma.chittal_no
+        AND sub_no = ma.sub_no)   
+        ORDER BY gds_no  
+     
+    
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "authorizeGDSPrizedMoneyDetails" result-class = "java.util.LinkedHashMap"> 
+        UPDATE mds_prized_money_details
+        SET authorized_status = #STATUS:VARCHAR#,
+        authorized_by = #AUTHORIZED_BY:VARCHAR#,
+        authorized_dt = #AUTHORIZED_DT:VARCHAR#
+        WHERE status != 'DELETED'
+        AND authorized_status IS NULL
+        AND GDS_NO = #CHITTAL_NO:VARCHAR#
+        AND sub_no =#SUB_NO:NUMBER#     
+    </dynamic-mapped-statement>
+       
+    <dynamic-mapped-statement name = "getGDSNxtInstallmntAmt" result-class = "java.util.LinkedHashMap">         
+        SELECT SUM(INSTALLMENT_AMOUNT)  AS INSTALLMENT_AMOUNT FROM MDS_SCHEME_DETAILS WHERE GROUP_NO = #GROUP_NO:VARCHAR#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSSchemeNameDetailsMaxSlNo" result-class = "java.util.LinkedHashMap">         
+        SELECT NVL(MAX(SL_NO),0) AS SL_NO FROM MDS_PRIZED_MONEY_DETAILS WHERE STATUS!='DELETED' AND          
+        (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED')AND SCHEME_NAME=#SCHEME_NAME:VARCHAR#       AND DIVISION_NO =#DIVISION_NO:NUMBER#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSDivisionExistinPrizedMoney" result-class = "java.util.LinkedHashMap">         
+        select to_char(to_date(DRAW_AUCTION_DATE),'MM-yy') AS DDMM,DIVISION_NO from MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME in (select SCHEME_name from 
+        MDS_SCHEME_DETAILS where GROUP_NO =#GROUP_NO:VARCHAR#)
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSCoChittalSlNo" result-class = "java.util.LinkedHashMap">         
+        SELECT CHITTAL_NO FROM MDS_PRIZED_MONEY_DETAILS WHERE  DIVISION_NO = #DIVISION_NO:NUMBER# AND SCHEME_NAME=#SCHEME_NAME:VARCHAR# AND SL_NO=#SL_NO:NUMBER#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getGDSApplicationForGDSNo" result-class = "java.util.LinkedHashMap">         
+        SELECT * FROM MDS_APPLICATION WHERE  GDS_NO=#GDS_NO:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "DIVISION_NO">
+                    DIVISION_NO = #DIVISION_NO:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+ 
+    </dynamic-mapped-statement>
+    <mapped-statement name="insertGDSPrizedMoneyDetailsEntryTO" inline-parameters="true">
+        INSERT INTO MDS_PRIZED_MONEY_DETAILS(SCHEME_NAME, DRAW_AUCTION_DATE, INSTALLMENT_NO, DIVISION_NO, DRAW, AUCTION, NEXT_INSTALLMENT_DATE, 
+        PRIZED_AMOUNT, TOTAL_BONUS_AMOUNT, NEXT_BONUS_AMOUNT, COMMISION_AMOUNT, TOTAL_DISCOUNT, NET_AMOUNT_PAYABLE, APP_NO, 
+        CHITTAL_NO, MEMBER_TYPE, MEMBER_NAME, INSTALLMENT_PAID, INSTALL_AMOUNT_PAID, INSTALLMENT_DUE, INSTAL_OVERDUE_AMT, STATUS, 
+        STATUS_DT, STATUS_BY,SL_NO,PAYMENT_DATE,PAID_STATUS,SUB_NO,BRANCH_ID,USER_DEFINED_Y_N,AUCTION_TRANS,GDS_NO
+        ) VALUES (
+        #mdsSchemeName:VARCHAR#, #drawAuctionDate:DATE#, #installmentNo:NUMERIC#, #divisionNo:NUMERIC#, 
+        #draw:VARCHAR#, #auction:VARCHAR#, #nextInstallmentDate:DATE#, #prizedAmount:NUMERIC#, #totalBonusAmount:NUMERIC#, 
+        #nextBonusAmount:NUMERIC#, #commisionAmount:NUMERIC#, #totalDiscount:NUMERIC#, #netAmountPayable:NUMERIC#, #appNo:NUMERIC#, 
+        #chittalNo:VARCHAR#, #memberType:VARCHAR#, #memberName:VARCHAR#, #installmentPaid:NUMERIC#, #installAmountPaid:NUMERIC#, 
+        #installmentDue:NUMERIC#, #instalOverdueAmt:NUMERIC#, #status:VARCHAR#, #statusDt:DATE#, #statusBy:VARCHAR#,#slNo:NUMERIC#,#paymentDate:DATE#,'N',#subNo:NUMERIC#,#branchId:VARCHAR#,
+        #userDefined:VARCHAR#,#auctionTrans:VARCHAR#,#gds_no:VARCHAR#
+        )
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getGDSSelectMDSPrizedMoneyDetailsEntryTO" result-map="getGDSPrizedMoneyDetailsEntryTOResult" >
+        SELECT * FROM MDS_PRIZED_MONEY_DETAILS WHERE STATUS!='DELETED' AND GDS_NO = #GDS_NO:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SUB_NO">
+                    SUB_NO = #SUB_NO:NUMBER# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isEqual prepend="AND" property="PREDEFINITION_INSTALLMENT" compareValue="Y" >
+                DIVISION_NO = #DIVISION_NO:NUMBER#
+                AND DRAW_AUCTION_DATE = #DRAW_AUCTION_DATE:DATE# 
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <result-map name="getGDSPrizedMoneyDetailsEntryTOResult" class="com.see.truetransact.transferobject.gdsapplication.gdsprizedmoneydetailsentry.GDSPrizedMoneyDetailsEntryTO">
+        <property name="mdsSchemeName" column="SCHEME_NAME"/>
+        <property name="drawAuctionDate" column="DRAW_AUCTION_DATE"/>
+        <property name="installmentNo" column="INSTALLMENT_NO"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="draw" column="DRAW"/>
+        <property name="auction" column="AUCTION"/>
+        <property name="userDefined" column="USER_DEFINED_Y_N"/>
+        <property name="nextInstallmentDate" column="NEXT_INSTALLMENT_DATE"/>
+        <property name="prizedAmount" column="PRIZED_AMOUNT"/>
+        <property name="totalBonusAmount" column="TOTAL_BONUS_AMOUNT"/>
+        <property name="nextBonusAmount" column="NEXT_BONUS_AMOUNT"/>
+        <property name="commisionAmount" column="COMMISION_AMOUNT"/>
+        <property name="totalDiscount" column="TOTAL_DISCOUNT"/>
+        <property name="netAmountPayable" column="NET_AMOUNT_PAYABLE"/>
+        <property name="appNo" column="APP_NO"/>
+        <property name="chittalNo" column="CHITTAL_NO"/>
+        <property name="memberType" column="MEMBER_TYPE"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="installmentPaid" column="INSTALLMENT_PAID"/>
+        <property name="installAmountPaid" column="INSTALL_AMOUNT_PAID"/>
+        <property name="installmentDue" column="INSTALLMENT_DUE"/>
+        <property name="instalOverdueAmt" column="INSTAL_OVERDUE_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="paymentDate" column="PAYMENT_DATE"/>     
+        <property name="gds_no" column="GDS_NO"/>   
+    </result-map>
+      
+      <mapped-statement name="getGDSTransBatchIdForCashPayment" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT TT.BATCH_ID
+        FROM TRANSFER_TRANS TT
+        WHERE TT.GL_TRANS_ACT_NUM IN
+               (SELECT DISTINCT CT.GL_TRANS_ACT_NUM
+                  FROM CASH_TRANS CT
+                 WHERE CT.TRANS_DT = #TRANS_DT:DATE#
+                   AND CT.TRANS_ID = #TRANS_ID:VARCHAR#)
+        AND TT.TRANS_DT = #TRANS_DT:DATE#
+        AND STATUS != 'DELETED'
+        AND TT.AUTHORIZE_STATUS IS NULL
+        AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        and TT.SCREEN_NAME = 'GDS Prized Money Payment'
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getGDSPrizedMoneyDetailsEntryEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT  distinct MPD.GDS_NO,MDs.GROUP_NO, mpd.sub_no, draw_auction_date,
+        division_no, no_of_divisions, mds.scheme_desc, mpd.installment_no,
+        mds.predefinition_installment,
+        DECODE (mpd.draw,
+        'N', DECODE (mpd.auction, 'N', 'NO_AUCTION', 'AUCTION'),
+        'DRAW'
+        ) AS prized_type
+        FROM mds_prized_money_details mpd, mds_scheme_details mds
+        WHERE mpd.scheme_name = mds.scheme_name
+        AND mpd.status != 'DELETED'
+        AND (mpd.authorized_status IS NULL
+        OR mpd.authorized_status = 'AUTHORIZED'
+        )
+        AND mpd.chittal_no NOT IN (
+        SELECT chittal_no
+        FROM mds_money_payment_details
+        WHERE status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED'
+        AND mpd.chittal_no = chittal_no
+        AND mpd.sub_no = sub_no)
+        ORDER BY gds_no   
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="updateGDSPrizedMoneyDetailsEntryTO" inline-parameters="true">
+        UPDATE MDS_PRIZED_MONEY_DETAILS SET 
+        CHITTAL_NO = #chittalNo:VARCHAR#,
+        GDS_NO = #gds_no:VARCHAR#,
+        SUB_NO = #subNo:NUMERIC#,
+        SCHEME_NAME = #mdsSchemeName:VARCHAR#,
+        DRAW_AUCTION_DATE = #drawAuctionDate:DATE#,
+        INSTALLMENT_NO = #installmentNo:NUMERIC#,
+        DIVISION_NO = #divisionNo:NUMERIC#,
+        DRAW = #draw:VARCHAR#,
+        AUCTION = #auction:VARCHAR#,
+        NEXT_INSTALLMENT_DATE = #nextInstallmentDate:DATE#,
+        <!--PRIZED_AMOUNT = #prizedAmount:NUMERIC#,
+        TOTAL_BONUS_AMOUNT = #totalBonusAmount:NUMERIC#,
+        NEXT_BONUS_AMOUNT = #nextBonusAmount:NUMERIC#,
+        COMMISION_AMOUNT = #commisionAmount:NUMERIC#,
+        TOTAL_DISCOUNT = #totalDiscount:NUMERIC#,
+        NET_AMOUNT_PAYABLE = #netAmountPayable:NUMERIC#,
+        APP_NO = #appNo:NUMERIC#,-->
+        MEMBER_TYPE = #memberType:VARCHAR#,
+        MEMBER_NAME = #memberName:VARCHAR#,
+        INSTALLMENT_PAID = #installmentPaid:NUMERIC#,
+        INSTALL_AMOUNT_PAID = #installAmountPaid:NUMERIC#,
+        INSTALLMENT_DUE = #installmentDue:NUMERIC#,
+        INSTAL_OVERDUE_AMT = #instalOverdueAmt:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZED_STATUS = NULL,
+        USER_DEFINED_Y_N = #userDefined:VARCHAR#
+        WHERE STATUS != 'DELETED'      
+        <dynamic>
+            <isEqual prepend="AND" property="predefinedInstall" compareValue="N" >
+                GDS_NO = #oldChittalNo:VARCHAR#
+                AND SUB_NO = #oldSubNo:NUMERIC#
+                AND SCHEME_NAME = #mdsSchemeName:VARCHAR#
+            </isEqual>
+        </dynamic>
+        <dynamic>
+            <isEqual prepend="AND" property="predefinedInstall" compareValue="Y" >
+                DIVISION_NO = #divisionNo:NUMERIC#
+                AND DRAW_AUCTION_DATE = #drawAuctionDate:DATE# 
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+      <mapped-statement name="checkGDSAuctionEntryAllowed" result-class="java.util.LinkedHashMap" > 
+         select CHECK_GDS_AUCTION_REQUIRED(#GROUP_NO:VARCHAR#,#BRANCH_CODE:VARCHAR#) AS AUCTION_REQUIRED from dual
+      </mapped-statement>
+       
+       
+</sql-map>

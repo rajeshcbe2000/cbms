@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TodAllowedMap">
+
+	<!-- Use FreezeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTodAllowedTO" inline-parameters="true">
+        INSERT INTO TOD_ALLOWED
+        (TRANS_ID,PROD_ID, ACT_NUM,TYPE_OF_TOD,TOD_AMOUNT,FROM_DT,TO_DT,PERMITTED_BY,PERMISSION_REF_NO,PERMITTED_DT,STATUS_BY,CREATED_BY,STATUS,AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,CREATED_DT,STATUS_DT,REMARKS,BRANCH_CODE,ACCT_NAME,PROD_TYPE,CHANGED_TO_DT,INT_CALC_DT,REPAY_PERIOD,REPAY_PERIOD_DDMMYY,REPAY_DT
+        ) VALUES (
+        #trans_id:VARCHAR#,#productId:VARCHAR#,#accountNumber:VARCHAR#,#typeOfTOD:VARCHAR#,cast(#todAllowed# as numeric),#fromDate:DATE#,#toDate:DATE#, #permitedBy:VARCHAR#, #permissionRefNo:VARCHAR#,#permittedDt:DATE#,#statusBy:VARCHAR#,#createdBy:VARCHAR#,#status:VARCHAR#,#authorizeStatus:VARCHAR#,#authorizeUser:VARCHAR#,#authorizeDt:DATE#,#createdDt:DATE#,#statusDt:DATE#,#remarks:VARCHAR#,#branchCode:VARCHAR#,#acctName:VARCHAR#,#productType:VARCHAR#,#toDate:DATE#,#intCalcDt:DATE#,#repayPeriod:NUMERIC#,#repayPeriodDDMMYY:VARCHAR#,#repayDt:DATE#)
+    </mapped-statement>
+        
+    <result-map name="getToadAllowedTOResult" class="com.see.truetransact.transferobject.operativeaccount.TodAllowedTO">
+        <property name="trans_id" column="TRANS_ID"/>
+        <property name="productId" column="PROD_ID"/>
+        <property name="accountNumber" column="ACT_NUM"/>
+        <property name="typeOfTOD" column="TYPE_OF_TOD"/>
+        <property name="todAllowed" column="TOD_AMOUNT"/>
+        <property name="fromDate" column="FROM_DT"/>
+        <property name="toDate" column="TO_DT"/>
+        <property name="permitedBy" column="PERMITTED_BY"/>
+        <property name="permissionRefNo" column="PERMISSION_REF_NO"/>
+        <property name="permittedDt" column="PERMITTED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="acctName" column="ACCT_NAME"/>
+        <property name="productType" column="PROD_TYPE"/>
+        <property name="intCalcDt" column="INT_CALC_DT"/>
+        <property name="repayPeriod" column="REPAY_PERIOD"/>
+        <property name="repayPeriodDDMMYY" column="REPAY_PERIOD_DDMMYY"/>
+        <property name="repayDt" column="REPAY_DT"/>
+                <!--<property name="toDate" column="CHANGED_TO_DT"/>-->
+                
+    </result-map>
+    <mapped-statement name="getSelectAccountListForTOD" result-class="java.util.HashMap">
+        SELECT A.ACT_NUM AS "Account Number", get_cust_name(C.CUST_ID) AS "Customer Name" 
+        FROM  CUSTOMER C,  ACT_MASTER A 
+        WHERE C.CUST_ID = A.CUST_ID
+        AND A.PROD_ID = #PROD_ID:VARCHAR#
+        AND A.AUTHORIZATION_STATUS = 'AUTHORIZED'                             
+        AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement >
+    <mapped-statement name="getSelectAccountListForTODForEdit" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_ID,ACT_NUM as ACCOUNTNO,ACCT_NAME, PROD_ID,TYPE_OF_TOD, TOD_AMOUNT,PROD_TYPE
+        FROM TOD_ALLOWED WHERE STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement >
+    <mapped-statement name="getSelectAccountListForEdit" result-map="getToadAllowedTOResult" >
+        SELECT * FROM TOD_ALLOWED WHERE STATUS!='DELETED' AND  TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement >
+    <mapped-statement name="getSelectExistAccountList" result-map="getToadAllowedTOResult" >
+        SELECT * FROM TOD_ALLOWED WHERE STATUS!='DELETED' AND FROM_DT=#CURR_DT:DATE# AND 
+        TO_DT=#CURR_DT:DATE# AND ACT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement >
+        
+    <mapped-statement name="getSelectExistAccountListUI" result-class="java.util.HashMap" >
+        SELECT * FROM TOD_ALLOWED WHERE STATUS!='DELETED' AND FROM_DT=#CURR_DT:DATE# AND 
+        TO_DT=#CURR_DT:DATE# AND ACT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement >
+        
+        <!-- Use TodAllowedTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTodTO" inline-parameters="true">
+        UPDATE TOD_ALLOWED SET
+        PROD_ID =#productId:VARCHAR#,
+        ACT_NUM=#accountNumber:VARCHAR#,
+        TYPE_OF_TOD =#typeOfTOD:VARCHAR#,
+        TOD_AMOUNT=#todAllowed:NUMERIC#, 
+        FROM_DT=#fromDate:DATE#,
+        TO_DT=#toDate:DATE#,
+        PERMITTED_BY=#permitedBy:VARCHAR#,
+        PERMISSION_REF_NO=#permissionRefNo:VARCHAR#,
+        PERMITTED_DT=#permittedDt:DATE#,
+        STATUS_BY=#statusBy:VARCHAR#,
+        STATUS=#status:VARCHAR#,
+        STATUS_DT=#statusDt:DATE#,
+        REMARKS=#remarks:VARCHAR#,
+        ACCT_NAME=#acctName:VARCHAR#,
+        PROD_TYPE=#productType:VARCHAR#,
+        INT_CALC_DT=#intCalcDt:DATE#,
+        REPAY_PERIOD=#repayPeriod:NUMERIC#,
+        REPAY_PERIOD_DDMMYY=#repayPeriodDDMMYY:VARCHAR#,
+        REPAY_DT=#repayDt:DATE#
+        WHERE TRANS_ID=#trans_id:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteTodAllowedTO" inline-parameters="true">
+        UPDATE TOD_ALLOWED SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE TRANS_ID=#trans_id:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectAccountListForTODForView" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_ID,ACT_NUM as ACCOUNTNO,ACCT_NAME, PROD_ID,TYPE_OF_TOD, TOD_AMOUNT,PROD_TYPE,FROM_DT,TO_DT,CREATED_DT
+        FROM TOD_ALLOWED WHERE STATUS!='DELETED' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND AUTHORIZE_STATUS ='AUTHORIZED'
+    </mapped-statement >
+    <mapped-statement name="getSelectTodAuthorizeTOList" result-class="java.util.HashMap">
+        SELECT TRANS_ID,ACT_NUM AS ACCOUNTNO, PROD_ID,TYPE_OF_TOD, TOD_AMOUNT
+        FROM TOD_ALLOWED WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL 
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TOD_ALLOWED.STATUS_BY)
+    </mapped-statement >
+    <mapped-statement name="getTodForAuthDisplay" result-map="getToadAllowedTOResult" >
+        SELECT * FROM TOD_ALLOWED 
+        WHERE (STATUS='CREATED' OR STATUS='MODIFIED')
+        AND  AUTHORIZE_STATUS IS NULL
+        AND  TRANS_ID=#trans_id:VARCHAR#
+    </mapped-statement >
+    <mapped-statement name="authorizeUpdateTodTO" inline-parameters="true">
+        UPDATE TOD_ALLOWED SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:VARCHAR#
+        WHERE TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="Tod.updateAvailBalance" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET
+        AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement >
+        
+    <mapped-statement name="Tod.updateAvailBalanceAD" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS
+        SET AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0)+#AMOUNT:NUMBER#,
+        LOAN_PAID_INT = nvl(CLEAR_BALANCE,0)+(SELECT NVL(LIMIT,0) FROM LOANS_SANCTION_DETAILS,LOANS_FACILITY_DETAILS
+        WHERE LOANS_SANCTION_DETAILS.SANCTION_NO=LOANS_FACILITY_DETAILS.SANCTION_NO AND
+        LOANS_SANCTION_DETAILS.SL_NO=LOANS_FACILITY_DETAILS.SL_NO AND LOANS_FACILITY_DETAILS.ACCT_NUM=#ACT_NUM:VARCHAR#)
+        WHERE ACCT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getTODDetails" result-class="java.util.HashMap">
+        SELECT nvl(SUM(TOD_AMOUNT),0) as TOD_AMOUNT, TYPE_OF_TOD FROM TOD_ALLOWED ,DAY_END
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND CURR_APPL_DT BETWEEN FROM_DT AND TO_DT
+        AND TOD_ALLOWED.BRANCH_CODE=DAY_END.BRANCH_CODE
+        group by TYPE_OF_TOD
+    </mapped-statement >
+        
+    <dynamic-mapped-statement name="updateTODUtilized" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="TODUTILIZED">
+                TOD_UTILIZED = NVL(TOD_UTILIZED,0)+#AMOUNT:NUMBER#-#CLEAR_BALANCE:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="TODUTILIZEDAD">
+                TOD_UTILIZED =NVL(TOD_UTILIZED,0)+#AMOUNT:NUMBER#-#LOAN_PAID_INT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="TODUTILIZEDCBLESS">
+                TOD_UTILIZED =NVL(TOD_UTILIZED,0)+#AMOUNT:NUMBER# <!--+#CLEAR_BALANCE#-->
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="TODUTILIZEDCBMORE">
+                TOD_UTILIZED =NVL(TOD_UTILIZED,0)
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="TODUTILIZEDCBMORERUNNING">
+                TOD_UTILIZED =CASE
+                WHEN( ((NVL(TOD_UTILIZED,0) - #AMOUNT:NUMBER#) &gt; 0)
+                )
+                THEN  NVL(TOD_UTILIZED,0)-#AMOUNT:NUMBER#
+                ELSE 0
+                END
+            </isPropertyAvailable>
+        </dynamic>
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# and status!='DELETED' and #TODAY_DT:DATE# between from_dt and to_dt
+    </dynamic-mapped-statement> 
+       
+    <mapped-statement name="getTodDetailsListForDayend" result-class="java.util.HashMap">
+              <!--SELECT sum(NVL(TOD_AMOUNT,0)) AS TOD_AMOUNT, sum(NVL(TOD_UTILIZED,0)) AS TOD_UTILIZED, 
+              sum(NVL(TOD_AMOUNT,0)) - NVL(TOD_UTILIZED,0) AS TOD_LEFT
+              FROM TOD_ALLOWED WHERE ACT_NUM=#actNum# AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'
+              AND TO_DT = #dayeEndDt# group by act_num-->
+        SELECT sum(NVL(TOD_AMOUNT,0)) AS TOD_AMOUNT ,(select distinct TOD_UTILIZED from TOD_ALLOWED 
+        where act_num=#actNum:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'
+        AND TO_DT = #dayeEndDt:DATE# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#) AS TOD_UTILIZED,
+        sum(NVL(TOD_AMOUNT,0)) - (select distinct TOD_UTILIZED from TOD_ALLOWED 
+        where act_num=#actNum:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'
+        AND TO_DT = #dayeEndDt:DATE# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ) AS TOD_LEFT
+        FROM TOD_ALLOWED WHERE ACT_NUM=#actNum# AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'
+        AND TO_DT = #dayeEndDt:DATE#  AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# group by act_num
+    </mapped-statement>
+        
+    <mapped-statement name="updateAvailBalOA" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET AVAILABLE_BALANCE=#AVAILABLE_BALANCE:NUMBER#
+        WHERE PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# 
+            
+    </mapped-statement> 
+        
+    <mapped-statement name="updateAvailBalAD" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET AVAILABLE_BALANCE=#AVAILABLE_BALANCE:NUMBER#,
+        LOAN_PAID_INT = #LOAN_PAID_INT:NUMBER# WHERE PROD_ID = #prodId# AND ACcT_NUM = #actNum:VARCHAR#
+    </mapped-statement> 
+        
+    <mapped-statement name="getTypeOfTod" result-class="java.util.HashMap">
+        SELECT TYPE_OF_TOD, ACT_NUM FROM TOD_ALLOWED
+        WHERE #TODAY_DT:DATE# BETWEEN FROM_DT AND TO_DT AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND STATUS!='DELETED' and ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getTODUtilizedDetails" result-class="java.util.HashMap">
+        SELECT ACT_NUM,TRANS_ID,TOD_UTILIZED FROM TOD_ALLOWED WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND #TODAY_DT:DATE# BETWEEN FROM_DT AND TO_DT order by TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="updateTODUtilizedWhileAuth" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET TOD_UTILIZED= #TOD_UTILIZED:NUMBER# WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND #TODAY_DT:DATE# BETWEEN FROM_DT AND TO_DT
+    </mapped-statement>
+    <mapped-statement name="updateTODUtilizedWhileDayend" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET TOD_UTILIZED= #TOD_UTILIZED:NUMBER# WHERE ACT_NUM=#actNum:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND #dayeEndDt:DATE# BETWEEN FROM_DT AND TO_DT
+    </mapped-statement>
+        
+    <mapped-statement name="getTodDetailsListForDayendUpdate" result-class="java.util.HashMap">
+        select sum(NVL(TOD_AMOUNT,0)) AS TOD_AMOUNT,(select distinct TOD_UTILIZED  from TOD_ALLOWED 
+        where act_num=#actNum:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'and to_dt=#dayeEndDt:DATE#) as TOD_UTILIZED
+        from tod_allowed where 
+        AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED' and to_dt=#dayeEndDt:DATE#
+        and ACT_NUM=#actNum:VARCHAR# group by act_num
+    </mapped-statement>
+        
+    <mapped-statement name="getTODUtilizedDetailsForAvBalUpdate" result-class="java.util.HashMap">
+        SELECT ACT_NUM,FROM_DT,TRANS_ID,
+        (SELECT (CLEAR_BALANCE) FROM ACT_MASTER WHERE ACT_NUM=TD.ACT_NUM) AS CLEAR_BAL,
+        (SELECT (CLEAR_BALANCE) FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM=TD.ACT_NUM) AS ADV_CLEAR_BAL
+        FROM TOD_ALLOWED TD WHERE TRANS_ID =#TRANS_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getTodDetailsForDayBegin" result-class="java.util.HashMap">
+        SELECT ACT_NUM,FROM_DT,sum(TOD_AMOUNT) as TOD_AMOUNT,PROD_ID,PROD_TYPE FROM TOD_ALLOWED WHERE AUTHORIZE_STATUS='AUTHORIZED'
+        AND STATUS!='DELETED' and FROM_DT=#HOLIDAY_DT:DATE# AND TO_DT &gt;=#CURR_DT:DATE# GROUP BY ACT_NUM,FROM_DT,PROD_ID,PROD_TYPE
+    </mapped-statement>
+    <mapped-statement name="getSelectListForDtChange" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_ID,ACT_NUM as ACCOUNTNO,ACCT_NAME,TYPE_OF_TOD,TOD_AMOUNT,FROM_DT,TO_DT FROM TOD_ALLOWED WHERE TO_DT> #TODAY_DT:DATE#
+        AND AUTHORIZE_STATUS='AUTHORIZED'
+        AND STATUS!='DELETED' and BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateChangedDate" result-class="java.util.HashMap">
+        UPDATE  TOD_ALLOWED SET TO_DT=#CHANGED_DATE:DATE#,STOP_STATUS='STOPPED',AUTHORIZE_STATUS =null,
+        AUTHORIZED_BY=null,AUTHORIZED_DT=null
+        WHERE TRANS_ID=#TRANS_ID:VARCHAR# 
+    </mapped-statement> 
+    <mapped-statement name="getStopStatus" result-class="java.util.HashMap">
+        SELECT STOP_STATUS FROM TOD_ALLOWED WHERE TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="reverseDate" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET TO_DT=CHANGED_TO_DT,AUTHORIZE_STATUS='AUTHORIZED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:VARCHAR#
+        WHERE TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="reverseDate1" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET CHANGED_TO_DT=TO_DT WHERE TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateTODUtilizedAmountAuth" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET TOD_UTILIZED= #TOD_UTILIZED:NUMBER# WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' 
+        AND TRANS_ID = #TRANS_ID:VARCHAR# AND #TODAY_DT:DATE# BETWEEN FROM_DT AND TO_DT
+    </mapped-statement>
+        
+    <mapped-statement name="getTODLimit" result-class="java.util.HashMap">
+        SELECT SUM(TOD_AMOUNT) AS TOD_AMOUNT FROM TOD_ALLOWED WHERE #dayeEndDt:DATE# BETWEEN FROM_DT AND REPAY_DT 
+        AND ACT_NUM=#actNum:VARCHAR#  AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'
+        GROUP BY ACT_NUM
+    </mapped-statement>
+        
+    <mapped-statement name="getDrawPowOrLim" result-class="java.util.HashMap">
+        SELECT NVL(DECODE(DRAWING_POWER,'Y',LSD.LIMIT,'N',(SELECT SUM(NVL(CALC_DRAWING_POWER,0)) FROM
+        LOANS_DRAWING_POWER_DETAILS 
+        WHERE STATUS != 'DELETED'AND ACCT_NO = #actNum:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND AUTHORIZE_DT IN(SELECT MAX(AUTHORIZE_DT) FROM LOANS_DRAWING_POWER_DETAILS WHERE 
+        ACCT_NO = #actNum:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED'))),0) AS DRAWING_POWER, LSD.LIMIT
+        FROM LOANS_SANCTION_DETAILS LSD, LOANS_FACILITY_DETAILS LFD
+        WHERE LFD.BORROW_NO=LSD.BORROW_NO AND LFD.ACCT_NUM=#actNum:VARCHAR#
+        AND LFD.SANCTION_NO=LSD.SANCTION_NO AND LFD.SL_NO=LSD.SL_NO
+        AND LFD.STATUS!='DELETED' AND LFD.ACCT_STATUS!='CLOSED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="updateCBTOD" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET CLEAR_BAL_BEF_TOD= 
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="OA_CLEAR_BAL">
+                #CLEAR_BAL#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="AD_CLEAR_BAL">
+                #ADV_CLEAR_BAL#
+            </isPropertyAvailable>
+        </dynamic>
+        WHERE TRANS_ID=#TRANS_ID:VARCHAR#
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getCBForTOD" result-class="java.util.HashMap">
+        SELECT CLEAR_BALANCE FROM 
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="OA_CB">
+                ACT_MASTER WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = " " property="AD_CB">
+                LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#
+            </isPropertyAvailable>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="updateCBForTODDayBegin" result-class="java.util.HashMap">
+        UPDATE TOD_ALLOWED SET CLEAR_BAL_BEF_TOD=#CLEAR_BALANCE:NUMBER# WHERE
+        ACT_NUM=#ACT_NUM:VARCHAR# AND FROM_DT=#FROM_DT:DATE# AND STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+</sql-map>

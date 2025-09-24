@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DeathMarkingTOMap">
+
+	<!-- Use DeathMarkingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDeathMarkingTO" inline-parameters="true">
+        INSERT INTO DEATH_MARKING
+        (DEATH_DT, REPORTED_ON, REPORTED_BY, RELATIONSHIP, REFERENCE_NO, REMARKS, CREATED_BY, CREATED_DT, CUST_ID, STATUS, STATUS_BY, STATUS_DT, BRANCH_ID, INITIATED_BRANCH
+        ) VALUES (
+        #deathDt:DATE#, #reportedOn:DATE#, #reportedBy:VARCHAR#, #relationship:VARCHAR#, #referenceNo:VARCHAR#, #remarks:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #custId:VARCHAR#,#status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:VARCHAR#, #branchId:VARCHAR#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use DeathMarkingTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDeathMarkingTO" inline-parameters="true">
+        UPDATE DEATH_MARKING SET 
+        DEATH_DT = #deathDt:DATE#,
+        REPORTED_ON = #reportedOn:DATE#,
+        REPORTED_BY = #reportedBy:VARCHAR#,
+        RELATIONSHIP = #relationship:VARCHAR#,
+        REFERENCE_NO = #referenceNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        REMARKS = #remarks:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use DeathMarkingTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDeathMarkingTO" inline-parameters="true">
+        UPDATE DEATH_MARKING
+        SET STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE CUST_ID = #custId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to DeathMarkingTO object (JavaBean) properties -->
+    <result-map name="getDeathMarkingTOResult" class="com.see.truetransact.transferobject.customer.deathmarking.DeathMarkingTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="deathDt" column="DEATH_DT"/>
+        <property name="reportedOn" column="REPORTED_ON"/>
+        <property name="reportedBy" column="REPORTED_BY"/>
+        <property name="relationship" column="RELATIONSHIP"/>
+        <property name="referenceNo" column="REFERENCE_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+    <mapped-statement name="getSelectDeathMarkingTO" result-map="getDeathMarkingTOResult" >
+        SELECT * FROM DEATH_MARKING 
+        WHERE CUST_ID = #value:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+        <!-- This statement is used to execute query for populating the viewall screen -->
+    <mapped-statement name="getSelectDeathMarkingMap" result-class="java.util.LinkedHashMap" >
+<!--		SELECT CUST.CUST_ID, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", DM.REPORTED_ON  FROM DEATH_MARKING DM, CUSTOMER CUST
+                WHERE ( DM.STATUS IS NULL OR DM.STATUS IN ('CREATED', 'MODIFIED') ) AND DM.CUST_ID = CUST.CUST_ID AND (DM.AUTHORIZE_STATUS IS NULL OR DM.AUTHORIZE_STATUS NOT IN ('AUTHORIZED')) AND DM.BRANCH_ID = #BRANCH_ID#-->
+        SELECT CUST.CUST_ID, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", 
+        DM.REPORTED_ON  FROM DEATH_MARKING DM, CUSTOMER CUST WHERE DM.CUST_ID = CUST.CUST_ID AND 
+        ((DM.STATUS IS NULL OR DM.STATUS NOT IN ('DELETED')) AND 
+        (DM.AUTHORIZE_STATUS IS NULL OR DM.AUTHORIZE_STATUS NOT  IN  ( 'REJECTED'))) AND 
+        DM.BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+        
+       
+        <!--  This Statement is used to Get the Customer Infromation Both from the AccountMaster,Deposit_AcInfo,Deposit_Sub_Acinfo -->
+    <mapped-statement name="selectDeathMarkInfo" result-class="java.util.LinkedHashMap">
+        <!--This Query is commented by Sathiya-->
+<!--        SELECT 'OA' AS "Product Type", ACT_NUM AS "Account No.",  CREATE_DT AS "Create Dt.",NULL AS "Maturity Dt.", NULL AS "Interest", AVAILABLE_BALANCE AS "Available Balance", SETTMT_MODE_ID AS "Settlement", (SELECT DECODE(COUNT(*), 0, 'Y','N')   FROM ACT_MASTER A, ACT_NOMINEE_DETAIL AN WHERE A.ACT_NUM = AN.ACT_NUM) AS "Nominee"  FROM ACT_MASTER 
+        WHERE CUST_ID =#CUST_ID# AND STATUS != 'DELETED' 
+        UNION 
+        SELECT 'TD' As "Term Deposit", DA.DEPOSIT_NO AS "Account No.",DS.TOTAL_BALANCE AS "Total Balance", DS.DEPOSIT_DT AS "Create Dt.", DS.MATURITY_DT AS "Maturity Dt.", DS.RATE_OF_INT AS "Interest", DS.AVAILABLE_BALANCE AS "Available Balance", DA.SETTLEMENT_MODE AS "Settlement", DA.NOMINEE_DETAILS AS "Nominee" FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DS 
+        WHERE DA.DEPOSIT_NO = DS.DEPOSIT_NO AND DA.CUST_ID =#CUST_ID# AND DA.STATUS != 'DELETED' AND DS.STATUS != 'DELETED' -->
+        
+        SELECT 'OA' AS "Product Type", AM.ACT_NUM AS "Account No.",AM.TOTAL_BALANCE AS "Total Balance", AM.CREATE_DT AS "Create Dt.",NULL AS "Maturity Dt.",
+        NULL AS "Interest", AVAILABLE_BALANCE AS "Available Balance", SETTMT_MODE_ID AS "Settlement",
+        (SELECT DECODE(COUNT(*), 0, 'Y','N')   FROM ACT_MASTER , ACT_NOMINEE_DETAIL AN WHERE AM.ACT_NUM = AN.ACT_NUM)
+        AS "Nominee"  FROM ACT_MASTER AM WHERE AM.CUST_ID =#CUST_ID:VARCHAR# AND STATUS != 'DELETED' 
+        UNION
+        SELECT 'TD' As "Product Type", DS.DEPOSIT_NO AS "Account No.",DS.TOTAL_BALANCE AS "Total Balance", DS.DEPOSIT_DT AS "Create Dt.",
+        DS.MATURITY_DT AS "Maturity Dt.", DS.RATE_OF_INT AS "Interest", DS.AVAILABLE_BALANCE AS "Available Balance",
+        DA.SETTLEMENT_MODE AS "Settlement", DA.NOMINEE_DETAILS AS "Nominee" FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DS 
+        WHERE DA.DEPOSIT_NO = DS.DEPOSIT_NO AND DA.CUST_ID =#CUST_ID:VARCHAR# AND DA.STATUS != 'DELETED' AND 
+        DS.STATUS != 'DELETED'        
+    </mapped-statement>
+         
+        <!-- This statement is used to execute query to fill up the ui fields for updation or deletion -->
+    <mapped-statement name="selectDepositDetails" result-class="java.util.LinkedHashMap">
+        SELECT get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME" , DAC.DEPOSIT_NO, DAC.SETTLEMENT_MODE,  DAC.NOMINEE_DETAILS From DEPOSIT_ACINFO DAC, CUSTOMER CUST 
+                <!--WHERE DAC.CUST_ID = CUST.CUST_ID AND DAC.PROD_ID = #PROD_ID# AND DAC.DEPOSIT_NO NOT IN (SELECT DEPOSIT_NO FROM DEPOSIT_DEATH_MARKING WHERE STATUS != 'DELETED' )-->
+        WHERE DAC.CUST_ID = CUST.CUST_ID AND DAC.PROD_ID = #PROD_ID:VARCHAR# AND  NOT EXISTS (SELECT DEPOSIT_NO FROM DEPOSIT_DEATH_MARKING WHERE STATUS != 'DELETED' AND DAC.DEPOSIT_NO= DEPOSIT_NO)
+    </mapped-statement>
+        
+         <!-- This statement is used to execuste the query to fill up a label with customername -->
+    <mapped-statement name="getSelectCustomerDetails" result-class="java.util.LinkedHashMap">
+        SELECT CUST_ID, get_cust_name(CUSTOMER.CUST_ID) "CUSTOMER NAME" , PROFESSION, NATIONALITY FROM CUSTOMER WHERE STATUS != 'DELETED' AND  AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND CUST_ID NOT IN (SELECT CUST_ID FROM DEATH_MARKING WHERE STATUS != 'DELETED' AND  (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL))
+        AND  NOT EXISTS (SELECT CUST_ID FROM CUSTOMER_SUSPENDED  WHERE   STATUS='SUSPENDED'
+        AND CUSTOMER.CUST_ID=CUST_ID) AND BRANCH_CODE = #BRANCH_ID:VARCHAR# ORDER BY CUST_ID
+    </mapped-statement> 
+          <!-- This Statement is used to Retrieve the CustomerName Based on the customerId -->   
+    <mapped-statement name="getSelectCustomerName" result-class="java.util.LinkedHashMap">
+        SELECT  get_cust_name(CUSTOMER.CUST_ID) AS "CUSTOMER NAME"  FROM CUSTOMER WHERE (CUST_ID = #CUST_ID:VARCHAR#)
+    </mapped-statement> 
+    <mapped-statement name="getSelectCreatedDt" result-class="java.util.LinkedHashMap">
+        SELECT  CREATEDDT FROM CUSTOMER WHERE CUST_ID = #CUST_ID:VARCHAR# 
+    </mapped-statement>   
+ 
+  <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+
+    <mapped-statement name="updateCustomerMaster" inline-parameters="true">
+        UPDATE CUSTOMER SET
+        CUSTOMER_STATUS = 'DECEASED'
+        WHERE 
+        CUST_ID = #CUST_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getDeathMarkingAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  CUST.CUST_ID, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", DM.REPORTED_ON, 
+        DM.AUTHORIZE_STATUS, DM.AUTHORIZED_BY, DM.STATUS_BY  FROM DEATH_MARKING DM, CUSTOMER CUST
+        WHERE (DM.STATUS != 'DELETED' OR DM.STATUS IS NULL)
+        AND DM.CUST_ID = CUST.CUST_ID 
+        <!--AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# -->
+        AND DM.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND DM.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = DM.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                DM.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (DM.AUTHORIZE_STATUS IS NULL OR 
+                DM.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeDeathMarking" result-class="java.util.HashMap">
+        UPDATE DEATH_MARKING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #CURR_DATE:DATE#
+        WHERE CUST_ID = #CUST_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="rejectDeathMarking" result-class="java.util.HashMap">
+        UPDATE DEATH_MARKING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE CUST_ID = #CUST_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name ="updateDepositDeathClaim" result-class="java.util.HashMap">
+        UPDATE DEPOSIT_ACINFO SET DEATH_CLAIM = #DEATH_CLAIM:VARCHAR# WHERE CUST_ID =#CUST_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getDeathMarkingDetailsForDRF" result-class="java.util.LinkedHashMap">
+        SELECT 'OA' AS "Product Type", AM.ACT_NUM AS "Account No.",AM.TOTAL_BALANCE AS "Total Balance", AM.CREATE_DT AS "Create Dt.",NULL AS "Maturity Dt.",
+        NULL AS "Interest", AVAILABLE_BALANCE AS "Available Balance", SETTMT_MODE_ID AS "Settlement", am.CUST_ID as custId,am.acct_name,
+        (SELECT DECODE(COUNT(*), 0, 'Y','N')   FROM ACT_MASTER , ACT_NOMINEE_DETAIL AN WHERE AM.ACT_NUM = AN.ACT_NUM)
+        AS "Nominee"  FROM ACT_MASTER AM WHERE AM.CUST_ID =(SELECT CUST_ID FROM CUSTOMER WHERE MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED') AND STATUS != 'DELETED' 
+        UNION
+        SELECT 'TD' As "Product Type", DS.DEPOSIT_NO AS "Account No.",DS.TOTAL_BALANCE AS "Total Balance", DS.DEPOSIT_DT AS "Create Dt.",
+        DS.MATURITY_DT AS "Maturity Dt.", DS.RATE_OF_INT AS "Interest", DS.AVAILABLE_BALANCE AS "Available Balance",
+        DA.SETTLEMENT_MODE AS "Settlement",da.CUST_ID,'', DA.NOMINEE_DETAILS AS "Nominee" FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DS 
+        WHERE DA.DEPOSIT_NO = DS.DEPOSIT_NO AND DA.CUST_ID =(SELECT CUST_ID FROM CUSTOMER WHERE MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED')  AND 
+        DS.STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name ="getDeathDetailsForDRF" result-class="java.util.HashMap">
+        SELECT * FROM DEATH_MARKING WHERE CUST_ID=(SELECT CUST_ID FROM CUSTOMER WHERE MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED') AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+        
+        
+
+</sql-map>

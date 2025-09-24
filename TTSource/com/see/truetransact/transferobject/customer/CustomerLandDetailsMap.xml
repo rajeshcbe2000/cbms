@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerLandDetailsMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerLandDetailsTO" inline-parameters="true">
+        INSERT INTO CUST_LAND_DETAILS
+        (CUST_ID,LOCATIONS,SURVEY_NO,AREA,IRRIGATED,SOURCE_OF_IRRIGATION,VILLAGE,POST_OFFICE,HOBLI,TALUK,DISTRICT,STATE,PIN_CODE,STATUS,SL_NO
+        ) VALUES (
+        #custId:VARCHAR#,#location:VARCHAR#,#survey_no:VARCHAR#,#area:VARCHAR#,#irrigated:VARCHAR#,#irrSrc:VARCHAR#,#village:VARCHAR#,#post:VARCHAR#,#hobli:VARCHAR#,#taluk:VARCHAR#,#district:VARCHAR#,#state:VARCHAR#,#pin:VARCHAR#,#status:VARCHAR#,#slno:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateCustomerLandDetailsTO" inline-parameters="true">
+        UPDATE CUST_LAND_DETAILS SET 
+        LOCATIONS = #location:VARCHAR#,
+        SURVEY_NO = #survey_no:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        IRRIGATED = #irrigated:VARCHAR#,
+        SOURCE_OF_IRRIGATION = #irrSrc:VARCHAR#,
+        VILLAGE = #village:VARCHAR#,
+        POST_OFFICE = #post:VARCHAR#,
+        HOBLI = #hobli:VARCHAR#,
+        TALUK = #taluk:VARCHAR#,
+        DISTRICT = #district:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        PIN_CODE = #pin:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND SL_NO=#slno:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="deleteCustomerLandDetailsTO" inline-parameters="true">
+        UPDATE CUST_LAND_DETAILS SET 
+        STATUS = #status:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND SL_NO=#slno:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getCustomerLandDetailsTOResult" class="com.see.truetransact.transferobject.customer.CustomerLandDetailsTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="location" column="LOCATIONS"/>
+        <property name="survey_no" column="SURVEY_NO"/>
+        <property name="area" column="AREA"/>
+        <property name="irrigated" column="IRRIGATED"/>
+        <property name="irrSrc" column="SOURCE_OF_IRRIGATION"/>
+        <property name="village" column="VILLAGE"/>
+        <property name="post" column="POST_OFFICE"/>
+        <property name="hobli" column="HOBLI"/>
+        <property name="taluk" column="TALUK"/>
+        <property name="district" column="DISTRICT"/>
+        <property name="state" column="STATE"/>
+        <property name="pin" column="PIN_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="slno" column="SL_NO"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectCustomerLandDetailsTO" result-map="getCustomerLandDetailsTOResult" >
+        SELECT * FROM CUST_LAND_DETAILS WHERE CUST_ID=#CUST_ID:VARCHAR# AND STATUS!='DELETED' 
+        ORDER BY SL_NO
+	<!--<dynamic>
+                    <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                        (STATUS NOT IN ('DELETED')
+                    </isNotPropertyAvailable>
+                    <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                       ( STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                    <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                        STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                   )
+        </dynamic>-->
+                
+    </dynamic-mapped-statement>
+    <result-map name="get-getDistrictName-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="DISTRICT_CODE" />
+        <property name="lookUpDesc" column="DISTRICT_NAME" />
+    </result-map> 
+        
+    <mapped-statement name="getDistrictName" result-map="get-getDistrictName-result"> 
+        SELECT DISTRICT_CODE,DISTRICT_NAME FROM CUSTOMER_DISTRICT CD WHERE CD.STATE_CODE=#STATE_CODE:VARCHAR# 
+        AND DIS_STATUS!='DELETED' AND DIS_AUTHORIZE_STATUS ='AUTHORIZED'
+    </mapped-statement>
+    
+    <result-map name="get-getTalukName-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="TALUK_CODE" />
+        <property name="lookUpDesc" column="TALUK_NAME" />
+    </result-map> 
+    
+    <mapped-statement name="getTalukName" result-map="get-getTalukName-result"> 
+        SELECT TALUK_CODE,TALUK_NAME FROM CUSTOMER_TALUK CD WHERE CD.DISTRICT_CODE=#DISTRICT_CODE:VARCHAR#
+        AND  STATE_CODE=#STATE_CODE:VARCHAR# AND TAL_STATUS!='DELETED' AND TAL_AUTHORIZE_STATUS ='AUTHORIZED'
+    </mapped-statement>
+</sql-map>        

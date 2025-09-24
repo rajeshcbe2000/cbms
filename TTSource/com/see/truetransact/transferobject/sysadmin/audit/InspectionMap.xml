@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BranchInspectionTOMap">
+
+	<!-- Use BranchInspectionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertPerformanceInspectionTO" inline-parameters="true">
+        INSERT INTO AUDIT_PERFORMANCE
+        (AUDIT_ID, BRANCH_CODE, INSPECTION_COMMENCED, INSPECTION_CONCLUDED, POSITION_AS_ON, NO_OF_MAN_DAYS, BRANCH_RATING, INSPECTING_OFFICERS, OTHER_INFO, CREATED_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #auditId:VARCHAR#, #branchCode:VARCHAR#, #inspectionCommenced:DATE#, #inspectionConcluded:DATE#, #positionAsOn:DATE#, #noOfManDays:NUMERIC#, #branchRating:VARCHAR#, #inspectingOfficers:VARCHAR#, #otherInfo:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use BranchInspectionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updatePerformanceInspectionTO" inline-parameters="true">
+        UPDATE AUDIT_PERFORMANCE
+        SET 
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        INSPECTION_COMMENCED = #inspectionCommenced:DATE#,
+        INSPECTION_CONCLUDED = #inspectionConcluded:DATE#,
+        POSITION_AS_ON = #positionAsOn:DATE#,
+        NO_OF_MAN_DAYS = #noOfManDays:NUMERIC#,
+        BRANCH_RATING = #branchRating:VARCHAR#,
+        INSPECTING_OFFICERS = #inspectingOfficers:VARCHAR#,
+        OTHER_INFO = #otherInfo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE AUDIT_ID = #auditId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use BranchInspectionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deletePerformanceInspectionTO" inline-parameters="true">
+        UPDATE AUDIT_PERFORMANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:VARCHAR#
+        WHERE AUDIT_ID = #auditId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchInspectionTO object (JavaBean) properties -->
+    <result-map name="getPerformanceInspectionTOResult" class="com.see.truetransact.transferobject.sysadmin.audit.PerformanceInspectionTO">
+        <property name="auditId" column="AUDIT_ID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="inspectionCommenced" column="INSPECTION_COMMENCED"/>
+        <property name="inspectionConcluded" column="INSPECTION_CONCLUDED"/>
+        <property name="positionAsOn" column="POSITION_AS_ON"/>
+        <property name="noOfManDays" column="NO_OF_MAN_DAYS"/>
+        <property name="branchRating" column="BRANCH_RATING"/>
+        <property name="inspectingOfficers" column="INSPECTING_OFFICERS"/>
+        <property name="otherInfo" column="OTHER_INFO"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectPerformanceInspectionTO" result-map="getPerformanceInspectionTOResult" >
+        SELECT * FROM AUDIT_PERFORMANCE 
+        WHERE AUDIT_ID = #value:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+        <!-- This mappedstatement is used to execute a query when edit button is clicked -->
+    <mapped-statement name="getSelectAudit" result-class="java.util.LinkedHashMap" >
+        SELECT AP.AUDIT_ID, BM.BRANCH_NAME, BM.BRANCH_CODE, AP.INSPECTION_COMMENCED, AP.INSPECTION_CONCLUDED FROM AUDIT_PERFORMANCE AP, BRANCH_MASTER BM
+        WHERE BM.BRANCH_CODE = AP.BRANCH_CODE AND AP.STATUS != 'DELETED' AND BM.STATUS != 'DELETED'
+    </mapped-statement>
+      
+        <!-- Use BranchInspectionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchInspectionTO" inline-parameters="true">
+        INSERT INTO AUDIT_BRANCH
+        (AUDIT_ID, CLASSIFICATION, CATEGORY, WEEKLY_HOLIDAY, STAFF_POSITION
+        ) VALUES (
+        #auditId:VARCHAR#, #classification:VARCHAR#, #category:VARCHAR#, #weeklyHoliday:VARCHAR#, #staffPosition:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use BranchInspectionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchInspectionTO" inline-parameters="true">
+        UPDATE AUDIT_BRANCH SET 
+        CLASSIFICATION = #classification:VARCHAR#,
+        CATEGORY = #category:VARCHAR#,
+        WEEKLY_HOLIDAY = #weeklyHoliday:VARCHAR#,
+        STAFF_POSITION = #staffPosition:NUMERIC#
+        WHERE AUDIT_ID = #auditId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchInspectionTO object (JavaBean) properties -->
+    <result-map name="getBranchInspectionTOResult" class="com.see.truetransact.transferobject.sysadmin.audit.BranchInspectionTO">
+        <property name="auditId" column="AUDIT_ID"/>
+        <property name="classification" column="CLASSIFICATION"/>
+        <property name="category" column="CATEGORY"/>
+        <property name="weeklyHoliday" column="WEEKLY_HOLIDAY"/>
+        <property name="staffPosition" column="STAFF_POSITION"/>
+    </result-map>
+    <mapped-statement name="getSelectBranchInspectionTO" result-map="getBranchInspectionTOResult" >
+        SELECT * FROM AUDIT_BRANCH 
+        WHERE AUDIT_ID = #value:VARCHAR# 
+    </mapped-statement>
+        
+        <!-- Use JobInspectionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertJobInspectionTO" inline-parameters="true">
+        INSERT INTO AUDIT_JOB_POSITION
+        (AUDIT_ID, JOB_CATEGORY, ACTUAL_POSITION, STATUS
+        ) VALUES (
+        #auditId:VARCHAR#, #jobCategory:VARCHAR#, #actualPosition:NUMERIC#, #status:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use JobInspectionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateJobInspectionTO" inline-parameters="true">
+        UPDATE AUDIT_JOB_POSITION SET 
+        ACTUAL_POSITION = #actualPosition:NUMERIC#,
+        STATUS = #status:VARCHAR#
+        WHERE AUDIT_ID = #auditId:VARCHAR# AND JOB_CATEGORY = #jobCategory:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use JobInspectionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteJobInspectionTO" inline-parameters="true">
+        UPDATE AUDIT_JOB_POSITION SET 
+        STATUS = #status:VARCHAR#
+        WHERE AUDIT_ID = #auditId:VARCHAR#  AND JOB_CATEGORY = #jobCategory:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to JobInspectionTO object (JavaBean) properties -->
+    <result-map name="getJobInspectionTOResult" class="com.see.truetransact.transferobject.sysadmin.audit.JobInspectionTO">
+        <property name="auditId" column="AUDIT_ID"/>
+        <property name="jobCategory" column="JOB_CATEGORY"/>
+        <property name="actualPosition" column="ACTUAL_POSITION"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectJobInspectionTO" result-map="getJobInspectionTOResult" >
+        SELECT * FROM AUDIT_JOB_POSITION 
+        WHERE AUDIT_ID = #value:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+        <!-- This mappedStatement is used to execute a query to populate a Table in the UI -->
+    <mapped-statement name="getSelectAuditPerformance" result-class="java.util.LinkedHashMap" >
+        SELECT NO_OF_MAN_DAYS AS "No. Of ManDays", BRANCH_RATING AS "Branch Rating", INSPECTING_OFFICERS AS "Inspecting Officials" FROM AUDIT_PERFORMANCE 
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+       
+        <!-- This statement is used to execute a query when select button is clicked in the ui -->
+    <mapped-statement name="getSelectBranchMaster" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_CODE, BRANCH_NAME FROM BRANCH_MASTER WHERE (STATUS IS NULL OR STATUS != 'DELETED')
+    </mapped-statement>
+     
+        <!-- This Statment is used to execute a query to populate Labels in the UI -->   
+    <mapped-statement name="getBranchDetailsForAudit" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_CODE, BRANCH_NAME, CITY, (WORKING_HOURS_TO - WORKING_HOURS_FROM) AS "WORKING_HOURS", (WORKING_MINS_TO - WORKING_MINS_FROM) AS "WORKING_MINS", OPENING_DT 
+        FROM BRANCH_MASTER WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+        <!-- This Statement is used to execute query to get the TotalDeposits between the particular dates -->        
+    <mapped-statement name="getSelectAcInfo" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "TOTALDEPOSITS" FROM DEPOSIT_SUB_ACINFO WHERE DEPOSIT_DT BETWEEN  to_date(#INSPECTION_FROM#, 'MM-DD-YYYY') AND to_date(#INSPECTION_TO#,'MM-DD-YYYY')
+    </mapped-statement>
+        
+        <!-- This statement is used to execute query to get the TotalAdvances betweent the particulat dates -->
+    <mapped-statement name="getSelectAdvances" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "TOTALADVANCES"  FROM  LOANS_FACILITY_DETAILS WHERE to_date(to_char(CREATE_DT,'MM-DD-YYYY'), 'MM-DD-YYYY') BETWEEN  to_date(#INSPECTION_FROM#,'MM-DD-YYYY') AND  to_date(#INSPECTION_TO#,'MM-DD-YYYY')
+    </mapped-statement>
+        
+         <!-- This statement is used to execute query to get the  count of PrioritySectorAdvances which is set to 'Y' betweent the particulat dates -->
+    <mapped-statement name="getSelectPriority" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "PRIORITYSECTORADVANCES" FROM LOANS_FACILITY_DETAILS LFD, LOANS_CLASSIFY_DETAILS LCD WHERE LFD.BORROW_NO=LCD.BORROW_NO  AND  CREATE_DT BETWEEN  to_date(#INSPECTION_FROM#, 'MM-DD-YYYY') AND  to_date(#INSPECTION_TO#,'MM-DD-YYYY') AND LCD.STATUS != 'DELETED' AND LFD.STATUS != 'DELETED' AND LCD.PRIORITY_SECTOR = 'Y' 
+    </mapped-statement>
+        
+        <!-- This statement is used to execute query to get the Inspection_From , Inspection_To date in Audit_Performance Table -->
+    <mapped-statement name="getSelectDates" result-class="java.util.LinkedHashMap" >
+         <!-- SELECT  INSPECTION_COMMENCED, INSPECTION_CONCLUDED FROM AUDIT_PERFORMANCE WHERE STATUS != 'DELETED'-->
+        SELECT to_char(INSPECTION_COMMENCED,'MM-DD-YYYY') AS  INSPECTION_COMMENCED, to_char(INSPECTION_CONCLUDED,'MM-DD-YYYY') AS INSPECTION_CONCLUDED  FROM AUDIT_PERFORMANCE WHERE STATUS != 'DELETED'
+    </mapped-statement>
+        
+              <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getAuditPerformanceAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT AP.AUDIT_ID, BM.BRANCH_NAME, BM.BRANCH_CODE, AP.INSPECTION_COMMENCED, AP.INSPECTION_CONCLUDED FROM AUDIT_PERFORMANCE AP, BRANCH_MASTER BM
+        WHERE BM.BRANCH_CODE = AP.BRANCH_CODE AND BM.STATUS != 'DELETED' AND (AP.STATUS != 'DELETED' OR AP.STATUS IS NULL)
+        AND AP.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = AP.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AP.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AP.AUTHORIZE_STATUS IS NULL OR 
+                AP.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeAuditPerformance" result-class="java.util.HashMap">
+        UPDATE AUDIT_PERFORMANCE SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE AUDIT_ID = #AUDIT_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+<!-- =================================================================================== -->
+   
+
+</sql-map>

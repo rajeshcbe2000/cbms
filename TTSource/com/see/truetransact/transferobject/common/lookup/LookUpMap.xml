@@ -1,0 +1,1204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.  
+ * 
+ *
+    Document   : LookUpMap.xml
+    Created on : August 18, 2003, 3:20 PM
+    Author     : annamalai, Bala
+    Description:
+        Purpose of the document follows.
+            To provide a XML file that gives the reference ID and Description if the ID is given.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LookUpMap">
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to
+	be auto-mapped results to LookUpTO object (JavaBean) properties -->
+        <!-- Lookup Data from Lookup Table -->
+    <result-map name="get-LookUp-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    <!-- Modified order by nithya for 0003928 sorting combo box item -->      
+    <mapped-statement name="getLookUp" result-map="get-LookUp-result">
+        SELECT LOOKUP_REF_ID,LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL) 
+        AND UPPER(LOOKUP_ID) = UPPER(#value:VARCHAR#) ORDER BY LOOKUP_DESC
+    </mapped-statement>
+    <mapped-statement name="getAllDepositPeriod" result-class="java.util.HashMap">
+         SELECT LOOKUP_REF_ID,LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_ID='DEPOSITSPRODUCT.DEPOSITPERIOD' ORDER BY LOOKUP_DESC DESC
+    </mapped-statement>
+        
+    <result-map name="get-MajorHead-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="MJR_AC_HD_ID" />
+        <property name="lookUpDesc" column="MJR_AC_HD_DESC" />
+    </result-map>    
+        
+    <mapped-statement name="getMajorHead" result-map="get-MajorHead-result">
+        SELECT MJR_AC_HD_ID, MJR_AC_HD_DESC FROM MJR_AC_HD 
+        WHERE  MJR_AC_HD_TYPE= #value:VARCHAR# AND 
+        (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+
+    <result-map name="get-SubHead-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SUB_AC_HD_ID" />
+        <property name="lookUpDesc" column="SUB_AC_HD_DESC" />
+    </result-map>    
+    <mapped-statement name="getShift" result-map="get-LookUp-result" >
+        SELECT LOOKUP_REF_ID,LOOKUP_DESC FROM LOOKUP_MASTER where LOOKUP_ID='BRANCH_SHIFT' and
+        (Status!='DELETED' Or Status Is Null) And 
+        AUTHORIZED='Y'
+    </mapped-statement>    
+        
+    <mapped-statement name="getSubHead" result-map="get-SubHead-result">
+        SELECT SUB_AC_HD_ID, SUB_AC_HD_DESC FROM SUB_AC_HD 
+        WHERE MJR_AC_HD_ID = #value:VARCHAR# AND 
+        (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+
+        <!-- Product Data from Product Table -->
+	<!--result-map name="get-AccProducts-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+		<property name="lookUpRefID" column="PROD_ID" />
+		<property name="lookUpDesc" column="PROD_DESC" />
+	</result-map>
+        <mapped-statement name="getAccProducts" result-map="get-AccProducts-result">
+            SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT
+            (STATUS != 'DELETED' OR STATUS IS NULL) AND 
+	</mapped-statement-->
+
+        <!-- Account Head Data from Account Head Table -->
+    <result-map name="get-AccHeadId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="AC_HEAD" />
+        <property name="lookUpDesc" column="AC_DESC" />
+    </result-map>
+        
+    <mapped-statement name="getAccHead" result-map="get-AccHeadId-result">
+        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_DESC 
+        FROM AC_HD, OP_AC_PRODUCT 
+        WHERE OP_AC_PRODUCT.PROD_ID = #value:VARCHAR# 
+        AND AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID 
+        AND (AC_HD.STATUS != 'DELETED' OR AC_HD.STATUS IS NULL) AND
+        (OP_AC_PRODUCT.STATUS != 'DELETED' OR OP_AC_PRODUCT.STATUS IS NULL)  
+        AND OP_AC_PRODUCT.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-AccHeads-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="AC_HD_ID" /> 
+        <property name="lookUpDesc" column="AC_HD_ID" />
+    </result-map>
+            
+    <mapped-statement name="getAccHeads" result-map="get-AccHeads-result">
+        SELECT AC_HD_ID, AC_HD_ID FROM AC_HD
+        WHERE (AC_HD.STATUS != 'DELETED' OR AC_HD.STATUS IS NULL)
+    </mapped-statement>
+                
+    <result-map name="get-AccProducts-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+            <!--SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT WHERE STATUS='authorized'-->
+    <mapped-statement name="getAccProducts" result-map="get-AccProducts-result">
+        SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT 
+        WHERE AUTHORIZED_STATUS='AUTHORIZED' 
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getLockerProducts" result-map="get-AccProducts-result">
+        SELECT PROD_ID, PROD_DESC FROM locker_product 
+        WHERE AUTHORIZE_STATUS='AUTHORIZED' 
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getLoanProducts" result-map="get-AccProducts-result">
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT 
+        WHERE AUTHORIZE_STATUS='AUTHORIZED' 
+        AND STATUS != 'DELETED'
+        order by PROD_DESC      
+                         
+    </mapped-statement> 
+    <!--   <mapped-statement name="getLoanProducts" result-map="get-AccProducts-result">
+            select distinct  LOANS_PRODUCT.PROD_ID,LOANS_PRODUCT.PROD_DESC from 
+LOANS_PRODUCT,SHARE_DIVIDEND_CALC_DETAILS
+where LOANS_PRODUCT.AUTHORIZE_STATUS='AUTHORIZED' 
+             and STATUS != 'DELETED' and
+SHARE_DIVIDEND_CALC_DETAILS.MEMBER_NO=#MEM_NO# 
+	</mapped-statement>-->
+
+    <result-map name="get-AgriProducts-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+                
+    <dynamic-mapped-statement name="getAgriLoanSubLimit" result-map="get-AgriProducts-result">
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE  AUTHORIZED='Y'
+        AND STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"    property="CROPLOAN">
+                    LOOKUP_ID='AGRILOAN_TYPE_CODE_CROP'
+                </isNotNull>
+            
+                <isNotNull prepend="AND"    property="DAIRYLOAN">
+                    LOOKUP_ID='AGRILOAN_TYPE_CODE_DAIRY'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!--result-map name="get-AccHeadId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+		<property name="lookUpRefID" column="AC_HEAD" />
+		<property name="lookUpDesc" column="AC_DESC" />
+	</result-map>
+        <mapped-statement name="getAccHead" result-map="get-AccHeadId-result">
+            SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_DESC FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #value#
+	</mapped-statement-->
+        
+    <result-map name="get-CustomerName-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="Available Balance" />
+        <property name="lookUpDesc" column="Customer Name" />
+    </result-map>
+    <mapped-statement name="getCustomerName" result-map="get-CustomerName-result">
+        SELECT get_cust_name(cust.cust_id) as "Customer Name", 
+        act.available_balance as "Available Balance" 
+        from customer cust, act_master act 
+        where act.cust_id=cust.cust_id and act.act_num=#value:VARCHAR#
+    </mapped-statement>
+        
+        <!--result-map name="get-ContraHead-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+            <property name="lookUpRefID" column="AC_HD_ID" />
+            <property name="lookUpDesc" column="AC_HD_ID" />
+        </result-map>        
+        
+        <mapped-statement name="getContraHead" result-map="get-ContraHead-result" >
+            SELECT AC_HD_ID, AC_HD_ID FROM AC_HD,MJR_AC_HD
+            WHERE MJR_AC_HD.MJR_AC_HD_ID = AC_HD.MJR_AC_HD_ID 
+            AND (MJR_AC_HD.STATUS = 'CREATED' OR MJR_AC_HD.STATUS = 'MODIFIED' OR MJR_AC_HD.STATUS = 'UPDATED')
+            AND MJR_AC_HD.MJR_AC_HD_TYPE = #value#
+        </mapped-statement-->
+        
+        <!--> This Query is used to fill ProdId Combo Box  of 
+                      transaction.clearing.outward.OutwardClearinUI
+        <-->
+    <mapped-statement name="getOpAccProductLookUp" result-map="get-LookUp-result">
+        SELECT PROD_ID AS LOOKUP_REF_ID, PROD_ID AS LOOKUP_DESC FROM OP_AC_PRODUCT
+        WHERE AUTHORIZED_STATUS='AUTHORIZED' 
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    
+     <!--mapped-statement name="getManager" result-map="get-Manager-result">
+        SELECT EMPLOYEE_CODE, CONCAT(CONCAT(FNAME, ' '), LNAME) AS NAME 
+        FROM BANK_EMPLOYEE WHERE STATUS != 'DELETED'
+    </mapped-statement>-->
+        
+        <!-- AND BRANCH_CODE = #BRANCH_ID# !==================================-->    
+  
+        
+        <!-- Product Data from DEPOSITS_PRODUCT Table -->
+    <result-map name="deposit_get-ProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>        
+        
+    <mapped-statement name="deposit_getProdId" result-map="deposit_get-ProdId-result" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT 
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="LTD.getDepositProducts" result-map="deposit_get-ProdId-result" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT WHERE STATUS != 'DELETED' AND 
+        PROD_DESC IN
+        (SELECT SELECTED_DEPOSITS FROM LOAN_PROD_AGAINST_AV_DEPOSIT WHERE PROD_ID = #value#)
+    </mapped-statement>
+        
+        <!-- Deposit No. from DEPOSIT_ACINFO Table -->
+    <result-map name="deposit_get-DepositNo-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="DEPOSIT_NO" />
+        <property name="lookUpDesc" column="DEPOSIT_NO" />
+    </result-map>        
+
+    <mapped-statement name="deposit_getDepositNo" result-map="deposit_get-DepositNo-result" >
+        SELECT DEPOSIT_NO FROM DEPOSIT_ACINFO 
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+        <!-- Product Data from OPERATIVE ACCOUNT Table -->
+    <result-map name="OperativeAccount_get-ProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+        
+    <mapped-statement name="getOperativeProdId" result-map="OperativeAccount_get-ProdId-result" >
+        SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT
+        WHERE AUTHORIZED_STATUS='AUTHORIZED' 
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+                
+    <result-map name="get-AccountClosingCharges-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="Closing Charges" />
+        <property name="lookUpDesc" column="Closing Charges" />
+    </result-map>
+    <mapped-statement name="getAccountClosingCharges" result-map="get-AccountClosingCharges-result">
+        SELECT DECODE(AM.ACT_STATUS_ID, 'NEW', OACP.CHG_PREMATURE_CLOSURE, 
+        APD.ACT_CLOSING_CHRG) AS "Closing Charges" 
+        FROM ACT_PARAM_DETAIL APD, ACT_MASTER AM, OP_AC_CHARGES_PARAM OACP
+        WHERE OACP.PROD_ID = AM.PROD_ID AND AM.ACT_NUM = APD.ACT_NUM
+        AND AM.ACT_NUM=#value:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="get-PreviousAccountList-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="ACCOUNTNO" />
+        <property name="lookUpDesc" column="ACCOUNTNO" />
+    </result-map>  
+    <mapped-statement name="getPreviousAccountList" result-map="get-PreviousAccountList-result">
+        SELECT distinct
+        ACT_NUM as ACCOUNTNO, CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME             
+        FROM ACT_MASTER, CUSTOMER
+        WHERE ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID and 
+        (CUSTOMER.status!='DELETED' or CUSTOMER.status is null) and
+        ACT_MASTER.BRANCH_CODE=#value:VARCHAR#     
+    </mapped-statement>
+    
+    <result-map name="getDepositProductsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+    
+    <mapped-statement name="getDepositProducts" result-map="getDepositProductsResult" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT where 
+        (status!='DELETED' or status is null) and 
+        (AUTHORIZE_STATUS='AUTHORIZED')
+    </mapped-statement>
+    
+    <mapped-statement name="getDepositProductsAndMds" result-map="getDepositProductsResult" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT where 
+        (status!='DELETED' or status is null) and 
+        (AUTHORIZE_STATUS='AUTHORIZED')
+        UNION
+        SELECT SCHEME_NAME as PROD_ID, SCHEME_DESC as PROD_DESC FROM mds_scheme_details where 
+        (status!='DELETED' or status is null) and 
+        (AUTHORIZED_STATUS='AUTHORIZED')and 
+        SCHEME_NAME not in(select SCHEME_NAME from mds_closure_details) order by prod_id
+    </mapped-statement>
+    
+    <mapped-statement name="getCustAddrType" result-map="get-LookUp-result" >
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM CUST_ADDR CA, LOOKUP_MASTER, CUSTOMER C 
+        WHERE (CA.CUST_ID = #CUST_ID:VARCHAR#) AND 
+        (LOOKUP_ID = trim(DECODE(C.CUST_TYPE,'INDIVIDUAL','CUSTOMER.ADDRTYPE','CORPORATE.ADDRESS_TYPE'))) 
+        AND (LOOKUP_REF_ID = ADDR_TYPE) AND C.CUST_ID = CA.CUST_ID
+        
+        <!-- SELECT LOOKUP_REF_ID, LOOKUP_DESC 
+        FROM CUST_ADDR, LOOKUP_MASTER 
+        WHERE (CUST_ID = #CUST_ID#)
+        AND (LOOKUP_ID ='CUSTOMER.ADDRTYPE') AND (LOOKUP_REF_ID = ADDR_TYPE)-->
+    </mapped-statement>
+    
+    <mapped-statement name="getShareType" result-map="get-LookUp-result" >
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC  
+        FROM SHARE_CONF_DETAILS SCD, LOOKUP_MASTER LM 
+        WHERE SCD.STATUS != 'DELETED'  
+        AND SCD.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND LOOKUP_ID = 'SHARE_TYPE'
+        AND LOOKUP_REF_ID = SHARE_TYPE
+    </mapped-statement>
+    
+    <!-- This Mapped Statement is not getting any parameter.-->
+    <mapped-statement name="selectAnyTable" result-class="java.util.HashMap">
+        select * from $TABLE$ where status = ${created}
+    </mapped-statement>    
+    
+        <!--!==================================-->    
+<!-- Used in RemittanceIssueMap -->    
+    <result-map name="get-IssueProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+        
+        
+    <mapped-statement name="RemitIssuegetProdId" result-map="get-IssueProdId-result">
+        SELECT PROD_ID,PROD_DESC FROM REMITTANCE_PRODUCT 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-Bank-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BANK_CODE" />
+        <property name="lookUpDesc" column="BANK_CODE_WITH_NAME" />
+    </result-map>      
+    <mapped-statement name="getBankInward" result-map="get-Bank-result">   
+        
+        SELECT distinct OB.BANK_CODE AS "BANK_CODE", CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE)  
+        ||' ('||OB.BANK_NAME||') ' AS "BANK_CODE_WITH_NAME" FROM OTHER_BANK OB, REMITTANCE_PROD_BRANCH RPB,
+        BRANCH_MASTER BM WHERE OB.BANK_CODE = RPB.BANK_CODE AND BM.BANK_CODE = RPB.BANK_CODE  
+        AND BM.CITY = #CITY:VARCHAR#  AND (OB.STATUS != 'DELETED' OR OB.STATUS IS NULL)                  
+        AND (RPB.STATUS  != 'DELETED' OR RPB.STATUS IS NULL)
+        union
+        SELECT distinct OB.BANK_CODE AS "BANK_CODE", CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE)  
+        ||' ('||OB.BANK_NAME||') ' AS "BANK_CODE_WITH_NAME" FROM OTHER_BANK OB, REMITTANCE_PROD_BRANCH RPB,OTHER_BANK_branch,
+        BRANCH_MASTER BM WHERE
+        OB.BANK_CODE = RPB.BANK_CODE  
+        AND OTHER_BANK_branch.CITY = #CITY:VARCHAR#  AND (OB.STATUS != 'DELETED' OR OB.STATUS IS NULL)                  
+        AND (RPB.STATUS  != 'DELETED' OR RPB.STATUS IS NULL)
+    </mapped-statement>  
+    <mapped-statement name="getBank" result-map="get-Bank-result">   
+        
+                <!--SELECT CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE) AS "BANK_CODE", CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE) 
+                ||' ('||OB.BANK_NAME||') ' AS "BANK_CODE_WITH_NAME" FROM OTHER_BANK OB, REMITTANCE_PROD_BRANCH RPB, 
+                BRANCH_MASTER BM WHERE CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE) = RPB.BANK_CODE AND BM.BANK_CODE = RPB.BANK_CODE 
+                AND BM.CITY = #CITY# AND RPB.PROD_ID = #PROD_ID# AND (OB.STATUS != 'DELETED' OR OB.STATUS IS NULL) 
+                AND (RPB.STATUS  != 'DELETED' OR RPB.STATUS IS NULL)-->
+                <!--SELECT OB.BANK_CODE AS "BANK_CODE", OB.BANK_CODE||' ('||OB.BANK_NAME||') '  AS "BANK_CODE_WITH_NAME"
+                FROM   OTHER_BANK OB, REMITTANCE_PROD_BRANCH RPB, BRANCH_MASTER BM  
+                WHERE  OB.BANK_CODE  = RPB.BANK_CODE
+                AND    BM.BANK_CODE = RPB.BANK_CODE  
+                AND    BM.CITY = #CITY# AND RPB.PROD_ID = #PROD_ID#
+                AND    (OB.STATUS != 'DELETED' OR OB.STATUS IS NULL)  
+                AND    (RPB.STATUS != 'DELETED' OR RPB.STATUS IS NULL)
+                UNION  
+                SELECT B.BANK_CODE AS "BANK_CODE", B.BANK_CODE||' ('||B.BANK_NAME||') '  AS "BANK_CODE_WITH_NAME"
+                FROM   BANK B,REMITTANCE_PROD_BRANCH RPB,BRANCH_MASTER BM  
+                WHERE  B.BANK_CODE =  RPB.BANK_CODE AND RPB.PROD_ID = #PROD_ID#
+                AND BM.BANK_CODE = RPB.BANK_CODE AND BM.CITY = #CITY#  
+                AND   (RPB.STATUS != 'DELETED' OR RPB.STATUS IS NULL)-->
+                
+        SELECT distinct OB.BANK_CODE AS "BANK_CODE", CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE)  
+        ||' ('||OB.BANK_NAME||') ' AS "BANK_CODE_WITH_NAME" FROM OTHER_BANK OB, REMITTANCE_PROD_BRANCH RPB,
+        BRANCH_MASTER BM WHERE OB.BANK_CODE = RPB.BANK_CODE AND BM.BANK_CODE = RPB.BANK_CODE  
+        AND BM.CITY = #CITY:VARCHAR# AND RPB.PROD_ID = #PROD_ID:VARCHAR# AND (OB.STATUS != 'DELETED' OR OB.STATUS IS NULL)                  
+        AND (RPB.STATUS  != 'DELETED' OR RPB.STATUS IS NULL)
+        union
+        SELECT distinct OB.BANK_CODE AS "BANK_CODE", CONCAT(OB.BANK_SHORT_NAME,OB.BANK_CODE)  
+        ||' ('||OB.BANK_NAME||') ' AS "BANK_CODE_WITH_NAME" FROM OTHER_BANK OB, REMITTANCE_PROD_BRANCH RPB,OTHER_BANK_branch,
+        BRANCH_MASTER BM WHERE
+        OB.BANK_CODE = RPB.BANK_CODE  
+        AND OTHER_BANK_branch.CITY = #CITY# AND RPB.PROD_ID = #PROD_ID:VARCHAR# AND (OB.STATUS != 'DELETED' OR OB.STATUS IS NULL)                  
+        AND (RPB.STATUS  != 'DELETED' OR RPB.STATUS IS NULL)
+    </mapped-statement>
+        
+    <result-map name="get-City-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="ID" />
+        <property name="lookUpDesc" column="DESC" />
+    </result-map>     
+
+    <mapped-statement name="getCity" result-map="get-City-result">               
+        SELECT LOOKUP_REF_ID AS "ID",LOOKUP_DESC AS "DESC" FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = 'CUSTOMER.CITY' 
+        AND LOOKUP_REF_ID IN
+        (SELECT CITY FROM BRANCH_MASTER 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+        UNION SELECT CITY FROM OTHER_BANK_BRANCH 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) )
+    </mapped-statement>  
+    <mapped-statement name="getCityRemittanceIssue1" result-map="get-City-result">               
+        SELECT  DISTINCT LOOKUP_REF_ID AS "ID",LOOKUP_DESC AS "DESC" FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = 'CUSTOMER.CITY' 
+        AND LOOKUP_REF_ID IN
+        (SELECT BM.CITY FROM BRANCH_MASTER BM, 
+        REMITTANCE_PROD_BRANCH RPB 
+        WHERE ( BM.STATUS != 'DELETED' OR BM.STATUS IS NULL )
+        AND BM.AUTHORIZE_STATUS_1 = 'AUTHORIZED'  
+        AND BM.BRANCH_CODE = RPB.BRANCH_CODE
+        UNION 
+        SELECT CITY FROM OTHER_BANK_BRANCH OBB,
+        REMITTANCE_PROD_BRANCH RPB 
+        WHERE ( OBB.STATUS != 'DELETED' OR OBB.STATUS IS NULL )
+        AND OBB.BRANCH_CODE = RPB.BRANCH_CODE 
+        )
+    </mapped-statement>  
+    <mapped-statement name="getCityRemittanceIssue" result-map="get-City-result">               
+        SELECT  DISTINCT LOOKUP_REF_ID AS "ID",LOOKUP_DESC AS "DESC" FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = 'CUSTOMER.CITY' 
+        AND LOOKUP_REF_ID IN
+        (SELECT BM.CITY FROM BRANCH_MASTER BM, 
+        REMITTANCE_PROD_BRANCH RPB 
+        WHERE ( BM.STATUS != 'DELETED' OR BM.STATUS IS NULL )
+        AND BM.AUTHORIZE_STATUS_1 = 'AUTHORIZED'  
+                <!--AND BM.AUTHORIZE_STATUS_2 = 'AUTHORIZED'-->  
+        AND BM.BRANCH_CODE = RPB.BRANCH_CODE
+        AND RPB.PROD_ID = #PROD_ID:VARCHAR# 
+        UNION 
+        SELECT CITY FROM OTHER_BANK_BRANCH OBB,
+        REMITTANCE_PROD_BRANCH RPB 
+        WHERE ( OBB.STATUS != 'DELETED' OR OBB.STATUS IS NULL )
+        AND OBB.BRANCH_CODE = RPB.BRANCH_CODE 
+        AND RPB.PROD_ID = #PROD_ID:VARCHAR# )
+    </mapped-statement>  
+        
+    <mapped-statement name="getCityForBillsRemit" result-map="get-City-result">               
+        SELECT  DISTINCT LOOKUP_REF_ID AS "ID",LOOKUP_DESC AS "DESC" FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = 'CUSTOMER.CITY' 
+        AND LOOKUP_REF_ID IN
+        (SELECT BM.CITY FROM BRANCH_MASTER BM
+        WHERE (BM.STATUS != 'DELETED' OR BM.STATUS IS NULL )
+        AND BM.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        UNION 
+        SELECT CITY FROM OTHER_BANK_BRANCH OBB
+        WHERE ( OBB.STATUS != 'DELETED' OR OBB.STATUS IS NULL ))
+    </mapped-statement>  
+        
+        
+        
+    <mapped-statement name="getCityForPayable" result-map="get-City-result">               
+        SELECT LOOKUP_REF_ID AS "ID",LOOKUP_DESC AS "DESC" FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = 'CUSTOMER.CITY' AND UPPER(LOOKUP_REF_ID) = 
+        (SELECT UPPER(CITY) FROM BRANCH_MASTER WHERE BRANCH_CODE =#BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+
+    <result-map name="get-Category-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="KEY" />
+        <property name="lookUpDesc" column="VALUE" />
+    </result-map>
+    <mapped-statement name="getCategory" result-map="get-Category-result">
+        SELECT DISTINCT LM.LOOKUP_REF_ID AS "KEY", LM.LOOKUP_DESC AS "VALUE"  
+        FROM LOOKUP_MASTER LM, REMITTANCE_PROD_CHARGES RPC
+        WHERE LM.LOOKUP_ID = 'CATEGORY' AND LM.LOOKUP_REF_ID = RPC.CATEGORY
+        AND PROD_ID = #value:VARCHAR# AND ( LM.STATUS != 'DELETED' OR LM.STATUS IS NULL )
+        AND ( RPC.STATUS != 'DELETED' OR RPC.STATUS IS NULL )
+    </mapped-statement>
+        
+    <result-map name="get-Branch-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BRANCH_CODE" />
+        <property name="lookUpDesc" column="BRANCH_CODE_WITH_NAME" />
+    </result-map>     
+
+    <mapped-statement name="getBranch" result-map="get-Branch-result">
+        SELECT BRANCH_CODE, BRANCH_CODE||' ('||BRANCH_NAME||') '  AS "BRANCH_CODE_WITH_NAME" 
+        FROM REMITTANCE_PROD_BRANCH WHERE BANK_CODE = #BANK_CODE:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR# AND 
+        (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="getBranchInward" result-map="get-Branch-result">
+        SELECT BRANCH_CODE, BRANCH_CODE||' ('||BRANCH_NAME||') '  AS "BRANCH_CODE_WITH_NAME" 
+        FROM REMITTANCE_PROD_BRANCH WHERE BANK_CODE = #BANK_CODE:VARCHAR#  AND 
+        (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+        
+    <result-map name="get-Bill-Branch-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BRANCH_CODE" />
+        <property name="lookUpDesc" column="BRANCH_CODE" />
+    </result-map>  
+          
+    <mapped-statement name="getBillsRemitBranch" result-map="get-Bill-Branch-result">
+        SELECT BM.BRANCH_CODE 
+        FROM BRANCH_MASTER BM
+        WHERE (BM.STATUS != 'DELETED' OR BM.STATUS IS NULL )
+        AND BM.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND BM.BANK_CODE = #BANK_CODE:VARCHAR# AND
+        BM.CITY = #CITY:VARCHAR#
+        UNION 
+        SELECT OBB.BRANCH_CODE
+        FROM OTHER_BANK_BRANCH OBB
+        WHERE ( OBB.STATUS != 'DELETED' OR OBB.STATUS IS NULL) AND
+        OBB.BANK_CODE = #BANK_CODE:VARCHAR# AND OBB.BANK_TYPE = 'Y' AND OBB.CITY = #CITY:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getBranchGroupResult" result-map="get-Branch-result">
+        SELECT BRANCH_GROUP_ID AS BRANCH_CODE, BRANCH_GROUP_ID||' ('||BRANCH_GROUP_NAME||') '  AS "BRANCH_CODE_WITH_NAME" 
+        FROM BRANCH_GROUP WHERE (STATUS != 'DELETED' OR STATUS IS NULL) 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement> 
+        <!--!==================================-->
+<!-- Used in DepositFreezeMap -->    
+    <result-map name="getNewFreezeSubDepositsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SUBDEPOSITNO" />
+        <property name="lookUpDesc" column="SUBDEPOSITNO" />
+    </result-map>   
+    <mapped-statement name="Freeze.getNewSubDepositNos" result-map="getNewFreezeSubDepositsResult" >
+        SELECT DEPOSIT_SUB_NO as SUBDEPOSITNO FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO=#value:VARCHAR# and (status not in ('DELETED') or status is null) and
+        (ACCT_STATUS IS NULL OR ACCT_STATUS NOT IN ('CLOSED')) AND 
+        (AUTHORIZE_STATUS='AUTHORIZED') <!--and (AVAILABLE_BALANCE>0 or AVAILABLE_BALANCE is null)-->
+    </mapped-statement>    
+      
+    <result-map name="getEditFreezeSubDepositsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SUBDEPOSITNO" />
+        <property name="lookUpDesc" column="SUBDEPOSITNO" />
+    </result-map>   
+    <mapped-statement name="Freeze.getEditSubDepositNos" result-map="getEditFreezeSubDepositsResult" >
+        SELECT DEPOSIT_SUB_NO as SUBDEPOSITNO FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO=#value:VARCHAR# AND STATUS NOT IN ('DELETED') AND 
+        (ACCT_STATUS IS NULL OR ACCT_STATUS NOT IN ('CLOSED')) AND 
+        (AUTHORIZE_STATUS='AUTHORIZED')
+    </mapped-statement>   
+        <!--!==================================-->
+<!-- Used in ParameterMap -->    
+       <!-- This is used to Load the combobox with key and values -->
+    <result-map name="get-LookUp-result1" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="CLEARING_TYPE" />
+        <property name="lookUpDesc" column="CLEARING_TYPE" />
+    </result-map>
+    <mapped-statement name="getSelectBankClearingType" result-map="get-LookUp-result1">
+        SELECT CLEARING_TYPE, CLEARING_TYPE  FROM CLEARING_BANK_PARAM
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED')
+    </mapped-statement>
+        <!--!==================================-->
+<!-- Used in ChequeBookMap -->    
+        <!-- To get the Product Id's for which cheque books are allowed.   -->
+    <result-map name="getProductIdResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>         
+        
+        <!--mapped-statement name="getProductId" result-map="getProductIdResult">
+            SELECT OP_AC_PRODUCT.PROD_ID AS "PROD_ID", OP_AC_PRODUCT.PROD_DESC AS "PROD_DESC"
+            FROM OP_AC_PRODUCT, OP_AC_ACCOUNT_PARAM 
+            WHERE OP_AC_PRODUCT.PROD_ID = OP_AC_ACCOUNT_PARAM.PROD_ID 
+            AND OP_AC_PRODUCT.AUTHORIZED_STATUS = 'AUTHORIZED'
+            AND UPPER(OP_AC_ACCOUNT_PARAM.CHK_ALLOWED) = 'Y'
+        </mapped-statement -->        
+
+    <result-map name="getChequeSubTypeResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+        
+    <mapped-statement name="ChequeIssue.getChequeSubType" result-map="getChequeSubTypeResult">
+        SELECT DISTINCT LOOKUP_REF_ID, LOOKUP_DESC FROM
+        LOOKUP_MASTER LM, INVENTORY_MASTER IM
+        WHERE LM.LOOKUP_ID = 'INVENTORY.USAGE'
+        AND LM.LOOKUP_REF_ID = IM.ITEM_SUB_TYPE
+        AND IM.ITEM_TYPE = 'CHEQUES'
+        AND IM.BRANCH_ID = #value:VARCHAR#
+    </mapped-statement>        
+        
+    <result-map name="getChequeBooksResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+        
+    <mapped-statement name="ChequeIssue.getChequeLeavesPerBook" result-map="getChequeBooksResult">
+        SELECT DISTINCT LEAVES_PER_BOOK AS "LOOKUP_REF_ID",  LEAVES_PER_BOOK AS "LOOKUP_DESC"
+        FROM INVENTORY_MASTER
+        WHERE ITEM_TYPE = 'CHEQUES'
+        AND ITEM_SUB_TYPE = #ITEM_SUB_TYPE:VARCHAR#
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>        
+        <!--!==================================-->
+<!-- Used in LienMarkingMap -->    
+    <result-map name="getLienProdResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>   
+      
+    <mapped-statement name="Lein.getLienProd" result-map="getLienProdResult">
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        <!--!==================================-->
+<!-- Used in ChargesMap -->    
+    <result-map name="getChargesProductResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>    
+    <mapped-statement name="Charges.getProductDataOA" result-map="getChargesProductResult">
+        SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="Charges.getProductDataTD" result-map="getChargesProductResult">
+        SELECT DP.PROD_ID, DP.PROD_DESC FROM DEPOSITS_PRODUCT DP, DEPOSITS_PROD_INTPAY DPI
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND DP.PROD_ID = DPI.PROD_ID
+        AND DPI.INT_TYPE = 'SIMPLE'
+    </mapped-statement>
+    
+    <mapped-statement name="Standing.getProductDataTD" result-map="getChargesProductResult">
+        SELECT DP.PROD_ID , DP.PROD_DESC  FROM DEPOSITS_PRODUCT DP, DEPOSITS_PROD_INTPAY DPI
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND DP.BEHAVES_LIKE='DAILY'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND DP.PROD_ID = DPI.PROD_ID
+        AND DPI.INT_TYPE = 'SIMPLE'
+    </mapped-statement>
+    
+    <mapped-statement name="agent.getProductDataTD" result-class="java.util.HashMap">
+        SELECT DP.PROD_ID AS "KEY", DP.PROD_DESC AS "VALUE"  FROM DEPOSITS_PRODUCT DP, DEPOSITS_PROD_INTPAY DPI
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND DP.BEHAVES_LIKE='DAILY'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND DP.PROD_ID = DPI.PROD_ID
+        AND DPI.INT_TYPE = 'SIMPLE'
+    </mapped-statement>
+    
+    
+    <mapped-statement name="Charges.getProductDataCreditTD" result-map="getChargesProductResult">
+        SELECT DP.PROD_ID, DP.PROD_DESC FROM DEPOSITS_PRODUCT DP, DEPOSITS_PROD_INTPAY DPI
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND DP.PROD_ID = DPI.PROD_ID
+        AND DP.BEHAVES_LIKE = 'RECURRING'
+    </mapped-statement>
+        <!--Commented by Rajesh-->
+        <!--mapped-statement name="Charges.getProductDataTD" result-map="getChargesProductResult">
+		SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT 
+                WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+                AND AUTHORIZE_STATUS = 'AUTHORIZED'
+	</mapped-statement-->
+        
+    <mapped-statement name="Charges.getProductDataTL" result-map="getChargesProductResult" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' AND BEHAVES_LIKE NOT IN ('OD', 'CC')
+    </mapped-statement>
+        
+    <mapped-statement name="Charges.getProductDataAD" result-map="getChargesProductResult" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' AND BEHAVES_LIKE IN ('OD', 'CC')
+    </mapped-statement>        
+       
+    <mapped-statement name="Charges.getProductDataRM" result-map="getChargesProductResult" > 
+        SELECT PROD_ID,PROD_DESC FROM REMITTANCE_PRODUCT 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement> 
+        
+    <mapped-statement name="Charges.getProductDataSA" result-map="getChargesProductResult" > 
+        SELECT PROD_ID, PROD_DESC FROM SUSPENSE_PRODUCT
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL) AND 
+        AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement> 
+        <!--!==================================-->
+<!-- Used in TdsDeductionMap -->    
+    <result-map name="Deposit_TDS_get-ProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_ID" />
+    </result-map>
+        
+    <mapped-statement name="Deposit_TDS.getProdId" result-map="Deposit_TDS_get-ProdId-result" >
+        SELECT  PROD_ID , ACCT_HEAD
+        FROM  DEPOSITS_PRODUCT
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <result-map name="Deposit_TDS_get-ProdSubNo-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="DEPOSIT_SUB_NO" />
+        <property name="lookUpDesc" column="DEPOSIT_SUB_NO" />
+    </result-map>
+        
+    <mapped-statement name="Deposit_TDS.getProdSubNo" result-map="Deposit_TDS_get-ProdSubNo-result" >
+        SELECT DEPOSIT_SUB_NO
+        FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO = #value:VARCHAR# AND STATUS NOT IN ('DELETED') AND 
+        (ACCT_STATUS IS NULL OR ACCT_STATUS NOT IN ('CLOSED')) AND 
+        (AUTHORIZE_STATUS='AUTHORIZED')
+    </mapped-statement>
+        <!--!==================================-->
+<!-- Used in InwardClearingMap -->    
+    <result-map name="getAccProductresult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>         
+        
+    <mapped-statement name="getAccProduct" result-map="getAccProductresult">
+        SELECT OP_AC_PRODUCT.PROD_ID, OP_AC_PRODUCT.PROD_DESC FROM OP_AC_PRODUCT, AC_HD_PARAM
+        WHERE OP_AC_PRODUCT.AC_HD_ID = AC_HD_PARAM.AC_HD_ID
+        AND UPPER(AC_HD_PARAM.DR_CLR) = 'Y'
+        AND STATUS NOT IN ('DELETED') 
+        AND AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-Bank-result1" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BANK_CODE" />
+        <property name="lookUpDesc" column="BANK_NAME" />
+    </result-map>       
+
+    <mapped-statement name="InwardClearing.getBank" result-map="get-Bank-result1">
+        (SELECT BANK_CODE AS "BANK_CODE", BANK_CODE||' ('||BANK_NAME||') ' AS "BANK_NAME"
+        FROM BANK)
+        UNION
+        (SELECT BANK_CODE AS "BANK_CODE", BANK_CODE||' ('||BANK_NAME||') ' AS "BANK_NAME"
+        FROM OTHER_BANK 
+        WHERE OTHER_BANK.STATUS !='DELETED' OR OTHER_BANK.STATUS IS NULL)
+    </mapped-statement>
+        
+        
+    <result-map name="getBounceClearingResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="CLEARING_TYPE" />
+        <property name="lookUpDesc" column="CLEARING_TYPE" />
+    </result-map>  
+        
+    <mapped-statement name="InwardClearing.getBounceClearingType" result-map="getBounceClearingResult">
+        SELECT CLEARING_TYPE||'~'||CLEARING_DT AS CLEARING_TYPE FROM OUTWARD_TALLY 
+        WHERE STATUS != 'DELETED'
+        AND TALLY_STATUS = 'OPEN'
+        AND BRANCH_ID = #value:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="OutwardClearing.getBounceClearingType" result-map="getBounceClearingResult">
+        SELECT CLEARING_TYPE||' '||CLEARING_DT AS CLEARING_TYPE FROM inward_TALLY 
+        WHERE STATUS != 'DELETED'
+        AND TALLY_STATUS = 'OPEN'
+        AND BRANCH_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+      <!--!==================================-->    
+    <result-map name="get-Branch-result1" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BRANCH_CODE" />
+        <property name="lookUpDesc" column="BRANCH_NAME" />
+    </result-map>
+        
+    <mapped-statement name="InwardClearing.getBranch" result-map="get-Branch-result1">
+        (SELECT BRANCH_CODE, BRANCH_CODE||' ('||BRANCH_NAME||') '  
+        AS "BRANCH_NAME" FROM OTHER_BANK_BRANCH
+        WHERE BANK_CODE = #value:VARCHAR# AND (STATUS NOT IN ('DELETED')))
+        UNION
+        (SELECT BRANCH_CODE, BRANCH_CODE||' ('||BRANCH_NAME||') '  
+        AS "BRANCH_NAME" FROM BRANCH_MASTER
+        WHERE BANK_CODE = #value:VARCHAR# AND STATUS NOT IN ('DELETED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getOwnBranches" result-map="get-Branch-result1">
+             <!-- SELECT BRANCH_CODE, BRANCH_CODE || ' (' || BRANCH_NAME || ') '  
+              AS "BRANCH_NAME" FROM BRANCH_MASTER
+              WHERE STATUS NOT IN ('DELETED') AND 
+              AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+              AUTHORIZE_STATUS_2 = 'AUTHORIZED' AND
+              BRANCH_CODE = #BRANCH_ID#
+              UNION
+             SELECT BRANCH_CODE, BRANCH_CODE || ' (' || BRANCH_NAME || ') '  
+              AS "BRANCH_NAME" FROM BRANCH_MASTER
+              WHERE STATUS NOT IN ('DELETED') AND 
+              AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+              AUTHORIZE_STATUS_2 = 'AUTHORIZED' AND 
+              BRANCH_CODE != #BRANCH_ID# AND 
+              BRANCH_CODE IN (SELECT BGD.BRANCH_ID 
+              FROM BRANCH_GROUP BG, BRANCH_GROUP_DETAILS BGD 
+              WHERE BG.BRANCH_GROUP_ID = BGD.BRANCH_GROUP_ID AND 
+              BG.BRANCH_GROUP_ID = #BRANCH_GROUP:VARCHAR# AND 
+              BG.STATUS NOT IN ('DELETED') AND BGD.STATUS NOT IN ('DELETED') 
+              AND BG.AUTHORIZE_STATUS = 'AUTHORIZED') -->
+        SELECT BRANCH_CODE, BRANCH_CODE || ' (' || BRANCH_NAME || ') '  
+        AS "BRANCH_NAME" FROM BRANCH_MASTER
+        WHERE STATUS NOT IN ('DELETED') AND 
+        AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+            <!--AUTHORIZE_STATUS_2 = 'AUTHORIZED' AND -->
+        BRANCH_CODE IN 
+        (SELECT BRANCH_ID FROM BRANCH_GROUP_DETAILS 
+        WHERE BRANCH_GROUP_ID IN 
+        (SELECT BRANCH_GROUP_ID FROM BRANCH_GROUP_DETAILS 
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR#)) ORDER BY BRANCH_CODE             
+    </mapped-statement>
+        
+        <!--!==================================-->    
+    <result-map name="getInwardClearingTypeResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="CLEARING_TYPE" />
+        <property name="lookUpDesc" column="CLEARING_TYPE" />
+    </result-map>    
+    <mapped-statement name="InwardClearing.getInwardClearingType" result-map="getInwardClearingTypeResult">
+        SELECT CLEARING_TYPE
+        FROM CLEARING_PARAM 
+        WHERE BRANCH_ID = #value:VARCHAR#
+        AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+        <!--!==================================-->
+<!-- Used in TokenIssueMap -->    
+          <!-- This is used to Load the combobox with key and values -->
+    <result-map name="get-LookUp-result2" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SERIES_NO" />
+        <property name="lookUpDesc" column="SERIES_NO" />
+    </result-map>
+         
+    <mapped-statement name="getSelectTokenConfigSeries" result-map="get-LookUp-result2" >
+        SELECT DISTINCT SERIES_NO, SERIES_NO FROM TOKEN_CONFIG
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') 
+        AND TOKEN_TYPE IN 'METAL'
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTokenIssueSeries" result-map="get-LookUp-result2" >
+        SELECT DISTINCT SERIES_NO, SERIES_NO FROM TOKEN_ISSUE
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED')
+        AND TOKEN_TYPE IN 'METAL'
+    </mapped-statement>        
+        <!--!==================================-->
+<!-- Used in AccountMaintenanceMap -->    
+    <result-map name="get-ContraHead-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="AC_HD_ID" />
+        <property name="lookUpDesc" column="ACHDCONTRA" />
+    </result-map>        
+        
+    <mapped-statement name="getContraHead" result-map="get-ContraHead-result" >
+        SELECT AC_HD.AC_HD_ID,AC_HD.AC_HD_ID || '('|| CONTRA_ACT ||')'  AS "ACHDCONTRA" 
+        FROM AC_HD, AC_HD_PARAM , MJR_AC_HD
+        WHERE AC_HD.STATUS NOT IN ('DELETED') AND 
+        AC_HD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        AC_HD.AC_HD_ID = AC_HD_PARAM.AC_HD_ID AND
+        AC_HD.AC_HD_ID IN 
+        (SELECT AC_HD_ID FROM AC_HD_PARAM WHERE 
+        STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND MJR_AC_HD_TYPE=#value:VARCHAR# AND
+        AC_HD.MJR_AC_HD_ID = MJR_AC_HD.MJR_AC_HD_ID
+
+        UNION  
+
+            <!--SELECT DISTINCT AC_HD.AC_HD_ID,AC_HD.AC_HD_ID  FROM AC_HD , MJR_AC_HD, AC_HD_PARAM
+            WHERE  AC_HD.STATUS NOT IN ('DELETED') AND 
+             AC_HD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+             AC_HD.MJR_AC_HD_ID = MJR_AC_HD.MJR_AC_HD_ID AND
+             MJR_AC_HD_TYPE = #value# AND
+             AC_HD.AC_HD_ID NOT IN (SELECT AC_HD_ID FROM AC_HD_PARAM WHERE 
+             STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED') 
+
+            ORDER BY AC_HD_ID -->
+        SELECT DISTINCT AC_HD.AC_HD_ID,AC_HD.AC_HD_ID  FROM AC_HD , MJR_AC_HD, AC_HD_PARAM
+        WHERE  AC_HD.STATUS NOT IN ('DELETED') AND 
+        AC_HD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        AC_HD.MJR_AC_HD_ID = MJR_AC_HD.MJR_AC_HD_ID AND
+        MJR_AC_HD_TYPE = #value:VARCHAR# AND
+        NOT EXISTS(SELECT AC_HD_ID FROM AC_HD_PARAM WHERE 
+        STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' AND AC_HD.AC_HD_ID=AC_HD_ID) 
+
+        ORDER BY AC_HD_ID
+    </mapped-statement>     
+        <!--!==================================-->
+<!-- Used in OutwardClearingTallyMap -->    
+    <result-map name="get-LookUp-result3" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    <mapped-statement name="getSelectClearingType" result-map="get-LookUp-result3">
+        SELECT CLEARING_TYPE AS "LOOKUP_REF_ID", CLEARING_TYPE AS "LOOKUP_DESC" FROM CLEARING_PARAM 
+        WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID = #value# AND AUTHORIZE_STATUS IN ('AUTHORIZED')
+    </mapped-statement>
+        <!--!==================================-->
+<!-- Used in OperativeAcctProductMap -->    
+    <result-map name="get-Flexi-Result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+        
+    <mapped-statement name="getFlexiList" result-map="get-Flexi-Result" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT 
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL) 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-Int-Category-Result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+
+    <mapped-statement name="getIntCategoryList" result-map="get-Int-Category-Result">
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = 'INT_CAT_ID'
+    </mapped-statement>
+
+        <!--!==================================-->
+<!-- Used in LodgementBillsMap -->    
+    <!-- Product ID from BILLS_PRODUCT Table -->
+    <result-map name="Bill_Lodgements_get-ProdId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_ID" />
+    </result-map>
+        
+    <mapped-statement name="Bill_Lodgements.getProdId" result-map="Bill_Lodgements_get-ProdId-result" >
+        SELECT PROD_ID FROM BILLS_PRODUCT
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+    </mapped-statement>
+    
+        <!--!==================================-->
+<!-- Used in DepositRolloverMap -->    
+    <!-- FNAME and LNAME from BANK_EMPLOYEE Table for Client Contact Combo -->
+    <result-map name="DepositRolloverTO_get-ClientContact-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="EMPLOYEE_CODE" />
+        <property name="lookUpDesc" column="NAME" />
+    </result-map>
+        
+    <mapped-statement name="DepositRolloverTO.getClientContact" result-map="DepositRolloverTO_get-ClientContact-result" >
+        SELECT EMPLOYEE_CODE, FNAME  ||' '|| LNAME  AS "NAME"
+        FROM BANK_EMPLOYEE
+        WHERE STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    
+     <!-- MEMBER from PVT_ORDER_MASTER Table for Relationship Combo -->
+    <result-map name="DepositRolloverTO_get-Relationship-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="ORD_ID" />
+        <property name="lookUpDesc" column="MEMBER" />
+    </result-map>
+        
+    <mapped-statement name="DepositRolloverTO.getRelationship" result-map="DepositRolloverTO_get-Relationship-result" >
+        SELECT ORD_ID, MEMBER
+        FROM PVT_ORDER_MASTER
+        WHERE  STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        <!--!==================================-->
+<!-- Used in DepositLienMap -->    
+    <result-map name="getNewLienSubDepositsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SUBDEPOSITNO" />
+        <property name="lookUpDesc" column="SUBDEPOSITNO" />
+    </result-map>   
+    <mapped-statement name="Lien.getNewSubDepositNos" result-map="getNewLienSubDepositsResult" >
+        SELECT DEPOSIT_SUB_NO as SUBDEPOSITNO FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO=#value:VARCHAR# and (status not in ('DELETED') or status is null) and
+        (ACCT_STATUS NOT IN ('CLOSED') OR ACCT_STATUS IS NULL) AND 
+        (AUTHORIZE_STATUS='AUTHORIZED') and (AVAILABLE_BALANCE>0 or AVAILABLE_BALANCE is null)
+    </mapped-statement>       
+      
+    <result-map name="getEditLienSubDepositsResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SUBDEPOSITNO" />
+        <property name="lookUpDesc" column="SUBDEPOSITNO" />
+    </result-map>   
+    <mapped-statement name="Lien.getEditSubDepositNos" result-map="getEditLienSubDepositsResult" >
+        SELECT DEPOSIT_SUB_NO as SUBDEPOSITNO FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO=#value:VARCHAR# AND STATUS NOT IN ('DELETED') AND 
+        (ACCT_STATUS IS NULL OR ACCT_STATUS NOT IN ('CLOSED')) AND 
+        (AUTHORIZE_STATUS='AUTHORIZED')
+    </mapped-statement>            
+      
+    <result-map name="getLienProductIDResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+    <mapped-statement name="DepositLien.getLoanProducts" result-map="getLienProductIDResult">
+        SELECT PROD_ID as PROD_ID, PROD_DESC as PROD_DESC FROM LOANS_PRODUCT 
+        WHERE (STATUS != 'DELETED' or status is null) and authorize_status='AUTHORIZED'
+          
+    </mapped-statement>                       
+        <!--!==================================-->
+<!-- Used in BranchMasterMap -->    
+    <result-map name="get-Branch-group" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="GROUP_ID" />
+        <property name="lookUpDesc" column="GROUP_NAME" />
+    </result-map>     
+
+    <mapped-statement name="getBranchGroup" result-map="get-Branch-group">
+        SELECT GROUP_ID AS "GROUP_ID", GROUP_NAME AS "GROUP_NAME"
+        FROM GROUP_MASTER WHERE BRANCH_GROUP = 'Y' AND (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement> 
+
+    <result-map name="get-LookUp-result4" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="GROUP_ID" />
+        <property name="lookUpDesc" column="GROUP_DESC" />
+    </result-map>
+    <mapped-statement name="getSelectGLGroups" result-map="get-LookUp-result4">
+        SELECT GROUP_ID, GROUP_DESC  FROM BRANCH_GL_GROUP
+        WHERE STATUS NOT IN ('DELETED') 
+    </mapped-statement>
+
+       
+<!-- Used in RemitStopPaymentMap -->    
+    <result-map name="RemitStopGetProdIdResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>  
+        
+    <mapped-statement name="RemitStop.getProdId" result-map="RemitStopGetProdIdResult" >
+        SELECT PROD_ID, PROD_DESC FROM REMITTANCE_PRODUCT 
+        WHERE STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-LookUp-result10" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="INSTRUMENT_PREFIX" />
+        <property name="lookUpDesc" column="INSTRUMENT_PREFIX" />
+    </result-map>
+        
+    <mapped-statement name="getSelectInstrumentSeriesNo" result-map="get-LookUp-result10" >
+        SELECT ID.INSTRUMENT_PREFIX , ID.INSTRUMENT_PREFIX FROM INVENTORY_DETAILS ID, INVENTORY_MASTER IM 
+        WHERE  ID.ITEM_ID = IM.ITEM_ID  AND ID.STATUS!='DELETED' AND IM.ITEM_TYPE='PO'
+        AND ID.AUTHORIZE_STATUS IN ('AUTHORIZED') AND ID.INITIATED_BRANCH = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getReportData" result-class="java.lang.String" >
+        SELECT DISTINCT * FROM (
+        SELECT $COLUMN_NAME$ FROM $TABLE_NAME$ WHERE $COLUMN_NAME$ IS NOT NULL ORDER BY $COLUMN_NAME$
+        )A ORDER BY $COLUMN_NAME$
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="isGraphReport" result-class="java.lang.String" >
+        SELECT REPORT_NAME FROM GRAPH_REPORTS WHERE REPORT_NAME=#value#
+    </mapped-statement>
+
+        
+    <mapped-statement name="getOtherBankBranchs2" result-map="get-Bank-result1">
+        (SELECT BRANCH_CODE AS "BANK_CODE", BRANCH_CODE||' ('||BRANCH_NAME||') ' AS "BANK_NAME"
+        FROM OTHER_BANK_BRANCH 
+        WHERE OTHER_BANK_BRANCH.STATUS !='DELETED' OR OTHER_BANK_BRANCH.STATUS IS NULL
+        AND BRANCH_CODE=#value:VARCHAR#)
+                         
+    </mapped-statement>
+        
+    <mapped-statement name="getReportNamesForScreen" result-class="java.lang.String">
+        SELECT REPORT_NAME FROM REPORT_SCREENS WHERE SCREEN_ID=#SCREEN_ID:VARCHAR#
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLookUpDesc" result-class="java.util.HashMap">
+        SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_REF_ID = #LOOKUP_REF_ID:VARCHAR# AND LOOKUP_ID = #LOOKUP_ID:VARCHAR#
+    </mapped-statement>
+    
+    
+
+
+
+<!--added by anjuanand on 15-07-2014-->
+
+    <result-map name="getCustmrAddr" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="ADDR_TYPE" />
+        <property name="lookUpDesc" column="ADDR_TYPE" />
+    </result-map>         
+        
+        
+    <mapped-statement name="Account.getCustAddr" result-map="getCustmrAddr">
+        SELECT ADDR_TYPE, AREA, CITY, STATE, COUNTRY_CODE, PIN_CODE FROM CUST_ADDR
+        WHERE CUST_ID = #value:VARCHAR#
+    </mapped-statement>
+
+
+    <result-map name="get-Designation-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="DESIG_ID" />
+        <property name="lookUpDesc" column="DESIG_DESCIP" />
+    </result-map>
+
+
+    <mapped-statement name="getDesignation" result-map="get-Designation-result">
+        SELECT DESIG_ID, DESIG_DESCIP FROM DESIG_MASTER 
+        WHERE STATUS != 'DELETED'
+    </mapped-statement>
+  
+  
+    <result-map name="get-Department-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_DESC" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>       
+        
+        
+    <mapped-statement name="getDepartment" result-map="get-Department-result">
+        <!--SELECT DEPTT_ID, DEPTT_NAME FROM DEPTT_MASTER 
+        WHERE STATUS != 'DELETED'-->
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_ID = 'EMPLOYEE.DEPARTMENT' AND STATUS!= 'DELETED' ORDER BY LOOKUP_DESC
+    </mapped-statement>  
+    
+    
+    <result-map name="get-Manager-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="EMPLOYEE_CODE" />
+        <property name="lookUpDesc" column="NAME" />
+    </result-map>   
+    
+
+    <mapped-statement name="getManager" result-map="get-Manager-result">
+        select E.EMPLOYEEID AS EMPLOYEE_CODE, E.EMPLOYEE_NAME AS NAME from EMPLOYEE_MASTER E join EMPLOYEE_PRESENT_DETAILS P on E.EMPLOYEEID = P.EMPLOYEEID where P.DESIGNATION IN('Branch Manager','Manager')  AND E.STATUS != 'DELETED'   
+    </mapped-statement>
+    
+    
+    <result-map name="get-Desg-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="DESIGNATION" />
+        <property name="lookUpDesc" column="DESIGNATION" />
+    </result-map>   
+    
+    
+    <mapped-statement name="getDesg" result-map="get-Desg-result">
+        SELECT DISTINCT(DESIGNATION) FROM scale_master
+    </mapped-statement>
+
+
+    <result-map name="get-Relation-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_DESC" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>   
+    
+   
+    <mapped-statement name="getRelation" result-map="get-Relation-result">
+        SELECT DISTINCT(LOOKUP_DESC) FROM lookup_master where lookup_id LIKE '%RELATIONSHIP' ORDER BY LOOKUP_DESC
+    </mapped-statement>
+
+
+    <result-map name="get-ProdTypes-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>   
+  
+    <mapped-statement name="getProdTypes" result-map="get-ProdTypes-result">
+        SELECT DISTINCT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER WHERE (LOOKUP_ID='PRODUCTTYPE' OR LOOKUP_ID='PAYROLLPROD') ORDER BY LOOKUP_DESC ASC
+    </mapped-statement>
+
+
+    <mapped-statement name="getTitles" result-map="get-Relation-result">
+        SELECT LOOKUP_DESC FROM lookup_master where lookup_id = 'CUSTOMER.TITLE'
+    </mapped-statement>
+
+
+    <mapped-statement name="getCommAddr" result-map="get-Relation-result">
+        SELECT LOOKUP_DESC FROM lookup_master where lookup_id = 'DEPOSIT.COMM_ADD' 
+    </mapped-statement>
+    
+    <mapped-statement name="getDepositIntroducers" result-class="java.util.LinkedHashMap">
+        SELECT C.CUST_ID AS KEY,C.FNAME AS VALUE
+        FROM AGENT_MASTER AM,CUSTOMER C
+        WHERE AM.AGENT_ID = C.CUST_ID
+        AND AM.STATUS !='DELETED'
+        AND AM.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND C.AUTHORIZE_STATUS = 'AUTHORIZED'
+        UNION ALL
+        SELECT C.CUST_ID AS KEY,EM.EMPLOYEE_NAME AS VALUE
+        FROM EMPLOYEE_MASTER EM,CUSTOMER C
+        WHERE EM.EMPLOYEEID = C.STAFF_ID
+        AND EM.STATUS !='DELETED'
+        AND EM.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND C.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="getAccessRightsForReportView" result-class="java.util.HashMap">
+        <!--select GS.GROUP_ID,RM.ROLE_ID,RM.ROLE_NAME,GS.INTERBRANCH_ALLOWED,GS.REPORT_EXPORT_ALLOWED
+        from GROUP_SCREENS gs, ROLE_MASTER rm, SCREEN_MASTER sm, GROUP_MASTER gm
+        where GS.GROUP_ID = RM.GROUP_ID and
+        GS.SCREEN_ID = SM.SCREEN_ID
+        and GM.GROUP_ID = GS.GROUP_ID
+        and RM.ROLE_ID =  #ROLE_ID:VARCHAR#
+        and GS.SCREEN_ID in (select SCREEN_ID from SCREEN_MASTER where SCREEN_CLASS like #SCREEN_CLASS:VARCHAR#) -->
+        
+        select
+	GS.GROUP_ID,
+	RM.ROLE_ID,
+	RM.ROLE_NAME,
+	GS.INTERBRANCH_ALLOWED,
+	GS.REPORT_EXPORT_ALLOWED
+from
+	GROUP_SCREENS gs,
+	ROLE_MASTER rm,
+	SCREEN_MASTER sm,
+	GROUP_MASTER gm
+where
+	GS.GROUP_ID = RM.GROUP_ID
+	and GS.SCREEN_ID = SM.SCREEN_ID
+	and GM.GROUP_ID = GS.GROUP_ID
+	and RM.ROLE_ID = #ROLE_ID:VARCHAR#
+	and GS.SCREEN_ID in (
+	select
+		SCREEN_ID
+	from
+		SCREEN_MASTER,module_master 
+	where
+	SCREEN_MASTER.module_id = module_master.module_id 
+	and module_master.status not in ('DELETED') 
+	and SCREEN_MASTER.status  not in ('DELETED')  
+	and SCREEN_CLASS like #SCREEN_CLASS:VARCHAR#)        
+        
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getBranchwiseMdsSchems" result-map="getDepositProductsResult" >       
+        SELECT SCHEME_NAME as PROD_ID, SCHEME_DESC as PROD_DESC FROM mds_scheme_details where 
+        (status!='DELETED' or status is null) and 
+        (AUTHORIZED_STATUS='AUTHORIZED')and 
+        SCHEME_NAME not in(select SCHEME_NAME from mds_closure_details)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+    </dynamic-mapped-statement>
+
+</sql-map>

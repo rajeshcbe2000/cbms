@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LockerProdTOMap">
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLockerProdTO" inline-parameters="true">
+        INSERT INTO LOCKER_PRODUCT
+        (PROD_ID, PROD_DESC, LOC_DIM_LEN, LOC_DIM_BRE, LOC_DIM_HEI,
+        LOC_DIM_MET,
+        LOC_RENT_AC_HD, LOC_SUSP_AC_HD, 
+        LOC_MISC_AC_HD, LOC_BRK_AC_HD_YN,SERV_TAX_AC_HD,
+        STATUS, AUTHORIZE_STATUS, AUTHORIZE_USER, AUTHORIZE_DT, CREATED_BY, CREATED_DT, 
+        STATUS_BY, STATUS_DT, AUTHORIZE_REMARK, LOC_RENT_ADV_AC_HD,LOCKER_SURRENDER_REFUND,
+        PENAL_TO_BE_COLLECTED,PENAL_RATE_OF_INTEREST,PENAL_INTEREST_AC_HEAD) 
+        VALUES (
+        #prodId:VARCHAR#, #prodDesc:VARCHAR#, #dimLen:NUMERIC#,#dimBre:NUMERIC#,#dimHei:NUMERIC#,#dimMet:VARCHAR#,
+        #commAcHd:VARCHAR#,#glAcHd:VARCHAR#,#otherHd:VARCHAR#,
+        #chrgAcHd:VARCHAR#, #servTaxAcHd:VARCHAR#,#status:VARCHAR#, 
+        #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeRemark:VARCHAR#, 
+        #rentAdvAcHd:VARCHAR#,#rdoRefund:VARCHAR#,
+        #rdoPenal:VARCHAR#,#penalRate:NUMERIC#,#penalAcHd:VARCHAR#
+        )
+    </mapped-statement>
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLockerProdTO" inline-parameters="true">
+        UPDATE LOCKER_PRODUCT SET
+        PROD_DESC = #prodDesc:VARCHAR#,   
+        LOC_DIM_LEN = #dimLen:NUMERIC#,      
+        LOC_DIM_BRE = #dimBre:NUMERIC#,      
+        LOC_DIM_HEI = #dimHei:NUMERIC#,       
+        LOC_DIM_MET = #dimMet:NUMERIC#,     
+        LOC_RENT_AC_HD = #commAcHd:VARCHAR#,      
+        LOC_SUSP_AC_HD = #glAcHd:VARCHAR#,
+        LOC_MISC_AC_HD = #otherHd:VARCHAR#,
+        LOC_BRK_AC_HD_YN = #chrgAcHd:VARCHAR#,
+        SERV_TAX_AC_HD = #servTaxAcHd:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+		<!--CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:TIMESTAMP#,-->
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_REMARK = #authorizeRemark:VARCHAR#,
+        LOC_RENT_ADV_AC_HD = #rentAdvAcHd:VARCHAR#,  
+        LOCKER_SURRENDER_REFUND = #rdoRefund:VARCHAR#,
+        PENAL_TO_BE_COLLECTED=#rdoPenal:VARCHAR#,
+        PENAL_RATE_OF_INTEREST=#penalRate:NUMERIC#,
+        PENAL_INTEREST_AC_HEAD=#penalAcHd:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLockerProdTO" inline-parameters="true">
+        UPDATE LOCKER_PRODUCT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE PROD_ID = #prodId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+        <!-- Use BillsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLockerProdChargesTO" inline-parameters="true">
+        INSERT INTO LOCKER_PROD_CHARGES
+        (PROD_ID,CHARGE_TYPE, START_DT, END_DT,COMMISION,SERVICE_TAX,STATUS,AUTHORIZE_STATUS,AUTHORIZE_USER,AUTHORIZE_DT) 
+        VALUES (#prodID:VARCHAR#,#chargeType:VARCHAR#, #startDate:DATE#, #endDate:DATE#,
+        #commision:NUMERIC#, #serviceTax:NUMERIC#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLockerProdChargesTO" inline-parameters="true">
+        UPDATE LOCKER_PROD_CHARGES SET 		
+                <!--INSTRU_TYPE = #instrumentType:VARCHAR#,
+                CHARGE_TYPE = #chargeType:VARCHAR#,
+                CUST_CATEGORY = #custCategory:VARCHAR#,-->
+        START_DT = #startDate:DATE#,
+        END_DT =  #endDate:DATE#,
+                <!--FROM_SLAB = #fromSlab:NUMERIC#,-->
+        COMMISION = #commision:NUMERIC#,
+        SERVICE_TAX = #serviceTax:NUMERIC#,
+                <!--PROD_ID = #prodID:VARCHAR#,-->
+        STATUS = #status:VARCHAR#
+                
+        WHERE PROD_ID = #prodID:VARCHAR#
+        AND CHARGE_TYPE = #chargeType:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteLockerProdChargesTO" inline-parameters="true">
+        UPDATE LOCKER_PROD_CHARGES SET 
+        STATUS = #status:VARCHAR#
+        WHERE PROD_ID = #prodID:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND CHARGE_TYPE = #chargeType:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deleteLockerProdCharges" inline-parameters="true">
+        DELETE FROM LOCKER_PROD_CHARGES WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BillsTO object (JavaBean) properties -->
+    <result-map name="getLockerProdTOResult" class="com.see.truetransact.transferobject.product.locker.LockerProdTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="glAcHd" column="LOC_SUSP_AC_HD"/>
+        <property name="chrgAcHd" column="LOC_BRK_AC_HD_YN"/>
+        <property name="commAcHd" column="LOC_RENT_AC_HD"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZE_USER"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeRemark" column="AUTHORIZE_REMARK"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+        <property name="otherHd" column="LOC_MISC_AC_HD"/>
+        <property name="servTaxAcHd" column="SERV_TAX_AC_HD"/> 
+        <property name="dimLen" column="LOC_DIM_LEN"/> 
+        <property name="dimBre" column="LOC_DIM_BRE"/> 
+        <property name="dimHei" column="LOC_DIM_HEI"/> 
+        <property name="dimMet" column="LOC_DIM_MET"/> 
+        <property name="rdoRefund" column="LOCKER_SURRENDER_REFUND"/> 
+        <property name="rentAdvAcHd" column="LOC_RENT_ADV_AC_HD"/> 
+                
+        <property name="rdoPenal" column="PENAL_TO_BE_COLLECTED"/> 
+        <property name="penalRate" column="PENAL_RATE_OF_INTEREST"/> 
+        <property name="penalAcHd" column="PENAL_INTEREST_AC_HEAD"/> 
+    </result-map>
+        
+    <result-map name="getLockerProdChargesTOResult" class="com.see.truetransact.transferobject.product.locker.LockerProdChargesTO">
+        <property name="chargeType" column="CHARGE_TYPE"/>
+        <property name="startDate" column="START_DT"/>
+        <property name="endDate" column="END_DT"/>
+        <property name="commision" column="COMMISION"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>
+        <property name="prodID" column="PROD_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/> 
+        <property name="authorizeUser" column="AUTHORIZE_USER"/> 
+        <property name="authorizeDt" column="AUTHORIZE_DT"/> 
+                 
+    </result-map>
+    <mapped-statement name="getSelectLockerProdChargesTO" result-map="getLockerProdChargesTOResult" >
+        SELECT * FROM LOCKER_PROD_CHARGES 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# and status != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="selectLockerProdChargesTO" result-class="java.util.LinkedHashMap" >
+        SELECT CHARGE_TYPE,START_DT,END_DT,COMMISION,SERVICE_TAX FROM LOCKER_PROD_CHARGES 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# and status != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLockerProdTO" result-map="getLockerProdTOResult" >
+        SELECT * FROM LOCKER_PRODUCT 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLockerProdMap" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, LOC_RENT_AC_HD FROM LOCKER_PRODUCT 
+        WHERE STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLockerProd" result-class="java.util.LinkedHashMap" >
+        SELECT  AC_HD_ID, AC_HD_DESC FROM AC_HD
+        WHERE STATUS != 'DELETED' 
+    </mapped-statement>        
+        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getLockerProdAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT LP.PROD_ID as "PROD_ID", LP.LOC_RENT_AC_HD as "Rent A/c Head" 
+        FROM LOCKER_PRODUCT LP, LOCKER_PROD_CHARGES LC
+        WHERE (LP.STATUS != 'DELETED' OR LP.STATUS IS NULL) AND LC.STATUS != 'DELETED' AND LP.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = LP.STATUS_BY AND LP.PROD_ID = LC.PROD_ID)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                LC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (LC.AUTHORIZE_STATUS IS NULL OR 
+                LC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) OR (LP.AUTHORIZE_STATUS IS NULL OR 
+                LP.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY LP.PROD_ID  
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeLockerProd" result-class="java.util.HashMap">
+        UPDATE LOCKER_PRODUCT SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+    <mapped-statement name="authorizeLockerProdCharges" result-class="java.util.HashMap">
+        UPDATE LOCKER_PROD_CHARGES SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="countLockerProd" result-class="java.util.HashMap">
+        SELECT COUNT(PROD_ID) AS "COUNT" FROM LOCKER_PRODUCT
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getLockerProdCommisionAmount" result-class="java.util.HashMap" >
+        SELECT BC.COMMISION FROM BILLS_CHARGES BC
+        WHERE  BC.PROD_ID = #BILLS_TYPE:VARCHAR# AND #AMOUNT:NUMBER#
+        BETWEEN BC.FROM_SLAB AND BC.TO_SLAB
+    </mapped-statement>
+
+</sql-map>

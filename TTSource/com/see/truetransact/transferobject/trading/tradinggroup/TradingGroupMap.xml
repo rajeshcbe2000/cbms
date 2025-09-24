@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TDSConfigTOMap">
+
+    <!-- Use TDSConfigTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTradingGroupTO" inline-parameters="true">
+        INSERT INTO TRADING_GROUP_MASTER (GROUP_ID,GROUP_NAME,BRANCH_CODE,
+        STATUS,STATUS_BY , STATUS_DT)
+        VALUES(
+        #groupID:VARCHAR#,#groupName:VARCHAR#,#branchID:VARCHAR#,
+        #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="insertTradingSubGroupTO" inline-parameters="true">
+        INSERT INTO TRADING_SUB_GROUP (GROUP_ID,SUB_GROUP_ID ,SUB_GROUP_NAME,STATUS,CREATED_DT,ACTIVE)
+        VALUES(
+        #groupID:VARCHAR#,#subGroupID:VARCHAR#,#subGroupName:VARCHAR#,
+        #status:VARCHAR#,#cr_Dt:DATE#,#active:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingGroupTO" inline-parameters="true">
+        UPDATE TRADING_GROUP_MASTER SET 
+        GROUP_ID = #groupID:VARCHAR#,
+        GROUP_NAME = #groupName:VARCHAR#,
+        BRANCH_CODE = #branchID:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE GROUP_ID = #groupID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSubGroupTO" inline-parameters="true">
+        UPDATE TRADING_SUB_GROUP SET 
+        GROUP_ID = #groupID:VARCHAR#,
+        SUB_GROUP_ID = #subGroupID:VARCHAR#,
+        SUB_GROUP_NAME = #subGroupName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        CREATED_DT = #cr_Dt:DATE#,
+        ACTIVE = #active:VARCHAR#
+        WHERE GROUP_ID = #groupID:VARCHAR# AND SUB_GROUP_ID = #subGroupID:VARCHAR#
+    </mapped-statement>
+	
+    <result-map name="getTradingGroupTOResult" class="com.see.truetransact.transferobject.trading.tradinggroup.TradingGroupTO">
+        <property name="groupID" column="GROUP_ID"/>
+        <property name="groupName" column="GROUP_NAME"/>
+        <property name="branchID" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <result-map name="getTradingSubGroupTOResult" class="com.see.truetransact.transferobject.trading.tradinggroup.TradingSubGroupTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="groupID" column="GROUP_ID"/>
+        <property name="subGroupID" column="SUB_GROUP_ID"/>
+        <property name="subGroupName" column="SUB_GROUP_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorize_Status" column="AUTHORIZED_STATUS"/>
+        <property name="cr_Dt" column="CREATED_DT"/>
+        <property name="active" column="ACTIVE"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getTradingGroupEdit" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID,GROUP_NAME,BRANCH_CODE,AUTHORIZED_STATUS,STATUS_DT AS CREATED_DT FROM TRADING_GROUP_MASTER WHERE STATUS != 'DELETED'AND 
+        (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED') 
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(STATUS_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY GROUP_ID
+    </dynamic-mapped-statement>
+    
+     <dynamic-mapped-statement name="getTradingGroupDelete" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID,GROUP_NAME,BRANCH_CODE,AUTHORIZED_STATUS,STATUS_DT AS CREATED_DT FROM TRADING_GROUP_MASTER WHERE STATUS != 'DELETED'AND 
+        AUTHORIZED_STATUS IS NULL AND AUTHORIZED_DT IS NULL 
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(STATUS_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY GROUP_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectTradingGroupMasterTO" result-map="getTradingGroupTOResult" >
+        SELECT * FROM Trading_group_master WHERE GROUP_ID=#GROUP_ID# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingSubGroupTO" result-map="getTradingSubGroupTOResult" >
+        SELECT ROWNUM AS SL_NO,TSMD.* FROM TRADING_SUB_GROUP TSMD WHERE GROUP_ID = #GROUP_ID# AND  STATUS != 'DELETED' AND 
+        (AUTHORIZED_STATUS ='AUTHORIZED' OR AUTHORIZED_STATUS IS NULL)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingGroupForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID,GROUP_NAME,BRANCH_CODE,AUTHORIZED_STATUS,STATUS_DT AS CREATED_DT FROM Trading_group_master WHERE STATUS != 'DELETED' AND 
+        AUTHORIZED_STATUS IS NULL AND STATUS_BY!= #USER_ID# 
+        <!--<dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" > 
+                AUTHORIZED_DT IS NULL
+            </isEqual>
+        </dynamic>-->
+        ORDER BY  GROUP_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingGroupView" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID,GROUP_NAME,BRANCH_CODE  FROM Trading_group_master WHERE STATUS != 'DELETED'
+          <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>  
+        </dynamic>
+        ORDER BY GROUP_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="deleteSubGroupTO" inline-parameters="true">
+        UPDATE TRADING_SUB_GROUP SET 
+        STATUS = #status:VARCHAR#
+        WHERE GROUP_ID = #groupID:VARCHAR# AND SUB_GROUP_ID = #subGroupID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteSubGroupDetails" result-class="java.util.HashMap" >
+        DELETE TRADING_SUB_GROUP WHERE GROUP_ID =#GROUP_ID# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingGroup" result-class="java.util.HashMap">
+        UPDATE Trading_group_master SET 
+        AUTHORIZED_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND GROUP_ID =#GROUP_ID# 
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingSubGroup" result-class="java.util.HashMap">
+        UPDATE TRADING_SUB_GROUP SET 
+        AUTHORIZED_STATUS = #STATUS#
+        WHERE STATUS != 'DELETED' AND GROUP_ID =#GROUP_ID# AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingGroupDetailsTO" inline-parameters="true">
+        UPDATE Trading_group_master SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE GROUP_ID = #groupID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingSubGroupTO" inline-parameters="true">
+        UPDATE TRADING_SUB_GROUP SET 
+        STATUS = #status:VARCHAR#
+        WHERE GROUP_ID = #groupID:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getCurrentIDBefore" result-class="java.util.HashMap">
+        SELECT UPPER(PREFIX)||LPAD(CURR_VALUE+1, ID_LENGTH-LENGTH(PREFIX), '0') AS ID 
+        FROM ID_GENERATION WHERE ID_KEY = #ID_KEY#
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingGroupID" result-class="java.util.HashMap">
+        SELECT * FROM ID_GENERATION WHERE ID_KEY = 'TR_GROUP_ID'
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthDt" result-class="java.util.HashMap">
+        SELECT * FROM TRADING_GROUP_MASTER WHERE GROUP_ID = #GROUP_ID# AND STATUS !='DELETED'
+    </mapped-statement>
+        
+</sql-map>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BouncingInstrumentwiseTOMap">
+
+    <!-- Use BouncingInstrumentwiseTO object (JavaBean) properties as parameters for insert. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBouncingInstrumentwiseTO" inline-parameters="true">
+        INSERT INTO INWARD_BOUNCING
+        (BOUNCING_ID, BOUNCING_TYPE, INWARD_ID, INWARD_SCHEDULE_NO, BOUNCING_REASON, PRESENT_AGAIN, CLEARING_TYPE, CLEARING_DATE, STATUS, CREATED_DT, BRANCH_ID, CREATED_BY, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, CHARGE, SCHEDULE_NO, AMOUNT
+        ) VALUES (
+        #bouncingId:VARCHAR#, #bouncingType:VARCHAR#, #inwardId:VARCHAR#, #inwardScheduleNo:VARCHAR#, #bouncingReason:VARCHAR#, #presentAgain:VARCHAR#, #clearingType:VARCHAR#, #clearingDate:TIMESTAMP#, #status:VARCHAR#, #createdDt:TIMESTAMP#, #branchId:VARCHAR#, #createdBy:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #charge:NUMERIC#, #scheduleNo:VARCHAR#, #amount:NUMERIC#)
+    </mapped-statement>
+
+    <!-- Use BouncingInstrumentwiseTO object (JavaBean) properties as parameters for update. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBouncingInstrumentwiseTO" inline-parameters="true">
+        UPDATE INWARD_BOUNCING SET 
+<!--    BOUNCING_ID = #bouncingId:VARCHAR#,
+        BOUNCING_TYPE = #bouncingType:VARCHAR#, 
+        INWARD_ID =  #inwardId:VARCHAR#,
+        INWARD_SCHEDULE_NO = #inwardScheduleNo:VARCHAR#, -->
+        BOUNCING_REASON = #bouncingReason:VARCHAR#,
+        PRESENT_AGAIN = #presentAgain:VARCHAR#,
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+<!--        CLEARING_DATE = #clearingDate:DATE#,
+        CREATED_DT = #createdDt:DATE#,
+        CREATED_BY = #createdBy:VARCHAR#, 
+        BRANCH_ID = #branchId:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->
+<!--            ,
+        CHARGE = #charge:NUMERIC#, 
+        SCHEDULE_NO = #scheduleNo:VARCHAR#, 
+        AMOUNT = #amount:NUMERIC#
+    AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE# -->
+        WHERE BOUNCING_ID = #bouncingId:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use BouncingInstrumentwiseTO object (JavaBean) properties as parameters for delete. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBouncingInstrumentwiseTO" inline-parameters="true">
+        UPDATE INWARD_BOUNCING SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->
+        WHERE BOUNCING_ID = #bouncingId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to BouncingInstrumentwiseTO object (JavaBean) properties -->
+    <result-map name="getBouncingInstrumentwiseTOResult" class="com.see.truetransact.transferobject.clearing.bouncing.BouncingInstrumentwiseTO">
+        <property name="bouncingId" column="BOUNCING_ID"/>
+        <property name="bouncingType" column="BOUNCING_TYPE"/>
+        <property name="inwardId" column="INWARD_ID"/>
+        <property name="inwardScheduleNo" column="INWARD_SCHEDULE_NO"/>
+        <property name="bouncingReason" column="BOUNCING_REASON"/>
+        <property name="presentAgain" column="PRESENT_AGAIN"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="clearingDate" column="CLEARING_DATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="charge" column="CHARGE"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="amount" column="AMOUNT"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectBouncingInstrumentwiseTO" result-map="getBouncingInstrumentwiseTOResult" >
+        SELECT * FROM INWARD_BOUNCING 
+        WHERE BOUNCING_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="ViewAllBouncingInstrumentwiseTO" result-class="java.util.LinkedHashMap" >
+        SELECT BOUNCING_ID AS "Bouncing ID", INWARD_ID AS "Inward ID", DECODE(PRESENT_AGAIN, 'Y', 'Yes', 'No') AS "Present Again",
+        (Select CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME)
+        FROM CUSTOMER, ACT_MASTER, INWARD_CLEARING
+        WHERE ACT_MASTER.ACT_NUM = INWARD_CLEARING.ACCT_NO
+        AND CUSTOMER.CUST_ID = ACT_MASTER.CUST_ID
+        AND INWARD_BOUNCING.INWARD_ID  = INWARD_CLEARING.INWARD_ID) AS "Name"
+        FROM INWARD_BOUNCING
+        WHERE STATUS != 'DELETED'
+        AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="Bouncing_Instrumentwise.ViewSerialNumber" result-class="java.util.LinkedHashMap" >
+        SELECT INWARD_ID AS "Inward ID",(SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE  LOOKUP_REF_ID = CLEARING_TYPE)AS "Clearing Type", TO_CHAR(CLEARING_DT, 'MM/DD/YYYY') AS "Clearing Date"
+        FROM INWARD_CLEARING 
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+    </mapped-statement> 
+    
+    <mapped-statement name="Bouncing_Instrumentwise.getSerialNumber" result-class="java.util.HashMap" >
+        SELECT CLEARING_TYPE, PROD_ID, ACCT_NO, CLEARING_DT, INSTRUMENT_TYPE, INSTRUMENT_NO1, INSTRUMENT_NO2, INSTRUMENT_DT, AMOUNT, BANK_CODE, BRANCH_CODE, ACCT_NO, PAYEE_NAME 
+        FROM INWARD_CLEARING 
+        WHERE INWARD_ID = #WHERE:VARCHAR# AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND INWARD_DT=#TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="Bouncing_Instrumentwise.ViewAccountHead" result-class="java.util.LinkedHashMap" >
+        SELECT  DISTINCT  AC_HD.AC_HD_ID, AC_HD.AC_HD_DESC
+        FROM  AC_HD, INWARD_CLEARING, OP_AC_PRODUCT
+        WHERE  INWARD_CLEARING.PROD_ID = OP_AC_PRODUCT.PROD_ID AND  OP_AC_PRODUCT.AC_HD_ID = AC_HD.AC_HD_ID AND  INWARD_CLEARING.PROD_ID = #WHERE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Bouncing_Instrumentwise.ViewAccountNumber" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT INWARD_CLEARING.ACCT_NO, CUSTOMER.FNAME, CUSTOMER.LNAME, CUSTOMER.MNAME  
+        FROM INWARD_CLEARING, ACT_MASTER, CUSTOMER
+        WHERE INWARD_CLEARING.ACCT_NO =  ACT_MASTER.ACT_NUM AND   ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID AND   INWARD_CLEARING.ACCT_NO = #WHERE:VARCHAR#
+    </mapped-statement>
+    
+    <!-- ==============================AUTHORIZATION===================================================== -->
+    <mapped-statement name="getSelectBouncingInstrumentAuthList" result-class="java.util.LinkedHashMap" >
+        SELECT BOUNCING_ID AS "Bouncing ID", INWARD_ID AS "Inward ID", 
+        DECODE(PRESENT_AGAIN, 'Y', 'Yes', 'No') AS "Present Again",
+        (Select CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME)
+        FROM CUSTOMER, ACT_MASTER, INWARD_CLEARING
+        WHERE ACT_MASTER.ACT_NUM = INWARD_CLEARING.ACCT_NO
+        AND CUSTOMER.CUST_ID = ACT_MASTER.CUST_ID
+        AND INWARD_BOUNCING.INWARD_ID  = INWARD_CLEARING.INWARD_ID) AS "Name"
+        FROM INWARD_BOUNCING
+        WHERE STATUS != 'DELETED'
+        AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getBouncingData" result-class="java.lang.String">
+        SELECT BOUNCING_ID 
+        FROM INWARD_BOUNCING 
+        WHERE INWARD_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeBouncingInstrument"  inline-parameters="true">
+        UPDATE INWARD_BOUNCING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE BOUNCING_ID = #BOUNCING ID:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>      
+        
+    <mapped-statement name="updateBounchingCharge"  inline-parameters="true">
+        UPDATE INWARD_BOUNCING SET 
+        CHARGE = #CHRG:NUMERIC#
+        WHERE BOUNCING_ID = #BOUNCING ID:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="Bouncing.getTransactionData" result-class="java.util.HashMap">
+        SELECT IC.PROD_ID, IC.ACCT_NO, IC.BRANCH_ID, CBP.INWARD_RETURN_CHRG, 
+        CBP.INWARD_RETURN_HD, IC.AC_HD_ID, IC.PROD_TYPE, CBP.CLEARING_HD, 
+        CBP.CLEARING_SUSPENSE_HD , IC.AMOUNT  
+        FROM INWARD_CLEARING IC, CLEARING_BANK_PARAM CBP
+        WHERE IC.INWARD_ID = #INWARD ID:VARCHAR#
+        AND IC.CLEARING_TYPE = CBP.CLEARING_TYPE
+        AND IC.STATUS != 'DELETED'
+        AND IC.AUTHORIZE_STATUS = 'AUTHORIZED'   <!-- REJECTED changed as  AUTHORIZED  -->
+        AND CBP.STATUS != 'DELETED'
+        AND CBP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND IC.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND IC.INWARD_DT=#TRANS_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getBouncingDetails" result-class="java.util.HashMap">
+        SELECT * FROM INWARD_BOUNCING 
+        WHERE INWARD_ID = #INWARD_ID:VARCHAR#
+        AND BRANCH_ID = #INITIATED_BRANCH:VARCHAR# AND CLEARING_DATE=#TRANS_DT:DATE#
+    </mapped-statement>
+</sql-map>

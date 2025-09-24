@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : InwardTallyDetailsMap.xml
+    Created on : May 5, 2004, 12:47 PM
+    Author     : Hemant
+    Description:
+        Purpose of the document follows.
+-->
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InwardTallyDetailsTOMap">
+
+	<!-- Use InwardTallyDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInwardTallyDetailsTO" inline-parameters="true">
+        INSERT INTO INWARD_TALLY_DETAILS
+        (TALLY_ID, SCHEDULE_NO, SERV_INSTRUMENTS, SERV_AMOUNT, SYS_BOOKED_INSTRUMENTS, SYS_BOOKED_AMOUNT, SYS_OUTRET_INSTRUMENTS, SYS_OUTRET_AMOUNT, PHY_INSTRUMENTS, PHY_AMOUNT, DIFF_INSTRUMENTS, DIFF_AMOUNT, STATUS, CURRENCY
+        ) VALUES (
+        #tallyId:VARCHAR#, #scheduleNo:VARCHAR#, #servInstruments:NUMERIC#, #servAmount:NUMERIC#, #sysBookedInstruments:NUMERIC#, #sysBookedAmount:NUMERIC#, #sysOutretInstruments:NUMERIC#, #sysOutretAmount:NUMERIC#, #phyInstruments:NUMERIC#, #phyAmount:NUMERIC#, #diffInstruments:NUMERIC#, #diffAmount:NUMERIC#, #status:VARCHAR#, #currency:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InwardTallyDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInwardTallyDetailsTO" inline-parameters="true">
+        UPDATE INWARD_TALLY_DETAILS SET 
+        TALLY_ID = #tallyId:VARCHAR#,
+        SCHEDULE_NO = #scheduleNo:VARCHAR#,
+        SERV_INSTRUMENTS = #servInstruments:NUMERIC#,
+        SERV_AMOUNT = #servAmount:NUMERIC#,
+        SYS_BOOKED_INSTRUMENTS = #sysBookedInstruments:NUMERIC#,
+        SYS_BOOKED_AMOUNT = #sysBookedAmount:NUMERIC#,
+        SYS_OUTRET_INSTRUMENTS = #sysOutretInstruments:NUMERIC#,
+        SYS_OUTRET_AMOUNT = #sysOutretAmount:NUMERIC#,
+        PHY_INSTRUMENTS = #phyInstruments:NUMERIC#,
+        PHY_AMOUNT = #phyAmount:NUMERIC#,
+        DIFF_INSTRUMENTS = #diffInstruments:NUMERIC#,
+        DIFF_AMOUNT = #diffAmount:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        CURRENCY = #currency:VARCHAR#
+        WHERE TALLY_ID = #tallyId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InwardTallyDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInwardTallyDetailsTO" inline-parameters="true">
+        DELETE FROM INWARD_TALLY_DETAILS 
+        WHERE TALLY_ID = #tallyId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardTallyDetailsTO object (JavaBean) properties -->
+    <result-map name="getInwardTallyDetailsTOResult" class="com.see.truetransact.transferobject.clearing.tally.InwardTallyDetailsTO">
+        <property name="tallyId" column="TALLY_ID"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="servInstruments" column="SERV_INSTRUMENTS"/>
+        <property name="servAmount" column="SERV_AMOUNT"/>
+        <property name="sysBookedInstruments" column="SYS_BOOKED_INSTRUMENTS"/>
+        <property name="sysBookedAmount" column="SYS_BOOKED_AMOUNT"/>
+        <property name="sysOutretInstruments" column="SYS_OUTRET_INSTRUMENTS"/>
+        <property name="sysOutretAmount" column="SYS_OUTRET_AMOUNT"/>
+        <property name="phyInstruments" column="PHY_INSTRUMENTS"/>
+        <property name="phyAmount" column="PHY_AMOUNT"/>
+        <property name="diffInstruments" column="DIFF_INSTRUMENTS"/>
+        <property name="diffAmount" column="DIFF_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="currency" column="CURRENCY"/>
+    </result-map>
+    <mapped-statement name="getSelectInwardTallyDetailsTO" result-map="getInwardTallyDetailsTOResult" >
+        SELECT IT.TALLY_ID, IT.SCHEDULE_NO,
+        ITD.CURRENCY as CURRENCY, 
+        (SELECT COUNT(*) FROM INWARD_CLEARING WHERE 
+        SCHEDULE_NO = IT.SCHEDULE_NO) as SYS_BOOKED_INSTRUMENTS, 
+        NVL((SELECT SUM(AMOUNT) FROM INWARD_CLEARING WHERE 
+        SCHEDULE_NO = IT.SCHEDULE_NO),0) AS SYS_BOOKED_AMOUNT,
+        (SELECT COUNT(*) FROM OUTWARD_RETURN WHERE 
+        SCHEDULE_NO = IT.SCHEDULE_NO
+        AND STATUS != 'DELETED') as SYS_OUTRET_INSTRUMENTS,
+        (SELECT SUM(AMOUNT) FROM OUTWARD_RETURN WHERE 
+        SCHEDULE_NO = IT.SCHEDULE_NO
+        AND STATUS != 'DELETED')  as SYS_OUTRET_AMOUNT,
+        nvl(SERV_INSTRUMENTS,0) as SERV_INSTRUMENTS,
+        nvl(SERV_AMOUNT,0) as SERV_AMOUNT,
+        nvl(PHY_INSTRUMENTS,0) as PHY_INSTRUMENTS,
+        nvl(PHY_AMOUNT,0) as PHY_AMOUNT,
+        nvl(DIFF_INSTRUMENTS,0) as DIFF_INSTRUMENTS,
+        nvl(DIFF_AMOUNT,0) as DIFF_AMOUNT,
+        '' AS STATUS
+        FROM INWARD_TALLY_DETAILS ITD, INWARD_TALLY IT
+        WHERE IT.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# AND 
+        ITD.SCHEDULE_NO(+) = IT.SCHEDULE_NO AND
+        IT.STATUS != 'DELETED' AND 
+        IT.TALLY_STATUS != 'CLOSED' AND
+        IT.BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+
+</sql-map>

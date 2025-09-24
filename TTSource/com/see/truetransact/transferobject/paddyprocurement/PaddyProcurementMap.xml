@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="PaddyProcurementMap">
+
+	<!-- Use PaddyLocalityMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertPaddyLocalityMasterTO" inline-parameters="true">
+        INSERT INTO LOCALITY_MASTER
+        (LOCALITY_CODE, LOCALITY_NAME, STREET, AREA, CITY, COUNTRY, STATE, PINCODE,STATUS,STATUS_DATE, STATUS_BY,
+        AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DATE
+        ) VALUES (
+        #txtLocalityCode:VARCHAR#, #txtLocalityName:VARCHAR#, #txtStreet:VARCHAR#, #txtArea:VARCHAR#, #cboCity:VARCHAR#,
+        #cboCountry:VARCHAR#, #cboState:VARCHAR#, #txtPincode:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#, #statusBy:VARCHAR#,
+        #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use PaddyLocalityMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updatePaddyLocalityMasterTO" inline-parameters="true">
+        UPDATE LOCALITY_MASTER SET 
+        LOCALITY_NAME = #txtLocalityName:VARCHAR#,
+        STREET = #txtStreet:VARCHAR#,
+        AREA = #txtArea:VARCHAR#,
+        CITY = #cboCity:VARCHAR#,
+        STATE = #cboState:VARCHAR#,
+        PINCODE = #txtPincode:VARCHAR#,
+        COUNTRY = #cboCountry:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#
+        WHERE 
+        LOCALITY_CODE = #txtLocalityCode:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use PaddyLocalityMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deletePaddyLocalityMasterTO" inline-parameters="true">
+        UPDATE LOCALITY_MASTER SET 	
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#
+        WHERE 
+        LOCALITY_CODE = #txtLocalityCode:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to PaddyLocalityMasterTO object (JavaBean) properties -->
+    <result-map name="getPaddyLocalityMasterTOResult" class="com.see.truetransact.transferobject.paddyprocurement.PaddyLocalityMasterTO">
+        <property name="txtLocalityCode" column="LOCALITY_CODE"/>
+        <property name="txtLocalityName" column="LOCALITY_NAME"/>
+        <property name="txtStreet" column="STREET"/>
+        <property name="txtArea" column="AREA"/>
+        <property name="cboCity" column="CITY"/>
+        <property name="cboCountry" column="COUNTRY"/>
+        <property name="cboState" column="STATE"/>
+        <property name="txtPincode" column="PINCODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DATE"/>
+    </result-map>
+    <mapped-statement name="getSelectLocalityMasterTOList" result-class="java.util.LinkedHashMap">
+        SELECT LOCALITY_CODE,LOCALITY_NAME,STREET FROM LOCALITY_MASTER WHERE STATUS NOT IN ('DELETED')
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED','EXCEPTION') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="getLocalityCodeChk" result-class="java.util.LinkedHashMap">
+        SELECT * FROM LOCALITY_MASTER WHERE LOCALITY_CODE = #LOCALITY_CODE:VARCHAR#
+        AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+    <mapped-statement name="getItemCodeChk" result-class="java.util.LinkedHashMap">
+        SELECT * FROM PADDY_ITEM_OPENING WHERE ITEM_CODE = #ITEM_CODE:VARCHAR#
+        AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+    <mapped-statement name="getSelectPaddyLocalityMasterTO" result-map="getPaddyLocalityMasterTOResult" >
+        SELECT * FROM LOCALITY_MASTER 
+        WHERE LOCALITY_CODE = #LOCALITY_CODE:VARCHAR# AND
+        STATUS NOT IN ('DELETED') 
+    </mapped-statement>
+    <dynamic-mapped-statement name="getLocationMasterAuthMode" result-class="java.util.HashMap" >
+        SELECT LOCALITY_CODE,LOCALITY_NAME,STREET,STATUS_BY 
+        FROM LOCALITY_MASTER C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY LOCALITY_CODE
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="authorizeLocalityMaster" result-class="java.util.HashMap">
+        UPDATE LOCALITY_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE LOCALITY_CODE = #LOCALITY_CODE:VARCHAR# 
+    </dynamic-mapped-statement>
+        
+        <!-- =================================== PADDY ITEM OPENING STOCK BEGINS HERE ============================================= -->
+    <mapped-statement name="insertPaddyItemOpeningStockTO" inline-parameters="true">
+        INSERT INTO PADDY_ITEM_OPENING
+        (  ITEM_CODE ,ITEM_DESC,PURCHASE_PRICE,SELLING_PRICE,QUANTITY,UNIT,ORDER_LEVEL,PURCHASE_ACT_HEAD,
+        PURCHASE_RETURN_ACT_HEAD,SALES_ACT_HEAD,SALES_RETURN_ACT_HEAD,TAX_ACT_HEAD,STATUS
+        ,STATUS_DATE,STATUS_BY
+        ) VALUES (
+        #txtItemCode:VARCHAR#, #txtItemDesc:VARCHAR#, #txtPurchasePrice:VARCHAR#, #txtSellingPrice:VARCHAR#,
+        #txtQty:VARCHAR#,#cboUnit:VARCHAR#, #txtOrderLevel:VARCHAR#, #txtPurchaseAcHd:VARCHAR#,
+        #txtPurchaseReturnAcHd:VARCHAR#, #txtSalesAcHd:VARCHAR#, #txtSalesReturnAcHd:VARCHAR#,
+        #txtTaxAcHd:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#, #statusBy:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectPaddyItemOpeningTOList" result-class="java.util.LinkedHashMap">
+        SELECT ITEM_CODE,ITEM_DESC,PURCHASE_PRICE,SELLING_PRICE FROM PADDY_ITEM_OPENING WHERE STATUS NOT IN ('DELETED')
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED','EXCEPTION') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="getSelectAcntHdForPaddy" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SALES_ACT_HEAD,PURCHASE_ACT_HEAD FROM PADDY_ITEM_OPENING
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS NOT IN ('REJECTED','EXCEPTION')
+    </mapped-statement>
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to PaddyLocalityMasterTO object (JavaBean) properties -->
+    <result-map name="getPaddyItemOpeningTOResult" class="com.see.truetransact.transferobject.paddyprocurement.PaddyItemOpeningStockTO">
+        <property name="txtItemCode" column="ITEM_CODE"/>
+        <property name="txtItemDesc" column="ITEM_DESC"/>
+        <property name="txtPurchasePrice" column="PURCHASE_PRICE"/>
+        <property name="txtSellingPrice" column="SELLING_PRICE"/>
+        <property name="txtQty" column="QUANTITY"/>
+        <property name="cboUnit" column="UNIT"/>
+        <property name="txtOrderLevel" column="ORDER_LEVEL"/>
+        <property name="txtPurchaseAcHd" column="PURCHASE_ACT_HEAD"/>
+        <property name="txtPurchaseReturnAcHd" column="PURCHASE_RETURN_ACT_HEAD"/>
+        <property name="txtSalesAcHd" column="SALES_ACT_HEAD"/>
+        <property name="txtSalesReturnAcHd" column="SALES_RETURN_ACT_HEAD"/>
+        <property name="txtTaxAcHd" column="TAX_ACT_HEAD"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DATE"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectPaddyItemOpeningStockTO" result-map="getPaddyItemOpeningTOResult" >
+        SELECT * FROM PADDY_ITEM_OPENING 
+        WHERE ITEM_CODE = #ITEM_CODE:VARCHAR# AND
+        STATUS NOT IN ('DELETED') 
+    </mapped-statement>
+        
+    <mapped-statement name="updatePaddyItemOpeningStockTO" inline-parameters="true">
+        UPDATE PADDY_ITEM_OPENING SET 
+        ITEM_DESC = #txtItemDesc:VARCHAR#,
+        PURCHASE_PRICE = #txtPurchasePrice:VARCHAR#,
+        SELLING_PRICE = #txtSellingPrice:VARCHAR#,
+        QUANTITY = #txtQty:VARCHAR#,
+        UNIT = #cboUnit:VARCHAR#,
+        ORDER_LEVEL = #txtOrderLevel:VARCHAR#,
+        PURCHASE_ACT_HEAD = #txtPurchaseAcHd:VARCHAR#,
+        PURCHASE_RETURN_ACT_HEAD = #txtPurchaseReturnAcHd:VARCHAR#,
+        SALES_ACT_HEAD = #txtSalesAcHd:VARCHAR#,
+        SALES_RETURN_ACT_HEAD = #txtSalesReturnAcHd:VARCHAR#,
+        TAX_ACT_HEAD = #txtTaxAcHd:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#
+        WHERE 
+        ITEM_CODE = #txtItemCode:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use PaddyItemOpeningStockTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deletePaddyItemOpeningStockTO" inline-parameters="true">
+        UPDATE PADDY_ITEM_OPENING SET 	
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE#
+        WHERE 
+        ITEM_CODE = #txtItemCode:VARCHAR# AND
+        STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getPaddyItemOpeningAuthMode" result-class="java.util.HashMap" >
+        SELECT ITEM_CODE,ITEM_DESC,PURCHASE_PRICE,SELLING_PRICE,STATUS_BY 
+        FROM PADDY_ITEM_OPENING C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY ITEM_CODE
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="authorizePaddyItemOpeningStock" result-class="java.util.HashMap">
+        UPDATE PADDY_ITEM_OPENING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE ITEM_CODE = #ITEM_CODE:VARCHAR# 
+    </dynamic-mapped-statement>
+        
+        
+<!-- =================================================== PADDY PURCHASE MASTER ====================================================== -->
+    <mapped-statement name="getLocalityCodeDetailsPurchase" result-class="java.util.LinkedHashMap">
+        SELECT LOCALITY_CODE,LOCALITY_NAME,STREET,AUTHORIZE_STATUS FROM LOCALITY_MASTER WHERE STATUS NOT IN ('DELETED') 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getProductCodeDetailsPurchase" result-class="java.util.LinkedHashMap">
+        SELECT ITEM_CODE,ITEM_DESC,PURCHASE_PRICE,SELLING_PRICE,UNIT FROM PADDY_ITEM_OPENING WHERE STATUS NOT IN ('DELETED') 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getAvailablePaddyStock" result-class="java.util.HashMap">
+        SELECT QUANTITY FROM PADDY_ITEM_OPENING WHERE STATUS NOT IN ('DELETED') AND ITEM_CODE = #ITEM_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="insertPaddyPurchaseMasterTO" inline-parameters="true">
+        INSERT INTO PADDY_PURCHASE_MASTER
+        (  PURCHASE_ID,CND_NUMBER,PADDY_PURCHASE_SLNO,PURCHASE_NAME,TRANSACTION_DATE,PURCHASE_DATE,PURCHASE_ADDRESS,LOCALITY_CODE,
+        LOCALITY_NAME,PRODUCT_CODE,PRODUCT_DESC,RATE_PER_KG,KILO_GRAMS,NET_AMOUNT,ACREAGE,BAGS,TOTAL_AMOUNT,STATUS,
+        STATUS_DATE,STATUS_BY
+        ) VALUES (
+        #purchaseId:VARCHAR#,#txtCnDNo:VARCHAR#, #purchaseSlNo:VARCHAR#, #txtName:VARCHAR#, #tdtBillDate:DATE#,
+        #tdtPurchaseDate:DATE#,#txtAddress:VARCHAR#, #txtLocalityCode:VARCHAR#, #txtLocalityName:VARCHAR#,
+        #txtProductCode:VARCHAR#, #txtProductDesc:VARCHAR#, #txtRatePerKg:VARCHAR#,
+        #txtKiloGram:VARCHAR#,#txtAmount:VARCHAR#, #txtlAcreage:VARCHAR#, #txtBags:VARCHAR#,
+        #txtTotalAmount:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#, #statusBy:VARCHAR#)
+    </mapped-statement>
+    
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to PaddyLocalityMasterTO object (JavaBean) properties -->
+    <result-map name="getPaddyPurchaseMasterTOResult" class="com.see.truetransact.transferobject.paddyprocurement.PaddyPurchaseMasterTO">
+        <property name="purchaseId" column="PURCHASE_ID"/>
+        <property name="txtCnDNo" column="CND_NUMBER"/>
+        <property name="purchaseSlNo" column="PADDY_PURCHASE_SLNO"/>
+        <property name="txtName" column="PURCHASE_NAME"/>
+        <property name="tdtBillDate" column="TRANSACTION_DATE"/>
+        <property name="tdtPurchaseDate" column="PURCHASE_DATE"/>
+        <property name="txtAddress" column="PURCHASE_ADDRESS"/>
+        <property name="txtLocalityCode" column="LOCALITY_CODE"/>
+        <property name="txtLocalityName" column="LOCALITY_NAME"/>
+        <property name="txtProductCode" column="PRODUCT_CODE"/>
+        <property name="txtProductDesc" column="PRODUCT_DESC"/>
+        <property name="txtRatePerKg" column="RATE_PER_KG"/>
+        <property name="txtKiloGram" column="KILO_GRAMS"/>
+        <property name="txtAmount" column="NET_AMOUNT"/>
+        <property name="txtlAcreage" column="ACREAGE"/>
+        <property name="txtBags" column="BAGS"/>
+        <property name="txtTotalAmount" column="TOTAL_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DATE"/>
+    </result-map>
+        
+    <mapped-statement name="getPaddyPurchaseHead" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT PURCHASE_ACT_HEAD FROM PADDY_ITEM_OPENING WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = NULL OR
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getPaddyPurchaseTransAuth" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT PURCHASE_ID,CND_NUMBER,PURCHASE_NAME,TOTAL_AMOUNT FROM PADDY_PURCHASE_MASTER C   
+        WHERE AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR#
+        ORDER BY C.PURCHASE_ID
+    </mapped-statement>
+    <mapped-statement name="getPaddyPurchaseTransDelete" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT PURCHASE_ID,CND_NUMBER,PURCHASE_NAME,TOTAL_AMOUNT FROM PADDY_PURCHASE_MASTER C   
+        WHERE AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="getSelectPaddyPurchaseTransAuthList" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM PADDY_PURCHASE_MASTER WHERE PURCHASE_ID = #PURCHASE_ID:VARCHAR#
+    </mapped-statement>
+    <dynamic-mapped-statement name="getSelectPaddyPurchaseMasterTO" result-map="getPaddyPurchaseMasterTOResult">
+        SELECT * FROM PADDY_PURCHASE_MASTER WHERE PURCHASE_ID = #PURCHASE_ID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY PADDY_PURCHASE_SLNO
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizePaddyPurchaseTransInfo"  result-class="java.util.HashMap">
+        UPDATE PADDY_PURCHASE_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DATE = #CURR_DATE:DATE#
+        WHERE PURCHASE_ID = #PURCHASE_ID#
+    </mapped-statement>
+    <mapped-statement name="deletePaddyPurchaseTO" inline-parameters="true">
+        UPDATE PADDY_PURCHASE_MASTER SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDt:DATE#
+        WHERE STATUS != 'DELETED' AND
+        PURCHASE_ID = #purchaseId:VARCHAR#
+    </mapped-statement>
+        
+<!-- =====================================================PADDY_SALE_MASTER ============================================================= -->
+    <mapped-statement name="insertPaddySaleMasterTO" inline-parameters="true">
+        INSERT INTO PADDY_SALE_MASTER
+        (  SALE_ID,BILL_NUMBER,PADDY_SALE_SLNO,SALE_NAME,TRANSACTION_DATE,SALE_DATE,SALE_ADDRESS,PRODUCT_CODE,PRODUCT_DESC,
+        RATE_PER_KG,KILO_GRAMS,NET_AMOUNT,ACREAGE,BAGS,TOTAL_AMOUNT,STATUS,
+        STATUS_DATE,STATUS_BY
+        ) VALUES (
+        #saleId:VARCHAR#,#txtBillNo:VARCHAR#, #saleSlNo:VARCHAR#, #txtName:VARCHAR#, #tdtBillDate:DATE#,
+        #tdtSaleDate:DATE#,#txtAddress:VARCHAR#,#txtProductCode:VARCHAR#, #txtProductDesc:VARCHAR#, #txtRatePerKg:VARCHAR#,
+        #txtKiloGram:VARCHAR#,#txtAmount:VARCHAR#, #txtlAcreage:VARCHAR#, #txtBags:VARCHAR#,
+        #txtTotalAmount:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#, #statusBy:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="deletePaddySaleTO" inline-parameters="true">
+        UPDATE PADDY_SALE_MASTER SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDt:DATE#
+        WHERE STATUS != 'DELETED' AND
+        SALE_ID = #saleId:VARCHAR#
+    </mapped-statement>
+        
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to PaddyLocalityMasterTO object (JavaBean) properties -->
+    <result-map name="getPaddySaleMasterTOResult" class="com.see.truetransact.transferobject.paddyprocurement.PaddySaleMasterTO">
+        <property name="saleId" column="SALE_ID"/>
+        <property name="txtBillNo" column="BILL_NUMBER"/>
+        <property name="saleSlNo" column="PADDY_SALE_SLNO"/>
+        <property name="txtName" column="SALE_NAME"/>
+        <property name="tdtBillDate" column="TRANSACTION_DATE"/>
+        <property name="tdtSaleDate" column="SALE_DATE"/>
+        <property name="txtAddress" column="SALE_ADDRESS"/>
+        <property name="txtProductCode" column="PRODUCT_CODE"/>
+        <property name="txtProductDesc" column="PRODUCT_DESC"/>
+        <property name="txtRatePerKg" column="RATE_PER_KG"/>
+        <property name="txtKiloGram" column="KILO_GRAMS"/>
+        <property name="txtAmount" column="NET_AMOUNT"/>
+        <property name="txtlAcreage" column="ACREAGE"/>
+        <property name="txtBags" column="BAGS"/>
+        <property name="txtTotalAmount" column="TOTAL_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DATE"/>
+    </result-map>
+    <mapped-statement name="getPaddySaleHead" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT SALES_ACT_HEAD FROM PADDY_ITEM_OPENING WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = NULL OR
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+    <mapped-statement name="getPaddySaleTransAuth" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT SALE_ID,BILL_NUMBER,SALE_NAME,TOTAL_AMOUNT FROM PADDY_SALE_MASTER C   
+        WHERE AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR#
+        ORDER BY C.SALE_ID
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectPaddySaleMasterTO" result-map="getPaddySaleMasterTOResult">
+        SELECT * FROM PADDY_SALE_MASTER WHERE SALE_ID = #SALE_ID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY PADDY_SALE_SLNO
+    </dynamic-mapped-statement>
+    <mapped-statement name="getPaddySaleTransDelete" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT SALE_ID,BILL_NUMBER,SALE_NAME,TOTAL_AMOUNT FROM PADDY_SALE_MASTER C   
+        WHERE AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="authorizePaddySaleTransInfo"  result-class="java.util.HashMap">
+        UPDATE PADDY_SALE_MASTER SET
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DATE = #CURR_DATE:DATE#   
+        WHERE
+        SALE_ID = #SALE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectSaleItems" result-class="java.util.HashMap" >
+        SELECT * FROM PADDY_SALE_MASTER WHERE SALE_ID = #SALE_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+    <mapped-statement name="getSelectPurchaseItems" result-class="java.util.HashMap" >
+        SELECT * FROM PADDY_PURCHASE_MASTER WHERE PURCHASE_ID = #PURCHASE_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>   
+    <mapped-statement name="updatePaddyItemAfterSaleAuth"  result-class="java.util.HashMap">
+        UPDATE  PADDY_ITEM_OPENING SET
+        QUANTITY = QUANTITY - #QUANTITY:VARCHAR# 
+        WHERE 
+        ITEM_CODE = #ITEM_CODE#
+    </mapped-statement>
+    <mapped-statement name="updatePaddyItemAfterPurchaseAuth"  result-class="java.util.HashMap">
+        UPDATE  PADDY_ITEM_OPENING SET
+        QUANTITY = QUANTITY + #QUANTITY# 
+        WHERE 
+        ITEM_CODE = #ITEM_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getCndNumberChk" result-class="java.util.LinkedHashMap">
+        SELECT * FROM PADDY_PURCHASE_MASTER WHERE CND_NUMBER = #CND_NUMBER:VARCHAR#
+        AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+    <mapped-statement name="getBillNumberChk" result-class="java.util.LinkedHashMap">
+        SELECT * FROM PADDY_SALE_MASTER WHERE BILL_NUMBER = #BILL_NUMBER:VARCHAR#
+        AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+    <mapped-statement name="getPaddyPurchaseTransView" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT PURCHASE_ID,CND_NUMBER,PURCHASE_NAME,TOTAL_AMOUNT FROM PADDY_PURCHASE_MASTER C   
+        WHERE  STATUS != 'DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+    <mapped-statement name="getPaddySaleTransView" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT SALE_ID,BILL_NUMBER,SALE_NAME,TOTAL_AMOUNT FROM PADDY_SALE_MASTER C   
+        WHERE STATUS != 'DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+</sql-map>

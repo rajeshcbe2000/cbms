@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanRebateTOMap">
+
+    <mapped-statement name="getPenalAccountNumber" result-class="java.util.HashMap">
+        SELECT ACCT_NUM,PENAL_WAIVE_OFF,ACCT_OPEN_DT FROM LOANS_FACILITY_DETAILS 
+        WHERE  ACCT_NUM BETWEEN #FROMACT_NUM# AND #TOACT_NUM:VARCHAR# AND STATUS!='DELETED' AND REBATE_ALLOWED='Y' AND ACCT_STATUS!='CLOSED'
+    </mapped-statement>
+    <mapped-statement name="getPenalAccountNumberForProd" result-class="java.util.HashMap">
+        SELECT ACCT_NUM,PENAL_WAIVE_OFF,ACCT_OPEN_DT FROM LOANS_FACILITY_DETAILS 
+        WHERE  PROD_ID=#PROD_ID# AND STATUS!='DELETED'  AND ACCT_STATUS!='CLOSED' AND REBATE_ALLOWED='Y'
+    </mapped-statement>
+    <mapped-statement name="getPenalAmount" result-class="java.util.HashMap">
+        SELECT LF.ACCT_NUM,FNAME || 
+        ' ' || MNAME || ' '|| LNAME as "ACCT_NAME",REBATE_PERCENTAGE AS "REBATE_INTEREST",(SELECT SUM(PENAL) 
+        FROM LOAN_TRANS_DETAILS WHERE  ACT_NUM = #ACCT_NUM:VARCHAR# and TRANS_DT BETWEEN #FROMFINDT:DATE# AND #TOFINDT:DATE# ) 
+
+        AS PENAL,BORROW_NO,REBATE_DT FROM
+        ALL_CUSTOMER C,LOANS_FACILITY_DETAILS 
+        LF,
+        LOANS_PROD_SUBSIDY_REBATE LR
+        WHERE   C.ACT_NUM=#ACCT_NUM:VARCHAR#  AND         
+        C.ACT_NUM=LF.ACCT_NUM  AND LR.PROD_ID=LF.PROD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getPenalAmountDetails" result-class="java.util.HashMap">
+        SELECT ACCT_NUM, ACCT_NAME, REBATE_INTEREST, PENAL, BORROW_NO,REBATE_CALC_PERIOD,
+        ROUND(CASE
+            WHEN (REBATE_DT IS NULL AND  PENAL_DT IS NULL)
+                THEN MONTHS_BETWEEN (#TOFINDT:DATE#, ACCT_OPEN_DT)
+            WHEN REBATE_DT IS NULL
+                THEN MONTHS_BETWEEN (#TOFINDT:DATE#, PENAL_DT)
+            WHEN PENAL_DT IS NULL
+                THEN MONTHS_BETWEEN (#TOFINDT:DATE#, REBATE_DT)
+            WHEN REBATE_DT > PENAL_DT
+                THEN MONTHS_BETWEEN (#TOFINDT:DATE#, REBATE_DT)
+            ELSE 
+                MONTHS_BETWEEN (#TOFINDT:DATE#, PENAL_DT)
+       END) AS REBATE_CALC_COUNT,
+       (CASE
+            WHEN (REBATE_DT IS NULL AND  PENAL_DT IS NULL)
+                 THEN ACCT_OPEN_DT
+            WHEN REBATE_DT IS NULL
+                THEN PENAL_DT
+            WHEN PENAL_DT IS NULL
+                THEN REBATE_DT
+            WHEN REBATE_DT > PENAL_DT
+                THEN REBATE_DT
+            ELSE 
+                PENAL_DT
+        END) AS CAL_FROM_DT,REBATE_CALC
+        FROM (SELECT LF.ACCT_NUM,
+               FNAME || ' ' || MNAME || ' ' || LNAME AS ACCT_NAME,
+               REBATE_PERCENTAGE AS REBATE_INTEREST,
+               (SELECT SUM (PENAL)
+                  FROM LOAN_TRANS_DETAILS
+                 WHERE ACT_NUM = #ACCT_NUM:VARCHAR#
+                   AND TRANS_DT BETWEEN #FROMFINDT:DATE# AND #TOFINDT:DATE#) AS PENAL,
+               BORROW_NO, REBATE_DT,
+               (SELECT MAX (TRANS_DT)
+                  FROM LOAN_TRANS_DETAILS
+                 WHERE ACT_NUM = #ACCT_NUM:VARCHAR#
+                   AND TRANS_DT BETWEEN #FROMFINDT:DATE# AND #TOFINDT:DATE#
+                   AND PENAL > 0) AS PENAL_DT,
+               REBATE_CALC_PERIOD,LF.ACCT_OPEN_DT,REBATE_CALC
+          FROM ALL_CUSTOMER C,
+               LOANS_FACILITY_DETAILS LF,
+               LOANS_PROD_SUBSIDY_REBATE LR
+         WHERE C.ACT_NUM = #ACCT_NUM:VARCHAR#
+           AND C.ACT_NUM = LF.ACCT_NUM
+           AND LR.PROD_ID = LF.PROD_ID)a           
+    </mapped-statement>
+    
+    <mapped-statement name="getIntRateTLForRebate" result-class="java.util.HashMap">
+        SELECT DECODE(INT_GET_FROM 
+        ,'PROD',(SELECT DRGTR.ROI FROM DEPOSIT_ROI_GROUP DRG, 
+        DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD 
+        DRGP,
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+        DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+        
+        DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+        DRG.PRODUCT_TYPE 
+        IN( 'TL','AD') AND 
+        DRGP.PROD_ID = #PROD_ID:VARCHAR# AND DRGC.CATEGORY_ID = (SELECT CATEGORY from LOANS_BORROWER 
+        WHERE BORROW_NO=#BORROW_NO:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED') AND
+        #LIMIT:NUMBER# 
+        BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+        ((TO_CHAR(#DEPOSIT_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(ROI_DATE,'YYYY-MM-DD') 
+        AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(ROI_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(#DEPOSIT_DT:DATE#,'YYYY-MM-DD') 
+        AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD') IS NULL))),(SELECT INTEREST FROM LOANS_INT_MAINTENANCE WHERE ACCT_NUM=#ACT_NUM:VARCHAR#))AS 
+        INTEREST FROM 
+        LOANS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getPenalIntAmounts" result-class="java.util.HashMap">
+        SELECT  INT_RATE,INT_AMT,FROM_DT,TO_DATE FROM LOANS_INTEREST  WHERE ACT_NUM =  #ACT_NUM:VARCHAR#  AND 
+        ((#FROMDT:DATE# BETWEEN  FROM_DT AND TO_DATE) OR
+        (FROM_DT&lt;=#TODATE:DATE# AND TO_DATE &gt;=#TODATE:DATE#) OR (FROM_DT &gt;#FROMDT:DATE# AND TO_DATE &lt;=#TODATE:DATE#) OR (FROM_DT &lt;=#FROMDT:DATE# AND TO_DATE IS NULL))
+    </mapped-statement>
+    <mapped-statement name="getPenalInterest" result-class="java.util.HashMap">
+        SELECT REBATE_PERCENTAGE "INTEREST" FROM LOANS_PROD_SUBSIDY_REBATE WHERE PROD_ID=#PROD_ID:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="getTLPenalInterest" result-class="java.util.HashMap">
+        SELECT * FROM REP_LOAN_NOTICE_TWO WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getLastIntCalDateForRebate" result-class="java.util.HashMap">
+        SELECT   LFD.PROD_ID,LAST_INT_CALC_DT,TOTAL_BALANCE 
+        ,INSTALL_TYPE,ACCT_OPEN_DT ,LSD.LIMIT 
+        FROM  LOANS_FACILITY_DETAILS LFD,
+                 
+        LOANS_SANCTION_DETAILS LSD,
+        LOANS_REPAY_SCHEDULE LRS WHERE  
+        LFD.ACCT_NUM=#ACT_NUM:VARCHAR# 
+        AND LFD.ACCT_NUM=LRS.ACCT_NUM AND 
+        LSD.SANCTION_NO=LFD.SANCTION_NO AND 
+                
+        LSD.SL_NO=LFD.SL_NO AND 
+        LSD.BORROW_NO=LFD.BORROW_NO AND
+        LRS.STATUS !='DELETED' 
+        AND 
+        LRS.REPAY_ACTIVE ='Y'
+    </mapped-statement>
+    <mapped-statement name="getTLPaidAmount" result-class="java.util.HashMap">SELECT SUM(INTEREST) "INTEREST" FROM LOAN_TRANS_DETAILS WHERE  TRANS_TYPE='CREDIT'  AND AUTHORIZE_STATUS='AUTHORIZED' AND TRANS_DT BETWEEN #FROMDT# AND #TODATE# AND
+        ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getTLPaidAmountForVariousRates" result-class="java.util.HashMap">
+        SELECT SUM(INTEREST) "INTEREST" FROM LOAN_TRANS_DETAILS WHERE  TRANS_TYPE='CREDIT'  AND AUTHORIZE_STATUS='AUTHORIZED' AND TRANS_DT BETWEEN #FROMDATE# AND #TDATE# AND
+        ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="insertLoanRebate" inline-parameters="true">INSERT INTO LOANS_REBATE_INTEREST_DETAILS (ACCT_NUM,ACCT_NAME,REBATE_INTEREST,INTEREST_AMOUNT,STATUS,STATUS_BY,STATUS_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,REBATE_ID,BRANCH_CODE,REBATE_UPTO_DT)
+        VALUES(#accNo:VARCHAR#, #accName:VARCHAR#, #rebateInt:VARCHAR#, #intAmount:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#rebateId:VARCHAR#,#branchCode:VARCHAR#,#rebateUpto:DATE#)
+    </mapped-statement>
+    <mapped-statement name="insertLoanRebateMaster" inline-parameters="true">INSERT INTO LOAN_REBATE_MASTER_DETAILS (PROD_ID,PROD_TYPE,FROM_ACC_NO,TO_ACC_NO,STATUS,STATUS_BY,STATUS_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,REBATE_ID,BRANCH_CODE,REBATE_UPTO)
+        VALUES(#prodId:VARCHAR#, #prodType:VARCHAR#, #fromAccNo:VARCHAR#,#toAccNo:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#rebateId:VARCHAR#,#branchCode:VARCHAR#,#rebateUpto:DATE#)
+    </mapped-statement>
+	<!--
+ <mapped-statement name="getEditLoanRebateList" result-class="java.util.LinkedHashMap">
+		SELECT ACCT_NUM,REBATE_ID,BRANCH_CODE,REBATE_UPTO_DT FROM LOANS_REBATE_INTEREST_DETAILS
+                WHERE  BRANCH_CODE=#BRANCH_CODE# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS!='AUTHORIZED' AND AUTHORIZE_STATUS!='REJECTED')
+	</mapped-statement>
+	-->
+   <dynamic-mapped-statement name="getEditLoanRebateList" result-class="java.util.LinkedHashMap">
+        SELECT REBATE_ID,REBATE_UPTO,PROD_ID,FROM_ACC_NO,TO_ACC_NO,PROD_TYPE FROM LOAN_REBATE_MASTER_DETAILS
+        WHERE  BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS!='AUTHORIZED' AND AUTHORIZE_STATUS!='REJECTED')
+    <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REBATE_ID">
+                    UPPER(REBATE_ID) LIKE UPPER('%$REBATE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REBATE_UPTO">
+                    UPPER(REBATE_UPTO) LIKE UPPER('%$REBATE_UPTO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FROM_ACC_NO">
+                    UPPER(FROM_ACC_NO) LIKE UPPER('%$FROM_ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="TO_ACC_NO">
+                    UPPER(TO_ACC_NO) LIKE UPPER('%$TO_ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+   </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getEditLoanRebateListForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT REBATE_ID,REBATE_UPTO,PROD_ID,FROM_ACC_NO,TO_ACC_NO,PROD_TYPE FROM LOAN_REBATE_MASTER_DETAILS
+        WHERE  BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS_BY !=#USER_ID#  AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS!='AUTHORIZED' AND AUTHORIZE_STATUS!='REJECTED')
+       <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REBATE_ID">
+                    UPPER(REBATE_ID) LIKE UPPER('%$REBATE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REBATE_UPTO">
+                    UPPER(REBATE_UPTO) LIKE UPPER('%$REBATE_UPTO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FROM_ACC_NO">
+                    UPPER(FROM_ACC_NO) LIKE UPPER('%$FROM_ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="TO_ACC_NO">
+                    UPPER(TO_ACC_NO) LIKE UPPER('%$TO_ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+   </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getViewLoanRebateList" result-class="java.util.LinkedHashMap">
+        SELECT REBATE_ID,REBATE_UPTO,PROD_ID,FROM_ACC_NO,TO_ACC_NO,PROD_TYPE FROM LOAN_REBATE_MASTER_DETAILS
+        WHERE  BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS!='DELETED' AND
+        AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS='AUTHORIZED' AND AUTHORIZE_STATUS!='REJECTED')
+           <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REBATE_ID">
+                    UPPER(REBATE_ID) LIKE UPPER('%$REBATE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REBATE_UPTO">
+                    UPPER(REBATE_UPTO) LIKE UPPER('%$REBATE_UPTO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FROM_ACC_NO">
+                    UPPER(FROM_ACC_NO) LIKE UPPER('%$FROM_ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="TO_ACC_NO">
+                    UPPER(TO_ACC_NO) LIKE UPPER('%$TO_ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+                    <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getEditLoanRebateValues" result-class="java.util.HashMap">
+        SELECT ACCT_NUM,ACCT_NAME,REBATE_INTEREST,INTEREST_AMOUNT,REBATE_UPTO_DT FROM LOANS_REBATE_INTEREST_DETAILS WHERE REBATE_ID=#REBATE_ID# AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateLoanRebate" inline-parameters="true">
+        UPDATE LOANS_REBATE_INTEREST_DETAILS SET ACCT_NUM = #accNo:VARCHAR#,
+        ACCT_NAME = #accName:VARCHAR#,
+        REBATE_INTEREST = #rebateInt:VARCHAR#,
+        INTEREST_AMOUNT = #intAmount:VARCHAR#,		
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE REBATE_ID = #rebateId:VARCHAR#  and ACCT_NUM=#accNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateLoanRebateAsDelete" inline-parameters="true">
+        UPDATE LOANS_REBATE_INTEREST_DETAILS SET AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE REBATE_ID = #rebateId:VARCHAR#  and ACCT_NUM=#accNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteLoanRebate" inline-parameters="true">
+        UPDATE LOANS_REBATE_INTEREST_DETAILS SET AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE REBATE_ID = #rebateId:VARCHAR#  and ACCT_NUM=#accNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteLoanRebateMaster" inline-parameters="true">
+        UPDATE LOAN_REBATE_MASTER_DETAILS SET AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE REBATE_ID = #rebateId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="authorizeLoanRebate" result-class="java.util.HashMap">
+        UPDATE LOANS_REBATE_INTEREST_DETAILS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT=#AUTHORIZE_DT:DATE#
+        WHERE REBATE_ID = #REBATE_ID:VARCHAR#  AND STATUS!='DELETED' and ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="authorizeLoanRebateMaster" result-class="java.util.HashMap">
+        UPDATE LOAN_REBATE_MASTER_DETAILS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT=#AUTHORIZE_DT:DATE#
+        WHERE REBATE_ID = #REBATE_ID:VARCHAR#  AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="rejectLoanRebate" result-class="java.util.HashMap">
+        UPDATE LOANS_REBATE_INTEREST_DETAILS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT=#AUTHORIZE_DT:DATE#
+        WHERE REBATE_ID = #REBATE_ID:VARCHAR#  AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="rejectLoanRebateMaster" result-class="java.util.HashMap">
+        UPDATE LOAN_REBATE_MASTER_DETAILS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT=#AUTHORIZE_DT:DATE#
+        WHERE REBATE_ID = #REBATE_ID:VARCHAR#  AND STATUS!='DELETED'
+    </mapped-statement>
+    <result-map name="getLoanRebateTOResult" class="com.see.truetransact.transferobject.termloan.loanrebate.LoanRebateTO">
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="rebateId" column="REBATE_ID"/>
+        <property name="intAmount" column="INTEREST_AMOUNT"/>
+        <property name="rebateInt" column="REBATE_INTEREST"/>
+        <property name="accName" column="ACCT_NAME"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="accNo" column="ACCT_NUM"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="rebateUpto" column="REBATE_UPTO_DT"/>
+    </result-map>
+    <mapped-statement name="selectLoanRebateTO" result-map="getLoanRebateTOResult">
+        SELECT * FROM LOANS_REBATE_INTEREST_DETAILS WHERE ACCT_NUM=#ACCT_NUM:VARCHAR# AND STATUS!='DELETED' AND
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    <mapped-statement name="getRebateAllowedForProd" result-class="java.util.HashMap">
+        SELECT REBATE_ALLOWED,REBATE_CALCULATION,REBATE_PERIOD,FIN_YEAR_START_DD,FIN_YEAR_START_MM,REBATE_PERCENTAGE "INTEREST" FROM LOANS_PROD_SUBSIDY_REBATE WHERE PROD_ID=#PROD_ID:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getInterestAndPenalIntActHeadForRebate" result-class="java.util.HashMap">
+        SELECT DISTINCT(AC_DEBIT_INT), PENAL_INT,INT_PAYABLE_ACHD ,ACCT_HEAD,REBATE_INTEREST_ACHD,
+        LEGAL_CHARGES, 
+        EA_COST as "EA Cost", EA_EXPENSE as "EA Expense", EP_COST as "EP Cost", EP_EXPENSE as "EP Expense" ,LFD.PROD_ID FROM LOANS_PRODUCT LP,
+        LOANS_PROD_ACHD LPA,  LOANS_FACILITY_DETAILS LFD WHERE LPA.PROD_ID = LFD.PROD_ID AND LFD.PROD_ID=LP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_NUM">
+                    LFD.ACCT_NUM=#ACCT_NUM:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend="AND" property="PROD_ID">
+                    LP.PROD_ID=#PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND LP.STATUS !='DELETED' AND LP.AUTHORIZE_STATUS='AUTHORIZED'
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateLoanFacilityDetails" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET REBATE_DT=#CURR_DT:DATE# ,REBATE_AMT=#AMOUNT:NUMBER# WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getProdType" result-class="java.util.HashMap">
+        SELECT PROD_TYPE,PROD_ID FROM  ALL_PRODUCT_ACCTS WHERE ACT_NUM=#ACCT_NUM:VARCHAR# <!--AND ACCT_STATUS!='CLOSED'-->
+   </mapped-statement>
+   
+   <mapped-statement name="getClosedLoanList" result-class="java.util.HashMap">
+        SELECT * FROM LOANS_FACILITY_DETAILS LF WHERE LF.ACCT_STATUS = 'CLOSED' AND LF.ACCT_NUM =  #ACCT_NUM:VARCHAR#
+   </mapped-statement>    
+   
+   <mapped-statement name="getLoanRebateSettings" result-class="java.util.HashMap">
+        SELECT * FROM LOANS_PROD_SUBSIDY_REBATE WHERE PROD_ID = substr(#ACCT_NUM:VARCHAR#,5,3) and status!= 'DELETED'
+   </mapped-statement>  
+   
+   <mapped-statement name="updateRebateDateForPenalAccounts" result-class="java.util.HashMap">
+        INSERT INTO LOANS_FACILITY_DETAILS 
+        (
+        with penal_tab as
+        (SELECT * FROM (
+        SELECT LF.ACCT_NUM, FNAME || ' ' || MNAME || ' ' || LNAME AS "ACCT_NAME",
+               REBATE_PERCENTAGE AS "REBATE_INTEREST",
+               (SELECT SUM (PENAL)
+                  FROM LOAN_TRANS_DETAILS
+                 WHERE ACT_NUM = LF.ACCT_NUM AND TRANS_DT BETWEEN #FROMFINDT:DATE# AND #TOFINDT:DATE# ) as penal,
+                  (SELECT max(trans_dt)
+                  FROM LOAN_TRANS_DETAILS
+                 WHERE ACT_NUM = LF.ACCT_NUM AND TRANS_DT BETWEEN #FROMFINDT:DATE# AND #TOFINDT:DATE#  and PENAL>0) as penal_dt ,
+                 BORROW_NO,LF.REBATE_DT
+          FROM ALL_CUSTOMER C, LOANS_FACILITY_DETAILS LF,
+               LOANS_PROD_SUBSIDY_REBATE LR
+         WHERE  C.ACT_NUM = LF.ACCT_NUM AND LR.PROD_ID = LF.PROD_ID
+         AND LF.PROD_ID = #PROD_ID:VARCHAR# )WHERE PENAL>0)
+        SELECT PENAL_TAB.ACCT_NUM,PENAL_TAB.PENAL_DT FROM PENAL_TAB
+        )
+        ON CONFLICT(LFD.ACCT_NUM)
+        DO UPDATE SET LFD.REBATE_DT = EXCLUDED.PENAL_DT
+   </mapped-statement>
+   
+   <mapped-statement name="updateLoanFacilityWithPenalDt" result-class="java.util.HashMap">
+        MERGE INTO LOANS_FACILITY_DETAILS LFDS
+        USING       
+        (SELECT * FROM (
+        SELECT LF.ACCT_NUM,
+               (SELECT SUM (PENAL)
+                  FROM LOAN_TRANS_DETAILS
+                 WHERE ACT_NUM = LF.ACCT_NUM AND TRANS_DT BETWEEN (SELECT CASE
+                  WHEN LR.REBATE_PERIOD = 'Financial year'
+                     THEN TO_DATE
+                               (   LR.FIN_YEAR_START_DD
+                                || '-'
+                                || LR.FIN_YEAR_START_MM
+                                || '-'
+                                || (EXTRACT (YEAR FROM (SELECT CURR_APPL_DT
+                                                          FROM DAY_END
+                                                         WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#))
+                                   ),
+                                'DD-MM-YYYY'
+                               )
+                  ELSE CASE
+                  WHEN LFD.REBATE_DT IS NOT NULL
+                     THEN LFD.REBATE_DT
+                  ELSE LFD.ACCT_OPEN_DT
+               END
+               END AS FROM_DT
+          FROM LOANS_FACILITY_DETAILS LFD, LOANS_PROD_SUBSIDY_REBATE LR
+         WHERE LR.PROD_ID = LFD.PROD_ID AND LFD.ACCT_NUM = LF.ACCT_NUM AND LFD.PROD_ID = LF.PROD_ID
+         ) AND #TO_DATE:DATE#) AS PENAL,
+                  (SELECT MAX(TRANS_DT)
+                  FROM LOAN_TRANS_DETAILS
+                 WHERE ACT_NUM = LF.ACCT_NUM AND TRANS_DT BETWEEN (SELECT CASE
+                  WHEN LR.REBATE_PERIOD = 'Financial year'
+                     THEN TO_DATE
+                               (   LR.FIN_YEAR_START_DD
+                                || '-'
+                                || LR.FIN_YEAR_START_MM
+                                || '-'
+                                || (EXTRACT (YEAR FROM (SELECT CURR_APPL_DT
+                                                          FROM DAY_END
+                                                         WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#))
+                                   ),
+                                'DD-MM-YYYY'
+                               )
+                  ELSE CASE
+                  WHEN LFD.REBATE_DT IS NOT NULL
+                     THEN LFD.REBATE_DT
+                  ELSE LFD.ACCT_OPEN_DT
+               END
+               END AS FROM_DT
+          FROM LOANS_FACILITY_DETAILS LFD, LOANS_PROD_SUBSIDY_REBATE LR
+         WHERE LR.PROD_ID = LFD.PROD_ID AND LFD.ACCT_NUM = LF.ACCT_NUM AND LFD.PROD_ID = LF.PROD_ID
+         ) AND #TO_DATE:DATE# AND PENAL>0) AS PENAL_DT ,
+                 BORROW_NO,LF.REBATE_DT
+          FROM ALL_CUSTOMER C, LOANS_FACILITY_DETAILS LF,
+               LOANS_PROD_SUBSIDY_REBATE LR
+         WHERE  C.ACT_NUM = LF.ACCT_NUM AND LR.PROD_ID = LF.PROD_ID
+         AND LF.PROD_ID = (SELECT PROD_ID
+        FROM  LOAN_REBATE_MASTER_DETAILS
+        WHERE REBATE_ID = #REBATE_ID:VARCHAR#) AND LF.REBATE_ALLOWED = 'Y' AND LR.REBATE_ALLOWED = 'Y' 
+         AND LF.ACCT_STATUS !='CLOSED' AND LF.AUTHORIZE_STATUS_1 = 'AUTHORIZED' )WHERE PENAL>0 
+         AND (ACCT_NUM BETWEEN (SELECT FROM_ACC_NO  FROM  LOAN_REBATE_MASTER_DETAILS WHERE REBATE_ID = #REBATE_ID:VARCHAR#)
+         AND (SELECT TO_ACC_NO
+        FROM  LOAN_REBATE_MASTER_DETAILS
+        WHERE REBATE_ID = #REBATE_ID:VARCHAR#))
+        ) PENAL_TAB
+         ON (LFDS.ACCT_NUM = PENAL_TAB.ACCT_NUM)
+         WHEN MATCHED THEN UPDATE SET LFDS.REBATE_DT = PENAL_TAB.PENAL_DT
+    </mapped-statement>
+    <mapped-statement name="getRebateAllowedForActnum" result-class="java.util.HashMap">
+         SELECT LSR.REBATE_ALLOWED,LSR.REBATE_CALCULATION,LSR.REBATE_PERIOD,LSR.FIN_YEAR_START_DD,LSR.FIN_YEAR_START_MM,
+         LSR.REBATE_PERCENTAGE "INTEREST" , LSR.INT_RATE_REBATE,nvl(lsr.loan_int_percent,1) "LOAN_INT_PERCENT"
+         FROM LOANS_PROD_SUBSIDY_REBATE LSR, LOANS_FACILITY_DETAILS LFS WHERE  LFS.PROD_ID=LSR.PROD_ID AND LFS.ACCT_NUM=#ACCT_NUM:VARCHAR#
+         AND LFS.STATUS!='DELETED'
+    </mapped-statement>
+    
+</sql-map>

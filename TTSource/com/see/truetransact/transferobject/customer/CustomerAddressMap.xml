@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerAddressMap">
+
+
+<!-- Use CustomerAddressTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerAddressTO" inline-parameters="true">
+        INSERT INTO CUST_ADDR
+        (BRANCH_CODE, CUST_ID, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE, ADDR_TYPE, REMARKS, STATUS,VILLAGE,TALUK,POSTOFFICE,WARD_NAME
+        ) VALUES (
+        #branchCode:VARCHAR#, #custId:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, 
+        #pinCode:VARCHAR#, #countryCode:VARCHAR#, #addrType:VARCHAR#, #remarks:VARCHAR#, #status:VARCHAR#,#village:VARCHAR#,#taluk:VARCHAR#
+        ,#postOffice:VARCHAR#,#wardName:VARCHAR#)
+    </mapped-statement>
+	<!-- Use CustomerAddressTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCustomerAddressTO" inline-parameters="true">
+        UPDATE CUST_ADDR SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND ADDR_TYPE = #addrType:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+       <!-- Use CustomerAddressTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCustomerAddressTO" inline-parameters="true">
+        UPDATE CUST_ADDR SET 
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        PIN_CODE = #pinCode:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        ADDR_TYPE = #addrType:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        VILLAGE= #village:VARCHAR#,
+        TALUK=#taluk:VARCHAR#,
+        POSTOFFICE = #postOffice:VARCHAR#,
+        WARD_NAME = #wardName:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND ADDR_TYPE = #addrType:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerAddressTO object (JavaBean) properties -->
+    <result-map name="getCustomerAddressTOResult" class="com.see.truetransact.transferobject.customer.CustomerAddressTO">
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pinCode" column="PIN_CODE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="addrType" column="ADDR_TYPE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="village" column="VILLAGE"/>
+        <property name="taluk" column="TALUK"/>
+        <property name="postOffice" column="POSTOFFICE"/>
+        <property name="wardName" column="WARD_NAME"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectCustomerAddressTO" result-map="getCustomerAddressTOResult" >
+        SELECT * FROM CUST_ADDR WHERE CUST_ID=#CUST_ID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN ('DELETED')
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN ('DELETED')
+            </isPropertyAvailable>
+        </dynamic>
+        )
+    </dynamic-mapped-statement>
+    
+    
+    
+
+        
+    <mapped-statement name="getSelectOldCustomerAddressTO" result-map="getCustomerAddressTOResult" >
+        SELECT * FROM CUST_ADDR CA, CUSTOMER C WHERE CA.CUST_ID = #custId:VARCHAR# AND CA.ADDR_TYPE = #addrType:VARCHAR# AND CA.STATUS NOT IN ('DELETED') 
+        AND C.CUST_ID=CA.CUST_ID <!-- AND (C.AUTHORIZE_STATUS='AUTHORIZED' OR C.AUTHORIZE_STATUS='REJECTED') -->
+    </mapped-statement>
+        
+     <!--   <mapped-statement name="insertCustomerHistoryAddressTO" inline-parameters="true">
+	 INSERT INTO CUST_HISTORY_ADDR
+		(CUST_ID, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE, ADDR_TYPE, REMARKS, BRANCH_CODE, STATUS, STATUS_BY, STATUS_DT
+		) VALUES (
+		#custId:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #pinCode:VARCHAR#, 
+                #countryCode:VARCHAR#, #addrType:VARCHAR#, #remarks:VARCHAR#, #branchCode:VARCHAR#,  #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:VARCHAR#)
+	</mapped-statement>
+        
+        <mapped-statement name="getSelectCustomerHistoryAddressTO" result-map="getCustomerAddressTOResult" >
+         SELECT * FROM CUST_HISTORY_ADDR WHERE CUST_ID = #CUSTOMER ID# AND STATUS NOT IN ('DELETED')
+	</mapped-statement>
+        
+        <mapped-statement name="deleteCustomerHistoryAddressTO" result-class="java.util.HashMap">
+         DELETE CUST_HISTORY_ADDR WHERE CUST_ID = #CUSTOMER ID#
+	</mapped-statement> -->
+        
+    <mapped-statement name="insertCustomerHistoryMaster" inline-parameters="true">
+        INSERT INTO HISTORY_MASTER (TABLE_NAME, PRIMARY_ID, HISTORY_ID, STATUS, STATUS_BY, STATUS_DT ) VALUES (#TABLE_NAME:VARCHAR#, #PRIMARY_ID:VARCHAR#,
+        cast(#HISTORY_ID# as numeric), #STATUS:VARCHAR#, #STATUS_BY:VARCHAR#, #STATUS_DT:TIMESTAMP#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCustMasterDetails" result-class="java.util.HashMap">
+        SELECT CUST_ID,FNAME,AUTHORIZE_STATUS FROM CUSTOMER  WHERE CUST_ID = #custId:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateCustMasterDetails" result-class="java.util.HashMap">
+        UPDATE HISTORY_MASTER_DETAILS
+        SET NEW_VALUE=#SET_NEW_VALUE:VARCHAR# WHERE TABLE_NAME=#TABLE_NAME:VARCHAR# AND 
+        PRIMARY_ID=#PRIMARY_ID:VARCHAR# AND COLUMN_NAME=#COLUMN_NAME:VARCHAR# AND NEW_VALUE=#OLD_NEW_VALUE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateCustHistoryMaster" result-class="java.util.HashMap">
+        UPDATE HISTORY_MASTER
+        SET AUTHORIZED_STATUS='', AUTHORIZED_DT= null,AUTHORIZED_BY=''
+        WHERE TABLE_NAME=#TABLE_NAME:VARCHAR# AND
+        PRIMARY_ID=#PRIMARY_ID:VARCHAR#  AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="insertCustHistoryMasterDetails" inline-parameters="true">
+        INSERT INTO HISTORY_MASTER_DETAILS (TABLE_NAME, PRIMARY_ID, HISTORY_ID, COLUMN_NAME, OLD_VALUE, NEW_VALUE ) VALUES (#TABLE_NAME:VARCHAR#, #PRIMARY_ID:VARCHAR#,
+        cast(#HISTORY_ID# as numeric), #COLUMN_NAME:VARCHAR#, #OLD_VALUE:VARCHAR#, #NEW_VALUE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertCustomerProofTO" inline-parameters="true">
+        INSERT INTO CUSTOMER_PROOF
+        (CUST_ID,PROOF_TYPE,UNIQUE_ID,STATUS)
+         VALUES (
+        #custId:VARCHAR#, #proofType:VARCHAR#, #uniqueId:VARCHAR#,#status:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCustomerProofTO" result-map="getCustomerProofTOResult" >
+        SELECT * FROM CUSTOMER_PROOF WHERE CUST_ID=#CUST_ID:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <result-map name="getCustomerProofTOResult" class="com.see.truetransact.transferobject.customer.CustomerProofTo">
+        <property name="custId" column="CUST_ID"/>
+        <property name="proofType" column="PROOF_TYPE"/>
+        <property name="uniqueId" column="UNIQUE_ID"/> 
+        <property name="status" column="STATUS"/> 
+    </result-map>
+           
+    <mapped-statement name="updateCustomerProofTO" inline-parameters="true">
+        UPDATE CUSTOMER_PROOF SET 
+        UNIQUE_ID=#uniqueId:VARCHAR#,
+        STATUS=#status:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND PROOF_TYPE = #proofType:VARCHAR# 
+    </mapped-statement>
+          
+     <mapped-statement name="deleteCustomerProofTO" inline-parameters="true">
+        UPDATE CUSTOMER_PROOF SET 
+        STATUS = #status:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND PROOF_TYPE = #proofType:VARCHAR#  
+    </mapped-statement>      
+          
+</sql-map>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InwardClearingTallyTOMap">
+
+	<!-- Use InwardClearingTallyTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInwardClearingTallyTO" inline-parameters="true">
+        INSERT INTO INWARD_TALLY
+        (TALLY_ID, CLEARING_TYPE, SCHEDULE_NO, CLEARING_DT, STATUS, BRANCH_ID, STATUS_BY, STATUS_DT, TALLY_STATUS
+        ) VALUES (
+        #tallyId:VARCHAR#, #clearingType:VARCHAR#, #scheduleNo:VARCHAR#, #clearingDt:DATE#, #status:VARCHAR#, #branchId:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #tallyStatus:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InwardClearingTallyTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInwardClearingTallyTO" inline-parameters="true">
+        UPDATE INWARD_TALLY SET 
+<!--		TALLY_ID = #tallyId:VARCHAR#, -->
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+        SCHEDULE_NO = #scheduleNo:VARCHAR#,
+        CLEARING_DT = #clearingDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =  #statusBy:VARCHAR#,
+        STATUS_DT =  #statusDt:DATE#
+<!--		BRANCH_ID = #branchId:VARCHAR#-->
+        WHERE TALLY_ID = #tallyId:VARCHAR#
+        AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InwardClearingTallyTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInwardClearingTallyTO" inline-parameters="true">
+        UPDATE INWARD_TALLY SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =  #statusBy:VARCHAR#,
+        STATUS_DT =  #statusDt:DATE#
+        WHERE TALLY_ID = #tallyId:VARCHAR#
+        AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardClearingTallyTO object (JavaBean) properties -->
+    <result-map name="getInwardClearingTallyTOResult" class="com.see.truetransact.transferobject.clearing.tally.InwardClearingTallyTO">
+        <property name="tallyId" column="TALLY_ID"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="clearingDt" column="CLEARING_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="tallyStatus" column="TALLY_STATUS"/>
+        <property name="branchId" column="BRANCH_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectInwardClearingTallyTO" result-map="getInwardClearingTallyTOResult" >
+        SELECT * FROM INWARD_TALLY 
+        WHERE SCHEDULE_NO = #SCHEDULE_NO:VARCHAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="closeInwardClearingTallyTO" inline-parameters="true">
+        UPDATE INWARD_TALLY SET 
+        TALLY_STATUS = 'CLOSED' 
+        WHERE TALLY_ID = #TALLY_ID:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+<!--=====================================================================================-->
+    <mapped-statement name="checkClearingTypeExist" result-class="java.util.HashMap">
+        SELECT TALLY_ID AS "Tally ID", CLEARING_TYPE AS "Clearing Type", SCHEDULE_NO as "Schedule No",
+        CLEARING_DT as "Clearing Date" 
+        FROM INWARD_TALLY MIT WHERE (STATUS != 'DELETED') 
+                <!--AND TALLY_STATUS != 'CLOSED' -->               
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        AND CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# AND CLEARING_DT=#CLEARING_DT:DATE#   <!--add the AND CLEARING_DT=#CLEARING_DT#  -->
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectClearingDataTO" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS "INSTRUMENT", SUM(AMOUNT) AS "AMOUNT" FROM INWARD_CLEARING 
+        WHERE CLEARING_TYPE = #CLEARINGTYPE:VARCHAR# 
+        AND SCHEDULE_NO = #SCHEDULENO:VARCHAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>
+
+    <mapped-statement name="viewInwardClearingTally" result-class="java.util.HashMap">
+        SELECT TALLY_ID AS "Tally ID", CLEARING_TYPE AS "Clearing Type", SCHEDULE_NO as "Schedule No",
+        CLEARING_DT as "Clearing Date" 
+        FROM INWARD_TALLY MIT WHERE (STATUS != 'DELETED') 
+        AND TALLY_STATUS != 'CLOSED'                
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+<!--                
+                AND TALLY_ID NOT IN 
+                (SELECT IT.TALLY_ID FROM INWARD_TALLY IT, INWARD_TALLY_DETAILS ITD
+                    WHERE IT.TALLY_ID = ITD.TALLY_ID
+                    AND BRANCH_ID = #BRANCH_ID#
+                    GROUP BY IT.TALLY_ID
+                    HAVING SUM(PHY_AMOUNT) = 
+                        (SELECT SUM(IC.AMOUNT) FROM INWARD_CLEARING IC
+                        WHERE IC.CLEARING_TYPE = MIT.CLEARING_TYPE AND
+                        IC.SCHEDULE_NO = MIT.SCHEDULE_NO AND BRANCH_ID = #BRANCH_ID# AND 
+                        IC.STATUS != 'DELETED' AND IC.AUTHORIZE_STATUS = 'AUTHORIZED')
+                    AND
+                    SUM(PHY_INSTRUMENTS) = 
+                        (SELECT COUNT(*) FROM INWARD_CLEARING IC
+                        WHERE IC.CLEARING_TYPE = MIT.CLEARING_TYPE AND
+                        IC.SCHEDULE_NO = MIT.SCHEDULE_NO AND BRANCH_ID = #BRANCH_ID# AND 
+                        IC.STATUS != 'DELETED' AND IC.AUTHORIZE_STATUS = 'AUTHORIZED')
+                )
+                -->
+    </mapped-statement>
+        
+    <mapped-statement name="viewScheduleNumberInwardClearingTally" result-class="java.util.HashMap">
+        SELECT  DISTINCT SCHEDULE_NO
+        FROM  INWARD_TALLY
+        WHERE SCHEDULE_NO = #SCHEDULE_NO:VARCHAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="checkInwardTallyCount" result-class="java.lang.Integer">
+        SELECT SUM(CNT) FROM 
+        (SELECT  COUNT(*) AS CNT
+        FROM  INWARD_CLEARING IC
+        WHERE IC.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# 
+        AND IC.BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND IC.CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND IC.STATUS != 'DELETED'
+        AND (IC.AUTHORIZE_STATUS IS NULL OR 
+        IC.AUTHORIZE_STATUS = 'EXCEPTION')
+        UNION ALL 
+        SELECT COUNT(*) AS CNT FROM OUTWARD_RETURN OWR 
+        WHERE OWR.SCHEDULE_NO = #SCHEDULE_NO:VARCHAR# 
+        AND OWR.BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND OWR.CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND OWR.STATUS != 'DELETED'
+        AND (OWR.AUTHORIZE_STATUS IS NULL OR 
+        OWR.AUTHORIZE_STATUS = 'EXCEPTION'))
+    </mapped-statement>
+</sql-map>

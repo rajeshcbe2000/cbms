@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeMasterPassPortMap">
+
+<!-- Use EMPLOYEEMASTERPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmployeeMasterPassPortTO" inline-parameters="true">
+        INSERT INTO EMPLOYEEMASTER_PASSPORT
+        (sys_emp_id,PASSPORT_LNAME,PASSPORT_FNAME,PASSPORT_MNAME,TITLE,PASSPORT_NUMBER,ISSUED_DATE,VALID_UPTO,ISSUEING_AUTHORITY,ISSUED_PLACE,STATUS 
+        ) VALUES (
+        #txtEmpId:VARCHAR#,#passlname:VARCHAR#, #passfname:VARCHAR#, #passmname:VARCHAR#, #passTitle:VARCHAR#, #passNumber:VARCHAR#,#issueDt:TIMESTAMP#,#validUpto:TIMESTAMP#,#issueAuth:VARCHAR#,#issuePlace:VARCHAR#, #status:VARCHAR# )
+    </mapped-statement>
+
+	<!-- Use EMPLOYEEMASTERPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateEmployeeMasterPassPortTO" inline-parameters="true">
+        UPDATE EMPLOYEEMASTER_PASSPORT SET 
+        PASSPORT_LNAME = #passlname:VARCHAR#,
+        PASSPORT_MNAME = #passmname:VARCHAR#,
+        PASSPORT_FNAME = #passfname:VARCHAR#,
+        TITLE = #passTitle:VARCHAR#,
+        PASSPORT_NUMBER = #passNumber:VARCHAR#,
+        ISSUED_DATE = #issueDt:TIMESTAMP#,
+        VALID_UPTO = #validUpto:TIMESTAMP#,
+        ISSUEING_AUTHORITY=#issueAuth:VARCHAR#,
+        ISSUED_PLACE=#issuePlace:VARCHAR#
+        WHERE  sys_emp_id = #txtEmpId:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="deleteEmployeeMasterPassPortTO" inline-parameters="true">
+        UPDATE EMPLOYEEMASTER_PASSPORT SET 
+        STATUS = #status:VARCHAR#
+        WHERE SYS_EMP_ID  = #txtEmpId:VARCHAR# 
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EMPLOYEEMASTERPhoneTO object (JavaBean) properties -->
+    <result-map name="getEmployeePassPortTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterPassPortTO">
+        <property name="txtEmpId" column="SYS_EMP_ID"/>
+        <property name="passlname" column="PASSPORT_LNAME"/>
+        <property name="passmname" column="PASSPORT_MNAME"/>
+        <property name="passfname" column="PASSPORT_FNAME"/>
+        <property name="passTitle" column="TITLE"/>
+        <property name="passNumber" column="PASSPORT_NUMBER"/>
+        <property name="issueDt" column="ISSUED_DATE" />
+        <property name="validUpto" column="VALID_UPTO"/>
+        <property name="issueAuth" column="ISSUEING_AUTHORITY"/>
+        <property name="issuePlace" column="ISSUED_PLACE"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectEmployeeMasterPassPortTO" result-map="getEmployeePassPortTOResult" >
+        SELECT * FROM EMPLOYEEMASTER_PASSPORT WHERE SYS_EMP_ID =#SYS_EMPI:VARCHARD#  
+        AND STATUS!='DELETED'
+                
+                
+    </mapped-statement>
+    <mapped-statement name="checkForLengthEmployeePassPort" result-class="java.util.HashMap" >
+        select sys_emp_id  from EMPLOYEEMASTER_PASSPORT where sys_emp_id  = #txtEmpId:VARCHAR#
+        AND (STATUS is NUll OR STATUS NOT  IN ('DELETED'))
+    </mapped-statement>
+    <mapped-statement name="updateEmployeePassport" result-class="java.util.HashMap" >
+        UPDATE EMPLOYEEMASTER_PASSPORT SET STATUS='DELETED' WHERE sys_emp_id =#txtEmpId:VARCHAR#
+    </mapped-statement>
+</sql-map>        

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CashMovementDetailsTOMap">
+
+	<!-- Use CashMovementDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCashMovementDetailsTO" inline-parameters="true">
+        INSERT INTO CASH_MOVEMENT_DETAILS
+        (CASH_MOVEMENT_ID, DENOMINATION_NAME, DENOMINATION_COUNT, DENOMINATION_TOTAL, STATUS, DENOMINATION_TYPE,MOVEMENT_DATE,TOTAL_VALUE,BRANCH_CODE,DENOM_TYPE
+        ) VALUES (
+        #cashMovementId:VARCHAR#, #denominationName:VARCHAR#, #denominationCount:NUMERIC#, #denominationTotal:NUMERIC#, #status:VARCHAR#, #denominationType:VARCHAR#,#movementDate:DATE#,#totalValue:NUMERIC#,#branchId:VARCHAR#,#denomType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use CashMovementDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCashMovementDetailsTO" inline-parameters="true">
+        UPDATE CASH_MOVEMENT_DETAILS SET 				
+        DENOMINATION_COUNT = #denominationCount:NUMERIC#,
+        DENOMINATION_TOTAL = #denominationTotal:NUMERIC#,
+        STATUS = #status:VARCHAR#
+        WHERE CASH_MOVEMENT_ID = #cashMovementId:VARCHAR# AND DENOMINATION_NAME = #denominationName:VARCHAR# AND DENOMINATION_TYPE = #denominationType:VARCHAR# and DENOM_TYPE=#denomType:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use CashMovementDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCashMovementDetailsTO" inline-parameters="true">
+        UPDATE CASH_MOVEMENT_DETAILS SET 
+        STATUS = #status:VARCHAR#
+        WHERE CASH_MOVEMENT_ID = #cashMovementId:VARCHAR# AND DENOMINATION_TYPE = #denominationType:VARCHAR# AND DENOMINATION_NAME = #denominationName:VARCHAR# AND DENOM_TYPE=#denomType:VARCHAR#
+    </mapped-statement>       
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CashMovementDetailsTO object (JavaBean) properties -->
+    <result-map name="getCashMovementDetailsTOResult" class="com.see.truetransact.transferobject.transaction.cashmanagement.CashMovementDetailsTO">
+        <property name="cashMovementId" column="CASH_MOVEMENT_ID"/>
+        <property name="denominationName" column="DENOMINATION_NAME"/>
+        <property name="denominationCount" column="DENOMINATION_COUNT"/>
+        <property name="denominationTotal" column="DENOMINATION_TOTAL"/>
+        <property name="status" column="STATUS"/>
+        <property name="denominationType" column="DENOMINATION_TYPE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="denomType" column="DENOM_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectTransactionDetailsTO" result-map="getCashMovementDetailsTOResult" >
+        SELECT * FROM CASH_MOVEMENT_DETAILS 
+        WHERE CASH_MOVEMENT_ID = #CASH_MOVEMENT_ID:VARCHAR# AND DENOMINATION_TYPE != #DENOMINATION_TYPE:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL) 
+    </mapped-statement>
+
+    <mapped-statement name="getSelectCashBoxDetailsTO" result-map="getCashMovementDetailsTOResult" >
+        SELECT * FROM CASH_MOVEMENT_DETAILS 
+        WHERE CASH_MOVEMENT_ID = #CASH_MOVEMENT_ID:VARCHAR# AND DENOMINATION_TYPE = #DENOMINATION_TYPE:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL) 
+    </mapped-statement>
+        
+    <mapped-statement name="AuthorizeCashMovementDetails" result-class="java.util.HashMap" >
+        UPDATE CASH_MOVEMENT_DETAILS SET AUTHORIZE_STATUS=#STATUS:VARCHAR#,AUTHORIZE_BY=#USER_ID:VARCHAR#,AUTHORIZE_DT=#AUTHORIZEDT:DATE#
+        WHERE CASH_MOVEMENT_ID = #CASH_MOVEMENT_ID:VARCHAR# and STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getMaxDateFromCashMovement" result-class="java.util.HashMap" >
+        SELECT MAX(CASH_DT) MAX_DT FROM CASH_MOVEMENT CM  
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "WHERE" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getAvailableDenominations" result-map="getCashMovementDetailsTOResult" >
+        WITH TEST AS (SELECT '' AS CASH_MOVEMENT_ID, A.DENOMINATION_NAME,
+        (NVL(B.COUNT,0) - NVL(C.COUNT,0) + NVL(D.COUNT,0) - NVL(E.COUNT,0)
+        + NVL(F.COUNT,0) - NVL(G.COUNT,0)) AS DENOMINATION_COUNT, 
+        A.DENOMINATION_VALUE, '' AS STATUS, A.DENOMINATION_TYPE FROM
+        (SELECT DENOMINATION_NAME, DENOMINATION_VALUE, DENOMINATION_TYPE FROM   <!-- ****** Table A starts here ****** -->
+        FOREX_DENOMINATION_MASTER WHERE AUTHORIZE_STATUS='AUTHORIZED') A,       <!-- gets the available denominations End of Table A -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      <!-- ****** Table B starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Cash Box Receipts        -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#CURR_DATE:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('CASH BOX')
+        AND CM.TRANS_TYPE = 'R'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME) B,                                          <!-- ******    End of Table B   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      <!-- ****** Table C starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Cash Box Payments        -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#CURR_DATE:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('CASH BOX')
+        AND CM.TRANS_TYPE = 'P'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME) C,                                          <!-- ******    End of Table C   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      <!-- ****** Table D starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Receipts                 -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#CURR_DATE:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('RECEIPT')
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME) D,                                          <!-- ******    End of Table D   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      <!-- ****** Table E starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Payment Denomination     -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- only                              -->
+        AND CM.CASH_DT IN (#CURR_DATE:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE = 'PAYMENT' 
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME) E,                                          <!-- ******    End of Table E   ****** -->
+        (SELECT FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE,                  <!-- ****** Table F starts here ****** --> 
+        SUM(FDT.DENOMINATION_COUNT) AS "COUNT" FROM                             <!-- gets the Cash Receipts (CREDIT)   -->
+        FOREX_DENOMINATION_TRANS FDT, CASH_TRANS CT,                            <!-- Transactions only                 -->                           
+        FOREX_DENOMINATION_MASTER FDM
+        WHERE FDT.TRANS_ID = CT.TRANS_ID 
+        AND CT.TRANS_DT IN (#CURR_DATE:DATE#)
+        AND CT.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CT.INIT_TRANS_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CT.TRANS_TYPE = 'CREDIT' AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        FDT.DENOMINATION_TYPE = FDM.DENOMINATION_TYPE AND
+        FDT.DENOMINATION_VALUE = FDM.DENOMINATION_VALUE
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        GROUP BY FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE) F,              <!-- ******    End of Table F   ****** -->
+        (SELECT FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE,                  <!-- ****** Table G starts here ****** --> 
+        SUM(FDT.DENOMINATION_COUNT) AS "COUNT" FROM                             <!-- gets the Cash Receipts (DEBIT)    -->
+        FOREX_DENOMINATION_TRANS FDT, CASH_TRANS CT,                            <!-- Transactions only                 --> 
+        FOREX_DENOMINATION_MASTER FDM
+        WHERE FDT.TRANS_ID = CT.TRANS_ID 
+        AND CT.TRANS_DT IN (#CURR_DATE:DATE#)
+        AND CT.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CT.INIT_TRANS_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CT.TRANS_TYPE = 'DEBIT' AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        FDT.DENOMINATION_TYPE = FDM.DENOMINATION_TYPE AND
+        FDT.DENOMINATION_VALUE = FDM.DENOMINATION_VALUE
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        GROUP BY FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE) G               <!-- ******    End of Table G   ****** -->
+        WHERE A.DENOMINATION_NAME = B.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = C.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = D.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = E.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = F.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = G.DENOMINATION_NAME(+)
+        ORDER BY A.DENOMINATION_TYPE DESC, A.DENOMINATION_VALUE DESC)
+        SELECT CASH_MOVEMENT_ID, DENOMINATION_NAME,
+        DECODE(DENOMINATION_COUNT, 0, NULL, DENOMINATION_COUNT) AS DENOMINATION_COUNT, 
+        DENOMINATION_VALUE * DENOMINATION_COUNT 
+        AS DENOMINATION_TOTAL, STATUS, 'CASH BOX' AS DENOMINATION_TYPE FROM TEST
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="getClosingDenominations" result-map="getCashMovementDetailsTOResult" >
+        SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM 
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CMM 
+        WHERE CMM.CASH_MOVEMENT_ID = 
+        (SELECT MAX(CASH_MOVEMENT_ID) FROM CASH_MOVEMENT CM WHERE
+        CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR#
+        AND CM.TRANS_TYPE = 'P' 
+        AND CM.VAULT_CASH = 'Y'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR#) AND
+        CMM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID 
+        GROUP BY DENOMINATION_NAME    
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="updateCashMovementDetForTotalValue" inline-parameters="true">
+        UPDATE CASH_MOVEMENT_DETAILS SET 				
+        MOVEMENT_DATE=#movementDate:DATE#,
+        TOTAL_VALUE=#totalValue:NUMERIC#                
+        WHERE CASH_MOVEMENT_ID = #cashMovementId:VARCHAR# AND DENOMINATION_NAME = #denominationName:VARCHAR# AND DENOMINATION_TYPE = #denominationType:VARCHAR# AND DENOM_TYPE=#denomType:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+            
+</sql-map>

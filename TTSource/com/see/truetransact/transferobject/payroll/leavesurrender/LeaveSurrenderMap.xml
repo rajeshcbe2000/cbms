@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ServiceTaxSettingsMap">
+<!--
+  Author   : Chithra
+  Location : Thrissur
+  Date of Completion : 1-08-2015
+ 
+-->
+    <mapped-statement name="insertLeaveSurrenderTO" inline-parameters="true">
+        INSERT INTO LEAVE_SURRENDER_DETAILS
+        (LEAVE_SURRENDER_ID,EMP_ID,LEAVE_NO, AMOUNT,  BRANCH_ID, CREATED_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #leaveSurrenderId:VARCHAR#, #empId:VARCHAR#, #leaveNo:NUMBER#, #leaveAmt:NUMBER#, #branchId:VARCHAR#, #createdDt:DATE#,
+        #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+ 
+    <result-map name="getLeaveSurrenderTOResult" class="com.see.truetransact.transferobject.payroll.leavesurrender.LeaveSurrenderTO">
+        <property name="leaveSurrenderId" column="LEAVE_SURRENDER_ID"/>
+        <property name="empId" column="EMP_ID"/>
+        <property name="leaveNo" column="LEAVE_NO"/>
+        <property name="leaveAmt" column="AMOUNT"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DATE"/>
+    </result-map>
+    <mapped-statement name="getLeaveSurrenderTO" result-map="getLeaveSurrenderTOResult" >
+        SELECT * FROM LEAVE_SURRENDER_DETAILS 
+        WHERE LEAVE_SURRENDER_ID = #LEAVE_SURRENDER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateLeaveSurrenderTO" inline-parameters="true">
+        UPDATE LEAVE_SURRENDER_DETAILS SET 
+        EMP_ID =#empId:VARCHAR#,
+        LEAVE_NO = #leaveNo:NUMBER#,
+        AMOUNT = #leaveAmt:NUMBER#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZED_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DATE = #authorizeDt:DATE#
+        WHERE LEAVE_SURRENDER_ID = #LEAVE_SURRENDER_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteLeaveSurrenderTO" inline-parameters="true">
+        UPDATE LEAVE_SURRENDER_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE LEAVE_SURRENDER_ID = #LEAVE_SURRENDER_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getServiceTaxSettingsAuthorizeListttt" result-class="java.util.LinkedHashMap">
+        SELECT  SERVICETAX_GEN_ID, WEF_DATE, BRANCH_ID, SERVICE_TAX,EDUCATION_CESS, HIGHER_EDU_CESS FROM SERVICE_TAX_SETTINGS TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZED_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZED_STATUS IS NULL OR 
+                AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  SERVICETAX_GEN_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeLeaveSurrender" result-class="java.util.HashMap">
+        UPDATE LEAVE_SURRENDER_DETAILS  SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DATE = #TODAY_DT:DATE#
+        WHERE  LEAVE_SURRENDER_ID = #LINK_BATCH_ID:VARCHAR# AND BRANCH_ID = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizeLeaveSurrenderDet" result-class="java.util.LinkedHashMap" >
+        SELECT LD.LEAVE_SURRENDER_ID,LD.EMP_ID,(SELECT FNAME FROM CUSTOMER WHERE STAFF_ID =LD.EMP_ID) AS EMP_NAME , LD.LEAVE_NO,LD.AMOUNT
+        FROM LEAVE_SURRENDER_DETAILS LD WHERE LD.AUTHORIZED_STATUS IS NULL AND STATUS !='DELETED' AND LD.STATUS_BY !=#USER_ID:VARCHAR#
+        AND LD.BRANCH_ID =#BRANCH_CODE:VARCHAR# ORDER BY LD.LEAVE_SURRENDER_ID
+    </mapped-statement>
+    
+    <mapped-statement name="updateEndDatett" result-class="java.util.LinkedHashMap" >
+        UPDATE SERVICE_TAX_SETTINGS SET  END_DATE=#END_DATE:DATE#   WHERE 
+        WEF_DATE=(select max(STS.WEF_DATE)  from SERVICE_TAX_SETTINGS STS 
+        WHERE  (STS.STATUS != 'DELETED' AND STS.AUTHORIZED_STATUS = 'AUTHORIZED' AND STS.END_DATE IS NULL))
+    </mapped-statement>
+    
+    <mapped-statement name="getLeaveSurrenderAmount" result-class="java.util.LinkedHashMap">
+        <!--SELECT ((baisic + hra + da) - pf) / 30 AS amount
+        FROM (SELECT (SELECT pm.amount
+        FROM paymaster pm, PAYCODES_MASTER pc
+        WHERE pm.pay_code = pc.pay_code
+        AND pc.pay_module_type = 'BasicPay'
+        AND pm.employeeid = #EMP_ID:VARCHAR#
+        AND pm.srl_no =
+        (SELECT MAX (pm1.srl_no)
+        FROM paymaster pm1, PAYCODES_MASTER pc1
+        WHERE pm1.pay_code = pc1.pay_code
+        AND pc1.pay_module_type = 'BasicPay'
+        AND pm1.employeeid =  #EMP_ID:VARCHAR#)) AS baisic,
+        (SELECT pm2.amount
+        FROM paymaster pm2, PAYCODES_MASTER pc2
+        WHERE pm2.pay_code = pc2.pay_code
+        AND pc2.pay_module_type = 'DEARNESS ALLOWANCE'
+        AND pm2.employeeid = #EMP_ID:VARCHAR#
+        AND pm2.srl_no =
+        (SELECT MAX (pm3.srl_no)
+        FROM paymaster pm3, PAYCODES_MASTER pc3
+        WHERE pm3.pay_code = pc3.pay_code
+        AND pc3.pay_module_type = 'DEARNESS ALLOWANCE'
+        AND pm3.employeeid = #EMP_ID:VARCHAR#)) AS da,
+        (SELECT pm4.amount
+        FROM paymaster pm4, PAYCODES_MASTER pc4
+        WHERE pm4.pay_code = pc4.pay_code
+        AND pc4.pay_module_type = 'House Rent Allowance'
+        AND pm4.employeeid = #EMP_ID:VARCHAR#
+        AND pm4.srl_no =
+        (SELECT MAX (pm5.srl_no)
+        FROM paymaster pm5, PAYCODES_MASTER pc5
+        WHERE pm5.pay_code = pc5.pay_code
+        AND pc5.pay_module_type = 'House Rent Allowance'
+        AND pm5.employeeid = #EMP_ID:VARCHAR#)) AS hra,
+        (SELECT pm6.amount
+        FROM paymaster pm6, PAYCODES_MASTER pc6
+        WHERE pm6.pay_code = pc6.pay_code
+        AND pc6.pay_module_type = 'House Rent Allowance'
+        AND pm6.employeeid = #EMP_ID:VARCHAR#
+        AND pm6.srl_no =
+        (SELECT MAX (pm7.srl_no)
+        FROM paymaster pm7, PAYCODES_MASTER pc7
+        WHERE pm7.pay_code = pc7.pay_code
+        AND pc7.pay_module_type = 'House Rent Allowance'
+        AND pm7.employeeid = #EMP_ID:VARCHAR#)) AS pf
+        FROM DUAL) -->
+        
+        SELECT GET_LEAVE_SURRENDER_AMT(#EMP_ID:VARCHAR#) AS AMOUNT FROM DUAL
+        
+    </mapped-statement>   
+    
+    <mapped-statement name="getPaycodeHead" result-class="java.util.LinkedHashMap" >
+       SELECT ACC_HD FROM PAYCODES_MASTER PC, PAY_ACCOUNT PA WHERE PA.PAYCODE_ID = PC.PAYCODE_ID  AND PC.PAY_DESCRI = 'BASIC PAY'
+    </mapped-statement> 
+    
+</sql-map>   

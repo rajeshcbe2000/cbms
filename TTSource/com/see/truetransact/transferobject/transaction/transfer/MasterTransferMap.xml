@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MasterTransfer">
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow
+    results to be auto-mapped results to TxTransferTO object (JavaBean) properties -->
+    <mapped-statement name="getMasterTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.MasterTransferTO">
+        SELECT
+        P.BATCH_ID AS batchId,
+        P.INIT_TRANS_ID as createdBy,
+        A.INST_CR AS instCr,
+        A.AMOUNT_CR AS amountCr,
+        B.INST_DR AS instDr,
+        B.AMOUNT_DR AS amountDr,
+        P.TRANS_DT as transDt,
+        P.INITIATED_BRANCH as initBran
+        FROM
+        (
+        SELECT BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        FROM TRANSFER_TRANS
+        where (authorize_status not in ('AUTHORIZED','REJECTED','EXCEPTION') or authorize_status is null)
+        and status!='DELETED' AND 
+        (AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR AUTHORIZE_STATUS_2 IS NULL)
+        AND STATUS_BY !='TTSYSTEM'                 
+                <!--AND BRANCH_ID = #value#  -->    
+        AND INITIATED_BRANCH = #value:VARCHAR#  
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value# )   
+                <!--AND LINK_BATCH_ID IS NULL -->
+        GROUP BY BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        ) P,
+        (
+        SELECT BATCH_ID, COUNT(*) INST_CR, SUM(AMOUNT) AMOUNT_CR
+        FROM TRANSFER_TRANS
+        WHERE TRANS_TYPE = 'CREDIT' and 
+        (authorize_status not in ('AUTHORIZED','REJECTED','EXCEPTION') or authorize_status is null)
+        and status!='DELETED' AND
+        (AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR AUTHORIZE_STATUS_2 IS NULL)
+        AND STATUS_BY !='TTSYSTEM'                               
+                <!--AND LINK_BATCH_ID IS NULL -->
+                <!--AND BRANCH_ID = #value#  -->    
+        AND INITIATED_BRANCH = #value:VARCHAR#
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value# )   
+        GROUP BY BATCH_ID
+        ) A,
+        (
+        SELECT BATCH_ID, COUNT(*) INST_DR, SUM(AMOUNT) AMOUNT_DR
+        FROM TRANSFER_TRANS
+        WHERE TRANS_TYPE = 'DEBIT' and 
+        (authorize_status not in ('AUTHORIZED','REJECTED','EXCEPTION') or authorize_status is null)
+        and status!='DELETED' AND
+        (AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR AUTHORIZE_STATUS_2 IS NULL)             
+                <!--AND LINK_BATCH_ID IS NULL -->
+                <!--AND BRANCH_ID = #value#  -->    
+        AND INITIATED_BRANCH = #value:VARCHAR# 
+        AND TRANS_DT =(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#value# )       
+        GROUP BY BATCH_ID
+        ) B 
+        WHERE P.BATCH_ID = A.BATCH_ID(+) and P.BATCH_ID = B.BATCH_ID(+)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAuthorizeMasterTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.MasterTransferTO">
+        SELECT
+        P.BATCH_ID AS batchId,
+        P.INIT_TRANS_ID as createdBy,
+        A.INST_CR AS instCr,
+        A.AMOUNT_CR AS amountCr,
+        B.INST_DR AS instDr,
+        B.AMOUNT_DR AS amountDr,
+        P.TRANS_DT as transDt,
+        P.INITIATED_BRANCH as initBran
+        FROM
+        (
+        SELECT TT1.BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        FROM TRANSFER_TRANS TT1
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET1
+            </isEqual>
+        </dynamic>
+                
+        where TT1.TRANS_DT =#TRANS_DT# AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT1.STATUS_BY != #USER_ID:VARCHAR# and TT1.STATUS NOT IN ('DELETED') AND
+                <!--AND LINK_BATCH_ID IS NULL -->
+                
+        (TT1.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT1.AUTHORIZE_STATUS_2 IS NULL)
+        AND (#HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT1.STATUS_BY)OR (TT1.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT1.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET1.BATCH_ID=TT1.BATCH_ID AND 
+                ET1.EXCEPTION_DT IS NULL AND ET1.EXCEPTION_BY IS NULL 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT1.AUTHORIZE_STATUS IS NULL )
+            </isNotEqual>
+        </dynamic>
+        GROUP BY TT1.BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        ) P 
+        LEFT JOIN
+        (SELECT TT2.BATCH_ID, COUNT(*) INST_CR, SUM(AMOUNT) AMOUNT_CR
+        FROM TRANSFER_TRANS TT2
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET2
+            </isEqual>
+        </dynamic>
+        WHERE TT2.TRANS_DT =#TRANS_DT# AND TRANS_TYPE = 'CREDIT' and  TT2.STATUS NOT IN ('DELETED')  AND            
+        INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT2.STATUS_BY != #USER_ID:VARCHAR# AND
+                <!--AND LINK_BATCH_ID IS NULL -->
+        (TT2.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT2.AUTHORIZE_STATUS_2 IS NULL)
+        AND (#HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT2.STATUS_BY) OR (TT2.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT2.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET2.BATCH_ID=TT2.BATCH_ID AND 
+                ET2.EXCEPTION_DT IS NULL AND ET2.EXCEPTION_BY IS NULL
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT2.AUTHORIZE_STATUS IS NULL )
+            </isNotEqual>
+        </dynamic>
+        GROUP BY TT2.BATCH_ID
+        ) A ON P.BATCH_ID = A.BATCH_ID 
+        LEFT JOIN 
+        (SELECT TT3.BATCH_ID, COUNT(*) INST_DR, SUM(AMOUNT) AMOUNT_DR
+        FROM TRANSFER_TRANS TT3
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET3
+            </isEqual>
+        </dynamic>
+        WHERE TT3.TRANS_DT =#TRANS_DT# AND TRANS_TYPE = 'DEBIT' and TT3.STATUS NOT IN ('DELETED')  AND               
+        INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT3.STATUS_BY != #USER_ID# AND
+                <!--AND LINK_BATCH_ID IS NULL --> 
+        (TT3.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT3.AUTHORIZE_STATUS_2 IS NULL)
+        AND (#HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT3.STATUS_BY) OR (TT3.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT3.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET3.BATCH_ID=TT3.BATCH_ID AND 
+                ET3.EXCEPTION_DT IS NULL AND ET3.EXCEPTION_BY IS NULL
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT3.AUTHORIZE_STATUS IS NULL)
+            </isNotEqual>
+        </dynamic>
+        GROUP BY TT3.BATCH_ID
+        ) B ON P.BATCH_ID = B.BATCH_ID
+    </dynamic-mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow
+    results to be auto-mapped results to TxTransferTO object (JavaBean) properties -->
+    
+    <!--
+    <mapped-statement name="getMasterTransferTOForStatus" result-class="com.see.truetransact.transferobject.transaction.transfer.MasterTransferTO">
+        SELECT
+            P.BATCH_ID AS batchId,
+            A.INST_CR AS instCr,
+            A.AMOUNT_CR AS amountCr,
+            B.INST_DR AS instDr,
+            B.AMOUNT_DR AS amountDr
+        FROM
+            (
+		SELECT BATCH_ID
+		FROM TRANSFER_TRANS
+                WHERE STATUS = #value#
+		GROUP BY BATCH_ID
+            ) P,
+            (
+		SELECT BATCH_ID, COUNT(*) INST_CR, SUM(AMOUNT) AMOUNT_CR
+		FROM TRANSFER_TRANS
+		WHERE TRANS_TYPE = 'CREDIT' AND STATUS = #value#
+		GROUP BY BATCH_ID
+            ) A,
+            (
+		SELECT BATCH_ID, COUNT(*) INST_DR, SUM(AMOUNT) AMOUNT_DR
+		FROM TRANSFER_TRANS
+		WHERE TRANS_TYPE = 'DEBIT' AND STATUS = #value#
+		GROUP BY BATCH_ID
+            ) B
+
+        WHERE P.BATCH_ID = A.BATCH_ID(+)
+            AND P.BATCH_ID = B.BATCH_ID(+)
+    </mapped-statement>
+    -->
+    
+    <!-- Use MasterTransferTO object (JavaBean) properties as parameters for update.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    
+    <mapped-statement name="updateMasterTransferTO" inline-parameters="true">
+        UPDATE TRANSFER_TRANS
+        SET
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        <!--AUTHORIZE_DT= #TODAY_DT:DATE#,-->
+        AUTHORIZE_DT= (SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_REMARKS = #REMARKS:VARCHAR#,
+        SHIFT=#SHIFT#
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and 
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or 
+        AUTHORIZE_STATUS is null)
+    </mapped-statement>
+    
+    
+    <!-- Use DetailTransfer object (JavaBean) Ã¯Â¿Â½idÃ¯Â¿Â½ properties as parameters for delete.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <!--
+    <mapped-statement name="deleteMasterTransferTO" inline-parameters="true">
+        UPDATE TRANSFER_TRANS
+	SET
+            STATUS =#status:VARCHAR#,
+            STATUS_DT = TODAY_DT,
+            STATUS_BY = #statusBy:VARCHAR#
+        WHERE BATCH_ID = #batchId:VARCHAR#           
+    </mapped-statement>    
+    -->
+    
+    
+    
+    <!--
+    <mapped-statement name="Transfer.getAccountListTranID" result-class="java.util.HashMap" >
+        SELECT ACT_NUM AS ACCOUNTNO,TRANS_TYPE AS TRANSTYPE,AMOUNT FROM TRANSFER_TRANS  
+        WHERE TRANS_ID = #TRANSID#
+    </mapped-statement>
+    -->
+    <!--
+     <mapped-statement name="Transfer.getAccountListBatchID" result-class="java.util.HashMap" >
+        SELECT ACT_NUM AS ACCOUNTNO,TRANS_TYPE AS TRANSTYPE,TRANS_ID as TRANSID,AMOUNT FROM TRANSFER_TRANS  
+        WHERE BATCH_ID = #value# and status!='DELETED' and 
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is  null)
+    </mapped-statement>    
+    
+    <mapped-statement name="Transfer.getAuthorizeAccountListBatchID" result-class="java.util.HashMap" >
+        SELECT ACT_NUM AS ACCOUNTNO,TRANS_TYPE AS TRANSTYPE,TRANS_ID as TRANSID,AMOUNT,STATUS FROM TRANSFER_TRANS  
+        WHERE BATCH_ID = #value# and 
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED')  or AUTHORIZE_STATUS is  null)
+    </mapped-statement>    
+    -->
+    <!--
+    <mapped-statement name="Transfer.getAccountDetail" result-class="java.util.HashMap">
+	SELECT AVAILABLE_BALANCE AS AVLB,SHADOW_CREDIT AS SHADOWCR,SHADOW_DEBIT AS SHADOWDB
+        FROM ACT_MASTER WHERE ACT_NUM = #ACCOUNTNO#
+    </mapped-statement>   
+    -->
+    <!--
+    <mapped-statement name="Transfer.updateAccount" result-class="java.util.HashMap">
+	UPDATE ACT_MASTER SET 
+	AVAILABLE_BALANCE=#BALANCE:NUMERIC#,
+        SHADOW_CREDIT=#SHADOWCR:NUMERIC#,
+        SHADOW_DEBIT=#SHADOWDB:NUMERIC#
+	WHERE ACT_NUM = #ACCOUNTNO#
+    </mapped-statement>    
+    -->
+    <!--
+    
+    <mapped-statement name="Transfer.getActNoForBatch" result-class="java.util.HashMap">
+	SELECT ACT_NUM as ACCOUNTNO 
+        FROM TRANSFER_TRANS WHERE BATCH_ID = #BATCHID# and status!='DELETED'
+    </mapped-statement>  
+    -->
+    
+    <mapped-statement name="Transfer.getActOpeningDate" result-class="java.util.HashMap">
+        SELECT CREATE_DT as CREATEDATE FROM ACT_MASTER WHERE ACT_NUM = #value:VARCHAR# AND 
+        (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))  and authorization_status='AUTHORIZED'
+    </mapped-statement>   
+    
+    <!-- ============================Transfer Transaction======================================== -->
+    
+    <!--
+    <result-map name="getTransferAccountResultList" class="java.util.LinkedHashMap">
+	<property name="AccountNo" column="ACT_NUM"/>
+	<property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="CustomerType" column="CUST_TYPE_ID"/>
+    </result-map>
+    -->
+    <!--
+    <mapped-statement name="Transfer.getAccountList" result-map="getTransferAccountResultList">
+        SELECT
+            ACT_NUM, CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME,
+            CUST_TYPE_ID 
+        FROM ACT_MASTER, CUSTOMER
+        WHERE ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID AND 
+        PROD_ID = #PROD_ID# and (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))
+        and authorization_status='AUTHORIZED'
+    </mapped-statement> 
+    -->
+    
+    <!--
+    <dynamic-mapped-statement name="Transfer.getAccountList" result-map="getTransferAccountResultList">-->
+                <!--SELECT CUSTOMER.CUST_ID as "Customer Id", DOB, get_cust_name(CUSTOMER.CUST_ID) "Name", GENDER , CUSTOMERGROUP, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE from CUSTOMER , CUST_ADDR  WHERE ((CUSTOMER.STATUS = 'MODIFIED') or (CUSTOMER.STATUS = 'UPDATED') or (CUSTOMER.STATUS = 'CREATED')) and (CUST_ADDR.CUST_ID = CUSTOMER.CUST_ID) and (CUSTOMER.COMM_ADDR_TYPE = CUST_ADDR.ADDR_TYPE)-->
+                <!--
+               SELECT
+                ACT_NUM, CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME,
+                CUST_TYPE_ID 
+                FROM ACT_MASTER, CUSTOMER
+                WHERE (ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID)
+                AND (PROD_ID = #PROD_ID#) and 
+                (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))
+                and (authorization_status='AUTHORIZED')
+                <dynamic>
+                <iterate prepend="AND ACT_NUM NOT IN" property="ACT NUM" open = "(" close=")" conjunction="," >
+                #ACT NUM[]#
+                </iterate>
+                </dynamic>
+   </dynamic-mapped-statement>   
+    
+    
+    <mapped-statement name="Transfer.getActData" result-class="java.util.HashMap">
+	SELECT OPT_MODE_ID, ACT_CAT_ID, GROUP_CODE_ID, CREATE_DT  FROM ACT_MASTER WHERE ACT_NUM = #ACT_NUM#
+    </mapped-statement>       
+    -->
+    
+	
+    <mapped-statement name="getBackDatedTransactionAuthList" result-class="java.util.LinkedHashMap">     
+        SELECT P.BATCH_ID AS BATCH_ID, P.INIT_TRANS_ID AS CREATED_BY,
+        A.INST_CR AS INST_CR, A.AMOUNT_CR AS AMOUNT_CR, B.INST_DR AS INST_DR,
+        B.AMOUNT_DR AS AMOUNT_DR, P.TRANS_DT AS TRANS_DT,
+        P.INITIATED_BRANCH AS INIT_BRANCH
+        FROM (SELECT   TT1.BATCH_ID, INIT_TRANS_ID, TRANS_DT, INITIATED_BRANCH
+        FROM TRANSFER_TRANS TT1   WHERE INITIATED_BRANCH = #BRANCH_CODE#   AND TT1.STATUS_BY != #USER_ID#
+        AND TT1.STATUS NOT IN ('DELETED') AND AUTHORIZE_REMARKS='BACK_DATED_TRANSACTION'
+        AND (   TT1.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT' OR TT1.AUTHORIZE_STATUS_2 IS NULL)
+        AND (   #HIERARCHY_ID#::numeric &gt;=(SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED,'N'),'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND UM.USER_ID = TT1.STATUS_BY) OR (TT1.STATUS_BY = 'SITTSYSTEM'))AND (   TT1.AUTHORIZE_STATUS IS NULL
+        OR TT1.AUTHORIZE_STATUS NOT IN('AUTHORIZED', 'REJECTED', 'EXCEPTION', 'DAILY'))
+        GROUP BY TT1.BATCH_ID, INIT_TRANS_ID, TRANS_DT, INITIATED_BRANCH) P left join
+        (SELECT   TT2.BATCH_ID, COUNT (*) INST_CR, SUM (AMOUNT) AMOUNT_CR
+        FROM TRANSFER_TRANS TT2 WHERE TRANS_TYPE = 'CREDIT' AND TT2.STATUS NOT IN ('DELETED') AND AUTHORIZE_REMARKS='BACK_DATED_TRANSACTION'
+        AND INITIATED_BRANCH = #BRANCH_CODE# AND TT2.STATUS_BY != #USER_ID# AND (   TT2.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT' 
+        OR TT2.AUTHORIZE_STATUS_2 IS NULL) AND (   #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED,'N'),
+        'Y', HIERARCHY_ID,HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND UM.USER_ID = TT2.STATUS_BY) OR (TT2.STATUS_BY = 'SITTSYSTEM')) AND (   TT2.AUTHORIZE_STATUS IS NULL
+        OR TT2.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION', 'DAILY'))
+        GROUP BY TT2.BATCH_ID) A on P.BATCH_ID = A.BATCH_ID left join(SELECT   TT3.BATCH_ID, COUNT (*) INST_DR, SUM (AMOUNT) AMOUNT_DR
+        FROM TRANSFER_TRANS TT3 WHERE TRANS_TYPE = 'DEBIT' AND TT3.STATUS NOT IN ('DELETED') AND AUTHORIZE_REMARKS='BACK_DATED_TRANSACTION'
+        AND INITIATED_BRANCH = #BRANCH_CODE# AND TT3.STATUS_BY != #USER_ID# AND (   TT3.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT'
+        OR TT3.AUTHORIZE_STATUS_2 IS NULL) AND (   #HIERARCHY_ID#::numeric &gt;=(SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED,'N'),
+        'Y', HIERARCHY_ID,HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND UM.USER_ID = TT3.STATUS_BY) OR (TT3.STATUS_BY = 'SITTSYSTEM')) AND (   TT3.AUTHORIZE_STATUS IS NULL
+        OR TT3.AUTHORIZE_STATUS NOT IN('AUTHORIZED', 'REJECTED', 'EXCEPTION', 'DAILY'))
+        GROUP BY TT3.BATCH_ID) B on P.BATCH_ID = B.BATCH_ID ORDER BY 1
+    </mapped-statement>
+    
+    <dynamic-mapped-statement  name="getBackDatedTransactionEnquiryList" result-class="java.util.LinkedHashMap">     
+        SELECT P.BATCH_ID AS BATCH_ID, P.INIT_TRANS_ID AS CREATED_BY,
+        A.INST_CR AS INST_CR, A.AMOUNT_CR AS AMOUNT_CR, B.INST_DR AS INST_DR,
+        B.AMOUNT_DR AS AMOUNT_DR, P.TRANS_DT AS TRANS_DT,
+        P.INITIATED_BRANCH AS INIT_BRANCH
+        FROM (SELECT   TT1.BATCH_ID, INIT_TRANS_ID, TRANS_DT, INITIATED_BRANCH
+        FROM TRANSFER_TRANS TT1   WHERE INITIATED_BRANCH = #BRANCH_CODE# 
+        AND TT1.STATUS NOT IN ('DELETED') AND AUTHORIZE_REMARKS='BACK_DATED_TRANSACTION'
+        AND ( TT1.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT' OR TT1.AUTHORIZE_STATUS_2 IS NULL)
+        AND ( TT1.AUTHORIZE_STATUS IS NULL
+        OR TT1.AUTHORIZE_STATUS NOT IN('AUTHORIZED', 'REJECTED', 'EXCEPTION', 'DAILY'))
+        GROUP BY TT1.BATCH_ID, INIT_TRANS_ID, TRANS_DT, INITIATED_BRANCH) P ,
+        (SELECT   TT2.BATCH_ID, COUNT (*) INST_CR, SUM (AMOUNT) AMOUNT_CR
+        FROM TRANSFER_TRANS TT2 WHERE TRANS_TYPE = 'CREDIT' AND TT2.STATUS NOT IN ('DELETED') AND AUTHORIZE_REMARKS='BACK_DATED_TRANSACTION'
+        AND INITIATED_BRANCH = #BRANCH_CODE# AND (   TT2.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT' 
+        OR TT2.AUTHORIZE_STATUS_2 IS NULL) AND (   TT2.AUTHORIZE_STATUS IS NULL
+        OR TT2.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION', 'DAILY'))
+        GROUP BY TT2.BATCH_ID) A, (SELECT   TT3.BATCH_ID, COUNT (*) INST_DR, SUM (AMOUNT) AMOUNT_DR
+        FROM TRANSFER_TRANS TT3 WHERE TRANS_TYPE = 'DEBIT' AND TT3.STATUS NOT IN ('DELETED') AND AUTHORIZE_REMARKS='BACK_DATED_TRANSACTION'
+        AND INITIATED_BRANCH = #BRANCH_CODE# AND (   TT3.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT'
+        OR TT3.AUTHORIZE_STATUS_2 IS NULL) AND (   TT3.AUTHORIZE_STATUS IS NULL
+        OR TT3.AUTHORIZE_STATUS NOT IN('AUTHORIZED', 'REJECTED', 'EXCEPTION', 'DAILY'))
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="BATCH_ID">
+                    UPPER(P.BATCH_ID) LIKE UPPER('%$BATCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="TRANS_DT">
+                    UPPER(P.TRANS_DT) LIKE UPPER('%$TRANS_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="INST_DR">
+                    UPPER(B.INST_DR) LIKE UPPER('%$INST_DR$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="INIT_BRANCH">
+                    UPPER(P.INITIATED_BRANCH) LIKE UPPER('%$INIT_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY TT3.BATCH_ID) B WHERE P.BATCH_ID = A.BATCH_ID(+) AND P.BATCH_ID = B.BATCH_ID(+) ORDER BY 1 
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateGL_Abstract" result-class="java.util.LinkedHashMap">     
+        SELECT BACKDATEDtRANSACTION(#AC_HD_ID# , cast(#AMOUNT# as bigint), cast(#FROM_DT# as date), cast(#TO_DT# as date), #TRANS_TYPE#, #BRANCH_CODE#) FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="updateBackDatedDayEndBalance" result-class="java.util.LinkedHashMap">     
+        call SAVDAYEND4APERIOD(#ACT_NUM:VARCHAR#,#FROM_DT:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateBackDatedPassbookBalance" result-class="java.util.LinkedHashMap">     
+        call SAVPASSBOOK4APERIOD_new(#ACT_NUM:VARCHAR#,#FROM_DT:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="glupdate" result-class="java.util.LinkedHashMap">
+        call GLUPDATE(#DT:DATE#,#BRANCH_CODE:VARCHAR#,#AC_HD_ID:VARCHAR#)
+    </mapped-statement>
+  <mapped-statement name="updateBackDatedSADayEndBalance" result-class="java.util.LinkedHashMap">     
+        call SA_DAYEND_BALANCE_UPDATE(#ACT_NUM:VARCHAR#,#FROM_DT:DATE#)
+  </mapped-statement>
+</sql-map>

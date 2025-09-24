@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanEligibilityMap">
+
+	<!-- Use LoanProductAccountTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+           
+    <mapped-statement name="insertLoanEligibilityTO" inline-parameters="true">
+        INSERT INTO LOANS_PROD_CROP_DETAILS
+        (CROP_NAME, ELIGIBLE_PER_ACRE, FROM_DT, TO_DT, STATUS,STATUS_DT, STATUS_BY,SLNO 
+        ) VALUES (
+        #cropType:VARCHAR#, #eligibleAmt:VARCHAR#, #fromDate:DATE#, #toDate:DATE#, #status:VARCHAR#, #statusDate:DATE#, #statusBy:VARCHAR#,#slno:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateLoanEligibilityTO" inline-parameters="true">
+        UPDATE LOANS_PROD_CROP_DETAILS SET 
+
+        CROP_NAME = #cropType:VARCHAR#,
+        ELIGIBLE_PER_ACRE = #eligibleAmt:VARCHAR#,
+        FROM_DT = #fromDate:DATE#,
+        TO_DT = #toDate:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT =#statusDate:VARCHAR#
+	<!--	AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#,
+                CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#,
+                AUTHORIZE_REMARK = #authorizeRemark:VARCHAR#,
+		BASE_CURRENCY = #baseCurrency:VARCHAR# -->
+        WHERE CROP_NAME = #cropType:VARCHAR# AND SLNO=#slno:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLoanEligibilityTO" inline-parameters="true">
+<!--		DELETE FROM LOANS_PRODUCT 
+		WHERE PROD_ID = #prodId# -->
+        UPDATE LOANS_PROD_CROP_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDate:TIMESTAMP#
+        WHERE CROP_NAME = #cropType:VARCHAR# AND SLNO=#slno:VARCHAR#
+                
+    </mapped-statement>
+              
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductAccountTO object (JavaBean) properties -->
+    <result-map name="getLoanEligibilityTOResult" class="com.see.truetransact.transferobject.product.loan.loaneligibilitymaintenance.LoanEligibilityTO">
+        <property name="cropType" column="CROP_NAME"/>
+        <property name="eligibleAmt" column="ELIGIBLE_PER_ACRE"/>
+        <property name="fromDate" column="FROM_DT"/>
+        <property name="toDate" column="TO_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DT"/>
+        <property name="authStatus" column="AUTHORIZE_STATUS"/>
+        <property name="slno" column="SLNO"/>
+    </result-map>
+               
+    <mapped-statement name="getSelectLoanEligibilityTO" result-map="getLoanEligibilityTOResult" >
+        SELECT *  FROM LOANS_PROD_CROP_DETAILS 
+        WHERE CROP_NAME = #CROP_NAME:VARCHAR#   AND STATUS !='DELETED'  AND AUTHORIZE_STATUS !='REJECTED' ORDER BY SLNO
+    </mapped-statement>
+   
+    <mapped-statement name="editLoanEligibilityTO" result-class="java.util.HashMap" >
+        select distinct(LOOKUP_DESC),LOANS_PROD_CROP_DETAILS.status,CROP_NAME  from lookup_master  ,LOANS_PROD_CROP_DETAILS where lookup_id='CROP_TYPE' and LOOKUP_REF_ID=CROP_NAME 
+        AND LOANS_PROD_CROP_DETAILS.STATUS !='DELETED'  AND LOANS_PROD_CROP_DETAILS.AUTHORIZE_STATUS !='REJECTED'
+    </mapped-statement>
+       
+    <mapped-statement name="authLoanEligibilityTO" result-class="java.util.HashMap" >
+        select distinct(LOOKUP_DESC),LOANS_PROD_CROP_DETAILS.status,CROP_NAME  from lookup_master  ,LOANS_PROD_CROP_DETAILS where lookup_id='CROP_TYPE' and LOOKUP_REF_ID=CROP_NAME AND
+        LOANS_PROD_CROP_DETAILS.AUTHORIZE_STATUS IS NULL AND LOANS_PROD_CROP_DETAILS.STATUS !='DELETED'
+            
+    </mapped-statement>
+
+       
+    <mapped-statement name="authorizeLoanEligibilityTO" inline-parameters="true">
+<!--		DELETE FROM LOANS_PRODUCT 
+		WHERE PROD_ID = #prodId# -->
+        UPDATE LOANS_PROD_CROP_DETAILS SET 
+        AUTHORIZE_STATUS = #authStatus:VARCHAR#,
+        AUTHORIZE_BY = #authBy:VARCHAR#,
+        AUTHORIZE_DATE = #authDate:DATE#
+        WHERE CROP_NAME = #cropType:VARCHAR# AND SLNO=#slno:VARCHAR# and AUTHORIZE_STATUS IS NULL AND STATUS !='DELETED'
+                
+    </mapped-statement>
+        
+    <mapped-statement name="getCropAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        select distinct(LOOKUP_DESC),LOANS_PROD_CROP_DETAILS.status,CROP_NAME  from lookup_master  ,LOANS_PROD_CROP_DETAILS where lookup_id='CROP_TYPE' and LOOKUP_REF_ID=CROP_NAME 
+        and AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+
+</sql-map>
+
+

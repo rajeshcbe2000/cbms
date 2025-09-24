@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : SecurityInsuranceMap.xml
+    Created on : January 13, 2005, 4:00 PM
+    Author     : 152713
+    Description:
+        Purpose of the document follows.
+-->
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InsuranceTOMap">
+
+	<!-- Use InsuranceTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInsuranceTO" inline-parameters="true">
+        INSERT INTO CUST_INSURANCE_DETAILS
+        (CUST_ID, INSURANCE_COMPANY, POLICY_NO, POLICY_AMT, POLICY_DT, PREMIUM_AMT, EXPIRY_DT, RISK_NATURE, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, SLNO, SECURITY_NO, REMARKS, STATUS_BY, STATUS_DT, AUTHORIZE_BY, AUTHORIZE_DT, BRANCH_CODE
+        ) VALUES (
+        #custId:VARCHAR#, #insuranceCompany:VARCHAR#, #policyNo:VARCHAR#, #policyAmt:NUMERIC#, #policyDt:DATE#, #premiumAmt:NUMERIC#, #expiryDt:DATE#, #riskNature:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #status:VARCHAR#, #slno:NUMERIC#, #securityNo:NUMERIC#, #remarks:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #branchCode:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InsuranceTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInsuranceTO" inline-parameters="true">
+        UPDATE CUST_INSURANCE_DETAILS SET 
+        INSURANCE_COMPANY = #insuranceCompany:VARCHAR#,
+        POLICY_NO = #policyNo:VARCHAR#,
+        POLICY_AMT = #policyAmt:NUMERIC#,
+        POLICY_DT = #policyDt:DATE#,
+        PREMIUM_AMT = #premiumAmt:NUMERIC#,
+        EXPIRY_DT = #expiryDt:DATE#,
+        RISK_NATURE = #riskNature:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        SECURITY_NO = #securityNo:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        BRANCH_CODE = #branchCode:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use InsuranceTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInsuranceTO" inline-parameters="true">
+        UPDATE CUST_INSURANCE_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE CUST_ID = #custId:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InsuranceTO object (JavaBean) properties -->
+    <result-map name="getInsuranceTOResult" class="com.see.truetransact.transferobject.customer.security.InsuranceTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="insuranceCompany" column="INSURANCE_COMPANY"/>
+        <property name="policyNo" column="POLICY_NO"/>
+        <property name="policyAmt" column="POLICY_AMT"/>
+        <property name="policyDt" column="POLICY_DT"/>
+        <property name="premiumAmt" column="PREMIUM_AMT"/>
+        <property name="expiryDt" column="EXPIRY_DT"/>
+        <property name="riskNature" column="RISK_NATURE"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="slno" column="SLNO"/>
+        <property name="securityNo" column="SECURITY_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+    </result-map>
+    <mapped-statement name="getSelectInsuranceTO" result-map="getInsuranceTOResult" >
+        SELECT * FROM CUST_INSURANCE_DETAILS 
+        WHERE CUST_ID = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SLNO) 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectInsuranceMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SLNO) AS MAX_SL_NO FROM CUST_INSURANCE_DETAILS WHERE CUST_ID = #custId:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        <!-- Use SecurityTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSecurityTO" inline-parameters="true">
+        INSERT INTO CUST_SECURITY_DETAILS
+        (CUST_ID, SECURITY_NO, SECURITY_CATEGORY, SECURITY_VALUE, SECURITY_VALUE_ON, PARTICULARS, SECURITY_TYPE, FROM_DT, TO_DT, AVAILABLE_SECURITY_VALUE, CHARGE_NATURE, CHARGE_DT, SELECTIVE_COMMODITY, INDUSTRIAL_USERS, INSPECTION_DT, STOCK_STAT_FREQ, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_BY, AUTHORIZE_DT, BRANCH_CODE, WEIGHT, INSURANCE_NO, INITIATED_BRANCH,GROSS_WEIGHT
+        ) VALUES (
+        #custId:VARCHAR#, #securityNo:NUMERIC#, #securityCategory:VARCHAR#, #securityValue:NUMERIC#, #securityValueOn:DATE#, #particulars:VARCHAR#, #securityType:VARCHAR#, #fromDt:DATE#, #toDt:DATE#, #availableSecurityValue:NUMERIC#, #chargeNature:VARCHAR#, #chargeDt:DATE#, #selectiveCommodity:VARCHAR#, #industrialUsers:VARCHAR#, #inspectionDt:DATE#, #stockStatFreq:NUMERIC#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #branchCode:VARCHAR#, #weight:NUMERIC#, #insuranceNo:NUMERIC#, #initiatedBranch:VARCHAR#,#grossWeight:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use SecurityTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateSecurityTO" inline-parameters="true">
+        UPDATE CUST_SECURITY_DETAILS SET 
+        SECURITY_CATEGORY = #securityCategory:VARCHAR#,
+        SECURITY_VALUE = #securityValue:NUMERIC#,
+        SECURITY_VALUE_ON = #securityValueOn:DATE#,
+        PARTICULARS = #particulars:VARCHAR#,
+        SECURITY_TYPE = #securityType:VARCHAR#,
+        FROM_DT = #fromDt:DATE#,
+        TO_DT = #toDt:DATE#,
+        AVAILABLE_SECURITY_VALUE = #availableSecurityValue:NUMERIC#,
+        CHARGE_NATURE = #chargeNature:VARCHAR#,
+        CHARGE_DT = #chargeDt:DATE#,
+        SELECTIVE_COMMODITY = #selectiveCommodity:VARCHAR#,
+        INDUSTRIAL_USERS = #industrialUsers:VARCHAR#,
+        INSPECTION_DT = #inspectionDt:DATE#,
+        STOCK_STAT_FREQ = #stockStatFreq:NUMERIC#,
+        WEIGHT = #weight:NUMERIC#,
+        GROSS_WEIGHT=#grossWeight#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#,
+        INSURANCE_NO = #insuranceNo:NUMERIC#,
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#, 
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#, 
+        AUTHORIZE_DT = #authorizeDt:TIMESTAMP#
+        WHERE CUST_ID = #custId:VARCHAR# AND SECURITY_NO = #securityNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use SecurityTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteSecurityTO" inline-parameters="true">
+        UPDATE CUST_SECURITY_DETAILS SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE CUST_ID = #custId:VARCHAR# AND SECURITY_NO = #securityNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SecurityTO object (JavaBean) properties -->
+    <result-map name="getSecurityTOResult" class="com.see.truetransact.transferobject.customer.security.SecurityTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="securityNo" column="SECURITY_NO"/>
+        <property name="securityCategory" column="SECURITY_CATEGORY"/>
+        <property name="securityValue" column="SECURITY_VALUE"/>
+        <property name="securityValueOn" column="SECURITY_VALUE_ON"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="securityType" column="SECURITY_TYPE"/>
+        <property name="fromDt" column="FROM_DT"/>
+        <property name="toDt" column="TO_DT"/>
+        <property name="availableSecurityValue" column="AVAILABLE_SECURITY_VALUE"/>
+        <property name="chargeNature" column="CHARGE_NATURE"/>
+        <property name="chargeDt" column="CHARGE_DT"/>
+        <property name="selectiveCommodity" column="SELECTIVE_COMMODITY"/>
+        <property name="industrialUsers" column="INDUSTRIAL_USERS"/>
+        <property name="inspectionDt" column="INSPECTION_DT"/>
+        <property name="stockStatFreq" column="STOCK_STAT_FREQ"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="weight" column="WEIGHT"/>
+        <property name="insuranceNo" column="INSURANCE_NO"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="grossWeight" column="GROSS_WEIGHT"/>
+    </result-map>
+    <mapped-statement name="getSelectSecurityTO" result-map="getSecurityTOResult" >
+        SELECT * FROM CUST_SECURITY_DETAILS 
+        WHERE CUST_ID = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SECURITY_NO) 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSecurityMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SECURITY_NO) AS MAX_SECURITY_NO FROM CUST_SECURITY_DETAILS WHERE CUST_ID = #custId:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="popUpEditSecurityInsurance" result-class = "java.util.LinkedHashMap" >
+        SELECT DISTINCT CSD.CUST_ID AS "CUSTOMER ID", get_cust_name(cust_id) AS "CUSTOMER NAME"
+        FROM CUST_SECURITY_DETAILS CSD, CUSTOMER WHERE (CSD.STATUS = 'CREATED' OR CSD.STATUS = 'MODIFIED')
+        AND (CSD.CUST_ID = CUSTOMER.CUST_ID) AND CSD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#  ORDER BY "CUSTOMER ID"
+    </mapped-statement>
+        
+    <mapped-statement name="popUpNewSecurityInsurance" result-class = "java.util.LinkedHashMap" >
+        SELECT CUSTOMER.CUST_ID AS "CUSTOMER ID", get_cust_name(CUSTOMER.CUST_ID) AS "CUSTOMER NAME"
+        FROM CUSTOMER WHERE (CUSTOMER.STATUS = 'CREATED' OR CUSTOMER.STATUS = 'MODIFIED')
+        AND (NOT EXISTS (SELECT CUST_ID FROM CUST_SECURITY_DETAILS 
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED') AND CUST_ID = CUSTOMER.CUST_ID)) AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND  NOT EXISTS (SELECT CUST_ID FROM CUSTOMER_SUSPENDED  WHERE   STATUS='SUSPENDED'
+        AND CUSTOMER.CUST_ID=CUST_ID) AND CUSTOMER.BRANCH_CODE =#BRANCH_CODE:VARCHAR#  
+        ORDER BY "CUSTOMER ID"
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectCust_Security_Insurance_AuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT CSD.CUST_ID "Customer ID", get_cust_name(C.CUST_ID)  AS "Customer Name", 
+        CSD.SECURITY_TYPE "Security Type", CSD.AVAILABLE_SECURITY_VALUE "Available Security Value", CSD.PARTICULARS "Particulars" 
+        FROM CUST_SECURITY_DETAILS CSD, CUSTOMER C  
+        WHERE CSD.STATUS != 'DELETED' AND C.CUST_ID = CSD.CUST_ID 
+        AND CSD.STATUS_BY != #STATUS_BY:VARCHAR# 
+        AND CSD.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = CSD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CSD.AUTHORIZE_STATUS = 'EXCEPTION' 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CSD.AUTHORIZE_STATUS IS NULL OR 
+                CSD.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectLoanAvailedList" result-class="java.util.LinkedHashMap" >
+        SELECT LFD.BORROW_NO "Borrower No", LSD.ACCT_NUM "Account No", LSD.FROM_DT "From Date", 
+        LSD.TO_DT "To Date", LSD.MARGIN "Margin", LSD.ELIGIBLE_LOAN_AMT "Security Amount" 
+        FROM LOANS_SECURITY_DETAILS LSD, LOANS_FACILITY_DETAILS LFD 
+        WHERE LSD.CUST_ID = #CUST_ID:VARCHAR# 
+        AND LSD.SECURITY_NO = cast(#SECURITY_NO# as numeric)
+        AND LFD.ACCT_NUM = LSD.ACCT_NUM 
+        AND (LSD.STATUS = 'CREATED' OR LSD.STATUS = 'MODIFIED')
+        AND LFD.ACCT_STATUS!='CLOSED'
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeCust_Security"  inline-parameters="true">
+        UPDATE CUST_SECURITY_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZESTATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE CUST_ID = #CUSTOMER ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeCust_Insurance" inline-parameters="true">
+        UPDATE CUST_INSURANCE_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZESTATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE CUST_ID = #CUSTOMER ID:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

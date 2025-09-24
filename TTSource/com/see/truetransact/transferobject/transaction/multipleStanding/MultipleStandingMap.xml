@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MultipleStandingMap">
+
+	<!-- Use MultipleStandingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertMultipleStandingTO" inline-parameters="true">
+       <!-- INSERT INTO MULTIPLE_STANDING_MASTER(STANDING_ID,ACCOUNT_HEAD,TRANS_TYPE,TRANS_PROD_TYPE,TRANS_PROD_ID,TRANS_ACC_NO,TRANS_AMOUNT,
+        STATUS,STATUS_BY,STATUS_DT,AUTHORIZED_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,PARTICULARS)  
+        VALUES(#standingId:VARCHAR#,#accountHead:VARCHAR#,#transType:VARCHAR#,#transProdType:VARCHAR#,#transProdID:VARCHAR#,#transAccNo:VARCHAR#,
+        #transAmount:NUMERIC#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizedDt:DATE#,#particulars:VARCHAR#) -->
+    
+        INSERT INTO MULTIPLE_STANDING_MASTER(STANDING_ID,ACCOUNT_HEAD,TRANS_TYPE,MASTER_PROD_TYPE,MASTER_PROD_ID,MASTER_ACC_NO,
+        STATUS,STATUS_BY,STATUS_DT,AUTHORIZED_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,PARTICULARS,BRANCH_ID,SI_DESCRIPTION) 
+        VALUES(#standingId:VARCHAR#,#accountHead:VARCHAR#,#transType:VARCHAR#,#masterProdType:VARCHAR#,#masterProdId:VARCHAR#,#masterActNo:VARCHAR#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:DATE#,#particulars:VARCHAR#,#branchId:VARCHAR#,#siDescription:VARCHAR#)
+    
+    </mapped-statement>
+    
+     <mapped-statement name="insertMultipleStandingActDetailsTO" inline-parameters="true">
+       <!-- INSERT INTO MULTIPLE_STANDING_MASTER(STANDING_ID,ACCOUNT_HEAD,TRANS_TYPE,TRANS_PROD_TYPE,TRANS_PROD_ID,TRANS_ACC_NO,TRANS_AMOUNT,
+        STATUS,STATUS_BY,STATUS_DT,AUTHORIZED_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,PARTICULARS)  
+        VALUES(#standingId:VARCHAR#,#accountHead:VARCHAR#,#transType:VARCHAR#,#transProdType:VARCHAR#,#transProdID:VARCHAR#,#transAccNo:VARCHAR#,
+        #transAmount:NUMERIC#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizedDt:DATE#,#particulars:VARCHAR#) -->
+    
+        INSERT INTO MULTIPLE_STANDING_ACT_DETAILS(STANDING_ID,TRANS_TYPE,ACT_PROD_TYPE,ACT_PROD_ID,ACT_ACC_NO,ACT_LAST_TRANS_DT,IS_ACTIVE,
+        STATUS,STATUS_BY,STATUS_DT,AUTHORIZED_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,PARTICULARS,TRANS_AMOUNT) 
+        VALUES(#standingId:VARCHAR#,#transType:VARCHAR#,#actProdType:VARCHAR#,#actProdId:VARCHAR#,#actAccNo:VARCHAR#,#actLastTransDt:DATE#,    
+        #isActive:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,
+        #authorizedStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizedDt:DATE#,#particulars:VARCHAR#,#transAmount:NUMBER#)		
+    
+    </mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getStandingDetails" result-class="java.util.LinkedHashMap" >
+        <!-- SELECT DISTINCT STANDING_ID,ACCOUNT_HEAD as ACCOUNT_ID,GET_AC_HD_NAME(ACCOUNT_HEAD) as account_head,TRANS_TYPE FROM MULTIPLE_STANDING_MASTER WHERE AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND STATUS !='DELETED' -->
+        SELECT DISTINCT msm.standing_id, msm.account_head AS account_id,
+        get_ac_hd_name (account_head) AS account_head, msm.trans_type,MSM.SI_DESCRIPTION
+        FROM multiple_standing_master msm left join MULTIPLE_STANDING_ACT_DETAILS msa
+        on MSM.STANDING_ID =MSA.STANDING_ID
+        WHERE msm.authorized_status IN ('AUTHORIZED') AND msm.status NOT IN ('DELETED')
+        AND MSA.STATUS not in ('DELETED')        
+          <dynamic>
+            <!-- <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable> -->
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="STANDING_ID">
+                    UPPER(msm.STANDING_ID) LIKE UPPER('%$STANDING_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT_ID">
+                    UPPER(msm.ACCOUNT_HEAD) LIKE UPPER('%$ACCOUNT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="account_head">
+                    UPPER(GET_AC_HD_NAME(ACCOUNT_HEAD)) LIKE UPPER('%$account_head$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANS_TYPE">
+                    UPPER(msm.TRANS_TYPE) LIKE UPPER('%$TRANS_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        order by STANDING_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getStandingAccountDetails" result-class="java.util.LinkedHashMap" >
+        <!-- SELECT  TRANS_PROD_TYPE,TRANS_PROD_ID,TRANS_ACC_NO,TRANS_AMOUNT,PARTICULARS FROM MULTIPLE_STANDING_MASTER WHERE AUTHORIZED_STATUS = 'AUTHORIZED'   
+        AND STATUS !='DELETED' AND STANDING_ID = #STANDING_ID:VARCHAR# -->        
+        
+       SELECT MM.MASTER_PROD_TYPE, MM.MASTER_PROD_ID, MM.MASTER_ACC_NO, ma.trans_amount,
+       mm.particulars as MASTER_PARTICULARS,MA.ACT_PROD_TYPE,MA.ACT_PROD_ID,MA.ACT_ACC_NO,mm.trans_type,ma.particulars AS ACT_PARTICULARS
+       FROM multiple_standing_master mm,MULTIPLE_STANDING_ACT_DETAILS ma
+       WHERE ma.authorized_status = 'AUTHORIZED'
+       AND mM.authorized_status = 'AUTHORIZED'
+       AND ma.status != 'DELETED'
+       AND MA.STATUS not in ('DELETED')
+       AND MA.STANDING_ID = MM.STANDING_ID
+       AND ma.standing_id = #STANDING_ID:VARCHAR#
+       and MA.AUTHORIZED_STATUS = 'AUTHORIZED'
+       and upper(MA.IS_ACTIVE) in ('Y')
+       
+    </mapped-statement>
+    
+    <result-map name="getStandingMasterTOResult" class="com.see.truetransact.transferobject.transaction.multipleStanding.MultiStandingMasterTO">
+        <property name="standingId" column="STANDING_ID"/>
+        <property name="accountHead" column="ACCOUNT_HEAD"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="masterProdType" column="MASTER_PROD_TYPE"/>
+        <property name="masterProdId" column="MASTER_PROD_ID"/>
+        <property name="masterActNo" column="MASTER_ACC_NO"/>               
+        <property name="branchId" column="BRANCH_ID"/>   
+        <property name="siDescription" column="SI_DESCRIPTION"/> 
+        <property name="particulars" column="PARTICULARS"/>          
+    </result-map> 
+    
+    <mapped-statement name="getStandingMasterTO" result-map="getStandingMasterTOResult" >
+        <!--SELECT  STANDING_ID,ACCOUNT_HEAD,TRANS_TYPE,TRANS_PROD_TYPE,TRANS_PROD_ID,TRANS_ACC_NO,TRANS_AMOUNT,BRANCH_ID
+        FROM MULTIPLE_STANDING_MASTER WHERE AUTHORIZED_STATUS = 'AUTHORIZED'   
+        AND STATUS !='DELETED' AND STANDING_ID = #STANDING_ID:VARCHAR# -->        
+        SELECT msm.standing_id, msm.account_head, msm.trans_type, MSM.MASTER_PROD_TYPE, MSM.MASTER_PROD_ID,
+        MSM.MASTER_ACC_NO,msm.branch_id,msm.SI_DESCRIPTION,MSM.PARTICULARS
+        FROM multiple_standing_master msm
+        WHERE authorized_status IN ('AUTHORIZED')
+        AND status NOT IN ('DELETED')
+        AND standing_id = #STANDING_ID:VARCHAR#        
+    </mapped-statement>
+    
+    <result-map name="getMultipleStandingActDetailsTOResult" class="com.see.truetransact.transferobject.transaction.multipleStanding.MultipleStandingActDetailsTO">
+        <property name="standingId" column="STANDING_ID"/>        
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="actProdType" column="ACT_PROD_TYPE"/>
+        <property name="actProdId" column="ACT_PROD_ID"/>
+        <property name="actAccNo" column="ACT_ACC_NO"/>               
+        <property name="isActive" column="IS_ACTIVE"/>       
+        <property name="transAmount" column="TRANS_AMOUNT"/>    
+         <property name="particulars" column="PARTICULARS"/>    
+    </result-map> 
+    
+    <mapped-statement name="getMultipleStandingActDetailsTO" result-map="getMultipleStandingActDetailsTOResult" >
+        <!--SELECT  STANDING_ID,ACCOUNT_HEAD,TRANS_TYPE,TRANS_PROD_TYPE,TRANS_PROD_ID,TRANS_ACC_NO,TRANS_AMOUNT,BRANCH_ID
+        FROM MULTIPLE_STANDING_MASTER WHERE AUTHORIZED_STATUS = 'AUTHORIZED'   
+        AND STATUS !='DELETED' AND STANDING_ID = #STANDING_ID:VARCHAR# -->        
+        SELECT msa.standing_id, msa.trans_type, msa.ACT_PROD_TYPE, msa.ACT_PROD_ID,
+        msa.ACT_ACC_NO,MSA.IS_ACTIVE,MSA.TRANS_AMOUNT,MSA.PARTICULARS
+        FROM MULTIPLE_STANDING_ACT_DETAILS msa
+        WHERE authorized_status IN ('AUTHORIZED')
+        AND status NOT IN ('DELETED')
+        AND standing_id = #STANDING_ID:VARCHAR#  
+        order by msa.act_acc_no     
+     
+    </mapped-statement>
+    
+    <mapped-statement name="updateMultipleStandingTO" result-class="java.util.HashMap">
+       <!-- update MULTIPLE_STANDING_MASTER set TRANS_TYPE=#transType:VARCHAR#,TRANS_PROD_TYPE=#transProdType:VARCHAR#
+        ,TRANS_PROD_ID=#transProdID:VARCHAR#,TRANS_ACC_NO=#transAccNo:VARCHAR#,TRANS_AMOUNT=#transAmount:NUMERIC#
+        ,STATUS=#status:VARCHAR#,STATUS_BY=#statusBy:VARCHAR#,STATUS_DT=#statusDt:DATE#,PARTICULARS=#particulars:VARCHAR#
+        WHERE STANDING_ID = #standingId:VARCHAR# and TRANS_ACC_NO=#transAccNo:VARCHAR# -->
+        
+        update MULTIPLE_STANDING_MASTER set 
+        TRANS_TYPE=#transType:VARCHAR#,
+		MASTER_PROD_TYPE=#masterProdType:VARCHAR#,
+		MASTER_PROD_ID=#masterProdId:VARCHAR#,
+		MASTER_ACC_NO=#masterActNo:VARCHAR#,
+		PARTICULARS=#particulars:VARCHAR#
+        WHERE STANDING_ID = #standingId:VARCHAR# and MASTER_ACC_NO=#masterActNo:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateMultipleStandingActDetailsTO" result-class="java.util.HashMap">
+        UPDATE MULTIPLE_STANDING_ACT_DETAILS SET 
+        TRANS_TYPE=#transType:VARCHAR#,
+        ACT_PROD_TYPE = #actProdType:VARCHAR#,
+        ACT_PROD_ID = #actProdId:VARCHAR#,
+        IS_ACTIVE = #isActive:VARCHAR#,
+        TRANS_AMOUNT=#transAmount:NUMERIC#,
+        PARTICULARS=#particulars:VARCHAR#
+        WHERE STANDING_ID = #standingId:VARCHAR# and 
+        ACT_ACC_NO = #actAccNo:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="deleteMultipleStandingTO" result-class="java.util.HashMap">
+       <!-- DELETE FROM  MULTIPLE_STANDING_MASTER 
+        WHERE TRANS_ACC_NO=#transAccNo:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="standingId">
+                    STANDING_ID=#standingId:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   -->
+        UPDATE MULTIPLE_STANDING_ACT_DETAILS MA 
+        SET MA.STATUS = 'DELETED'
+        WHERE MA.ACT_ACC_NO = #actAccNo:VARCHAR# 
+        AND MA.STANDING_ID = #standingId:VARCHAR#
+    </dynamic-mapped-statement>  
+   
+</sql-map>

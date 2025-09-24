@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BorrowingsMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <dynamic-mapped-statement name="PurchaseEntry.getSelectPurchaseEntryList" result-class="java.util.LinkedHashMap" >
+        SELECT PURCHASE_ENTRY_ID, PURCHASE_AMT ,PURCHASE_COMM_AMT,PURCHASE_TYPE FROM PURCHASE_ENTRY  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL ) AND AUTHORIZE_STATUS IS NULL
+          <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_ENTRY_ID">
+                    UPPER(PURCHASE_ENTRY_ID) LIKE UPPER('%$PURCHASE_ENTRY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_AMT">
+                    UPPER(PURCHASE_AMT) LIKE UPPER('%$PURCHASE_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_COMM_AMT">
+                    UPPER(PURCHASE_COMM_AMT) LIKE UPPER('%$PURCHASE_COMM_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_TYPE">
+                    UPPER(PURCHASE_TYPE) LIKE UPPER('%$PURCHASE_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="PurchaseEntry.getSelectTradeExpenseList" result-class="java.util.LinkedHashMap" >
+       SELECT TRADEEXEPENSE_ID,AMOUNT,TRANS_DT,NARRATION FROM tradeexpense_entry  
+       WHERE STATUS != 'DELETED'  AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="TRADEEXEPENSE_ID">
+                    UPPER(TRADEEXEPENSE_ID) LIKE UPPER('%$TRADEEXEPENSE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AMOUNT">
+                    UPPER(AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="TRANS_DT">
+                    UPPER(TRANS_DT) LIKE UPPER('%$TRANS_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NARRATION">
+                    UPPER(NARRATION) LIKE UPPER('%$NARRATION$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="getSupplierDescoff" result-class="java.util.LinkedHashMap" >
+        select  supplier_name from SUPPLIER_TABLE where supplier_id= #SUPPLIER_ID:VARCHAR#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getTradeexpenseTableData" result-class="java.util.HashMap" >
+        select EFFECT_DT ,FROM_WEIGHT,TO_WEIGHT,AMOUNT from TRADE_EXPENSE where EFFECT_DT =( select max(EFFECT_DT) from TRADE_EXPENSE)
+        AND STATUS != 'DELETED' order by FROM_WEIGHT 
+
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="getTradeIdData" result-class="java.util.HashMap" >
+       select SINGLE_TRANS_ID from CASH_TRANS where  GL_TRANS_ACT_NUM=#TRADE_ID:VARCHAR#
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="getBankNamefrSupply" result-class="java.util.LinkedHashMap" >
+    	select OAP.PROD_DESC from transfer_trans tt  
+		join purchase_entry pe on PE.PURCHASE_ENTRY_ID = TT.LINK_BATCH_ID
+		join OTHER_BANK_ACCOUNT_PRODUCTS oap on OAP.PRINCIPAL_AC_HD = TT.AC_HD_ID
+		where PE.PURCHASE_ENTRY_ID =#PURCHASE_ENTRY_ID:VARCHAR#  
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="insertPurchaseEntryTO" inline-parameters="true">
+       INSERT INTO PURCHASE_ENTRY 
+	(PURCHASE_ENTRY_ID, PURCHASE_AMT, PURCHASE_COMM_AMT, PURCHASE_RET_AMT,SUNDRY_AMT,INVEST_AMT,AUTHORIZE_STATUS, AUTHORIZED_BY,  
+         AUTHORIZED_DT, STATUS,CASH_AMT ,STATUS_BY,TRANS_TYPE,SUPPLIER_ID,TRANSACTION_MODE,CHEQUE_NO,NARRATION,BANK_NAME,ACCOUNT_NUM,PURCHASE_TYPE
+        ) VALUES 
+        (#purId:VARCHAR#, #purAmount:NUMBER#, #purComm:NUMBER#, #purchaseRet:NUMBER#, 
+        #sundry:NUMBER#, #investAcHead:NUMBER#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#cashAmount:NUMBER#,#status_By:VARCHAR#,#transType:VARCHAR#,
+        #supplier:VARCHAR#,#transMode:VARCHAR#,#chequeNo:VARCHAR#,#narration:VARCHAR#,#prodId:VARCHAR#,#actnum:VARCHAR#,#purchaseType:VARCHAR#)
+    </mapped-statement> 
+    <mapped-statement name="insertTradeExpenseTO" inline-parameters="true">
+        INSERT INTO  TRADE_EXPENSE 
+        ( EFFECT_DT,AMOUNT,FROM_WEIGHT,TO_WEIGHT,AUTHORIZE_STATUS,AUTHORIZED_BY,STATUS,STATUS_BY
+        ) VALUES 
+        (#fromDate:DATE#, #amount:NUMBER#, #fromWeight:NUMBER#, #toWeight:NUMBER#, 
+        #authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#status:VARCHAR#,#status_By:VARCHAR#
+        )
+        
+    </mapped-statement> 
+    <mapped-statement name="insertTradeExpenseentryTO" inline-parameters="true">
+       INSERT INTO TradeExpense_entry 
+       (TRADEEXEPENSE_ID,TRANS_DT,AMOUNT,AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,
+       STATUS, STATUS_BY,STATUS_DT,NARRATION
+       ) VALUES 
+       (#tradeId:VARCHAR#,#fromDate:DATE#, #grandTot:NUMBER#,#authorizeStatus:VARCHAR#,
+       #authorizeBy:VARCHAR#,#fromDate:DATE#,#status:VARCHAR#,#status_By:VARCHAR#,#statusDt:DATE#,#tradeNarration:VARCHAR#
+       )
+        
+    </mapped-statement> 
+    
+
+    <mapped-statement name="updatePurchaseEntryTO" inline-parameters="true">
+		UPDATE PURCHASE_ENTRY SET 
+		PURCHASE_AMT = #purAmount:NUMBER#,
+		PURCHASE_COMM_AMT = #purComm:NUMBER#,
+		PURCHASE_RET_AMT= #purchaseRet:NUMBER#,
+		SUNDRY_AMT= #sundry:NUMBER#,
+		INVEST_AMT = #investAcHead:NUMBER#,
+        CASH_AMT= #cashAmount:NUMBER#,
+        TRANS_TYPE=#transType:VARCHAR#,
+        SUPPLIER_ID=#supplier:VARCHAR#,
+        TRANSACTION_MODE=#transMode:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#status_By:VARCHAR#,
+        CHEQUE_NO=#chequeNo:VARCHAR#,
+        NARRATION=#narration:VARCHAR#,
+        BANK_NAME=#prodId:VARCHAR#,
+        ACCOUNT_NUM=#actnum:VARCHAR#,
+        PURCHASE_ENTRY=#purchaseType:VARCHAR#
+        WHERE PURCHASE_ENTRY_ID = #purId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deletePurchaseEntryTO" inline-parameters="true">
+        UPDATE PURCHASE_ENTRY SET 
+        STATUS = #status:VARCHAR# ,STATUS_BY =#status_By:VARCHAR#
+        WHERE  PURCHASE_ENTRY_ID = #purId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getPurchaseEntryAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  PURCHASE_ENTRY_ID, ST.SUPPLIER_NAME, PURCHASE_AMT ,PURCHASE_COMM_AMT FROM PURCHASE_ENTRY TC ,supplier_table st
+        WHERE STATUS_BY!=#USER_ID:VARCHAR#  AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+         <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        and ST.SUPPLIER_ID = TC.SUPPLIER_ID
+        ORDER BY  PURCHASE_ENTRY_ID
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getTradeExpenseAuthorizeList" result-class="java.util.LinkedHashMap">
+       SELECT   FROM_WEIGHT,  TO_WEIGHT  , AMOUNT,EFFECT_DT FROM TRADE_EXPENSE tc
+       WHERE STATUS_BY!=#USER_ID:VARCHAR# AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY EFFECT_DT
+    </dynamic-mapped-statement>
+    
+     <dynamic-mapped-statement name="getTradeExpenseEntryAuthorizeList" result-class="java.util.LinkedHashMap">
+       SELECT   AMOUNT,TRANS_DT,TRADEEXEPENSE_ID FROM TRADEEXPENSE_ENTRY tc
+       WHERE STATUS_BY!=#USER_ID:VARCHAR# AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  TRADEEXEPENSE_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizePurchaseEntry" result-class="java.util.HashMap">
+        UPDATE PURCHASE_ENTRY  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  PURCHASE_ENTRY_ID = #PURCHASE_ENTRY_ID:VARCHAR#
+    </mapped-statement>
+     <mapped-statement name="authorizeTradeEntry" result-class="java.util.HashMap">
+       UPDATE tradeexpense_entry  SET 
+       AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+       AUTHORIZED_BY = #USER_ID:VARCHAR#,
+       AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+       WHERE  TRADEEXEPENSE_ID = #TRADEEXEPENSE_ID:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getPurchaseEntryTOResult" class="com.see.truetransact.transferobject.purchaseentry.PurchaseEntryTO">
+        <property name="purId" column="PURCHASE_ENTRY_ID"/>
+        <property name="purAmount" column="PURCHASE_AMT"/>
+        <property name="purComm" column="PURCHASE_COMM_AMT"/>
+        <property name="purchaseRet" column="PURCHASE_RET_AMT"/>
+        <property name="sundry" column="SUNDRY_AMT"/>
+        <property name="investAcHead" column="INVEST_AMT"/>
+        <property name="cashAmount" column="CASH_AMT"/> 
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="supplier" column="SUPPLIER_ID"/>
+        <property name="trans_mode" column="TRANS_MODE"/>
+        <property name="transMode" column="TRANSACTION_MODE"/>
+        <property name="chequeNo" column="CHEQUE_NO"/>
+        <property name="narration" column="NARRATION"/>
+        <property name="prodId" column="BANK_NAME"/>
+        <property name="actnum" column="ACCOUNT_NUM"/>
+        <property name="purchaseType" column="PURCHASE_TYPE"/>
+    </result-map>
+
+    <result-map name="getTradeExpenseTOResult" class="com.see.truetransact.transferobject.purchaseentry.PurchaseEntryTO"> 
+        <property name="toWeight" column="TO_WEIGHT"/>
+        <property name="totAmount" column="AMOUNT"/>
+        <property name="fromWeight" column="FROM_WEIGHT "/>
+        <property name="effectFromDate" column="EFFECT_DT"/>
+        <property name="tradeNarration" column="NARRATION"/>
+    </result-map>
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="PurchaseEntry.getSelectPurchaseEntry" result-map="getPurchaseEntryTOResult" >
+       	select p.*,S.SUPPLIER_NAME  from PURCHASE_ENTRY p join  SUPPLIER_TABLE s on P.SUPPLIER_ID=S.SUPPLIER_ID where P.PURCHASE_ENTRY_ID= #PURCHASE_ENTRY_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="PurchaseEntry.getSelectTradeExpense" result-class="java.util.HashMap">
+      select p.*  from tradeexpense_entry p  where P.TRADEEXEPENSE_ID= #TRADEEXEPENSE_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="PurchaseEntry.getAcHeads" result-class="java.util.HashMap">
+        SELECT PURCHASE_AC_HEAD , PURCHASE_COMMISSION_AC_HEAD,SUNDRY_CREDITORS_AC_HEAD,
+        INVEST_AC_HEAD,PURCHASE_RETURN_AC_HEAD,TRADE_EXPENSE_ACHD FROM RECOVERY_PARAMETERS 
+		
+    </mapped-statement> 
+    <dynamic-mapped-statement name="PurchaseEntry.getSelectSupplierList" result-class="java.util.HashMap">
+        select SUPPLIER_ID,SUPPLIER_NAME,SUP_ACT_NUM,SUNDRY_ACT_NUM from SUPPLIER_TABLE  
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUPPLIER_ID">
+                    UPPER(SUPPLIER_ID) LIKE UPPER('%$SUPPLIER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUPPLIER_NAME">
+                    UPPER(SUPPLIER_NAME) LIKE UPPER('%$SUPPLIER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUP_ACT_NUM">
+                    UPPER(SUP_ACT_NUM) LIKE UPPER('%$SUP_ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUNDRY_ACT_NUM">
+                    UPPER(SUNDRY_ACT_NUM) LIKE UPPER('%$SUNDRY_ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getCashSundryBalance" result-class="java.util.HashMap">
+       
+        SELECT   nvl(SUM(DECODE(a.trans_type,'CREDIT',NVL(A.AMOUNT,0)))-NVL (SUM(DECODE(a.trans_type,'DEBIT',NVL(A.AMOUNT,0))),0),0)
+        AS AMOUNT  FROM ALL_TRANS  A  WHERE (A.authorize_status = 'AUTHORIZED'
+        OR A.authorize_status NOT IN ('REJECTED')
+        )AND A.act_num = #SUNDRY_ACT_NUM:VARCHAR# 
+        
+    </mapped-statement>  
+    
+    <dynamic-mapped-statement name="PurchaseEntry.getSelectPurchaseEntryReprintList" result-class="java.util.LinkedHashMap" >
+        SELECT PURCHASE_ENTRY_ID, PURCHASE_AMT ,PURCHASE_COMM_AMT,PURCHASE_TYPE FROM PURCHASE_ENTRY  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL ) AND AUTHORIZE_STATUS != 'REJECTED' AND AUTHORIZED_DT = #FROM_DATE:DATE#
+    <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_ENTRY_ID">
+                    UPPER(PURCHASE_ENTRY_ID) LIKE UPPER('%$PURCHASE_ENTRY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_AMT">
+                    UPPER(PURCHASE_AMT) LIKE UPPER('%$PURCHASE_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_COMM_AMT">
+                    UPPER(PURCHASE_COMM_AMT) LIKE UPPER('%$PURCHASE_COMM_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_TYPE">
+                    UPPER(PURCHASE_TYPE) LIKE UPPER('%$PURCHASE_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>    
+    
+</sql-map>

@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InterestSubsidyAdjustmentTOMap">
+
+	<!-- Use InterestSubsidyAdjustmentTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInterestSubsidyAdjustmentTO" inline-parameters="true">
+        INSERT INTO SUBSIDY_INT_ADJUSTED
+        (ADJUSTMENT_NO, INT_TYPE, AGENCY_NAME, SUBSIDY_REF_NO, SUBSIDY_DATE, SUBSIDY_AMOUNT_RECEIVED, 
+        SUBSIDY_RECEIVED_PER, PROD_TYPE, PROD_ID, FROM_ACC_NO, TO_ACC_NO, SUBSIDY_TYPE, FROM_DT, TO_DT, FROM_RELEASE_NO, 
+        TO_RELEASE_NO, OTS_SANCTION_NO, OTS_SANCTION_DT, OTS_SANCTION_BY, OTS_AMOUNT, REMARKS, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #adjustmentNo:VARCHAR#, #intType:VARCHAR#, #agencyName:VARCHAR#, #subsidyRefNo:VARCHAR#, #subsidyDate:DATE#, 
+        #subsidyAmountReceived:VARCHAR#, #subsidyReceivedPer:VARCHAR#, #prodType:VARCHAR#, #prodId:VARCHAR#, #fromAccNo:VARCHAR#, 
+        #toAccNo:VARCHAR#, #subsidyType:VARCHAR#, #fromDt:DATE#, #toDt:DATE#, #fromReleaseNo:VARCHAR#, #toReleaseNo:VARCHAR#, 
+        #otsSanctionNo:VARCHAR#, #otsSanctionDt:DATE#, #otsSanctionBy:VARCHAR#, #otsAmount:VARCHAR#, #remarks:VARCHAR#, 
+        #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getSubsidyTransAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT ADJUSTMENT_NO,DECODE(INT_TYPE,'S','Subsidy Reimbursement','R','Recovery From Customer','W','Write Off','O','OTS') AS INT_TYPE,
+        PROD_TYPE,STATUS FROM SUBSIDY_INT_ADJUSTED WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL 
+      <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ADJUSTMENT_NO">
+                    UPPER(ADJUSTMENT_NO) LIKE UPPER('%$ADJUSTMENT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INT_TYPE">
+                    UPPER(DECODE(INT_TYPE,'S','Subsidy Reimbursement','R','Recovery From Customer','W','Write Off','O','OTS')) LIKE UPPER('%$INT_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY ADJUSTMENT_NO
+   </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSubsidyTransEditEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT ADJUSTMENT_NO,DECODE(INT_TYPE,'S','Subsidy Reimbursement','R','Recovery From Customer','W','Write Off','O','OTS') AS INT_TYPE,
+        PROD_TYPE,STATUS FROM SUBSIDY_INT_ADJUSTED WHERE STATUS!='DELETED' AND 
+        (AUTHORIZED_STATUS IS NULL  OR AUTHORIZED_STATUS = 'AUTHORIZED') 
+         <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ADJUSTMENT_NO">
+                    UPPER(ADJUSTMENT_NO) LIKE UPPER('%$ADJUSTMENT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INT_TYPE">
+                    UPPER(DECODE(INT_TYPE,'S','Subsidy Reimbursement','R','Recovery From Customer','W','Write Off','O','OTS')) LIKE UPPER('%$INT_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY ADJUSTMENT_NO
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSubsidyTransDelete" result-class="java.util.LinkedHashMap">
+        SELECT ADJUSTMENT_NO,DECODE(INT_TYPE,'S','Subsidy Reimbursement','R','Recovery From Customer','W','Write Off','O','OTS') AS INT_TYPE,
+        PROD_TYPE,STATUS FROM SUBSIDY_INT_ADJUSTED WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL 
+          <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ADJUSTMENT_NO">
+                    UPPER(ADJUSTMENT_NO) LIKE UPPER('%$ADJUSTMENT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INT_TYPE">
+                    UPPER(DECODE(INT_TYPE,'S','Subsidy Reimbursement','R','Recovery From Customer','W','Write Off','O','OTS')) LIKE UPPER('%$INT_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY ADJUSTMENT_NO
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFinYearWiseOutstandingFromActNumAD" result-class="java.util.LinkedHashMap">
+        SELECT A.START_FIN_YEAR||'-'||A.END_FIN_YEAR AS FIN_YEAR, SUM(AMOUNT) AS TOT_OUTSTANDING, 0 AS OVER_DUE FROM 
+        (SELECT NSD.NCL_SANCTION_NO, NSL.START_FIN_YEAR, NSL.END_FIN_YEAR,KCC_ACT_NUM FROM NCL_SANCTION_DETAILS NSD, 
+        NCL_SUB_LIMIT NSL WHERE NSD.NCL_SANCTION_NO=NSL.NCL_SANCTION_NO AND NSD.AUTHORIZE_STATUS='AUTHORIZED' AND STATUS! 
+        ='DELETED') A,(SELECT SUM(AMOUNT) AS AMOUNT, REPAYMENT_DATE ,NCL_SANCTION_NO FROM  SUBSIDY_INDIVIDUAL_RATES SIR,
+        NCL_RELEASE_DETAILS  NRD WHERE ACT_NUM =RELEASE_NO AND  NRD.STATUS!='DELETED' AND NRD.AUTHORIZE_STATUS='AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INSTITUTION_NAME">
+                    INSTITUTION_NAME=#INSTITUTION_NAME:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        GROUP BY REPAYMENT_DATE,NCL_SANCTION_NO ) B WHERE A.NCL_SANCTION_NO=B.NCL_SANCTION_NO AND B.REPAYMENT_DATE
+        BETWEEN '01-APR-'||A.START_FIN_YEAR AND '31-MAR -'||A.END_FIN_YEAR AND  A.KCC_ACT_NUM=#KCC_ACT_NUM:VARCHAR# 
+        GROUP BY A.START_FIN_YEAR||'-'||A.END_FIN_YEAR ORDER BY 1
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFinYearWiseOutstandingFromActNumTL" result-class="java.util.LinkedHashMap">
+        SELECT FIN_YEAR, NVL(SUM(AMOUNT),0) AS TOT_OUTSTANDING, 0 AS OVER_DUE FROM(SELECT TO_CHAR(REPAYMENT_DATE,'YYYY')||'-'||
+        (TO_CHAR(REPAYMENT_DATE,'YYYY')+1) AS REPAY_YEAR, AMOUNT FROM  SUBSIDY_INDIVIDUAL_RATES SIR,LOANS_FACILITY_DETAILS  NRD 
+        WHERE ACCT_NUM =ACT_NUM AND  NRD.STATUS!='DELETED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INSTITUTION_NAME">
+                    INSTITUTION_NAME=#INSTITUTION_NAME:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND PROD_ID=#PROD_ID:VARCHAR#) A,(SELECT (START_FIN_YEAR + LEVEL-1) ||'-'|| (START_FIN_YEAR + LEVEL) AS FIN_YEAR FROM 
+        (SELECT TO_CHAR(MIN(ACCT_OPEN_DT),'YYYY') AS START_FIN_YEAR,TO_CHAR(MAX(ACCT_OPEN_DT),'YYYY') AS END_FIN_YEAR FROM 
+        LOANS_FACILITY_DETAILS LFD WHERE ACCT_STATUS!='CLOSED' AND PROD_ID=#PROD_ID:VARCHAR#
+        AND LFD.AUTHORIZE_STATUS_1='AUTHORIZED' AND ACCT_NUM &gt;=#FROM_ACT_NO:VARCHAR# AND ACCT_NUM &lt;=#TO_ACT_NO:VARCHAR#
+        )CONNECT BY LEVEL &lt;=(END_FIN_YEAR-START_FIN_YEAR+1)) B 
+        WHERE FIN_YEAR=REPAY_YEAR(+) GROUP BY FIN_YEAR ORDER BY FIN_YEAR
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFinYearReleaseDetailsIntSubsidy" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT NRD.RELEASE_NO,NRD.NCL_SANCTION_NO, FNAME AS CUSTOMER_NAME,NSD.KCC_ACT_NUM FROM NCL_RELEASE_DETAILS NRD, 
+        NCL_SANCTION_DETAILS NSD, CUSTOMER C, SUBSIDY_INDIVIDUAL_RATES SIR WHERE C.CUST_ID=NSD.CUST_ID AND 
+        (REPAYMENT_DATE BETWEEN '01-APR-'||#START_YEAR# AND '31-MAR-'||#END_YEAR#) 
+        AND NRD.NCL_SANCTION_NO = NSD.NCL_SANCTION_NO AND NSD.KCC_ACT_NUM=#KCC_ACT_NUM:VARCHAR# AND NRD.STATUS!='DELETED' AND 
+        ACT_NUM =NRD.RELEASE_NO AND NRD.AUTHORIZE_STATUS='AUTHORIZED' AND CLOSED_STATUS IS NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_RELEASE_NO">
+                    RELEASE_NO &gt;=#FROM_RELEASE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TO_RELEASE_NO">
+                    RELEASE_NO &lt;=#TO_RELEASE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY 1
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFinYearIntSubsidyTL" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SIR.ACT_NUM,FNAME AS CUSTOMER_NAME,LB.BORROW_NO FROM LOANS_BORROWER LB, CUSTOMER C, LOANS_FACILITY_DETAILS LFD,  
+        SUBSIDY_INDIVIDUAL_RATES SIR WHERE C.CUST_ID=LB.CUST_ID AND LB.BORROW_NO = LFD.BORROW_NO AND LFD.ACCT_NUM = SIR.ACT_NUM AND 
+        (REPAYMENT_DATE BETWEEN '01-APR-'||#START_YEAR# AND '31-MAR-'||#END_YEAR#) AND LFD.ACCT_STATUS !='CLOSED' AND LFD.AUTHORIZE_STATUS_1='AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_ACT_NO">
+                    SIR.ACT_NUM &gt;=#FROM_ACT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TO_ACT_NO">
+                    SIR.ACT_NUM &lt;=#TO_ACT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY 1
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFinYearPrincipalSubsidyTL" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT LFD.ACCT_NUM AS ACT_NUM, FNAME AS CUSTOMER_NAME, LB.BORROW_NO,NVL(SUBSIDY_AMT,0) AS SUBSIDY_AMT,SUBSIDY_ADJUST_ACHD
+        FROM LOANS_BORROWER LB, CUSTOMER C, LOANS_FACILITY_DETAILS LFD WHERE C.CUST_ID=LB.CUST_ID AND LB.BORROW_NO = LFD.BORROW_NO AND  
+        LFD.ACCT_STATUS !='CLOSED' AND LFD.AUTHORIZE_STATUS_1='AUTHORIZED' AND PROD_ID =#PROD_ID:VARCHAR# AND 
+        INT_PRINC_SUBSIDY='N' AND SUBSIDY_ALLOWED='Y'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_ACT_NO">
+                    LFD.ACCT_NUM &gt;=#FROM_ACT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TO_ACT_NO">
+                    LFD.ACCT_NUM &lt;=#TO_ACT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY 1
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTotalSubsidyAmount" result-class="java.util.LinkedHashMap"  >
+        SELECT NVL(SUM(AMOUNT),0) AS SUBSIDY_AMOUNT FROM SUBSIDY_INDIVIDUAL_RATES WHERE  ACT_NUM=#RELEASE_NO# 
+        AND REPAYMENT_DATE BETWEEN '01-APR-'||#START_YEAR# AND '31-MAR -'||#END_YEAR#
+        <dynamic>
+            <isParameterPresent>                
+                <isNotNull prepend="AND" property="INSTITUTION_NAME">
+                    INSTITUTION_NAME=#INSTITUTION_NAME:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTotalAdjustedSubsidyAmount" result-class="java.util.LinkedHashMap">
+        SELECT NVL(SUM(TODAYS_ADJUSTMENT_AMOUNT),0) AS TODAYS_ADJUSTMENT_AMOUNT, NVL(SUM(RECOVERY_FROM_CUST_AMOUNT),0) AS RECOVERY_FROM_CUST_AMOUNT,
+        NVL(SUM(SID.WRITE_OFF_AMOUNT),0) AS WRITE_OFF_AMOUNT,NVL(SUM(SID.OTS_AMOUNT),0) AS OTS_AMOUNT
+        FROM SUBSIDY_INT_DUE_DETAILS SID, SUBSIDY_INT_ADJUSTED SIA WHERE RELEASE_NO=#RELEASE_NO:VARCHAR# AND 
+        SID.ADJUSTMENT_NO=SIA.ADJUSTMENT_NO AND STATUS!='DELETED' AND (AUTHORIZED_STATUS = 'AUTHORIZED'
+        OR AUTHORIZED_STATUS IS NULL)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ADJD_FIN_YEAR">
+                    ADJD_FIN_YEAR=#ADJD_FIN_YEAR:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INSTITUTION_NAME">
+                    AGENCY_NAME=#INSTITUTION_NAME:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SUBSIDY_TYPE">
+                    SUBSIDY_TYPE=#SUBSIDY_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>
+    
+
+	<!-- Use InterestSubsidyAdjustmentTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInterestSubsidyAdjustmentTO" inline-parameters="true">
+        UPDATE SUBSIDY_INT_ADJUSTED SET 
+        AGENCY_NAME = #agencyName:VARCHAR#,
+        SUBSIDY_REF_NO = #subsidyRefNo:VARCHAR#,
+        SUBSIDY_DATE = #subsidyDate:DATE#,
+        SUBSIDY_AMOUNT_RECEIVED = #subsidyAmountReceived:NUMERIC#,
+        SUBSIDY_RECEIVED_PER = #subsidyReceivedPer:NUMERIC#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#,
+        FROM_ACC_NO = #fromAccNo:VARCHAR#,
+        TO_ACC_NO = #toAccNo:VARCHAR#,
+        SUBSIDY_TYPE = #subsidyType:VARCHAR#,
+        FROM_DT = #fromDt:DATE#,
+        TO_DT = #toDt:DATE#,
+        FROM_RELEASE_NO = #fromReleaseNo:VARCHAR#,
+        TO_RELEASE_NO = #toReleaseNo:VARCHAR#,
+        OTS_SANCTION_NO = #otsSanctionNo:VARCHAR#,
+        OTS_SANCTION_DT = #otsSanctionDt:DATE#,
+        OTS_SANCTION_BY = #otsSanctionBy:VARCHAR#,
+        OTS_AMOUNT = #otsAmount:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        WHERE ADJUSTMENT_NO = #adjustmentNo:VARCHAR# AND INT_TYPE = #intType:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InterestSubsidyAdjustmentTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteInterestSubsidyAdjustmentTO" inline-parameters="true">
+        UPDATE SUBSIDY_INT_ADJUSTED SET 
+        STATUS = #STATUS:VARCHAR#, 
+        STATUS_BY = #USER_ID:VARCHAR#, 
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL) 
+        WHERE 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestSubsidyAdjustmentTO object (JavaBean) properties -->
+    <result-map name="getInterestSubsidyAdjustmentTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.InterestSubsidyAdjustmentTO">
+        <property name="adjustmentNo" column="ADJUSTMENT_NO"/>
+        <property name="intType" column="INT_TYPE"/>
+        <property name="agencyName" column="AGENCY_NAME"/>
+        <property name="subsidyRefNo" column="SUBSIDY_REF_NO"/>
+        <property name="subsidyDate" column="SUBSIDY_DATE"/>
+        <property name="subsidyAmountReceived" column="SUBSIDY_AMOUNT_RECEIVED"/>
+        <property name="subsidyReceivedPer" column="SUBSIDY_RECEIVED_PER"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="fromAccNo" column="FROM_ACC_NO"/>
+        <property name="toAccNo" column="TO_ACC_NO"/>
+        <property name="subsidyType" column="SUBSIDY_TYPE"/>
+        <property name="fromDt" column="FROM_DT"/>
+        <property name="toDt" column="TO_DT"/>
+        <property name="fromReleaseNo" column="FROM_RELEASE_NO"/>
+        <property name="toReleaseNo" column="TO_RELEASE_NO"/>
+        <property name="otsSanctionNo" column="OTS_SANCTION_NO"/>
+        <property name="otsSanctionDt" column="OTS_SANCTION_DT"/>
+        <property name="otsSanctionBy" column="OTS_SANCTION_BY"/>
+        <property name="otsAmount" column="OTS_AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectInterestSubsidyAdjustmentTO" result-map="getInterestSubsidyAdjustmentTOResult" >
+        SELECT * FROM SUBSIDY_INT_ADJUSTED WHERE ADJUSTMENT_NO=#ADJUSTMENT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertSubsidyIntDueDetails" result-class="java.util.LinkedHashMap">
+        INSERT INTO SUBSIDY_INT_DUE_DETAILS
+        (ADJUSTMENT_NO, ACCOUNT_NO, NAME, RELEASE_NO, TOTAL_SUBSIDY_AMOUNT, SUBSIDY_ADJUSTED_AMOUNT, BALANCE_SUBSIDY_DUE, 
+        TODAYS_ADJUSTMENT_AMOUNT, RECOVERY_FROM_CUST_AMOUNT, WRITE_OFF_AMOUNT, OTS_AMOUNT, ADJD_FIN_YEAR
+        ) VALUES (
+        #ADJUSTMENT_NO:VARCHAR#, #KCC_ACT_NUM:VARCHAR#, #CUSTOMER_NAME:VARCHAR#, #RELEASE_NO:VARCHAR#, #TOTAL_SUBSIDY_AMOUNT:VARCHAR#, 
+        #SUBSIDY_ADJUSTED_AMOUNT:VARCHAR#, #BALANCE_SUBSIDY_DUE:VARCHAR#, #TODAYS_ADJUSTMENT_AMOUNT:VARCHAR#, 
+        #RECOVERY_FROM_CUST_AMOUNT:VARCHAR#, #WRITE_OFF_AMOUNT:VARCHAR#, #OTS_AMOUNT:VARCHAR#,#ADJD_FIN_YEAR:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectInterestSubsidyDueDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SUBSIDY_INT_DUE_DETAILS WHERE ADJUSTMENT_NO=#ADJUSTMENT_NO:VARCHAR# ORDER BY RELEASE_NO
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeInterestSubsidy" result-class="java.util.HashMap">
+        UPDATE SUBSIDY_INT_ADJUSTED SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND ADJUSTMENT_NO=#ADJUSTMENT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteIntSubsidyTO" inline-parameters="true">
+        UPDATE SUBSIDY_INT_ADJUSTED SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE STATUS!='DELETED' AND ADJUSTMENT_NO = #adjustmentNo:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectReleaseNumberFromActNum" result-class="java.util.LinkedHashMap"  >
+        SELECT NRD.RELEASE_NO,NRD.RELEASE_DATE,NRD.AMOUNT_RELEASED FROM NCL_RELEASE_DETAILS NRD, 
+        NCL_SANCTION_DETAILS NSD WHERE KCC_ACT_NUM=#ACT_NUM:VARCHAR# AND NSD.NCL_SANCTION_NO=NRD.NCL_SANCTION_NO 
+        AND NRD.STATUS !='DELETED' AND CLOSED_STATUS IS NULL 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="RELEASE_NO">
+                    RELEASE_NO=#RELEASE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="RELEASE_DATE">
+                    UPPER(NRD.RELEASE_DATE) LIKE UPPER('%$RELEASE_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT_RELEASED">
+                    UPPER(NRD.AMOUNT_RELEASED) LIKE UPPER('%$AMOUNT_RELEASED$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY RELEASE_NO
+    </dynamic-mapped-statement>    
+</sql-map>

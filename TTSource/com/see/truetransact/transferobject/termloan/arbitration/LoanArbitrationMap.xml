@@ -1,0 +1,1370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanArbitrationMap">
+    <dynamic-mapped-statement name="getAccountsForArbitration" result-class = "java.util.LinkedHashMap" >
+        <!-- This query taken from Membership Liability. For Joint a/cs query can be taken from that only --> 
+        Select distinct ACCT_NUM as ACT_NUM , membership_no AS MEM_NO, FNAME AS NAME, 
+        <dynamic>
+           <isParameterPresent>
+              <isNotNull prepend=""   property="SHOW_PRINCIPAL_BAL">                            
+                 NVL(principal,0)                            
+              </isNotNull>
+           </isParameterPresent>
+           <isParameterPresent>
+             <isNotNull prepend="" property="LOANS_WITH_NO_DUE">   
+                CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+                THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+                ELSE 0
+                END
+             </isNotNull>
+           </isParameterPresent>           
+        </dynamic>        
+        as principal_due,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property="OVER_DUE_DT">
+                    CASE WHEN trunc (((cast(#OVER_DUE_DT# as DATE))- cast(REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT as DATE)) *24 ) >0 THEN
+                    ROUND((trunc (((cast(#OVER_DUE_DT# as DATE))- cast(REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT as DATE)))) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    NVL(INTEREST_DEMAND,0) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges
+            From rep_loan_notice_two, LOANS_BORROWER
+            where  
+            LOANS_BORROWER.BORROW_NO=rep_loan_notice_two.BORROW_NO 
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FULL_DUE">
+                    TO_DT &lt;= #TODAY_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_TYPE">
+                    rep_loan_notice_two.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                    (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DT">
+                    FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DUE_DT">
+                    DUE_DT &gt;= #FROM_DUE_DT:DATE# AND DUE_DT &lt;= #TO_DUE_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                </isNotNull>
+            </isParameterPresent> 
+             <isParameterPresent>
+                <isNotNull prepend="AND" property="LOANS_WITH_NO_DUE">      
+                  (CASE
+                  WHEN   NVL (prin_demand, 0)
+                  - NVL (prin_paid, 0) > 0
+                  THEN NVL (prin_demand, 0) - NVL (prin_paid, 0)
+                  ELSE 0
+                  END)>0 
+               </isNotNull>
+             </isParameterPresent>
+        </dynamic>   
+        order by 1
+    </dynamic-mapped-statement>
+    <mapped-statement name="getAccOpdate" result-class="java.util.HashMap" > 
+        select to_char(ACCT_OPEN_DT,'dd/MM/yyyy') AS ACCT_OPEN_DT FROM LOANS_FACILITY_DETAILS where ACCT_NUM =#ACCT_NUM:VARCHAR#  
+
+    </mapped-statement> 
+    <mapped-statement name="getMDSChargeDet" result-class="java.util.HashMap" > 
+        SELECT NVL (SUM (amount - NVL (paid_amt, 0)),
+        0) AS CHARGE
+        FROM loans_acct_charge_details
+        WHERE act_num =#CHITTAL_NO:VARCHAR#
+        AND status != 'DELETED'
+    </mapped-statement> 
+    <mapped-statement name="getPenalRateLoan" result-class="java.util.HashMap" > 
+        select PENAL_INT_RATE,AS_CUSTOMER_COMES  FROM LOANS_PROD_INTREC where PROD_ID =#PROD_ID:VARCHAR#  
+
+    </mapped-statement> 
+    <mapped-statement name="getInterestForLoan" result-class="java.util.HashMap" > 
+        select  nvl(ROUND(PRINCIPAL*INTEREST*((cast(#CURR_DATE:DATE# as DATE))- cast(TO_DATE(c.LAST_INT_CALC_DT2)+1 as DATE))/36500,0)
+        ,0)-nvl((SELECT SUM(l.interest) from loan_trans_details L JOIN
+        REP_LOAN_NOTICE_TWO R ON L.act_num=R.acct_num WHERE L.TRANS_DT
+         &gt; TO_DATE(R.LAST_INT_CALC_DT2)+1  AND  L.TRANS_DT &lt; #CURR_DATE:DATE# AND  R.acct_num=#ACCT_NUM:VARCHAR# ),0) As INTEREST 
+        from REP_LOAN_NOTICE_TWO c where c.acct_num=#ACCT_NUM:VARCHAR#  
+
+    </mapped-statement> 
+    <mapped-statement name="getInterestForLoanFn" result-class="java.util.HashMap" > 
+        select GET_TL_INTEREST(#ACCT_NUM:VARCHAR#,#OPEN_DATE:DATE#,#CURR_DATE:DATE#) as INTEREST from dual
+
+    </mapped-statement> 
+    <mapped-statement name="getPenalForLoanFn" result-class="java.util.HashMap" > 
+        select GET_TL_PEN_INTEREST_NEW(#ACCT_NUM:VARCHAR#,#CURR_DATE#,#CURR_DATE#,cast(#PENAL_RATE# as bigint)) as INTEREST from dual
+    </mapped-statement> 
+    <dynamic-mapped-statement name="getAccountsForMDSLoanArbitration" result-class = "java.util.LinkedHashMap" >
+        select chittal_no,mem_no,member_name,no_of_months_due,due_amt,PENAL_AMT,0 as charge from
+        (
+        WITH MDS AS
+        (
+        SELECT MDS.CHITTAL_NO|| '_' ||MDS.SUB_NO AS CHITTAL_NO,MDS.SCHEME_NAME,MDS.SCHEME_DESC,MDS.TOTAL_AMOUNT_DIVISION,
+        MDS.DIVISION_NO,MDS.mem_no,MDS.MEMBER_NAME,MDS.NOOFINSTPAID,MDS.NOOFINSTPAYABLE,
+        GET_MDS_BONUS_AVAILBALE(MDS.SCHEME_NAME,MDS.CHITTAL_NO,cast(MDS.DIVISION_NO as text),cast(#OVER_DUE_DT1# as timestamp without time zone)) AS BONUS_AMT_AVAILABLE, 
+        GET_MDS_PENALINT(MDS.SCHEME_NAME,MDS.CHITTAL_NO,cast(MDS.DIVISION_NO as text),cast(#OVER_DUE_DT1# as timestamp without time zone)) AS penal_amt,
+        PRIZED,
+        MDS.NOOFINSTPAYABLE - MDS.NOOFINSTPAID AS no_of_months_due,
+        GET_MDS_INSTDUE(MDS.SCHEME_NAME,MDS.CHITTAL_NO,cast(MDS.DIVISION_NO as text),cast(#OVER_DUE_DT1# as timestamp without time zone)) as due_amt
+        FROM
+        (
+        SELECT MDS_SCHEME_DETAILS.SCHEME_NAME,MDS_SCHEME_DETAILS.SCHEME_DESC, 
+        MDS_APPLICATION.CHITTAL_NO,MDS_APPLICATION.DIVISION_NO, MDS_APPLICATION.MEMBER_NO as mem_no,MDS_APPLICATION.MEMBER_NAME,
+        NVL((SELECT SUM(T.NO_OF_INST) FROM MDS_TRANS_DETAILS T
+        WHERE T.SCHEME_NAME = MDS_APPLICATION.SCHEME_NAME AND
+        T.CHITTAL_NO = MDS_APPLICATION.CHITTAL_NO AND 
+        T.SUB_NO = MDS_APPLICATION.SUB_NO AND
+        T.TRANS_DT &lt;= #OVER_DUE_DT1:DATE# AND
+        T.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        T.STATUS != 'DELETED'),0) AS NOOFINSTPAID,
+        NVL((SELECT MAX(MP.INSTALLMENT_NO)
+        FROM MDS_PRIZED_MONEY_DETAILS MP
+        WHERE MP.SCHEME_NAME = MDS_SCHEME_DETAILS.SCHEME_NAME AND 
+        MP.DRAW_AUCTION_DATE &lt;= #OVER_DUE_DT1:DATE# AND
+        MP.DRAW_AUCTION_DATE != MP.NEXT_INSTALLMENT_DATE AND
+        MP.AUTHORIZED_STATUS = 'AUTHORIZED' AND MP.STATUS != 'DELETED'),0) AS NOOFINSTPAYABLE,
+        CASE WHEN MPD.CHITTAL_NO IS NULL THEN 0 ELSE 1 END AS PRIZED,
+        MDS_SCHEME_DETAILS.TOTAL_AMOUNT_DIVISION,MDS_APPLICATION.SUB_NO
+        FROM MDS_SCHEME_DETAILS
+        JOIN MDS_APPLICATION ON MDS_SCHEME_DETAILS.SCHEME_NAME = MDS_APPLICATION.SCHEME_NAME 
+        LEFT JOIN MDS_PRIZED_MONEY_DETAILS MPD ON MPD.SCHEME_NAME = MDS_APPLICATION.SCHEME_NAME AND MPD.CHITTAL_NO = MDS_APPLICATION.CHITTAL_NO AND 
+        MPD.AUTHORIZED_STATUS = 'AUTHORIZED' AND MPD.STATUS != 'DELETED' AND MDS_SCHEME_DETAILS.SCHEME_NAME =#PROD_ID:VARCHAR#
+        JOIN MDS_MASTER_MAINTENANCE MM ON MM.SCHEME_NAME = MDS_APPLICATION.SCHEME_NAME AND MM.CHITTAL_NO = MDS_APPLICATION.CHITTAL_NO AND
+        MM.SUB_NO = MDS_APPLICATION.SUB_NO
+        LEFT JOIN MDS_CLOSED_SCHEMES MCS ON MCS.SCHEME_NAME = MDS_SCHEME_DETAILS.SCHEME_NAME                                      
+        WHERE MDS_APPLICATION.BRANCH_CODE = NVL(#BRANCH_CODE:VARCHAR#,MDS_APPLICATION.BRANCH_CODE) AND  MDS_SCHEME_DETAILS.SCHEME_NAME =#PROD_ID:VARCHAR# AND
+        MDS_SCHEME_DETAILS.SCHEME_DESC = NVL('',MDS_SCHEME_DETAILS.SCHEME_DESC) 
+         <dynamic>
+        <isParameterPresent>
+        <isNotNull prepend="AND" property="EXCLUDE_CLOSED_MDS">        
+        CASE WHEN NVL('','NEW') = 'NEW' 
+        THEN MCS.SCHEME_NAME
+        WHEN NVL('','NEW') = 'CLOSED' 
+        THEN (CASE WHEN MCS.SCHEME_NAME IS NOT NULL THEN NULL ELSE MDS_SCHEME_DETAILS.SCHEME_NAME END)
+        WHEN NVL('','NEW') = 'ALL' 
+        THEN NULL
+        ELSE NULL 
+        END IS NULL       
+        </isNotNull>
+        </isParameterPresent>  
+         </dynamic>
+        AND NVL(MM.DEFAULTER,'N') != 'Y'
+        ) MDS
+        WHERE MDS.NOOFINSTPAYABLE &gt; MDS.NOOFINSTPAID
+        )
+        SELECT SCHEME_NAME,SCHEME_DESC,CHITTAL_NO,DIVISION_NO,mem_no,MEMBER_NAME,
+        NOOFINSTPAID,NOOFINSTPAYABLE,BONUS_AMT_AVAILABLE,penal_amt,PRIZED,
+        no_of_months_due,due_amt,0 as sub_no
+        FROM MDS
+        <!--UNION ALL
+        SELECT MDS_SCHEME_DETAILS.SCHEME_NAME,MDS_SCHEME_DETAILS.SCHEME_DESC,
+        NULL AS CHITTAL_NO,NULL AS DIVISION,NULL AS  mem_no,NULL AS MEMBER_NAME,
+        0 AS NOOFINSTPAID,0 AS NOOFINSTPAYABLE,0 AS BONUS_AMT_AVAILABLE,0 AS PENAL_INT,0 AS PRIZED,
+        0 AS INST_DUE,0 as due_amt,0 as sub_no
+        FROM REP_TMPDATA
+        JOIN MDS_SCHEME_DETAILS ON REP_TMPDATA.BRANCH_CODE = MDS_SCHEME_DETAILS.SCHEME_DESC
+        JOIN REP_OPERATORS ON REP_OPERATORS.OPERATORS = REP_TMPDATA.BRANCH_CODE
+        JOIN RPT_NUMBERS ON RPT_NUMBERS.LVL::varchar = REP_TMPDATA.BRANCH_CODE
+        JOIN RPT_PARAM_STATUS ON RPT_PARAM_STATUS.STATUS = REP_TMPDATA.BRANCH_CODE
+        JOIN RPT_PARAM_PRIZED_STATUS ON RPT_PARAM_PRIZED_STATUS.STATUS = REP_TMPDATA.BRANCH_CODE
+        WHERE REP_TMPDATA.FDATE = #OVER_DUE_DT1:DATE# AND
+        REP_TMPDATA.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        MDS_SCHEME_DETAILS.SCHEME_NAME = #PROD_ID:VARCHAR# AND
+        RPT_NUMBERS.LVL = 0 AND
+        RPT_PARAM_STATUS.STATUS = '' AND
+        RPT_PARAM_PRIZED_STATUS.STATUS = #PRIZED:VARCHAR#
+        ORDER BY SCHEME_NAME,PRIZED,CHITTAL_NO -->
+         )a
+
+    </dynamic-mapped-statement>
+    <!-- Added ARC_CUST_REP_TDT by nithya on 05-03-2016 for 0003914 -->
+    <mapped-statement name="insertTermLoanArbitrationFileList" result-class="java.util.HashMap" > 
+        INSERT INTO LOAN_ARBITRATION (ARC_ID,ACT_NUM,MEMBER_NO,PRINCIPAL_DUE,INT_DUE,PENAL,CHARGES,ARC_FEE,TOT_ARC,FILE_NO,ARB_DATE,ARB_RATE,ARB_TYPE,MISC_CHARGES,ARC_CUST_REP_TDT,ARC_STATUS,PROD_ID,BRANCH_ID)
+        VALUES(#arbid:VARCHAR#,#act_num:VARCHAR#,#mem_no:VARCHAR#,#princ_due:NUMBER#,#int_due:NUMBER#,#penal:NUMBER#,#charges:NUMBER#,
+        #arcfee:NUMBER#,#totalarc:NUMBER#,#fileNo:VARCHAR#,#arbitDate:DATE#,#arbRate:NUMBER#,#arb_type:VARCHAR#,#miscCharges:VARCHAR#,#reportingDate:DATE#,#arcStatus:VARCHAR#,#prodId:VARCHAR#,#branchId:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getArcHeads" result-class="java.util.HashMap" >
+        select ARC_COST,ARC_EXPENSE,EP_COST,EP_EXPENSE,BEHAVES_LIKE from  LOANS_PROD_ACHD join LOANS_PRODUCT    
+        on LOANS_PROD_ACHD.PROD_ID=LOANS_PRODUCT.PROD_ID
+        where LOANS_PRODUCT.prod_id=#PROD_ID:VARCHAR#        
+    </mapped-statement>
+    <mapped-statement name="getArcMDSHeads" result-class="java.util.HashMap" >
+        select ARC_COST,ARC_EXPENSE,EP_COST,EP_EXPENSE from MDS_ACCT_HEAD   where scheme_name=#PROD_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getArbitrationDetails" result-class="java.util.HashMap" >
+        select ACT_NUM,PRINCIPAL_DUE as AWARD_AMOUNT,(INT_DUE+PENAL) as AWARD_INTEREST,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE,
+        FILE_NO,(SELECT FNAME FROM CUSTOMER WHERE MEMBERSHIP_NO =LOAN_ARBITRATION.MEMBER_NO ) AS NAME 
+        from LOAN_ARBITRATION join LOANS_FACILITY_DETAILS on LOAN_ARBITRATION.ACT_NUM= LOANS_FACILITY_DETAILS.ACCT_NUM
+        where AWARD_NO is null and LOANS_FACILITY_DETAILS.ACCT_STATUS !='CLOSED'
+        and ARB_DATE between #ARB_FROMDT:DATE# and #ARB_TODT:DATE#
+        order by 1
+    </mapped-statement>
+    
+    <mapped-statement name="getArbitrationMDSDetails" result-class="java.util.HashMap" >
+        select ACT_NUM,PRINCIPAL_DUE as AWARD_AMOUNT,INT_DUE as AWARD_INTEREST,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE,         
+        FILE_NO,(SELECT FNAME FROM CUSTOMER WHERE MEMBERSHIP_NO =LOAN_ARBITRATION.MEMBER_NO ) AS NAME from LOAN_ARBITRATION join MDS_APPLICATION on LOAN_ARBITRATION.ACT_NUM= MDS_APPLICATION.CHITTAL_NO||'_'||MDS_APPLICATION.SUB_NO   
+        where AWARD_NO is null  and ARB_DATE between #ARB_FROMDT:DATE# and #ARB_TODT:DATE#
+    </mapped-statement>
+    <mapped-statement name="updateTermLoanArbitrationFileList" inline-parameters="true">
+        update LOAN_ARBITRATION set 
+        AWARD_NO=#awardno:VARCHAR#,
+        AWARD_DATE=#awardDate:DATE#,
+        INSPECTOR_ORDER_NO=#inspordno:VARCHAR#,
+        INSPECTOR_ORDER_DATE=#inspordDate:DATE#
+        where ACT_NUM=#act_num:VARCHAR# and ARB_DATE=#arbitDate:DATE#
+    </mapped-statement>
+    <mapped-statement name="getArbChargeslab" result-class="java.util.HashMap" >
+        select asad.FROM_SLAB_AMT,asad.TO_SLAB_AMT,asad.CHARGE_RATE,asad.MIN_CHARGE_AMOUNT,asad.MAX_CHARGE_AMOUNT,acd.ARC_FEE_ROUNDOFF from ARC_CHARGE_DEFINITION 
+        acd,ARC_SLAB_AMOUNT_DETAILS asad where acd.CHARGE_TYPE =#CHARGE_TYPE:VARCHAR# and ASAD.CHARGE_ID=ACD.CHARGE_ID
+    </mapped-statement>
+    <dynamic-mapped-statement name="getArbitrationAwardEditDetails" result-class="java.util.HashMap" >
+		SELECT act_num, (SELECT fname FROM customer
+		WHERE membership_no = la.member_no) AS NAME, principal_due,
+		int_due, penal, charges, arc_fee, inspector_order_date,
+		ep_app_fee AS app_fee, ep_sales_fee AS sales_fee,
+		ep_postage_fee AS post_fee, ep_fee, file_no, ep_id,arb_type,LOAN_EP_NO
+		FROM loan_arbitration la
+		WHERE ep_Id = #EP_ID:VARCHAR#  AND ep_date IS NOT NULL
+                 <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="act_num">
+                    UPPER(ACT_NUM) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal">
+                    UPPER(penal) LIKE UPPER('%$penal$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="due_amt">
+                    UPPER(PRINCIPAL_DUE) LIKE UPPER('%$due_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal_amt">
+                    UPPER(int_due) LIKE UPPER('%$penal_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charge">
+                    UPPER(charges) LIKE UPPER('%$charge$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+                     <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(EP_APP_FEE) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(EP_SALES_FEE) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                  <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                    UPPER(EP_POSTAGE_FEE) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                    UPPER(EP_FEE) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                    UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_id">
+                    UPPER(ep_id) LIKE UPPER('%$ep_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="arb_type">
+                    UPPER(arb_type) LIKE UPPER('%$arb_type$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getArbitrationAwardDetails" result-class="java.util.HashMap" >
+        Select distinct rep_loan_notice_two.ACCT_NUM as ACT_NUM ,FNAME AS NAME,
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due,
+        LOAN_ARBITRATION.INT_DUE AS INT_DUE,
+        loan_arbitration.penal,   nvl((SELECT NVL (SUM (amount - NVL (paid_amt, 0)), 0)
+        FROM loans_acct_charge_details
+        WHERE act_num = rep_loan_notice_two.ACCT_NUM AND status != 'DELETED' AND CHARGE_TYPE!='ARC_COST'),0) as charges,ARC_FEE,INSPECTOR_ORDER_DATE,
+        '0' as APP_FEE,'0' as SALES_FEE,cast(ARC.BORROWER_FEE as numeric)+cast(ARC.JOINT_FEE as numeric) AS POST_FEE,
+        nvl(( select ep_fee from EP_FEE_CONFIG where BORROWER_NO=( nvl(( select (count(*)+1) from LOANS_JOINT a join LOANS_BORROWER b on 
+        A.BORROW_NO=B.BORROW_NO
+        join LOANS_FACILITY_DETAILS f on F.BORROW_NO=B.BORROW_NO where F.ACCT_NUM=LOAN_ARBITRATION.ACT_NUM),0))),0) as ep_fee , LOAN_ARBITRATION.FILE_NO  
+        , LOAN_ARBITRATION.EP_ID,LOAN_ARBITRATION.LOAN_EP_NO,
+        LOANS_FACILITY_DETAILS.prod_id,
+        LOANS_FACILITY_DETAILS.ACCT_OPEN_DT,
+        GET_PRODUCT_BEHAVESLIKE(LOANS_FACILITY_DETAILS.prod_id) AS BEHAVES_LIKE
+        From rep_loan_notice_two, LOANS_BORROWER,LOAN_ARBITRATION,LOANS_FACILITY_DETAILS,ARC_POSTAGE_FEE ARC 
+        where  
+        LOANS_BORROWER.BORROW_NO=rep_loan_notice_two.BORROW_NO 
+        AND LOAN_ARBITRATION.ACT_NUM=REP_LOAN_NOTICE_TWO.ACCT_NUM
+        AND LOANS_FACILITY_DETAILS.ACCT_NUM=LOAN_ARBITRATION.ACT_NUM
+        AND LOANS_FACILITY_DETAILS.ACCT_STATUS!='CLOSED'
+        AND LOAN_ARBITRATION.INSPECTOR_ORDER_DATE is not null
+        AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#) AND ARC.PROD_TYPE='LOAN'
+        <dynamic>
+            <isNotEqual prepend="and" property="EDIT" compareValue="Y" >
+                LOAN_ARBITRATION.EP_DATE is null
+            </isNotEqual>
+            <isEqual prepend="and" property="EDIT" compareValue="Y" >
+                LOAN_ARBITRATION.EP_DATE is not null
+            </isEqual>
+        </dynamic> 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="act_num">
+                    UPPER(ACT_NUM) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal">
+                    UPPER(penal) LIKE UPPER('%$penal$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="due_amt">
+                    UPPER(PRINCIPAL_DUE) LIKE UPPER('%$due_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal_amt">
+                    UPPER(int_due) LIKE UPPER('%$penal_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charge">
+                    UPPER(charges) LIKE UPPER('%$charge$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+                     <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(EP_APP_FEE) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(EP_SALES_FEE) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                  <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                    UPPER(EP_POSTAGE_FEE) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                    UPPER(EP_FEE) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                    UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_id">
+                    UPPER(ep_id) LIKE UPPER('%$ep_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="arb_type">
+                    UPPER(arb_type) LIKE UPPER('%$arb_type$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+            ORDER BY ACT_NUM
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getArbitrationAwardMDSEditDetails" result-class="java.util.HashMap" >
+        select ACT_NUM as chittal_no,(select FNAME FROM CUSTOMER where MEMBERSHIP_NO = la.MEMBER_NO) AS NAME ,
+        penal as no_of_months_due,PRINCIPAL_DUE as due_amt,int_due as penal_amt,charges as charge,arc_fee,
+        inspector_order_date, EP_APP_FEE AS app_fee,
+        EP_SALES_FEE AS sales_fee,EP_POSTAGE_FEE as post_fee,
+        EP_FEE AS ep_fee,file_no, ep_id,LOAN_EP_NO from  LOAN_ARBITRATION la
+        WHERE inspector_order_date IS NOT NULL and arb_type='MDS'
+        AND EP_DATE is not null AND EP_DATE=#FILING_DT:DATE#
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="chittal_no">
+                    UPPER(ACT_NUM) LIKE UPPER('%$chittal_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="no_of_months_due">
+                    UPPER(penal) LIKE UPPER('%$no_of_months_due$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="due_amt">
+                    UPPER(PRINCIPAL_DUE) LIKE UPPER('%$due_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal_amt">
+                    UPPER(int_due) LIKE UPPER('%$penal_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charge">
+                    UPPER(charges) LIKE UPPER('%$charge$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+                     <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(EP_APP_FEE) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(EP_SALES_FEE) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                    <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                    UPPER(EP_POSTAGE_FEE) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                    UPPER(EP_FEE) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                    UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_id">
+                    UPPER(ep_id) LIKE UPPER('%$ep_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement> 
+    
+    <dynamic-mapped-statement name="getArbitrationAwardMDSDetails" result-class="java.util.HashMap" >
+        select ACT_NUM as chittal_no,(select FNAME FROM CUSTOMER where MEMBERSHIP_NO = la.MEMBER_NO) AS NAME ,
+        penal as no_of_months_due,PRINCIPAL_DUE as due_amt,int_due as penal_amt,charges as charge,arc_fee,
+        inspector_order_date, EP_APP_FEE AS app_fee,
+        EP_SALES_FEE AS sales_fee,EP_POSTAGE_FEE as post_fee,
+        EP_FEE AS ep_fee,file_no, ep_id,LOAN_EP_NO from  LOAN_ARBITRATION la
+        WHERE inspector_order_date IS NOT NULL and arb_type='MDS'
+        AND EP_DATE is null AND inspector_order_date=#FILING_DT:DATE#
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="chittal_no">
+                    UPPER(ACT_NUM) LIKE UPPER('%$chittal_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="no_of_months_due">
+                    UPPER(penal) LIKE UPPER('%$no_of_months_due$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="due_amt">
+                    UPPER(PRINCIPAL_DUE) LIKE UPPER('%$due_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal_amt">
+                    UPPER(int_due) LIKE UPPER('%$penal_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charge">
+                    UPPER(charges) LIKE UPPER('%$charge$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+                     <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(EP_APP_FEE) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(EP_SALES_FEE) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                    UPPER(EP_POSTAGE_FEE) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                    UPPER(EP_FEE) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                    UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_id">
+                    UPPER(ep_id) LIKE UPPER('%$ep_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement> 
+    <mapped-statement name="updateTermLoanArbitrationEPList" inline-parameters="true">
+        update LOAN_ARBITRATION set 
+        EP_ID=#epid:VARCHAR#,
+        EP_DATE=#epDate:DATE#,
+        EP_FEE=#epfee:NUMBER#,
+        TOT_EP_AMOUNT=#tot_ep:NUMBER#,
+        EP_APP_FEE=#ep_app_fee:NUMBER#,
+        EP_SALES_FEE=#ep_sales_fee:NUMBER#,
+        EP_POSTAGE_FEE=#ep_postage_fee:NUMBER#,
+        FILE_NO=#fileNo:VARCHAR#,
+        LOAN_EP_NO = #epNo:VARCHAR#,
+        EP_PRINCIPAL_DUE = #princ_due:NUMBER#,
+        EP_INT_DUE = #int_due:NUMBER#,
+        EP_PENAL = #penal:NUMBER#,
+        EP_CHARGES = #charges:NUMBER#,
+        EP_ARC_FEE = #arcfee:NUMBER#       
+        where ACT_NUM=#act_num:VARCHAR# and INSPECTOR_ORDER_DATE=#inspordDate:DATE#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="updateFileNoForFiling" inline-parameters="true">
+        update LOAN_ARBITRATION set 
+        FILE_NO=#fileNo:VARCHAR#,
+        LOAN_EP_NO = #epNo:VARCHAR#
+        where ACT_NUM=#act_num:VARCHAR#
+        <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="ARC_ID">
+                   ARC_ID =#ARC_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"  property="EP_ID">
+                   EP_ID =#EP_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>  
+    </dynamic-mapped-statement>
+    <!-- Added ARC_CUST_REP_TDT by nithya on 05-03-2016 for 0003914  && modified condition ARC_STATUS ='0'-->
+   <dynamic-mapped-statement name="getArbitrationDetailsForEdit" result-class="java.util.LinkedHashMap" >
+        select ACT_NUM,ARC_ID,C.FNAME AS NAME,la.PROD_ID AS PROD_ID,TOT_ARC,ARB_DATE,FILE_NO,ARC_CUST_REP_TDT 
+        from LOAN_ARBITRATION la 
+        join LOANS_FACILITY_DETAILS lfd on la.ACT_NUM= lfd.ACCT_NUM
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO
+        where  lfd.ACCT_STATUS !='CLOSED' and la.AWARD_NO is null and la.BRANCH_ID =#SELECTED_BRANCH:VARCHAR# and la.ARC_STATUS ='Y'         
+        union all 
+        select ACT_NUM,ARC_ID, C.FNAME AS NAME,la.PROD_ID AS PROD_ID,TOT_ARC,ARB_DATE,
+        FILE_NO,ARC_CUST_REP_TDT 
+        from LOAN_ARBITRATION la 
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO
+        join MDS_APPLICATION ma on (ma.CHITTAL_NO ||'_'||ma.SUB_NO)=la.ACT_NUM 
+        join MDS_MASTER_MAINTENANCE mm on ma.CHITTAL_NO = mm.CHITTAL_NO
+        where ma.STATUS !='DELETED' and la.AWARD_NO is null and mm.CHIT_CLOSE_DT is null and la.BRANCH_ID =#SELECTED_BRANCH:VARCHAR# and la.ARC_STATUS ='Y'
+        <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(C.FNAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(la.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="TOT_ARC">
+                    UPPER(TOT_ARC) LIKE UPPER('%$TOT_ARC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="ARB_DATE">
+                    UPPER(ARB_DATE) LIKE UPPER('%$ARB_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="FILE_NO">
+                    UPPER(FILE_NO) LIKE UPPER('%$FILE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="ARC_CUST_REP_TDT">
+                    UPPER(ARC_CUST_REP_TDT) LIKE UPPER('%$ARC_CUST_REP_TDT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+      order by ARC_ID
+    </dynamic-mapped-statement>
+    <!-- Added ARC_CUST_REP_TDT by nithya on 05-03-2016 for 0003914 -->
+   <mapped-statement name="getArbitrationDetailsForView" result-class="java.util.LinkedHashMap" >
+        select ACT_NUM,MEMBER_NO,C.FNAME AS NAME,
+        PRINCIPAL_DUE ,INT_DUE,PENAL ,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE ,FILE_NO,MISC_CHARGES,ARC_CUST_REP_TDT,la.PROD_ID,la.ARB_TYPE
+        from LOAN_ARBITRATION la 
+        join LOANS_FACILITY_DETAILS lfd on la.ACT_NUM= lfd.ACCT_NUM
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO
+        where la.AWARD_NO is null and lfd.ACCT_STATUS !='CLOSED'
+        and ARC_ID = #ARC_ID:VARCHAR# and ARC_STATUS ='Y'
+        union all 
+        select ACT_NUM,ma.MEMBER_NO,c.FNAME AS NAME,
+        PRINCIPAL_DUE ,INT_DUE,PENAL ,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE ,FILE_NO,MISC_CHARGES,ARC_CUST_REP_TDT,la.PROD_ID,la.ARB_TYPE     
+        from LOAN_ARBITRATION la 
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO
+        join MDS_APPLICATION ma on (ma.CHITTAL_NO ||'_'||ma.SUB_NO)=la.ACT_NUM 
+        join MDS_MASTER_MAINTENANCE mm on ma.CHITTAL_NO = mm.CHITTAL_NO
+        where ARC_ID = #ARC_ID:VARCHAR# and ma.STATUS !='DELETED' and la.AWARD_NO is null and mm.CHIT_CLOSE_DT is null and la.ARC_STATUS ='Y'
+    </mapped-statement>
+    <dynamic-mapped-statement name="getArbitrationAwardViewDetails" result-class="java.util.LinkedHashMap" >
+		SELECT ep_id,act_num, (SELECT fname FROM customer WHERE membership_no = la.member_no) AS NAME,ARB_TYPE, principal_due,
+		int_due, penal, charges, arc_fee, inspector_order_date,ep_app_fee AS app_fee, ep_sales_fee AS sales_fee,ep_postage_fee AS post_fee, ep_fee, file_no,LOAN_EP_NO 
+		FROM loan_arbitration la WHERE  ep_date IS NOT NULL and ep_id is not null
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_id">
+                    UPPER(ep_id) LIKE UPPER('%$ep_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ARB_TYPE">
+                    UPPER(ARB_TYPE) LIKE UPPER('%$ARB_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="principal_due">
+                    UPPER(principal_due) LIKE UPPER('%$principal_due$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal">
+                    UPPER(penal) LIKE UPPER('%$penal$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charges">
+                    UPPER(charges) LIKE UPPER('%$charges$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(ep_app_fee) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(ep_sales_fee) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                   UPPER(ep_postage_fee) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                   UPPER(ep_fee) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                   UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                order by ep_id
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getAwardViewDetails" result-class="java.util.LinkedHashMap" >
+		SELECT AWARD_NO,act_num, (SELECT fname FROM customer WHERE membership_no = la.member_no) AS NAME,ARB_TYPE, principal_due,
+		int_due, penal, charges, arc_fee, inspector_order_date,ep_app_fee AS app_fee, ep_sales_fee AS sales_fee,ep_postage_fee AS post_fee, ep_fee, file_no 
+		FROM loan_arbitration la WHERE  AWARD_DATE IS NOT NULL and AWARD_NO is not null 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AWARD_NO">
+                    UPPER(AWARD_NO) LIKE UPPER('%$AWARD_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ARB_TYPE">
+                    UPPER(ARB_TYPE) LIKE UPPER('%$ARB_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="principal_due">
+                    UPPER(principal_due) LIKE UPPER('%$principal_due$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal">
+                    UPPER(penal) LIKE UPPER('%$penal$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charges">
+                    UPPER(charges) LIKE UPPER('%$charges$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(ep_app_fee) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(ep_sales_fee) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                   UPPER(ep_postage_fee) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                   UPPER(ep_fee) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                   UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                order by AWARD_NO
+    </dynamic-mapped-statement>
+    <mapped-statement name="getAwardDetailsForEdit" result-class="java.util.LinkedHashMap" >
+        select ACT_NUM,PRINCIPAL_DUE as AWARD_AMOUNT,(INT_DUE+PENAL) as AWARD_INTEREST,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE,
+        FILE_NO,(SELECT FNAME FROM CUSTOMER WHERE MEMBERSHIP_NO =LOAN_ARBITRATION.MEMBER_NO ) AS NAME,
+        AWARD_NO, AWARD_DATE, INSPECTOR_ORDER_NO, INSPECTOR_ORDER_DATE 
+        from LOAN_ARBITRATION join LOANS_FACILITY_DETAILS on LOAN_ARBITRATION.ACT_NUM= LOANS_FACILITY_DETAILS.ACCT_NUM
+        where  LOANS_FACILITY_DETAILS.ACCT_STATUS !='CLOSED'
+        and ARB_DATE is NOT NULL AND AWARD_NO =#AWARD_NO:VARCHAR#
+    </mapped-statement>
+   
+     <!-- added by nithya on 08-03-2016 -->
+    <dynamic-mapped-statement name="getArbitrationDetailsProcessing" result-class="java.util.LinkedHashMap" >
+        select ACT_NUM,ARC_ID,C.FNAME AS NAME,la.PROD_ID AS PROD_ID,TOT_ARC,ARB_DATE,FILE_NO,ARC_CUST_REP_TDT 
+        from LOAN_ARBITRATION la 
+        <!--join LOANS_FACILITY_DETAILS lfd on la.ACT_NUM= lfd.ACCT_NUM
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO-->
+        JOIN LOANS_FACILITY_DETAILS lfd ON la.ACT_NUM = lfd.ACCT_NUM
+        join loans_borrower lb on lfd.BORROW_NO = lb.borrow_no
+        JOIN CUSTOMER c ON c.cust_id= lb.cust_id
+        left join SHARE_ACCT sa on (sa.CUST_ID = c.CUST_ID  and sa.SHARE_ACCT_NO = la.MEMBER_NO)   
+        where  lfd.ACCT_STATUS !='CLOSED' and la.AWARD_NO is null and la.BRANCH_ID =#SELECTED_BRANCH:VARCHAR# and la.ARC_STATUS ='N'         
+        union all 
+        select ACT_NUM,ARC_ID, C.FNAME AS NAME,la.PROD_ID AS PROD_ID,TOT_ARC,ARB_DATE,
+        FILE_NO,ARC_CUST_REP_TDT 
+        from LOAN_ARBITRATION la 
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO
+        join MDS_APPLICATION ma on (ma.CHITTAL_NO ||'_'||ma.SUB_NO)=la.ACT_NUM 
+        join MDS_MASTER_MAINTENANCE mm on ma.CHITTAL_NO = mm.CHITTAL_NO
+        where ma.STATUS !='DELETED' and la.AWARD_NO is null and mm.CHIT_CLOSE_DT is null and la.BRANCH_ID =#SELECTED_BRANCH:VARCHAR# and la.ARC_STATUS ='N'
+        UNION ALL
+        SELECT ACT_NUM,
+        ARC_ID,
+        la.MEMBER_NO AS NAME,
+        la.PROD_ID AS PROD_ID,
+        TOT_ARC,
+        ARB_DATE,
+        FILE_NO,
+        ARC_CUST_REP_TDT
+        FROM LOAN_ARBITRATION la
+        WHERE la.AWARD_NO IS NULL
+        AND la.ARB_type = 'ROOMS'
+        AND la.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+        AND la.ARC_STATUS = 'N'
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="ARC_ID">
+                    UPPER(ARC_ID) LIKE UPPER('%$ARC_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(C.FNAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(la.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="TOT_ARC">
+                    UPPER(TOT_ARC) LIKE UPPER('%$TOT_ARC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="ARB_DATE">
+                    UPPER(ARB_DATE) LIKE UPPER('%$ARB_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="FILE_NO">
+                    UPPER(FILE_NO) LIKE UPPER('%$FILE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="ARC_CUST_REP_TDT">
+                    UPPER(ARC_CUST_REP_TDT) LIKE UPPER('%$ARC_CUST_REP_TDT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+       order by ARC_ID
+    </dynamic-mapped-statement>
+   
+    <mapped-statement name="updateTermLoanArbitrationFileListAfterProcess" inline-parameters="true">
+        update LOAN_ARBITRATION set 
+        ARC_STATUS=#arcStatus:VARCHAR#        
+        where ACT_NUM=#act_num:VARCHAR# and ARC_ID=#arbid:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteCustomerFromARC" inline-parameters="true">
+        DELETE FROM LOAN_ARBITRATION WHERE ACT_NUM=#act_num:VARCHAR# and ARC_ID=#arbid:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getArbitrationDetailsProcessingEdit" result-class="java.util.LinkedHashMap" >
+        select ACT_NUM,MEMBER_NO,C.FNAME AS NAME,
+        PRINCIPAL_DUE ,INT_DUE,PENAL ,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE ,FILE_NO,MISC_CHARGES,ARC_CUST_REP_TDT,la.PROD_ID,la.ARB_TYPE
+        from LOAN_ARBITRATION la 
+        <!--join LOANS_FACILITY_DETAILS lfd on la.ACT_NUM= lfd.ACCT_NUM
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO-->
+        JOIN LOANS_FACILITY_DETAILS lfd ON la.ACT_NUM = lfd.ACCT_NUM
+        join loans_borrower lb on lfd.BORROW_NO = lb.borrow_no
+        JOIN CUSTOMER c ON c.cust_id= lb.cust_id
+        where la.AWARD_NO is null and lfd.ACCT_STATUS !='CLOSED'
+        and ARC_ID = #ARC_ID:VARCHAR# and ARC_STATUS ='N'
+        union all 
+        select ACT_NUM,ma.MEMBER_NO,c.FNAME AS NAME,
+        PRINCIPAL_DUE ,INT_DUE,PENAL ,CHARGES,ARC_FEE,TOT_ARC,ARB_DATE ,FILE_NO,MISC_CHARGES,ARC_CUST_REP_TDT,la.PROD_ID,la.ARB_TYPE     
+        from LOAN_ARBITRATION la 
+        join CUSTOMER c on c.MEMBERSHIP_NO=la.MEMBER_NO
+        join MDS_APPLICATION ma on (ma.CHITTAL_NO ||'_'||ma.SUB_NO)=la.ACT_NUM 
+        join MDS_MASTER_MAINTENANCE mm on ma.CHITTAL_NO = mm.CHITTAL_NO
+        where ARC_ID = #ARC_ID:VARCHAR# and ma.STATUS !='DELETED' and la.AWARD_NO is null and mm.CHIT_CLOSE_DT is null and la.ARC_STATUS ='N'
+        UNION ALL  
+        SELECT ACT_NUM,
+        '' AS MEMBER_NO,
+        la.MEMBER_NO AS NAME,
+        PRINCIPAL_DUE,
+        INT_DUE,
+        PENAL,
+        CHARGES,
+        ARC_FEE,
+        TOT_ARC,
+        ARB_DATE,
+        FILE_NO,
+        MISC_CHARGES,
+        ARC_CUST_REP_TDT,
+        la.PROD_ID,
+        la.ARB_TYPE
+        FROM LOAN_ARBITRATION la     
+        WHERE la.ARC_ID = #ARC_ID:VARCHAR#
+        AND la.AWARD_NO IS NULL
+        AND la.ARB_TYPE = 'ROOMS'
+        AND la.ARC_STATUS = 'N'
+    </mapped-statement>
+  
+  <!-- Added by nithya -->
+  
+  <dynamic-mapped-statement name="getAccountsForArbitrationAD" result-class = "java.util.LinkedHashMap" >
+        <!-- This query taken from Membership Liability. For Joint a/cs query can be taken from that only --> 
+        Select ACCT_NUM as ACT_NUM ,membership_no AS MEM_NO, FNAME AS NAME,       
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due ,
+        <dynamic>
+            <isParameterPresent>
+                <!--<isNotNull property="OVER_DUE_DT">
+                    CASE WHEN TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>-->
+                 <isNotNull property="OVER_DUE_DT">
+                    CASE WHEN trunc (((cast(#OVER_DUE_DT# as DATE))- cast(REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT as DATE)) *24 ) >0 THEN
+                    ROUND((trunc (((cast(#OVER_DUE_DT# as DATE))- cast(REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT as DATE)))) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="FROM_DUE_DT">
+                    CASE WHEN DUE_DT - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((DUE_DT - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    NVL(INTEREST_DEMAND,0) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges          
+            From rep_loan_notice_two_AD, LOANS_BORROWER           
+            where  
+            LOANS_BORROWER.BORROW_NO=rep_loan_notice_two_AD.BORROW_NO            
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two_AD.PROD_ID = #PROD_ID:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FULL_DUE">
+                    TO_DT &lt;= #TODAY_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_TYPE">
+                    rep_loan_notice_two_AD.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two_AD.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two_AD.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">
+                    (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DT">
+                    FROM_DT &gt;= #FROM_DT# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DUE_DT">
+                    DUE_DT &gt;= #FROM_DUE_DT# AND DUE_DT &lt;= #TO_DUE_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                    NO_MONTH_DUE between 1 and 2
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                    NO_MONTH_DUE between 3 and 4
+                </isEqual>
+                <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                    NO_MONTH_DUE &gt; 4
+                </isEqual>
+                <isNotNull prepend=""  property="GUARANTOR">
+                    UNION
+                    Select LOANS_SECURITY_MEMBER.ACCT_NUM as ACT_NUM ,CUSTOMER.membership_no AS MEM_NO, CUSTOMER.FNAME AS NAME,                    
+                    CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+                    THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+                    ELSE 0
+                    END
+                    as principal_due ,
+                    <isParameterPresent>
+                        <isNotNull property="OVER_DUE_DT">
+                            CASE WHEN TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT >0 THEN
+                            ROUND((TO_DATE(#OVER_DUE_DT#) - REP_LOAN_NOTICE_TWO_AD.LAST_INT_CALC_DT) * 
+                            REP_LOAN_NOTICE_TWO_AD.INTEREST * REP_LOAN_NOTICE_TWO_AD.PRINCIPAL/36500) 
+                            ELSE 0 END AS INT_DUE,
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isNotPropertyAvailable property="OVER_DUE_DT">
+                        NVL(INTEREST_DEMAND,0) as int_due, 
+                    </isNotPropertyAvailable>
+                    penal, charges 
+                    From rep_loan_notice_two_AD, LOANS_SECURITY_MEMBER, CUSTOMER                   
+                    where  
+                    LOANS_SECURITY_MEMBER.ACCT_NUM=rep_loan_notice_two_AD.ACCT_NUM                    
+                    AND CUSTOMER.MEMBERSHIP_NO=LOANS_SECURITY_MEMBER.MEMBER_NO 
+                    AND rep_loan_notice_two_AD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                    AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#)
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_ID">
+                            rep_loan_notice_two_AD.PROD_ID = #PROD_ID:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="PROD_TYPE">
+                            rep_loan_notice_two_AD.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_DT">
+                            FROM_DT &gt;= #FROM_DT:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                            rep_loan_notice_two_AD.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                            rep_loan_notice_two_AD.ACCT_NUM &lt; = #TO_ACCT_NUM:VARCHAR#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="LAST_NOTICE_SENT_DT">                          
+                            (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT &lt;= #LAST_NOTICE_SENT_DT:DATE#)
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                            NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                        </isNotNull>
+                    </isParameterPresent>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="First Notice">
+                        NO_MONTH_DUE between 1 and 2
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Second Notice">
+                        NO_MONTH_DUE between 3 and 4
+                    </isEqual>
+                    <isEqual prepend="AND" property="NOTICE_TYPE" compareValue="Third Notice">
+                        NO_MONTH_DUE &gt; 4
+                    </isEqual>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+        ORDER BY 1
+       
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getInterestForAdvanceFn" result-class="java.util.HashMap" > 
+        select GET_ADV_INTEREST(#ACCT_NUM:VARCHAR#,#OPEN_DATE:DATE#,#CURR_DATE:DATE#) as INTEREST from dual
+    </mapped-statement> 
+    
+    <mapped-statement name="getPenalForAdvanceFn" result-class="java.util.HashMap" > 
+      select GET_ADV_PEN_INT_APPLICATION(#ACCT_NUM:VARCHAR#,#CURR_DATE:DATE#) as INTEREST from dual
+    </mapped-statement> 
+    
+    <mapped-statement name="getBuildingDerailsForARC" result-class="java.util.LinkedHashMap" > 
+        SELECT BUILDING_NUM AS PROD_ID, BUILDING_DES AS PROD_DESC
+        FROM RENT_PROFILE
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND RSTATUS = 'Occupied'
+        ORDER BY BUILDING_NUM        
+    </mapped-statement>  
+    
+    <mapped-statement name="getAllRoomsForArbitration" result-class="java.util.HashMap" > 
+      select R.RRID,R.ROOM_NO,R.NAME,R.OCCUPIED_DATE,R.RENT_AMT,R.BUILDING_NO 
+      from RENT_REGISTER r where R.BUILDING_NO = #PROD_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getDetailsForRoomDueArbitration" result-class="java.util.LinkedHashMap" > 
+        select R.ROOM_NO,R.NAME,NVL(ROOM_RENT_DUE(#BRANCH_CODE:VARCHAR#,R.ROOM_NO,R.ROOM_NO,#ASONDT:DATE#),0) as DUE_AMT,
+        NVL(ROOM_RENT_PENAL(#BRANCH_CODE:VARCHAR#,R.ROOM_NO,R.ROOM_NO,#ASONDT:DATE#),0) as PENAL_AMT
+        from RENT_REGISTER r where R.BUILDING_NO = #PROD_ID:VARCHAR# AND R.ROOM_NO BETWEEN #FROM_ACCT_NUM:VARCHAR# AND #TO_ACCT_NUM:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getArcRoomRentHeads" result-class="java.util.HashMap" >
+        SELECT RP.RENT_ARC_COST_AC_HD_ID AS ARC_COST ,RP.RENT_ARC_EXPENSE_AC_HD_ID AS ARC_EXPENSE
+        FROM RENT_PROFILE RP WHERE RP.BUILDING_NUM = #PROD_ID:VARCHAR#   
+    </mapped-statement>
+    
+    <mapped-statement name ="getLoanEPPenal" result-class="java.util.LinkedHashMap">   
+      select GET_TL_OD_INTEREST(#ACCT_NUM:VARCHAR#,#CURR_DATE:DATE#) AS PENAL from dual
+    </mapped-statement>
+    
+    <mapped-statement name ="getAdvanceEPPenal" result-class="java.util.LinkedHashMap">   
+      select GET_ADV_PEN_INT_APPLICATION(#ACCT_NUM:VARCHAR#,#CURR_DATE:DATE#) AS PENAL from dual
+    </mapped-statement>
+    
+    
+<dynamic-mapped-statement name="getOverDraftArbitrationAwardDetails" result-class="java.util.HashMap" >
+        Select distinct rep_loan_notice_two_AD.ACCT_NUM as ACT_NUM ,FNAME AS NAME,
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due,
+        LOAN_ARBITRATION.INT_DUE AS INT_DUE,
+        loan_arbitration.penal,   nvl((SELECT NVL (SUM (amount - NVL (paid_amt, 0)), 0)
+        FROM loans_acct_charge_details
+        WHERE act_num = rep_loan_notice_two_AD.ACCT_NUM AND status != 'DELETED' AND CHARGE_TYPE!='ARC_COST'),0) as charges,ARC_FEE,INSPECTOR_ORDER_DATE,
+        '0' as APP_FEE,'0' as SALES_FEE,ARC.BORROWER_FEE+ARC.JOINT_FEE AS POST_FEE,
+        nvl(( select ep_fee from EP_FEE_CONFIG where BORROWER_NO=( nvl(( select (count(*)+1) from LOANS_JOINT a join LOANS_BORROWER b on 
+        A.BORROW_NO=B.BORROW_NO
+        join LOANS_FACILITY_DETAILS f on F.BORROW_NO=B.BORROW_NO where F.ACCT_NUM=LOAN_ARBITRATION.ACT_NUM),0))),0) as ep_fee , LOAN_ARBITRATION.FILE_NO  
+        , LOAN_ARBITRATION.EP_ID,LOAN_ARBITRATION.LOAN_EP_NO,
+        LOANS_FACILITY_DETAILS.prod_id,
+        LOANS_FACILITY_DETAILS.ACCT_OPEN_DT,
+        GET_PRODUCT_BEHAVESLIKE(LOANS_FACILITY_DETAILS.prod_id) AS BEHAVES_LIKE
+        From rep_loan_notice_two_AD, LOANS_BORROWER,LOAN_ARBITRATION,LOANS_FACILITY_DETAILS,ARC_POSTAGE_FEE ARC 
+        where  
+        LOANS_BORROWER.BORROW_NO=rep_loan_notice_two_AD.BORROW_NO 
+        AND LOAN_ARBITRATION.ACT_NUM=rep_loan_notice_two_AD.ACCT_NUM
+        AND LOANS_FACILITY_DETAILS.ACCT_NUM=LOAN_ARBITRATION.ACT_NUM
+        AND LOANS_FACILITY_DETAILS.ACCT_STATUS!='CLOSED'
+        AND LOAN_ARBITRATION.INSPECTOR_ORDER_DATE is not null
+        AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND (LAST_NOTICE_SENT_DT IS NULL OR LAST_NOTICE_SENT_DT != #CURR_DATE:DATE#) AND ARC.PROD_TYPE='LOAN'
+        <dynamic>
+            <isNotEqual prepend="and" property="EDIT" compareValue="Y" >
+                LOAN_ARBITRATION.EP_DATE is null
+            </isNotEqual>
+            <isEqual prepend="and" property="EDIT" compareValue="Y" >
+                LOAN_ARBITRATION.EP_DATE is not null
+            </isEqual>
+        </dynamic> 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="act_num">
+                    UPPER(ACT_NUM) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal">
+                    UPPER(penal) LIKE UPPER('%$penal$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="due_amt">
+                    UPPER(PRINCIPAL_DUE) LIKE UPPER('%$due_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="penal_amt">
+                    UPPER(int_due) LIKE UPPER('%$penal_amt$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="charge">
+                    UPPER(charges) LIKE UPPER('%$charge$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="arc_fee">
+                    UPPER(arc_fee) LIKE UPPER('%$arc_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="inspector_order_date">
+                    UPPER(inspector_order_date) LIKE UPPER('%$inspector_order_date$%')
+                </isNotNull>
+            </isParameterPresent>
+                     <isParameterPresent>
+                <isNotNull prepend="AND"      property="app_fee">
+                    UPPER(EP_APP_FEE) LIKE UPPER('%$app_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="sales_fee">
+                    UPPER(EP_SALES_FEE) LIKE UPPER('%$sales_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                  <isParameterPresent>
+                <isNotNull prepend="AND"      property="post_fee">
+                    UPPER(EP_POSTAGE_FEE) LIKE UPPER('%$post_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_fee">
+                    UPPER(EP_FEE) LIKE UPPER('%$ep_fee$%')
+                </isNotNull>
+            </isParameterPresent>
+                 <isParameterPresent>
+                <isNotNull prepend="AND"      property="file_no">
+                    UPPER(file_no) LIKE UPPER('%$file_no$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ep_id">
+                    UPPER(ep_id) LIKE UPPER('%$ep_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="arb_type">
+                    UPPER(arb_type) LIKE UPPER('%$arb_type$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+            ORDER BY ACT_NUM
+    </dynamic-mapped-statement>  
+    
+    
+      
+</sql-map>
+        

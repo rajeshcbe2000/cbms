@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="LockMap">
+
+<!--
+    Document   : SalaryDeductionMappingMap.xml
+    Created on : June 13, 2012, 1:39 PM
+    Author     : Rajesh
+    Description:
+        Purpose of the document follows.
+-->
+
+    <result-map name="getAccProductresultAD" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="Lock.getAccProductAD" result-map="getAccProductresultAD">
+        SELECT LOANS_PRODUCT.PROD_ID AS PROD_ID, LOANS_PRODUCT.PROD_DESC AS PROD_DESC 
+        FROM LOANS_PRODUCT
+        WHERE BEHAVES_LIKE IN ('OD', 'CC', 'BILLS')
+        AND STATUS !='DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND ACCT_HEAD IN (select ac_hd_id from ac_hd_param where CR_CASH='Y' OR CR_CASH='Y')
+    </mapped-statement>
+        
+    <result-map name="getAccountResultListAD" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="Category" column="CATEGORY"/>
+        <property name="lockStatus" column="LOCKSTATUS"/>
+    </result-map>
+    <dynamic-mapped-statement name="Lock.getAccountListAD" result-map="getAccountResultListAD" >
+        SELECT
+        LFD.ACCT_NUM as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME, 
+        LB.CATEGORY as CATEGORY ,LFD.LOCK_STATUS AS LOCKSTATUS
+        FROM LOANS_BORROWER LB, CUSTOMER CU, CUST_ADDR CA, LOANS_FACILITY_DETAILS LFD
+        WHERE LB.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND LFD.SALARY_RECOVERY ='Y' AND
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID:VARCHAR# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+            <!--LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' AND -->
+        LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#   
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    LFD.ACCT_NUM=#ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKSTATUS">
+                    UPPER(LFD.LOCK_STATUS) LIKE UPPER('%$LOCKSTATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         ORDER BY LFD.ACCT_NUM
+    </dynamic-mapped-statement>
+        
+    <result-map name="getAccProductresultMDS" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="SCHEME_NAME" />
+        <property name="lookUpDesc" column="SCHEME_DESC" />
+    </result-map>
+    <mapped-statement name="Lock.getAccProductMDS" result-map="getAccProductresultMDS">
+		SELECT DISTINCT ms.scheme_name, ms.scheme_desc
+		FROM mds_product_general_details mp, mds_scheme_details ms, day_end de
+		WHERE mp.prod_id = ms.prod_id
+		AND ms.status NOT IN ('DELETED','CLOSED')
+		AND ms.authorized_status = 'AUTHORIZED'
+		AND DE.CURR_APPL_DT &lt;= MS.SCHEME_END_DT
+		order by ms.scheme_desc
+    </mapped-statement>
+    
+    <mapped-statement name="Lock.getAccProductMDSLIEN" result-map="getAccProductresultMDS">
+	    SELECT   DISTINCT msd.scheme_desc, MSD.SCHEME_NAME FROM mds_application ma JOIN mds_scheme_details msd ON msd.scheme_name = ma.scheme_name
+	    JOIN mds_trans_details mtd ON mtd.chittal_no = ma.chittal_no JOIN share_acct sa ON sa.share_acct_no = ma.member_no
+	    JOIN customer c ON c.cust_id = sa.cust_id WHERE mtd.authorize_status = 'AUTHORIZED' AND MSD.STATUS != 'CLOSED'
+	    AND ma.authorize_status = 'AUTHORIZED' AND NOT EXISTS (SELECT * FROM mds_prized_money_details mpd WHERE mpd.chittal_no = ma.chit_no) AND NOT EXISTS(SELECT * FROM MDS_APPLICATION MA WHERE MA.LOAN_GIVEN != 'Y' AND MA.LOAN_STATUS!= 'NEW') 
+	    AND  sa.cust_id = #cust_id:varchar#
+    </mapped-statement>
+       
+    <result-map name="getAccProductresultTD" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>
+    <mapped-statement name="Lock.getAccProductTD" result-map="getAccProductresultTD">
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' AND BEHAVES_LIKE ='RECURRING'
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+    </mapped-statement>
+        
+    <result-map name="getAccProductresultTL" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="Lock.getAccProductTL" result-map="getAccProductresultTL">
+        SELECT LOANS_PRODUCT.PROD_ID AS PROD_ID, LOANS_PRODUCT.PROD_DESC AS PROD_DESC 
+        FROM LOANS_PRODUCT
+        WHERE BEHAVES_LIKE NOT IN ('OD', 'CC') AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND
+        ACCT_HEAD IN (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+    </mapped-statement>
+        
+    <result-map name="getAccountResultListTD" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+            <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="ProductType" column="TYPE"/>
+        <property name="Amount" column="AMOUNT"/>
+        <property name="lockStatus" column="LOCKSTATUS"/>
+            <!--<property name="ReminingAmount" column="REMINING_AMT"/> -->           
+    </result-map>
+    <dynamic-mapped-statement name="Lock.getAccountListTD" result-map="getAccountResultListTD" >
+        SELECT DA.DEPOSIT_NO as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTOMER_NAME, CA.STREET AS HOUSE_NAME,  DP.BEHAVES_LIKE AS TYPE, DS.DEPOSIT_AMT AS AMOUNT,DS.LOCK_STATUS AS LOCKSTATUS
+        FROM DEPOSIT_ACINFO DA, 
+        CUSTOMER CU, CUST_ADDR CA,DEPOSIT_SUB_ACINFO DS, DEPOSITS_PRODUCT DP WHERE DA.CUST_ID = CU.CUST_ID AND 
+        CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND DS.SALARY_RECOVERY='Y'  AND DS.ACCT_STATUS!='CLOSED' AND
+        DP.PROD_ID = DA.PROD_ID AND DA.PROD_ID = #PROD_ID:VARCHAR# AND DA.DEPOSIT_NO=DS.DEPOSIT_NO AND DP.BEHAVES_LIKE != 'DAILY' AND 
+        (DS.DEPOSIT_AMT > (NVL(DS.CLEAR_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0) -
+        NVL(DS.SHADOW_DEBIT,0)) OR DP.BEHAVES_LIKE = 'RECURRING') AND (DS.ACCT_STATUS IN 
+        ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND DS.STATUS NOT IN 
+        ('DELETED') AND DS.AUTHORIZE_STATUS='AUTHORIZED' AND DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+        <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(DA.DEPOSIT_NO) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="TYPE">
+                    UPPER(DP.BEHAVES_LIKE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="emp_refno_new">
+                    UPPER(Lsa.emp_refno_new) LIKE UPPER('%$emp_refno_new$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKSTATUS">
+                    UPPER(LFD.LOCK_STATUS) LIKE UPPER('%$LOCKSTATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(DS.DEPOSIT_AMT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+           </dynamic>
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+        
+    <result-map name="getAccountResultListTL" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="Category" column="CATEGORY"/>
+        <property name="lockStatus" column="LOCKSTATUS"/>
+        <property name="ClockNo" column="EMP_REFNO_NEW"/>
+    </result-map>
+    <dynamic-mapped-statement name="Lock.getAccountListTL" result-map="getAccountResultListTL" >
+        SELECT
+        DISTINCT(LFD.ACCT_NUM) <!--|| '_' || LRS.SCHEDULE_NO --> as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME, sa.emp_refno_new,
+        LB.CATEGORY as CATEGORY ,LFD.LOCK_STATUS AS LOCKSTATUS 
+        FROM LOANS_BORROWER LB, CUSTOMER CU, CUST_ADDR CA, LOANS_FACILITY_DETAILS LFD, LOANS_REPAY_SCHEDULE LRS,LOANS_ACCT_CHARGE_DETAILS LACD,SHARE_ACCT SA
+        WHERE LB.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND SA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE  AND
+        LB.BORROW_NO = LFD.BORROW_NO AND LFD.ACCT_STATUS!='CLOSED' AND
+        LFD.PROD_ID = #PROD_ID:VARCHAR# AND LFD.SALARY_RECOVERY='Y' AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+           <!-- AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->  AND 
+        LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR# AND
+        LRS.ACCT_NUM = LFD.ACCT_NUM AND (LFD.ACCT_STATUS !='CLOSED') AND
+        (LRS.STATUS NOT IN ('DELETED') OR LRS.STATUS IS NULL)AND 
+        LRS.REPAY_ACTIVE = 'Y' AND
+        LFD.ACCT_NUM=LACD.ACT_NUM(+)
+           
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="PAYMENT">
+                       <!--(LFD.LOAN_BALANCE_PRINCIPAL&lt;0 OR 
+                        LFD.AVAILABLE_BALANCE&gt;0)-->
+                    LFD.AVAILABLE_BALANCE&gt;0
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="RECEIPT">
+                        <!--LFD.CLEAR_BALANCE&lt;0-->
+                    ( LFD.CLEAR_BALANCE &lt; 0  OR 0 &lt; (SELECT SUM (NVL(AMOUNT,0)-NVL(PAID_AMT,0)) AS CHARGE_AMT FROM LOANS_ACCT_CHARGE_DETAILS WHERE   ACT_NUM=LFD.ACCT_NUM
+                    AND STATUS !='DELETED'))
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    LFD.ACCT_NUM=#ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="emp_refno_new">
+                    UPPER(Lsa.emp_refno_new) LIKE UPPER('%$emp_refno_new$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKSTATUS">
+                    UPPER(LFD.LOCK_STATUS) LIKE UPPER('%$LOCKSTATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY 1
+    </dynamic-mapped-statement>
+       
+    <result-map name="getAccountResultListMDS" class="java.util.LinkedHashMap">
+        <property name="chittalNo" column="ACT_NUM"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="lockStatus" column="LOCKSTATUS"/>
+            <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+            <!--<property name="ReminingAmount" column="REMINING_AMT"/> -->           
+    </result-map>
+        
+     <dynamic-mapped-statement name="Lock.getAccountListMDS" result-map="getAccountResultListMDS" >
+         <!--SELECT CHITTAL_NO as ACT_NUM,MEMBER_NAME,LOCK_STATUS AS LOCKSTATUS
+         FROM MDS_MASTER_MAINTENANCE   
+         WHERE SCHEME_NAME=#PROD_ID# AND SALARY_RECOVERY='Y'AND STATUS NOT IN('DELETED') AND AUTHORIZED_STATUS='AUTHORIZED' AND BRANCH_CODE = #SELECTED_BRANCH# -->
+         
+        SELECT MM.CHITTAL_NO as ACT_NUM,MM.MEMBER_NAME,MM.LOCK_STATUS AS LOCKSTATUS 
+        FROM MDS_MASTER_MAINTENANCE  MM, MDS_SCHEME_DETAILS MSD,
+        (SELECT CHITTAL_NO, SUM(NO_OF_INST) NO_OF_INST FROM MDS_TRANS_DETAILS
+        WHERE  SCHEME_NAME=#PROD_ID:VARCHAR# GROUP BY CHITTAL_NO) A
+        WHERE MM.SCHEME_NAME=#PROD_ID:VARCHAR# AND MM.SALARY_RECOVERY='Y'AND MM.STATUS NOT IN('DELETED') AND 
+        MM.AUTHORIZED_STATUS='AUTHORIZED' AND MM.BRANCH_CODE =  #SELECTED_BRANCH:VARCHAR# AND MM.SCHEME_NAME=MSD.SCHEME_NAME
+        AND A.CHITTAL_NO=MM.CHITTAL_NO AND A.NO_OF_INST &lt;= MSD.NO_OF_INSTALLMENTS
+           <dynamic>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(MM.CHITTAL_NO) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMBER_NAME">
+                    UPPER(MM.MEMBER_NAME) LIKE UPPER('%$MEMBER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKSTATUS">
+                    UPPER(MM.LOCK_STATUS) LIKE UPPER('%$LOCKSTATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="setLockStatusForMDS" result-map="java.util.HashMap" >
+        UPDATE MDS_MASTER_MAINTENANCE SET LOCK_STATUS = #LOCK_STATUS:VARCHAR#
+        WHERE CHITTAL_NO=#ACT_NUM:VARCHAR# AND SALARY_RECOVERY='Y'
+    </mapped-statement>
+        
+    <mapped-statement name="setLockStatusForTD" result-map="java.util.HashMap" >
+        UPDATE DEPOSIT_SUB_ACINFO SET LOCK_STATUS = #LOCK_STATUS:VARCHAR#
+        WHERE DEPOSIT_NO=#ACT_NUM:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="setLockStatusForTL" result-map="java.util.HashMap" >
+        UPDATE LOANS_FACILITY_DETAILS SET LOCK_STATUS = #LOCK_STATUS:VARCHAR#
+        WHERE ACCT_NUM =#ACT_NUM:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="setLockStatusForAllMDS" result-map="java.util.HashMap" >
+        UPDATE MDS_MASTER_MAINTENANCE SET LOCK_STATUS = #LOCK_STATUS:VARCHAR# WHERE NVL(SALARY_RECOVERY,'N')='Y' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="setLockStatusForAllTD" result-map="java.util.HashMap" >
+        UPDATE DEPOSIT_SUB_ACINFO DSA SET LOCK_STATUS = #LOCK_STATUS:VARCHAR# WHERE NVL(SALARY_RECOVERY,'N')='Y' AND EXISTS (SELECT * FROM DEPOSIT_ACINFO 
+        WHERE DEPOSIT_NO=DSA.DEPOSIT_NO AND BRANCH_ID=#BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="setLockStatusForAllTL" result-map="java.util.HashMap" >
+        UPDATE  LOANS_FACILITY_DETAILS SET LOCK_STATUS = #LOCK_STATUS:VARCHAR# WHERE NVL(SALARY_RECOVERY,'N')='Y' AND BRANCH_ID=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getAccountNumberNameMDS" result-class="java.util.HashMap" >
+        SELECT get_cust_name(c.cust_id) AS MEMBER_NAME, MMM.MEMBER_NO AS MEMBERSHIP_NO, MA.HOUSE_ST || ', ' || AREA || ', ' || MA.CITY AS ADDRESS  
+        FROM MDS_MASTER_MAINTENANCE MMM, MDS_APPLICATION MA, CUSTOMER C WHERE MMM.CHITTAL_NO=#ACC_NUM:VARCHAR#
+        AND MA.CUST_ID = C.CUST_ID AND MMM.SCHEME_NAME=MA.SCHEME_NAME AND MA.CHITTAL_NO=MMM.CHITTAL_NO AND MMM.STATUS!='DELETED' AND MMM.AUTHORIZED_STATUS='AUTHORIZED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getProdIdForActNoMDS" result-class="java.util.HashMap">
+        SELECT SCHEME_NAME AS PROD_ID FROM MDS_MASTER_MAINTENANCE WHERE
+        CHITTAL_NO =#ACC_NUM:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="getAccountNos" result-class="java.util.HashMap">
+        SELECT AP.PROD_TYPE,AP.PROD_ID,AP.ACT_NUM,AC.FNAME AS NAME FROM ALL_PRODUCT_ACCTS AP,ALL_CUSTOMER AC WHERE (AC.ACT_NUM=AP.ACT_NUM OR
+        AC.ACT_NUM=AP.REP_ACT_NUM) AND
+        AP.SALARY_RECOVERY =#SALARY_RECOVERY:VARCHAR# AND (AP.PROD_TYPE='TD' OR AP.PROD_TYPE='TL' OR AP.PROD_TYPE='MDS' OR AP.PROD_TYPE='AD')  AND BRANCH_ID=#BRANCH_CODE:VARCHAR#          
+    </mapped-statement>
+         
+    <dynamic-mapped-statement name="getAllLockedAccounts" result-class="java.util.HashMap" >       
+        select el.record_key,el.locked_by,sm.screen_name from EDIT_LOCK el,  
+        ALL_PRODUCT_ACCTS ap,screen_master sm 
+        where el.cur_date = #CURR_DT:DATE# 
+        and el.branch_id = #BRANCH_CODE:VARCHAR#
+        and el.record_key = ap.act_num 
+        and sm.screen_id = el.screen_id
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend= "AND"  property="RECORD_KEY">
+                    EL.RECORD_KEY = #RECORD_KEY:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>   
+                  
+        
+         
+</sql-map>

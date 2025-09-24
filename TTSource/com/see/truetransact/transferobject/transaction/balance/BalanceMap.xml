@@ -1,0 +1,1061 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BalanceMap">	
+    <mapped-statement name="getLoanProductDetails" result-class="java.util.HashMap">
+        SELECT   prod_id as product_id, prod_desc AS loan_products FROM LOANS_PRODUCT  WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' ORDER BY PROD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getLoanAccountDetailsList" result-class="java.util.LinkedHashMap">
+        WITH loan_os AS    
+        (SELECT lon.PROD_ID, lon.PROD_DESC, SUM(CASE WHEN NVL(lon.OPENING,0) &gt; 0 THEN 1 ELSE 0 END) AS OPNO,
+        SUM(lon.OPENING) AS OPENING, SUM(lon.PNOS) AS PAYNO, SUM(lon.PAYMENTS) AS PAYMENTS,
+        SUM(RNOS) AS RECNO, SUM(RECEIPTS) AS RECEIPTS,
+        SUM(CASE WHEN NVL((lon.OPENING + lon.PAYMENTS - lon.RECEIPTS),0) &gt; 0 THEN 1 ELSE 0 END) AS BALNO,
+        SUM(lon.OPENING + lon.PAYMENTS - lon.RECEIPTS) AS BALANCE, SUM(CASE WHEN NVL(lon.ODPRN,0) &gt; 0 THEN 1 ELSE 0 END) AS ODNO,
+        SUM(lon.ODPRN) AS ODAMT FROM
+        (    
+        SELECT LOANS_FACILITY_DETAILS.BRANCH_ID,LOANS_PRODUCT.PROD_ID,LOANS_PRODUCT.PROD_DESC,LOANS_FACILITY_DETAILS.ACCT_NUM,C.MEMBERSHIP_NO,
+        NVL((SELECT SUM(CASE WHEN T.TRANS_TYPE = 'DEBIT' THEN 1 ELSE -1 END * T.PRINCIPLE) 
+        FROM LOAN_TRANS_DETAILS T 
+        WHERE T.ACT_NUM = LOANS_FACILITY_DETAILS.ACCT_NUM AND
+        T.TRANS_DT &lt; #From_Date:DATE#),0) AS OPENING,
+        NVL((SELECT SUM(T.PRINCIPLE)
+        FROM LOAN_TRANS_DETAILS T
+        WHERE T.ACT_NUM = LOANS_FACILITY_DETAILS.ACCT_NUM AND
+        T.TRANS_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# AND
+        T.TRANS_TYPE = 'DEBIT'),0) AS PAYMENTS,
+        NVL((SELECT SUM(T.PRINCIPLE)
+        FROM LOAN_TRANS_DETAILS T
+        WHERE T.ACT_NUM = LOANS_FACILITY_DETAILS.ACCT_NUM AND
+        T.TRANS_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# AND
+        T.TRANS_TYPE = 'CREDIT'),0) AS RECEIPTS,
+        CASE WHEN LOANS_PRODUCT.BEHAVES_LIKE != 'LOANS_AGAINST_DEPOSITS' THEN 
+        GET_TL_INST_OD(LOANS_FACILITY_DETAILS.ACCT_NUM,#To_Date:DATE#) ELSE 0 END AS ODPRN,
+        CASE WHEN LOANS_SANCTION_DETAILS.FROM_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# THEN 1 ELSE 0 END AS PNOS,
+        CASE WHEN TO_DATE(LOANS_FACILITY_DETAILS.ACCT_CLOSE_DT) BETWEEN #From_Date:DATE# AND #To_Date:DATE# THEN 1 ELSE 0 END AS RNOS
+        FROM LOANS_FACILITY_DETAILS
+        JOIN LOANS_SANCTION_DETAILS ON LOANS_SANCTION_DETAILS.BORROW_NO = LOANS_FACILITY_DETAILS.BORROW_NO
+        JOIN LOANS_BORROWER B ON B.BORROW_NO = LOANS_SANCTION_DETAILS.BORROW_NO
+        JOIN CUSTOMER C ON C.CUST_ID = B.CUST_ID
+        JOIN LOANS_PRODUCT ON LOANS_PRODUCT.PROD_ID = LOANS_FACILITY_DETAILS.PROD_ID
+        WHERE LOANS_FACILITY_DETAILS.BRANCH_ID = NVL(#BRANCH_CODE:VARCHAR# ,LOANS_FACILITY_DETAILS.BRANCH_ID) AND
+        LOANS_PRODUCT.PROD_ID IN ($PROD_ID$) AND
+        (LOANS_SANCTION_DETAILS.FROM_DT &lt;= #From_Date:DATE# OR LOANS_SANCTION_DETAILS.FROM_DT &lt;= #To_Date:DATE#) AND
+        (LOANS_FACILITY_DETAILS.ACCT_CLOSE_DT IS NULL OR LOANS_FACILITY_DETAILS.ACCT_CLOSE_DT &gt;= #From_Date:DATE#) AND
+        LOANS_PRODUCT.BEHAVES_LIKE != 'OD'
+        UNION ALL
+        SELECT LOANS_FACILITY_DETAILS.BRANCH_ID,LOANS_PRODUCT.PROD_ID,LOANS_PRODUCT.PROD_DESC,
+        LOANS_FACILITY_DETAILS.ACCT_NUM,C.MEMBERSHIP_NO,
+        NVL((SELECT SUM(CASE WHEN T.TRANS_TYPE = 'DEBIT' THEN 1 ELSE -1 END * T.PRINCIPLE) 
+        FROM ADV_TRANS_DETAILS T 
+        WHERE T.ACT_NUM = LOANS_FACILITY_DETAILS.ACCT_NUM AND
+        T.TRANS_DT &lt; #From_Date:DATE#),0) AS OPENING,
+        NVL((SELECT SUM(T.PRINCIPLE)
+        FROM ADV_TRANS_DETAILS T
+        WHERE T.ACT_NUM = LOANS_FACILITY_DETAILS.ACCT_NUM AND
+        T.TRANS_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# AND
+        T.TRANS_TYPE = 'DEBIT'),0) AS PAYMENTS,
+        NVL((SELECT SUM(T.PRINCIPLE)
+        FROM ADV_TRANS_DETAILS T
+        WHERE T.ACT_NUM = LOANS_FACILITY_DETAILS.ACCT_NUM AND
+        T.TRANS_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# AND
+        T.TRANS_TYPE = 'CREDIT'),0) AS RECEIPTS,
+        CASE WHEN LOANS_SANCTION_DETAILS.TO_DT &lt;= #To_Date:DATE# THEN GET_ADV_BALANCE(LOANS_FACILITY_DETAILS.ACCT_NUM,#To_Date:DATE#) ELSE 0 END AS ODPRN,
+        CASE WHEN LOANS_SANCTION_DETAILS.FROM_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# THEN 1 ELSE 0 END AS PNOS,
+        CASE WHEN TO_DATE(LOANS_FACILITY_DETAILS.ACCT_CLOSE_DT) BETWEEN #From_Date:DATE# AND #To_Date:DATE# THEN 1 ELSE 0 END AS RNOS                                          
+        FROM LOANS_FACILITY_DETAILS
+        JOIN LOANS_SANCTION_DETAILS ON LOANS_SANCTION_DETAILS.BORROW_NO = LOANS_FACILITY_DETAILS.BORROW_NO
+        JOIN LOANS_BORROWER B ON B.BORROW_NO = LOANS_SANCTION_DETAILS.BORROW_NO
+        JOIN CUSTOMER C ON C.CUST_ID = B.CUST_ID
+        JOIN LOANS_PRODUCT ON LOANS_PRODUCT.PROD_ID = LOANS_FACILITY_DETAILS.PROD_ID
+        WHERE LOANS_PRODUCT.BEHAVES_LIKE = 'OD' AND 
+        LOANS_FACILITY_DETAILS.BRANCH_ID = NVL(#BRANCH_CODE:VARCHAR#,LOANS_FACILITY_DETAILS.BRANCH_ID) AND 
+        LOANS_PRODUCT.PROD_ID IN ($PROD_ID$) AND
+        (LOANS_SANCTION_DETAILS.FROM_DT &lt;= #From_Date:DATE# OR LOANS_SANCTION_DETAILS.FROM_DT &lt;= #To_Date:DATE#) AND
+        (LOANS_FACILITY_DETAILS.ACCT_CLOSE_DT IS NULL OR LOANS_FACILITY_DETAILS.ACCT_CLOSE_DT &gt;= #From_Date:DATE#)
+        ) lon GROUP BY lon.PROD_ID,lon.PROD_DESC
+        ORDER BY PROD_ID )   
+        SELECT 
+        PROD_ID, PROD_DESC,  OPNO,
+        OPENING,  PAYNO,  PAYMENTS,
+        RECNO,  RECEIPTS, BALNO,  BALANCE,  ODNO,     ODAMT
+        from loan_os 
+        UNION ALL
+        SELECT 
+        null AS PROD_ID,'Grand Total' AS PROD_DESC, SUM(OPNO) AS OPNO,
+        SUM(OPENING) AS OPENING, SUM(PAYNO) AS PAYNO, SUM(PAYMENTS) AS PAYMENTS,
+        SUM(RECNO) AS RECNO, SUM(RECEIPTS) AS RECEIPTS,
+        SUM(BALNO) AS BALNO, SUM(BALANCE) AS BALANCE, SUM(ODNO) AS ODNO,
+        SUM(ODAMT) AS ODAMT 
+        FROM  loan_os 
+        ORDER BY PROD_ID   
+    </mapped-statement>
+    <!--2-->    
+    <mapped-statement name="getShareProductDetails" result-class="java.util.HashMap">
+        select LOOKUP_REF_ID,LOOKUP_DESC from 
+        (SELECT LM.LOOKUP_REF_ID ,LM.LOOKUP_DESC ,'1S' as Tag FROM SHARE_CONF_DETAILS SCD,LOOKUP_MASTER LM 
+        WHERE SCD.SHARE_TYPE = LM.LOOKUP_REF_ID AND  LM.STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND LM.LOOKUP_ID = 'SHARE_TYPE' AND   (SCD.SHARE_ACHD like '1%' or SCD.SHARE_ACHD like'2%')  
+        UNION
+        SELECT LOOKUP_REF_ID,LOOKUP_DESC,Tag FROM (SELECT BORROWING_NO AS LOOKUP_REF_ID,DESCRIPTION AS LOOKUP_DESC,'2B' as Tag FROM BORROWING_MASTER 
+        WHERE type ='SHARE' AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' ORDER BY BORROWING_NO))
+        order by Tag,LOOKUP_REF_ID,LOOKUP_DESC
+    </mapped-statement>
+    
+    <mapped-statement name="getShareAccountDetailsList" result-class="java.util.LinkedHashMap">
+        WITH share_os AS
+        (SELECT s.share_type, s.share_acct_no,
+        NVL ((SELECT SUM (  CASE
+        WHEN sad.share_no_from = 'ADD'
+        THEN 1
+        ELSE -1
+        END
+        * sad.share_value
+        )
+        FROM SHARE_ACCT_DETAILS SAD
+        WHERE sad.share_acct_no = s.share_acct_no
+        AND sad.status_dt &lt; #From_Date:DATE#
+        AND sad.authorize = 'AUTHORIZED'
+        AND sad.status != 'DELETED'),
+        0
+        ) AS opening,
+        NVL
+        ((SELECT SUM (  CASE
+        WHEN sad.share_no_from = 'ADD'
+        THEN 1
+        ELSE 0
+        END
+        * sad.share_value
+        )
+        FROM SHARE_ACCT_DETAILS SAD
+        WHERE sad.share_acct_no = s.share_acct_no
+        AND sad.status_dt BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        AND sad.authorize = 'AUTHORIZED'
+        AND sad.status != 'DELETED'),
+        0
+        ) AS receipts,
+        NVL
+        ((SELECT SUM (  CASE
+        WHEN sad.share_no_from = 'WITHDRAWAL'
+        THEN 1
+        ELSE 0
+        END
+        * sad.share_value
+        )
+        FROM SHARE_ACCT_DETAILS SAD
+        WHERE sad.share_acct_no = s.share_acct_no
+        AND sad.status_dt BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        AND sad.authorize = 'AUTHORIZED'
+        AND sad.status != 'DELETED'),
+        0
+        ) AS payments,
+        (SELECT MIN(SAD.STATUS_DT)
+        FROM SHARE_ACCT_DETAILS SAD 
+        WHERE sad.share_acct_no = s.share_acct_no
+        AND sad.authorize = 'AUTHORIZED'
+        AND sad.status != 'DELETED') first_dt,
+        (SELECT MAX(SAD.STATUS_DT)
+        FROM SHARE_ACCT_DETAILS SAD 
+        WHERE sad.share_acct_no = s.share_acct_no
+        AND sad.authorize = 'AUTHORIZED'
+        AND sad.status != 'DELETED') last_dt
+        FROM share_acct s JOIN share_conf_details scd
+        ON scd.share_type = s.share_type
+        WHERE s.share_acct_no IS NOT NULL
+        AND s.branch_code = NVL (#BRANCH_CODE:VARCHAR#, s.branch_code)
+        AND (scd.SHARE_ACHD like '1%' or scd.SHARE_ACHD like'2%') 
+        AND s.share_type IN ($PROD_ID$)
+        AND s.created_dt &lt;=  #To_Date:DATE#),
+        SHARE_OS1 AS
+     
+        (SELECT share_type, share_acct_no, opening, receipts,
+        payments, first_dt, last_dt
+        FROM SHARE_OS
+        WHERE opening!= 0 OR receipts !=0 OR payments != 0),
+        SHARE_OS2 AS
+        (SELECT share_type, share_acct_no,
+        CASE
+        WHEN opening &gt; 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN first_dt BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos, receipts,
+        CASE
+        WHEN (opening + receipts - payments) = 0
+        AND last_dt BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        payments,
+        CASE
+        WHEN (opening + receipts - payments) != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + receipts - payments) AS balance
+        FROM share_os1),
+        b_os AS
+        (SELECT bor.agency, bor.description, bor.sanction_date,
+        bor.sanction_exp_date, bor.rate_interest, bor.opening,
+        bor.payments, bor.receipts, bor.int_payable
+        FROM (SELECT b.borrowing_no, b.borrwing_refno, b.description,
+        b.sanction_date, b.sanction_exp_date, b.rate_interest,
+        NVL ((SELECT SUM (d.amount_borrwed)
+        FROM borrowing_disbursal d
+        WHERE d.borrowing_no = b.borrowing_no
+        AND d.authorized_dt &lt; #From_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'),
+        0
+        )
+        - NVL ((SELECT SUM (NVL (bri.principal_repaid, 0))
+        FROM borrowing_rep_int_cls bri
+        WHERE bri.borrowing_no = b.borrowing_no
+        --AND bri.borrwing_refno = b.borrwing_refno
+        AND bri.authorized_dt &lt;   #From_Date:DATE#
+        AND bri.authorize_status = 'AUTHORIZED'
+        AND bri.status != 'DELETED'),
+        0
+        ) AS opening,
+        NVL ((SELECT SUM (d.amount_borrwed)
+        FROM borrowing_disbursal d
+        WHERE d.borrowing_no = b.borrowing_no
+        AND d.authorized_dt &gt;=  #From_Date:DATE# 
+        AND d.authorized_dt &lt;=   #To_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'),
+        0
+        ) AS payments,
+        NVL ((SELECT SUM (r.principal_repaid)
+        FROM borrowing_rep_int_cls r
+        WHERE r.borrowing_no = b.borrowing_no
+        AND r.authorized_dt &gt;= #From_Date:DATE# 
+        AND r.authorized_dt &lt;= #To_Date:DATE#
+        AND r.authorize_status = 'AUTHORIZED'),
+        0
+        ) AS receipts,
+        0 AS int_payable, ba.agency
+        FROM borrowing_master b LEFT JOIN borrowing_agency ba
+        ON ba.agency_id = b.agency_code
+        WHERE b.authorize_status = 'AUTHORIZED' AND TYPE ='SHARE'
+        AND b.status != 'DELETED'
+        and b.borrowing_no in($PROD_ID$)
+        AND (b.sanction_date &lt;=  #To_Date:DATE#  )) bor
+        WHERE bor.opening !=0 OR  bor.payments !=0 OR bor.receipts != 0)
+        SELECT   MAX (l.lookup_desc) AS  description,
+        SUM(S.OP_NOS) AS OP_NOS,SUM(S.OPENING) AS OPENING,
+        SUM(S.REC_NOS) AS REC_NOS,SUM(S.RECEIPTS) AS RECEIPTS,
+        SUM(S.PAY_NOS) AS PAY_NOS,SUM(S.PAYMENTS) AS PAYMENTS,
+        SUM(S.BAL_NOS) AS BAL_NOS,SUM(S.BALANCE) AS BALANCE
+        FROM share_os2 s JOIN lookup_master l
+        ON l.lookup_id = 'SHARE_TYPE' AND l.lookup_ref_id = s.share_type
+        GROUP BY S.SHARE_TYPE
+        UNION ALL
+        SELECT  description, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS receipts,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS payments,
+        SUM (bal_nos) AS bal_nos, SUM (balance) AS balance
+        FROM (SELECT description, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN sanction_date &lt;= #From_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos, payments AS receipts,
+        CASE
+        WHEN opening + payments - receipts = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        receipts AS payments,
+        CASE
+        WHEN opening + payments - receipts != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + payments - receipts) AS balance
+        FROM b_os)
+        GROUP BY description 
+        UNION ALL
+        SELECT 'Grand Total' AS  description,
+        SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS receipts,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS payments,
+        SUM (bal_nos) AS bal_nos, SUM (balance) AS balance
+        FROM 
+        (SELECT  MAX (l.lookup_desc) AS  description,
+        SUM (s.op_nos) AS op_nos, SUM (s.opening) AS opening,
+        SUM (s.rec_nos) AS rec_nos, SUM (s.receipts) AS receipts,
+        SUM (s.pay_nos) AS pay_nos, SUM (s.payments) AS payments,
+        SUM (s.bal_nos) AS bal_nos, SUM (s.balance) AS balance
+        FROM share_os2 s JOIN lookup_master l
+        ON l.lookup_id = 'SHARE_TYPE' AND l.lookup_ref_id = s.share_type
+        GROUP BY s.share_type   
+        UNION ALL
+        SELECT  description, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS receipts,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS payments,
+        SUM (bal_nos) AS bal_nos, SUM (balance) AS balance
+        FROM (SELECT description, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN sanction_date &lt;= #From_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos, payments AS receipts,
+        CASE
+        WHEN opening + payments - receipts = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        receipts AS payments,
+        CASE
+        WHEN opening + payments - receipts != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + payments - receipts) AS balance
+        FROM b_os)
+        GROUP BY description )GRNDTOT
+    </mapped-statement>
+    <!--3-->    
+    <mapped-statement name="getDepositProductDetails" result-class="java.util.HashMap">
+        <!--SELECT PROD_ID,PROD_DESC FROM DEPOSITS_PRODUCT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' ORDER BY PROD_ID-->    
+        select * from (SELECT PROD_ID,PROD_DESC FROM DEPOSITS_PRODUCT WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' ORDER BY PROD_ID) UNION select * from (SELECT PROD_ID,PROD_DESC FROM  OP_AC_PRODUCT WHERE STATUS != 'DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED'  ORDER BY PROD_ID)
+
+
+    </mapped-statement>
+    <mapped-statement name="getbranches" result-class="java.util.HashMap">
+        SELECT DISTINCT BRANCH_CODE FROM BRANCH_MASTER 	order by branch_code
+    </mapped-statement>
+    <mapped-statement name="getDepositAccountDetailsList" result-class="java.util.LinkedHashMap">
+        WITH DEPS AS(
+        SELECT M.BRANCH_CODE AS BRANCH_ID,M.PROD_ID,M.ACT_NUM,
+        M.CREATE_DT AS DEP_DATE,
+        TO_DATE(TO_CHAR(M.CLOSED_DT,'dd/MM/yyyy'),'dd/MM/yyyy') AS CLOSED_DT,OA.AC_HD_ID,
+        NULL AS LINK_ID,OA.BEHAVIOR,M.CREATE_DT AS WEF
+        FROM ACT_MASTER M
+        JOIN OP_AC_PRODUCT OA ON OA.PROD_ID = M.PROD_ID
+        WHERE M.BRANCH_CODE = NVL(#BRANCH_CODE:VARCHAR#,M.BRANCH_CODE) AND 
+        OA.PROD_DESC IN ($PROD_ID$) AND
+        M.CREATE_DT &lt;= #To_Date:DATE# AND
+        (M.CLOSED_DT IS NULL OR TO_DATE(TO_CHAR(M.CLOSED_DT,'dd/MM/yyyy'),'dd/MM/yyyy') &gt;= #From_Date:DATE#) AND
+        (M.AUTHORIZATION_STATUS = 'AUTHORIZED' OR M.AUTHORIZATION_STATUS IS NULL )AND M.STATUS != 'DELETED'
+        UNION ALL
+        SELECT A.BRANCH_ID,A.PROD_ID,A.DEPOSIT_NO AS ACT_NUM,
+        A.CREATED_DT AS DEP_DATE,
+        TO_DATE(TO_CHAR(S.CLOSE_DT,'dd/MM/yyyy'),'dd/MM/yyyy') AS CLOSED_DT,P.ACCT_HEAD AS AC_HD_ID,
+        S.DEPOSIT_NO || '_' || S.DEPOSIT_SUB_NO AS LINK_ID,P.BEHAVES_LIKE AS BEHAVIOR,S.DEPOSIT_DT AS WEF
+        FROM DEPOSIT_ACINFO A
+        JOIN DEPOSIT_SUB_ACINFO S ON S.DEPOSIT_NO = A.DEPOSIT_NO
+        JOIN DEPOSITS_PRODUCT P ON P.PROD_ID = A.PROD_ID
+        WHERE A.BRANCH_ID = NVL(#BRANCH_CODE:VARCHAR#,A.BRANCH_ID) AND 
+        P.PROD_DESC  IN ($PROD_ID$) AND
+        A.CREATED_DT &lt;= #To_Date:DATE# AND
+        (S.CLOSE_DT IS NULL OR
+        (CASE WHEN S.TOTAL_BALANCE &gt; 0 THEN ADD_MONTHS(#From_Date:DATE#,1) 
+        ELSE TO_DATE(TO_CHAR(S.CLOSE_DT,'dd/MM/yyyy'),'dd/MM/yyyy') 
+        END &gt;= #From_Date:DATE#)) AND
+        (S.AUTHORIZE_STATUS = 'AUTHORIZED' OR S.AUTHORIZE_STATUS IS NULL) AND S.STATUS != 'DELETED'
+        ),
+        DEPS1 AS(
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        COUNT(D.ACT_NUM) AS OPNOS,
+        0 AS OPBAL,
+        0 AS RECNOS,0 AS RECAMT,0 AS PAYNOS,0 AS PAYAMT,0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM DEPS D
+        WHERE D.DEP_DATE &lt; #From_Date:DATE#
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,0 AS OPBAL,
+        COUNT(D.ACT_NUM) AS RECNOS,
+        0 AS RECAMT,0 AS PAYNOS,0 AS PAYAMT,0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM DEPS D
+        WHERE D.DEP_DATE BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,0 AS OPBAL,0 AS RECNOS,0 AS RECAMT,
+        COUNT(D.ACT_NUM) AS PAYNOS,
+        0 AS PAYAMT,0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM DEPS D
+        WHERE D.CLOSED_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,
+        SUM(AD.AMT) AS OPBAL,
+        0 AS RECNOS,0 AS RECAMT,0 AS PAYNOS,0 AS PAYAMT,0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM ACT_DAYEND_BALANCE AD
+        JOIN DEPS D ON D.ACT_NUM = AD.ACT_NUM
+        WHERE AD.DAY_END_DT =(SELECT MAX(ADB.DAY_END_DT)
+        FROM ACT_DAYEND_BALANCE ADB
+        WHERE ADB.ACT_NUM = D.ACT_NUM AND 
+        ADB.DAY_END_DT &lt; #From_Date:DATE#)
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,
+        SUM(DDB.AMT) AS OPBAL,
+        0 AS RECNOS,0 AS RECAMT,0 AS PAYNOS,0 AS PAYAMT,0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM DEPOSIT_DAYEND_BALANCE DDB
+        JOIN DEPS D ON D.ACT_NUM = DDB.ACT_NUM
+        WHERE DDB.DAY_END_DT = (SELECT MAX(DD.DAY_END_DT)
+        FROM DEPOSIT_DAYEND_BALANCE DD
+        WHERE DD.ACT_NUM = D.ACT_NUM AND
+        DD.DAY_END_DT &lt; #From_Date:DATE#)
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,0 AS OPBAL,
+        0 AS RECNOS,
+        NVL(SUM(CASE WHEN O.TRANS_TYPE = 'CREDIT' THEN O.AMOUNT ELSE 0 END),0) AS RECAMT,
+        0 AS PAYNOS,
+        NVL(SUM(CASE WHEN O.TRANS_TYPE = 'DEBIT' THEN O.AMOUNT ELSE 0 END),0) AS PAYAMT,
+        0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM OPERATIVE_AC_TRANS O 
+        JOIN DEPS D ON D.ACT_NUM = O.ACT_NUM AND D.AC_HD_ID = O.AC_HD_ID
+        WHERE O.TRANS_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,0 AS OPBAL,
+        0 AS RECNOS,
+        SUM(CASE WHEN T.TRANS_TYPE = 'CREDIT' THEN T.AMOUNT ELSE 0 END) AS RECAMT,
+        0 AS PAYNOS,
+        SUM(CASE WHEN T.TRANS_TYPE = 'DEBIT' THEN T.AMOUNT ELSE 0 END) AS PAYAMT,
+        0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM ALL_TRANS T
+        JOIN DEPS D ON D.LINK_ID = NVL(T.ACT_NUM,T.LINK_BATCH_ID) AND D.AC_HD_ID = T.AC_HD_ID
+        WHERE T.TRANS_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# AND 
+        T.AUTHORIZE_STATUS = 'AUTHORIZED' AND T.STATUS != 'DELETED'
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,0 AS OPBAL,0 AS RECNOS,
+        SUM(DDT.AMOUNT) AS RECAMT,0 AS PAYNOS,0 AS PAYAMT,
+        0 AS INT_PAID,0 AS INT_PAYABLE
+        FROM DAILY_DEPOSIT_TRANS DDT
+        JOIN DEPS D ON D.LINK_ID = DDT.ACC_NUM
+        WHERE DDT.TRN_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE# AND
+        DDT.AUTHORIZE_STATUS = 'AUTHORIZED' AND DDT.STATUS != 'DELETED'
+        GROUP BY D.BRANCH_ID,D.PROD_ID,D.ACT_NUM
+        UNION ALL
+        SELECT D.BRANCH_ID,D.PROD_ID,D.ACT_NUM,
+        0 AS OPNOS,0 AS OPBAL,0 AS RECNOS,
+        0 AS RECAMT,0 AS PAYNOS,0 AS PAYAMT,
+        0 AS INT_PAID,
+        0 AS INT_PAYABLE
+        FROM DEPS D  
+        ),
+        DEPS2 AS(
+        SELECT MAX(A.PROD_DESC) AS PROD_DESC,
+        SUM(D.OPNOS) AS OPNOS,SUM(D.OPBAL) AS OPBAL,
+        SUM(D.RECNOS) AS RECNOS,SUM(D.RECAMT) AS RECAMT,
+        SUM(D.PAYNOS) AS PAYNOS,SUM(D.PAYAMT) AS PAYAMT
+        FROM DEPS1 D
+        JOIN ALL_DEPOSIT_PRODUCT A ON A.PROD_ID = D.PROD_ID
+        GROUP BY D.PROD_ID
+        ),
+        DEPS3 AS(
+        SELECT PROD_DESC,OPNOS,OPBAL,RECNOS,RECAMT,PAYNOS,PAYAMT,(OPNOS + RECNOS - PAYNOS) AS BAL_NOS,(OPBAL + RECAMT - PAYAMT) AS BALANCE
+        FROM DEPS2
+        )
+        SELECT PROD_DESC,OPNOS,OPBAL,RECNOS,RECAMT,PAYNOS,PAYAMT, BAL_NOS, BALANCE FROM DEPS3
+        UNION ALL
+        SELECT 'Grand Total' AS PROD_DESC,SUM(OPNOS) AS OPNOS,SUM(OPBAL) AS OPBAL,SUM(RECNOS) AS RECNOS,SUM(RECAMT) AS RECAMT,SUM(PAYNOS) AS PAYNOS,SUM(PAYAMT) AS PAYAMT,SUM(BAL_NOS) AS
+        BAL_NOS, SUM(BALANCE) AS BALANCE
+        FROM DEPS3
+    </mapped-statement>
+    <!--4-->    
+    <mapped-statement name="getInvestmentProductDetails" result-class="java.util.HashMap">
+        with 
+        INV_PROD AS (    SELECT PROD_DESC,PROD_ID,ACCOUNT_TYPE AS INVTYPE,'A' AS TAG    FROM OTHER_BANK_ACCOUNT_PRODUCTS OBAP WHERE OBAP.STATUS != 'DELETED' AND OBAP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND  ACCOUNT_TYPE NOT IN('OD','CC')
+        UNION ALL 
+        SELECT  IINVESTMENT_PROD_DESC AS PROD_DESC,INVESTMENT_PROD_ID AS PROD_ID,INVESTMENT_TYPE AS INVTYPE,'B' AS TAG   FROM INVESTMENT_CONF_DETAILS ICD WHERE ICD.STATUS != 'DELETED' AND ICD.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND INVESTMENT_PROD_ID NOT IN(SELECT PROD_ID FROM OTHER_BANK_ACCOUNT_PRODUCTS )
+        ORDER BY  INVTYPE,PROD_ID )  
+        SELECT PROD_DESC,PROD_ID FROM INV_PROD ORDER BY TAG,INVTYPE,PROD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getInvestmentAccountDetailsList" result-class="java.util.LinkedHashMap">
+           WITH Mster as
+    (SELECT investment_conf_details.investment_prod_id,
+        investment_conf_details.investment_type,
+        investment_conf_details.iinvestment_prod_desc,
+        INVESTMENT_DEPOSIT.INVESTMENT_REF_NO,
+        investment_deposit.agency_name,
+        investment_deposit.investment_issue_dt,
+        investment_deposit.maturity_dt,
+        NVL
+        ((SELECT SUM
+        (  CASE
+        WHEN itt.tran_code IN
+        ('Purchase', 'Deposit')
+        THEN 1
+        ELSE -1
+        END
+        * itt.investment_amount
+        )
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_deposit.investment_prod_id
+        AND itt.investment_id =
+        investment_deposit.investment_id
+        AND itt.investment_ref_no =
+        investment_deposit.investment_ref_no
+        AND itt.trans_dt &lt;  #From_Date:DATE#
+        AND itt.tran_code != 'Interest'
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'),
+        0
+        ) AS opening,
+        NVL
+        ((SELECT SUM (itt.investment_amount)
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_deposit.investment_prod_id
+        AND itt.investment_id =
+        investment_deposit.investment_id
+        AND itt.investment_ref_no = investment_deposit.investment_ref_no
+        AND itt.trans_dt &gt;= #From_Date:DATE#
+        AND itt.trans_dt &lt;=  #To_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'
+        AND itt.tran_code IN ('Purchase', 'Deposit')),
+         0
+        ) AS receipts,
+        NVL
+        ((SELECT SUM (itt.investment_amount)
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_deposit.investment_prod_id
+        AND itt.investment_id =
+        investment_deposit.investment_id
+        AND itt.investment_ref_no = investment_deposit.investment_ref_no
+        AND itt.trans_dt &gt;=  #From_Date:DATE#
+        AND itt.trans_dt &lt;=  #To_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'
+        AND itt.tran_code NOT IN
+        ('Purchase', 'Deposit', 'Interest')),
+        0
+        ) AS payments,
+        investment_deposit.investment_id, 0 AS int_receivable
+        FROM investment_deposit JOIN investment_conf_details
+        ON investment_deposit.investment_prod_id =
+        investment_conf_details.investment_prod_id
+        WHERE investment_deposit.authorized_status = 'AUTHORIZED'
+        AND investment_deposit.status != 'DELETED'
+        AND  investment_deposit.INVESTMENT_PROD_DESC IN($PROD_ID$)
+        AND investment_deposit.investment_issue_dt &lt;=  #To_Date:DATE#)
+       ,Renewal as    
+        (SELECT investment_conf_details.investment_prod_id,
+        investment_conf_details.investment_type,
+        investment_conf_details.iinvestment_prod_desc,
+        INVESTMENT_DEPOSIT_RENEWAL.INVESTMENT_REF_NO,
+        investment_deposit_renewal.agency_name,
+        investment_deposit_renewal.investment_issue_dt,
+        investment_deposit_renewal.maturity_dt,
+        NVL
+        ((SELECT SUM
+        (  CASE
+        WHEN itt.tran_code IN
+        ('Purchase', 'Deposit')
+        THEN 1
+        ELSE -1
+        END
+        * itt.investment_amount
+        )
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_deposit_renewal.investment_prod_id
+        AND itt.investment_id =
+        investment_deposit_renewal.investment_id
+        AND itt.investment_ref_no =
+        investment_deposit_renewal.investment_ref_no
+        AND itt.trans_dt &lt;  #From_Date:DATE#
+        AND itt.tran_code != 'Interest'
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'),
+        0
+        ) AS opening,
+        NVL
+        ((SELECT SUM (itt.investment_amount)
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_deposit_renewal.investment_prod_id
+        AND itt.investment_id =
+        investment_deposit_renewal.investment_id
+        AND itt.investment_ref_no =
+        investment_deposit_renewal.investment_ref_no
+        AND itt.trans_dt &gt;=  #From_Date:DATE#
+        AND itt.trans_dt &lt;= #To_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'
+        AND itt.tran_code IN ('Purchase', 'Deposit')),
+        0
+        ) AS receipts,
+        NVL
+        ((SELECT SUM (itt.investment_amount)
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_deposit_renewal.investment_prod_id
+        AND itt.investment_id =
+        investment_deposit_renewal.investment_id
+        AND itt.investment_ref_no =
+        investment_deposit_renewal.investment_ref_no
+        AND itt.trans_dt &gt;=  #From_Date:DATE#
+        AND itt.trans_dt &lt;=  #To_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'
+        AND itt.tran_code NOT IN
+        ('Purchase', 'Deposit', 'Interest')),
+        0
+        ) AS payments,
+        investment_deposit_renewal.investment_id,
+        0 AS INT_RECEIVABLE
+        FROM investment_deposit_renewal JOIN investment_conf_details
+        ON investment_deposit_renewal.investment_prod_id =
+        investment_conf_details.investment_prod_id
+        WHERE investment_deposit_renewal.authorized_status =
+        'AUTHORIZED'
+        AND investment_deposit_renewal.status != 'DELETED'
+        AND  investment_deposit_renewal.INVESTMENT_PROD_DESC IN($PROD_ID$)
+        AND investment_deposit_renewal.investment_issue_dt &lt;= #To_Date:DATE#        
+        ),  i_os AS
+        (
+        SELECT investment_prod_id, investment_type, iinvestment_prod_desc,
+        investment_ref_no, agency_name, investment_issue_dt, maturity_dt,
+        OPENING,PAYMENTS,RECEIPTS,INVESTMENT_ID,INT_RECEIVABLE
+        FROM (
+       SELECT Mster.INVESTMENT_PROD_ID,Mster.INVESTMENT_TYPE,Mster.IINVESTMENT_PROD_DESC,Mster.INVESTMENT_REF_NO,Mster.AGENCY_NAME,Mster.INVESTMENT_ISSUE_DT,Mster.MATURITY_DT,
+       Mster.OPENING,Mster.RECEIPTS,Mster.PAYMENTS,Mster.INVESTMENT_ID,Mster.INT_RECEIVABLE FROM Mster
+        WHERE NVL(Mster.OPENING,0) + NVL(Mster.RECEIPTS,0) + NVL(Mster.PAYMENTS,0) != 0
+       union All         
+        
+       SELECT Renewal.INVESTMENT_PROD_ID,Renewal.INVESTMENT_TYPE,Renewal.IINVESTMENT_PROD_DESC,Renewal.INVESTMENT_REF_NO,Renewal.AGENCY_NAME,Renewal.INVESTMENT_ISSUE_DT,
+	   Renewal.MATURITY_DT,  Renewal.OPENING,Renewal.RECEIPTS,Renewal.PAYMENTS,Renewal.INVESTMENT_ID,Renewal.INT_RECEIVABLE FROM Renewal  
+       LEFT OUTER JOIN Mster  on Renewal.INVESTMENT_PROD_ID = Mster.INVESTMENT_PROD_ID
+       AND Renewal.INVESTMENT_TYPE=Mster.INVESTMENT_TYPE AND Renewal.IINVESTMENT_PROD_DESC=Mster.IINVESTMENT_PROD_DESC
+       AND  Renewal.INVESTMENT_REF_NO=Mster.INVESTMENT_REF_NO  
+       WHERE NVL(Renewal.OPENING,0) + NVL(Renewal.RECEIPTS,0) + NVL(Renewal.PAYMENTS,0) != 0 AND nvl(Mster.INVESTMENT_REF_NO,'zz')='zz'        
+      
+        )
+        WHERE OPENING + RECEIPTS + PAYMENTS &gt; 0 
+        
+        UNION ALL 
+        SELECT investment_conf_details.investment_prod_id,
+        investment_conf_details.investment_type,
+        investment_conf_details.iinvestment_prod_desc,
+        investment_share.member_no AS investment_ref_no,
+        investment_share.agency_name,
+        investment_share.investment_issue_dt, NULL maturity_dt,
+        NVL
+        ((SELECT SUM (  CASE
+        WHEN itt.tran_code IN
+        ('Purchase', 'Deposit')
+        THEN 1
+        ELSE -1
+        END
+        * itt.investment_amount
+        )
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_share.investment_prod_id
+        AND itt.investment_id = investment_share.investment_id
+        AND itt.trans_dt &lt;  #From_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'),
+        0
+        ) AS opening,
+        NVL
+        ((SELECT SUM (itt.investment_amount)
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_share.investment_prod_id
+        AND itt.investment_id = investment_share.investment_id
+        AND itt.trans_dt &gt;=  #From_Date:DATE#
+        AND itt.trans_dt &lt;= #To_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'
+        AND itt.tran_code IN ('Purchase', 'Deposit')),
+        0
+        ) AS receipts,
+        NVL
+        ((SELECT SUM (itt.investment_amount)
+        FROM INVESTMENT_TRANS_DETAILS ITT
+        WHERE itt.investment_prod_id =
+        investment_share.investment_prod_id
+        AND itt.investment_id = investment_share.investment_id
+        AND itt.trans_dt &gt;=  #From_Date:DATE#
+        AND itt.trans_dt &lt;=  #To_Date:DATE#
+        AND itt.authorize_status = 'AUTHORIZED'
+        AND itt.status != 'DELETED'
+        AND itt.tran_code NOT IN ('Purchase', 'Deposit')),
+        0
+        ) AS payments,
+        investment_share.investment_id, 0 AS int_receivable
+        FROM investment_share JOIN investment_conf_details
+        ON investment_share.investment_prod_id =
+        investment_conf_details.investment_prod_id
+        WHERE investment_share.authorized_status = 'AUTHORIZED'
+        AND investment_share.status != 'DELETED'
+        AND  investment_share.INVESTMENT_PROD_DESC IN($PROD_ID$)
+        AND (   investment_share.investment_issue_dt &lt;=  #To_Date:DATE#
+        ))
+        ,
+        i_os1 AS
+        (SELECT iinvestment_prod_desc, investment_issue_dt, opening, receipts,
+        payments
+        FROM I_OS    
+        WHERE opening + receipts + payments &gt; 0),
+        i_os2 AS
+        (SELECT iinvestment_prod_desc, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN investment_issue_dt BETWEEN  #From_Date:DATE# AND  #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos,
+        receipts,
+        CASE
+        WHEN opening + receipts - payments = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos, payments
+        FROM i_os1),
+        b_oba AS
+        (SELECT oba.agency, oba.PROD_DESC, oba.ACT_OPEN_DT,
+        oba.EXPIRY_DT, oba.RATE_OF_INTEREST, oba.opening,
+        oba.payments, oba.receipts, oba.int_payable
+        FROM (SELECT b.ACT_MASTER_ID, b.ACT_REF_NO, b.PROD_DESC,
+        b.ACT_OPEN_DT, b.EXPIRY_DT, b.RATE_OF_INTEREST,
+        NVL ((SELECT NVL (SUM ( case when trans_type ='DEBIT' then amount else 0 end ),0)
+        - NVL (SUM ( case when trans_type ='CREDIT' then amount else 0 end  ),0)
+        FROM all_trans d  JOIN OTHER_BANK_ACCOUNT_PRODUCTS OBAP ON d.AC_HD_ID=OBAP.PRINCIPAL_AC_HD
+        AND d.PROD_ID=OBAP.PROD_ID
+        WHERE d.act_num = b.ACT_MASTER_ID
+        AND d.trans_dt &lt;  #From_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'and d.status != 'DELETED'),0)
+        AS opening,
+        NVL ((SELECT NVL (SUM ( case when trans_type ='DEBIT' then amount else 0 end  ),0)
+        FROM all_trans d  JOIN OTHER_BANK_ACCOUNT_PRODUCTS OBAP ON d.AC_HD_ID=OBAP.PRINCIPAL_AC_HD
+        AND d.PROD_ID=OBAP.PROD_ID
+        WHERE d.act_num = b.ACT_MASTER_ID
+        AND d.trans_dt &gt;=  #From_Date:DATE#
+        AND d.trans_dt &lt;=  #To_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED' and d.status != 'DELETED'),
+        0
+        ) AS receipts ,
+        NVL ((SELECT NVL (SUM ( case when trans_type ='CREDIT' then amount else 0 end ),0)
+        FROM all_trans d JOIN OTHER_BANK_ACCOUNT_PRODUCTS OBAP ON d.AC_HD_ID=OBAP.PRINCIPAL_AC_HD
+        AND d.PROD_ID=OBAP.PROD_ID
+        WHERE d.act_num = b.ACT_MASTER_ID
+        AND d.trans_dt &gt;=  #From_Date:DATE#
+        AND d.trans_dt &lt;=  #To_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'and d.status != 'DELETED'),
+        0
+        ) AS payments,
+        0 AS int_payable, ba.agency
+        FROM OTHER_BANKS_ACT_MASTER b LEFT JOIN 
+        (SELECT l.lookup_id AS agency_category, l.lookup_ref_id AS agency_id,
+        l.lookup_desc AS agency
+        FROM lookup_master l  WHERE l.lookup_id = 'ACCOUNTS_OTHER_BANK') ba
+        ON ba.agency_id = b.ACCOUNT_TYPE
+        WHERE  ACCOUNT_TYPE not in('OD','CC') and  b.authorized_status = 'AUTHORIZED'
+        AND  b.PROD_DESC IN($PROD_ID$)
+        AND b.status != 'DELETED'  
+        AND (b.ACT_OPEN_DT &lt;=  #To_Date:DATE#  )) oba
+        WHERE oba.opening !=0 OR  oba.payments !=0 OR oba.receipts != 0)  ,
+        ALL_INV AS
+        (  SELECT  icd.INVESTMENT_TYPE, I_OS2.iinvestment_prod_desc, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM(REC_NOS) AS REC_NOS,SUM(RECEIPTS) AS PAYMENTS,
+        SUM(PAY_NOS) AS PAY_NOS,SUM(PAYMENTS) AS RECEIPTS
+        FROM I_OS2,INVESTMENT_CONF_DETAILS  icd where icd.IINVESTMENT_PROD_DESC = I_OS2.iinvestment_prod_desc
+        GROUP BY icd.INVESTMENT_TYPE, I_OS2.iinvestment_prod_desc
+        union all       
+        
+        SELECT    INVESTMENT_TYPE ,  iinvestment_prod_desc, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS payments,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS receipts
+         
+        FROM (SELECT obp.ACCOUNT_TYPE as INVESTMENT_TYPE,b_oba.PROD_DESC as iinvestment_prod_desc,
+        CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN ACT_OPEN_DT BETWEEN  #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos,  receipts  ,
+        CASE
+        WHEN opening + receipts    - payments  = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos, payments,
+        CASE
+        WHEN  opening + receipts    - payments != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos, ( opening + receipts    - payments) AS balance
+        FROM b_oba join OTHER_BANK_ACCOUNT_PRODUCTS obp on  obp.PROD_DESC = b_oba.PROD_DESC 
+        ) GROUP BY INVESTMENT_TYPE,iinvestment_prod_desc order by  INVESTMENT_TYPE,iinvestment_prod_desc
+        ),
+
+        inv_sel as(
+        SELECT INVESTMENT_TYPE,iinvestment_prod_desc,  op_nos,  opening,
+        rec_nos,  receipts,
+        pay_nos,  payments ,((op_nos+rec_nos)-pay_nos ) as BALNO,((opening+receipts)- payments) as BALANCE 
+        FROM ALL_INV 
+        UNION ALL
+        SELECT 'Z' as INVESTMENT_TYPE,'Grand Total' as iinvestment_prod_desc ,  SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS payments,
+        SUM (pay_nos) AS pay_nos,   SUM (payments) AS receipts,
+        sum( ((op_nos+rec_nos)-pay_nos )) as BALNO,sum(((opening+receipts)- payments)) as BALANCE
+        FROM ALL_INV ) 
+        select iinvestment_prod_desc, op_nos,  opening,
+        rec_nos,  receipts,
+        pay_nos,  payments ,BALNO,BALANCE from inv_sel 
+        order by INVESTMENT_TYPE,iinvestment_prod_desc 
+    </mapped-statement>
+    <!--5-->    
+    <mapped-statement name="getBorrowingProductDetails" result-class="java.util.HashMap">
+        SELECT BORROWING_NO AS PROD_ID,DESCRIPTION AS PROD_DESC FROM BORROWING_MASTER WHERE TYPE!='SHARE' AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        UNION
+        SELECT ACT_MASTER_ID AS  PROD_ID,PROD_DESC  FROM OTHER_BANKS_ACT_MASTER OBAM WHERE OBAM.STATUS != 'DELETED' AND OBAM.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND  ACCOUNT_TYPE IN('OD','CC')
+        ORDER BY PROD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getBorrowingAccountDetailsList" result-class="java.util.LinkedHashMap">
+                WITH b_os AS
+        (SELECT bor.agency, bor.description, bor.sanction_date,
+        bor.sanction_exp_date, bor.rate_interest, bor.opening,
+        bor.payments, bor.receipts, bor.int_payable
+        FROM (SELECT b.borrowing_no, b.borrwing_refno, b.description,
+        b.sanction_date, b.sanction_exp_date, b.rate_interest,
+        NVL ((SELECT SUM (d.amount_borrwed)
+        FROM BORROWING_DISBURSAL D
+        WHERE d.borrowing_no = b.borrowing_no
+        AND d.authorized_dt &lt; #From_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'),
+        0
+        )
+        - NVL ((SELECT SUM (NVL (bri.principal_repaid, 0))
+        FROM BORROWING_REP_INT_CLS BRI
+        WHERE bri.borrowing_no = b.borrowing_no
+        --AND bri.borrwing_refno = b.borrwing_refno
+        AND bri.authorized_dt &lt; #From_Date:DATE#
+        AND bri.authorize_status = 'AUTHORIZED'
+        AND bri.status != 'DELETED'),
+        0
+        ) AS opening,
+        NVL ((SELECT SUM (d.amount_borrwed)
+        FROM BORROWING_DISBURSAL D
+        WHERE d.borrowing_no = b.borrowing_no
+        AND d.authorized_dt &gt;= #From_Date:DATE#
+        AND d.authorized_dt &lt;= #To_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'),
+        0
+        ) AS payments,
+        NVL ((SELECT SUM (r.principal_repaid)
+        FROM BORROWING_REP_INT_CLS R
+        WHERE r.borrowing_no = b.borrowing_no
+        AND r.authorized_dt &gt;= #From_Date:DATE#
+        AND r.authorized_dt &lt;= #To_Date:DATE#
+        AND r.authorize_status = 'AUTHORIZED'),
+        0
+        ) AS receipts,
+        0 AS int_payable, ba.agency
+        FROM borrowing_master b LEFT JOIN borrowing_agency ba
+        ON ba.agency_id = b.agency_code
+        WHERE b.authorize_status = 'AUTHORIZED'
+        AND b.status != 'DELETED' and b.TYPE !='SHARE'
+        --AND b.BORROWING_NO 
+        and DESCRIPTION IN ($PROD_ID$)
+        AND (b.sanction_date &lt;= #To_Date:DATE# )) bor
+        WHERE bor.opening !=0 OR  bor.payments !=0 OR bor.receipts != 0)  
+        ,
+        b_oba AS
+        (SELECT oba.agency, oba.PROD_DESC, oba.ACT_OPEN_DT,
+        oba.EXPIRY_DT, oba.RATE_OF_INTEREST, oba.opening,
+        oba.payments, oba.receipts, oba.int_payable
+        FROM (SELECT b.ACT_MASTER_ID, b.ACT_REF_NO, b.PROD_DESC,
+        b.ACT_OPEN_DT, b.EXPIRY_DT, b.RATE_OF_INTEREST,
+        NVL ((SELECT NVL (SUM ( case when trans_type ='CREDIT' then amount else 0 end ),0)
+        - NVL (SUM ( case when trans_type ='DEBIT' then amount else 0 end  ),0)
+        FROM all_trans d
+        WHERE d.act_num = b.ACT_MASTER_ID
+        AND d.trans_dt &lt; #From_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'and d.status != 'DELETED'),0)
+        AS opening,
+        NVL ((SELECT NVL (SUM ( case when trans_type ='DEBIT' then amount else 0 end  ),0)
+        FROM all_trans d
+        WHERE d.act_num = b.ACT_MASTER_ID
+        AND d.trans_dt &gt;= #From_Date:DATE#
+        AND d.trans_dt &lt;= #To_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED' and d.status != 'DELETED'),
+        0
+        ) AS receipts ,
+        NVL ((SELECT NVL (SUM ( case when trans_type ='CREDIT' then amount else 0 end ),0)
+        FROM all_trans d
+        WHERE d.act_num = b.ACT_MASTER_ID
+        AND d.trans_dt &gt;= #From_Date:DATE#
+        AND d.trans_dt &lt;= #To_Date:DATE#
+        AND d.authorize_status = 'AUTHORIZED'and d.status != 'DELETED'),
+        0
+        ) AS payments,
+        0 AS int_payable, ba.agency
+        FROM OTHER_BANKS_ACT_MASTER b LEFT JOIN 
+        (SELECT l.lookup_id AS agency_category, l.lookup_ref_id AS agency_id,
+        l.lookup_desc AS agency
+        FROM lookup_master l  WHERE l.lookup_id = 'ACCOUNTS_OTHER_BANK') ba
+        ON ba.agency_id = b.ACCOUNT_TYPE
+        WHERE ACCOUNT_TYPE in('OD','CC') and  b.authorized_status = 'AUTHORIZED'
+        -- AND b.ACT_MASTER_ID
+        and PROD_DESC IN($PROD_ID$) 
+        AND b.status != 'DELETED'  
+ 
+                 
+        AND (b.ACT_OPEN_DT &lt;= #To_Date:DATE#  )) oba
+        WHERE oba.opening !=0 OR  oba.payments !=0 OR oba.receipts != 0)         
+        SELECT  description,op_nos,opening,rec_nos,receipts,pay_nos,payments,bal_nos,balance             
+        FROM        
+        (SELECT   description, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM(REC_NOS) AS REC_NOS,SUM(RECEIPTS) AS PAYMENTS,
+        SUM(PAY_NOS) AS PAY_NOS,SUM(PAYMENTS) AS RECEIPTS,
+        SUM(BAL_NOS) AS BAL_NOS,SUM(BALANCE) AS BALANCE
+        FROM (SELECT description, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN sanction_date BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos, payments AS receipts,
+        CASE
+        WHEN opening + payments - receipts = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        receipts AS payments,
+        CASE
+        WHEN opening + payments - receipts != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + payments - receipts) AS balance
+        FROM b_os)
+        GROUP BY DESCRIPTION
+        union all       
+        SELECT   PROD_DESC, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS payments,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS receipts,
+        SUM (bal_nos) AS bal_nos, SUM (balance) AS balance
+        FROM (SELECT PROD_DESC, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN ACT_OPEN_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos,receipts,
+        CASE
+        WHEN opening + payments-receipts = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        payments,
+        CASE
+        WHEN opening + payments-receipts != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + payments-receipts) AS balance
+        FROM b_oba)
+        GROUP BY PROD_DESC )Borrowlst
+        union all
+        SELECT  'Grand Total' AS description,SUM(op_nos),SUM(opening),SUM(rec_nos),SUM(receipts),SUM(pay_nos),SUM(payments),SUM(bal_nos),SUM(balance)--,GROUPING_ID(TAG)              
+        FROM (SELECT   description, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS payments,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS receipts,
+        SUM (bal_nos) AS bal_nos, SUM (balance) AS balance
+        FROM (SELECT description, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN sanction_date BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos, payments AS receipts,
+        CASE
+        WHEN opening + payments - receipts = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        receipts AS payments,
+        CASE
+        WHEN opening + payments - receipts != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + payments - receipts) AS balance
+        FROM b_os)
+        GROUP BY description 
+        union all       
+        SELECT   PROD_DESC, SUM (op_nos) AS op_nos, SUM (opening) AS opening,
+        SUM (rec_nos) AS rec_nos, SUM (receipts) AS payments,
+        SUM (pay_nos) AS pay_nos, SUM (payments) AS receipts,
+        SUM (bal_nos) AS bal_nos, SUM (balance) AS balance
+        FROM (SELECT PROD_DESC, CASE
+        WHEN opening != 0
+        THEN 1
+        ELSE 0
+        END AS op_nos, opening,
+        CASE
+        WHEN ACT_OPEN_DT BETWEEN #From_Date:DATE# AND #To_Date:DATE#
+        THEN 1
+        ELSE 0
+        END AS rec_nos,receipts,
+        CASE
+        WHEN opening + payments-receipts = 0
+        THEN 1
+        ELSE 0
+        END AS pay_nos,
+        payments,
+        CASE
+        WHEN opening + payments-receipts != 0
+        THEN 1
+        ELSE 0
+        END AS bal_nos,
+        (opening + payments-receipts) AS balance
+        FROM b_oba)
+        GROUP BY PROD_DESC )BorrowGrand  
+    </mapped-statement>
+    <mapped-statement name="getAdvanceBalanceDetails" result-class="java.util.HashMap">
+        <!-- SELECT GET_ADV_CRDR_INTEREST(#ACTNUM:VARCHAR#,#FROM_DATE:DATE#,#ASONDT:DATE#) AS CRDRINTEREST  FROM DUAL -->
+        SELECT DEBITINT,CREDITINT,LIMIT_EXD_PST from GET_ADV_CRDR_INTEREST(#ACTNUM:VARCHAR#,#FROM_DATE:DATE#,#ASONDT:DATE#)
+    </mapped-statement>
+</sql-map>

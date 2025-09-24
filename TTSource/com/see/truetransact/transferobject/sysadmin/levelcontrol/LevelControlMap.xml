@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LevelControlTOMap">
+
+	<!-- Use LevelControlTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLevelControlTO" inline-parameters="true">
+        INSERT INTO LEVEL_MASTER
+        (LEVEL_ID, LEVEL_DESC, CASH_CREDIT, CASH_DEBIT, TRANS_CREDIT, TRANS_DEBIT, CLEARING_CREDIT, CLEARING_DEBIT, STATUS, LEVEL_NAME, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, BRANCH_CODE, SINGLE_WINDOW, CREATED_BY, CREATED_DT
+        ) VALUES (
+        #levelId:VARCHAR#, #levelDesc:VARCHAR#, #cashCredit:NUMERIC#, #cashDebit:NUMERIC#, #transCredit:NUMERIC#, #transDebit:NUMERIC#, #clearingCredit:NUMERIC#, #clearingDebit:NUMERIC#, #status:VARCHAR#, #levelName:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #branchCode:VARCHAR#, #singleWindow:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use LevelControlTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLevelControlTO" inline-parameters="true">
+        UPDATE LEVEL_MASTER SET 
+<!--		LEVEL_ID = #levelId:VARCHAR#,-->
+        LEVEL_DESC = #levelDesc:VARCHAR#,
+        CASH_CREDIT = #cashCredit:NUMERIC#,
+        CASH_DEBIT = #cashDebit:NUMERIC#,
+        TRANS_CREDIT = #transCredit:NUMERIC#,
+        TRANS_DEBIT = #transDebit:NUMERIC#,
+        CLEARING_CREDIT = #clearingCredit:NUMERIC#,
+        CLEARING_DEBIT = #clearingDebit:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        LEVEL_NAME = #levelName:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+<!--		BRANCH_CODE = #branchCode:VARCHAR#,-->
+        SINGLE_WINDOW = #singleWindow:VARCHAR#
+<!--		CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:TIMESTAMP# -->
+        WHERE LEVEL_ID = #levelId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LevelControlTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLevelControlTO" inline-parameters="true">
+<!--		DELETE FROM LEVEL_MASTER--> 
+        UPDATE LEVEL_MASTER SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE LEVEL_ID = #levelId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LevelControlTO object (JavaBean) properties -->
+    <result-map name="getLevelControlTOResult" class="com.see.truetransact.transferobject.sysadmin.levelcontrol.LevelControlTO">
+        <property name="levelId" column="LEVEL_ID"/>
+        <property name="levelDesc" column="LEVEL_DESC"/>
+        <property name="cashCredit" column="CASH_CREDIT"/>
+        <property name="cashDebit" column="CASH_DEBIT"/>
+        <property name="transCredit" column="TRANS_CREDIT"/>
+        <property name="transDebit" column="TRANS_DEBIT"/>
+        <property name="clearingCredit" column="CLEARING_CREDIT"/>
+        <property name="clearingDebit" column="CLEARING_DEBIT"/>
+        <property name="status" column="STATUS"/>
+        <property name="levelName" column="LEVEL_NAME"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="singleWindow" column="SINGLE_WINDOW"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectLevelControlTO" result-map="getLevelControlTOResult" >
+        SELECT * FROM LEVEL_MASTER 
+        WHERE LEVEL_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="viewLevelControl" result-class="java.util.LinkedHashMap">
+        SELECT LEVEL_ID as "Level ID", LEVEL_NAME as "Level Name", LEVEL_DESC as "Level Description" 
+        FROM LEVEL_MASTER 
+        WHERE STATUS != 'DELETED'
+<!--                AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#-->
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectLevelControl" result-class="java.util.LinkedHashMap">
+        SELECT LEVEL_ID, LEVEL_NAME, LEVEL_DESC
+        FROM LEVEL_MASTER 
+        WHERE 
+        CASH_CREDIT = #CASH_CREDIT:NUMBER# AND  
+        CASH_DEBIT  = #CASH_DEBIT:NUMBER# AND  
+        CLEARING_CREDIT = #CLEARING_CREDIT:NUMBER# AND  
+        CLEARING_DEBIT = #CLEARING_DEBIT:NUMBER# AND  
+        TRANS_CREDIT = #TRANS_CREDIT:NUMBER# AND  
+        TRANS_DEBIT  = #TRANS_DEBIT:NUMBER# AND  
+        (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED') 
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED') OR AUTHORIZE_STATUS IS NULL)
+        <dynamic>
+            <isNotNull prepend="AND" property="LEVEL_ID">
+                LEVEL_ID != #LEVEL_ID:VARCHAR#
+            </isNotNull>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+           <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getLevelMasterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  LEVEL_ID as "Level ID", LEVEL_NAME as "Level Name", LEVEL_DESC as "Level Description"
+        FROM LEVEL_MASTER 
+        WHERE STATUS != 'DELETED'
+<!--            AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)-->
+        AND STATUS_BY != #USER_ID:VARCHAR# 
+<!--            AND BRANCH_CODE = #BRANCH_CODE# -->
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = LEVEL_MASTER.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY LEVEL_ID
+    </dynamic-mapped-statement> 
+
+        
+    <mapped-statement name="authorizeLevelMaster" result-class="java.util.HashMap">
+        UPDATE LEVEL_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  LEVEL_ID = #LEVEL ID:VARCHAR#   
+    </mapped-statement>  
+        
+
+</sql-map>

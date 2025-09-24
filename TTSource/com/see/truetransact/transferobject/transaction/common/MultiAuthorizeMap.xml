@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MultiAuthorizeMap">
+
+	<!-- Use MultiAuthorize object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertMultiAuthorize" inline-parameters="true">
+        INSERT INTO AUTHORIZE_EXCEPTION
+        (TRANS_ID, TRANS_TYPE, AUTH_USER_ID, STATUS,TRANS_DT,INITIATED_BRANCH
+        ) VALUES (
+        #transId:VARCHAR#, #transType:NUMERIC#, #authUserId:VARCHAR#, #status:VARCHAR#,
+        #transDt:DATE#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use MultiAuthorize object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateMultiAuthorize" inline-parameters="true">
+        UPDATE AUTHORIZE_EXCEPTION SET 
+        STATUS = #status:VARCHAR#
+        WHERE TRANS_ID = #transId:VARCHAR#
+        AND TRANS_TYPE = #transType:NUMERIC#
+        AND AUTH_USER_ID = #authUserId:VARCHAR#
+        AND TRANS_DT = #transDt:DATE#
+        AND INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to MultiAuthorize object (JavaBean) properties -->
+    <result-map name="getMultiAuthorizeResult" class="com.see.truetransact.transferobject.transaction.common.MultiAuthorizeTO">
+        <property name="transId" column="TRANS_ID"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="authUserId" column="AUTH_USER_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="transDt" column="TRANS_DT"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+    <mapped-statement name="getSelectMultiAuthorize" result-map="getMultiAuthorizeResult" >
+        SELECT * FROM AUTHORIZE_EXCEPTION 
+        WHERE TRANS_ID = #transId:VARCHAR#
+        AND TRANS_DT = #transDt:DATE#
+        AND INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+    </mapped-statement>
+</sql-map>

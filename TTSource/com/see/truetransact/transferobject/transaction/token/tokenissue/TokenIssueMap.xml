@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TokenIssueTOMap">
+
+	<!-- Use TokenIssueTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTokenIssueTO" inline-parameters="true">
+        INSERT INTO TOKEN_ISSUE
+        (ISSUE_ID, TOKEN_TYPE, ISSUE_DT, NO_OF_TOKENS, RECEIVED_BY, SERIES_NO, TOKEN_START_NO, TOKEN_END_NO, BRANCH_ID, CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #issueId:VARCHAR#, #tokenType:VARCHAR#, #issueDt:DATE#, #noOfTokens:NUMERIC#, #receivedBy:VARCHAR#, #seriesNo:VARCHAR#, #tokenStartNo:NUMERIC#, #tokenEndNo:NUMERIC#, #branchId:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+
+	<!-- Use TokenIssueTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTokenIssueTO" inline-parameters="true">
+        UPDATE TOKEN_ISSUE SET 
+        ISSUE_ID = #issueId:VARCHAR#,
+        TOKEN_TYPE = #tokenType:VARCHAR#,
+        NO_OF_TOKENS = #noOfTokens:NUMERIC#,
+        RECEIVED_BY = #receivedBy:VARCHAR#,
+        SERIES_NO = #seriesNo:VARCHAR#,
+        TOKEN_START_NO = #tokenStartNo:NUMERIC#,
+        TOKEN_END_NO = #tokenEndNo:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE ISSUE_ID = #issueId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+
+	<!-- Use TokenIssueTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTokenIssueTO" inline-parameters="true">
+        UPDATE TOKEN_ISSUE SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE  ISSUE_ID = #issueId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenIssueTO object (JavaBean) properties -->
+    <result-map name="getTokenIssueTOResult" class="com.see.truetransact.transferobject.transaction.token.tokenissue.TokenIssueTO">
+        <property name="issueId" column="ISSUE_ID"/>
+        <property name="tokenType" column="TOKEN_TYPE"/>
+        <property name="issueDt" column="ISSUE_DT"/>
+        <property name="noOfTokens" column="NO_OF_TOKENS"/>
+        <property name="receivedBy" column="RECEIVED_BY"/>
+        <property name="seriesNo" column="SERIES_NO"/>
+        <property name="tokenStartNo" column="TOKEN_START_NO"/>
+        <property name="tokenEndNo" column="TOKEN_END_NO"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="tokenStatus" column="TOKEN_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectTokenIssueTO" result-map="getTokenIssueTOResult" >
+        SELECT * FROM TOKEN_ISSUE 
+        WHERE ISSUE_ID = #ISSUE_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+         
+        <!-- Statement used to view previously inserted data...when user clicks edit or delete button in UI -->
+    <mapped-statement name="getSelectTokenIssue" result-class="java.util.LinkedHashMap" >
+        SELECT ISSUE_ID, TOKEN_TYPE,ISSUE_DT,SERIES_NO,TOKEN_START_NO, TOKEN_END_NO FROM TOKEN_ISSUE 
+        WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_ID#
+    </mapped-statement>
+        
+        <!-- Statement used to check whether configured token is issued -->
+    <mapped-statement name="getSelectMetalTokenConfig" result-class="java.util.LinkedHashMap" >
+        SELECT TOKEN_START_NO, TOKEN_END_NO FROM TOKEN_CONFIG 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') AND SERIES_NO = #SERIES_NO# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND TOKEN_TYPE = #TOKEN_TYPE:VARCHAR#
+    </mapped-statement>
+        
+         <!-- Statement used to check whether configured token is issued -->
+    <mapped-statement name="getSelectPaperTokenConfig" result-class="java.util.LinkedHashMap" >
+        SELECT TOKEN_START_NO, TOKEN_END_NO FROM TOKEN_CONFIG 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND TOKEN_TYPE = #TOKEN_TYPE:VARCHAR#
+    </mapped-statement>
+        
+         <!-- Statement used to check for dupllication of token issued -->
+    <mapped-statement name="getSelectMetalTokenIssue" result-class="java.util.LinkedHashMap" >
+        SELECT MAX(TOKEN_END_NO) AS TOKEN_END_NO  FROM TOKEN_ISSUE
+        WHERE STATUS NOT IN ('DELETED') AND (AUTHORIZE_STATUS is NULL OR AUTHORIZE_STATUS = 'AUTHORIZED') AND SERIES_NO = #SERIES_NO:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND TOKEN_TYPE = #TOKEN_TYPE:VARCHAR# AND to_char(ISSUE_DT, 'YYYY-MM-DD') = to_char(#CURRENT_DATE:DATE#, 'YYYY-MM-DD')
+    </mapped-statement>
+        
+          <!-- Statement used to check for dupllication of token issued --> 
+    <mapped-statement name="getSelectPaperTokenIssue" result-class="java.util.LinkedHashMap" >
+        SELECT MAX(TOKEN_END_NO) AS TOKEN_END_NO  FROM TOKEN_ISSUE
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND TOKEN_TYPE = #TOKEN_TYPE:VARCHAR# AND to_char(ISSUE_DT, 'YYYY-MM-DD') = to_char(#CURRENT_DATE:DATE#, 'YYYY-MM-DD')
+    </mapped-statement>
+        
+        <!-- This statement used to view the User_master table when the helpbutton btnUserId is clicked in the UI -->      
+    <mapped-statement name="getSelectUserMaster" result-class="java.util.LinkedHashMap" >
+        SELECT  USER_ID, USER_GROUP, USER_ROLE FROM USER_MASTER 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS IN ('AUTHORIZED') AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLostTokens" result-class="java.util.LinkedHashMap" >
+        SELECT SERIES_NO,TOKEN_NO,TOKEN_STATUS,LOST_DT FROM TOKEN_LOST 
+        WHERE SERIES_NO = #SERIES_NO:VARCHAR# AND  BRANCH_ID = #BRANCH_ID#  AND STATUS NOT IN ('DELETED') AND TOKEN_STATUS = 'STOPPED'
+        ORDER BY TOKEN_NO
+    </mapped-statement>
+        
+        <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getTokenIssueAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  ISSUE_ID, TOKEN_TYPE, BRANCH_ID, SERIES_NO, TOKEN_START_NO, TOKEN_END_NO, NO_OF_TOKENS FROM TOKEN_ISSUE TI
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TI.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  ISSUE_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeTokenIssue" result-class="java.util.HashMap">
+        UPDATE TOKEN_ISSUE  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#,
+        TOKEN_STATUS = #TOKEN_STATUS:VARCHAR#
+        WHERE  ISSUE_ID = #ISSUE_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#  
+    </mapped-statement>  
+        
+</sql-map>

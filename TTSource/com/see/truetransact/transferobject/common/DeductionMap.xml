@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DeductionMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name = "insertDeductionTypeTO" inline-parameters = "true">
+        INSERT INTO DEDUCTION_DETAILS(DTSLNO,EMPLOYEE_ID,EMPLOYEE_NAME,DESIGNATION,EMPLOYEE_BRANCH,FIXED,INSTALLMENTS,
+        DEDUCTIONTYPE,FROM_MM,FROM_YYYY,TO_MM,TO_YYYY,AMOUNT,ACCOUNTHEAD,STATUS,STATUS_BY,STATUS_DATE,AUTHORIZE_BY,
+        AUTHORIZE_STATUS,AUTHORIZE_DATE,BRANCH_CODE,LOAN_ACCNO,LOAN_FROMDATE,LOAN_TODATE,LOAN_AMOUNT,
+        INSTALLMENT_AMT,NOOF_INSTALLMENTS,LOAN_AVAILED_BRANCH,LOAN_DESC,LOAN_STATUS,LOAN_STOPPED_DATE,REMARKS,INTEREST_RATE,NET_LOAN_AMOUNT
+        )VALUES(
+        #dtSlNo:NUMBER#,#employeeId:VARCHAR#,#employeeName:VARCHAR#,#designation:VARCHAR#,#employeeBranch:VARCHAR#,#fixed:VARCHAR#,
+        #installments:VARCHAR#,#deductionType:VARCHAR#,#fromMM:NUMBER#,#fromYYYY:NUMBER#,#toMM:NUMBER#,#toYYYY:NUMBER#,#amount:NUMBER#,
+        #accountHead:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDate:DATE#,#authorizeBy:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeDate:DATE#,#branchCode:VARCHAR#,#loanAccNo:VARCHAR#,#loanFromDate:DATE#,#loanToDate:DATE#,
+        #loanAmount:VARCHAR#,#installmentAmt:VARCHAR#,#noofInstallments:VARCHAR#,#loanAvailedBranch:VARCHAR#,#loanDesc:VARCHAR#,
+        #loanStatus:VARCHAR#,#loanStoppedDate:DATE#,#remarks:VARCHAR#,#txtInstIntRate:VARCHAR#,#txtIntNetAmount:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name ="updateDeductionTypeTO" inline-parameters = "true">
+        UPDATE DEDUCTION_DETAILS SET 
+        FIXED = #fixed:VARCHAR#,
+        INSTALLMENTS = #installments:VARCHAR#,
+        DEDUCTIONTYPE = #deductionType:VARCHAR#,
+        FROM_MM = #fromMM:NUMBER#,
+        FROM_YYYY = #fromYYYY:NUMBER#,
+        TO_MM = #toMM:NUMBER#,
+        TO_YYYY = #toYYYY:NUMBER#,
+        AMOUNT = #amount:NUMBER#,
+        ACCOUNTHEAD = #accountHead:VARCHAR#,
+        LOAN_ACCNO = #loanAccNo:VARCHAR#,
+        LOAN_FROMDATE = #loanFromDate:DATE#,
+        LOAN_TODATE = #loanToDate:DATE#,
+        INSTALLMENT_AMT = #installmentAmt:VARCHAR#,
+        NOOF_INSTALLMENTS = #noofInstallments:VARCHAR#,
+        LOAN_AVAILED_BRANCH = #loanAvailedBranch:VARCHAR#,
+        INTEREST_RATE = #txtInstIntRate:VARCHAR#,
+        NET_LOAN_AMOUNT = #txtIntNetAmount:VARCHAR#,
+        LOAN_DESC = #loanDesc:VARCHAR#,
+        LOAN_STATUS = #loanStatus:VARCHAR#,
+        LOAN_STOPPED_DATE = #loanStoppedDate:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DATE=#authorizeDate:DATE#,
+        LOAN_AMOUNT = #loanAmount:VARCHAR# WHERE
+        EMPLOYEE_ID = #employeeId:VARCHAR# AND
+        DTSLNO = #dtSlNo:VARCHAR# AND
+        STATUS!='DELETED' 
+        <!--AND 
+        AUTHORIZE_STATUS IS NULL -->
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteDeductionTypeTO" inline-parameters = "true">
+        UPDATE DEDUCTION_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE# WHERE
+        EMPLOYEE_ID = #employeeId:VARCHAR# AND
+        DTSLNO = #dtSlNo:VARCHAR# AND
+        STATUS!='DELETED' AND 
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <result-map name="getDeductionTOResult" class="com.see.truetransact.transferobject.common.DeductionTO">
+        <property name="dtSlNo" column="DTSLNO"/>
+        <property name="employeeId" column="EMPLOYEE_ID"/>
+        <property name="employeeName" column="EMPLOYEE_NAME"/>
+        <property name="designation" column="DESIGNATION"/>
+        <property name="employeeBranch" column="EMPLOYEE_BRANCH"/>
+        <property name="fixed" column="FIXED"/>
+        <property name="installments" column="INSTALLMENTS"/>
+        <property name="deductionType" column="DEDUCTIONTYPE"/>
+        <property name="fromMM" column="FROM_MM"/>
+        <property name="fromYYYY" column="FROM_YYYY"/>
+        <property name="toMM" column="TO_MM"/>
+        <property name="toYYYY" column ="TO_YYYY"/>
+        <property name="amount" column ="AMOUNT"/>
+        <property name="accountHead" column ="ACCOUNTHEAD"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+        <property name="loanAccNo" column="LOAN_ACCNO"/>            
+        <property name="loanFromDate" column="LOAN_FROMDATE"/>            
+        <property name="loanToDate" column="LOAN_TODATE"/>            
+        <property name="loanAmount" column="LOAN_AMOUNT"/>            
+        <property name="installmentAmt" column="INSTALLMENT_AMT"/>            
+        <property name="noofInstallments" column="NOOF_INSTALLMENTS"/>            
+        <property name="txtInstIntRate" column="INTEREST_RATE"/>            
+        <property name="txtIntNetAmount" column="NET_LOAN_AMOUNT"/>
+        <property name="loanAvailedBranch" column="LOAN_AVAILED_BRANCH"/>
+        <property name="loanDesc" column="LOAN_DESC"/>            
+        <property name="loanStatus" column="LOAN_STATUS"/>            
+        <property name="loanStoppedDate" column="LOAN_STOPPED_DATE"/>            
+        <property name="remarks" column="REMARKS"/>            
+    </result-map>        
+    
+    <mapped-statement name = "getDeductionEditMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID,EMPLOYEE_NAME,EMPLOYEE_BRANCH,DESIGNATION FROM DEDUCTION_DETAILS 
+        WHERE  ((STATUS NOT IN ('DELETED')))
+    </mapped-statement> 
+    <mapped-statement name = "getEarningEditMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMP_ID,EMP_NAME,EMP_BRANCH,EMP_DESIGNATION FROM EARNING_DETAILS 
+        WHERE  ((STATUS NOT IN ('DELETED')))
+    </mapped-statement> 
+  <!--  <mapped-statement name = "getDeductionAuthorizeMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID,CUST_ID,DD.EMPLOYEE_NAME,DD.DESIGNATION,EMPLOYEE_BRANCH FROM 
+        BANK_EMPLOYEE BE,CUSTOMER C,DEDUCTION_DETAILS DD WHERE BE.STATUS!='DELETED' AND 
+        BE.EMPLOYEE_CODE = DD.EMPLOYEE_ID AND BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+        BE.BRANCH_CODE = C.BRANCH_CODE AND BE.EMPLOYEE_CODE = C.STAFF_ID AND DD.STATUS != 'DELETED' AND 
+        DD.AUTHORIZE_STATUS IS NULL ORDER BY EMPLOYEE_ID
+    </mapped-statement>    -->
+    <mapped-statement name = "updateAuthorizeStatusEarning" result-class = "java.util.HashMap">
+        UPDATE EARNING_DETAILS SET
+        AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE=#AUTHORIZE_DATE:DATE#
+        WHERE EMP_ID=#EMP_ID:VARCHAR# AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name = "updateAuthorizeStatusDeduction" result-class = "java.util.HashMap">
+        UPDATE DEDUCTION_DETAILS SET
+        AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE=#AUTHORIZE_DATE:DATE#
+        WHERE EMPLOYEE_ID=#EMPLOYEE_ID:VARCHAR# AND
+        STATUS != 'DELETED'
+    </mapped-statement>
+    <dynamic-mapped-statement name="getEarningsAuthorizeMode" result-class="java.util.HashMap" >
+        SELECT DISTINCT EMP_ID,EMP_NAME,EMP_GRADE,EMP_DESIGNATION,PRESENT_BASIC_PAY,STATUS_BY 
+        FROM EARNING_DETAILS C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY EMP_ID
+    </dynamic-mapped-statement> 
+        
+    <dynamic-mapped-statement name="getDeductionAuthorizeMode" result-class="java.util.HashMap" >
+        SELECT DISTINCT EMPLOYEE_ID,EMPLOYEE_NAME,EMPLOYEE_BRANCH,DESIGNATION,STATUS_BY 
+        FROM DEDUCTION_DETAILS C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY EMPLOYEE_ID
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSelectMaxofSlNoDT" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(DTSLNO),0) AS SL_NO FROM DEDUCTION_DETAILS
+    </mapped-statement>
+   
+   <!-- <mapped-statement name = "updateAuthorizeStatusDeduction" result-class = "java.util.HashMap">
+        UPDATE DEDUCTION_DETAILS SET STATUS = #STATUS#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS#,AUTHORIZE_BY = #AUTHORIZE_BY#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE# WHERE EMPLOYEE_ID = #EMPLOYEE_ID# AND TEMP_SL_NO = #TEMP_SL_NO# AND 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement> -->
+    
+    <dynamic-mapped-statement name = "getSelectLoanDetails" result-class = "java.util.HashMap">
+        SELECT LFD.ACCT_NUM,LOAN_AMOUNT,ACCT_OPEN_DT,DISBURSEMENT_DT,NO_INSTALLMENTS,BM.BRANCH_NAME,FIRST_INSTALL_DT,
+        ACCT_STATUS,LAST_INSTALL_DT,LP.PROD_DESC FROM LOANS_FACILITY_DETAILS LFD,LOANS_BORROWER LB,LOANS_PRODUCT LP,
+        LOANS_REPAY_SCHEDULE LRS,BRANCH_MASTER BM WHERE LP.PROD_ID = LFD.PROD_ID AND LRS.STATUS!='DELETED' AND 
+        LP.BEHAVES_LIKE !='LOANS_AGAINST_DEPOSITS' AND CUST_ID = #CUST_ID:VARCHAR# AND LFD.BRANCH_ID = BM.BRANCH_CODE AND 
+        LFD.ACCT_NUM = LRS.ACCT_NUM AND LFD.BORROW_NO = LB.BORROW_NO
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACCT_NUM">
+                    LFD.ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getInstallmentAmount" result-class = "java.util.HashMap">
+        SELECT TOTAL_AMT FROM LOANS_INSTALLMENT WHERE INSTALLMENT_SLNO = 1 AND STATUS!='DELETED' AND
+        ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getAlreadyExistingLoanNo" result-class = "java.util.HashMap">
+        SELECT * FROM DEDUCTION_DETAILS WHERE EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND LOAN_ACCNO = #LOAN_ACCNO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getSelectAmount" result-class = "java.util.HashMap">
+        SELECT HALTING_FIXED_AMT AS AMOUNT FROM HALTING_ALLOWANCE WHERE 
+        HALTING_SUB_PARAMETER = #SUB_PARAMETER:VARCHAR#    
+    </mapped-statement>
+    <mapped-statement name = "getOtherAllowanceAmount" result-class = "java.util.HashMap">
+        SELECT OAFIXED_AMT,OAPERCENTAGE_VALUE,OAMAXIMUM_AMT FROM OTHER_ALLOWANCE
+        WHERE OASUB_PARAMETER = #OASUB_PARAMETER:VARCHAR# AND OAGRADE = #OAGRADE:VARCHAR# AND OALLOWANCE_TYPE = #OALLOWANCE_TYPE:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name = "getOtherAllowanceAmountDetails" result-class = "java.util.HashMap">
+        SELECT OALLOWANCE_TYPE,OAFIXED_AMT,OAPERCENTAGE_VALUE,BASED_ON_PARAMETER,OATYPE FROM OTHER_ALLOWANCE
+        WHERE  STATUS != 'DELETED' AND OALLOWANCE_TYPE = #OALLOWANCE_TYPE:VARCHAR# AND OAGRADE = #OAGRADE:VARCHAR#
+    </mapped-statement>
+<!--=================================MisecllaniousAllowance==================================================-->    
+    <mapped-statement name = "insertEarningTypeTO" inline-parameters = "true">
+        INSERT INTO EARNING_DETAILS(EARNING_ID,EMP_ID,EMP_NAME,EMP_GRADE,EMP_DESIGNATION,ALLOWANCE_TYPE,EMP_BRANCH,PRESENT_BASIC_PAY,LAST_INC_DATE,
+        NEXT_INC_DATE,FROM_DATE,TO_DATE,PARAMETER,SUB_PARAMETER,AMOUNT,STATUS,STATUS_BY,STATUS_DATE,AUTHORIZE_BY,
+        AUTHORIZE_STATUS,AUTHORIZE_DATE,BRANCH_CODE,NO_OF_DAYS <!--,TEMP_SL_NO -->
+        )VALUES(
+        #earningID:VARCHAR#,#empId:VARCHAR#,#empName:VARCHAR#,#cboCreditDesigValue:VARCHAR#,#empDesignation:VARCHAR#,#cboCreditTypeValue:VARCHAR#,#empBranch:VARCHAR#,#presentBasicPay:NUMBER#,
+        #lastIncDate:DATE#,#nextIncDate:DATE#,#fromDate:DATE#,#toDate:DATE#,#parameter:VARCHAR#,#subParameter:VARCHAR#,
+        #amount:NUMBER#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#authorizeBy:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeDate:DATE#,#branchCode:VARCHAR#,#txtNoOfDaysLOP:VARCHAR#) <!--,#tempSlNo:NUMBER# -->
+    </mapped-statement>
+    
+    <mapped-statement name ="updateEarningTypeTO" inline-parameters = "true">
+        UPDATE EARNING_DETAILS SET 
+        ALLOWANCE_TYPE = #cboCreditTypeValue:VARCHAR#,
+        FROM_DATE = #fromDate:DATE#,
+        TO_DATE = #toDate:DATE#,
+        PARAMETER = #parameter:VARCHAR#,
+        SUB_PARAMETER = #subParameter:VARCHAR#,
+        AMOUNT = #amount:NUMBER#,
+        NO_OF_DAYS = #txtNoOfDaysLOP:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DATE=#authorizeDate:DATE#,
+        STATUS_DATE = #statusDt:DATE# WHERE
+        EMP_ID = #empId:VARCHAR# AND
+        EARNING_ID = #earningID:VARCHAR# AND
+        STATUS!='DELETED'
+        <!-- AND 
+        AUTHORIZE_STATUS IS NULL -->
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteEarningTypeTO" inline-parameters = "true">
+        UPDATE EARNING_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDt:DATE# WHERE
+        EMP_ID = #empId:VARCHAR# AND
+        EARNING_ID = #earningID:VARCHAR# AND
+        STATUS!='DELETED' AND 
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <result-map name="getEarningTOResult" class="com.see.truetransact.transferobject.common.EarningTO">
+        <property name="earningID" column="EARNING_ID"/>
+        <property name="empId" column="EMP_ID"/>
+        <property name="empName" column="EMP_NAME"/>
+        <property name="cboCreditDesigValue" column="EMP_GRADE"/>
+        <property name="empDesignation" column="EMP_DESIGNATION"/>
+        <property name="cboCreditTypeValue" column="ALLOWANCE_TYPE"/>
+        <property name="empBranch" column="EMP_BRANCH"/>
+        <property name="presentBasicPay" column="PRESENT_BASIC_PAY"/>
+        <property name="lastIncDate" column="LAST_INC_DATE"/>
+        <property name="nextIncDate" column="NEXT_INC_DATE"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="parameter" column="PARAMETER"/>
+        <property name="subParameter" column ="SUB_PARAMETER"/>
+        <property name="amount" column ="AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="tempSlNo" column="TEMP_SL_NO"/>            
+        <property name="txtNoOfDaysLOP" column="NO_OF_DAYS"/> 
+    </result-map>
+    
+   <!-- <mapped-statement name = "getEarningEditMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID,CUST_ID,DD.EMPLOYEE_NAME,DD.DESIGNATION,EMPLOYEE_BRANCH FROM 
+        BANK_EMPLOYEE BE,CUSTOMER C,EARNING_DETAILS DD WHERE BE.STATUS!='DELETED' AND 
+        BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND BE.BRANCH_CODE = C.BRANCH_CODE AND 
+        BE.EMPLOYEE_CODE = C.STAFF_ID AND DD.STATUS != 'DELETED' 
+    </mapped-statement> -->
+    
+    <mapped-statement name = "getEarningAuthorizeMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID,CUST_ID,DD.EMPLOYEE_NAME,DD.DESIGNATION,EMPLOYEE_BRANCH FROM 
+        BANK_EMPLOYEE BE,CUSTOMER C,EARNING_DETAILS DD WHERE BE.STATUS!='DELETED' AND 
+        BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND BE.BRANCH_CODE = C.BRANCH_CODE AND 
+        BE.EMPLOYEE_CODE = C.STAFF_ID AND DD.STATUS != 'DELETED' AND DD.AUTHORIZE_STATUS IS NULL
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getSelectEarningEmployeeDetails" result-class="java.util.LinkedHashMap" >        
+        SELECT EMPLOYEE_CODE,CUST_ID,BE.BRANCH_CODE,DECODE(BE.EMPLOYEE_TYPE,'EMPLOYEE',BE.FNAME,BE.LNAME)AS FNAME,
+        DESIG_ID FROM BANK_EMPLOYEE BE,CUSTOMER C WHERE BE.STATUS!='DELETED' AND BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND BE.BRANCH_CODE = C.BRANCH_CODE AND BE.EMPLOYEE_CODE = C.STAFF_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "EMPLOYEE_CODE">
+                    EMPLOYEE_CODE = #EMPLOYEE_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>      
+
+    <mapped-statement name="getEarningSelectMaxofSlNoDT" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(DTSLNO),0) AS SL_NO FROM EARNING_DETAILS
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectEarningEditTO" result-map="getEarningTOResult" >
+        SELECT * FROM EARNING_DETAILS WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND EMP_ID = #EMPLOYEE_ID:VARCHAR# AND STATUS!='DELETED' ORDER BY TEMP_SL_NO,(TO_NUMBER(EARNING_ID))         
+    </mapped-statement>      
+    <mapped-statement name="getSelectDeductionEditTO" result-map="getDeductionTOResult" >
+        SELECT * FROM DEDUCTION_DETAILS WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND STATUS!='DELETED' ORDER BY TEMP_SL_NO,(TO_NUMBER(DTSLNO))         
+    </mapped-statement>  
+
+ <!--   <mapped-statement name = "updateAuthorizeStatusEarning" result-class = "java.util.HashMap">
+        UPDATE EARNING_DETAILS SET STATUS = #STATUS#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS#,AUTHORIZE_BY = #AUTHORIZE_BY#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE# WHERE EMPLOYEE_ID = #EMPLOYEE_ID# AND TEMP_SL_NO = #TEMP_SL_NO# AND 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement> -->
+    
+    <dynamic-mapped-statement name = "getEarningSelectLoanDetails" result-class = "java.util.HashMap">
+        SELECT LFD.ACCT_NUM,LOAN_AMOUNT,ACCT_OPEN_DT,DISBURSEMENT_DT,NO_INSTALLMENTS,BM.BRANCH_NAME,FIRST_INSTALL_DT,
+        ACCT_STATUS,LAST_INSTALL_DT,LP.PROD_DESC FROM LOANS_FACILITY_DETAILS LFD,LOANS_BORROWER LB,LOANS_PRODUCT LP,
+        LOANS_REPAY_SCHEDULE LRS,BRANCH_MASTER BM WHERE LP.PROD_ID = LFD.PROD_ID AND LRS.STATUS!='DELETED' AND 
+        LP.BEHAVES_LIKE !='LOANS_AGAINST_DEPOSITS' AND CUST_ID = #CUST_ID:VARCHAR# AND LFD.BRANCH_ID = BM.BRANCH_CODE AND 
+        LFD.ACCT_NUM = LRS.ACCT_NUM AND LFD.BORROW_NO = LB.BORROW_NO
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACCT_NUM">
+                    LFD.ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getEarningInstallmentAmount" result-class = "java.util.HashMap">
+        SELECT TOTAL_AMT FROM LOANS_INSTALLMENT WHERE INSTALLMENT_SLNO = 1 AND STATUS!='DELETED' AND
+        ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getEarningAlreadyExistingLoanNo" result-class = "java.util.HashMap">
+        SELECT * FROM EARNING_DETAILS WHERE EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND LOAN_ACCNO = #LOAN_ACCNO:VARCHAR#
+    </mapped-statement>
+    
+    
+    
+    <mapped-statement name = "getEarningSelectAmount" result-class = "java.util.HashMap">
+        SELECT HALTING_FIXED_AMT AS AMOUNT FROM EARNING_DETAILS WHERE 
+        HALTING_SUB_PARAMETER = #SUB_PARAMETER:VARCHAR#    
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getAllBranchesList" result-class="java.util.HashMap">
+        SELECT BRANCH_CODE as KEY, BRANCH_CODE as VALUE, BRANCH_NAME FROM BRANCH_MASTER WHERE 
+        AUTHORIZE_STATUS_1='AUTHORIZED' AND STATUS !='DELETED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_ID">
+                    BRANCH_CODE = #BRANCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    <mapped-statement name = "getAllZonalList" result-class = "java.util.HashMap">
+        SELECT DISTINCT ZONAL_ID AS KEY,ZONAL_ID AS VALUE FROM BRANCH_MASTER
+        WHERE AUTHORIZE_STATUS_1='AUTHORIZED' AND STATUS !='DELETED'
+    </mapped-statement>
+    <mapped-statement name = "getSelectDADetails" result-class = "java.util.HashMap">
+        SELECT DAPERCENTAGE_PER_SLAB,DAINDEX,DANOOF_POINTS,DATOTAL_PERCENTAGE FROM DEARNESS_ALLOWANCE WHERE 
+        DAGRADE = #DESIG_ID:VARCHAR# AND DAFROM_DATE &gt;= #FROM_DATE:DATE# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectAllDeductionDetails" result-class = "java.util.HashMap">
+        SELECT FIXED,INSTALLMENTS,DEDUCTIONTYPE,AMOUNT,INSTALLMENT_AMT FROM DEDUCTION_DETAILS WHERE 
+        EMPLOYEE_ID = #EMPLOYEE_CODE:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectLossofPayDetails" result-class = "java.util.HashMap">
+        SELECT NO_OF_DAYS FROM EMP_LEAVE WHERE LEAVE_TYPE = 'LOSS OF PAY' AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND EMP_ID = #EMP_ID:VARCHAR#
+    </mapped-statement>
+<!--    <mapped-statement name = "" result-class = "java.util.HashMap">    
+        SELECT FIXED,PETROL,BASIC_AMTUPTO,CONV_PERMONTH,BASIC_AMT_BEYOND,CONVEYANCE_AMT,NOOF_LITRES_PERMONTH,
+        PRICE_PERLITRE,TOTAL_CONV_AMT FROM TA_ALLOWANCE WHERE TAGRADE = #GRADE#
+    </mapped-statement>-->
+<!--=========================================================================================================================================    -->
+    <mapped-statement name = "insertSalaryListTO" inline-parameters = "true">
+        INSERT INTO SALARY_LIST (EMP_SL_NO,EMP_ID,BASIC,TYPE_OF_DEDUCTION,AMOUNT,SALARY_MONTH,SALARY_YEAR,SALARY_STATUS,
+        SALARY_DATE,STATUS,STATUS_BY,STATUS_DATE,TEMP_SL_NO
+        ) VALUES (
+        #sdSlNo:NUMBER#,#empId:VARCHAR#,#basic:NUMBER#,#typeOfDeduction:VARCHAR#,#amount:NUMBER#,#salaryMonth:NUMBER#,#salaryYear:NUMBER#,
+        #salaryStatus:VARCHAR#,#salaryDate:DATE#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#tempSlNo:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name ="updateSalaryListTO" inline-parameters = "true">
+        UPDATE HALTING_ALLOWANCE SET HALTING_FIXED_AMT = #halting_fixed_amt:NUMBER#,
+        HALTING_MAXIMUM_AMT = #halting_maximum_amt:NUMBER#, PERCENTAGE_VALUE = #percentageValue:NUMBER#
+        WHERE HALTING_SL_NO = #halting_sl_no:NUMBER# AND TEMP_SL_NO = #tempSlNo:NUMBER#
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteSalaryListTO" inline-parameters = "true">
+        DELETE FROM HALTING_ALLOWANCE WHERE HALTING_SL_NO = #halting_sl_no:NUMBER# AND TEMP_SL_NO = #tempSlNo:NUMBER#
+    </mapped-statement>
+    
+    <result-map name="getSalaryListTOResult" class="com.see.truetransact.transferobject.common.SalaryDeductionTO">
+        <property name = "sdSlNo" column = "EMP_SL_NO"/>
+        <property name = "empId" column = "EMP_ID"/>
+<!--        <property name = "empName" column ="EMP_NAME"/>
+        <property name = "designation" column = "EMP_BRANCH"/>
+        <property name = "empBranch" column = "DESIGNATION"/> -->
+        <property name = "basic" column = "BASIC"/>
+        <property name = "typeOfDeduction" column = "TYPE_OF_DEDUCTION"/>
+        <property name = "amount" column = "AMOUNT"/>
+        <property name = "salaryMonth" column = "SALARY_MONTH"/>
+        <property name = "salaryYear" column = "SALARY_YEAR"/>
+        <property name = "salaryStatus" column = "SALARY_STATUS"/>
+        <property name = "salaryDate" column = "SALARY_DATE"/>
+        <property name = "status" column = "STATUS"/>
+        <property name = "statusBy" column = "STATUS_BY"/>
+        <property name = "statusDate" column = "STATUS_DATE"/>
+<!--        <property name = "authorizeStatus" column = "AUTHORIZE_STATUS"/>
+        <property name = "authorizeBy" column = "AUTHORIZE_BY"/>
+        <property name = "authorizeDate" column = "AUTHORIZE_DATE"/>
+        <property name = "branchCode" column = "BRANCH_CODE"/> -->
+        <property name = "tempSlNo" column = "TEMP_SL_NO"/>            
+    </result-map>        
+    <mapped-statement name = "getSalaryListEditMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID,CUST_ID,DD.EMPLOYEE_NAME,DD.DESIGNATION,EMPLOYEE_BRANCH FROM          
+        BANK_EMPLOYEE BE,CUSTOMER C,DEDUCTION_DETAILS DD WHERE BE.STATUS!='DELETED' AND          
+        BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND BE.BRANCH_CODE = C.BRANCH_CODE AND          
+        BE.EMPLOYEE_CODE = DD.EMPLOYEE_ID AND BE.EMPLOYEE_CODE = C.STAFF_ID AND DD.STATUS != 'DELETED'
+        ORDER BY EMPLOYEE_ID
+    </mapped-statement> 
+    
+    <mapped-statement name = "getSalaryListAuthorizeMode" result-class = "java.util.HashMap">
+        SELECT DISTINCT EMPLOYEE_ID,CUST_ID,DD.EMPLOYEE_NAME,DD.DESIGNATION,EMPLOYEE_BRANCH FROM 
+        BANK_EMPLOYEE BE,CUSTOMER C,DEDUCTION_DETAILS DD WHERE BE.STATUS!='DELETED' AND 
+        BE.EMPLOYEE_CODE = DD.EMPLOYEE_ID AND BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+        BE.BRANCH_CODE = C.BRANCH_CODE AND BE.EMPLOYEE_CODE = C.STAFF_ID AND DD.STATUS != 'DELETED' AND 
+        DD.AUTHORIZE_STATUS IS NULL ORDER BY EMPLOYEE_ID
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getSalaryListDetails" result-class="java.util.LinkedHashMap" >        
+        SELECT EMPLOYEE_CODE,CUST_ID,BE.BRANCH_CODE,DECODE(BE.EMPLOYEE_TYPE,'EMPLOYEE',BE.FNAME,BE.LNAME)AS FNAME,
+        PRESENT_DISGNATION AS DESIG_ID FROM BANK_EMPLOYEE BE,CUSTOMER C,EMPLOYEE_PRESENT_DETAILS WHERE 
+        BE.STATUS!='DELETED' AND BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND BE.BRANCH_CODE = C.BRANCH_CODE AND 
+        BE.EMPLOYEE_CODE = C.STAFF_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "EMPLOYEE_CODE">
+                    EMPLOYEE_CODE = #EMPLOYEE_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY EMPLOYEE_CODE
+    </dynamic-mapped-statement>      
+
+    <mapped-statement name="getSelectSalaryListMaxofSlNoDT" result-class = "java.util.HashMap">
+        SELECT NVL(MAX(TEMP_SL_NO),0) AS TEMP_SL_NO,NVL(MIN(DTSLNO),0) AS SL_NO FROM DEDUCTION_DETAILS
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSalaryListEditTO" result-map="getDeductionTOResult" >
+        SELECT * FROM DEDUCTION_DETAILS WHERE (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED' OR 
+        AUTHORIZE_STATUS = 'INACTIVE') AND EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND STATUS!='DELETED' ORDER BY TEMP_SL_NO,(TO_NUMBER(DTSLNO))         
+    </mapped-statement>      
+
+    <mapped-statement name = "updateAuthorizeStatusSalaryList" result-class = "java.util.HashMap">
+        UPDATE DEDUCTION_DETAILS SET STATUS = #STATUS#,AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DATE = #AUTHORIZE_DATE:DATE# WHERE EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND TEMP_SL_NO = #TEMP_SL_NO:VARCHAR# AND 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name = "getSelectLSalaryList" result-class = "java.util.HashMap">
+        SELECT LFD.ACCT_NUM,LOAN_AMOUNT,ACCT_OPEN_DT,DISBURSEMENT_DT,NO_INSTALLMENTS,BM.BRANCH_NAME,FIRST_INSTALL_DT,
+        ACCT_STATUS,LAST_INSTALL_DT,LP.PROD_DESC FROM LOANS_FACILITY_DETAILS LFD,LOANS_BORROWER LB,LOANS_PRODUCT LP,
+        LOANS_REPAY_SCHEDULE LRS,BRANCH_MASTER BM WHERE LP.PROD_ID = LFD.PROD_ID AND LRS.STATUS!='DELETED' AND 
+        LP.BEHAVES_LIKE !='LOANS_AGAINST_DEPOSITS' AND CUST_ID = #CUST_ID:VARCHAR# AND LFD.BRANCH_ID = BM.BRANCH_CODE AND 
+        LFD.ACCT_NUM = LRS.ACCT_NUM AND LFD.BORROW_NO = LB.BORROW_NO
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACCT_NUM">
+                    LFD.ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getInstallmentSalaryListAmount" result-class = "java.util.HashMap">
+        SELECT TOTAL_AMT FROM LOANS_INSTALLMENT WHERE INSTALLMENT_SLNO = 1 AND STATUS!='DELETED' AND
+        ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getAlreadySalaryListExistingLoanNo" result-class = "java.util.HashMap">
+        SELECT * FROM DEDUCTION_DETAILS WHERE EMPLOYEE_ID = #EMPLOYEE_ID:VARCHAR# AND LOAN_ACCNO = #LOAN_ACCNO:VARCHAR#
+    </mapped-statement>
+    
+    
+    
+    <mapped-statement name = "getSelectAlreadyExistingRecord" result-class = "java.util.HashMap">
+        SELECT DISTINCT SALARY_MONTH,SALARY_YEAR FROM SALARY_LIST WHERE EMP_ID = #EMP_ID# AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name = "getSelectEmployeePromotionDetails" result-class = "java.util.HashMap">
+        SELECT EM.SYS_EMPID as EMPLOYEE_CODE,EM.FIRST_NAME as fname ,EPD.PRESENT_DISGNATION as DESIG_ID,EPD.PRESENT_BASIC as Basics,EPD.PRESENT_GRADE AS PRESENT_GRADE
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD WHERE EM.STATUS!='DELETED' and EM.SYS_EMPID=EPD.SYS_ID
+        AND EM.SYS_EMPID = #SYS_EMPID:VARCHAR#
+        ORDER BY EM.SYS_EMPID
+    </mapped-statement>
+
+    <mapped-statement name = "getPromotionExistDetails" result-class = "java.util.HashMap">
+        SELECT * FROM PROMOTION_DETAILS WHERE AUTHORIZE_STATUS IS NULL AND EMP_ID = #SYS_EMPID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getSelectEmployeeDetails" result-class="java.util.LinkedHashMap" >   
+        SELECT EM.SYS_EMPID as EMPLOYEE_CODE,EPD.PRESENT_BRANCH_CODE as branch_id,EM.FIRST_NAME as fname ,EPD.PRESENT_DISGNATION as DESIG_ID,EPD.PRESENT_BASIC as Basics ,EPD.LAST_INCREMENT_DATE AS LAST_INCREMENT_DATE,
+        EPD.NEXT_INCREMENT_DATE AS NEXT_INCREMENT_DATE,EPD.PRESENT_GRADE AS PRESENT_GRADE,EPD.NO_OF_INCREMENTS AS NO_OF_INCREMENTS, INCREMENT_AMT
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD,SALARY_STRUCTURE MS where EM.STATUS!='DELETED' and EM.SYS_EMPID=EPD.SYS_ID
+        and SL_NO = 
+        (SELECT MIN (SL_NO)
+        FROM SALARY_STRUCTURE SS
+        WHERE SINGLEROW_TOTAMT > PRESENT_BASIC <!--(SELECT PRESENT_BASIC FROM EMPLOYEE_PRESENT_DETAILS WHERE SYS_ID=#SYS_EMPID#)-->
+        AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+        OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+        )
+        AND SS.GRADE = MS.GRADE)
+        AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+        OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+        )       
+        AND EPD.PRESENT_GRADE = MS.GRADE
+        AND EM.SYS_EMPID = EPD.SYS_ID AND MS.GRADE = EPD.PRESENT_GRADE 
+        ORDER BY EM.SYS_EMPID
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectEmpForEarning" result-class="java.util.LinkedHashMap" >   
+        <!--SELECT EM.SYS_EMPID as EMPLOYEE_CODE,EPD.PRESENT_BRANCH_CODE as branch_id,EM.FIRST_NAME as fname ,EPD.PRESENT_DISGNATION as DESIG_ID,EPD.PRESENT_BASIC as Basics ,EPD.LAST_INCREMENT_DATE AS LAST_INCREMENT_DATE,
+        EPD.NEXT_INCREMENT_DATE AS NEXT_INCREMENT_DATE,EPD.PRESENT_GRADE AS PRESENT_GRADE,EPD.NO_OF_INCREMENTS AS NO_OF_INCREMENTS, INCREMENT_AMT
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD,SALARY_STRUCTURE MS where EM.STATUS!='DELETED' and EM.SYS_EMPID=EPD.SYS_ID
+        and SL_NO = 
+                  (SELECT MIN (SL_NO)
+                     FROM SALARY_STRUCTURE SS
+                    WHERE SINGLEROW_TOTAMT > PRESENT_BASIC
+                      AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+                           OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+                          )
+                      AND SS.GRADE = MS.GRADE)
+           AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+                OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+               )       
+        AND EPD.PRESENT_GRADE = MS.GRADE
+        AND EM.SYS_EMPID NOT IN (SELECT DISTINCT EMP_ID FROM EARNING_DETAILS WHERE STATUS != 'DELETED')
+        AND EM.SYS_EMPID = EPD.SYS_ID AND MS.GRADE = EPD.PRESENT_GRADE 
+        ORDER BY EM.SYS_EMPID -->
+        SELECT EM.SYS_EMPID as EMPLOYEE_CODE,EPD.PRESENT_BRANCH_CODE as branch_id,EM.FIRST_NAME as fname ,EPD.PRESENT_DISGNATION as DESIG_ID,EPD.PRESENT_BASIC as Basics ,EPD.LAST_INCREMENT_DATE AS LAST_INCREMENT_DATE,
+        EPD.NEXT_INCREMENT_DATE AS NEXT_INCREMENT_DATE,EPD.PRESENT_GRADE AS PRESENT_GRADE,EPD.NO_OF_INCREMENTS AS NO_OF_INCREMENTS
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD where EM.STATUS!='DELETED' and EM.SYS_EMPID=EPD.SYS_ID
+        AND EM.SYS_EMPID NOT IN (SELECT DISTINCT EMP_ID FROM EARNING_DETAILS WHERE STATUS != 'DELETED')
+        AND EM.SYS_EMPID = EPD.SYS_ID
+        ORDER BY EM.SYS_EMPID
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectEmpForDeduction" result-class="java.util.LinkedHashMap" >   
+        <!--SELECT EM.SYS_EMPID as EMPLOYEE_CODE,EPD.PRESENT_BRANCH_CODE as branch_id,EM.FIRST_NAME as fname ,EPD.PRESENT_DISGNATION as DESIG_ID,EPD.PRESENT_BASIC as Basics ,EPD.LAST_INCREMENT_DATE AS LAST_INCREMENT_DATE,
+        EPD.NEXT_INCREMENT_DATE AS NEXT_INCREMENT_DATE,EPD.PRESENT_GRADE AS PRESENT_GRADE,EPD.NO_OF_INCREMENTS AS NO_OF_INCREMENTS, INCREMENT_AMT
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD,SALARY_STRUCTURE MS where EM.STATUS!='DELETED' and EM.SYS_EMPID=EPD.SYS_ID
+        and SL_NO = 
+                  (SELECT MIN (SL_NO)
+                     FROM SALARY_STRUCTURE SS
+                    WHERE SINGLEROW_TOTAMT > PRESENT_BASIC
+                      AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+                           OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+                          )
+                      AND SS.GRADE = MS.GRADE)
+           AND (   ((SELECT SYS_DATE() FROM DUAL) BETWEEN FROM_DATE AND TO_DATE)
+                OR ((SELECT SYS_DATE() FROM DUAL) > FROM_DATE AND TO_DATE IS NULL)
+               )       
+        AND EPD.PRESENT_GRADE = MS.GRADE
+        AND EM.SYS_EMPID NOT IN (SELECT DISTINCT EMPLOYEE_ID FROM DEDUCTION_DETAILS WHERE STATUS != 'DELETED')
+        AND EM.SYS_EMPID = EPD.SYS_ID AND MS.GRADE = EPD.PRESENT_GRADE 
+        ORDER BY EM.SYS_EMPID -->
+        SELECT EM.SYS_EMPID as EMPLOYEE_CODE,EPD.PRESENT_BRANCH_CODE as branch_id,EM.FIRST_NAME as fname ,EPD.PRESENT_DISGNATION as DESIG_ID,EPD.PRESENT_BASIC as Basics ,EPD.LAST_INCREMENT_DATE AS LAST_INCREMENT_DATE,
+        EPD.NEXT_INCREMENT_DATE AS NEXT_INCREMENT_DATE,EPD.PRESENT_GRADE AS PRESENT_GRADE FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD where EM.STATUS!='DELETED' and EM.SYS_EMPID=EPD.SYS_ID    
+        AND EM.SYS_EMPID NOT IN (SELECT DISTINCT EMPLOYEE_ID FROM DEDUCTION_DETAILS WHERE STATUS != 'DELETED')
+        AND EM.SYS_EMPID = EPD.SYS_ID 
+        ORDER BY EM.SYS_EMPID
+    </dynamic-mapped-statement>
+
+    <mapped-statement name = "getSelectEmployeeBasic" result-class = "java.util.HashMap">
+        SELECT PRESENT_BASIC, NEXT_INCREMENT_DATE, LAST_INCREMENT_DATE FROM 
+        EMPLOYEE_PRESENT_DETAILS WHERE SYS_ID = #EMPLOYEE_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name = "getEarningSelectEmployeeBasic" result-class = "java.util.HashMap">
+        SELECT PRESENT_BASIC, NEXT_INCREMENT_DATE, LAST_INCREMENT_DATE FROM 
+        EMPLOYEE_PRESENT_DETAILS WHERE SYS_ID = #EMPLOYEE_ID:VARCHAR#
+    </mapped-statement>
+
+
+    <dynamic-mapped-statement name = "getAllDetailsFromBranches" result-class = "java.util.HashMap">
+        SELECT EMPLOYEE_CODE,CUST_ID,BE.BRANCH_CODE,DECODE(BE.EMPLOYEE_TYPE,'EMPLOYEE',BE.FNAME,BE.LNAME)AS FNAME,
+        PRESENT_DISGNATION AS DESIG_ID,CENTERS,POPULATION,PROJECT_AREA,ABOVE_SEE_LEVEL FROM BANK_EMPLOYEE BE,CUSTOMER C,
+        EMPLOYEE_PRESENT_DETAILS,BRANCH_MASTER BM WHERE BE.STATUS!='DELETED' AND BE.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND BE.BRANCH_CODE = C.BRANCH_CODE AND BE.EMPLOYEE_CODE = C.STAFF_ID AND BM.BRANCH_CODE = BE.BRANCH_CODE
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property = "FROM_EMPLOYEE_CODE">
+                    <isNotNull prepend = "AND" property = "TO_EMPLOYEE_CODE">
+                        EMPLOYEE_CODE BETWEEN #FROM_EMPLOYEE_CODE:VARCHAR# AND #TO_EMPLOYEE_CODE:VARCHAR#
+                    </isNotNull>
+                </isNotNull>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY EMPLOYEE_CODE
+    </dynamic-mapped-statement>
+
+
+    <mapped-statement name ="getSelectAlltableDetails" result-class = "java.util.HashMap">
+            <!--        SELECT OATYPE,OAFIXED_AMT,OAPERCENTAGE_VALUE,OAMAXIMUM_AMT FROM OTHER_ALLOWANCE WHERE 
+            OASUB_PARAMETER = #OASUB_PARAMETER# AND STATUS !='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+        SELECT OAGRADE,OA.BRANCH_CODE,OATYPE,OAFIXED_AMT,OAPERCENTAGE_VALUE,OAMAXIMUM_AMT,HRASTARTING_SCALE_AMT,HRAINCREMENT_AMT,
+        TA_TYPE,BASIC_AMTUPTO,CONV_PERMONTH,BASIC_AMT_BEYOND,CONVEYANCE_AMT,NOOF_LITRES_PERMONTH,
+        PRICE_PERLITRE,TOTAL_CONV_AMT,CCSTARTING_SCALE_AMT,CCINCREMENT_AMT,PRESENT_BASIC FROM OTHER_ALLOWANCE OA,
+        HRA_ALLOWANCE HRA,CC_ALLOWANCE CCA,TA_ALLOWANCE TA,EMPLOYEE_PRESENT_DETAILS EPD WHERE 
+        OASUB_PARAMETER = #POPULATION:VARCHAR# AND CCCITY_TYPE = #POPULATION:VARCHAR# AND HRACITY_TYPE = #POPULATION:VARCHAR# AND 
+        OA.OAGRADE = #DESIG_ID:VARCHAR# AND OA.STATUS !='DELETED' AND OA.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        HRA.STATUS !='DELETED' AND HRA.AUTHORIZE_STATUS = 'AUTHORIZED'AND CCA.STATUS !='DELETED' AND 
+        CCA.AUTHORIZE_STATUS = 'AUTHORIZED'AND TA.STATUS !='DELETED' AND TA.AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+
+    <mapped-statement name = "getSelectSalaryListEmployeeBasic" result-class = "java.util.HashMap">
+        SELECT PRESENT_BASIC, NEXT_INCREMENT_DATE, LAST_INCREMENT_DATE FROM 
+        EMPLOYEE_PRESENT_DETAILS WHERE SYS_ID = #EMPLOYEE_ID:VARCHAR#
+    </mapped-statement>
+
+</sql-map>

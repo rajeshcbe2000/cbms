@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RemittanceProductChargeTOMap">
+
+<!-- Use RemittanceProductChargeTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRemittanceProductChargeTO" inline-parameters="true">
+        INSERT INTO REMITTANCE_PROD_CHARGES
+		(PROD_ID, CHARGE_TYPE, AMT_RANGE_FROM, AMT_RANGE_TO, CHARGE, STATUS, CATEGORY, BANK_CODE, BRANCH_CODE, FOR_EVERY_AMT, FOR_EVERY_RATE, FOR_EVERY_TYPE, PERCENTAGE, SERVICE_TAX,MIN_AMT,MAX_AMT
+        ) VALUES (
+		#prodId:VARCHAR#, #chargeType:VARCHAR#, #amtRangeFrom:NUMERIC#, #amtRangeTo:NUMERIC#, #charge:NUMERIC#, #status:VARCHAR#, #category:VARCHAR#, #bankCode:VARCHAR#, #branchCode:VARCHAR#, #forEveryAmt:NUMERIC#, #forEveryRate:NUMERIC#, #forEveryType:VARCHAR#, #percentage:NUMERIC#, #serviceTax:NUMERIC#,#minAmt:NUMERIC#,#maxAmt:NUMERIC#)
+    </mapped-statement>
+
+<!-- Use RemittanceProductChargeTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <dynamic-mapped-statement name="updateRemittanceProductChargeTO" inline-parameters="true">
+        UPDATE REMITTANCE_PROD_CHARGES SET 
+        AMT_RANGE_TO = #amtRangeTo:NUMERIC#,
+        CHARGE = #charge:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        FOR_EVERY_AMT = #forEveryAmt:NUMERIC#,
+        FOR_EVERY_RATE = #forEveryRate:NUMERIC#,
+        FOR_EVERY_TYPE = #forEveryType:VARCHAR#,
+        PERCENTAGE = #percentage:NUMERIC#,
+    SERVICE_TAX = #serviceTax:NUMERIC#,
+    MIN_AMT=#minAmt:NUMERIC#,
+    MAX_AMT=#maxAmt:NUMERIC#
+        WHERE PROD_ID = #prodId# AND CHARGE_TYPE = #chargeType# AND CATEGORY = #category# AND AMT_RANGE_FROM = #amtRangeFrom:NUMERIC#
+        <dynamic>
+            <isParameterPresent>
+     <!-- The test Parameter(s) should not be null... -->
+                <isNotEmpty property="bankCode">
+                    <isNotNull prepend="AND" property="bankCode">
+                        BANK_CODE = #bankCode:VARCHAR#
+                    </isNotNull>
+                </isNotEmpty>
+    
+                <isNotEmpty property="branchCode">
+                    <isNotNull prepend="AND" property="branchCode">
+                        BRANCH_CODE = #branchCode:VARCHAR#
+                    </isNotNull>
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>   
+	
+    </dynamic-mapped-statement>
+
+<!-- Use RemittanceProductChargeTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <dynamic-mapped-statement name="deletedRemittanceProductChargeTO" inline-parameters="true">
+        UPDATE REMITTANCE_PROD_CHARGES SET 
+        STATUS = #status:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR# AND CHARGE_TYPE = #chargeType:VARCHAR# AND CATEGORY = #category# AND AMT_RANGE_FROM = #amtRangeFrom:NUMERIC#
+        <dynamic>
+            <isParameterPresent>
+     <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="bankCode">
+                    BANK_CODE = #bankCode:VARCHAR#
+                </isNotNull>
+
+                <isNotNull prepend="AND" property="branchCode">
+                    BRANCH_CODE = #branchCode:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>         
+    </dynamic-mapped-statement>
+    <mapped-statement name="deleteRemittanceProductChargeTO" inline-parameters="true">
+        UPDATE REMITTANCE_PROD_CHARGES SET 
+        STATUS = #status:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to RemittanceProductChargeTO object (JavaBean) properties -->
+    <result-map name="getRemittanceProductChargeTOResult" class="com.see.truetransact.transferobject.product.remittance.RemittanceProductChargeTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="chargeType" column="CHARGE_TYPE"/>
+        <property name="amtRangeFrom" column="AMT_RANGE_FROM"/>
+        <property name="amtRangeTo" column="AMT_RANGE_TO"/>
+        <property name="charge" column="CHARGE"/>
+        <property name="status" column="STATUS"/>
+        <property name="category" column="CATEGORY"/>
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="forEveryAmt" column="FOR_EVERY_AMT"/>
+        <property name="forEveryRate" column="FOR_EVERY_RATE"/>
+        <property name="forEveryType" column="FOR_EVERY_TYPE"/>
+        <property name="percentage" column="PERCENTAGE"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>
+                <property name="minAmt" column="MIN_AMT"/>
+                <property name="maxAmt" column="MAX_AMT"/>
+                
+    </result-map>
+        
+    <mapped-statement name="getSelectRemittanceProductChargeTO" result-map="getRemittanceProductChargeTOResult" >
+        SELECT * FROM REMITTANCE_PROD_CHARGES 
+        WHERE PROD_ID = #value:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="ViewRemittance_Product_Charge" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM REMITTANCE_PROD_CHARGES
+        WHERE PROD_ID = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')       
+    </mapped-statement> 
+    
+    
+    <dynamic-mapped-statement name="deleteRemitProdChrg" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, CATEGORY
+        FROM REMIT_ISSUE
+        WHERE  (STATUS = 'MODIFIED' OR STATUS = 'UPDATE' OR STATUS = 'CREATED') AND  PROD_ID = #PROD_ID:VARCHAR# 
+        
+        <dynamic prepend = "AND CATEGORY IN" >
+            <iterate property="CATEGORY" open = "(" close=")" conjunction="," >
+                #CATEGORY[]#
+            </iterate>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+</sql-map>

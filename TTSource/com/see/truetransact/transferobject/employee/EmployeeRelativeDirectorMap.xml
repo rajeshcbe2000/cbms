@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeRelativeDirectorMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmployeeDirectorWorkingTO" inline-parameters="true">
+		
+        INSERT INTO  EMPLOYEE_RELATIVE_DIRECTOR (SYS_ID,TITLE ,FIRST_NAME  ,MIDDLE_NAME ,LAST_NAME ,RELEATIONSHIP,STATUS ,STATUS_BY,STATUS_DT,DIRECTOR_ID)
+        values(#sysId:VARCHAR#,#directorTittle:VARCHAR#,#directorFirstName:VARCHAR#,#directorMiddleName:VARCHAR#,#directorLastName:VARCHAR# ,#directorRelationShip:VARCHAR# ,#status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#,#directorID:VARCHAR# )
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateEmployeeDirectorWorkingTO" inline-parameters="true">
+        UPDATE EMPLOYEE_RELATIVE_DIRECTOR SET                 
+        TITLE =#directorTittle:VARCHAR#,
+        FIRST_NAME=#directorFirstName:VARCHAR#,
+        MIDDLE_NAME=#directorMiddleName:VARCHAR#,
+        LAST_NAME=#directorLastName:VARCHAR#,
+        RELEATIONSHIP=#directorRelationShip:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE  SYS_ID = #sysId:VARCHAR# AND DIRECTOR_ID = #directorID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="deleteEmployeeDirectorWorkingTO" inline-parameters="true">
+        UPDATE EMPLOYEE_RELATIVE_DIRECTOR SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SYS_ID = #sysId# AND DIRECTOR_ID = #directorID:VARCHAR# AND  STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getEmployeeDirectorWorkingTOResult" class="com.see.truetransact.transferobject.employee.EmployeeRelativeDirectorTO">
+        <property name="sysId" column="SYS_ID"/>		
+        <property name="directorRelationShip" column="RELEATIONSHIP"/>		
+        <property name="status" column="STATUS" />
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusDt" column="STATUS_DT"/>                
+        <property name="directorTittle" column="TITLE"/>
+        <property name="directorFirstName" column="FIRST_NAME"/>
+        <property name="directorMiddleName" column="MIDDLE_NAME"/>
+        <property name="directorLastName" column="LAST_NAME"/> 
+        <property name="directorID" column="DIRECTOR_ID"/>
+                
+                
+    </result-map>
+    <dynamic-mapped-statement name="getSelectEmployeeDirectorWorkingTO" result-map="getEmployeeDirectorWorkingTOResult" >
+        SELECT *
+        FROM EMPLOYEE_RELATIVE_DIRECTOR  erw
+        WHERE  SYS_ID=#SYS_EMPID:VARCHAR#  
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                (erw.STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( erw.STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                erw.STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY DIRECTOR_ID
+    </dynamic-mapped-statement>
+</sql-map>        

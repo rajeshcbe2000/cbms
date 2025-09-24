@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CashDenominationMap">
+
+	<!-- Use CurrencyExchangeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchCashTrans" inline-parameters="true">
+        INSERT INTO FOREX_BRANCH_CASH_TRANS
+        (BRANCH_CODE, CURRENCY, DENOMINATION_VALUE, DENOMINATION_COUNT,
+        USER_ID, TRANS_DT, TO_BRANCH_CODE, TO_USER_ID, CREATED_BY, 
+        CREATED_DT, STATUS
+        ) VALUES (
+        #BRANCH_CODE:VARCHAR#, #CURRENCY:VARCHAR#, #DENOMINATION_VALUE:NUMBER#, #DENOMINATION_COUNT:NUMBER#,
+        #USER_ID:VARCHAR#, #TODAY_DT:DATE#, #TO_BRANCH_CODE:VARCHAR#, #TO_USER_ID:VARCHAR#, #CREATED_BY:VARCHAR#, 
+        #TODAY_DT:DATE#, #STATUS:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateBranchCashTrans" inline-parameters="true">
+        UPDATE FOREX_BRANCH_CASH_TRANS
+        SET STATUS = #STATUS:VARCHAR#
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        CURRENCY =#CURRENCY:VARCHAR# AND 
+        DENOMINATION_VALUE = #DENOMINATION_VALUE:NUMBER# AND
+        DENOMINATION_COUNT =#DENOMINATION_COUNT:NUMBER# AND
+        USER_ID =#USER_ID:VARCHAR# AND
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') = #TRANS_DT:DATE# AND 
+        TO_BRANCH_CODE = #TO_BRANCH_CODE:VARCHAR# AND 
+        TO_USER_ID = #TO_USER_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getPendingCashTransfer" result-class="java.util.LinkedHashMap" >
+        SELECT 'RECEIVED', BRANCH_CODE, USER_ID, TO_BRANCH_CODE, TO_USER_ID, 
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') AS TRANS_DT, 
+        CURRENCY, 
+        DENOMINATION_VALUE, DENOMINATION_COUNT,  
+        DENOMINATION_VALUE *  DENOMINATION_COUNT as "Total"
+        FROM FOREX_BRANCH_CASH_TRANS  
+        WHERE STATUS NOT IN ('DELETED', 'RECEIVED') 
+    </mapped-statement>
+        
+    <mapped-statement name="getCashTransferNotReceived" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_CODE as "Branch Code", USER_ID as "User ID", TO_BRANCH_CODE as "To Branch", TO_USER_ID as "To User ID", 
+        TO_CHAR(TRANS_DT, 'MM/DD/YYYY') as "Trans Date", 
+        CURRENCY as "Currency", 
+        DENOMINATION_VALUE as "Value", DENOMINATION_COUNT as "Count",  
+        DENOMINATION_VALUE *  DENOMINATION_COUNT as "Total"
+        FROM FOREX_BRANCH_CASH_TRANS  
+        WHERE STATUS NOT IN ('DELETED', 'RECEIVED') 
+    </mapped-statement>
+        
+    <mapped-statement name="getMiddleRate" result-class="java.util.LinkedHashMap" >
+        SELECT MIDDLE_RATE FROM FOREX_EXCHANGE_RATE_DETAIL
+        WHERE TRANS_CURRENCY = #CURRENCY:VARCHAR# AND 
+        VALUE_DATE = (SELECT MAX(VALUE_DATE)
+        FROM FOREX_EXCHANGE_RATE_DETAIL
+        WHERE TRANS_CURRENCY = #CURRENCY:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getExchangeRateParam" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM FOREX_EXCHANGE_RATE
+        WHERE TRANS_CURRENCY = #CURRENCY:VARCHAR# AND 
+        CUSTOMER_TYPE = #CUSTOMERTYPE:VARCHAR#
+    </mapped-statement>
+
+        <!--getPendingCashTransfer AND TO_BRANCH_CODE = #BRANCH#-->
+</sql-map>

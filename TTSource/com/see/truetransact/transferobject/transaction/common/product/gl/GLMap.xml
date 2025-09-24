@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GLTOMap">
+
+	<!-- Use GLTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertGLTO" inline-parameters="true">
+        INSERT INTO GL
+        (AC_HD_ID, OPN_BAL, CUR_BAL, BRANCH_CODE, CLEAR_BALANCE, UNCLEAR_BALANCE, AVAILABLE_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT, LAST_TRANS_DT, TOTAL_BALANCE, IMPL_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, BALANCE_TYPE
+        ) VALUES (
+        #acHdId:VARCHAR#, #opnBal:NUMERIC#, #curBal:NUMERIC#, #branchCode:VARCHAR#, #clearBalance:NUMERIC#, #unclearBalance:NUMERIC#, #availableBalance:NUMERIC#, #shadowCredit:NUMERIC#, #shadowDebit:NUMERIC#, #lastTransDt:DATE#, #totalBalance:NUMERIC#, #implStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #balanceType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use GLTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateGLTO" inline-parameters="true">
+        UPDATE GL SET 
+        OPN_BAL = NVL(OPN_BAL,0) + #opnBal:NUMERIC#,
+        CUR_BAL = NVL(CUR_BAL,0) + #curBal:NUMERIC#,
+        IMPL_STATUS = #implStatus:VARCHAR#,
+        BALANCE_TYPE = #balanceType:VARCHAR#, 
+        LAST_TRANS_DT = #lastTransDt:DATE#
+        WHERE 
+        AC_HD_ID = #acHdId:VARCHAR# AND
+        BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateglTOminus" inline-parameters="true">
+        UPDATE GL SET 
+        OPN_BAL = NVL(OPN_BAL,0) + #opnBal:NUMERIC#,
+        CUR_BAL = #curBal:NUMERIC#,
+        IMPL_STATUS = #implStatus:VARCHAR#,
+        BALANCE_TYPE = #balanceType:VARCHAR#, 
+        LAST_TRANS_DT = #lastTransDt:DATE#
+        WHERE 
+        AC_HD_ID = #acHdId:VARCHAR# AND
+        BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to GLTO object (JavaBean) properties -->
+    <result-map name="getGLTOResult" class="com.see.truetransact.transferobject.transaction.common.product.gl.GLTO">
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="opnBal" column="OPN_BAL"/>
+        <property name="curBal" column="CUR_BAL"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="clearBalance" column="CLEAR_BALANCE"/>
+        <property name="unclearBalance" column="UNCLEAR_BALANCE"/>
+        <property name="availableBalance" column="AVAILABLE_BALANCE"/>
+        <property name="shadowCredit" column="SHADOW_CREDIT"/>
+        <property name="shadowDebit" column="SHADOW_DEBIT"/>
+        <property name="lastTransDt" column="LAST_TRANS_DT"/>
+        <property name="totalBalance" column="TOTAL_BALANCE"/>
+        <property name="implStatus" column="IMPL_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="balanceType" column="BALANCE_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectGLTO" result-map="getGLTOResult" >
+        SELECT * FROM GL 
+        WHERE AC_HD_ID = #ACCT_HEAD:VARCHAR# AND BRANCH_CODE = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateBankGL" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET 
+        GLBALANCE = NVL(GLBALANCE,0) + #curBal:NUMERIC#,
+        BALANCETYPE = #balanceType:VARCHAR#
+        WHERE 
+        AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>        
+
+    <mapped-statement name="updateBankMinusGL" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET 
+        GLBALANCE = #curBal:NUMERIC#,
+        BALANCETYPE = #balanceType:VARCHAR#
+        WHERE 
+        AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>        
+        
+        <!-- ================================================================ -->
+    <mapped-statement name="getSelectTransParams" result-class="java.util.HashMap" >
+        SELECT * FROM PARAMETERS
+    </mapped-statement>    
+        
+    <result-map name="getGLResult" class="com.see.truetransact.transferobject.transaction.common.product.gl.GLTO">
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="opnBal" column="OPN_BAL"/>
+        <property name="curBal" column="CUR_BAL"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="clearBalance" column="CLEAR_BALANCE"/>
+        <property name="unclearBalance" column="UNCLEAR_BALANCE"/>
+        <property name="availableBalance" column="AVAILABLE_BALANCE"/>
+        <property name="shadowCredit" column="SHADOW_CREDIT"/>
+        <property name="shadowDebit" column="SHADOW_DEBIT"/>
+        <property name="lastTransDt" column="LAST_TRANS_DT"/>
+        <property name="totalBalance" column="TOTAL_BALANCE"/>
+        <property name="implStatus" column="IMPL_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="balanceType" column="BALANCE_TYPE"/>
+    </result-map>
+    <mapped-statement name="getGLData" result-map="getGLResult" >
+        SELECT * FROM GL 
+        WHERE AC_HD_ID = #AC_HD_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND (STATUS IS NULL OR STATUS NOT IN ('DELETED'))
+    </mapped-statement>    
+</sql-map>

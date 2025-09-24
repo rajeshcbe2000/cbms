@@ -1,0 +1,496 @@
+-- Added by nithya on 19-06-2024 -- Version 1.0 - Correction Tool - Start
+
+CREATE OR REPLACE PROCEDURE savdayend4aperiod(actnum text, frdt timestamp without time zone)
+ LANGUAGE plpgsql
+AS $procedure$
+DECLARE
+ /*  
+DO $$
+DECLARE
+  l_act_num text;
+BEGIN
+  FOR l_act_num IN (SELECT DISTINCT ACT_NUM FROM  ALL_TRANS WHERE TRANS_DT >='2022-12-01'
+AND AC_HD_ID IN ('2012010104','2012001001')) LOOP
+    BEGIN
+      --PERFORM SAVPASSBOOK4APERIOD(l_act_num, '2022-12-01');
+      call SAVDAYEND4APERIOD(l_act_num , '2022-12-01'::date);
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error in Creation %', l_act_num;
+    END;
+  END LOOP;
+END $$;
+ */
+BEGIN
+ 	DELETE FROM ACT_DAYEND_BALANCE WHERE ACT_NUM =ACTNUM AND DAY_END_DT >=FRDT;
+	--COMMIT;
+	Insert into  ACT_DAYEND_BALANCE(PROD_ID, ACT_NUM, DAY_END_DT, AMT )
+	WITH DE AS
+	(SELECT ACT_NUM,AMT  FROM ACT_DAYEND_BALANCE WHERE ACT_NUM =ACTNUM AND DAY_END_DT =(
+		SELECT MAX(DAY_END_DT)  FROM ACT_DAYEND_BALANCE WHERE ACT_NUM =ACTNUM  AND
+		 DAY_END_DT < FRDT )
+		   ),
+	 TR AS 
+	 ( select  ACT_NUM ,TRANS_DT,  
+		(SUM( (CASE WHEN AT.TRANS_TYPE='CREDIT' THEN AMOUNT ELSE 0 END)-
+		(CASE when AT.TRANS_TYPE='DEBIT' THEN AMOUNT ELSE 0 END) ) ) 
+		AS TRBALANCE 
+		from all_trans AT where  AT.AUTHORIZE_STATUS='AUTHORIZED' AND AT.STATUS!='DELETED' AND  
+		trans_dt >= FRDT
+		  and act_num = ACTNUM
+		GROUP BY ACT_NUM ,TRANS_DT  )
+    select SUBSTR( TR.ACT_NUM,5,3),  TR.ACT_NUM,  TR.TRANS_DT,coalesce((SELECT DE.AMT FROM DE WHERE 
+		 DE.ACT_NUM = TR.ACT_NUM ),0) + 
+		 SUM(TR.TRBALANCE) OVER (order by  TR.trans_dt) AS BAL 
+	FROM TR  order by  TR.trans_dt;
+end;
+$procedure$
+;
+
+----------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE savpassbook4aperiod(act_number text, frdt timestamp without time zone)
+ LANGUAGE plpgsql
+AS $procedure$
+DECLARE
+
+/*  
+DO $$
+DECLARE
+  l_act_num text;
+BEGIN
+  FOR l_act_num IN (SELECT DISTINCT ACT_NUM FROM  ALL_TRANS WHERE TRANS_DT >='2022-12-01'
+AND AC_HD_ID IN ('2012010104','2012001001')) LOOP
+    BEGIN
+      call SAVPASSBOOK4APERIOD(l_act_num, '2022-12-01'::date);
+      call SAVDAYEND4APERIOD(l_act_num , '2022-12-01'::date);
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error in Creation %', l_act_num;
+    END;
+  END LOOP;
+END $$;
+ */
+RcFTag bigint;
+MxSlNo bigint;
+MxPGNo bigint;
+RecNo bigint :=30;
+Sort_FrmDt timestamp;    -- New variable declaration by Ajith on 27/07/2018 
+MXDT timestamp;
+BALAMT double precision;
+MSTUPDAT  varchar(1):='Y'; -- VARIABLE MSTUPDAT  ='Y'  IS USED FOR UPDATE ACT_MASTER CLEAR_BALANCE ,TOTAL_BALANCE=,AVAILABLE_BALANCE
+I integer:=0;
+J integer:=0;
+ACNO PASS_BOOK.ACT_NUM%TYPE:='A';
+BEGIN
+    DELETE FROM PASS_BOOK WHERE ACT_NUM =act_number AND TRANS_DT >=FRDT;
+      SELECT COUNT(*)
+ INTO STRICT RcFTag FROM PASS_BOOK WHERE ACT_NUM =act_number;
+    --SELECT MAX(nvl(PAGENO,1)) INTO MxPGNo FROM PASS_BOOK  WHERE ACT_NUM =act_number ; -- Old Code Blocked by Ajith on 27/07/2018
+    SELECT MAX(coalesce(PAGENO,1)) INTO STRICT MxPGNo
+      FROM PASS_BOOK  
+       WHERE ACT_NUM =act_number AND TRANS_DT <FRDT; -- New Code Modified by Ajith on 27/07/2018
+    SELECT MAX(TRANS_DT) INTO STRICT Sort_FrmDt
+      FROM PASS_BOOK  
+       WHERE ACT_NUM =act_number AND PAGENO=MxPGNo;   -- New Code Added by Ajith on 27/07/2018
+    SELECT MAX(SLNO) INTO STRICT MxSlNo
+      FROM PASS_BOOK 
+       WHERE ACT_NUM =act_number AND TRANS_DT =Sort_FrmDt AND coalesce(PAGENO,0) =MxPGNo; -- New Code Modified by Ajith on 27/07/2018
+/*    
+-- Old Code Blocked by Ajith on 27/07/2018 - Begins --
+    AND TRANS_DT =(SELECT MAX(TRANS_DT)  FROM PASS_BOOK WHERE ACT_NUM =act_number AND TRANS_DT <FRDT )
+    AND NVL(PAGENO,0) =(SELECT MAX(nvl(PAGENO,0)) FROM PASS_BOOK WHERE ACT_NUM =act_number); -- Old Code Blocked by Ajith on 27/07/2018
+-- Old Code Blocked by Ajith on 27/07/2018 - Ends --
+*/
+    Insert into PASS_BOOK(ACT_NUM, SLNO, TRANS_DT, PARTICULARS, DEBIT,
+        CREDIT, PBOOK_FLAG, BALANCE, INSTRUMENT_NO1, INSTRUMENT_NO2, 
+        TRANS_ID, BATCH_ID, INST_TYPE, INST_DT, STATUS, 
+        AUTHORIZE_STATUS, AUTHORIZE_DT, PAGENO, CREATED_DT, AUTHORIZE_STATUS_2 )
+         select X.act_num,((SUM(1) OVER (order by  X.TRANS_DT,X.AUTHORIZE_DT,X.STATUS_DT,X.TRANS_TYPE ,X.rowid )) + coalesce(X.MxSlNo,0))
+  -(((CEIL (coalesce(((SUM(1)  OVER (order by  X.TRANS_DT,X.AUTHORIZE_DT,X.STATUS_DT,X.TRANS_TYPE ,X.rowid )) + coalesce(X.MxSlNo,0)),0)/X.RecNo))-1)*X.RecNo)
+   AS SLNO , X.trans_dt, x.particulars,x.DEBIT,x.credit, 1::NUMERIC,
+   (coalesce((SELECT BALANCE FROM PASS_BOOK WHERE ACT_NUM =x.ACT_NUM AND TRANS_DT =(
+        SELECT MAX(TRANS_DT)  FROM PASS_BOOK WHERE ACT_NUM =x.ACT_NUM  AND TRANS_DT <FRDT )
+        AND SLNO = coalesce(x.MxSlNo,0) AND PAGENO = MxPGNo),0) +
+        SUM( (CASE when x.TRANS_TYPE='CREDIT' THEN AMOUNT ELSE 0 END)-
+        (CASE when x.TRANS_TYPE='DEBIT' THEN AMOUNT ELSE 0 END)) OVER (order by TRANS_DT,AUTHORIZE_DT,STATUS_DT,TRANS_TYPE)) 
+        AS BALANCE, x.instrument_no1 ,x.instrument_no2 ,
+x.trans_id,x.Batch_id,x.inst_type ,x.inst_dt,x.status ,x.authorize_status ,
+x.authorize_dt ,(CEIL (coalesce(((SUM(1)  OVER (order by  X.TRANS_DT,X.AUTHORIZE_DT,X.STATUS_DT,X.TRANS_TYPE ,X.rowid )) + coalesce(X.MxSlNo,0)),0)/X.RecNo)) as Pageno, x.status_dt ,x.authorize_status_2 From  
+  (SELECT ACT_NUM,AT.trans_dt,AT.TRANS_TYPE,AT.AMOUNT,at.ctid as rowid,MxSlNo,RecNo,PARTICULARS,
+(CASE when AT.TRANS_TYPE='CREDIT' THEN AMOUNT ELSE 0 END) AS CREDIT,  
+(CASE when AT.TRANS_TYPE='DEBIT' THEN AMOUNT ELSE 0 END) AS DEBIT,
+AT.PROD_ID,INSTRUMENT_NO1, INSTRUMENT_NO2, 
+        TRANS_ID, null as BATCH_ID, INST_TYPE, INST_DT, AT.STATUS, 
+        AT.AUTHORIZE_STATUS, AT.AUTHORIZE_DT,STATUS_DT, AUTHORIZE_STATUS_2 
+    from Cash_trans AT join OP_AC_PRODUCT OP  ON AT.AC_HD_ID = OP.AC_HD_ID AND AT.PROD_ID=OP.PROD_ID
+    where AT.AUTHORIZE_STATUS='AUTHORIZED' AND AT.STATUS!='DELETED' AND  trans_dt >= FRDT and act_num = act_number   
+union all
+SELECT ACT_NUM,AT.trans_dt,AT.TRANS_TYPE,AT.AMOUNT,at.ctid as rowid,MxSlNo,RecNo,PARTICULARS,
+(CASE when AT.TRANS_TYPE='CREDIT' THEN AMOUNT ELSE 0 END) AS CREDIT,
+(CASE when AT.TRANS_TYPE='DEBIT' THEN AMOUNT ELSE 0 END) AS DEBIT,
+AT.PROD_ID,INSTRUMENT_NO1, INSTRUMENT_NO2, 
+        TRANS_ID, null as BATCH_ID, INST_TYPE, INST_DT, AT.STATUS, 
+        AT.AUTHORIZE_STATUS, AT.AUTHORIZE_DT,STATUS_DT, AUTHORIZE_STATUS_2 
+    from transfer_trans AT join OP_AC_PRODUCT OP  ON AT.AC_HD_ID = OP.AC_HD_ID AND AT.PROD_ID=OP.PROD_ID
+    where AT.AUTHORIZE_STATUS='AUTHORIZED' AND AT.STATUS!='DELETED' AND  trans_dt >= FRDT and act_num = act_number) x
+    order by x.act_num,x.trans_dt,x.status_dt,x.AUTHORIZE_DT,x.TRANS_TYPE ,coalesce(x.AMOUNT,0);
+/* " AND PAGENO = MxPGNo" part added on 13/02/2019 by Ajith to avoid multiple row exception of MxSlNo in accounts with large number of transactions per day */
+ --   COMMIT;
+    IF RcFTag =0 THEN
+--SLNO AND PAGE NO UPDATION FROM THE BEGINNING 
+        DECLARE
+            C1 CURSOR FOR
+            SELECT ctid AS RID, ACT_NUM, TRANS_DT, DEBIT , CREDIT,  BALANCE, SLNO ,PAGENO,CREATED_DT
+            FROM PASS_BOOK   where act_num = act_number
+            ORDER BY ACT_NUM, TRANS_DT,CREATED_DT,coalesce(DEBIT,0),coalesce(CREDIT,0);
+        BEGIN
+            FOR SI IN C1
+            LOOP
+                IF SI.ACT_NUM=ACNO THEN
+                    I:=I+1;
+                    BALAMT:=(coalesce(BALAMT,0)+coalesce(SI.CREDIT,0))-coalesce(SI.DEBIT,0);
+                    IF I=31 THEN
+                        I:=1;
+                        J:=J+1;
+                    END IF;
+                ELSE
+                    --BALAMT:=  SI.BALANCE;  -- BALANCE UPDATION USING FIRST ROWS BALANCE
+                    BALAMT:= (coalesce(SI.CREDIT,0))-coalesce(SI.DEBIT,0);
+                    I:=1;
+                    J:=1;
+                END IF;
+                 UPDATE PASS_BOOK P SET BALANCE= BALAMT ,SLNO=I, PAGENO=J WHERE p.ctid = SI.RID;
+                ACNO:=SI.ACT_NUM;
+              END LOOP;
+        END;
+/* New "ELSE" part added by Ajith on 27/07/2018 to correct the page number and serial number update.
+   Earlier, the page number used to start with 1 and serial number was also wrong in many places. */
+        
+-- New code block by Ajith on 27/07/2018 - Begins --   
+    ELSE
+--SLNO  AND PAGE NO UPDATION FOR PARTIAL RECREATION OF PASSBOOK  
+        DECLARE
+            C11 CURSOR FOR
+            SELECT ctid AS RID, ACT_NUM, TRANS_DT, DEBIT , CREDIT,  BALANCE, SLNO ,PAGENO,CREATED_DT  
+            FROM PASS_BOOK 
+            WHERE ACT_NUM = act_number AND (TRANS_DT>Sort_FrmDt 
+            OR (TRANS_DT=Sort_FrmDt AND PAGENO=MxPGNo AND SLNO>MxSlNo))
+            ORDER BY ACT_NUM, TRANS_DT,CREATED_DT,coalesce(DEBIT,0),coalesce(CREDIT,0);
+        BEGIN
+            SELECT BALANCE INTO STRICT BALAMT
+            FROM PASS_BOOK   
+            WHERE ACT_NUM = act_number AND PAGENO=MxPGNo AND SLNO=MxSlNo AND TRANS_DT=Sort_FrmDt;
+            I:=MxSlNo;
+            J:=MxPGNo;
+            FOR SII IN C11
+            LOOP
+                I:=I+1;
+                BALAMT:=(coalesce(BALAMT,0)+coalesce(SII.CREDIT,0))-coalesce(SII.DEBIT,0);
+                IF I=31 THEN
+                    I:=1;
+                    J:=J+1;
+                END IF;
+                UPDATE PASS_BOOK P SET BALANCE= BALAMT ,SLNO=I, PAGENO=J WHERE p.ctid = SII.RID;
+             END LOOP;
+        END;
+-- New code block by Ajith on 27/07/2018 - Ends --        
+    END IF;
+   -- COMMIT;
+    IF coalesce(MSTUPDAT,'Z') = 'Y' THEN
+      SELECT distinct max(TRANS_DT) INTO STRICT MXDT FROM PASS_BOOK where act_num = act_number;
+      SELECT distinct max(coalesce(PAGENO,0)) INTO STRICT MXPGNO FROM PASS_BOOK where act_num = act_number AND TRANS_DT = MXDT;
+      SELECT distinct max(SLNO) INTO STRICT MXSLNO FROM PASS_BOOK where act_num = act_number  AND TRANS_DT = MXDT AND coalesce(PAGENO,0) = MXPGNO;
+      SELECT BALANCE INTO STRICT BALAMT FROM PASS_BOOK where act_num = act_number  AND TRANS_DT = MXDT AND coalesce(PAGENO,0) = MXPGNO AND SLNO = MXSLNO;
+      UPDATE ACT_MASTER  SET CLEAR_BALANCE =BALAMT,TOTAL_BALANCE=BALAMT,AVAILABLE_BALANCE =BALAMT  WHERE ACT_NUM = act_number;
+      --COMMIT;
+    END IF;
+  CALL SAVDAYEND4APERIOD(act_number::TEXT,FRDT);
+END;
+$procedure$
+;
+
+--------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE transfergl_insertion(trnid text, trandt timestamp without time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $procedure$
+
+BEGIN
+
+DELETE FROM TRANS_REF_GL T WHERE T.TRANS_ID =TRNID AND T.TRANS_DT =TRANDT;
+
+
+
+
+
+---TRANFER TRANSACTION
+
+INSERT INTO TRANS_REF_GL(TRANS_ID, TRANS_MODE, AC_HD_ID, ACT_NUM, INP_AMOUNT,
+
+        INP_CURR, AMOUNT, TRANS_DT, TRANS_TYPE, INST_TYPE, 
+
+        INST_DT, INIT_TRANS_ID, INIT_CHANN_TYPE, PARTICULARS, STATUS, 
+
+        INSTRUMENT_NO1, INSTRUMENT_NO2, PROD_ID, BRANCH_ID, STATUS_DT, 
+
+        PROD_TYPE, INITIATED_BRANCH, BATCH_ID, IBR_HIERARCHY)
+
+SELECT T.BATCH_ID||'_'||T.TRANS_ID  TRANS_ID , 'TRANSFER' TRANS_MODE, (SELECT P.IBR_AC_HD FROM  PARAMETERS P) AC_HD_ID , NULL, T.AMOUNT ,
+
+        NULL,T.AMOUNT ,T.TRANS_DT ,CASE WHEN T.TRANS_TYPE ='CREDIT' THEN 'CREDIT' ELSE 'DEBIT' END AS TRANS_TYPE , NULL ,
+
+        NULL, NULL, NULL,T.PARTICULARS, 'CREATED', 
+
+        NULL, NULL, NULL,T.INITIATED_BRANCH ,STATUS_DT,
+
+        'GL',T.INITIATED_BRANCH, NULL, NULL
+
+FROM  TRANSFER_TRANS T  WHERE  T.TRANS_DT =TRANDT 
+
+        -- AND T.BATCH_ID NOT IN (SELECT SUBSTR(TRANS_ID ,0,8) FROM  TRANS_REF_GL TG WHERE TG.TRANS_DT =T.TRANS_DT)
+
+        AND T.BATCH_ID =TRNID
+
+        AND T.INITIATED_BRANCH <> T.BRANCH_ID
+
+        AND T.AUTHORIZE_STATUS ='AUTHORIZED';
+
+                   
+
+INSERT INTO TRANS_REF_GL(TRANS_ID, TRANS_MODE, AC_HD_ID, ACT_NUM, INP_AMOUNT, 
+
+        INP_CURR, AMOUNT, TRANS_DT, TRANS_TYPE, INST_TYPE, 
+
+        INST_DT, INIT_TRANS_ID, INIT_CHANN_TYPE, PARTICULARS, STATUS, 
+
+        INSTRUMENT_NO1, INSTRUMENT_NO2, PROD_ID, BRANCH_ID, STATUS_DT, 
+
+        PROD_TYPE, INITIATED_BRANCH, BATCH_ID, IBR_HIERARCHY)
+
+SELECT T.BATCH_ID||'_'||T.TRANS_ID  TRANS_ID , 'TRANSFER' TRANS_MODE, (SELECT P.IBR_AC_HD FROM  PARAMETERS P) AC_HD_ID , NULL, T.AMOUNT ,
+
+        NULL,T.AMOUNT ,T.TRANS_DT ,CASE WHEN T.TRANS_TYPE ='CREDIT' THEN 'DEBIT' ELSE 'CREDIT' END AS TRANS_TYPE , NULL ,
+
+        NULL, NULL, NULL,T.PARTICULARS, 'CREATED', 
+
+        NULL, NULL, NULL,T.BRANCH_ID ,STATUS_DT,
+
+        'GL',T.INITIATED_BRANCH, NULL, NULL
+
+FROM  TRANSFER_TRANS T  WHERE  T.TRANS_DT =TRANDT 
+
+        -- AND T.BATCH_ID NOT IN (SELECT SUBSTR(TRANS_ID ,0,8) FROM  TRANS_REF_GL TG WHERE TG.TRANS_DT =T.TRANS_DT)
+
+        AND T.BATCH_ID =TRNID
+
+        AND T.INITIATED_BRANCH <> T.BRANCH_ID 
+
+        AND T.AUTHORIZE_STATUS ='AUTHORIZED';
+
+
+
+   
+
+
+
+
+
+---CASH
+
+INSERT INTO TRANS_REF_GL(TRANS_ID, TRANS_MODE, AC_HD_ID, ACT_NUM, INP_AMOUNT,
+
+        INP_CURR, AMOUNT, TRANS_DT, TRANS_TYPE, INST_TYPE, 
+
+        INST_DT, INIT_TRANS_ID, INIT_CHANN_TYPE, PARTICULARS, STATUS, 
+
+        INSTRUMENT_NO1, INSTRUMENT_NO2, PROD_ID, BRANCH_ID, STATUS_DT, 
+
+        PROD_TYPE, INITIATED_BRANCH, BATCH_ID, IBR_HIERARCHY)
+
+SELECT C.TRANS_ID ,'CASH' TRANS_MODE ,(SELECT P.CASH_AC_HD FROM  PARAMETERS P) AC_HD_ID , NULL ACT_NUM, C.AMOUNT ,
+
+        NULL, C.AMOUNT , C.TRANS_DT, CASE WHEN C.TRANS_TYPE ='CREDIT' THEN 'DEBIT' ELSE 'CREDIT' END AS TRANS_TYPE , NULL INST_TYPE ,
+
+        NULL, NULL, NULL,C.PARTICULARS|| 'Inter Branch Transaction A/C No :'||C.ACT_NUM, 'CREATED',
+
+        NULL, NULL, NULL,C.INITIATED_BRANCH ,C.STATUS_DT,
+
+        'GL',C.INITIATED_BRANCH, NULL, C.IBR_HIERARCHY
+
+FROM CASH_TRANS C WHERE C.TRANS_DT =TRANDT
+
+        AND C.TRANS_ID =TRNID 
+
+        AND C.INITIATED_BRANCH <> C.BRANCH_ID
+
+        AND C.AUTHORIZE_STATUS ='AUTHORIZED';
+
+
+
+---IBR  CASH
+
+INSERT INTO TRANS_REF_GL(TRANS_ID, TRANS_MODE, AC_HD_ID, ACT_NUM, INP_AMOUNT,
+
+        INP_CURR, AMOUNT, TRANS_DT, TRANS_TYPE, INST_TYPE, 
+
+        INST_DT, INIT_TRANS_ID, INIT_CHANN_TYPE, PARTICULARS, STATUS, 
+
+        INSTRUMENT_NO1, INSTRUMENT_NO2, PROD_ID, BRANCH_ID, STATUS_DT, 
+
+        PROD_TYPE, INITIATED_BRANCH, BATCH_ID, IBR_HIERARCHY)
+
+SELECT C.TRANS_ID ,'CASH' TRANS_MODE ,(SELECT P.IBR_AC_HD FROM  PARAMETERS P) AC_HD_ID , NULL ACT_NUM, C.AMOUNT ,
+
+        NULL, C.AMOUNT , C.TRANS_DT,  C.TRANS_TYPE AS TRANS_TYPE , NULL INST_TYPE ,
+
+        NULL, NULL, NULL,C.PARTICULARS|| 'Inter Branch Transaction A/C No :'||C.ACT_NUM, 'CREATED',
+
+        NULL, NULL, NULL,C.INITIATED_BRANCH ,C.STATUS_DT,
+
+        'GL',C.INITIATED_BRANCH, NULL, C.IBR_HIERARCHY
+
+FROM CASH_TRANS C WHERE C.TRANS_DT =TRANDT
+
+        AND C.TRANS_ID =TRNID 
+
+        AND C.INITIATED_BRANCH <> C.BRANCH_ID
+
+        AND C.AUTHORIZE_STATUS ='AUTHORIZED';
+
+
+
+
+
+----IBR TRANS
+
+INSERT INTO TRANS_REF_GL(TRANS_ID, TRANS_MODE, AC_HD_ID, ACT_NUM, INP_AMOUNT,
+
+        INP_CURR, AMOUNT, TRANS_DT, TRANS_TYPE, INST_TYPE, 
+
+        INST_DT, INIT_TRANS_ID, INIT_CHANN_TYPE, PARTICULARS, STATUS, 
+
+        INSTRUMENT_NO1, INSTRUMENT_NO2, PROD_ID, BRANCH_ID, STATUS_DT, 
+
+        PROD_TYPE, INITIATED_BRANCH, BATCH_ID, IBR_HIERARCHY)
+
+SELECT C.TRANS_ID ,'TRANSFER' TRANS_MODE ,(SELECT P.IBR_AC_HD FROM  PARAMETERS P) AC_HD_ID , NULL ACT_NUM, C.AMOUNT ,
+
+        NULL, C.AMOUNT , C.TRANS_DT,  CASE WHEN C.TRANS_TYPE ='CREDIT' THEN 'DEBIT' ELSE 'CREDIT' END AS TRANS_TYPE  , NULL INST_TYPE ,
+
+        NULL, NULL, NULL,C.PARTICULARS|| 'Inter Branch Transaction A/C No :'||C.ACT_NUM, 'CREATED',
+
+        NULL, NULL, NULL,C.BRANCH_ID ,C.STATUS_DT,
+
+        'GL',C.INITIATED_BRANCH, NULL, C.IBR_HIERARCHY
+
+ FROM CASH_TRANS C WHERE C.TRANS_DT =TRANDT
+
+        AND C.TRANS_ID =TRNID 
+
+        AND C.INITIATED_BRANCH <> C.BRANCH_ID
+
+        AND C.AUTHORIZE_STATUS ='AUTHORIZED';
+
+
+
+
+
+
+
+END;
+
+$procedure$
+;
+
+------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE suspensedayend4aperiod(actnum character varying, frdt date)
+ LANGUAGE plpgsql
+AS $procedure$
+DECLARE
+
+AVAIL_BAL numeric;
+ 
+BEGIN
+ 
+
+DELETE FROM SUSPENSE_DAYEND_BALANCE WHERE ACT_NUM =ACTNUM AND DAY_END_DT >=FRDT;
+
+
+ 
+Insert into  SUSPENSE_DAYEND_BALANCE
+   (PROD_ID, ACT_NUM, DAY_END_DT, AMT,AVAILABLE_BALANCE,CLEAR_BALANCE)
+
+WITH DE AS
+(SELECT ACT_NUM,AMT,AVAILABLE_BALANCE,CLEAR_BALANCE FROM SUSPENSE_DAYEND_BALANCE WHERE ACT_NUM =ACTNUM AND DAY_END_DT =(
+    SELECT MAX(DAY_END_DT)  FROM SUSPENSE_DAYEND_BALANCE WHERE ACT_NUM =ACTNUM  AND
+     DAY_END_DT < FRDT )
+       ),
+ TR AS 
+ ( select  ACT_NUM ,TRANS_DT,  
+ 
+    (SUM( (CASE WHEN AT.TRANS_TYPE='CREDIT' THEN AMOUNT ELSE 0::numeric END)-
+    (CASE when AT.TRANS_TYPE='DEBIT' THEN AMOUNT ELSE 0::numeric END) ) ) 
+    AS TRBALANCE 
+     
+    from all_trans AT where  AT.AUTHORIZE_STATUS='AUTHORIZED' AND AT.STATUS!='DELETED' AND  
+    trans_dt >= FRDT
+      and act_num = ACTNUM
+    GROUP BY ACT_NUM ,TRANS_DT  )
+  
+select SUBSTR( TR.ACT_NUM,5::numeric,3::numeric),  TR.ACT_NUM,  TR.TRANS_DT,nvl((SELECT DE.AMT FROM DE WHERE 
+ DE.ACT_NUM = TR.ACT_NUM ),0::numeric) + 
+ SUM(TR.TRBALANCE) OVER (order by  TR.trans_dt) AS BAL1, nvl((SELECT DE.AMT FROM DE WHERE 
+ DE.ACT_NUM = TR.ACT_NUM ),0::numeric) + 
+ SUM(TR.TRBALANCE) OVER (order by  TR.trans_dt) AS BAL2,
+ nvl((SELECT DE.AMT FROM DE WHERE 
+ DE.ACT_NUM = TR.ACT_NUM ),0::numeric) + 
+ SUM(TR.TRBALANCE) OVER (order by  TR.trans_dt)AS BAL3
+FROM TR  order by  TR.trans_dt;
+
+
+SELECT SUM(CASE WHEN A.TRANS_TYPE='CREDIT'THEN 1::numeric ELSE -1::numeric END*A.AMOUNT)INTO AVAIL_BAL  FROM ALL_TRANS A
+JOIN SUSPENSE_ACCOUNT_MASTER SA ON SA.SUSPENSE_ACCT_NUM=A.ACT_NUM
+ WHERE A.ACT_NUM=ACTNUM 
+AND A.AUTHORIZE_STATUS='AUTHORIZED'::text
+AND A.STATUS NOT IN ('DELETED'::text)
+AND SA.SUSPENSE_PROD_ID=A.PROD_ID;
+UPDATE  SUSPENSE_ACCOUNT_MASTER S 
+SET TOTAL_BALANCE=AVAIL_BAL,CLEAR_BALANCE=AVAIL_BAL
+WHERE S.SUSPENSE_ACCT_NUM=ACTNUM;
+
+
+end;
+$procedure$
+;
+
+
+-------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE ab_bal_update(actnum character varying)
+ LANGUAGE plpgsql
+AS $procedure$
+DECLARE
+AB_BAL numeric;
+BEGIN
+
+SELECT SUM(CASE WHEN A.TRANS_TYPE='DEBIT'THEN 1 ELSE -1 END*A.AMOUNT)INTO AB_BAL FROM ALL_TRANS A
+JOIN OTHER_BANKS_ACT_MASTER AB ON AB.ACT_MASTER_ID=A.ACT_NUM
+JOIN OTHER_BANK_ACCOUNT_PRODUCTS OP ON OP.PROD_ID=AB.PROD_ID
+WHERE A.ACT_NUM=ACTNUM
+AND A.AUTHORIZE_STATUS='AUTHORIZED'
+AND A.STATUS NOT IN ('DELETED')
+AND A.AC_HD_ID=OP.PRINCIPAL_AC_HD
+AND A.PROD_ID=AB.PROD_ID;
+UPDATE OTHER_BANKS_ACT_MASTER AB
+SET AVAILABLE_BALANCE=AB_BAL
+,CLEAR_BALANCE=AB_BAL
+WHERE AB.ACT_MASTER_ID=ACTNUM;
+--COMMIT;
+END;
+$procedure$
+;
+
+-- Added by nithya on 19-06-2024 -- Version 1.0 - Correction Tool - End

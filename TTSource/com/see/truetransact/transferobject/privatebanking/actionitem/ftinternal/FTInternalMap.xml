@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="FTInternalTOMap">
+
+	<!-- Use FTInternalTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertFTInternalTO" inline-parameters="true">
+        INSERT INTO PVT_AI_FTINTERNAL
+        (REF_NO, DR_ENTITLE_GRP, DR_PORTFOLIO_LOC, DR_ASSET_SUBCLASS, DR_ACCT, CR_ENTITLE_GRP, CR_PORTFOLIO_LOC, CR_ASSET_SUBCLASS, CR_ACCT, ORD_EXEC_DT, ORD_VALUE_DT, DR_AMOUNT, CR_AMOUNT, BANK_OFFICE_INSTRUCT, TRADER_INSTRUCT, CLIENT_ADVCIES, CREDIT_NOTES, STATUS, MEMBER_ID
+        ) VALUES (
+        #refNo:VARCHAR#,  #drEntitleGrp:VARCHAR#, #drPortfolioLoc:VARCHAR#, #drAssetSubclass:VARCHAR#, #drAcct:VARCHAR#, #crEntitleGrp:VARCHAR#, #crPortfolioLoc:VARCHAR#, #crAssetSubclass:VARCHAR#, #crAcct:VARCHAR#, #ordExecDt:DATE#, #ordValueDt:DATE#, #drAmount:NUMERIC#, #crAmount:NUMERIC#, #bankOfficeInstruct:VARCHAR#, #traderInstruct:VARCHAR#, #clientAdvcies:VARCHAR#, #creditNotes:VARCHAR#, #status:VARCHAR#, #memberId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use FTInternalTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateFTInternalTO" inline-parameters="true">
+        UPDATE PVT_AI_FTINTERNAL SET 
+        DR_ENTITLE_GRP = #drEntitleGrp:VARCHAR#,
+        DR_PORTFOLIO_LOC = #drPortfolioLoc:VARCHAR#,
+        DR_ASSET_SUBCLASS = #drAssetSubclass:VARCHAR#,
+        DR_ACCT = #drAcct:VARCHAR#,
+        CR_ENTITLE_GRP = #crEntitleGrp:VARCHAR#,
+        CR_PORTFOLIO_LOC = #crPortfolioLoc:VARCHAR#,
+        CR_ASSET_SUBCLASS = #crAssetSubclass:VARCHAR#,
+        CR_ACCT = #crAcct:VARCHAR#,
+        ORD_EXEC_DT = #ordExecDt:DATE#,
+        ORD_VALUE_DT = #ordValueDt:DATE#,
+        DR_AMOUNT = #drAmount:NUMERIC#,
+        CR_AMOUNT = #crAmount:NUMERIC#,
+        BANK_OFFICE_INSTRUCT = #bankOfficeInstruct:VARCHAR#,
+        TRADER_INSTRUCT = #traderInstruct:VARCHAR#,
+        CLIENT_ADVCIES = #clientAdvcies:VARCHAR#,
+        CREDIT_NOTES = #creditNotes:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT,
+        MEMBER_ID = #memberId:VARCHAR#
+        WHERE REF_NO = #refNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use FTInternalTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteFTInternalTO" inline-parameters="true">
+        UPDATE PVT_AI_FTINTERNAL SET
+        STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE REF_NO = #refNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to FTInternalTO object (JavaBean) properties -->
+    <result-map name="getFTInternalTOResult" class="com.see.truetransact.transferobject.privatebanking.actionitem.ftinternal.FTInternalTO">
+        <property name="refNo" column="REF_NO"/>
+        <property name="drEntitleGrp" column="DR_ENTITLE_GRP"/>
+        <property name="drPortfolioLoc" column="DR_PORTFOLIO_LOC"/>
+        <property name="drAssetSubclass" column="DR_ASSET_SUBCLASS"/>
+        <property name="drAcct" column="DR_ACCT"/>
+        <property name="crEntitleGrp" column="CR_ENTITLE_GRP"/>
+        <property name="crPortfolioLoc" column="CR_PORTFOLIO_LOC"/>
+        <property name="crAssetSubclass" column="CR_ASSET_SUBCLASS"/>
+        <property name="crAcct" column="CR_ACCT"/>
+        <property name="ordExecDt" column="ORD_EXEC_DT"/>
+        <property name="ordValueDt" column="ORD_VALUE_DT"/>
+        <property name="drAmount" column="DR_AMOUNT"/>
+        <property name="crAmount" column="CR_AMOUNT"/>
+        <property name="bankOfficeInstruct" column="BANK_OFFICE_INSTRUCT"/>
+        <property name="traderInstruct" column="TRADER_INSTRUCT"/>
+        <property name="clientAdvcies" column="CLIENT_ADVCIES"/>
+        <property name="creditNotes" column="CREDIT_NOTES"/>
+        <property name="memberId" column="MEMBER_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectFTInternalTO" result-map="getFTInternalTOResult" >
+        SELECT * FROM PVT_AI_FTINTERNAL 
+        WHERE REF_NO = #value:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSelectPvtAIFTInternal" result-class="java.util.LinkedHashMap" >
+        SELECT PAI.REF_NO, POM.MEMBER, PAI.DR_ENTITLE_GRP, PAI.CR_ENTITLE_GRP FROM PVT_AI_FTINTERNAL PAI, PVT_ORDER_MASTER POM  
+        WHERE PAI.STATUS != 'DELETED' AND PAI.MEMBER_ID = POM.ORD_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectPvtOrderMaster" result-class="java.util.LinkedHashMap" >
+        SELECT ORD_ID, MEMBER, ORDER_TYPE FROM PVT_ORDER_MASTER 
+        WHERE STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="SelectPvtOrderMaster" result-class="java.util.LinkedHashMap" >
+        SELECT  ACTUAL.CONTACT_MODE, ACTUAL.CONTACT_DT, ACTUAL.CLIENT_CONTACT, ACTUAL.MEMBER,RELATION.MEMBER AS "MEMBER RELATION"
+        FROM PVT_ORDER_MASTER ACTUAL, PVT_ORDER_MASTER RELATION
+        WHERE  ACTUAL.RELATIONSHIP = RELATION.ORD_ID (+) AND ACTUAL.STATUS NOT IN ('DELETED') AND ACTUAL.ORD_ID = #ORD_ID:VARCHAR#
+    </mapped-statement>
+        
+        <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <mapped-statement name="getFTInternalAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT PAI.REF_NO, POM.MEMBER, PAI.DR_ENTITLE_GRP, PAI.CR_ENTITLE_GRP FROM PVT_AI_FTINTERNAL PAI, PVT_ORDER_MASTER POM  
+        WHERE PAI.MEMBER_ID = POM.ORD_ID AND (PAI.STATUS != 'DELETED' OR PAI.STATUS IS NULL)
+        AND (PAI.AUTHORIZE_STATUS NOT IN 
+        ('AUTHORIZED', 'REJECTED') OR PAI.AUTHORIZE_STATUS IS NULL) 
+    </mapped-statement>
+
+    <mapped-statement name="authorizeFTInternal" result-class="java.util.HashMap">
+        UPDATE PVT_AI_FTINTERNAL
+        SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = TODAY_DT
+        WHERE REF_NO = #REF_NO:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+        
+</sql-map>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ShareProductLoanTOMap">
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShareProductLoanTO" inline-parameters="true">
+        INSERT INTO SHARE_PROD_LOANS
+        (SHARE_TYPE, LOAN_TYPE, SURITY_SHARE, BORROWER_SHARE, STATUS, STATUS_BY, STATUS_DT,MAX_LOAN_AMT
+        ) VALUES (
+        #shareType:VARCHAR#, #loanType:VARCHAR#, #maxLoanLimit:NUMERIC#, #shareHoldingMultiples:NUMERIC#, #status:VARCHAR#,#statusBy:VARCHAR#, #statusDt:DATE#,#maxLoanAmt:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateShareProductLoanTO" inline-parameters="true">
+        UPDATE SHARE_PROD_LOANS SET 
+        SHARE_TYPE = #shareType:VARCHAR#,
+        LOAN_TYPE = #loanType:VARCHAR#,
+        SURITY_SHARE = #maxLoanLimit:NUMERIC#,
+        BORROWER_SHARE = #shareHoldingMultiples:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        MAX_LOAN_AMT=#maxLoanAmt:NUMERIC#
+        WHERE SHARE_TYPE = #shareType:VARCHAR# AND LOAN_TYPE = #loanType:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteShareProductLoanTO" inline-parameters="true">
+        UPDATE SHARE_PROD_LOANS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE SHARE_TYPE = #shareType:VARCHAR# AND LOAN_TYPE = #loanType:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+     	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareProductLoanTO object (JavaBean) properties -->
+    <result-map name="getShareProductLoanTOResult" class="com.see.truetransact.transferobject.product.share.ShareProductLoanTO">
+        <property name="shareType" column="SHARE_TYPE"/>
+        <property name="loanType" column="LOAN_TYPE"/>
+        <property name="maxLoanLimit" column="SURITY_SHARE"/>
+        <property name="shareHoldingMultiples" column="BORROWER_SHARE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="maxLoanAmt" column="MAX_LOAN_AMT"/>
+    </result-map>
+    <mapped-statement name="getSelectShareProductLoan" result-map="getShareProductLoanTOResult" >
+        SELECT * FROM SHARE_PROD_LOANS 
+        WHERE SHARE_TYPE = #value:VARCHAR#  AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getSelectShareProductLoanAcct" result-map="getShareProductLoanTOResult" >
+        SELECT * FROM SHARE_PROD_LOANS 
+        WHERE LOAN_TYPE = #PROD_ID:VARCHAR#  AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="TermLoan.getProdID_LoanType" result-class="java.util.HashMap" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT WHERE AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') AND (AUTHORIZE_REMARK = 'GOLD_LOAN' or AUTHORIZE_REMARK='OTHER_LOAN')
+    </mapped-statement>
+
+</sql-map>

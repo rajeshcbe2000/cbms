@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ShiftMap">
+
+	<!-- Use InwardRegisterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+         
+             
+    <mapped-statement name="getShiftStatus" result-class="java.util.HashMap" >
+        SELECT count(*) as count FROM BRANCH_MASTER  
+        WHERE BRANCH_CODE =#BRANCH_ID:VARCHAR#  and SHIFT is not null
+    </mapped-statement>   
+        
+    <mapped-statement name="updateBranchMasterShift" result-class="java.util.HashMap">
+        UPDATE BRANCH_MASTER SET 
+        SHIFT = #SHIFT:VARCHAR#     
+        WHERE BRANCH_CODE = #BRANCH_ID:VARCHAR#        
+    </mapped-statement>  
+            
+    <mapped-statement name="getShiftNames" result-class="java.util.HashMap" >
+        SELECT SHIFT FROM BRANCH_MASTER  
+        WHERE BRANCH_CODE =#BRANCH_ID:VARCHAR#
+    </mapped-statement> 
+              
+    <mapped-statement name="Auth_view" result-class="java.util.HashMap">
+        Select Table_Name, Column_Name, Err_Count, Branch_Column From AUTHORIZATION_VIEW
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>     
+             
+             
+          
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InwardRegisterTO object (JavaBean) properties -->
+	
+         <!-- <mapped-statement name="getOutwardRegisterEdit" result-class="java.util.LinkedHashMap">
+                SELECT OUTWARD_NO,SENT_DATE,
+                 REFERENCE_NO FROM OUTWARD_REGISTER
+                  WHERE STATUS!='DELETED'
+	</mapped-statement>
+        <mapped-statement name="getSelectOutwardTO" result-map="getOutwardTOResult" >
+		SELECT * FROM OUTWARD_REGISTER  
+		WHERE OUTWARD_NO =#OUTWARD_NO# AND STATUS != 'DELETED'
+	</mapped-statement>
+       
+        <mapped-statement name="deleteOutwardTO" inline-parameters="true">
+            UPDATE OUTWARD_REGISTER SET 
+            STATUS = #status:VARCHAR#
+            WHERE OUTWARD_NO = #outwardNo:VARCHAR#      
+        </mapped-statement> -->
+
+   
+</sql-map>

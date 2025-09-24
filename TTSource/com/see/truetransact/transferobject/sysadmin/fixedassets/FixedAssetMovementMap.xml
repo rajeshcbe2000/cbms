@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="FixedAssetsMovementMap">
+
+             <!-- Use FixedAssetDepreciationTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             
+    <mapped-statement name="insertFixedAssetDepreciationTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_DEPRECIATION
+        (FA_ID, DEPRECIATION_DATE, DEPRECIATION_VALUE, NEW_CURRENT_VALUE, DEPR_BATCH_ID, 
+        STATUS_DT, STATUS_BY, BRANCH_CODE ) VALUES (#faId:VARCHAR#,
+        #depreciationDate:DATE#, #depreciationValue:VARCHAR#,#newCurrentValue:VARCHAR#,  
+        #deprBatchId:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #statusBy:VARCHAR#, #branchCode:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertFixedAssetsMovement" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_MOVEMENT
+        (FA_ID, MOVE_BATCH_ID,MOVEMENT_DATE,SOURCE_BRANCH_ID,SOURCE_DEPARTMENT,SOURCE_FLOOR, DESTINATION_BRANCH_ID, 
+        DESTINATION_DEPARTMENT, DESTINATION_FLOOR,STATUS, STATUS_DT,  
+        STATUS_BY ) VALUES (
+        #faMoveId:VARCHAR#, #moveBatchId:VARCHAR#,#moveDate:TIMESTAMP#, 
+        #sourceBranchId:VARCHAR#,#sourceDepartment:VARCHAR#,#sourceFloor:VARCHAR#,
+        #destinationBranchId:VARCHAR#, #destinationDepartment:VARCHAR#,
+        #destinationFloor:VARCHAR#, #status:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #statusBy:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertFixedAssetBreakageTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_BREAKAGE
+        (FA_ID, BREAK_BATCH_ID,BREAKAGE_DATE, BREAKAGE_REASON, STATUS, 
+        STATUS_DT, STATUS_BY ) VALUES (
+        #faBreakageId:VARCHAR#,#breakBatchId:VARCHAR#, #breakDate:VARCHAR#, 
+        #breakageRegion:VARCHAR#, #status:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #statusBy:VARCHAR#)
+    </mapped-statement>  
+        
+    <mapped-statement name="insertFixedAssetSaleTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_SALE
+        (FA_ID,SALE_BATCH_ID,SALE_DATE,SALE_AMOUNT,STATUS,STATUS_DT,
+        STATUS_BY ) VALUES (
+        #assetIdSale:VARCHAR#,#saleBatchId:VARCHAR#,#saleDate:VARCHAR#,
+        #saleAmount:VARCHAR#,#status:VARCHAR#, (SELECT SYS_DATE() FROM DUAL),#statusBy:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedAssetBreakageTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_BREAKAGE SET 
+        BREAKAGE_REASON = #breakageRegion:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        BREAKAGE_DATE = #breakDate:DATE#
+        WHERE FA_ID = #faBreakageId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedAssetMovementTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_MOVEMENT SET 
+        DESTINATION_BRANCH_ID = #destinationBranchId:VARCHAR#,
+        DESTINATION_DEPARTMENT = #destinationDepartment:VARCHAR#,
+        DESTINATION_FLOOR = #destinationFloor:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        MOVEMENT_DATE = #moveDate:DATE#
+        WHERE FA_ID = #faMoveId:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedAssetSaleTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_SALE SET 
+        SALE_AMOUNT = #saleAmount:VARCHAR#,               
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        SALE_DATE = #saleDate:DATE#
+        WHERE FA_ID = #assetIdSale:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="deleteFixedAssetBreakageTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_BREAKAGE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE FA_ID = #faBreakageId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteFixedAssetMovementTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_MOVEMENT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE FA_ID = #faMoveId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteFixedAssetSaleTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_SALE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE FA_ID = #assetIdSale:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSelectFixedAssetDepreciationAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT DEPR_BATCH_ID, DEPRECIATION_DATE, SUM(DEPRECIATION_VALUE) AS TOT_DEPR_VALUE, 
+        SUM(NEW_CURRENT_VALUE) AS TOT_NEW_CURR_VALUE, STATUS_BY FROM FIXED_ASSET_DEPRECIATION FAD
+        WHERE AUTHORIZE_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FAD.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR#
+        GROUP BY DEPR_BATCH_ID, DEPRECIATION_DATE, STATUS_BY ORDER BY DEPR_BATCH_ID
+    </mapped-statement>
+    <mapped-statement name="getSelectFixedAssetSaleDelete" result-class="java.util.LinkedHashMap" >
+        SELECT FAI.ASSET_TYPE,FAI.ASSET_DESC,F.SALE_DATE,F.FA_ID,faid.face_value,faid.curr_value,f.sale_batch_id
+        FROM FIXED_ASSET_SALE F
+        JOIN FIXED_ASSET_INDIVIDUAL_DETAILS FAID ON F.FA_ID = FAID.FA_ID
+        JOIN FIXED_ASSET_INDIVIDUAL FAI ON FAID.FID_ID = FAI.FID_ID
+        WHERE F.AUTHORIZED_STATUS IS NULL AND F.STATUS != 'DELETED'
+    </mapped-statement> 
+    <mapped-statement name="getSelectFixedAssetDepreciationDelete" result-class="java.util.LinkedHashMap" >
+        SELECT DEPR_BATCH_ID,fa_id,depreciation_date
+        FROM fixed_asset_depreciation
+        WHERE AUTHORIZE_STATUS IS NULL AND (STATUS != 'DELETED' or status is null)
+    </mapped-statement>
+    <mapped-statement name="getSelectFixedAssetMovementDelete" result-class="java.util.LinkedHashMap" >
+        SELECT FA_ID,MOVE_BATCH_ID,DESTINATION_BRANCH_ID,DESTINATION_DEPARTMENT,MOVEMENT_DATE
+        FROM fixed_asset_movement
+        WHERE AUTHORIZED_STATUS IS NULL AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="getSelectFixedAssetBreakageDelete" result-class="java.util.LinkedHashMap" >
+        SELECT BREAK_BATCH_ID,FA_ID,breakage_date,breakage_reason
+        FROM fixed_asset_breakage
+        WHERE AUTHORIZED_STATUS IS NULL AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="updateFixedAssetSaleDeleteStatus" inline-parameters="true">
+        UPDATE FIXED_ASSET_SALE SET STATUS='DELETED' WHERE sale_batch_id = #saleBatchId:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="updateFixedAssetDepreciationDeleteStatus" inline-parameters="true">
+        UPDATE FIXED_ASSET_DEPRECIATION SET STATUS='DELETED' WHERE DEPR_BATCH_ID = #deprBatchId:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="updateFixedAssetMovementDeleteStatus" inline-parameters="true">
+        UPDATE FIXED_ASSET_MOVEMENT SET STATUS='DELETED' WHERE MOVE_BATCH_ID = #moveBatchId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateFixedAssetBreakageDeleteStatus" inline-parameters="true">
+        UPDATE FIXED_ASSET_BREAKAGE SET STATUS='DELETED' WHERE BREAK_BATCH_ID = #breakBatchId:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="FixedAssetDepreciation.getSelectFixedAssetDepreciation" result-map="getFixedAssetDepreciationTOResult" >
+        select * from fixed_asset_depreciation WHERE (STATUS NOT IN ('DELETED') or status is null) AND DEPR_BATCH_ID = #DEPR_BATCH_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="FixedAssetDepreciationOB.getSelectFixedAssetDepreciation" result-class="java.util.HashMap" >
+        select * from fixed_asset_depreciation WHERE (STATUS NOT IN ('DELETED') or status is null) AND DEPR_BATCH_ID = #DEPR_BATCH_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="FixedAssetMovement.getSelectFixedAssetMovement" result-map="getFixedAssetMovementTOResult" >
+        select * from fixed_asset_movement WHERE (STATUS NOT IN ('DELETED') or status is null) AND MOVE_BATCH_ID = #MOVE_BATCH_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="FixedAssetBreakage.getSelectFixedAssetBreakage" result-map="getFixedAssetBreakageTOResult" >
+        select * from fixed_asset_breakage WHERE (STATUS NOT IN ('DELETED') or status is null) AND BREAK_BATCH_ID = #BREAK_BATCH_ID:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getSelectFixedAssetDetailsList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT FAID.FA_ID,FAID.SL_NO,SUPPLIED_BRANCH_ID,DEPARTMENT,FLOOR,FACE_VALUE,CURR_VALUE FROM FIXED_ASSETS_PRODUCT
+        FAP,FIXED_ASSET_DESCRIPTION fad,FIXED_ASSET_INDIVIDUAL fai,FIXED_ASSET_INDIVIDUAL_DETAILS FAID WHERE FAID.AI_STATUS !='DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="getSelectFixedAssetBreakageAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT BREAK_BATCH_ID,STATUS_BY FROM FIXED_ASSET_BREAKAGE FAB
+        WHERE AUTHORIZED_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FAB.STATUS_BY)
+        AND STATUS_BY!= #USER_ID# AND  STATUS != 'DELETED'
+        GROUP BY BREAK_BATCH_ID, STATUS_BY ORDER BY BREAK_BATCH_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedAssetSaleAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT SALE_BATCH_ID,SUM(CURR_VALUE) AS TOT_CURRENT_AMOUNT,SUM(SALE_AMOUNT)AS TOT_SALE_AMOUNT,
+        STATUS_BY  FROM FIXED_ASSET_SALE FAS,FIXED_ASSET_INDIVIDUAL_DETAILS FAID
+        WHERE FAS.FA_ID=FAID.FA_ID AND AUTHORIZED_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FAS.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# AND  STATUS != 'DELETED'
+        GROUP BY SALE_BATCH_ID,STATUS_BY ORDER BY SALE_BATCH_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedAssetMovementAuthorize" result-class="java.util.LinkedHashMap" >
+        SELECT MOVE_BATCH_ID,STATUS_BY FROM FIXED_ASSET_MOVEMENT FAM  WHERE AUTHORIZED_STATUS IS NULL 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FAM.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# AND STATUS != 'DELETED'                       
+        GROUP BY MOVE_BATCH_ID,STATUS_BY ORDER BY MOVE_BATCH_ID 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeFixedDepreciation" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_DEPRECIATION SET
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE DEPR_BATCH_ID = #DEPR_BATCH_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeFixedMovement" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_MOVEMENT SET
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE  STATUS != 'DELETED' AND MOVE_BATCH_ID = #MOVE_BATCH_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeFixedBreakage" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_BREAKAGE SET
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND BREAK_BATCH_ID = #BREAK_BATCH_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeFixedSale" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_SALE SET
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND SALE_BATCH_ID = #SALE_BATCH_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBreakageEditTO" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT BREAK_BATCH_ID,BREAKAGE_REASON,FAID.FA_ID,FAID.SL_NO,SUPPLIED_BRANCH_ID,DEPARTMENT,FLOOR,
+        FACE_VALUE,CURR_VALUE,BREAKAGE_DATE FROM FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION FAD,FIXED_ASSET_INDIVIDUAL FAI,
+        FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_BREAKAGE FAB WHERE FAP.ASSET_TYPE=FAD.ASSET_TYPE AND
+        FAD.ASSET_TYPE=FAI.ASSET_TYPE AND FAI.FID_ID =FAID.FID_ID
+        AND FAID.FA_ID=FAB.FA_ID AND BREAK_BATCH_ID=#BREAK_BATCH_ID:VARCHAR# AND FAB.STATUS != 'DELETED' ORDER BY FA_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMovementEditTO" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT MOVE_BATCH_ID,FAID.FA_ID,FAID.SL_NO,FACE_VALUE,CURR_VALUE,SOURCE_BRANCH_ID,SOURCE_DEPARTMENT,SOURCE_FLOOR,
+        DESTINATION_BRANCH_ID,DESTINATION_DEPARTMENT,DESTINATION_FLOOR,MOVEMENT_DATE FROM FIXED_ASSETS_PRODUCT FAP,
+        FIXED_ASSET_DESCRIPTION FAD,FIXED_ASSET_INDIVIDUAL FAI,FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_MOVEMENT FAM
+        WHERE FAP.ASSET_TYPE=FAD.ASSET_TYPE AND FAD.ASSET_TYPE=FAI.ASSET_TYPE AND FAI.FID_ID =FAID.FID_ID 
+        AND FAID.FA_ID=FAM.FA_ID AND MOVE_BATCH_ID=#MOVE_BATCH_ID:VARCHAR# AND FAM.STATUS != 'DELETED' ORDER BY FA_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSaleEditTO" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SALE_BATCH_ID,FAID.FA_ID, FAID.FACE_VALUE,FAID.CURR_VALUE,SALE_AMOUNT,SALE_DATE FROM
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION FAD,FIXED_ASSET_INDIVIDUAL FAI,
+        FIXED_ASSET_INDIVIDUAL_DETAILS FAID, FIXED_ASSET_SALE FAS WHERE FAP.ASSET_TYPE=FAD.ASSET_TYPE
+        AND FAD.ASSET_TYPE=FAI.ASSET_TYPE AND FAI.FID_ID =FAID.FID_ID AND FAID.FA_ID=FAS.FA_ID
+        AND SALE_BATCH_ID=#SALE_BATCH_ID:VARCHAR# AND FAS.STATUS != 'DELETED' ORDER BY FA_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedAssetDepreciationList" result-class="java.util.LinkedHashMap" >
+        SELECT FAD.FA_ID,FAI.ASSET_TYPE,FAI.ASSET_DESC,FACE_VALUE,CURR_VALUE,DEPRECIATION_RATE,DEPRECIATION_VALUE,
+        NEW_CURRENT_VALUE,MONTH,PURCHASED_DT FROM FIXED_ASSETS_PRODUCT FAP, FIXED_ASSET_INDIVIDUAL FAI, 
+        FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_DEPRECIATION FAD  WHERE FAI.ASSET_TYPE=FAP.ASSET_TYPE
+        AND FAI.FID_ID=FAID.FID_ID AND FAD.FA_ID=FAID.FA_ID AND DEPR_BATCH_ID=#DEPR_BATCH_ID:VARCHAR#              
+        AND DEPRECIATION_DATE=#DEPR_DATE:DATE# AND FAD.BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY FAD.FA_ID
+    </mapped-statement>
+        
+    <mapped-statement name="countFixedAssetSubtype" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT FAI.ASSET_TYPE,FAI.ASSET_DESC FROM FIXED_ASSETS_PRODUCT FAP, FIXED_ASSET_INDIVIDUAL FAI, 
+        FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_DEPRECIATION FAD  WHERE FAI.ASSET_TYPE=FAP.ASSET_TYPE
+        AND FAI.FID_ID=FAID.FID_ID AND FAD.FA_ID=FAID.FA_ID AND DEPR_BATCH_ID=#DEPR_BATCH_ID:VARCHAR#              
+        AND DEPRECIATION_DATE=#DEPR_DATE:DATE# AND FAD.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedAssetBreakList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT FAID.FA_ID,FAID.SL_NO,SUPPLIED_BRANCH_ID,DEPARTMENT,FLOOR,FACE_VALUE,CURR_VALUE FROM 
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION fad,FIXED_ASSET_INDIVIDUAL fai,FIXED_ASSET_INDIVIDUAL_DETAILS FAID 
+        WHERE  EXISTS(SELECT FA_ID FROM FIXED_ASSET_BREAKAGE WHERE STATUS != 'DELETED' AND FA_ID=FAID.FA_ID ) 
+        ORDER BY FA_ID
+    </mapped-statement>
+    <mapped-statement name="getSelectFixedAssetBreakList1" result-class="java.util.LinkedHashMap" >
+        select distinct FAID.FA_ID,FAID.SL_NO,SUPPLIED_BRANCH_ID,DEPARTMENT,FLOOR,FACE_VALUE,CURR_VALUE,FAB.BREAKAGE_REASON from 
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION FAD,FIXED_ASSET_INDIVIDUAL FAI,FIXED_ASSET_INDIVIDUAL_DETAILS FAID ,
+        FIXED_ASSET_BREAKAGE FAB
+        where  exists(select FA_ID from FIXED_ASSET_BREAKAGE where STATUS != 'DELETED' and FA_ID=FAID.FA_ID ) 
+        and FAB.FA_ID=FAID.FA_ID and FAB.BREAK_BATCH_ID=#DEPR_BATCH_ID#
+        ORDER BY FA_ID
+    </mapped-statement>     
+    <mapped-statement name="getSelectFixedAssetMoveList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT FAID.FA_ID,FAID.SL_NO,SUPPLIED_BRANCH_ID,DEPARTMENT,FLOOR,FACE_VALUE,CURR_VALUE FROM 
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION fad,FIXED_ASSET_INDIVIDUAL fai,FIXED_ASSET_INDIVIDUAL_DETAILS FAID 
+        WHERE EXISTS (SELECT CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS WHERE CURR_VALUE&gt;0 AND FA_ID=FAID.FA_ID) AND
+        FAID.AI_STATUS !='DELETED' ORDER BY FA_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedAssetSaleDetailsList" result-class="java.util.LinkedHashMap" >
+        SELECT FA_ID,PURCHASED_DT,FACE_VALUE,CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS FAID, 
+        FIXED_ASSET_INDIVIDUAL FAI WHERE NOT EXISTS(SELECT FA_ID FROM FIXED_ASSET_SALE
+        WHERE STATUS != 'DELETED' AND FA_ID=FAID.FA_ID) AND FAI.FID_ID=FAID.FID_ID AND FAI.ASSET_TYPE=#ASSET_TYPE:VARCHAR#
+        AND  FAI.ASSET_DESC=#ASSET_DESC:VARCHAR# AND EXISTS (SELECT CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS
+        WHERE CURR_VALUE&gt;0 AND FA_ID=FAID.FA_ID) AND FAID.AI_STATUS !='DELETED' ORDER BY FA_ID
+    </mapped-statement>
+    <mapped-statement name="getSelectFixedAssetSaleDetailsList1" result-class="java.util.LinkedHashMap" >
+        select FAS.FA_ID,PURCHASED_DT,FACE_VALUE,CURR_VALUE from FIXED_ASSET_INDIVIDUAL_DETAILS FAID, 
+        FIXED_ASSET_INDIVIDUAL FAI,FIXED_ASSET_SALE FAS WHERE  EXISTS(SELECT FA_ID FROM FIXED_ASSET_SALE
+        where STATUS != 'DELETED' and FA_ID=FAID.FA_ID) and FAI.FID_ID=FAID.FID_ID 
+        and FAS.FA_ID = FAID.FA_ID and FAS.SALE_BATCH_ID=#DEPR_BATCH_ID:VARCHAR#
+        order by FA_ID
+    </mapped-statement>
+    <dynamic-mapped-statement name="getSelectFixedAssetDepreciationIdDetailsList" result-class="java.util.LinkedHashMap" >
+        SELECT FA_ID,ASSET_NUM FROM FIXED_ASSET_INDIVIDUAL FAI ,FIXED_ASSET_INDIVIDUAL_DETAILS FAID 
+        WHERE EXISTS (SELECT CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS WHERE CURR_VALUE&gt;0 AND FA_ID=FAID.FA_ID) AND 
+        FAI.FID_ID=FAID.FID_ID
+        <dynamic>
+            <isParameterPresent>
+                        <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="ASSET_TYPE">
+                    FAI.ASSET_TYPE=#ASSET_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ASSET_DESC">
+                    FAI.ASSET_DESC=#ASSET_DESC:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        AND FAID.AI_STATUS !='DELETED' ORDER BY FA_ID
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectFixedAssetDepreciationIdDetailsListToID" result-class="java.util.LinkedHashMap" >
+        SELECT FA_ID,ASSET_NUM FROM FIXED_ASSET_INDIVIDUAL FAI ,FIXED_ASSET_INDIVIDUAL_DETAILS FAID 
+        WHERE EXISTS (SELECT CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS WHERE CURR_VALUE&gt;0 AND FA_ID=FAID.FA_ID) AND 
+        FAI.FID_ID=FAID.FID_ID
+        <dynamic>
+            <isParameterPresent>
+                        <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="ASSET_TYPE">
+                    FAI.ASSET_TYPE=#ASSET_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ASSET_DESC">
+                    FAI.ASSET_DESC=#ASSET_DESC:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+                    
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_ID">
+                    FA_ID &gt; #FROM_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        AND FAID.AI_STATUS !='DELETED' ORDER BY FA_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectBreakageViewDetails" result-class="java.util.LinkedHashMap">
+        SELECT BREAK_BATCH_ID,STATUS_BY FROM FIXED_ASSET_BREAKAGE WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL
+        GROUP BY  BREAK_BATCH_ID,STATUS_BY ORDER BY BREAK_BATCH_ID  
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMovementViewDetails" result-class="java.util.LinkedHashMap">
+        SELECT MOVE_BATCH_ID,STATUS_BY  FROM FIXED_ASSET_MOVEMENT WHERE STATUS!='DELETED' 
+        GROUP BY MOVE_BATCH_ID,STATUS_BY ORDER BY MOVE_BATCH_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSaleViewDetails" result-class="java.util.LinkedHashMap">
+        SELECT SALE_BATCH_ID,STATUS_BY FROM FIXED_ASSET_SALE WHERE STATUS!='DELETED'              
+        GROUP BY SALE_BATCH_ID,STATUS_BY ORDER BY SALE_BATCH_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBreakageDetails" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT FA_ID,SL_NO,SUPPLIED_BRANCH_ID,DEPARTMENT,FLOOR,FACE_VALUE,CURR_VALUE FROM 
+        FIXED_ASSET_INDIVIDUAL_DETAILS WHERE AI_STATUS !='DELETED' AND FA_ID=#FA_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSaleDetails" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT ASSET_TYPE,ASSET_DESC,FA_ID,PURCHASED_DT,FACE_VALUE,CURR_VALUE FROM 
+        FIXED_ASSET_INDIVIDUAL FAI,FIXED_ASSET_INDIVIDUAL_DETAILS FAID WHERE
+        AI_STATUS !='DELETED' AND FAI.FID_ID =FAID.FID_ID AND FA_ID=#FA_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsBreakageDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT BREAK_BATCH_ID,STATUS_BY FROM FIXED_ASSET_BREAKAGE WHERE STATUS!='DELETED' AND  
+        AUTHORIZED_STATUS IS NULL GROUP BY  BREAK_BATCH_ID,STATUS_BY ORDER BY BREAK_BATCH_ID  
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsMovementDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT MOVE_BATCH_ID,STATUS_BY  FROM FIXED_ASSET_MOVEMENT WHERE STATUS!='DELETED' AND  
+        AUTHORIZED_STATUS IS NULL GROUP BY MOVE_BATCH_ID,STATUS_BY ORDER BY MOVE_BATCH_ID                  
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsSaleDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT SALE_BATCH_ID,SUM(CURR_VALUE) AS TOT_CURRENT_AMOUNT,SUM(SALE_AMOUNT)AS TOT_SALE_AMOUNT,
+        STATUS_BY FROM FIXED_ASSET_SALE  FAS,FIXED_ASSET_INDIVIDUAL_DETAILS FAID
+        WHERE STATUS!='DELETED' AND  FAS.FA_ID=FAID.FA_ID AND
+        AUTHORIZED_STATUS IS NULL GROUP BY SALE_BATCH_ID,STATUS_BY ORDER BY SALE_BATCH_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBreakageData" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT BREAK_BATCH_ID,FA_ID,BREAKAGE_REASON FROM FIXED_ASSET_BREAKAGE  
+        WHERE STATUS != 'DELETED' AND FA_ID=#FA_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectDepreciationTableDetailsList" result-class="java.util.LinkedHashMap" >
+        SELECT FAID.FA_ID,FACE_VALUE,CURR_VALUE,DEPRECIATION_RATE,DEPRECIATION,ROUND_OFF_TYPE,CURR_VAL_ROUND_OFF,MONTH,PURCHASED_DT
+        FROM FIXED_ASSET_INDIVIDUAL FAI, FIXED_ASSET_INDIVIDUAL_DETAILS FAID, FIXED_ASSETS_PRODUCT FAP 
+        WHERE CURR_VALUE IN (SELECT CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS WHERE CURR_VALUE>0) AND
+        FAI.FID_ID=FAID.FID_ID AND FAI.ASSET_TYPE=FAP.ASSET_TYPE 
+        AND FAID.FA_ID NOT IN (SELECT FAD.FA_ID FROM  FIXED_ASSET_DEPRECIATION FAD,
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_INDIVIDUAL FAI,FIXED_ASSET_INDIVIDUAL_DETAILS FAID WHERE 
+        FAP.ASSET_TYPE=FAI.ASSET_TYPE AND FAI.FID_ID=FAID.FID_ID AND FAID.FA_ID = FAD.FA_ID AND
+        FAP.ASSET_TYPE=#ASSET_TYPE:VARCHAR# AND DEPRECIATION_DATE=#LAST_PROV_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                        <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="ASSET_TYPE">
+                    FAI.ASSET_TYPE=#ASSET_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+                    
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_ID">
+                    FA_ID &gt;= #FROM_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TO_ID">
+                    FA_ID &lt;= #TO_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+                    
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ASSET_DESC">
+                    FAI.ASSET_DESC=#ASSET_DESC:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        AND FAID.AI_STATUS !='DELETED' ORDER BY FA_ID  
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsSaleAcHeads" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT PURCHASE_DEBIT,PROVISION_DEBIT,SELLING_AC_ID,EXCESS_DEBIT,EXCESS_CREDIT FROM 
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION FAD,FIXED_ASSET_INDIVIDUAL FAI,
+        FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_SALE FAS WHERE FAP.ASSET_TYPE=FAD.ASSET_TYPE
+        AND FAD.ASSET_TYPE=FAI.ASSET_TYPE AND FAD.ASSET_SUB_TYPE=FAI.ASSET_DESC AND FAI.FID_ID =FAID.FID_ID
+        AND FAID.FA_ID=FAS.FA_ID AND FAS.SALE_BATCH_ID=#SALE_BATCH_ID:VARCHAR# AND FAS.STATUS!='DELETED'  
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsDeprAcHeads" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT PURCHASE_DEBIT,PROVISION_DEBIT,SELLING_AC_ID,EXCESS_DEBIT,EXCESS_CREDIT FROM 
+        FIXED_ASSETS_PRODUCT FAP,FIXED_ASSET_DESCRIPTION FAD,FIXED_ASSET_INDIVIDUAL FAI,
+        FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_DEPRECIATION
+        FADP WHERE FAP.ASSET_TYPE=FAD.ASSET_TYPE
+        AND FAD.ASSET_TYPE=FAI.ASSET_TYPE AND FAD.ASSET_SUB_TYPE=FAI.ASSET_DESC AND FAI.FID_ID =FAID.FID_ID
+        AND FAID.FA_ID=FADP.FA_ID AND FADP.DEPR_BATCH_ID=#DEPR_BATCH_ID:VARCHAR# 
+    </mapped-statement>                
+        
+    <mapped-statement name="getTransIDForFixedAssetsSale" result-class="java.util.HashMap">
+        SELECT TRANS_ID FROM CASH_TRANS WHERE LINK_BATCH_ID=#LINK_BATCH_ID:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement> 
+        
+    <mapped-statement name="updateFixedAssetIndividualCurrentValue" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET CURR_VALUE=0 WHERE FA_ID = #assetIdSale:VARCHAR#  
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedIndividualCurrentValue" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET CURR_VALUE=(CURR_VALUE - #depreciationValue:VARCHAR#) 
+        WHERE FA_ID = #faId:VARCHAR#  
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedAssetIndividualCurrentVal" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET CURR_VALUE=0 WHERE FA_ID = #faBreakageId:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedAssetIndividualMovementDetails" inline-parameters="true">
+        UPDATE FIXED_ASSET_INDIVIDUAL_DETAILS SET 
+        SUPPLIED_BRANCH_ID = #destinationBranchId:VARCHAR#,
+        DEPARTMENT = #destinationDepartment:VARCHAR#,
+        FLOOR = #destinationFloor:VARCHAR#
+        WHERE FA_ID = #faMoveId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetLastProvisionDt" result-class="java.util.HashMap">
+        SELECT LAST_PROV_DT FROM  DEPOSIT_PROVISION WHERE PROD_ID=#PROD_ID:VARCHAR#  AND REMARKS='PROVISIONING'
+        AND BRANCH_CODE=#BRANCH_CODE# AND PROD_TYPE = 'FIXED_ASSET'
+    </mapped-statement> 
+        
+    <mapped-statement name="toDisplayDepreAuthorizeOrBending" result-class="java.util.HashMap">
+        SELECT FA_ID FROM FIXED_ASSET_DEPRECIATION WHERE AUTHORIZE_STATUS IS NULL AND FA_ID = #FA_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetProductList" result-class="java.util.HashMap">
+        SELECT FA_ID FROM FIXED_ASSET_INDIVIDUAL_DETAILS FAID,FIXED_ASSET_INDIVIDUAL FAI 
+        WHERE EXISTS (SELECT CURR_VALUE FROM FIXED_ASSET_INDIVIDUAL_DETAILS WHERE CURR_VALUE > 0 AND FA_ID=FAID.FA_ID) 
+        AND FAI.FID_ID=FAID.FID_ID  AND FAID.AI_STATUS !='DELETED' AND
+        FAI.ASSET_TYPE =#PROD_ID:VARCHAR# ORDER BY FA_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetDepreciationList" result-class="java.util.HashMap">
+        SELECT FAD.FA_ID FROM  FIXED_ASSET_DEPRECIATION FAD,
+        FIXED_ASSET_INDIVIDUAL FAI,FIXED_ASSET_INDIVIDUAL_DETAILS FAID WHERE 
+        FAI.FID_ID=FAID.FID_ID AND FAID.FA_ID = FAD.FA_ID AND FAI.ASSET_TYPE=#PROD_ID:VARCHAR#
+        AND FAD.DEPRECIATION_DATE &gt; #LAST_PROV_DT:DATE#  ORDER BY FA_ID
+    </mapped-statement>
+
+    <result-map name="getFixedAssetMovementTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetMovementTO">
+        <property name="faMoveId" column="FA_ID"/>
+        <property name="moveBatchId" column="MOVE_BATCH_ID"/>
+        <property name="moveDate" column="MOVEMENT_DATE"/>
+        <property name="destinationBranchId" column="DESTINATION_BRANCH_ID"/>
+        <property name="destinationDepartment" column="DESTINATION_DEPARTMENT"/>
+        <property name="destinationFloor" column="DESTINATION_FLOOR"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="sourceBranchId" column="SOURCE_BRANCH_ID"/>
+        <property name="sourceDepartment" column="SOURCE_DEPARTMENT"/>
+        <property name="sourceFloor" column="SOURCE_FLOOR"/>
+    </result-map>
+	
+    <result-map name="getFixedAssetDepreciationTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetDepreciationTO">
+        <property name="faId" column="FA_ID"/>
+        <property name="depreciationDate" column="DEPRECIATION_DATE"/>
+        <property name="depreciationValue" column="DEPRECIATION_VALUE"/>
+        <property name="newCurrentValue" column="NEW_CURRENT_VALUE"/>
+        <property name="deprBatchId" column="DEPR_BATCH_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+    </result-map>
+        
+    <result-map name="getFixedAssetBreakageTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetBreakageTO">
+        <property name="faBreakageId" column="FA_ID"/>
+        <property name="breakageRegion" column="BREAKAGE_REASON"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="breakBatchId" column="BREAK_BATCH_ID"/>
+        <property name="breakDate" column="BREAKAGE_DATE"/>
+    </result-map>
+
+</sql-map>

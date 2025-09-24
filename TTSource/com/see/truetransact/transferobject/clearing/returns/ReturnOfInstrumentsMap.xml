@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ReturnOfInstrumentsTOMap">
+
+	<!-- Use ReturnOfInstrumentsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertReturnOfInstrumentsTO" inline-parameters="true">
+        INSERT INTO OUTWARD_RETURN
+        (RETURN_TYPE, PRESENT_AGAIN, CLEARING_TYPE, CLEARING_DATE, STATUS, BATCH_ID, RETURN_ID, AUTHORIZE_BY, AUTHORIZE_DT, AUTHORIZE_STATUS, AUTHORIZE_REMARKS, BRANCH_ID, STATUS_BY, STATUS_DT, INSTRUMENT_NO1, INSTRUMENT_NO2, SCHEDULE_NO, AMOUNT, INITIATED_BRANCH, CHARGE, ACCT_NO
+        ) VALUES (
+        #returnType:VARCHAR#, #presentAgain:VARCHAR#, #clearingType:VARCHAR#, #clearingDate:TIMESTAMP#, #status:VARCHAR#, #batchId:VARCHAR#, #returnId:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeRemarks:VARCHAR#, #branchId:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#, #scheduleNo:VARCHAR#, #amount:NUMERIC#, #initiatedBranch:VARCHAR#, #charge:NUMERIC#, #acctNo:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ReturnOfInstrumentsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateReturnOfInstrumentsTO" inline-parameters="true">
+        UPDATE OUTWARD_RETURN SET 
+        RETURN_TYPE = #returnType:VARCHAR#,
+        PRESENT_AGAIN = #presentAgain:VARCHAR#,
+<!--		CLEARING_TYPE = #clearingType:VARCHAR#,
+		CLEARING_DATE = #clearingDate:DATE#,
+		BATCH_ID = #batchId:VARCHAR#,
+		RETURN_ID = #returnId:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+		BRANCH_ID = #branchId:VARCHAR#,  
+                
+                SCHEDULE_NO
+                AMOUNT
+                -->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->
+<!--		INSTRUMENT_NO1 = #instrumentNo1:VARCHAR#,
+		INSTRUMENT_NO2 = #instrumentNo2:VARCHAR# -->
+        WHERE RETURN_ID=#returnId:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use ReturnOfInstrumentsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteReturnOfInstrumentsTO" inline-parameters="true">
+        UPDATE OUTWARD_RETURN SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:TIMESTAMP#-->
+        WHERE RETURN_ID=#returnId:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ReturnOfInstrumentsTO object (JavaBean) properties -->
+    <result-map name="getReturnOfInstrumentsTOResult" class="com.see.truetransact.transferobject.clearing.returns.ReturnOfInstrumentsTO">
+        <property name="returnType" column="RETURN_TYPE"/>
+        <property name="presentAgain" column="PRESENT_AGAIN"/>
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="clearingDate" column="CLEARING_DATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="batchId" column="BATCH_ID"/>
+        <property name="returnId" column="RETURN_ID"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="instrumentNo1" column="INSTRUMENT_NO1"/>
+        <property name="instrumentNo2" column="INSTRUMENT_NO2"/>
+        <property name="scheduleNo" column="SCHEDULE_NO"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectReturnOfInstrumentsTO" result-map="getReturnOfInstrumentsTOResult" >
+        SELECT * FROM OUTWARD_RETURN 
+        WHERE RETURN_ID = #RETURN_ID:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="viewReturnOfInstrumentData" result-class="java.util.LinkedHashMap" >
+        SELECT RETURN_ID AS "Return ID", CLEARING_TYPE AS "Clearing Type", RETURN_TYPE AS "Return Type",
+        (INSTRUMENT_NO1 || ' ' || INSTRUMENT_NO2) AS "Instrument No"
+        FROM OUTWARD_RETURN 
+        WHERE STATUS != 'DELETED' 
+        AND BRANCH_ID = #BRANCH_ID#
+        AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getOutwardClearingData" result-class="java.util.LinkedHashMap" >
+        SELECT OC.CLEARING_TYPE,OC.SCHEDULE_NO,OC.BANK_CODE,OC.BRANCH_CODE,OC.INSTRUMENT_DT,
+        OC.AMOUNT,OT.CLEARING_DT
+        FROM OUTWARD_CLEARING OC, OUTWARD_TALLY OT 
+        WHERE OC.INSTRUMENT_NO1 = #INSRU_NO1:VARCHAR#
+        AND OC.INSTRUMENT_NO2 = #INSRU_NO2:VARCHAR#
+        AND OC.BATCH_ID=#BATCH_ID:VARCHAR# 
+        AND OC.BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        AND OC.SCHEDULE_NO = OT.SCHEDULE_NO 
+        AND OC.STATUS != 'DELETED' 
+        AND OT.STATUS != 'DELETED'
+        and OC.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND
+        OC.OUTWARD_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEWDATA">
+                       <!-- ((OC.INSTRUMENT_NO1|| '_' || OC.INSTRUMENT_NO2) NOT IN (SELECT INSTRUMENT_NO1 || '_' || INSTRUMENT_NO2 FROM 
+                        OUTWARD_RETURN WHERE STATUS != 'DELETED' )) -->
+                    (NOT EXISTS(SELECT INSTRUMENT_NO1 || '_' || INSTRUMENT_NO2 FROM 
+                    OUTWARD_RETURN WHERE STATUS != 'DELETED' ) AND (OC.INSTRUMENT_NO1|| '_' || OC.INSTRUMENT_NO2)=INSTRUMENT_NO1 || '_' || INSTRUMENT_NO2)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getBatchIdData" result-class="java.util.LinkedHashMap">
+        SELECT BATCH_ID AS "Batch ID", OC.CLEARING_TYPE AS "Clearing Type",  INSTRUMENT_TYPE AS "Instument Type"
+        FROM  OUTWARD_CLEARING OC, OUTWARD_TALLY OT
+        WHERE OC.SCHEDULE_NO = OT.SCHEDULE_NO
+        AND  OC.CLEARING_TYPE = OT.CLEARING_TYPE
+        AND OT.CLOSING_DT IS NULL
+        AND OC.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND OC.STATUS != 'DELETED'
+        AND OC.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND OT.STATUS != 'DELETED'
+        ORDER BY BATCH_ID
+    </mapped-statement>        
+      <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <dynamic-mapped-statement name="getReturnInstrumentsAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT RETURN_ID AS "Return ID", CLEARING_TYPE, RETURN_TYPE FROM OUTWARD_RETURN R
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = R.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY RETURN_ID
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="authorizeReturnInstruments" result-class="java.util.HashMap">
+        UPDATE OUTWARD_RETURN SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE RETURN_ID = #RET_ID:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="updateReturnCharge"  inline-parameters="true">
+        UPDATE OUTWARD_RETURN SET 
+        CHARGE = #CHRG:NUMERIC#
+        WHERE RETURN_ID = #RET_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="Return.getTransactionData" result-class="java.util.HashMap">
+        SELECT PI.PROD_ID, PI.ACCT_NO, PI.BRANCH_ID, CBP.OUTWARD_RETURN_CHRG,
+        CBP.OUTWARD_RETURN_HD, PI.AC_HD_ID, PI.PROD_TYPE, CBP.CLEARING_HD,
+        CBP.CLEARING_SUSPENSE_HD , OUTR.AMOUNT
+        FROM OUTWARD_CLEARING OC, PAY_IN_SLIP PI,
+        CLEARING_BANK_PARAM CBP, OUTWARD_RETURN OUTR
+        WHERE OUTR.RETURN_ID = #RET_ID:VARCHAR# 
+        AND OUTR.ACCT_NO = #ACCT_NO:VARCHAR# 
+        AND OUTR.ACCT_NO = PI.ACCT_NO 
+        AND OC.INSTRUMENT_NO1 = OUTR.INSTRUMENT_NO1
+        AND OC.INSTRUMENT_NO2 = OUTR.INSTRUMENT_NO2
+        AND OUTR.BATCH_ID = OC.BATCH_ID
+        AND OUTR.BATCH_ID = PI.BATCH_ID
+        AND OC.CLEARING_TYPE = CBP.CLEARING_TYPE
+        AND PI.STATUS != 'DELETED'
+        AND OC.AUTHORIZE_STATUS = 'REJECTED'
+        AND CBP.STATUS != 'DELETED'
+        AND CBP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and oc.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND
+        oc.OUTWARD_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+<!-- =================================================================================== -->
+</sql-map>
+

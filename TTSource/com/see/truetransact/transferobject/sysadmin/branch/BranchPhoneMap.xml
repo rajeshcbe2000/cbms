@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BranchPhoneMap">
+
+	<!-- Use BranchPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchPhoneTO" inline-parameters="true">
+        INSERT INTO BRANCH_PHONE
+        (BRANCH_CODE, CONTACT_NO, CONTACT_TYPE
+        ) VALUES (
+        #branchCode:VARCHAR#, #contactNo:VARCHAR#, #contactType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use BranchPhoneTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchPhoneTO" inline-parameters="true">
+        UPDATE BRANCH_PHONE SET 
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        CONTACT_NO = #contactNo:VARCHAR#,
+        CONTACT_TYPE = #contactType:VARCHAR#
+        WHERE BRANCH_CODE = #branchCode# AND CONTACT_TYPE = #contactType:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use BranchPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchPhoneTO" inline-parameters="true">
+        DELETE FROM BRANCH_PHONE 
+        WHERE BRANCH_CODE = #branchCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BranchPhoneTO object (JavaBean) properties -->
+    <result-map name="getBranchPhoneTOResult" class="com.see.truetransact.transferobject.sysadmin.branch.BranchPhoneTO">
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="contactNo" column="CONTACT_NO"/>
+        <property name="contactType" column="CONTACT_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectBranchPhoneTO" result-map="getBranchPhoneTOResult" >
+        SELECT * FROM BRANCH_PHONE 
+        WHERE BRANCH_CODE=#BRANCHCODE:VARCHAR#
+    </mapped-statement>
+
+</sql-map>

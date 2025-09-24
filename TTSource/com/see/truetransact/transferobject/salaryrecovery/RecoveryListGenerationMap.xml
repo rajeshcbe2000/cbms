@@ -1,0 +1,1511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RecoveryListGenerationMap">
+
+    <mapped-statement name = "getDueDetailsForRecoveryList" result-class = "java.util.LinkedHashMap">
+        <!--select * from (select distinct EMP_REFNO_NEW as EMP_REFNO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, APA.PROD_TYPE, APA.PROD_ID, NULL AS AMOUNT,SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SHARE_ACCT SA, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,CUSTOMER CU
+        WHERE EMP_REFNO_NEW IS NOT NULL
+        and SALARY_RECOVERY = 'Y'
+        AND SA.CUST_ID = C.CUST_ID AND SA.SHARE_TYPE=SCT.SHARE_TYPE  AND SA.CUST_ID=CU.CUST_ID
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND (C.ACT_NUM = APA.ACT_NUM OR C.ACT_NUM = APA.REP_ACT_NUM)
+        and APA.PROD_ID = AP.PROD_ID and APA.ACCT_STATUS!='CLOSED' 
+        AND CU.CUSTOMER_STATUS='PRESENT'
+        UNION ALL
+        SELECT EMP_REF_NO AS EMP_REFNO,
+        get_cust_name(CUST.CUST_ID) AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID,AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SALARY_DEDUCTION_MAPPING SDM, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_CUSTOMER C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.ACT_NUM = SDM.MAP_ACT_NUM
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND SDM.MAP_PROD_ID = AP.PROD_ID AND SA.SHARE_TYPE=SCT.SHARE_TYPE 
+        AND SA.EMP_REFNO_NEW = SDM.EMP_REF_NO AND
+        CU.CUST_ID = SA.CUST_ID and SDM.MAP_PROD_TYPE != 'GL' and SDM.STATUS!='DELETED' and C.ACCT_STATUS!='CLOSED'
+        AND CU.CUSTOMER_STATUS='PRESENT'
+        UNION ALL
+        SELECT EMP_REF_NO AS EMP_REFNO,get_cust_name(C.CUST_ID) AS "MEM_NAME", AC_HD_DESC AS PROD_DESC,
+        AC_HD_ID as ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID, AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SALARY_DEDUCTION_MAPPING SDM, SHARE_CONF_DETAILS SCT, AC_HD C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.AC_HD_ID = SDM.MAP_ACT_NUM  AND SA.SHARE_TYPE=SCT.SHARE_TYPE  
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N') AND
+        SDM.STATUS!='DELETED' and SDM.MAP_PROD_TYPE = 'GL' and 
+        SA.EMP_REFNO_NEW = SDM.EMP_REF_NO and
+        CU.CUST_ID = SA.CUST_ID AND CU.CUSTOMER_STATUS='PRESENT'
+        UNION ALL
+        SELECT DISTINCT A.EMP_REFNO,A.MEM_NAME,A.PROD_DESC,A.ACT_NUM,A.PROD_TYPE,A.PROD_ID, C.AMOUNT,NULL AS SALARY_RECOVERY,A.customergroup FROM (SELECT DISTINCT(C.ACT_NUM),
+        CLOCK_NO AS EMP_REFNO, c.FNAME || ' ' || c.MNAME || ' ' || c.LNAME 
+        AS "MEM_NAME", PROD_DESC, APA.PROD_TYPE, APA.PROD_ID ,decode(cu.customergroup,'Canteen','0','1') as customergroup FROM SUSPENSE_INSTALLMENT SI, ALL_PRODUCTS AP, 
+        ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,SUSPENSE_ACCOUNT_MASTER  SAM,customer cu   where CLOCK_NO is not null and SI.ACCT_NUM = APA.ACT_NUM and SAM.SUSPENSE_ACCT_NUM=SI.ACCT_NUM and
+        APA.ACT_NUM = C.ACT_NUM AND APA.PROD_ID = AP.PROD_ID AND APA.ACCT_STATUS!='CLOSED' and SAM.SALARY_RECOVERY='Y' AND BALANCE_AMOUNT &gt; 0 and cu.cust_id=c.cust_id) A,
+        (select SUM(INSTALLMENT_AMOUNT)-SUM(NVL(PAID_AMOUNT,0)) as AMOUNT,SUI.ACCT_NUM from  SUSPENSE_INSTALLMENT SUI, 
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT&gt;0  
+        GROUP BY BILL_ID ,ACCT_NUM) B WHERE B.INST_NO = SUI.INSTALLMENT_NO AND B.BILL_ID = SUI.BILL_ID AND
+        B.ACCT_NUM = SUI.ACCT_NUM GROUP BY SUI.ACCT_NUM) C 
+        WHERE A.ACT_NUM = C.ACCT_NUM 
+        UNION ALL
+        select distinct EMP_REFNO_NEW as EMP_REFNO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, APA.PROD_TYPE, APA.PROD_ID, NULL AS AMOUNT, SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SHARE_ACCT SA, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,CUSTOMER CU
+        WHERE EMP_REFNO_NEW IS NOT NULL
+        AND (SALARY_RECOVERY IS NULL OR SALARY_RECOVERY ='Y')
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND SA.CUST_ID = C.CUST_ID AND SA.SHARE_TYPE=SCT.SHARE_TYPE
+        AND (C.ACT_NUM = APA.ACT_NUM OR C.ACT_NUM = APA.REP_ACT_NUM)
+        and APA.PROD_ID = AP.PROD_ID and (APA.ACCT_STATUS!='CLOSED' and APA.ACCT_STATUS='NEW') 
+        AND CU.CUST_ID=SA.CUST_ID AND CU.CUSTOMER_STATUS='PRESENT' 
+        UNION  
+        select sa.EMP_REFNO_NEW as EMP_REFNO,SUSPENSE_NAME as MEM_NAME, SUSPENSE_PROD_DESC as PROD_DESC,SUSPENSE_ACCT_NUM as ACT_NUM,'SA' as PROD_TYPE,
+        SUSPENSE_PROD_ID as PROD_ID,ABS(CLEAR_BALANCE) as AMOUNT ,
+        SALARY_RECOVERY, decode(c.customergroup,'Canteen','0','1') as customergroup
+        from SUSPENSE_ACCOUNT_MASTER join CUSTOMER  C
+        on SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID=C.CUST_ID
+        join SHARE_ACCT SA on SA.CUST_ID = C.CUST_ID
+        join SHARE_CONF_DETAILS SCT on SA.SHARE_TYPE=SCT.SHARE_TYPE
+        where  CLEAR_BALANCE &lt; 0 
+        and (SALARY_RECOVERY is null or SALARY_RECOVERY='Y')
+        and (SCT.CONSIDER_RECOVERY_SALARY is null or SCT.CONSIDER_RECOVERY_SALARY ='N')
+        and C.CUSTOMER_STATUS='PRESENT') A
+        ORDER BY customergroup,
+        TO_NUMBER(EMP_REFNO)-->
+        
+        
+        
+        <!--select * from (
+        select distinct EMP_REFNO_NEW as EMP_REFNO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, APA.PROD_TYPE, APA.PROD_ID, NULL AS AMOUNT,SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SHARE_ACCT SA, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,CUSTOMER CU
+        WHERE SA.EMP_REFNO_NEW IS NOT NULL AND SA.CUST_ID = C.CUST_ID AND CU.CUST_TYPE_ID != 'STAFF' 
+        AND SA.SHARE_TYPE=SCT.SHARE_TYPE  AND SA.CUST_ID=CU.CUST_ID
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND (C.ACT_NUM = APA.ACT_NUM OR C.ACT_NUM = APA.REP_ACT_NUM)
+        and APA.PROD_ID = AP.PROD_ID and APA.ACCT_STATUS!='CLOSED' 
+        AND CU.CUSTOMER_STATUS='PRESENT' and not exists (select distinct DEM.EMP_REF_NO  from DEDUCTION_EXEMPTION_MAPPING dem
+        where SA.EMP_REFNO_NEW = DEM.EMP_REF_NO and DEM.STATUS = 'CREATED')
+        UNION
+        SELECT EMP_REF_NO AS EMP_REFNO,
+        get_cust_name(CUST.CUST_ID) AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID,AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SALARY_DEDUCTION_MAPPING SDM, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_CUSTOMER C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.ACT_NUM = SDM.MAP_ACT_NUM AND CU.CUST_TYPE_ID != 'STAFF'
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND SDM.MAP_PROD_ID = AP.PROD_ID AND SA.SHARE_TYPE=SCT.SHARE_TYPE 
+        AND SA.EMP_REFNO_NEW = SDM.EMP_REF_NO AND
+        CU.CUST_ID = SA.CUST_ID and SDM.MAP_PROD_TYPE != 'GL' and SDM.STATUS!='DELETED' and C.ACCT_STATUS!='CLOSED'
+        AND CU.CUSTOMER_STATUS='PRESENT'
+        AND NOT EXISTS (SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        UNION       
+        SELECT EMP_REF_NO AS EMP_REFNO,get_cust_name(C.CUST_ID) AS "MEM_NAME", AC_HD_DESC AS PROD_DESC,
+        AC_HD_ID as ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID, AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SALARY_DEDUCTION_MAPPING SDM, SHARE_CONF_DETAILS SCT, AC_HD C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.AC_HD_ID = SDM.MAP_ACT_NUM  AND SA.SHARE_TYPE=SCT.SHARE_TYPE  
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N') AND
+        SDM.STATUS!='DELETED' and SDM.MAP_PROD_TYPE = 'GL' and 
+        SA.EMP_REFNO_NEW = SDM.EMP_REF_NO and
+        CU.CUST_ID = SA.CUST_ID AND CU.CUSTOMER_STATUS='PRESENT' AND CU.CUST_TYPE_ID != 'STAFF'
+        AND NOT EXISTS (SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED') 
+        UNION
+        SELECT DISTINCT A.EMP_REFNO,A.MEM_NAME,A.PROD_DESC,A.ACT_NUM,A.PROD_TYPE,A.PROD_ID,
+        C.AMOUNT,NULL AS SALARY_RECOVERY,A.customergroup FROM (SELECT DISTINCT(C.ACT_NUM),
+        CLOCK_NO AS EMP_REFNO, c.FNAME || ' ' || c.MNAME || ' ' || c.LNAME AS "MEM_NAME",
+        PROD_DESC, APA.PROD_TYPE, APA.PROD_ID ,decode(cu.customergroup,'Canteen','0','1') as customergroup
+        FROM SUSPENSE_INSTALLMENT SI, ALL_PRODUCTS AP,ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,
+        SUSPENSE_ACCOUNT_MASTER  SAM,customer cu,SHARE_ACCT SA WHERE C.CUST_ID = SA.CUST_ID    
+        and SI.ACCT_NUM = APA.ACT_NUM and SAM.SUSPENSE_ACCT_NUM=SI.ACCT_NUM and CU.CUST_TYPE_ID != 'STAFF' AND
+        APA.ACT_NUM = C.ACT_NUM AND APA.PROD_ID = AP.PROD_ID AND APA.ACCT_STATUS!='CLOSED' 
+        AND BALANCE_AMOUNT &gt; 0 and cu.cust_id=c.cust_id AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')) A,
+        (select SUM(INSTALLMENT_AMOUNT)-SUM(NVL(PAID_AMOUNT,0)) as AMOUNT,SUI.ACCT_NUM from  SUSPENSE_INSTALLMENT SUI, 
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT &gt; 0  
+        GROUP BY BILL_ID ,ACCT_NUM) B WHERE B.INST_NO = SUI.INSTALLMENT_NO AND B.BILL_ID = SUI.BILL_ID AND
+        B.ACCT_NUM = SUI.ACCT_NUM GROUP BY SUI.ACCT_NUM) C 
+        WHERE A.ACT_NUM = C.ACCT_NUM
+        UNION
+        select distinct EMP_REFNO_NEW as EMP_REFNO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, APA.PROD_TYPE, APA.PROD_ID, 0 AS AMOUNT, SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup
+        from SHARE_ACCT SA, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,CUSTOMER CU
+        WHERE EMP_REFNO_NEW IS NOT NULL AND CU.CUST_TYPE_ID != 'STAFF'
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND SA.CUST_ID = C.CUST_ID AND SA.SHARE_TYPE=SCT.SHARE_TYPE
+        AND (C.ACT_NUM = APA.ACT_NUM OR C.ACT_NUM = APA.REP_ACT_NUM)
+        and APA.PROD_ID = AP.PROD_ID and (APA.ACCT_STATUS!='CLOSED' and APA.ACCT_STATUS='NEW') 
+        AND CU.CUST_ID=SA.CUST_ID AND CU.CUSTOMER_STATUS='PRESENT' 
+        AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        UNION
+        select sa.EMP_REFNO_NEW as EMP_REFNO,SUSPENSE_NAME as MEM_NAME, SUSPENSE_PROD_DESC as PROD_DESC,SUSPENSE_ACCT_NUM as ACT_NUM,'SA' as PROD_TYPE,
+        SUSPENSE_PROD_ID as PROD_ID,nvl(ABS(CLEAR_BALANCE),0) as AMOUNT ,
+        SALARY_RECOVERY, decode(c.customergroup,'Canteen','0','1') as customergroup
+        from SUSPENSE_ACCOUNT_MASTER join CUSTOMER  C
+        on SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID=C.CUST_ID
+        join SHARE_ACCT SA on SA.CUST_ID = C.CUST_ID
+        join SHARE_CONF_DETAILS SCT on SA.SHARE_TYPE=SCT.SHARE_TYPE
+        where  CLEAR_BALANCE &lt; 0 AND C.CUST_TYPE_ID != 'STAFF' 
+        and (SCT.CONSIDER_RECOVERY_SALARY is null or SCT.CONSIDER_RECOVERY_SALARY ='N')
+        and C.CUSTOMER_STATUS='PRESENT'
+        AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        ) A
+        ORDER BY customergroup,Regexp_replace(EMP_REFNO,'[AZaz]','' )-->
+        
+        <!--select * from (
+        select distinct EMP_REFNO_NEW as EMP_REFNO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME", ap.PROD_DESC,
+        C.ACT_NUM, APA.PROD_TYPE, APA.PROD_ID, NULL AS AMOUNT,SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup, '' as de_status
+        from SHARE_ACCT SA, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,CUSTOMER CU
+        WHERE SA.EMP_REFNO_NEW IS NOT NULL AND SA.CUST_ID = C.CUST_ID 
+        AND SA.SHARE_TYPE=SCT.SHARE_TYPE  
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND (C.ACT_NUM = APA.ACT_NUM OR C.ACT_NUM = APA.REP_ACT_NUM)
+        and APA.PROD_ID = AP.PROD_ID and APA.ACCT_STATUS !='CLOSED' AND CU.CUST_ID=SA.CUST_ID
+        AND not exists (select SP.PROD_ID from SUSPENSE_PRODUCT sp where APA.PROD_ID = SP.PROD_ID) 
+        AND CU.CUSTOMER_STATUS='PRESENT' and not exists (select distinct DEM.EMP_REF_NO  from DEDUCTION_EXEMPTION_MAPPING dem
+        where SA.EMP_REFNO_NEW = DEM.EMP_REF_NO and DEM.STATUS = 'CREATED')
+        AND CU.CUST_TYPE_ID != 'STAFF' and APA.PROD_ID not in ('310','302','308')
+        UNION
+        SELECT EMP_REF_NO AS EMP_REFNO,
+        get_cust_name(CUST.CUST_ID) AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID,AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup,'' as de_status
+        from SALARY_DEDUCTION_MAPPING SDM, SHARE_CONF_DETAILS SCT, ALL_PRODUCTS AP, ALL_CUSTOMER C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.ACT_NUM = SDM.MAP_ACT_NUM AND CU.CUST_TYPE_ID != 'STAFF'
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N')
+        AND SDM.MAP_PROD_ID = AP.PROD_ID AND SA.SHARE_TYPE=SCT.SHARE_TYPE 
+        AND SA.EMP_REFNO_NEW = SDM.EMP_REF_NO AND
+        CU.CUST_ID = SA.CUST_ID and SDM.MAP_PROD_TYPE != 'GL' and SDM.STATUS!='DELETED' and C.ACCT_STATUS!='CLOSED'
+        AND CU.CUSTOMER_STATUS='PRESENT'
+        AND NOT EXISTS (SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        UNION       
+        SELECT EMP_REF_NO AS EMP_REFNO,get_cust_name(C.CUST_ID) AS "MEM_NAME", AC_HD_DESC AS PROD_DESC,
+        AC_HD_ID as ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID, AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup,'' as de_status
+        from SALARY_DEDUCTION_MAPPING SDM, SHARE_CONF_DETAILS SCT, AC_HD C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.AC_HD_ID = SDM.MAP_ACT_NUM  AND SA.SHARE_TYPE=SCT.SHARE_TYPE  
+        AND (SCT.CONSIDER_RECOVERY_SALARY IS NULL OR SCT.CONSIDER_RECOVERY_SALARY ='N') AND
+        SDM.STATUS!='DELETED' and SDM.MAP_PROD_TYPE = 'GL' and 
+        SA.EMP_REFNO_NEW = SDM.EMP_REF_NO and
+        CU.CUST_ID = SA.CUST_ID AND CU.CUSTOMER_STATUS='PRESENT' AND CU.CUST_TYPE_ID != 'STAFF'
+        AND NOT EXISTS (SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED') 
+        UNION
+        SELECT DISTINCT A.EMP_REFNO,A.MEM_NAME,A.PROD_DESC,A.ACT_NUM,A.PROD_TYPE,A.PROD_ID,
+        C.AMOUNT,NULL AS SALARY_RECOVERY,A.customergroup,'' as de_status FROM (SELECT DISTINCT(C.ACT_NUM),
+        CLOCK_NO AS EMP_REFNO, c.FNAME || ' ' || c.MNAME || ' ' || c.LNAME AS "MEM_NAME",
+        PROD_DESC, APA.PROD_TYPE, APA.PROD_ID ,decode(cu.customergroup,'Canteen','0','1') as customergroup,'' as de_status
+        FROM SUSPENSE_INSTALLMENT SI, ALL_PRODUCTS AP,ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,
+        SUSPENSE_ACCOUNT_MASTER  SAM,customer cu,SHARE_ACCT SA WHERE C.CUST_ID = SA.CUST_ID    
+        and SI.ACCT_NUM = APA.ACT_NUM and SAM.SUSPENSE_ACCT_NUM=SI.ACCT_NUM and CU.CUST_TYPE_ID != 'STAFF' AND
+        APA.ACT_NUM = C.ACT_NUM AND APA.PROD_ID = AP.PROD_ID AND APA.ACCT_STATUS!='CLOSED' 
+        AND BALANCE_AMOUNT &gt; 0 and cu.cust_id=c.cust_id AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')) A,
+        (select SUM(INSTALLMENT_AMOUNT)-SUM(NVL(PAID_AMOUNT,0)) as AMOUNT,SUI.ACCT_NUM from  SUSPENSE_INSTALLMENT SUI, 
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT &gt; 0  
+        GROUP BY BILL_ID ,ACCT_NUM) B WHERE B.INST_NO = SUI.INSTALLMENT_NO AND B.BILL_ID = SUI.BILL_ID AND
+        B.ACCT_NUM = SUI.ACCT_NUM GROUP BY SUI.ACCT_NUM) C 
+        WHERE A.ACT_NUM = C.ACCT_NUM
+        UNION
+        select sa.EMP_REFNO_NEW as EMP_REFNO,SUSPENSE_NAME as MEM_NAME, SUSPENSE_PROD_DESC as PROD_DESC,SUSPENSE_ACCT_NUM as ACT_NUM,'SA' as PROD_TYPE,
+        SUSPENSE_PROD_ID as PROD_ID,nvl(ABS(CLEAR_BALANCE),0) as AMOUNT ,
+        SALARY_RECOVERY, decode(c.customergroup,'Canteen','0','1') as customergroup,'' as de_status
+        from SUSPENSE_ACCOUNT_MASTER join CUSTOMER  C
+        on SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID=C.CUST_ID
+        join SHARE_ACCT SA on SA.CUST_ID = C.CUST_ID
+        join SHARE_CONF_DETAILS SCT on SA.SHARE_TYPE=SCT.SHARE_TYPE
+        where  CLEAR_BALANCE &lt; 0 AND C.CUST_TYPE_ID != 'STAFF' 
+        and (SCT.CONSIDER_RECOVERY_SALARY is null or SCT.CONSIDER_RECOVERY_SALARY ='N')
+        and C.CUSTOMER_STATUS='PRESENT'
+        AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        union
+        SELECT apr.emp_refno_new, c.fname, ap.prod_desc, apr.act_num, apr.prod_type,
+        apr.prod_id, 0 AS amount, apr.salary_recovery,
+        DECODE (cu.customergroup, 'Canteen', '0', '1') AS customergroup,'DE' as de_status
+        FROM all_product_accts_recoveryde apr,
+        all_customer c,
+        all_products ap,
+        customer cu
+        Where APR.ACT_NUM = REPLACE(C.ACT_NUM,'_1','')
+        and AP.PROD_ID = APR.PROD_ID 
+        and CU.CUST_ID = C.CUST_ID
+        and APR.EMP_REFNO_NEW is not null
+        ) A
+        ORDER BY customergroup,Regexp_replace(EMP_REFNO,'[AZaz]','' )-->
+       <!-- SELECT   *
+        FROM (
+        SELECT DISTINCT emp_refno_new AS emp_refno,
+        c.fname
+        || ' '
+        || c.mname
+        || ' '
+        || c.lname AS "MEM_NAME",
+        ap.prod_desc, c.act_num, apa.prod_type, apa.prod_id,
+        NULL AS amount, salary_recovery,
+        DECODE (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM share_acct sa,
+        all_products ap,
+        all_product_accts apa,
+        all_customer c,
+        customer cu
+        WHERE sa.emp_refno_new IS NOT NULL
+        AND sa.cust_id = c.cust_id
+        AND (   c.act_num = apa.act_num
+        OR c.act_num = apa.rep_act_num
+        )
+        AND apa.prod_id = ap.prod_id
+        AND apa.acct_status != 'CLOSED'
+        AND cu.cust_id = sa.cust_id
+        AND NOT EXISTS (SELECT sp.prod_id
+        FROM suspense_product sp
+        WHERE apa.prod_id = sp.prod_id)
+        AND cu.customer_status = 'PRESENT'
+        AND CU.CUST_TYPE_ID IN ('MEMBER')
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status != 'DELETED')
+        AND cu.cust_type_id IN ('MEMBER')
+        AND apa.prod_id NOT IN ('310', '302', '308')
+        UNION
+        SELECT emp_ref_no AS emp_refno,
+        cu.fname || ' ' || cu.mname || ' ' || cu.lname AS "MEM_NAME",
+        prod_desc, c.act_num, sdm.map_prod_type AS prod_type,
+        sdm.map_prod_id AS prod_id, amount, NULL AS salary_recovery,
+        DECODE (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM salary_deduction_mapping sdm,
+        all_products ap,
+        all_customer c,
+        share_acct sa,
+        customer cu
+        WHERE c.act_num = sdm.map_act_num
+        AND cu.cust_type_id IN ('MEMBER')
+        AND sdm.map_prod_id = ap.prod_id
+        AND sa.emp_refno_new = sdm.emp_ref_no
+        AND cu.cust_id = sa.cust_id
+        AND sdm.map_prod_type != 'GL'
+        AND sdm.status != 'DELETED'
+        AND c.acct_status != 'CLOSED'
+        AND cu.customer_status = 'PRESENT'
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status != 'DELETED')
+        UNION
+        SELECT emp_ref_no AS emp_refno,
+        cu.fname || ' ' || mname || ' ' || lname AS "MEM_NAME",
+        ac_hd_desc AS prod_desc, ac_hd_id AS act_num,
+        sdm.map_prod_type AS prod_type, sdm.map_prod_id AS prod_id,
+        amount, NULL AS salary_recovery,
+        DECODE (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM salary_deduction_mapping sdm,
+        ac_hd c,
+        share_acct sa,
+        customer cu
+        WHERE c.ac_hd_id = sdm.map_act_num
+        AND sdm.status != 'DELETED'
+        AND sdm.map_prod_type = 'GL'
+        AND sa.emp_refno_new = sdm.emp_ref_no
+        AND cu.cust_id = sa.cust_id
+        AND cu.cust_type_id IN ('MEMBER')
+        AND cu.customer_status = 'PRESENT'
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status != 'DELETED')
+        UNION
+        SELECT DISTINCT a.emp_refno, a.mem_name, a.prod_desc, a.act_num,
+        a.prod_type, a.prod_id, null as amount, -->
+        
+        <!--c.amount
+        NULL AS salary_recovery, a.customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM (SELECT DISTINCT (c.act_num), clock_no AS emp_refno,
+        c.fname
+        || ' '
+        || c.mname
+        || ' '
+        || c.lname AS "MEM_NAME",
+        prod_desc, apa.prod_type,
+        apa.prod_id,
+        DECODE
+        (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status,
+        'NOT_DUE' AS due_status
+        FROM suspense_installment si,
+        all_products ap,
+        all_product_accts apa,
+        all_customer c,
+        suspense_account_master sam,
+        customer cu,
+        share_acct sa
+        WHERE c.cust_id = sa.cust_id
+        AND si.acct_num = apa.act_num
+        AND sam.suspense_acct_num = si.acct_num
+        AND cu.cust_type_id IN ('MEMBER','CANTEEN')
+        AND apa.act_num = c.act_num
+        AND apa.prod_id = ap.prod_id
+        AND apa.acct_status != 'CLOSED'
+        AND cu.cust_id = c.cust_id
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new =
+        dem.emp_ref_no 
+        AND dem.status != 'DELETED')) a
+         UNION
+        SELECT sa.emp_refno_new AS emp_refno, suspense_name AS mem_name,
+        suspense_prod_desc AS prod_desc,
+        suspense_acct_num AS act_num, 'SA' AS prod_type,
+        suspense_prod_id AS prod_id,
+        NVL (ABS (clear_balance), 0) AS amount, salary_recovery,
+        DECODE (c.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM suspense_account_master JOIN customer c
+        ON suspense_account_master.suspense_customer_id = c.cust_id
+        JOIN share_acct sa ON sa.cust_id = c.cust_id
+        WHERE clear_balance &lt; 0
+        AND c.cust_type_id IN ('MEMBER')
+        AND c.customer_status = 'PRESENT'
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status != 'DELETED')
+        UNION
+        SELECT apr.emp_refno_new, apr.fname, ap.prod_desc, apr.act_num,
+        apr.prod_type, apr.prod_id, 0 AS amount, apr.salary_recovery,
+        DECODE (apr.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        'DE' AS de_status, apr.due_status
+        FROM all_product_accts_recoveryde apr, all_products ap
+        WHERE ap.prod_id = apr.prod_id
+        AND apr.emp_refno_new IS NOT NULL
+        AND apr.emp_refno_new = getrecoverydueemp (apr.emp_refno_new)) a
+        ORDER BY customergroup, REGEXP_REPLACE (emp_refno, '[AZaz]', '') -->
+        
+        Select * from Load_getDueForRecoveryList(#INTEREST_UP_TO_DT:DATE#)
+        
+    </mapped-statement>
+    
+    
+    <mapped-statement name = "getBalnceDepositDetails" result-class = "java.util.LinkedHashMap"> 
+        select * from DEPOSIT_RECURRING dr where DR.TRANS_DT is null and DR.DEPOSIT_NO_SUB = #DEPOSIT_NO:VARCHAR# order by DR.SL_NO
+    </mapped-statement>
+    
+    <mapped-statement name = "getDetailsForRecoveryList" result-class = "java.util.LinkedHashMap">
+        
+        <!--select * from (
+        select distinct EMP_REFNO_NEW as EMP_REFNO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME", ap.PROD_DESC,
+        C.ACT_NUM, APA.PROD_TYPE, APA.PROD_ID, NULL AS AMOUNT,SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup, '' as de_status,'NOT_DUE' as DUE_STATUS
+        from SHARE_ACCT SA,ALL_PRODUCTS AP, ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,CUSTOMER CU
+        WHERE SA.EMP_REFNO_NEW IS NOT NULL AND SA.CUST_ID = C.CUST_ID 
+        AND (C.ACT_NUM = APA.ACT_NUM OR C.ACT_NUM = APA.REP_ACT_NUM)
+        and APA.PROD_ID = AP.PROD_ID and APA.ACCT_STATUS !='CLOSED' AND CU.CUST_ID=SA.CUST_ID
+        AND not exists (select SP.PROD_ID from SUSPENSE_PRODUCT sp where APA.PROD_ID = SP.PROD_ID) 
+        AND CU.CUSTOMER_STATUS='PRESENT' and not exists (select distinct DEM.EMP_REF_NO  from DEDUCTION_EXEMPTION_MAPPING dem
+        where SA.EMP_REFNO_NEW = DEM.EMP_REF_NO and DEM.STATUS = 'CREATED')
+        AND CU.CUST_TYPE_ID in ('CANTEEN','MEMBER') and APA.PROD_ID not in ('310','302','308')    
+        UNION     
+        SELECT EMP_REF_NO AS EMP_REFNO,
+        get_cust_name(CUST.CUST_ID) AS "MEM_NAME", PROD_DESC,
+        C.ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID,AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup,'' as de_status,'NOT_DUE' as DUE_STATUS
+        from SALARY_DEDUCTION_MAPPING SDM,ALL_PRODUCTS AP, ALL_CUSTOMER C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.ACT_NUM = SDM.MAP_ACT_NUM AND  CU.CUST_TYPE_ID in ('CANTEEN','MEMBER')
+        AND SDM.MAP_PROD_ID = AP.PROD_ID  
+        AND SA.EMP_REFNO_NEW = SDM.EMP_REF_NO AND
+        CU.CUST_ID = SA.CUST_ID and SDM.MAP_PROD_TYPE != 'GL' and SDM.STATUS!='DELETED' and C.ACCT_STATUS!='CLOSED'
+        AND CU.CUSTOMER_STATUS='PRESENT'
+        AND NOT EXISTS (SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        UNION 
+        SELECT EMP_REF_NO AS EMP_REFNO,get_cust_name(C.CUST_ID) AS "MEM_NAME", AC_HD_DESC AS PROD_DESC,
+        AC_HD_ID as ACT_NUM, SDM.MAP_PROD_TYPE as PROD_TYPE, SDM.MAP_PROD_ID as PROD_ID, AMOUNT,null as SALARY_RECOVERY,
+        decode(cu.customergroup,'Canteen','0','1') as customergroup,'' as de_status,'NOT_DUE' as DUE_STATUS
+        from SALARY_DEDUCTION_MAPPING SDM, AC_HD C,SHARE_ACCT SA,
+        CUSTOMER CU
+        WHERE C.AC_HD_ID = SDM.MAP_ACT_NUM  AND 
+        SDM.STATUS!='DELETED' and SDM.MAP_PROD_TYPE = 'GL' and 
+        SA.EMP_REFNO_NEW = SDM.EMP_REF_NO and
+        CU.CUST_ID = SA.CUST_ID AND CU.CUSTOMER_STATUS='PRESENT' AND CU.CUST_TYPE_ID in ('CANTEEN','MEMBER')
+        AND NOT EXISTS (SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED') 
+        UNION
+        SELECT DISTINCT A.EMP_REFNO,A.MEM_NAME,A.PROD_DESC,A.ACT_NUM,A.PROD_TYPE,A.PROD_ID,
+        C.AMOUNT,NULL AS SALARY_RECOVERY,A.customergroup,'' as de_status,'NOT_DUE' as DUE_STATUS FROM (SELECT DISTINCT(C.ACT_NUM),
+        CLOCK_NO AS EMP_REFNO, c.FNAME || ' ' || c.MNAME || ' ' || c.LNAME AS "MEM_NAME",
+        PROD_DESC, APA.PROD_TYPE, APA.PROD_ID ,decode(cu.customergroup,'Canteen','0','1') as customergroup,'' as de_status, 'NOT_DUE' as DUE_STATUS
+        FROM SUSPENSE_INSTALLMENT SI, ALL_PRODUCTS AP,ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,
+        SUSPENSE_ACCOUNT_MASTER  SAM,customer cu,SHARE_ACCT SA WHERE C.CUST_ID = SA.CUST_ID    
+        and SI.ACCT_NUM = APA.ACT_NUM and SAM.SUSPENSE_ACCT_NUM=SI.ACCT_NUM and CU.CUST_TYPE_ID in ('CANTEEN','MEMBER') AND
+        APA.ACT_NUM = C.ACT_NUM AND APA.PROD_ID = AP.PROD_ID AND APA.ACCT_STATUS!='CLOSED' 
+        AND BALANCE_AMOUNT &gt; 0 and cu.cust_id=c.cust_id AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')) A,
+        (select SUM(INSTALLMENT_AMOUNT)-SUM(NVL(PAID_AMOUNT,0)) as AMOUNT,SUI.ACCT_NUM from  SUSPENSE_INSTALLMENT SUI, 
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT &gt; 0  
+        GROUP BY BILL_ID ,ACCT_NUM) B WHERE B.INST_NO = SUI.INSTALLMENT_NO AND B.BILL_ID = SUI.BILL_ID AND
+        B.ACCT_NUM = SUI.ACCT_NUM GROUP BY SUI.ACCT_NUM) C 
+        WHERE A.ACT_NUM = C.ACCT_NUM
+        UNION
+        select sa.EMP_REFNO_NEW as EMP_REFNO,SUSPENSE_NAME as MEM_NAME, SUSPENSE_PROD_DESC as PROD_DESC,SUSPENSE_ACCT_NUM as ACT_NUM,'SA' as PROD_TYPE,
+        SUSPENSE_PROD_ID as PROD_ID,nvl(ABS(CLEAR_BALANCE),0) as AMOUNT ,
+        SALARY_RECOVERY, decode(c.customergroup,'Canteen','0','1') as customergroup,'' as de_status,'NOT_DUE' as DUE_STATUS
+        from SUSPENSE_ACCOUNT_MASTER join CUSTOMER  C
+        on SUSPENSE_ACCOUNT_MASTER.SUSPENSE_CUSTOMER_ID=C.CUST_ID
+        join SHARE_ACCT SA on SA.CUST_ID = C.CUST_ID
+        where  CLEAR_BALANCE &lt; 0 AND C.CUST_TYPE_ID in ('CANTEEN','MEMBERS') 
+        and C.CUSTOMER_STATUS='PRESENT' 
+        AND NOT EXISTS(SELECT DISTINCT DEM.EMP_REF_NO  FROM DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SA.EMP_REFNO_NEW = DEM.EMP_REF_NO AND DEM.STATUS = 'CREATED')
+        ) A
+        ORDER BY customergroup,Regexp_replace(EMP_REFNO,'[AZaz]','' )-->
+        <!-- SELECT   *
+        FROM (SELECT DISTINCT emp_refno_new AS emp_refno,
+        c.fname
+        || ' '
+        || c.mname
+        || ' '
+        || c.lname AS "MEM_NAME",
+        ap.prod_desc, c.act_num, apa.prod_type, apa.prod_id,
+        NULL AS amount, salary_recovery,
+        DECODE (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM share_acct sa,
+        all_products ap,
+        all_product_accts apa,
+        all_customer c,
+        customer cu
+        WHERE sa.emp_refno_new IS NOT NULL
+        AND sa.cust_id = c.cust_id
+        AND (   c.act_num = apa.act_num
+        OR c.act_num = apa.rep_act_num
+        )
+        AND apa.prod_id = ap.prod_id
+        AND apa.acct_status != 'CLOSED'
+        AND cu.cust_id = sa.cust_id
+        AND NOT EXISTS (SELECT sp.prod_id
+        FROM suspense_product sp
+        WHERE apa.prod_id = sp.prod_id)
+        AND cu.customer_status = 'PRESENT'
+        AND cu.cust_type_id IN ('MEMBER')
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status = 'CREATED')
+        AND cu.cust_type_id IN ('MEMBER')
+        AND apa.prod_id NOT IN ('310', '302', '308')
+        UNION
+        SELECT emp_ref_no AS emp_refno,
+        cu.fname || ' ' || cu.mname || ' ' || cu.lname AS "MEM_NAME",
+        prod_desc, c.act_num, sdm.map_prod_type AS prod_type,
+        sdm.map_prod_id AS prod_id, amount, NULL AS salary_recovery,
+        DECODE (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM salary_deduction_mapping sdm,
+        all_products ap,
+        all_customer c,
+        share_acct sa,
+        customer cu
+        WHERE c.act_num = sdm.map_act_num
+        AND cu.cust_type_id IN ('MEMBER')
+        AND sdm.map_prod_id = ap.prod_id
+        AND sa.emp_refno_new = sdm.emp_ref_no
+        AND cu.cust_id = sa.cust_id
+        AND sdm.map_prod_type != 'GL'
+        AND sdm.status != 'DELETED'
+        AND c.acct_status != 'CLOSED'
+        AND cu.customer_status = 'PRESENT'
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status = 'CREATED')
+        UNION
+        SELECT emp_ref_no AS emp_refno,
+        cu.fname || ' ' || mname || ' ' || lname AS "MEM_NAME",
+        ac_hd_desc AS prod_desc, ac_hd_id AS act_num,
+        sdm.map_prod_type AS prod_type, sdm.map_prod_id AS prod_id,
+        amount, NULL AS salary_recovery,
+        DECODE (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM salary_deduction_mapping sdm,
+        ac_hd c,
+        share_acct sa,
+        customer cu
+        WHERE c.ac_hd_id = sdm.map_act_num
+        AND sdm.status != 'DELETED'
+        AND sdm.map_prod_type = 'GL'
+        AND sa.emp_refno_new = sdm.emp_ref_no
+        AND cu.cust_id = sa.cust_id
+        AND cu.cust_type_id IN ('MEMBER')
+        AND cu.customer_status = 'PRESENT'
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status = 'CREATED')
+        UNION
+        SELECT DISTINCT a.emp_refno, a.mem_name, a.prod_desc, a.act_num,
+        a.prod_type, a.prod_id, NULL AS amount,
+        NULL AS salary_recovery, a.customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM (SELECT DISTINCT (c.act_num), clock_no AS emp_refno,
+        c.fname
+        || ' '
+        || c.mname
+        || ' '
+        || c.lname AS "MEM_NAME",
+        prod_desc, apa.prod_type,
+        apa.prod_id,
+        DECODE
+        (cu.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status,
+        'NOT_DUE' AS due_status
+        FROM suspense_installment si,
+        all_products ap,
+        all_product_accts apa,
+        all_customer c,
+        suspense_account_master sam,
+        customer cu,
+        share_acct sa
+        WHERE c.cust_id = sa.cust_id
+        AND si.acct_num = apa.act_num
+        AND sam.suspense_acct_num = si.acct_num
+        AND cu.cust_type_id IN
+        ('MEMBER', 'CANTEEN')
+        AND apa.act_num = c.act_num
+        AND apa.prod_id = ap.prod_id
+        AND apa.acct_status != 'CLOSED'
+        AND cu.cust_id = c.cust_id
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new =
+        dem.emp_ref_no
+        AND dem.status =
+        'CREATED')) a
+        UNION
+        SELECT sa.emp_refno_new AS emp_refno, suspense_name AS mem_name,
+        suspense_prod_desc AS prod_desc,
+        suspense_acct_num AS act_num, 'SA' AS prod_type,
+        suspense_prod_id AS prod_id,
+        NVL (ABS (clear_balance), 0) AS amount, salary_recovery,
+        DECODE (c.customergroup,
+        'Canteen', '0',
+        '1'
+        ) AS customergroup,
+        '' AS de_status, 'NOT_DUE' AS due_status
+        FROM suspense_account_master JOIN customer c
+        ON suspense_account_master.suspense_customer_id = c.cust_id
+        JOIN share_acct sa ON sa.cust_id = c.cust_id
+        WHERE clear_balance &lt; 0
+        AND c.cust_type_id IN ('MEMBER')
+        AND c.customer_status = 'PRESENT'
+        AND NOT EXISTS (
+        SELECT DISTINCT dem.emp_ref_no
+        FROM deduction_exemption_mapping dem
+        WHERE sa.emp_refno_new = dem.emp_ref_no
+        AND dem.status = 'CREATED')) a
+        ORDER BY customergroup, REGEXP_REPLACE (emp_refno, '[AZaz]', '') -->
+        
+        
+        SELECT * FROM Load_getDetailsForRecoveryList(#INTEREST_UP_TO_DT:DATE#)
+        
+    </mapped-statement>
+    
+
+    <!-- Use RecoveryListGeneration object (JavaBean) properties as parameters for insert. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertRecoveryListGeneration" inline-parameters="true">
+        INSERT INTO SALARY_RECOVERY_LIST_MASTER
+        (INT_CALC_UPTO_DT, CREATED_BY, CREATED_DT
+        ) VALUES (
+        #intCalcUptoDt:DATE#, #createdBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="updateRecoveryListGeneration" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_MASTER SET
+        CREATED_BY = #createdBy:VARCHAR#,CREATED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE INT_CALC_UPTO_DT = #intCalcUptoDt:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name = "getRecoveryTableDetail" result-class = "java.util.LinkedHashMap">
+     select * from salary_recovery_list_detail sl where sl.int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE# and sl.act_num = #ACT_NUM:VARCHAR# and sl.recovery_type = 'DE'       
+    </mapped-statement>
+    
+    <mapped-statement name = "getRetireDate" result-class = "java.util.LinkedHashMap">
+        SELECT ADD_MONTHS (c.dob, p.retirement_age * 12) ret_date
+        FROM customer c, share_acct sa, PARAMETERS p
+        WHERE sa.cust_id = c.cust_id AND sa.emp_refno_new = #EMP_REF_NO:VARCHAR#
+    </mapped-statement>        
+    <!-- Use SalaryRecoveryListDetailTO object (JavaBean) properties as parameters for insert. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSalaryRecoveryListDetailTO" inline-parameters="true">
+        INSERT INTO SALARY_RECOVERY_LIST_DETAIL
+        (INT_CALC_UPTO_DT, EMP_REF_NO, MEMBER_NAME, SCHEME_NAME, ACT_NUM, TOTAL_DEMAND, PRINCIPAL, INTEREST, 
+        PENAL, CHARGES, PROD_ID, PROD_TYPE, DEPOSIT_PENAL_MONTH, STATUS,PARTICULARS,EMP_TYPE,RECOVERY_TYPE,OMIT_PRINCIPAL,OMIT_INTEREST
+        ) VALUES (
+        #intCalcUptoDt:DATE#, #empRefNo:VARCHAR#, #memberName:VARCHAR#, #schemeName:VARCHAR#, #actNum:VARCHAR#, #totalDemand:NUMERIC#, 
+        #principal:NUMERIC#, #interest:NUMERIC#, #penal:NUMERIC#, #charges:NUMERIC#, #prod_ID:VARCHAR#, #prod_Type:VARCHAR#, #penalMonth:NUMERIC#, #status:VARCHAR#
+        ,#particulars:VARCHAR#,#exemptionMode:VARCHAR#,#recoveryType:VARCHAR#,#omitPrincipal:VARCHAR#,#omitInterest:VARCHAR#)
+    </mapped-statement>
+            
+    <!-- Use SalaryRecoveryListDetailTO object (JavaBean) properties as parameters for update. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateSalaryRecoveryListDetailTO" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        EMP_REF_NO = #empRefNo:VARCHAR#,
+        MEMBER_NAME = #memberName:VARCHAR#,
+        SCHEME_NAME = #schemeName:VARCHAR#,
+        PROD_ID = #prod_ID:VARCHAR#,
+        PROD_TYPE = #prod_Type:VARCHAR#,
+        DEPOSIT_PENAL_MONTH = #penalMonth:NUMERIC#,
+        TOTAL_DEMAND = #totalDemand:NUMERIC#,
+        PRINCIPAL = #principal:NUMERIC#,
+        INTEREST = #interest:NUMERIC#,
+        PENAL = #penal:NUMERIC#,
+        CHARGES = #charges:NUMERIC#
+        WHERE INT_CALC_UPTO_DT = #intCalcUptoDt:DATE# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+         be auto-mapped results to SalaryRecoveryListDetailTO object (JavaBean) properties -->
+    <result-map name="getSalaryRecoveryListDetailTOResult" class="com.see.truetransact.transferobject.salaryrecovery.SalaryRecoveryListDetailTO">
+        <property name="intCalcUptoDt" column="INT_CALC_UPTO_DT"/>
+        <property name="empRefNo" column="EMP_REF_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="prod_ID" column="PROD_ID"/>
+        <property name="prod_Type" column="PROD_TYPE"/>
+        <property name="penalMonth" column="DEPOSIT_PENAL_MONTH"/>
+        <property name="status" column="STATUS"/>
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="totalDemand" column="TOTAL_DEMAND"/>
+        <property name="principal" column="PRINCIPAL"/>
+        <property name="interest" column="INTEREST"/>
+        <property name="penal" column="PENAL"/>
+        <property name="charges" column="CHARGES"/>
+    </result-map>
+    <mapped-statement name="getSelectSalaryRecoveryListDetailTO" result-map="getSalaryRecoveryListDetailTOResult" >
+        SELECT * FROM SALARY_RECOVERY_LIST_DETAIL 
+        WHERE 
+    </mapped-statement>
+    
+    <mapped-statement name="getGLSalaryDeductionAmt" result-class="java.util.HashMap" >
+        SELECT EMP_REF_NO,MAP_PROD_TYPE,AMOUNT FROM SALARY_DEDUCTION_MAPPING WHERE 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' AND MAP_ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getRecoveryParameter" result-class="java.util.HashMap" >
+        SELECT rp.*, lsa.*,nvl(LRS.EMI_IN_SIMPLEINTREST,'N') as EMI_IN_SIMPLEINTREST , LRS.INSTALL_TYPE ,
+        get_first_Loan_recovery_date(#ACT_NUM:VARCHAR#) as RECOVERY_DATE
+        FROM recovery_parameters rp, loans_sanction_details lsa,LOANS_REPAY_SCHEDULE lrs,LOANS_FACILITY_DETAILS lfd 
+        WHERE LFD.BORROW_NO = LSA.BORROW_NO and LFD.ACCT_NUM = LRS.ACCT_NUM
+        and rp.status != 'DELETED' AND LRS.REPAY_ACTIVE='Y' AND lsa.BORROW_NO=(SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM = #ACT_NUM:VARCHAR#) 
+    </mapped-statement>
+    
+    <mapped-statement name="updateLockStatusTL" result-class="java.util.HashMap" >
+        UPDATE LOANS_FACILITY_DETAILS SET LOCK_STATUS=#LOCK_STATUS:VARCHAR# WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateLockStatusAD" result-class="java.util.HashMap" >
+        UPDATE LOANS_FACILITY_DETAILS SET LOCK_STATUS=#LOCK_STATUS:VARCHAR# WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getMemberEmpType" result-class="java.util.HashMap" >
+        SELECT c.cust_type_id
+        FROM share_acct sa JOIN customer c ON sa.cust_id = c.cust_id
+        WHERE sa.emp_refno_new = #EMP_REF_NO:VARCHAR#
+    </mapped-statement>
+    
+    
+    <mapped-statement name="updateLockStatusTD" result-class="java.util.HashMap" >
+        UPDATE DEPOSIT_SUB_ACINFO SET LOCK_STATUS=#LOCK_STATUS:VARCHAR# WHERE DEPOSIT_NO=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateLockStatusMDS" result-class="java.util.HashMap" >
+        UPDATE MDS_MASTER_MAINTENANCE SET LOCK_STATUS=#LOCK_STATUS:VARCHAR# WHERE CHITTAL_NO=#CHITTAL_NO:VARCHAR# AND SUB_NO=#SUB_NO:NUMBER#
+    </mapped-statement>
+    <mapped-statement name="updateLockStatusSA" result-class="java.util.HashMap" >
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET LOCK_STATUS=#LOCK_STATUS:VARCHAR# WHERE SUSPENSE_ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    <dynamic-mapped-statement name="checkingSameDateRecord" result-class="java.util.HashMap">
+        SELECT * FROM SALARY_RECOVERY_LIST_MASTER WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="EXPORT_LIST">
+                    EXPORT_LIST='Y'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="deleteRecoveryDetailsData" result-class="java.util.HashMap" >
+        DELETE FROM SALARY_RECOVERY_LIST_DETAIL WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteRecoveryDetailsMDSData" result-class="java.util.HashMap" >
+        DELETE FROM SALARY_RECOVERY_MDS_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteRecoveryDetailsRDData" result-class="java.util.HashMap" >
+        DELETE FROM SALARY_RECOVERY_RD_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteRecoveryChargeDetails" result-class="java.util.HashMap" >
+        DELETE FROM SALARY_RECOVERY_CHARGE_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="insertSalaryRecoveryMDSDetails" result-class="java.util.HashMap" >
+        INSERT INTO SALARY_RECOVERY_MDS_DETAILS
+        (INT_CALC_UPTO_DT, CHITTAL_NO, SUB_NO, DIVISION_NO, INSTALLMENT_NO, BONUS_AMT, PENAL_AMT, DISCOUNT_AMT, ARBITRATION_AMT, NOTICE_AMT
+        ) VALUES (
+        #INT_CALC_DT:DATE#, #CHITTAL_NO:VARCHAR#, #SUB_NO:VARCHAR#, #DIVISION_NO:NUMERIC#, #INSTALLMENT_NO:NUMERIC#, #BONUS:NUMBER#, 
+        #PENAL:NUMBER#, #DISCOUNT:NUMBER#, #ARBITRATION_AMT:NUMBER#, #NOTICE_AMT:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertSalaryRecoveryRDDetails" result-class="java.util.HashMap" >
+        INSERT INTO SALARY_RECOVERY_RD_DETAILS (INT_CALC_UPTO_DT, DEPOSIT_NO, SUB_NO, INSTALLMENT_NO, PENAL_AMT, INST_AMT)
+        VALUES (#INT_CALC_UPTO_DT:DATE#, #DEPOSIT_NO:VARCHAR#, #SUB_NO:NUMBER#, #INSTALLMENT_NO:NUMBER#, #PENAL_AMT:NUMBER#, #INST_AMT:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="getRecoveryListData" result-class="java.util.HashMap" >
+        SELECT EMP_REF_NO,MEMBER_NAME, (TRIM(RTRIM(TO_CHAR(sum(nvl(principal,0)+nvl(interest,0)+nvl(penal,0)+nvl(charges,0)),'99999999999999.99')))) AS AMOUNT FROM SALARY_RECOVERY_LIST_DETAIL 
+        WHERE INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE# AND STATUS!='DELETED' and EMP_TYPE=#EMP_TYPE:VARCHAR# GROUP BY EMP_REF_NO,MEMBER_NAME ORDER BY to_number(EMP_REF_NO)
+    </mapped-statement>
+    <mapped-statement name="viewListDetailsForUnrecovery" result-class="java.util.HashMap" >
+      <!-- select EMP_REF_NO,MEMBER_NAME,SCHEME_NAME,ACT_NUM,TOTAL_DEMAND,PRINCIPAL,
+        interest,penal,charges,rec_principal,count(SRDM.INSTALLMENT_NO) AS INSTALLMENT from SALARY_RECOVERY_LIST_DETAIL sr 
+        left join SALARY_RECOVERY_MDS_DETAILS srdm on SRDM.CHITTAL_NO = replace(SR.ACT_NUM,'_1',NULL) and SR.INT_CALC_UPTO_DT = SRDM.INT_CALC_UPTO_DT
+        where sr.int_calc_upto_dt=#RECOVERY_DT:DATE# and STATUS='CREATED' AND EMP_REF_NO = #EMP_NO:VARCHAR#  and TALLY_VERIFIED is null
+        Group by EMP_REF_NO,MEMBER_NAME,SCHEME_NAME,ACT_NUM,TOTAL_DEMAND,PRINCIPAL,
+        interest,penal,charges,rec_principal
+        ORDER BY TO_NUMBER((EMP_REF_NO))-->
+		<!--SELECT emp_ref_no, member_name, scheme_name, sr.act_num, total_demand,
+		         principal, interest, penal, charges, rec_principal,
+		         CASE WHEN SR.PROD_TYPE = 'MDS' THEN  COUNT (srdm.installment_no)
+		         WHEN  SR.PROD_TYPE = 'TD' THEN NVL(GET_RD_INSTALL_RECOVERY(REPLACE(SR.ACT_NUM,'_1',NULL),SR.INT_CALC_UPTO_DT,'0001'),0)
+		         ELSE 0 END  INSTALLMENT,SR.PROD_TYPE,SR.PROD_ID
+		    FROM salary_recovery_list_detail sr LEFT JOIN salary_recovery_mds_details srdm
+		         ON srdm.chittal_no = REPLACE (sr.act_num, '_1', NULL)
+		       AND sr.int_calc_upto_dt = srdm.int_calc_upto_dt
+		   WHERE sr.int_calc_upto_dt = #RECOVERY_DT:DATE#
+		     AND status = 'CREATED'
+		     AND emp_ref_no = #EMP_NO:VARCHAR#
+		     AND tally_verified IS NULL
+		GROUP BY emp_ref_no,
+		         member_name,
+		         scheme_name,
+		         act_num,
+		         total_demand,
+		         principal,
+		         interest,
+		         penal,
+		         charges,
+		         rec_principal,
+		         SR.PROD_TYPE,
+		         SR.INT_CALC_UPTO_DT ,
+                         SR.PROD_ID
+		ORDER BY TO_NUMBER ((emp_ref_no))-->
+        SELECT   emp_ref_no, member_name, scheme_name, sr.act_num, total_demand,
+        principal, interest, penal, charges, rec_principal,
+        CASE
+        WHEN sr.prod_type = 'MDS'
+        THEN COUNT (srdm.installment_no)
+        WHEN sr.prod_type = 'TD'
+        THEN COUNT (srrd.installment_no)
+        ELSE 0
+        END installment,
+        sr.prod_type, sr.prod_id
+        FROM salary_recovery_list_detail sr LEFT JOIN salary_recovery_mds_details srdm
+        ON srdm.chittal_no = REPLACE (sr.act_num, '_1', NULL)
+        AND sr.int_calc_upto_dt = srdm.int_calc_upto_dt
+        LEFT JOIN salary_recovery_rd_details srrd
+        ON srrd.deposit_no = REPLACE (sr.act_num, '_1', NULL)
+        AND sr.int_calc_upto_dt = srrd.int_calc_upto_dt
+        WHERE sr.int_calc_upto_dt = #RECOVERY_DT:DATE#
+        AND status = 'CREATED'
+        AND emp_ref_no = #EMP_NO:VARCHAR#
+        AND tally_verified IS NULL
+        GROUP BY emp_ref_no,
+        member_name,
+        scheme_name,
+        act_num,
+        total_demand,
+        principal,
+        interest,
+        penal,
+        charges,
+        rec_principal,
+        sr.prod_type,
+        sr.int_calc_upto_dt,
+        sr.prod_id
+        ORDER BY TO_NUMBER ((emp_ref_no))
+    </mapped-statement>
+    <mapped-statement name="updateRecoveryListExportStatus" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_MASTER SET EXPORT_LIST='Y' WHERE INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="updateRecoveryListExportStatusNo" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_MASTER SET EXPORT_LIST=null WHERE INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getRecoveryTallyData" result-class="java.util.HashMap" >
+        SELECT INT_CALC_UPTO_DT,EMP_REF_NO,MEMBER_NAME, (TRIM(RTRIM(TO_CHAR(sum(TOTAL_DEMAND),'99999999999999.99')))) AS AMOUNT FROM SALARY_RECOVERY_LIST_DETAIL 
+        WHERE INT_CALC_UPTO_DT = (SELECT MAX(INT_CALC_UPTO_DT) FROM SALARY_RECOVERY_LIST_DETAIL) 
+        AND EMP_TYPE=#EMP_TYPE:VARCHAR# AND STATUS!='DELETED' 
+        GROUP BY EMP_REF_NO,MEMBER_NAME,INT_CALC_UPTO_DT ORDER BY to_number(EMP_REF_NO)
+    </mapped-statement>
+    <mapped-statement name="GetProdtypeandid" result-class="java.util.HashMap" >
+        select PROD_ID,PROD_TYPE from SALARY_RECOVERY_LIST_DETAIL 
+        where ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getRecoveryTallyDataEdit" result-class="java.util.HashMap" >
+        SELECT INT_CALC_UPTO_DT,EMP_REF_NO,MEMBER_NAME, SUM(TOTAL_DEMAND) AS AMOUNT, SUM((REC_PRINCIPAL+REC_INTEREST+REC_CHARGES+REC_PENAL)) AS RECOVERED_AMOUNT 
+        FROM SALARY_RECOVERY_LIST_DETAIL WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#   AND EMP_TYPE=#EMP_TYPE:VARCHAR#
+        GROUP BY EMP_REF_NO,MEMBER_NAME,INT_CALC_UPTO_DT ORDER BY to_number(EMP_REF_NO)
+    </mapped-statement>
+    
+    <mapped-statement name="getEmpNoRecoveryTallyDetails" result-class="java.util.HashMap">
+        SELECT SRLD.*, NVL(TOTAL_DEMAND,0) AS RECOVERED_AMOUNT FROM SALARY_RECOVERY_LIST_DETAIL SRLD  
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR#
+       <!--           SELECT SRLD.*, TOTAL_DEMAND AS RECOVERED_AMOUNT,BEHAVES_LIKE FROM SALARY_RECOVERY_LIST_DETAIL SRLD ,ALL_PRODUCT_ACCTS APA,ALL_PRODUCTS AP 
+                            WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT# AND EMP_REF_NO=#EMP_REF_NO# AND AP.PROD_ID=APA.PROD_ID 
+                            AND (APA.ACT_NUM =SRLD.ACT_NUM OR APA.REP_ACT_NUM=SRLD.ACT_NUM) -->
+    </mapped-statement>
+    
+    <mapped-statement name="getEmpNoRecoveryTallyDetailsEdit" result-class="java.util.HashMap" >
+        SELECT SRLD.*, (NVL(REC_PRINCIPAL,0)+NVL(REC_INTEREST,0)+NVL(REC_CHARGES,0)+NVL(REC_PENAL,0)) AS RECOVERED_AMOUNT FROM SALARY_RECOVERY_LIST_DETAIL SRLD  
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getMDSChittalDetails" result-class="java.util.HashMap" >
+        SELECT MA.*,MSD.* FROM MDS_APPLICATION MA, MDS_SCHEME_DETAILS MSD WHERE CHITTAL_NO=#CHITTAL_NO:VARCHAR# AND SUB_NO=#SUB_NO:NUMBER# AND MA.SCHEME_NAME=MSD.SCHEME_NAME
+    </mapped-statement>
+    
+    <mapped-statement name="getRecoveryListInstallmentMapDetails" result-class="java.util.HashMap" >
+        SELECT * FROM SALARY_RECOVERY_MDS_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# 
+        AND CHITTAL_NO=#CHITTAL_NO:VARCHAR# AND SUB_NO=#SUB_NO:NUMBER# ORDER BY INSTALLMENT_NO
+    </mapped-statement>
+    
+    <mapped-statement name="insertRecoveryChargesList" result-class="java.util.HashMap" >
+        INSERT INTO SALARY_RECOVERY_CHARGE_DETAILS
+        (INT_CALC_UPTO_DT, ACT_NUM, CHARGE_TYPE, AMOUNT
+        ) VALUES (
+        #INT_CALC_UPTO_DT:DATE#, #ACT_NUM:VARCHAR#, #CHARGE_TYPE:VARCHAR#, #AMOUNT:NUMBER#)
+    </mapped-statement>
+    
+    
+    
+    <mapped-statement name="getRecoveryChargeList" result-class="java.util.HashMap" >
+        SELECT * FROM SALARY_RECOVERY_CHARGE_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getMDSRecoveryNoticeChargeDetails" result-class="java.util.HashMap" >
+        SELECT AMOUNT AS CHARGE_AMT,CHARGE_TYPE FROM SALARY_RECOVERY_CHARGE_DETAILS WHERE ACT_NUM=#ACT_NUM# AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+        AND CHARGE_TYPE IN('NOTICE CHARGES','POSTAGE CHARGES')
+    </mapped-statement>
+    
+    <mapped-statement name="getMDSRecoveryCaseChargeDetails" result-class="java.util.HashMap" >
+        SELECT AMOUNT AS CHARGE_AMT,CHARGE_TYPE FROM SALARY_RECOVERY_CHARGE_DETAILS WHERE ACT_NUM=#ACT_NUM# AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+        AND CHARGE_TYPE NOT IN('NOTICE CHARGES','POSTAGE CHARGES')
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectClockNumber" result-class="java.util.HashMap">
+        SELECT EMP_REFNO_NEW AS CLOCK_NO,SHARE_ACCT_NO,SH.CUST_ID ,get_cust_name(C.CUST_ID) AS "NAME" FROM SHARE_ACCT SH, CUSTOMER C      
+        WHERE SH.CUST_ID = C.CUST_ID AND (SH.AUTHORIZE IS NOT NULL OR (SH.AUTHORIZE='AUTHOTIZED' AND SH.AUTHORIZE!='REJECTED'))
+        AND ACCT_STATUS!='CLOSED' and C.CUSTOMER_STATUS='PRESENT'
+        AND EMP_REFNO_NEW IS NOT NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CLOCK_NO">
+                    EMP_REFNO_NEW=#CLOCK_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHARE_ACCT_NO">
+                    UPPER(SHARE_ACCT_NO) LIKE UPPER('%$SHARE_ACCT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(SH.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="NAME">
+                    UPPER(get_cust_name(C.CUST_ID)) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY EMP_REFNO_NEW
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSalaryRecoveryList" result-class="java.util.HashMap" >
+        SELECT distinct APA.*,ap.prod_desc FROM ALL_PRODUCT_ACCTS APA,ALL_CUSTOMER AC, ALL_PRODUCTS AP WHERE (APA.ACT_NUM=AC.ACT_NUM or apa.rep_act_num=ac.act_num) AND AP.PROD_ID=APA.PROD_ID AND
+        APA.ACCT_STATUS!='CLOSED' AND AC.MEMBERSHIP_NO IN(SELECT SHARE_ACCT_NO FROM SHARE_ACCT WHERE EMP_REFNO_NEW=#CLOCK_NO:VARCHAR#)  
+        AND BEHAVES_LIKE IN('MDS','SI_BEARING','OD','RECURRING') 
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalaryRecoveryTL" result-class="java.util.HashMap" >
+        UPDATE LOANS_FACILITY_DETAILS SET SALARY_RECOVERY=#SALARY_RECOVERY:VARCHAR# WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalaryRecoveryAD" result-class="java.util.HashMap" >
+        UPDATE LOANS_FACILITY_DETAILS SET SALARY_RECOVERY=#SALARY_RECOVERY:VARCHAR# WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalaryRecoveryTD" result-class="java.util.HashMap" >
+        UPDATE DEPOSIT_SUB_ACINFO SET SALARY_RECOVERY=#SALARY_RECOVERY:VARCHAR# WHERE DEPOSIT_NO=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalaryRecoveryMDS" result-class="java.util.HashMap" >
+        UPDATE MDS_MASTER_MAINTENANCE SET SALARY_RECOVERY=#SALARY_RECOVERY:VARCHAR# WHERE CHITTAL_NO=#CHITTAL_NO:VARCHAR# AND SUB_NO=#SUB_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSalaryRecoveryListTallyTransDetails" result-class="java.util.HashMap" >
+        SELECT DISTINCT NVL (AT.act_num, AT.link_batch_id), AT.amount, AT.trans_dt
+           FROM all_trans AT,
+                salary_recovery_list_master sm,
+                salary_recovery_list_detail sr
+          WHERE sr.act_num = REPLACE (AT.link_batch_id, '_1', NULL)
+            AND AT.trans_dt &lt;= #CURR_DT:DATE#
+            AND REPLACE (AT.link_batch_id, '_1', NULL) = #ACT_NUM:VARCHAR#
+            AND AT.trans_dt > (SELECT MAX (s.created_dt)
+                                 FROM salary_recovery_list_master s
+                                WHERE s.int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE#)
+            AND trans_type = 'CREDIT'
+            AND sr.int_calc_upto_dt = sm.int_calc_upto_dt
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="updateTallyRecoveredDetails" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        REC_PRINCIPAL=#REC_PRINCIPAL:NUMBER#,
+        REC_INTEREST=#REC_INTEREST:NUMBER#,
+        REC_PENAL=#REC_PENAL:NUMBER#,
+         <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="DEP_INST_NO">
+                    DEP_INST_NO =#DEP_INST_NO:NUMBER#,
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        REC_CHARGES=#REC_CHARGES:NUMBER#,
+        TALLY_VERIFIED=#TALLY_VERIFIED:VARCHAR#,
+        UNRECOVERY = 'Y'
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# AND ACT_NUM=#ACT_NUM:VARCHAR#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="updateTally_Recovered_Details" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        REC_PRINCIPAL=#REC_PRINCIPAL:NUMBER#,
+        REC_INTEREST=#REC_INTEREST:NUMBER#,
+        REC_PENAL=#REC_PENAL:NUMBER#,
+         <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="DEP_INST_NO">
+                    DEP_INST_NO =#DEP_INST_NO:NUMBER#,
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        REC_CHARGES=#REC_CHARGES:NUMBER#,
+        TALLY_VERIFIED=#TALLY_VERIFIED:VARCHAR#,
+        UNRECOVERY = 'Y'
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# AND ACT_NUM=#ACT_NUM:VARCHAR#
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="updateTallyRecoveredDetailsAutomate" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        REC_PRINCIPAL=PRINCIPAL,
+        REC_INTEREST=INTEREST,
+        REC_PENAL=PENAL,
+        REC_CHARGES=CHARGES,
+        TALLY_VERIFIED=#TALLY_VERIFIED:VARCHAR#,
+        UNRECOVERY = 'N'
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# AND ACT_NUM=#ACT_NUM:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="REC_PRINCIPAL">
+                    (REC_PRINCIPAL IS NULL OR REC_PRINCIPAL = 0)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="checkingTallyVerified" result-class="java.util.HashMap" >
+        SELECT EMP_REF_NO AS CLOCK_NO,MEMBER_NAME FROM SALARY_RECOVERY_LIST_DETAIL 
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE# AND EMP_TYPE=#EMP_TYPE:VARCHAR# AND TALLY_VERIFIED IS NULL GROUP BY EMP_REF_NO,MEMBER_NAME ORDER BY EMP_REF_NO
+    </mapped-statement>
+    
+    <mapped-statement  name="selectTallyAppropriatTransaction"  result-class="java.util.LinkedHashMap">
+        SELECT * FROM LOANS_PROD_APPROPRIATE_TRANS WHERE PROD_ID= #PROD_ID:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateTallyRecoveryStatus" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        STATUS ='DELETED' WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# AND ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertSalaryRecoveryListDetail" result-class="java.util.HashMap" >
+        INSERT INTO SALARY_RECOVERY_LIST_DETAIL
+        (INT_CALC_UPTO_DT, EMP_REF_NO,  SCHEME_NAME, ACT_NUM, MEMBER_NAME, PROD_TYPE, PROD_ID, STATUS,EMP_TYPE,PARTICULARS
+        ) VALUES (
+        #INT_CALC_UPTO_DT:DATE#, #EMP_REF_NO:VARCHAR#, #SCHEME_NAME:VARCHAR#, #ACT_NUM:NUMERIC#, #MEMBER_NAME#, #PROD_TYPE#, #PROD_ID#, #STATUS#,#EMP_TYPE#,#PARTICULARS#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateNewTallyRecoveredDetails" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        REC_PRINCIPAL=#REC_PRINCIPAL:NUMBER#,
+        REC_INTEREST=#REC_INTEREST:NUMBER#,
+        REC_PENAL=#REC_PENAL:NUMBER#,
+        REC_CHARGES=#REC_CHARGES:NUMBER#,
+        TALLY_VERIFIED=#TALLY_VERIFIED:VARCHAR#
+            <!-- TOTAL_DEMAND=#TOTAL_DEMAND# -->
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# AND ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateNewTallyRecoveredDetailsSA" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        REC_PRINCIPAL=<!--nvl(REC_PRINCIPAL,0)+-->#REC_PRINCIPAL:NUMBER#,
+        REC_INTEREST=#REC_INTEREST:NUMBER#,
+        REC_PENAL=#REC_PENAL:NUMBER#,
+        REC_CHARGES=#REC_CHARGES:NUMBER#,
+        TALLY_VERIFIED=#TALLY_VERIFIED:VARCHAR#
+            <!-- TOTAL_DEMAND=#TOTAL_DEMAND# -->
+        WHERE STATUS!='DELETED' AND INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# AND EMP_REF_NO=#EMP_REF_NO:VARCHAR# AND ACT_NUM=#ACT_NUM:VARCHAR#
+        AND PARTICULARS = #PARTICULARS:VARCHAR#
+        
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getActNoFromCustomerID" result-class="java.util.HashMap" >
+        SELECT APA.ACT_NUM,PROD_TYPE,PROD_ID,FNAME AS NAME,MEMBERSHIP_NO AS MEMBER_NO FROM ALL_PRODUCT_ACCTS APA,ALL_CUSTOMER AC WHERE AC.ACCT_STATUS!='CLOSED' AND
+        AC.CUST_ID=#CUST_ID# AND (AC.ACT_NUM=APA.ACT_NUM OR AC.ACT_NUM=APA.REP_ACT_NUM) AND PROD_ID = #PROD_ID:VARCHAR#  AND BRANCH_ID=#SELECTED_BRANCH:VARCHAR#
+       <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(APA.ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(FNAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_TYPE">
+                    UPPER(PROD_TYPE) LIKE UPPER('%$PROD_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="MEMBER_NO">
+                    UPPER(MEMBERSHIP_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getCustIdFromEmpRefNo" result-class="java.util.HashMap" >
+        SELECT CUST_ID FROM SHARE_ACCT WHERE EMP_REFNO_NEW=#EMP_REFNO_NEW:VARCHAR#
+           <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUST_ID">
+                    UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSuspendInstallmentDetails" result-class="java.util.HashMap" >
+        SELECT * FROM SUSPENSE_INSTALLMENT  WHERE BALANCE_AMOUNT>0 AND ACCT_NUM=#ACCT_NUM:VARCHAR# ORDER BY INSTALLMENT_NO,BILL_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getSuspendCurrInstDetails" result-class="java.util.HashMap" >
+        SELECT A.* FROM(SELECT * FROM SUSPENSE_INSTALLMENT  WHERE BALANCE_AMOUNT>0 AND ACCT_NUM=#ACCT_NUM:VARCHAR# ORDER BY INSTALLMENT_NO,BILL_ID)A,    
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT>0  AND ACCT_NUM=#ACCT_NUM:VARCHAR#
+        GROUP BY BILL_ID ,ACCT_NUM)B  WHERE A.ACCT_NUM=B.ACCT_NUM  AND A.INSTALLMENT_NO=INST_NO AND A.BILL_ID=B.BILL_ID ORDER BY A.BILL_ID
+    </mapped-statement>
+    
+    <mapped-statement name="updateSABalanceAmount" result-class="java.util.HashMap" >
+        UPDATE SUSPENSE_INSTALLMENT
+        SET PAID_AMOUNT=NVL(PAID_AMOUNT,0)+#AMOUNT:NUMBER#, PAID_DATE=#PAID_DATE:DATE#, BALANCE_AMOUNT=BALANCE_AMOUNT-#AMOUNT:NUMBER# 
+        WHERE CLOCK_NO=#CLOCK_NO# AND ACCT_NUM=#ACCT_NUM:VARCHAR# AND INSTALLMENT_NO=#INSTALLMENT_NO:VARCHAR# AND BILL_ID=#BILL_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLoanMaxInstDt" result-class="java.util.HashMap" >
+        SELECT MAX(INSTALLMENT_DT) as INSTALLMENT_DT FROM LOANS_INSTALLMENT WHERE ACCT_NUM=#ACT_NUM:VARCHAR# AND STATUS !='DELETED' AND INSTALLMENT_DT &lt;= #CHECK_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getPrincipalAmtGreaterThanBalAmt" result-class="java.util.HashMap" >
+        SELECT SUM(PRINCIPAL_AMT) AS PRINCIPAL_AMOUNT FROM LOANS_INSTALLMENT WHERE ACCT_NUM =#ACCT_NUM:VARCHAR# AND STATUS !='DELETED' AND BALANCE_AMT &gt;#BALANCE_AMT:NUMBER#
+    </mapped-statement>
+    <mapped-statement name="getPrincipalAmtGreaterThanBalAmtforemi" result-class="java.util.HashMap" >
+        SELECT SUM(TOTAL_AMT) AS TOTAL_AMT FROM LOANS_INSTALLMENT WHERE ACCT_NUM =#ACCT_NUM:VARCHAR# AND STATUS !='DELETED' AND BALANCE_AMT &gt;#BALANCE_AMT:NUMBER#
+    </mapped-statement>
+    <mapped-statement name="updateSalaryRecoveryList" result-class="java.util.HashMap" >
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        TOTAL_DEMAND = #totalDemand:NUMERIC#,
+        PRINCIPAL = #principal:NUMERIC#,
+        INTEREST = #interest:NUMERIC#,
+        PENAL = #penal:NUMERIC#,
+        CHARGES = #charges:NUMERIC#
+        WHERE INT_CALC_UPTO_DT = #intCalcUptoDt:DATE# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteSalaryRecoveryList" result-class="java.util.HashMap" >
+        delete from SALARY_RECOVERY_LIST_DETAIL
+        WHERE INT_CALC_UPTO_DT = #intCalcUptoDt:DATE# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getActstatus" result-class="java.util.HashMap" >
+        select ACCT_STATUS from ALL_PRODUCT_ACCTS where (ACT_NUM=#ACT_NUM# OR REP_ACT_NUM=#ACT_NUM:VARCHAR#) 
+    </mapped-statement>
+    <mapped-statement name="getSuspenseActNo" result-class="java.util.HashMap" >
+        select SM.SUSPENSE_ACCT_NUM,SM.SUSPENSE_PROD_ID,SM.SUSPENSE_PROD_DESC from SUSPENSE_ACCOUNT_MASTER SM
+        join RECOVERY_PARAMETERS RP on SM.SUSPENSE_PROD_ID=RP.SUSPENSE_PRODUCT_ID
+        where SM.SUSPENSE_MEMBER_NO=(select SHARE_ACCT_NO from SHARE_ACCT where EMP_REFNO_NEW=#EMP_REFNO:VARCHAR#) 
+    </mapped-statement>
+    <mapped-statement name="viewListDetails" result-class="java.util.HashMap" >
+       <!-- select EMP_REF_NO,MEMBER_NAME,SCHEME_NAME,ACT_NUM,TOTAL_DEMAND,PRINCIPAL,
+        interest,penal,charges from SALARY_RECOVERY_LIST_DETAIL 
+        where int_calc_upto_dt=#INT_CALC_UPTO_DT:DATE# and STATUS!='DELETED' and TALLY_VERIFIED is null
+        ORDER BY TO_NUMBER((EMP_REF_NO))-->
+        SELECT   emp_ref_no, member_name, scheme_name, act_num, total_demand,
+        principal, salary_recovery_list_detail.interest, penal, charges,LFD.CLEAR_BALANCE
+        FROM salary_recovery_list_detail,LOANS_FACILITY_DETAILS lfd
+        WHERE int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE# AND salary_recovery_list_detail.status != 'DELETED'
+        AND tally_verified IS NULL
+        and SALARY_RECOVERY_LIST_DETAIL.ACT_NUM =  LFD.ACCT_NUM(+) 
+        ORDER BY TO_NUMBER ((emp_ref_no))
+    </mapped-statement>
+    <mapped-statement name="viewListDetails1" result-class="java.util.HashMap" >
+        select EMP_REF_NO,MEMBER_NAME,SCHEME_NAME,ACT_NUM,TOTAL_DEMAND,PRINCIPAL,
+        interest,penal,charges from SALARY_RECOVERY_LIST_DETAIL 
+        where int_calc_upto_dt=#INT_CALC_UPTO_DT:DATE# and STATUS='CREATED' and TALLY_VERIFIED is null
+        and EMP_REF_NO=#EMP_REF_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getClkNofrmRecList" result-class="java.util.HashMap" >
+        select distinct EMP_REF_NO,MEMBER_NAME from SALARY_RECOVERY_LIST_DETAIL
+        where TO_CHAR(INT_CALC_UPTO_DT:DATE,'MM-yyyy')=to_char(#INT_CALC_UPTO_DT:DATE#,'MM-yyyy')
+    </mapped-statement>
+    <mapped-statement name="getPartialrecoveryClearbalance" result-class="java.util.HashMap" >
+        select sum(nvl(a.amt,0)) as AMOUNT from  ( select sum(nvl(a.CLEAR_BALANCE,0)) as amt from SUSPENSE_ACCOUNT_MASTER a join 
+        SHARE_ACCT B on a.SUSPENSE_CUSTOMER_ID=B.CUST_ID
+        where B.EMP_REFNO_NEW=#EMP_REFNO_NEW:VARCHAR# and a.SUSPENSE_PROD_ID in (select MDS_SUSPENSE_PROD_ID from RECOVERY_PARAMETERS)
+        union all
+        select sum(nvl(a.CLEAR_BALANCE,0)) as amt from SUSPENSE_ACCOUNT_MASTER a join 
+        SHARE_ACCT B on a.SUSPENSE_CUSTOMER_ID=B.CUST_ID
+        where B.EMP_REFNO_NEW=#EMP_REFNO_NEW:VARCHAR# and a.SUSPENSE_PROD_ID in (select RD_SUSPENSE_PROD_ID from RECOVERY_PARAMETERS)
+        ) a
+    </mapped-statement>
+    <mapped-statement name="getEmiTypeDetail" result-class="java.util.HashMap" >
+        select install_type,nvl(emi_in_simpleintrest,'N') as emi_in_simpleintrest from loans_repay_schedule
+        where acct_num=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getTotalCountMDS" result-class="java.util.HashMap" >
+        select count(A.CHITTAL_NO) as total from SALARY_RECOVERY_MDS_DETAILS a
+        where A.INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# and A.CHITTAL_NO=#CHITTAL_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getTotalCountRD" result-class="java.util.HashMap" >
+        select count(A.DEPOSIT_NO) as total from SALARY_RECOVERY_RD_DETAILS a
+        where A.INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# and A.DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getMDSRecoveryDetail" result-class="java.util.HashMap" >
+        select BONUS_AMT,PENAL_AMT from  SALARY_RECOVERY_MDS_DETAILS 
+        where INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# and CHITTAL_NO=#CHITTAL_NO:VARCHAR#
+        order by INSTALLMENT_NO
+    </mapped-statement>
+    <mapped-statement name="getRDRecoveryDetail" result-class="java.util.HashMap" >
+        select INST_AMT,PENAL_AMT from  SALARY_RECOVERY_RD_DETAILS 
+        where INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# and DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+        order by INSTALLMENT_NO
+    </mapped-statement>
+    <mapped-statement name="getEmptype" result-class="java.util.HashMap" >
+        select EMP_TYPE from SALARY_RECOVERY_LIST_DETAIL
+        where INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE# and EMP_REF_NO=#EMP_REF_NO:VARCHAR#
+    </mapped-statement>
+
+     <mapped-statement name="getAllSuretyDetails" result-class="java.util.HashMap" >
+     SELECT
+	(select emp_refno_new from share_acct ss where SS.CUST_ID = b.cust_id ) as
+	  Employee_No, cu.fname as Name, lp.prod_desc as Head , f.acct_num as ACTNUM
+	  FROM loans_security_member s JOIN loans_facility_details f
+	       ON f.acct_num = s.acct_num
+	       JOIN loans_borrower b ON b.borrow_no = f.borrow_no
+	       JOIN customer cu ON cu.cust_id = b.cust_id
+	       JOIN loans_product lp ON lp.prod_id = f.prod_id
+	       join share_acct sa on SA.SHARE_ACCT_NO = S.MEMBER_NO
+	  WHERE f.acct_status != 'CLOSED'
+	  AND f.authorize_status_1 = 'AUTHORIZED'
+	  AND f.status != 'DELETED'
+	  and SA.EMP_REFNO_NEW=#EMP_REF_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getRecoveryListDataForDivision" result-class="java.util.HashMap" >
+    SELECT   emp_ref_no, member_name,
+         (TRIM (RTRIM (TO_CHAR (SUM (total_demand), '99999999999999.99')))
+         ) AS amount
+    FROM salary_recovery_list_detail sd,
+   <!-- customer c,-->
+    share_acct sa 
+     WHERE int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE# AND SD.STATUS != 'DELETED' AND emp_type = #EMP_TYPE:VARCHAR# 
+    <!-- and  SA.CUST_ID = C.CUST_ID and SA.EMP_REFNO_NEW = sd.emp_ref_no and C.DIVISION=#DIVISION:VARCHAR#-->
+    and SA.EMP_REFNO_NEW = sd.emp_ref_no
+        GROUP BY emp_ref_no, member_name
+        ORDER BY TO_NUMBER (emp_ref_no) 
+    
+    </mapped-statement>
+    <mapped-statement name="getRecoveryTallyDataForDivision" result-class="java.util.HashMap" >
+    SELECT   int_calc_upto_dt, emp_ref_no, member_name,
+         (TRIM (RTRIM (TO_CHAR (SUM (total_demand), '99999999999999.99')))
+         ) AS amount
+    FROM salary_recovery_list_detail sd,
+   <!-- customer c,-->
+    share_acct sa 
+    WHERE int_calc_upto_dt = (SELECT MAX (int_calc_upto_dt)
+                               FROM salary_recovery_list_detail)
+     AND emp_type = #EMP_TYPE:VARCHAR# 
+     AND SD.status != 'DELETED'
+    <!-- and  SA.CUST_ID = C.CUST_ID and SA.EMP_REFNO_NEW = sd.emp_ref_no and C.DIVISION=#DIVISION:VARCHAR#-->
+    and SA.EMP_REFNO_NEW = sd.emp_ref_no
+     GROUP BY EMP_REF_NO,MEMBER_NAME,INT_CALC_UPTO_DT
+     ORDER BY TO_NUMBER (emp_ref_no) 
+    </mapped-statement>
+     <mapped-statement name="getRecoveryTallyDataForDivisionEdit" result-class="java.util.HashMap" >
+        SELECT INT_CALC_UPTO_DT,EMP_REF_NO,MEMBER_NAME, SUM(TOTAL_DEMAND) AS AMOUNT, 
+        SUM((REC_PRINCIPAL+REC_INTEREST+REC_CHARGES+REC_PENAL)) AS RECOVERED_AMOUNT 
+        FROM SALARY_RECOVERY_LIST_DETAIL sd,
+       <!-- customer c,-->
+        share_acct sa  WHERE sd.STATUS!='DELETED' AND INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+        AND EMP_TYPE=#EMP_TYPE:VARCHAR# 
+        <!--and  SA.CUST_ID = C.CUST_ID and SA.EMP_REFNO_NEW = sd.emp_ref_no and C.DIVISION=#DIVISION:VARCHAR#-->
+        and SA.EMP_REFNO_NEW = sd.emp_ref_no
+        GROUP BY EMP_REF_NO,MEMBER_NAME,INT_CALC_UPTO_DT ORDER BY to_number(EMP_REF_NO)
+    </mapped-statement>
+     <mapped-statement name="checkingTallyVerifiedForDivision" result-class="java.util.HashMap" >
+    SELECT   emp_ref_no AS clock_no, member_name
+    FROM salary_recovery_list_detail sd,
+    <!--customer c,-->
+    share_acct sa 
+    WHERE  SD.status != 'DELETED'
+    <!--and  SA.CUST_ID = C.CUST_ID and SA.EMP_REFNO_NEW = sd.emp_ref_no and C.DIVISION=#DIVISION:VARCHAR#-->
+    and SA.EMP_REFNO_NEW = sd.emp_ref_no
+     AND int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE#
+     AND emp_type = #EMP_TYPE:VARCHAR#
+     AND tally_verified IS NULL
+    GROUP BY emp_ref_no, member_name
+    ORDER BY emp_ref_no
+    </mapped-statement>
+     <mapped-statement name="getRecoveredAmountForDivision" result-class="java.util.HashMap" >
+        SELECT   NVL(SUM((REC_PRINCIPAL+REC_INTEREST+REC_CHARGES+REC_PENAL)),0) AS RECOVERED_AMOUNT,UNRECOVERY 
+         <!-- SELECT   SUM(REC_PRINCIPAL) AS RECOVERED_AMOUNT,UNRECOVERY -->
+    FROM salary_recovery_list_detail sd,
+   <!-- customer c,-->
+    share_acct sa
+   WHERE int_calc_upto_dt = (SELECT MAX (int_calc_upto_dt)
+                               FROM salary_recovery_list_detail)
+     AND emp_type = #EMP_TYPE:VARCHAR#
+     AND sd.status != 'DELETED'
+     <!--AND sa.cust_id = c.cust_id-->
+     AND sa.emp_refno_new = sd.emp_ref_no
+    <!-- AND c.division = #DIVISION:VARCHAR#-->
+    and sd.emp_ref_no =#EMP_REF_NO:VARCHAR#
+     group by unrecovery
+    <!--ORDER BY TO_NUMBER (emp_ref_no)-->
+    </mapped-statement>
+    
+      <mapped-statement name="getMaxDueDateForDepRecurring" result-class="java.util.HashMap" >
+          SELECT MAX(DUE_DATE) AS DUE_DATE,SUM(AMOUNT) AS AMOUNT  FROM DEPOSIT_RECURRING WHERE DEPOSIT_NO_SUB =#DEPOSIT_NO:VARCHAR# 
+          </mapped-statement> 
+           <mapped-statement name="getdepositInstNo" result-class="java.util.HashMap" >
+        SELECT DEP_INST_NO,INT_CALC_UPTO_DT FROM SALARY_RECOVERY_LIST_DETAIL WHERE ACT_NUM =#ACCOUNTNO:VARCHAR#
+          </mapped-statement> 
+    <mapped-statement name="getAcctsRecoveryDE" result-class="java.util.HashMap" >
+    select DISTINCT APD.EMP_REFNO_NEW,APD.CUST_ID,APD.due_status,(SELECT LAST_DAY (ADD_MONTHS (c.dob, p.retirement_age * 12)) AS ret_date
+    FROM customer c, PARAMETERS p
+    WHERE c.cust_id = APD.CUST_ID) AS RET_DT from all_product_accts_RecoveryDE APD where 
+    APD.due_status !='NOT_DUE' AND APD.ACCT_STATUS !='CLOSED' AND APD.EMP_REFNO_NEW IS NOT NULL AND (SELECT LAST_DAY (ADD_MONTHS (c.dob, p.retirement_age * 12)) AS ret_date
+    FROM customer c, PARAMETERS p
+    WHERE c.cust_id = APD.CUST_ID) >= #INT_CALC_UPTO_DT:DATE#
+    GROUP BY APD.EMP_REFNO_NEW,APD.CUST_ID,APD.due_status
+   </mapped-statement>  
+    <mapped-statement name="updateDepositSalaryRecoveryStatus" result-class="java.util.HashMap" >
+    update DEPOSIT_SUB_ACINFO set SALARY_RECOVERY ='Y' WHERE DEPOSIT_NO IN
+   (SELECT DEPOSIT_NO FROM DEPOSIT_ACINFO WHERE CUST_ID=#CUST_ID:VARCHAR# AND DEPOSIT_STATUS!='CLOSED' )
+   </mapped-statement> 
+    <mapped-statement name="updateSuspanceSalaryRecoveryStatus" result-class="java.util.HashMap" >
+    UPDATE SUSPENSE_ACCOUNT_MASTER SET SALARY_RECOVERY ='Y' WHERE SUSPENSE_CUSTOMER_ID =#CUST_ID:VARCHAR#
+    AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS != 'DELETED'
+   </mapped-statement> 
+    <mapped-statement name="updateMDSSalaryRecoveryStatus" result-class="java.util.HashMap" >
+    UPDATE MDS_MASTER_MAINTENANCE SET SALARY_RECOVERY = 'Y' WHERE 
+    MEMBER_NO IN (SELECT SHARE_ACCT_NO FROM SHARE_ACCT WHERE CUST_ID =#CUST_ID:VARCHAR#) AND STATUS != 'DELETED'
+   </mapped-statement> 
+    <mapped-statement name="updateLoanSalaryRecoveryStatus" result-class="java.util.HashMap" >
+    UPDATE LOANS_FACILITY_DETAILS SET SALARY_RECOVERY ='Y' WHERE BORROW_NO IN 
+    (SELECT BORROW_NO FROM LOANS_BORROWER WHERE CUST_ID=#CUST_ID:VARCHAR# AND STATUS !='DELETED')
+    </mapped-statement> 
+    <mapped-statement name="getLastIntCalcDateForSalaryRecovery" result-class="java.util.HashMap" >
+        SELECT MAX(SLD.INT_CALC_UPTO_DT) AS INT_CALC_UPTO_DT FROM SALARY_RECOVERY_LIST_DETAIL SLD WHERE SLD.ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement> 
+    <mapped-statement name="getRecPrincipalForSalaryRecovery" result-class="java.util.HashMap" >
+        SELECT REC_PRINCIPAL FROM SALARY_RECOVERY_LIST_DETAIL SLD WHERE SLD.ACT_NUM = #ACT_NUM:VARCHAR#  AND INT_CALC_UPTO_DT =#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement> 
+    <mapped-statement name="getAdvAmtEmi" result-class="java.util.HashMap" >
+        SELECT get_advamt_emi(#ACCT_NUM:VARCHAR#,#ASONDT:DATE#,#EMI_IN_SIMPLE_INTEREST:VARCHAR#,#INSTALL_TYPE:VARCHAR#) AS BALANCE FROM DUAL
+    </mapped-statement> 
+    
+    <mapped-statement name="updateSalRecoveryListStatus" inline-parameters="true">
+        UPDATE SALARY_RECOVERY_LIST_DETAIL SET 
+        STATUS = #STATUS:VARCHAR#
+        WHERE EMP_REF_NO = #EMP_REF_NO:VARCHAR# AND SCHEME_NAME = #SCHEME_NAME:VARCHAR# AND ACT_NUM = #ACC_NO:VARCHAR#
+        AND INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="updateVoucherReleaseDetails" inline-parameters="true">
+    UPDATE salary_recovery_list_detail 
+    SET voucher_release_date = #VOUCHER_RELEASE_DATE:DATE#,VOUCHER_RELEASE_BATCH_ID=#VOUCHER_RELEASE_BATCH_ID:VARCHAR#
+    WHERE act_num = #ACT_NUM:VARCHAR# AND int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE#
+ </mapped-statement>
+ 
+ <mapped-statement name="getSalaryRecoverListEntryPresent" result-class="java.util.HashMap">
+    SELECT *
+    FROM salary_recovery_list_detail sd
+    WHERE sd.emp_ref_no = #EMP_REF_NO:VARCHAR#
+    AND sd.int_calc_upto_dt = #INT_CALC_UPTO_DT:DATE#
+    AND sd.act_num = #ACT_NUM:VARCHAR#
+    AND sd.PARTICULARS = #PARTICULARS:VARCHAR#
+    AND sd.status != 'DELETED'
+ </mapped-statement>
+
+<mapped-statement name="getSelectRecoveryListGenerationProcessed" result-class="java.util.HashMap">
+    SELECT * FROM SALARY_RECOVERY_LIST_MASTER WHERE INT_CALC_UPTO_DT = #CALC_INT_UPTO_DT:DATE#
+ </mapped-statement>    
+ 
+ <mapped-statement name="getPenalIntDetailsTL" result-class="java.util.HashMap">
+    select  GET_RecoveryTL(#ACT_NUM:VARCHAR#,#TRANS_DT:DATE#,#REC_TYPE:VARCHAR#) as RESULT from dual
+ </mapped-statement>
+ 
+ <mapped-statement name="getSelectRecoveryListDetForCash" result-class="java.util.HashMap">
+    SELECT * FROM SALARY_RECOVERY_LIST_DETAIL WHERE INT_CALC_UPTO_DT = #LAST_INT_CALC_DT:DATE# AND ACT_NUM =#ACT_NUM:VARCHAR#
+ </mapped-statement>    
+ 
+ <mapped-statement name="getSelectLoanTransDetForCash" result-class="java.util.HashMap">
+    SELECT * FROM LOAN_TRANS_DETAILS WHERE TRANS_DT = #LAST_INT_CALC_DT:DATE# AND ACT_NUM =#ACT_NUM:VARCHAR#  AND AUTHORIZE_STATUS IS NULL
+ </mapped-statement>  
+ 
+ <mapped-statement name="getPrincipleAmountFromCash" result-class="java.util.HashMap">
+    SELECT count(*) AS princ_count FROM ALL_TRANS C WHERE C.ACT_NUM =#ACT_NUM:VARCHAR# AND C.TRANS_DT = #TRANS_DT:DATE# AND C.AUTHORIZE_STATUS IS NULL
+ </mapped-statement> 
+ 
+ <mapped-statement name="getRemittedStatus" result-class="java.util.HashMap">
+    select  GET_TL_STATUS(#ACT_NUM:VARCHAR#,#TRANS_DT:DATE#) as STATUS from dual
+ </mapped-statement>
+ 
+ <mapped-statement name="getRemittedRecordCount" result-class="java.util.HashMap">
+   SELECT COUNT(*) AS SAT_NUM   FROM ALL_TRANS A WHERE A.TRANS_TYPE ='CREDIT' AND A.LINK_BATCH_ID =#ACT_NUM:VARCHAR# AND 
+A.TRANS_DT &gt;=last_day(add_months(#TRANS_DT:DATE#,-1)) + 1 AND A.TRANS_DT &lt;= #TRANS_DT:DATE#
+ </mapped-statement>
+
+    <mapped-statement name="updateAcctStatusForSalaryRecovery"  inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS SET  ACCT_STATUS = #ACCOUNT_STATUS:VARCHAR#,
+        ACCT_CLOSE_DT = #AUTHORIZEDT:DATE#  WHERE ACCT_NUM = #ACCOUNTNO:VARCHAR# AND NVL(CLEAR_BALANCE,0) = 0	
+    </mapped-statement>
+ <mapped-statement name="getThriftBenRecvoeryAmount" result-class="java.util.HashMap">
+     select NVL(Get_recovery_TDBD(#DEPOSIT_NO:VARCHAR#,#BEHAVESLIKE:VARCHAR#,#ASONDT:DATE#),0) AS RECAMOUNT   from dual
+ </mapped-statement>
+ 
+ <mapped-statement name="getLoansProductForSalaryRecovery" result-class = "java.util.LinkedHashMap">
+     SELECT lp.prod_id, lp.prod_desc
+     FROM loans_product lp,LOANS_PROD_ACPARAM lpa
+     WHERE LP.PROD_ID = LPA.PROD_ID
+     AND lp.authorize_remark IS NOT NULL
+     AND lp.authorize_remark = 'OTHER_LOAN'
+     and LPA.SALARY_RECOVERY = 'Y'  
+ </mapped-statement>
+ 
+ <mapped-statement name = "insertSalaryRecoveryOmitProdDetails" result-class = "java.util.LinkedHashMap">
+     INSERT INTO SALARY_RECO_OMIT_PRINC_DETAILS(PROD_ID,OMIT_DATE,OMIT_PRINCIPLE,OMIT_INTEREST)VALUES(
+     #PROD_ID:VARCHAR#,#OMIT_DATE:DATE#,#OMIT_PRINCIPLE:VARCHAR#,#OMIT_INTEREST:VARCHAR#)
+ </mapped-statement>
+ 
+ <mapped-statement name="getClosedAccounts" result-class="java.util.HashMap" >     
+     SELECT * FROM ACT_CLOSING WHERE ACT_NUM=#ACT_NUM# AND STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')
+ </mapped-statement>
+
+</sql-map>

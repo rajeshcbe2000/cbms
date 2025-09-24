@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : GroupScreen.xml
+    Created on : March 2, 2004, 4:30 PM
+    Author     : Pinky
+    Description:
+        Purpose of the document follows.
+-->
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BranchScreenMasterTOMap">
+
+	<!-- Use GroupMaster object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBranchGroupMaster" inline-parameters="true">
+        INSERT INTO GROUP_MASTER
+        (GROUP_ID, GROUP_NAME, STATUS, BRANCH_CODE, BRANCH_GROUP, CREATED_BY, CREATED_DT, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #groupId:VARCHAR#, #groupName:VARCHAR#, #status:VARCHAR#, #branchCode:VARCHAR#, #branchGroup:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use GroupMaster object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBranchGroupMaster" inline-parameters="true">
+        UPDATE GROUP_MASTER SET 		
+        GROUP_NAME = #groupName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,		
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_BY_1 = null
+        where GROUP_ID = #groupId#
+    </mapped-statement>
+
+	<!-- Use GroupMaster object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchGroupMaster" inline-parameters="true">
+        update GROUP_MASTER set 
+        STATUS='DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:VARCHAR#
+        WHERE GROUP_ID = #groupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to GroupMaster object (JavaBean) properties -->
+    <result-map name="getGroupMasterResult" class="com.see.truetransact.transferobject.sysadmin.branchgroupscr.BranchGroupMasterTO">
+        <property name="groupId" column="GROUP_ID"/>
+        <property name="groupName" column="GROUP_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="branchGroup" column="BRANCH_GROUP"/>
+    </result-map>
+        
+    <mapped-statement name="getBranchSelectGroupMaster" result-map="getGroupMasterResult" >
+        SELECT * FROM GROUP_MASTER 
+        WHERE GROUP_ID = #value:VARCHAR# AND (STATUS!='DELETED' or STATUS is null)
+    </mapped-statement>
+        
+    <result-map name="selectGroupMasterResult" class="java.util.LinkedHashMap">
+        <property name="GROUP_ID" column="GROUP_ID"/>
+        <property name="GROUP_Name" column="GROUP_NAME"/>
+    </result-map>
+   <dynamic-mapped-statement name="selectBranchGroupMaster" result-map="selectGroupMasterResult" >
+        SELECT GROUP_ID,GROUP_NAME FROM GROUP_MASTER 
+        where (STATUS!='DELETED' or STATUS is null) 
+        and Branch_Group = 'Y'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+	<!-- Use GroupScreenTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             
+    <mapped-statement name="insertBranchGroupScreenTO" inline-parameters="true">
+        INSERT INTO GROUP_SCREENS
+        (GROUP_ID, SCREEN_ID, STATUS
+        ) VALUES (
+        #groupId:VARCHAR#, #screenId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="countGroupExists" result-class = "java.lang.Integer">
+        SELECT COUNT(*) FROM GROUP_SCREENS WHERE GROUP_ID=#groupId:VARCHAR# AND SCREEN_ID =#screenId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateBranchGroupScreenTO" inline-parameters="true">
+        UPDATE GROUP_SCREENS SET GROUP_ID=#groupId:VARCHAR#, SCREEN_ID =#screenId:VARCHAR#,
+        STATUS = #status:VARCHAR# WHERE GROUP_ID=#groupId:VARCHAR# AND SCREEN_ID =#screenId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateBranchStatusGroupScreenTO" inline-parameters="true">
+        UPDATE GROUP_SCREENS SET                 
+        STATUS = 'DELETED' where GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use GroupScreenTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBranchGroupScreenTO" inline-parameters="true">
+        DELETE FROM GROUP_SCREENS WHERE GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getGroupScreenDataResult" class="java.util.LinkedHashMap">
+        <property name="screenId" column="SCREEN_ID"/>
+        <property name="screenClass" column="SCREEN_CLASS"/>
+        <property name="screenName" column="SCREEN_NAME"/>
+        <property name="screenSlNo" column="SCREEN_SL_NO"/>
+        <property name="moduleId" column="MODULE_ID"/>
+        <property name="moduleSlNo" column="MODULE_SL_NO"/>
+        <property name="moduleName" column="MODULE_NAME"/>
+    </result-map>
+    <mapped-statement name="getBranchGroupScreenData" result-map="getGroupScreenDataResult" >
+        SELECT screen_master.SCREEN_ID,SCREEN_NAME,screen_class,
+        screen_master.sl_no as SCREEN_SL_NO,screen_master.module_id,
+        module_name,module_master.sl_no as MODULE_SL_NO 
+        FROM GROUP_SCREENS,SCREEN_MASTER,module_master WHERE GROUP_ID = #value:VARCHAR#                 
+        AND GROUP_SCREENS.SCREEN_ID = SCREEN_MASTER.SCREEN_ID
+        and screen_master.module_id=module_master.module_id and
+        (group_screens.status!='DELETED' or group_screens.status is null) and 
+        (screen_master.status!='DELETED' or screen_master.status is null)
+        and (module_master.status!='DELETED'or module_master.status is null)
+    </mapped-statement>
+        
+    <result-map name="getRemainingScreenMasterTOResult" class="java.util.LinkedHashMap">
+        <property name="screenId" column="SCREEN_ID"/>		
+        <property name="screenName" column="SCREEN_NAME"/>
+        <property name="moduleId" column="MODULE_ID"/>		
+        <property name="screenClass" column="SCREEN_CLASS"/>
+        <property name="screenSlNo" column="SCREEN_SL_NO"/>
+        <property name="moduleSlNo" column="MODULE_SL_NO"/>
+        <property name="moduleName" column="MODULE_NAME"/>
+    </result-map>
+    <mapped-statement name="getBranchRemainingScreenMasterTO" result-map="getRemainingScreenMasterTOResult" >
+        select distinct SCREEN_ID,SCREEN_NAME,screen_master. MODULE_ID,
+        SCREEN_CLASS, screen_master.SL_NO as SCREEN_SL_NO,module_master.sl_no as MODULE_SL_NO,module_name 
+        from SCREEN_MASTER,module_master WHERE  screen_master.module_id=module_master.module_id  and SCREEN_ID NOT IN
+        (SELECT SCREEN_ID FROM GROUP_SCREENS WHERE GROUP_ID = #value:VARCHAR#) and                	 
+        (screen_master.status!='DELETED' or screen_master.status is null)
+        and (module_master.status!='DELETED'or module_master.status is null)
+    </mapped-statement>
+        
+    <result-map name="getScreenModuleTOResult" class="java.util.LinkedHashMap">
+        <property name="screenId" column="SCREEN_ID"/>		
+        <property name="screenName" column="SCREEN_NAME"/>
+        <property name="moduleId" column="MODULE_ID"/>		
+        <property name="screenClass" column="SCREEN_CLASS"/>
+        <property name="screenSlNo" column="SCREEN_SL_NO"/>
+        <property name="moduleSlNo" column="MODULE_SL_NO"/>
+        <property name="moduleName" column="MODULE_NAME"/>
+    </result-map>
+        
+    <dynamic-mapped-statement name="getBranchScreenModuleTO" result-map="getScreenModuleTOResult" >
+        select distinct SCREEN_ID, SCREEN_NAME,screen_master. MODULE_ID,
+        SCREEN_CLASS, screen_master.SL_NO as SCREEN_SL_NO,module_master.sl_no as MODULE_SL_NO,module_name 
+        from SCREEN_MASTER,module_master where 
+        screen_master.module_id=module_master.module_id and
+        (screen_master.status!='DELETED' or screen_master.status is null)
+        and (module_master.status!='DELETED' or screen_master.status is null)
+        <dynamic>
+            <isNotNull prepend=" AND " property="BRANCH_ID">
+                SCREEN_ID in (SELECT SCREEN_ID FROM GROUP_MASTER GM, GROUP_SCREENS GS
+                WHERE GM.GROUP_ID = GS.GROUP_ID AND 
+                GM.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND 
+                GM.BRANCH_GROUP = 'Y')
+            </isNotNull>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+          <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+    <mapped-statement name="getBranchGroupMasterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT GROUP_ID,GROUP_NAME,AUTHORIZE_STATUS_1, AUTHORIZE_STATUS_2, AUTHORIZE_BY_1, AUTHORIZE_BY_2, STATUS_BY FROM GROUP_MASTER 
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL) AND (AUTHORIZE_BY_1 IS NULL OR AUTHORIZE_BY_1 != #USER_ID:VARCHAR#)
+          <!--AND (AUTHORIZE_BY_2 IS NULL  OR AUTHORIZE_BY_2 != #USER_ID#)--> AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_GROUP = 'Y'
+    </mapped-statement>
+
+    <mapped-statement name="authorizeBranchGroupMaster" result-class="java.util.HashMap">
+        UPDATE GROUP_MASTER  SET 
+        AUTHORIZE_STATUS_1 = DECODE (AUTHORIZE_STATUS_1, NULL, DECODE(AUTHORIZE_STATUS_2, NULL, #STATUS:VARCHAR#), AUTHORIZE_STATUS_1),
+               <!-- AUTHORIZE_STATUS_2 = DECODE (AUTHORIZE_STATUS_2, NULL, DECODE(AUTHORIZE_STATUS_1, NULL, NULL, #STATUS#), AUTHORIZE_STATUS_2),-->
+        AUTHORIZE_BY_1 = DECODE (AUTHORIZE_BY_1, NULL, DECODE(AUTHORIZE_BY_2, NULL, #USER_ID:VARCHAR#), AUTHORIZE_BY_1),
+               <!-- AUTHORIZE_BY_2 = DECODE (AUTHORIZE_BY_2, NULL, DECODE(AUTHORIZE_BY_1, NULL, NULL, #USER_ID#), AUTHORIZE_BY_2),-->
+        AUTHORIZE_DT_1 = DECODE (AUTHORIZE_DT_1, NULL, DECODE(AUTHORIZE_DT_2, NULL, #AUTHORIZEDT:DATE#), AUTHORIZE_DT_1),
+        AUTHORIZE_DT_2 = DECODE (AUTHORIZE_DT_2, NULL, DECODE(AUTHORIZE_DT_1, NULL, NULL, #AUTHORIZEDT:DATE#), AUTHORIZE_DT_2)
+        WHERE GROUP_ID = #GROUP_ID:VARCHAR#  AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+    </mapped-statement>
+<!-- =================================================================================== -->
+</sql-map>

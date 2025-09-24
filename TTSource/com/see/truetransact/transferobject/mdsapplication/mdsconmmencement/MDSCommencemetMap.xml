@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MDSCommencemetMap">
+
+    <!-- Use ExternalWireTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+
+    <dynamic-mapped-statement name = "getSelectEachSchemeDetails" result-class = "java.util.LinkedHashMap">
+        <!--SELECT MSD.SCHEME_NAME, PROD_DESC, SCHEME_DESC, PROD_ID,SCHEME_START_DT,SCHEME_END_DT,NO_OF_DIVISIONS,INSTALLMENT_AMOUNT -->
+        <!-- SELECT PROD_DESC, SCHEME_DESC, MSD.SCHEME_NAME, PROD_ID
+        FROM MDS_SCHEME_DETAILS MSD
+        WHERE TOTAL_NO_OF_MEMBERS = (SELECT COUNT(*) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED' -->
+
+        SELECT MSD.SCHEME_NAME,MP_MDS_CODE AS SCHEME_DESC,PROD_ID,PROD_DESC,MULTIPLE_MEMBER,MSD.SCHEME_DESC as SCHEME_DETAILS FROM MDS_SCHEME_DETAILS MSD  WHERE 
+        TOTAL_AMOUNT_SCHEME = (SELECT SUM(INST_AMT) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND          
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED'
+     <!--   <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEME_NAMES">
+                    SCHEME_NAME= #SCHEME_NAMES#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> -->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    MSD.BRANCH_CODE = #BRANCH_CODE#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(MSD.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DESC">
+                    UPPER(MP_MDS_CODE) LIKE UPPER('%$SCHEME_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="MULTIPLE_MEMBER">
+                    UPPER(MULTIPLE_MEMBER) LIKE UPPER('%$MULTIPLE_MEMBER$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DETAILS">
+                    UPPER(MSD.SCHEME_DESC) LIKE UPPER('%$SCHEME_DETAILS$%')
+                </isNotNull>
+              </isParameterPresent>
+        </dynamic> 
+        ORDER BY MSD.SCHEME_NAME
+    </dynamic-mapped-statement>
+     <dynamic-mapped-statement name = "getSelectEachSchemeDetailsList" result-class = "java.util.LinkedHashMap">
+        <!--SELECT MSD.SCHEME_NAME, PROD_DESC, SCHEME_DESC, PROD_ID,SCHEME_START_DT,SCHEME_END_DT,NO_OF_DIVISIONS,INSTALLMENT_AMOUNT -->
+        <!-- SELECT PROD_DESC, SCHEME_DESC, MSD.SCHEME_NAME, PROD_ID
+        FROM MDS_SCHEME_DETAILS MSD
+        WHERE TOTAL_NO_OF_MEMBERS = (SELECT COUNT(*) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED' -->
+
+        SELECT MSD.SCHEME_NAME,MP_MDS_CODE AS SCHEME_DESC,PROD_ID,PROD_DESC,MULTIPLE_MEMBER,MSD.SCHEME_DESC as SCHEME_DETAILS FROM MDS_SCHEME_DETAILS MSD  WHERE 
+        TOTAL_AMOUNT_SCHEME = (SELECT SUM(INST_AMT) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND          
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEME_NAME">
+                    SCHEME_NAME= #SCHEME_NAME#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    MSD.BRANCH_CODE = #BRANCH_CODE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY MSD.SCHEME_NAME
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name = "getSelectEachSchemeDetailsForReciept" result-class = "java.util.LinkedHashMap">
+        <!--SELECT MSD.SCHEME_NAME, PROD_DESC, SCHEME_DESC, PROD_ID,SCHEME_START_DT,SCHEME_END_DT,NO_OF_DIVISIONS,INSTALLMENT_AMOUNT -->
+        <!-- SELECT PROD_DESC, SCHEME_DESC, MSD.SCHEME_NAME, PROD_ID
+        FROM MDS_SCHEME_DETAILS MSD
+        WHERE TOTAL_NO_OF_MEMBERS = (SELECT COUNT(*) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED' -->
+
+        SELECT MP_MDS_CODE AS SCHEME_DESC,MSD.SCHEME_NAME,PROD_ID,PROD_DESC,MULTIPLE_MEMBER,MSD.SCHEME_DESC as SCHEME_DETAILS,PREDEFINITION_INSTALLMENT FROM MDS_SCHEME_DETAILS MSD  WHERE 
+        TOTAL_AMOUNT_SCHEME = (SELECT SUM(INST_AMT) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME  
+        AND COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED'
+        and msd.scheme_end_dt + MSD.SCHEME_GRACE_PERIOD &gt;=#CURR_DATE#
+        AND msd.branch_code =#BRANCH_CODE#
+        <dynamic>
+            <!--<isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEME_NAME">
+                    SCHEME_NAME= #SCHEME_NAME#
+                </isNotNull>
+            </isParameterPresent>-->
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(MSD.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DESC">
+                    UPPER(MP_MDS_CODE) LIKE UPPER('%$SCHEME_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="MULTIPLE_MEMBER">
+                    UPPER(MULTIPLE_MEMBER) LIKE UPPER('%$MULTIPLE_MEMBER$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DETAILS">
+                    UPPER(MSD.SCHEME_DESC) LIKE UPPER('%$SCHEME_DETAILS$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="PREDEFINITION_INSTALLMENT">
+                    UPPER(PREDEFINITION_INSTALLMENT) LIKE UPPER('%$PREDEFINITION_INSTALLMENT$%')
+                </isNotNull>
+              </isParameterPresent>
+        </dynamic> 
+        ORDER BY MSD.SCHEME_NAME
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name = "getSelectEachSchemeDetailsNew" result-class = "java.util.HashMap">
+		select c.cust_id,SA.EMP_REFNO_NEW,MSD.SCHEME_DESC, C.FNAME,MA.SCHEME_NAME, MA.CHITTAL_NO  from MDS_APPLICATION ma
+		join MDS_MASTER_MAINTENANCE  mm on MA.CHITTAL_NO = MM.CHITTAL_NO
+		JOIN MDS_SCHEME_DETAILS MSD ON MSD.SCHEME_NAME = MA.SCHEME_NAME
+		join share_acct sa on SA.SHARE_ACCT_NO = MM.MEMBER_NO
+		join customer  c on C.CUST_ID = SA.CUST_ID
+		left join MDS_PRIZED_MONEY_DETAILS mpd on MPD.CHITTAL_NO = MM.CHITTAL_NO
+		where MPD.CHITTAL_NO IS NULL and C.CUST_ID = #CUSTOMER_ID# 
+                 <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="cust_id">
+                    UPPER(c.cust_id) LIKE UPPER('%$cust_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_REFNO_NEW">
+                    UPPER(SA.EMP_REFNO_NEW) LIKE UPPER('%$EMP_REFNO_NEW$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DESC">
+                    UPPER(MSD.SCHEME_DESC) LIKE UPPER('%$SCHEME_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="FNAME">
+                    UPPER(C.FNAME) LIKE UPPER('%$FNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(MA.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CHITTAL_NO">
+                    UPPER(MA.CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "updateCommencementStatus" result-class = "java.util.HashMap">
+        UPDATE MDS_APPLICATION SET COMMENCEMENT_STATUS = #COMMENCEMENT_STATUS#,COMMENCEMENT_DATE = #COMMENCEMENT_DATE:TIMESTAMP#
+        WHERE TRANS_ID = #TRANS_ID# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+
+      <mapped-statement name = "getSelectFromDate" result-class = "java.util.HashMap">
+        SELECT scheme_start_dt from  MDS_SCHEME_DETAILS where  scheme_name= #SCHEME_NAME# and scheme_start_dt &lt; SYS_DATE()
+    </mapped-statement>
+    
+    <mapped-statement name = "updateCommencementStatusNull" result-class = "java.util.HashMap">
+        UPDATE MDS_APPLICATION SET COMMENCEMENT_STATUS = NULL,COMMENCEMENT_DATE = NULL,COMMENCEMENT_TRANS_ID = NULL
+        WHERE TRANS_ID = #TRANS_ID# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectCommencementList" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT MDSA.SCHEME_NAME,COMMENCEMENT_TRANS_ID,MS.PREDEFINITION_INSTALLMENT,MS.DISCOUNT_FIRST_INSTALLMENT,MS.FIRST_DISCOUNT_AMT FROM MDS_APPLICATION MDSA ,MDS_SCHEME_DETAILS ms
+        WHERE (MDSA.STATUS != 'DELETED' OR MDSA.STATUS IS NULL)
+        AND MS.SCHEME_NAME = MDSA.SCHEME_NAME AND
+        MDSA.STATUS_BY != #USER_ID# AND MDSA.BRANCH_CODE = #SELECTED_BRANCH_ID# AND 
+        AUTHORIZE_STATUS= 'AUTHORIZED' AND COMMENCEMENT_AUTHORIZE_STATUS IS NULL AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL 
+        AND MS.GROUP_NO IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = MDSA.STATUS_BY)
+    </mapped-statement>
+    
+    <mapped-statement name = "updateCommencementTransId" result-class = "java.util.HashMap">
+        UPDATE MDS_APPLICATION SET COMMENCEMENT_TRANS_ID = #TRANS_ID# WHERE SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+   <dynamic-mapped-statement name = "getSelectCommencementEditList" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT SCHEME_NAME,COMMENCEMENT_TRANS_ID FROM MDS_APPLICATION MDSA WHERE MDSA.STATUS != 'DELETED'
+        AND COMMENCEMENT_STATUS = 'Y' AND COMMENCEMENT_DATE IS NOT NULL AND BRANCH_CODE = #SELECTED_BRANCH_ID# AND 
+        AUTHORIZE_STATUS= 'AUTHORIZED' AND COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS IS NULL
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="COMMENCEMENT_TRANS_ID">
+                    UPPER(COMMENCEMENT_TRANS_ID) LIKE UPPER('%$COMMENCEMENT_TRANS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "updateMDSCommencementAuthStatus" result-class = "java.util.HashMap">
+        UPDATE MDS_APPLICATION SET COMMENCEMENT_AUTHORIZE_STATUS = #COMMENCEMENT_AUTHORIZE_STATUS#,INST_COUNT = #INST_COUNT:NUMBER#,
+        LAST_TRANS_DT = #LAST_TRANS_DT# WHERE TRANS_ID = #TRANS_ID# AND SCHEME_NAME = #SCHEME_NAME# AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS= 'AUTHORIZED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name = "getSelectEachSchemeDetailsForCommence" result-class = "java.util.LinkedHashMap">
+        <!--SELECT SCHEME_NAME,PROD_ID,SCHEME_START_DT,SCHEME_END_DT,INSTALLMENT_AMOUNT,NO_OF_DIVISIONS FROM MDS_SCHEME_DETAILS MSD WHERE           
+        STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND TOTAL_NO_OF_MEMBERS = 
+        (SELECT COUNT(*) FROM MDS_APPLICATION MA WHERE MSD.SCHEME_NAME=MA.SCHEME_NAME AND STATUS!='DELETED' AND
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS='AUTHORIZED')AND COMMENCEMENT_AUTHORIZE_STATUS IS NULL AND COMMENCEMENT_TRANS_ID IS NULL ) -->
+
+        SELECT SCHEME_NAME,PROD_ID,SCHEME_START_DT,SCHEME_END_DT,INSTALLMENT_AMOUNT,NO_OF_DIVISIONS FROM MDS_SCHEME_DETAILS MSD WHERE                    
+        STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND TOTAL_AMOUNT_SCHEME =          
+        (SELECT SUM(INST_AMT) FROM MDS_APPLICATION MA WHERE MSD.SCHEME_NAME=MA.SCHEME_NAME AND STATUS!='DELETED' AND         
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS='AUTHORIZED') AND 
+        COMMENCEMENT_AUTHORIZE_STATUS IS NULL AND COMMENCEMENT_TRANS_ID IS NULL)
+        and MSD.BRANCH_CODE = #BRANCH_CODE# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEME_NAMES">
+                    SCHEME_NAME= #SCHEME_NAMES#
+                </isNotNull>
+            </isParameterPresent>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_START_DT">
+                    UPPER(SCHEME_START_DT) LIKE UPPER('%$SCHEME_START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_END_DT">
+                    UPPER(SCHEME_END_DT) LIKE UPPER('%$SCHEME_END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="INSTALLMENT_AMOUNT">
+                    UPPER(INSTALLMENT_AMOUNT) LIKE UPPER('%$INSTALLMENT_AMOUNT$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="NO_OF_DIVISIONS">
+                    UPPER(NO_OF_DIVISIONS) LIKE UPPER('%$NO_OF_DIVISIONS$%')
+                </isNotNull>
+              </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>
+
+    <mapped-statement name = "updateMDSTransDetailsEachRec" result-class = "java.util.LinkedHashMap">
+        INSERT INTO MDS_TRANS_DETAILS(SCHEME_NAME,CHITTAL_NO,NO_OF_INST,PENAL_AMT,BONUS_AMT,DISCOUNT_AMT,MDS_INTEREST,NET_AMT,STATUS,STATUS_DT,
+        STATUS_BY,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,TRANS_DT,NET_TRANS_ID,INST_AMT,INST_COUNT,SUB_NO,NOTICE_AMT,ARBITRATION_AMT,NARRATION
+        ,SERVICE_TAX_AMT,FORFEITED_AMT,BANK_ADV_AMTCR)VALUES(
+        #SCHEME_NAME#,#CHITTAL_NO#,cast(#NO_OF_INST# as numeric),#PENAL_AMT#,#BONUS_AMT#,
+        #DISCOUNT_AMT#,#MDS_INTEREST#,#NET_AMT#,#STATUS#,#STATUS_DT#,#STATUS_BY#,
+        #AUTHORIZE_STATUS#,#AUTHORIZE_BY#,#AUTHORIZE_DT#,#TRANS_DT#,#NET_TRANS_ID#,#INST_AMT#,
+        #INST_COUNT#,cast(#SUB_NO# as numeric),#NOTICE_AMT#,#ARBITRATION_AMT#,#NARRATION#,
+        #SERVICE_TAX_AMT#,#FORFEITED_AMT#,#BANK_ADV_AMTCR#)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name = "getSelectSchemeDetailsClosure" result-class = "java.util.HashMap">
+        SELECT PROD_ID,SCHEME_NAME,SCHEME_START_DT AS START_DT,SCHEME_END_DT AS END_DT,
+        INSTALLMENT_AMOUNT AS INST_AMOUNT FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND STATUS!='CLOSED' AND SCHEME_NAME NOT IN 
+        (SELECT SCHEME_NAME FROM MDS_CLOSURE_DETAILS WHERE STATUS IN('CREATED','MODIFIED') AND (AUTHORIZED_STATUS ='AUTHORIZED' 
+        OR AUTHORIZED_STATUS IS NULL)) 
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="START_DT">
+                    UPPER(SCHEME_START_DT) LIKE UPPER('%$START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="END_DT">
+                    UPPER(SCHEME_END_DT) LIKE UPPER('%$END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INST_AMOUNT">
+                    UPPER(INSTALLMENT_AMOUNT) LIKE UPPER('%$INST_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SCHEME_NAME          
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getCountOfPrizedMemberPerScheme" result-class = "java.util.HashMap">
+        SELECT COUNT(*) AS COUNT,TOTAL_NO_OF_MEMBERS FROM MDS_PRIZED_MONEY_DETAILS MPMD,MDS_SCHEME_DETAILS MSD
+        WHERE MPMD.STATUS!='DELETED' AND MPMD.AUTHORIZED_STATUS='AUTHORIZED' AND  
+        MPMD.SCHEME_NAME=MSD.SCHEME_NAME AND MSD.SCHEME_NAME =#SCHEME_NAME# GROUP BY TOTAL_NO_OF_MEMBERS 
+    </mapped-statement>
+    
+    <mapped-statement name = "insertMDSClosureDetails" result-class = "java.util.HashMap">
+        INSERT INTO MDS_CLOSURE_DETAILS(SCHEME_NAME,SCHEME_START_DT,SCHEME_END_DT,SCHEME_CLOSE_DT,INSTALLMENT_AMOUNT,STATUS,STATUS_DT,STATUS_BY
+        )VALUES(
+        #SCHEME_NAME#,#SCHEME_START_DT#,#SCHEME_END_DT#,#SCHEME_CLOSE_DT#,#INSTALLMENT_AMOUNT:NUMERIC#,
+        #STATUS#,#STATUS_DT#,#STATUS_BY#)   
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name = "getAuthMDSClosureDetails" result-class = "java.util.HashMap">
+        SELECT SCHEME_NAME,SCHEME_START_DT AS START_DT,SCHEME_END_DT AS END_DT,INSTALLMENT_AMOUNT AS INST_AMOUNT,STATUS FROM 
+        MDS_CLOSURE_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL 
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="START_DT">
+                    UPPER(SCHEME_START_DT) LIKE UPPER('%$START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="END_DT">
+                    UPPER(SCHEME_END_DT) LIKE UPPER('%$END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INST_AMOUNT">
+                    UPPER(INSTALLMENT_AMOUNT) LIKE UPPER('%$INST_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SCHEME_NAME 
+    </dynamic-mapped-statement>
+    
+   <dynamic-mapped-statement name = "getEnquiryMDSClosureDetails" result-class = "java.util.HashMap">
+        SELECT SCHEME_NAME,SCHEME_START_DT AS START_DT,SCHEME_END_DT AS END_DT,INSTALLMENT_AMOUNT AS INST_AMOUNT,STATUS FROM 
+        MDS_CLOSURE_DETAILS WHERE STATUS!='DELETED' AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED')
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="START_DT">
+                    UPPER(SCHEME_START_DT) LIKE UPPER('%$START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="END_DT">
+                    UPPER(SCHEME_END_DT) LIKE UPPER('%$END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INST_AMOUNT">
+                    UPPER(INSTALLMENT_AMOUNT) LIKE UPPER('%$INST_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SCHEME_NAME
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getTotalAmountPerScheme" result-class = "java.util.HashMap">
+        SELECT NO_OF_INSTALLMENTS*TOTAL_AMOUNT_SCHEME AS TOTAL_SCHEME_AMOUNT FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "getTotalAmountPerSchemeDivision" result-class = "java.util.HashMap">
+         SELECT SUM(nvl(TOT,0)) as TOTAL_SCHEME_AMOUNT FROM(
+        SELECT   nvl(MSD.TOTAL_AMOUNT_DIVISION,0)
+       * (SELECT COUNT (MM.CHITTAL_NO)
+            FROM MDS_MASTER_MAINTENANCE MM, MDS_PRIZED_MONEY_DETAILS MP
+           WHERE MM.CHITTAL_NO = MP.CHITTAL_NO            
+            AND MM.AUTHORIZED_STATUS = MP.AUTHORIZED_STATUS
+             AND MP.STATUS != 'DELETED'
+             AND MP.AUTHORIZED_STATUS = 'AUTHORIZED'
+             AND (MM.DEFAULTER = 'N' OR MM.DEFAULTER IS NULL)
+            AND (MP.USER_DEFINED_Y_N = 'N' OR MP.USER_DEFINED_Y_N IS NULL)
+             AND MP.SCHEME_NAME = #SCHEME_NAME#) AS TOT
+          FROM MDS_SCHEME_DETAILS MSD
+         WHERE MSD.STATUS != 'DELETED'
+           AND MSD.AUTHORIZED_STATUS = 'AUTHORIZED'
+           AND MSD.SCHEME_NAME = #SCHEME_NAME#     
+           union all  
+           SELECT   nvl(MSD.TOTAL_AMOUNT_DIVISION,0)
+       * (SELECT COUNT (MM.CHITTAL_NO)
+            FROM MDS_MASTER_MAINTENANCE MM, MDS_PRIZED_MONEY_DETAILS MP
+           WHERE MM.CHITTAL_NO = MP.CHITTAL_NO             
+             AND MM.AUTHORIZED_STATUS = MP.AUTHORIZED_STATUS
+             AND MP.STATUS != 'DELETED'
+             AND MP.AUTHORIZED_STATUS = 'AUTHORIZED'
+             AND (MM.DEFAULTER = 'Y')
+             AND (MP.USER_DEFINED_Y_N = 'N' OR MP.USER_DEFINED_Y_N IS NULL)
+             AND MP.SCHEME_NAME = #SCHEME_NAME#) AS TOTAL_SCHEME_AMOUNT
+              FROM MDS_SCHEME_DETAILS MSD
+             WHERE MSD.STATUS != 'DELETED'
+               AND MSD.AUTHORIZED_STATUS = 'AUTHORIZED'
+               AND MSD.SCHEME_NAME =#SCHEME_NAME# 
+               union all       
+            SELECT SUM(nvl(MP.PRIZED_AMOUNT,0)+nvl(MP.TOTAL_BONUS_AMOUNT,0)+nvl(MP.COMMISION_AMOUNT,0)) AS TOTAL_SCHEME_AMOUNT
+               FROM  MDS_PRIZED_MONEY_DETAILS MP
+               WHERE MP.USER_DEFINED_Y_N= 'Y'
+               AND MP.CHITTAL_NO IN (SELECT MM.CHITTAL_NO
+            FROM MDS_MASTER_MAINTENANCE MM, MDS_PRIZED_MONEY_DETAILS MP
+           WHERE MM.CHITTAL_NO = MP.CHITTAL_NO
+             AND MM.AUTHORIZED_STATUS = MP.AUTHORIZED_STATUS
+             AND MP.STATUS != 'DELETED'
+             AND MP.AUTHORIZED_STATUS = 'AUTHORIZED'
+             AND (MM.DEFAULTER = 'N' OR MM.DEFAULTER IS NULL)
+             AND (MP.USER_DEFINED_Y_N = 'Y')
+             AND MP.SCHEME_NAME =#SCHEME_NAME#))a
+    </mapped-statement>
+    
+    <mapped-statement name = "getTotalAmountPerMember" result-class = "java.util.HashMap">
+        SELECT NO_OF_INSTALLMENTS*INSTALLMENT_AMOUNT AS TOTAL__AMOUNT FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "getTotalReceivedAmount" result-class = "java.util.HashMap">
+        <!--SELECT SUM(SUM(BONUS_AMT)+SUM(NET_AMT)-SUM(PENAL_AMT)) AS TOTAL_RECEIVED FROM MDS_TRANS_DETAILS WHERE STATUS!='DELETED' 
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME:VARCHAR# GROUP BY BONUS_AMT,NET_AMT -->
+        
+        SELECT SUM(SUM(nvl(BONUS_AMT,0))+SUM(nvl(NET_AMT,0))+SUM(nvl(DISCOUNT_AMT,0))-SUM(nvl(PENAL_AMT,0))) AS TOTAL_RECEIVED FROM MDS_TRANS_DETAILS WHERE STATUS!='DELETED' 
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME:VARCHAR# GROUP BY BONUS_AMT,NET_AMT 
+        
+    </mapped-statement>
+    <mapped-statement name = "getTotalReceivedAmountNonDefaulter" result-class = "java.util.HashMap">
+        <!--SELECT   SUM (SUM (BONUS_AMT) + SUM (NET_AMT) - SUM (PENAL_AMT)
+        ) AS TOTAL_RECEIVED
+        FROM MDS_TRANS_DETAILS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND SCHEME_NAME = #SCHEME_NAME#
+        AND CHITTAL_NO NOT IN(SELECT CHITTAL_NO FROM MDS_MASTER_MAINTENANCE WHERE DEFAULTER='Y' AND SCHEME_NAME=#SCHEME_NAME#)
+        GROUP BY BONUS_AMT, NET_AMT-->
+        
+        SELECT   SUM (nvl(BONUS_AMT,0)) + SUM (nvl(NET_AMT,0)) - SUM (nvl(PENAL_AMT,0))
+        AS TOTAL_RECEIVED
+        FROM MDS_TRANS_DETAILS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND SCHEME_NAME = #SCHEME_NAME#
+        AND CHITTAL_NO NOT IN(SELECT CHITTAL_NO FROM MDS_MASTER_MAINTENANCE WHERE DEFAULTER='Y' AND SCHEME_NAME=#SCHEME_NAME#)
+     
+        
+    </mapped-statement>
+    <mapped-statement name = "getTotalReceivedAmountDefaulter" result-class = "java.util.HashMap">
+        SELECT SUM(nvl(NET_AMOUNT_PAYABLE,0)) AS DEF_AMOUNT FROM MDS_PRIZED_MONEY_DETAILS 
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND SCHEME_NAME = #SCHEME_NAME#
+        AND CHITTAL_NO IN(SELECT CHITTAL_NO FROM MDS_MASTER_MAINTENANCE WHERE DEFAULTER='Y' AND SCHEME_NAME=#SCHEME_NAME#)
+    </mapped-statement>
+    
+    <mapped-statement name = "getTotalPaidAmount" result-class = "java.util.HashMap">
+        SELECT SUM(SUM(BONUS_AMOUNT)+SUM(PRIZED_AMOUNT)) AS TOTAL_PAID FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED'
+        AND AUTHORIZED_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME# GROUP BY BONUS_AMOUNT,NET_AMOUNT 
+    </mapped-statement>
+    <mapped-statement name = "getTotalPaidNDefAmount" result-class = "java.util.HashMap">
+        <!--SELECT   SUM (SUM (BONUS_AMOUNT) + SUM (PRIZED_AMOUNT)+ sum(COMMISION_AMOUNT))  AS TOTAL_PAID
+        FROM MDS_MONEY_PAYMENT_DETAILS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND SCHEME_NAME = #SCHEME_NAME#
+        AND CHITTAL_NO NOT IN(SELECT CHITTAL_NO FROM MDS_MASTER_MAINTENANCE WHERE DEFAULTER='Y' AND SCHEME_NAME=#SCHEME_NAME#)
+        GROUP BY BONUS_AMOUNT, NET_AMOUNT,COMMISION_AMOUNT-->
+        
+        SELECT   SUM (nvl(BONUS_AMOUNT,0)) + SUM (nvl(PRIZED_AMOUNT,0))+ sum(nvl(COMMISION_AMOUNT,0)) AS TOTAL_PAID
+        FROM MDS_MONEY_PAYMENT_DETAILS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND SCHEME_NAME = #SCHEME_NAME#
+        AND CHITTAL_NO NOT IN(SELECT CHITTAL_NO FROM MDS_MASTER_MAINTENANCE WHERE DEFAULTER='Y' AND SCHEME_NAME=#SCHEME_NAME#)           
+        
+    </mapped-statement>
+    <mapped-statement name = "getTotalPaidDEfAmount" result-class = "java.util.HashMap">
+        SELECT   SUM(nvl(COMMISION_AMOUNT,0)+nvl(PRIZED_AMOUNT,0)) AS TOTAL_PAID_DEF
+        FROM MDS_MONEY_PAYMENT_DETAILS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND SCHEME_NAME = #SCHEME_NAME#
+        AND CHITTAL_NO IN(SELECT CHITTAL_NO FROM MDS_MASTER_MAINTENANCE WHERE DEFAULTER='Y' AND SCHEME_NAME=#SCHEME_NAME#) 
+    </mapped-statement>
+    <mapped-statement name = "getTotalBonusAmountAvailable" result-class = "java.util.HashMap">
+        SELECT SUM(nvl(BONUS_AMOUNT,0)) AS BONUS_AVAILABLE FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED'
+        AND AUTHORIZED_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "getTotalBonusAmountPaid" result-class = "java.util.HashMap">
+        SELECT SUM(nvl(BONUS_AMT,0)) AS BONUS_PAID FROM MDS_TRANS_DETAILS WHERE STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "getTotalBonusAmount" result-class = "java.util.HashMap">
+        SELECT SUM(nvl(TOTAL_BONUS_AMOUNT,0)) AS TOTAL_BONUS_AMOUNT FROM MDS_PRIZED_MONEY_DETAILS WHERE
+        STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED' AND  SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    <mapped-statement name = "getpendingCommissionAmount" result-class = "java.util.HashMap">
+        select nvl(max(MPMD.INSTALLMENT_NO)-max(MMPD.NO_OF_INST_PAID),0) * nvl(MSD.TOTAL_AMOUNT_DIVISION,0) * nvl(MPOD.COMMISION_RATE_AMT*.01,0)  as Pendingcommssion from
+        MDS_PRIZED_MONEY_DETAILS mpmd,MDS_MONEY_PAYMENT_DETAILS mmpd,MDS_PRODUCT_OTHER_DETAILS mpod,MDS_SCHEME_DETAILS msd
+        where MPMD.SCHEME_NAME=MMPD.SCHEME_NAME and 
+        MSD.SCHEME_NAME=MPMD.SCHEME_NAME
+        and MSD.PROD_ID=MPOD.PROD_ID
+        and MSD.SCHEME_NAME=#SCHEME_NAME#
+        group by MPOD.COMMISION_RATE_AMT,MSD.TOTAL_AMOUNT_DIVISION
+    </mapped-statement>
+    
+    <mapped-statement name = "authorizeMDSClosureDetails" result-class = "java.util.HashMap">
+        UPDATE MDS_CLOSURE_DETAILS SET 
+        AUTHORIZED_STATUS = #AUTHORIZESTATUS#,
+        AUTHORIZED_BY = #USER_ID#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateMDSProductCloseStatus" result-class = "java.util.HashMap">
+        UPDATE MDS_SCHEME_DETAILS SET STATUS = #STATUS# WHERE SCHEME_NAME = #SCHEME_NAME# 
+    </mapped-statement>
+    
+    <mapped-statement name = "checkSchemeClosureDetails" result-class = "java.util.HashMap">
+        SELECT * FROM MDS_CLOSURE_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS ='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "checkSchemeClosureDetailsForClosed" result-class = "java.util.HashMap">
+        SELECT * FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS ='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    
+    <dynamic-mapped-statement name = "getSelectClosedEachSchemeDetails" result-class = "java.util.LinkedHashMap">
+        <!--SELECT MSD.SCHEME_NAME, PROD_DESC, SCHEME_DESC, PROD_ID,SCHEME_START_DT,SCHEME_END_DT,NO_OF_DIVISIONS,INSTALLMENT_AMOUNT -->
+        <!-- SELECT PROD_DESC, SCHEME_DESC, MSD.SCHEME_NAME, PROD_ID
+        FROM MDS_SCHEME_DETAILS MSD
+        WHERE TOTAL_NO_OF_MEMBERS = (SELECT COUNT(*) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND STATUS!='DELETED' AND STATUS!='CLOSED' -->
+
+        <!-- SELECT  distinct MSD.SCHEME_NAME,MP_MDS_CODE AS SCHEME_DESC,MSD.PROD_ID,PROD_DESC,MULTIPLE_MEMBER,MSD.SCHEME_DESC as SCHEME_DETAILS FROM MDS_SCHEME_DETAILS MSD , MDS_CLOSURE_DETAILS MCD  
+     WHERE  msd.scheme_name=mcd.scheme_name and msd.scheme_end_dt &lt;=#CURR_DATE#
+       and TOTAL_AMOUNT_SCHEME = (SELECT SUM(INST_AMT) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND          
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND MSD.STATUS!='DELETED' AND MSD.STATUS!='CLOSED'-->
+
+        SELECT  distinct MSD.SCHEME_NAME,MP_MDS_CODE AS SCHEME_DESC,MSD.PROD_ID,PROD_DESC,MULTIPLE_MEMBER,MSD.SCHEME_DESC as SCHEME_DETAILS
+        FROM MDS_SCHEME_DETAILS MSD      
+        WHERE   msd.scheme_end_dt &lt;=#CURR_DATE# and 
+        TOTAL_AMOUNT_SCHEME = (SELECT SUM(INST_AMT) FROM MDS_APPLICATION WHERE SCHEME_NAME = MSD.SCHEME_NAME AND                   
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND COMMENCEMENT_AUTHORIZE_STATUS = 'AUTHORIZED') AND MSD.STATUS!='DELETED'
+        AND msd.branch_code =#BRANCH_CODE#
+        AND MSD.TOTAL_NO_OF_MEMBERS  !=(SELECT COUNT(*) FROM MDS_MASTER_MAINTENANCE MM WHERE MM.SCHEME_NAME = msd.scheme_name AND MM.CHIT_CLOSE_DT IS  NOT NULL)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SCHEME_NAMES">
+                    MSD.SCHEME_NAME= #SCHEME_NAMES#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(MSD.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DESC">
+                    UPPER(MP_MDS_CODE) LIKE UPPER('%$SCHEME_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CHITTAL_NO">
+                    UPPER(CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SUB_NO">
+                    UPPER(SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DETAILS">
+                    UPPER(MSD.SCHEME_DESC) LIKE UPPER('%$SCHEME_DETAILS$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(MSD.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="MULTIPLE_MEMBER">
+                    UPPER(MULTIPLE_MEMBER) LIKE UPPER('%$MULTIPLE_MEMBER$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY MSD.SCHEME_NAME
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name = "getSelectAllClosedChittalReceiptEntryDetails" result-class = "java.util.LinkedHashMap">
+        <!--SELECT SCHEME_NAME, CHITTAL_NO, SUB_NO, MEMBER_NO, MEMBER_NAME, TRANS_ID,DIVISION_NO,BRANCH_CODE FROM 
+        MDS_APPLICATION MA WHERE STATUS!= 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+        and COMMENCEMENT_TRANS_ID is not null -->
+        
+        SELECT MA.SCHEME_NAME, MA.CHITTAL_NO, MA.SUB_NO, MA.MEMBER_NO, MA.MEMBER_NAME, MA.TRANS_ID,MA.DIVISION_NO,
+        MA.BRANCH_CODE,MSD.SCHEME_START_DT FROM 
+        MDS_APPLICATION MA join MDS_SCHEME_DETAILS MSD  on MA.SCHEME_NAME=MSD.SCHEME_NAME
+        join MDS_CLOSURE_DETAILS MCD
+        on MCD.SCHEME_NAME=MSD.SCHEME_NAME
+        WHERE MA.STATUS!= 'DELETED' AND MA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND MA.COMMENCEMENT_TRANS_ID is not null 
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(MA.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="MEMBER_NO">
+                    UPPER(MA.MEMBER_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="MEMBER_NAME">
+                    UPPER(MA.MEMBER_NAME) LIKE UPPER('%$MEMBER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CHITTAL_NO">
+                    UPPER(MA.CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SUB_NO">
+                    UPPER(MA.SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_START_DT">
+                    UPPER(MSD.SCHEME_START_DT) LIKE UPPER('%$SCHEME_START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="TRANS_ID">
+                    UPPER(MA.TRANS_ID) LIKE UPPER('%$TRANS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="DIVISION_NO">
+                    UPPER(MA.DIVISION_NO) LIKE UPPER('%$DIVISION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        order by MA.SCHEME_NAME
+    </dynamic-mapped-statement>
+    
+    
+    <mapped-statement name = "getInstallmntAmount" result-class = "java.util.HashMap">
+        select INSTALLMENT_AMOUNT from mds_scheme_details where scheme_name=#SCHEME_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name = "getPendingChits" result-class = "java.util.HashMap">
+        SELECT B.CHITTAL_NO,B.SUB_NO,(A.INSTALLMENT_NO - B.NO_OF_INST) AS DUE
+        FROM
+        (
+        SELECT P.SCHEME_NAME,MAX(P.INSTALLMENT_NO) AS INSTALLMENT_NO
+        FROM MDS_PRIZED_MONEY_DETAILS P
+        WHERE P.SCHEME_NAME = #SCHEME_NAME# AND P.AUTHORIZED_STATUS = 'AUTHORIZED' AND P.STATUS != 'DELETED'
+        GROUP BY P.SCHEME_NAME
+        ) A,
+        (
+        SELECT T.SCHEME_NAME,T.CHITTAL_NO,T.SUB_NO,SUM(T.NO_OF_INST) AS NO_OF_INST
+        FROM MDS_TRANS_DETAILS T,MDS_MASTER_MAINTENANCE M
+        WHERE T.SCHEME_NAME = #SCHEME_NAME# AND T.CHITTAL_NO = M.CHITTAL_NO AND T.SUB_NO = M.SUB_NO AND
+        T.AUTHORIZE_STATUS = 'AUTHORIZED' AND T.STATUS != 'DELETED' AND
+        NVL(M.DEFAULTER,'N') != 'Y'
+        GROUP BY T.SCHEME_NAME,T.CHITTAL_NO,T.SUB_NO
+        ) B
+        WHERE A.SCHEME_NAME = B.SCHEME_NAME AND
+        A.INSTALLMENT_NO != B.NO_OF_INST
+    </mapped-statement>
+    
+    <mapped-statement name = "getMdsNetfrom" result-class = "java.util.HashMap">
+        SELECT SUM(BONUS_AMOUNT) +sum(COMMISION_AMOUNT)+sum(NET_AMOUNT) as TOTAL_MDSPAYMENT FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED'
+        AND AUTHORIZED_STATUS='AUTHORIZED' AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    
+    <mapped-statement name = "getClosureMethod" result-class = "java.util.HashMap">
+        select closure_method1,closure_method2 from mds_product_general_details where prod_id=
+        (select PROD_ID from mds_scheme_details where SCHEME_NAME= #SCHEME_NAME#)
+    </mapped-statement>
+    
+    <mapped-statement name = "checkSchemeEndDate" result-class = "java.util.HashMap">
+        SELECT * FROM MDS_SCHEME_DETAILS MSD WHERE MSD.SCHEME_END_DT &lt;=#CUR_DT# AND  MSD.SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+    
+    
+</sql-map>

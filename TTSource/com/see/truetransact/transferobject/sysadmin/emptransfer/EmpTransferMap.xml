@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmpTransferTOMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmpTransferTO" inline-parameters="true">
+        INSERT INTO EMP_TRANSFER
+        (EMP_TRANSFER_ID, EMP_ID, CURRENT_BRANCH, TRANSFER_BRANCH, LAST_WORKING_DAY, DATE_OF_JOINING, ROLE_IN_CURR_BRAN,ROLE_IN_TRANSFER_BRAN,
+        APPLICATION_TYPE,BRANCH_CODE,STATUS,STATUS_DT,STATUS_BY,CREATED_BY,CREATED_DT,AUTHORIZED_STATUS,AUTHORIZED_DT,AUTHORIZED_BY,
+        EMP_NAME,CURR_BRAN_NAME
+        ) VALUES (
+        #empTransferID:VARCHAR#, #empID:VARCHAR#, #currBran:VARCHAR#, #transferBran:VARCHAR#, #lastWorkingDay:DATE#, #doj:DATE#, 
+        #roleInCurrBran:VARCHAR#,#roleInTransferBran:VARCHAR#,#applType:VARCHAR#,#branCode:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#,
+        #statusBy:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeDt:DATE#,#authorizeBy:VARCHAR#,
+        #empName:VARCHAR#,#currBranName:VARCHAR#) 
+    </mapped-statement>
+        
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateEmpTransferTO" inline-parameters="true">
+        UPDATE EMP_TRANSFER SET 
+        TRANSFER_BRANCH = #transferBran:VARCHAR#,
+        LAST_WORKING_DAY =#lastWorkingDay:DATE#,
+        DATE_OF_JOINING= #doj:DATE#,
+        ROLE_IN_CURR_BRAN= #roleInCurrBran:VARCHAR#,
+        ROLE_IN_TRANSFER_BRAN= #roleInTransferBran:VARCHAR#,
+        APPLICATION_TYPE = #applType:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        EMP_NAME =#empName:VARCHAR#,
+        CURR_BRAN_NAME = #currBranName:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#
+        WHERE EMP_TRANSFER_ID = #empTransferID:VARCHAR#
+    </mapped-statement>
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteEmpTransferTO" inline-parameters="true">
+        UPDATE EMP_TRANSFER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE EMP_TRANSFER_ID = #empTransferID:VARCHAR#
+    </mapped-statement>
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getEmpTransferTOResult" class="com.see.truetransact.transferobject.sysadmin.emptransfer.EmpTransferTO">
+        <property name="empTransferID" column="EMP_TRANSFER_ID"/>
+        <property name="empID" column="EMP_ID"/>
+        <property name="currBran" column="CURRENT_BRANCH"/>
+        <property name="transferBran" column="TRANSFER_BRANCH"/>
+        <property name="lastWorkingDay" column="LAST_WORKING_DAY"/>
+        <property name="doj" column="DATE_OF_JOINING"/>
+        <property name="roleInCurrBran" column="ROLE_IN_CURR_BRAN"/>
+        <property name="roleInTransferBran" column="ROLE_IN_TRANSFER_BRAN"/>
+        <property name="applType" column="APPLICATION_TYPE"/>
+        <property name="branCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="empName" column="EMP_NAME"/>
+        <property name="currBranName" column="CURR_BRAN_NAME"/>
+    </result-map>
+	
+    <mapped-statement name="getSelectEmpTransferTO" result-map="getEmpTransferTOResult" >
+        SELECT * FROM EMP_TRANSFER 
+        WHERE EMP_TRANSFER_ID = #EMP_TRANSFER_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+
+
+    <mapped-statement name="authorizeEmpTransfer" result-class="java.util.HashMap">
+        UPDATE EMP_TRANSFER SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:DATE#
+        WHERE EMP_TRANSFER_ID = #EMP_TRANSFER_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updatePresentBranch" result-class="java.util.HashMap">
+       <!-- UPDATE EMPLOYEE_PRESENT_DETAILS SET PRESENT_BRANCH_CODE=#PRESENT_BRANCH_COD:VARCHARE#
+        WHERE SYS_ID = (SELECT SYS_EMPID FROM EMPLOYEE_MASTER WHERE STATUS!='DELETED'AND EMPLOYEEID=#EMP_ID:VARCHAR#)-->
+        update USER_MASTER set branch_code =#PRESENT_BRANCH_CODE:VARCHARE# where EMPLOYEE_ID = (select CUST_ID from CUSTOMER where STAFF_ID =#EMP_ID:VARCHAR#)
+    </mapped-statement>
+        
+        
+    <mapped-statement name="countBankCodess" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(BANK_CODE) AS "COUNT" FROM OTHER_BANK WHERE BANK_CODE = #BANK_CODE:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>  
+        
+    <result-map name="get-getAllBran-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="BRANCH_CODE" />
+        <property name="lookUpDesc" column="BRANCH_CODE" />
+    </result-map> 
+        
+    <mapped-statement name="getAllBran" result-map="get-getAllBran-result"> 
+        SELECT BRANCH_CODE||' -  '||BRANCH_NAME  AS BRANCH_CODE , BRANCH_NAME FROM BRANCH_MASTER WHERE STATUS!='DELETED' 
+        AND AUTHORIZE_STATUS_1='AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-getRoleEmp-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="ROLE_NAME" />
+        <property name="lookUpDesc" column="ROLE_NAME" />
+    </result-map> 
+        
+    <mapped-statement name="getRoleEmp" result-map="get-getRoleEmp-result"> 
+        SELECT ROLE_NAME FROM ROLE_MASTER WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getEmpTransferDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT EMP_TRANSFER_ID, EMP_ID,CURRENT_BRANCH ,TRANSFER_BRANCH,AUTHORIZED_STATUS FROM EMP_TRANSFER
+        WHERE STATUS!='DELETED' AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS!='AUTHORIZED')
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getEmpTransferDetailsDelete" result-class="java.util.LinkedHashMap">
+        SELECT EMP_TRANSFER_ID, EMP_ID,CURRENT_BRANCH ,TRANSFER_BRANCH,AUTHORIZED_STATUS FROM EMP_TRANSFER
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+         <dynamic-mapped-statement name="getEmpTransferDetailsView" result-class="java.util.LinkedHashMap" >
+        SELECT EMP_TRANSFER_ID, EMP_ID,CURRENT_BRANCH ,TRANSFER_BRANCH,AUTHORIZED_STATUS 
+        FROM EMP_TRANSFER
+       WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+       <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_TRANSFER_ID">
+                    UPPER(EMP_TRANSFER_ID) LIKE UPPER('%$EMP_TRANSFER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_ID">
+                    UPPER(EMP_ID) LIKE UPPER('%$EMP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CURRENT_BRANCH">
+                    UPPER(CURRENT_BRANCH) LIKE UPPER('%$CURRENT_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="TRANSFER_BRANCH">
+                    UPPER(TRANSFER_BRANCH) LIKE UPPER('%$TRANSFER_BRANCH$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getEmpDetailsForTransfer" result-class="java.util.LinkedHashMap">
+        SELECT EM.EMPLOYEEID AS EMPLOYEE_CODE, EM.FIRST_NAME AS FNAME,EPD.PRESENT_BRANCH_CODE,
+        (SELECT DISTINCT BRANCH_NAME FROM BRANCH_MASTER WHERE BRANCH_CODE=EPD.PRESENT_BRANCH_CODE) AS BRANCH_NAME 
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD WHERE EM.STATUS!='DELETED' 
+        AND EM.AUTHORIZE_STATUS='AUTHORIZED' AND EM.EMPLOYEEID=#EMP_CODE:VARCHAR#
+        AND EM.SYS_EMPID=EPD.SYS_ID
+    </mapped-statement>
+     <dynamic-mapped-statement name="setEmpDetailsForTransfer" result-class="java.util.LinkedHashMap" >
+        <!--SELECT EM.EMPLOYEEID AS EMPLOYEE_CODE,EM.FIRST_NAME AS FNAME,EPD.PRESENT_BRANCH_CODE,
+        (SELECT DISTINCT BRANCH_NAME FROM BRANCH_MASTER WHERE BRANCH_CODE=EPD.PRESENT_BRANCH_CODE) AS BRANCH_NAME 
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD WHERE EM.STATUS!='DELETED'
+        AND EM.AUTHORIZE_STATUS='AUTHORIZED' AND EM.SYS_EMPID=EPD.SYS_ID-->
+        SELECT em.employeeid AS employee_code, C.FNAME AS fname,
+        UM.BRANCH_CODE,
+        (SELECT DISTINCT branch_name
+                   FROM branch_master
+                  WHERE branch_code = UM.BRANCH_CODE) AS branch_name
+         FROM 
+         customer c
+        join employee_master em on C.STAFF_ID = EM.EMPLOYEEID
+        join employee_present_details epd on EM.EMPLOYEEID = EPD.EMPLOYEEID
+        join USER_MASTER um on UM.EMPLOYEE_ID = C.CUST_ID
+        WHERE em.status != 'DELETED'
+        AND em.authorize_status = 'AUTHORIZED'
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="employee_code">
+                    UPPER(em.employeeid) LIKE UPPER('%$employee_code$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="fname">
+                    UPPER(C.FNAME) LIKE UPPER('%$fname$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="UM.BRANCH_CODE">
+                    UPPER(UM.BRANCH_CODE) LIKE UPPER('%$UM.BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getEmpTransferDetailsAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT EMP_TRANSFER_ID, EMP_ID,CURRENT_BRANCH ,TRANSFER_BRANCH FROM EMP_TRANSFER
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# 
+        AND STATUS_BY != #USER_ID:VARCHAR# AND CREATED_DT =#CURR_DT:DATE#
+    </mapped-statement>
+
+
+</sql-map>

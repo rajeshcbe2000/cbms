@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OperativeTransMap">
+<!-- Used in OperativeTransMap -->    
+    <mapped-statement name="getBranchOA" result-class="java.lang.String">
+        SELECT BRANCH_CODE FROM ACT_MASTER 
+        WHERE ACT_NUM = #value#
+    </mapped-statement>
+        
+    <result-map name="getAccProductresultOA" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="Cash.getAccProductOA" result-map="getAccProductresultOA">
+        SELECT OP_AC_PRODUCT.PROD_ID AS PROD_ID, OP_AC_PRODUCT.PROD_DESC AS PROD_DESC 
+        FROM OP_AC_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and 
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+    </mapped-statement>
+        
+    <result-map name="get-LookUp-resultOA" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    <mapped-statement name="getOpAccProductLookUpOA" result-map="get-LookUp-resultOA">
+        SELECT PROD_ID AS LOOKUP_REF_ID,PROD_DESC AS LOOKUP_DESC FROM OP_AC_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and 
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where CR_CLR='Y')
+    </mapped-statement>
+      
+        <!--!==================================-->
+    <mapped-statement name="getoperativeProduct" result-class="java.util.HashMap">
+        SELECT OP_AC_PRODUCT.PROD_ID AS PROD_ID, OP_AC_PRODUCT.BEHAVIOR  AS BEHAVES_LIKE 
+        FROM OP_AC_PRODUCT
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'  AND BEHAVIOR='CA'
+    </mapped-statement>
+        
+    <mapped-statement name="getActDataOA" result-class="java.util.HashMap">
+<!--	    SELECT OPT_MODE_ID, CATEGORY_ID AS "CATEGORY", ACT_CAT_ID AS "CONSTITUTION", CREATE_DT, 
+                OP.BASE_CURRENCY AS "PRODCURRENCY", '' as REMARKS, AM.BRANCH_CODE, 
+                APD.HIDE_BALANCE, APD.SHOW_BALANCE_TO 
+                  FROM ACT_MASTER AM, OP_AC_PRODUCT OP, ACT_PARAM_DETAIL APD 
+                WHERE 
+                AM.ACT_NUM = APD.ACT_NUM AND 
+                AM.PROD_ID = OP.PROD_ID AND 
+                AM.ACT_NUM = #ACT_NUM# -->
+<!--        SELECT LOOKUP_DESC AS OPT_MODE_ID,ACT_STATUS_ID AS STATUS, CATEGORY_ID AS "CATEGORY", ACT_CAT_ID AS "CONSTITUTION", CREATE_DT, 
+        OP.BASE_CURRENCY AS "PRODCURRENCY", AM.REMARKS as REMARKS, AM.BRANCH_CODE, AC.AUTHORIZE_DT AS CLOSED_DT,AC.AUTHORIZE_STATUS,
+        APD.HIDE_BALANCE, APD.SHOW_BALANCE_TO,CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,MEMBERSHIP_NO 
+        FROM ACT_MASTER AM, OP_AC_PRODUCT OP, ACT_PARAM_DETAIL APD, ACT_CLOSING AC , 
+        LOOKUP_MASTER LM,CUSTOMER C
+        WHERE 
+        AM.ACT_NUM = APD.ACT_NUM AND 
+        AM.ACT_STATUS_ID != 'CLOSED' AND
+        AM.PROD_ID = OP.PROD_ID AND 
+        AM.ACT_NUM = #ACT_NUM:VARCHAR# AND
+        LM.LOOKUP_REF_ID=OPT_MODE_ID AND 
+        AC.ACT_NUM(+)=APD.ACT_NUM AND 
+        LM.LOOKUP_ID = 'ACT_OP_MODE'
+        AND C.CUST_ID=AM.CUST_ID-->
+        SELECT LOOKUP_DESC AS OPT_MODE_ID,ACT_STATUS_ID AS STATUS, CATEGORY_ID AS CATEGORY, ACT_CAT_ID AS CONSTITUTION, CREATE_DT, 
+        OP.BASE_CURRENCY AS PRODCURRENCY, AM.REMARKS as REMARKS, AM.BRANCH_CODE, AC.AUTHORIZE_DT AS CLOSED_DT,AC.AUTHORIZE_STATUS,
+        APD.HIDE_BALANCE, APD.SHOW_BALANCE_TO,CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,MEMBERSHIP_NO 
+        FROM  ACT_PARAM_DETAIL APD LEFT OUTER JOIN ACT_CLOSING AC ON AC.ACT_NUM = APD.ACT_NUM, ACT_MASTER AM,  OP_AC_PRODUCT OP,  
+        LOOKUP_MASTER LM, CUSTOMER C WHERE 
+        AM.ACT_NUM = APD.ACT_NUM AND AM.ACT_STATUS_ID != 'CLOSED' AND AM.PROD_ID = OP.PROD_ID AND AM.ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND LM.LOOKUP_REF_ID = OPT_MODE_ID AND LM.LOOKUP_ID = 'ACT_OP_MODE' AND C.CUST_ID = AM.CUST_ID
+    </mapped-statement>
+
+    <result-map name="getAccountResultListOA" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+           <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerCat" column="CATEGORY_ID"/>
+            </result-map>
+    <result-map name="getAccountResultOA" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+           <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerCat" column="CATEGORY_ID"/>
+        <property name="MemberNo" column="MemNo"/>
+        <property name="EmployNo" column="EmpNo"/>
+        <property name="Branch_Id" column="BRANCH_CODE"/>        
+    </result-map>
+    
+    <dynamic-mapped-statement name="Cash.getAccountListOA" result-map="getAccountResultOA" >
+        SELECT   Distinct act_num,
+         CASE WHEN cu.cust_type= 'INDIVIDUAL' THEN 
+               DECODE (am.opt_mode_id, 'SELF', cu.fname || ' ' || NVL(cu.mname,'') || ' '|| NVL(cu.lname,''), 
+               cu.fname || ' ' || NVL(cu.mname,'') || ' ' || NVL(cu.lname,'') ||<!-- (select ' &amp; ' || max(cu.fname) from customer cu join act_joint aj on aj.cust_id=cu.cust_id
+                       where aj.act_num=am.act_num)-->
+                       (GET_JOINT_CUST_NAMES(am.act_num))
+                       ) ELSE cu.comp_name END AS customer_name,
+               ca.street AS house_name, category_id, SA.SHARE_ACCT_NO AS memno,'' AS empno,am.branch_code
+        FROM act_master am
+        join customer cu on am.cust_id = cu.cust_id
+        Join cust_addr ca on ca.addr_type = cu.comm_addr_type and ca.cust_id = cu.cust_id 
+        Left join share_acct sa on SA.CUST_ID = CU.CUST_ID
+        WHERE am.prod_id = #PROD_ID:VARCHAR#
+        <dynamic> 
+           <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+           <!-- <isPropertyAvailable prepend = "AND" property="ACT_NUM">
+                AM.ACT_NUM=#ACT_NUM:VARCHAR#
+            </isPropertyAvailable>-->
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    <!--UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')-->
+                    UPPER ( CASE
+                   WHEN cu.cust_type = 'INDIVIDUAL'
+                      THEN DECODE (am.opt_mode_id, 'SELF', cu.fname || ' ' || NVL(cu.mname,'') || ' '|| NVL(cu.lname,''),
+                        cu.fname || ' ' || NVL(cu.mname,'') || ' ' || NVL(cu.lname,'')
+                                   || <!--(SELECT ' &amp; ' || MAX (cu.fname)
+                                         FROM customer cu JOIN act_joint aj
+                                              ON aj.cust_id = cu.cust_id
+                                        WHERE aj.act_num = am.act_num)-->
+                                      (GET_JOINT_CUST_NAMES(am.act_num))  
+                                  )
+                   ELSE cu.comp_name
+                END) LIKE UPPER ('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(AM.ACT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerCat">
+                    UPPER(CATEGORY_ID) LIKE UPPER('%$CustomerCat$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         AND (am.act_status_id IN
+             ('NEW', 'PART_FREEZE', 'OPERATIONAL', 'CREDIT_FREEZE',
+              'DEBIT_FREEZE', 'TOTAL_FREEZE', 'COMP_FREEZE')
+         )
+     AND am.status NOT IN ('DELETED')
+     AND am.authorization_status = 'AUTHORIZED'
+     <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="SELECTED_BRANCH">
+                am.branch_code= #SELECTED_BRANCH:VARCHAR#
+            </isPropertyAvailable>
+     </dynamic>
+             ORDER BY ACT_NUM
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>  
+    </dynamic-mapped-statement>
+    
+     <dynamic-mapped-statement name="Cash.getInterestAccountListOA" result-map="getAccountResultOA" >
+        SELECT   Distinct act_num,
+         CASE WHEN cu.cust_type= 'INDIVIDUAL' THEN 
+               DECODE (am.opt_mode_id, 'SELF', cu.fname || ' ' || cu.mname || ' '|| cu.lname,  cu.fname || ' ' || cu.mname || ' '
+               || cu.lname || (select ' &amp; ' || max(cu.fname) from customer cu join act_joint aj on aj.cust_id=cu.cust_id
+                       where aj.act_num=am.act_num)
+                       ) ELSE cu.comp_name END AS customer_name,
+               ca.street AS house_name, category_id, SA.SHARE_ACCT_NO AS memno,'' AS empno,am.branch_code
+        FROM act_master am
+        join customer cu on am.cust_id = cu.cust_id
+        Join cust_addr ca on ca.addr_type = cu.comm_addr_type and ca.cust_id = cu.cust_id 
+        Left join share_acct sa on SA.CUST_ID = CU.CUST_ID
+        WHERE am.prod_id = #PROD_ID:VARCHAR#
+        <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="ACT_NUM">
+                AM.ACT_NUM=#ACT_NUM:VARCHAR#
+            </isPropertyAvailable>
+        </dynamic>
+         AND (am.act_status_id IN
+             ('NEW', 'PART_FREEZE', 'OPERATIONAL', 'CREDIT_FREEZE',
+              'DEBIT_FREEZE', 'TOTAL_FREEZE', 'COMP_FREEZE')
+         )
+     AND am.status NOT IN ('DELETED')
+     AND am.authorization_status = 'AUTHORIZED'
+    <!-- AND am.branch_code= #SELECTED_BRANCH:VARCHAR#-->
+     ORDER BY ACT_NUM
+    </dynamic-mapped-statement>
+    
+    
+    
+    <dynamic-mapped-statement name="Report.getAccountListOA" result-map="getAccountResultListOA" >
+        SELECT
+        ACT_NUM, get_cust_name(CU.CUST_ID) AS CUSTOMER_NAME,
+        CA.STREET AS HOUSE_NAME, CATEGORY_ID
+        FROM ACT_MASTER AM, CUSTOMER CU, CUST_ADDR CA
+        WHERE AM.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        AM.PROD_ID = #PROD_ID:VARCHAR#  
+        <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="ACT_NUM">
+                AM.ACT_NUM=#ACT_NUM:VARCHAR#
+            </isPropertyAvailable>
+        </dynamic>
+        AND
+        (AM.ACT_STATUS_ID IN ('CLOSED','NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE')) AND 
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZATION_STATUS='AUTHORIZED' AND 
+        AM.BRANCH_CODE = #SELECTED_BRANCH:VARCHAR# 
+        <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY_ID">
+                    UPPER(CATEGORY_ID) LIKE UPPER('%$CATEGORY_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY ACT_NUM
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="Inward.getAccountListOA" result-map="getAccountResultListOA" >
+        SELECT
+        ACT_NUM, get_cust_name(CU.CUST_ID) AS CUSTOMER_NAME,
+        CUST_TYPE_ID, CATEGORY_ID,CA.STREET AS HOUSE_NAME
+        FROM ACT_MASTER AM, CUSTOMER CU,CUST_ADDR CA
+        WHERE AM.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND
+        AM.PROD_ID = #PROD_ID:VARCHAR# AND 
+        AM.STATUS NOT IN ('DELETED') AND 
+        AM.AUTHORIZATION_STATUS='AUTHORIZED' AND 
+        AM.BRANCH_CODE = #SELECTED_BRANCH:VARCHAR# 
+        ORDER BY ACT_NUM
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadProdOA" result-class="java.util.HashMap">
+<!--        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #PROD_ID# -->
+        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC,CR_CASH,DR_CASH,
+        OP_AC_PRODUCT.BASE_CURRENCY AS PROD_CURRENCY
+        FROM AC_HD, OP_AC_PRODUCT,AC_HD_PARAM 
+        WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND AC_HD.AC_HD_ID = AC_HD_PARAM.AC_HD_ID and
+        OP_AC_PRODUCT.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getBalanceOA" result-class="java.util.HashMap">
+        SELECT nvl(available_balance,0) as "AVAILABLE_BALANCE", 
+        nvl(CLEAR_BALANCE,0) as "CLEAR_BALANCE",
+        nvl(TOTAL_BALANCE,0) as "TOTAL_BALANCE", 
+        nvl(SHADOW_CREDIT,0) as "SHADOW_CREDIT", 
+        nvl(SHADOW_DEBIT,0) as "SHADOW_DEBIT",
+        nvl(FLEXI_DEPOSIT_AMT,0) as "FLEXI_DEPOSIT_AMT",
+        nvl((SELECT SUM(LIEN_AMT) FROM ACT_LIEN 
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        ((AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND LIEN_STATUS = 'LIENED') OR
+        (AUTHORIZE_STATUS = 'REJECTED' 
+        AND STATUS != 'DELETED' AND LIEN_STATUS = 'UNLIENED'))), 0) 
+        AS "LIEN_AMOUNT",
+        nvl((SELECT SUM(FREEZE_AMT) FROM ACT_FREEZE 
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        ((AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND FREEZE_STATUS = 'FREEZED') OR
+        (AUTHORIZE_STATUS = 'REJECTED' 
+        AND STATUS != 'DELETED' AND FREEZE_STATUS = 'UNFREEZED'))), 0) 
+        AS "FREEZE_AMOUNT", 
+        nvl(UNCLEAR_BALANCE,0) as "UNCLEAR_BALANCE",
+        nvl((SELECT SUM(TOD_AMOUNT)  FROM TOD_ALLOWED ,DAY_END
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND CURR_APPL_DT BETWEEN FROM_DT AND TO_DT),0) 
+        AS "TOD_AMOUNT",
+        nvl((SELECT SUM(TOD_UTILIZED)  FROM TOD_ALLOWED ,DAY_END
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND STATUS != 'DELETED' AND CURR_APPL_DT BETWEEN FROM_DT AND TO_DT),0) 
+        AS "TOD_UTILIZED"
+        FROM ACT_MASTER
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# 
+                <!--AND  
+                (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))-->
+    </mapped-statement> 
+        
+    <dynamic-mapped-statement name="getAccountNumberNameOA" result-class="java.util.HashMap">
+        SELECT get_cust_name(CUSTOMER.CUST_ID)  CUSTOMER_NAME,MINOR,ACT_STATUS_ID,
+        CUSTOMER.CUST_ID AS CUST_ID,CUST_TYPE,ACT_MASTER.BRANCH_CODE,MEMBERSHIP_NO
+        FROM ACT_MASTER, CUSTOMER
+        WHERE ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID and ACT_NUM = #ACC_NUM:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="CLOSECHECK">
+                ACT_MASTER.ACT_STATUS_ID != 'CLOSED'
+            </isNotPropertyAvailable>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getJointAccountName" result-class="java.util.HashMap">     
+        <!--SELECT SUBSTR (SYS_CONNECT_BY_PATH (FNAME ||' ' , ', '), 3) joint_Cust_Name
+        FROM (SELECT C.FNAME , ROW_NUMBER () OVER (ORDER BY aj.CUST_ID ) rn,
+        COUNT (*) OVER () cnt
+        FROM customer c,ACT_JOINT aj  where AJ.ACT_NUM = #ACC_NUM:VARCHAR# and
+        AJ.CUST_ID = C.CUST_ID and C.AUTHORIZE_STATUS = 'AUTHORIZED')
+        WHERE rn = cnt
+        START WITH rn = 1
+        CONNECT BY rn = PRIOR rn + 1-->        
+<!--        SELECT SUBSTR (SYS_CONNECT_BY_PATH (FNAME ||' ' , ', '), 3) joint_Cust_Name
+        FROM (SELECT C.FNAME , ROW_NUMBER () OVER (ORDER BY aj.CUST_ID ) rn,
+        COUNT (*) OVER () cnt
+        FROM customer c,ACT_JOINT aj,act_master act  where AJ.ACT_NUM = #ACC_NUM:VARCHAR# and
+        AJ.CUST_ID = C.CUST_ID and C.AUTHORIZE_STATUS = 'AUTHORIZED' and ACT.ACT_NUM = AJ.ACT_NUM and ACT.ACT_CAT_ID != 'INDIVIDUAL')
+        WHERE rn = cnt
+        START WITH rn = 1
+        CONNECT BY rn = PRIOR rn + 1-->
+
+        SELECT string_agg(C.FNAME,', ') joint_Cust_Name
+        FROM customer c,ACT_JOINT aj,act_master act  where AJ.ACT_NUM = #ACC_NUM:VARCHAR# and
+        AJ.CUST_ID = C.CUST_ID and C.AUTHORIZE_STATUS = 'AUTHORIZED' and ACT.ACT_NUM = AJ.ACT_NUM and ACT.ACT_CAT_ID != 'INDIVIDUAL'
+        AND AJ.STATUS != 'DELETED'
+        
+    </dynamic-mapped-statement>    
+    <mapped-statement name="getProdIdForActNoOA" result-class="java.util.HashMap">
+        SELECT PROD_ID FROM ACT_MASTER WHERE ACT_NUM = #ACC_NUM:VARCHAR# 
+            <!--AND BRANCH_CODE = #BRANCH_ID#--> <!-- Commented by Rajesh because to allow Interbranch Trans -->
+    </mapped-statement>            
+
+<!-- ==============================Common Transactions operation on Account===================================================== -->        
+
+    <mapped-statement name="updateShadowDebitOA" inline-parameters="true">
+        UPDATE ACT_MASTER SET 
+        SHADOW_DEBIT = NVL(SHADOW_DEBIT,0) + #AMOUNT:NUMERIC# <!--, 
+                LAST_TRANS_DT = #TODAY_DT# -->
+        WHERE ACT_NUM = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+
+        <!--To Update the Data in Business Rule ...-->
+    <mapped-statement name="updateShadowCreditOA" inline-parameters="true">
+        UPDATE ACT_MASTER SET 
+        SHADOW_CREDIT = nvl(SHADOW_CREDIT,0) + #AMOUNT:NUMERIC# <!--, 
+                LAST_TRANS_DT = #TODAY_DT# -->
+        WHERE ACT_NUM = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateOtherBalancesOA" inline-parameters="true">
+        UPDATE ACT_MASTER SET 
+        CLEAR_BALANCE = NVL (CLEAR_BALANCE, 0) + #AMOUNT:NUMBER# - #UNCLEAR_AMT:NUMBER#, 
+        TOTAL_BALANCE = NVL (TOTAL_BALANCE, 0) + #AMOUNT:NUMBER# , 
+        UNCLEAR_BALANCE = NVL (UNCLEAR_BALANCE, 0) + #UNCLEAR_AMT:NUMBER# <!--, 
+                LAST_TRANS_DT = #TODAY_DT# -->
+        WHERE ACT_NUM = #ACCOUNTNO:VARCHAR:NUMBER#
+    </mapped-statement>
+
+     <!-- <mapped-statement name="updateAvailBalanceOA" result-class="java.util.HashMap">
+		UPDATE ACT_MASTER SET
+                AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,
+                UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT#,
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT# 
+                WHERE ACT_NUM = #ACCOUNTNO:VARCHAR#
+	</mapped-statement> -->
+    <dynamic-mapped-statement name="updateAvailBalanceOA" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT:NUMBER#
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="GREATERAMTCREDIT">
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#,
+                AVAILABLE_BALANCE =(nvl(CLEAR_BALANCE,0)+#AMOUNT:NUMBER#)+ nvl(AVAILABLE_BALANCE,0)
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="NORMALSBOD">
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#,
+                AVAILABLE_BALANCE =(nvl(AVAILABLE_BALANCE,0)+#AMOUNT:NUMBER#) 
+                <!-- AVAILABLE_BALANCE = (CASE                
+                WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&gt;#AMOUNT:NUMBER# )
+                )
+                THEN   nvl(AVAILABLE_BALANCE,0)
+                ELSE nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER# 
+                END),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER# -->
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="LESSERAMTCREDIT">
+                AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="NORMAL">
+                        <!-- AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                AVAILABLE_BALANCE = (CASE
+                WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&lt;#AMOUNT:NUMBER# )
+                )
+                THEN  (nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER#) + NVL(CLEAR_BALANCE,0)
+                WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&gt;=#AMOUNT:NUMBER# )
+                )
+                THEN   nvl(AVAILABLE_BALANCE,0)
+                ELSE nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER# 
+                END),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="NORMALDEBIT">
+                        <!-- AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                AVAILABLE_BALANCE= nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER#,
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> 
+            <isPropertyAvailable prepend = "," property="GREATERAMTCREDITRUNNING">
+                          <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                AVAILABLE_BALANCE = (CASE
+                WHEN(  #TOD_UTILIZED# &gt; 0
+                )
+                THEN  #AMOUNT:NUMBER#+nvl(CLEAR_BALANCE,0)+#TOD_AMOUNT:NUMBER#
+                WHEN(#TOD_UTILIZED:NUMBER# &lt;= 0 AND ABS(CLEAR_BALANCE)&lt;#AMOUNT:NUMBER#
+                )
+                THEN   (nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER#) + NVL(CLEAR_BALANCE,0)
+                WHEN(#TOD_UTILIZED:NUMBER# &lt;= 0 AND ABS(CLEAR_BALANCE)&gt;=#AMOUNT:NUMBER#
+                )
+                THEN   nvl(AVAILABLE_BALANCE,0)
+                END),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#
+            </isPropertyAvailable>
+        </dynamic>
+        WHERE ACT_NUM = #ACCOUNTNO:VARCHAR#
+    </dynamic-mapped-statement>       
+        
+    <mapped-statement name="updateLastTransDateOA" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET
+        LAST_TRANS_DT = #TODAY_DT:DATE#
+        WHERE ACT_NUM = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>        
+        
+<!-- ==============================AUTHORIZATION===================================================== -->
+	<!--mapped-statement name="getSelectCashTransactionAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+            SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "Product Id", CT.ACT_NUM as "Account No",
+                  CU.FNAME || ' ' || CU.MNAME || ' ' || CU.LNAME AS "Customer", CT.amount,
+                  ct.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS 
+                  FROM CASH_TRANS CT, ACT_MASTER AM, CUSTOMER CU
+                  WHERE CT.ACT_NUM = AM.ACT_NUM AND AM.CUST_ID = CU.CUST_ID AND
+                  (CT.AUTHORIZE_STATUS IS NULL OR 
+                  CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))
+                  ORDER BY CT.TRANS_ID
+  	</mapped-statement-->        
+        
+        <!-- ============================Transfer Transaction======================================== -->
+        
+    <mapped-statement name="Transfer.getCreditProductOA" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM OP_AC_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_trans='Y')
+    </mapped-statement>
+        
+    <mapped-statement name="Transfer.getDebitProductOA" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM OP_AC_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZED_STATUS = 'AUTHORIZED'            
+        and
+        AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_trans='Y')
+    </mapped-statement>     
+        
+    <result-map name="getTransferAccountResultList" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+            <!--<property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="Branch" column="BRANCH_CODE"/>
+        <property name="MemberNo" column="MemNo"/>
+        <property name="EmployNo" column="EmpNo"/>
+        <property name="AVAILABLE_BALANCE" column="AVAILABLE_BALANCE"/>
+    </result-map>    
+    <dynamic-mapped-statement name="Transfer.getAccountListOA" result-map="getTransferAccountResultList">
+                <!--SELECT CUSTOMER.CUST_ID as "Customer Id", DOB, get_cust_name(CUSTOMER.CUST_ID) "Name", GENDER , CUSTOMERGROUP, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE from CUSTOMER , CUST_ADDR  WHERE ((CUSTOMER.STATUS = 'MODIFIED') or (CUSTOMER.STATUS = 'UPDATED') or (CUSTOMER.STATUS = 'CREATED')) and (CUST_ADDR.CUST_ID = CUSTOMER.CUST_ID) and (CUSTOMER.COMM_ADDR_TYPE = CUST_ADDR.ADDR_TYPE)-->
+        SELECT
+        ACT_NUM, get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+                <!--CUST_TYPE_ID,--> ACT_MASTER.BRANCH_CODE ,SA.SHARE_ACCT_NO as MemNo,SA.EMP_REFNO_NEW as EmpNo,AVAILABLE_BALANCE as AVAILABLE_BALANCE
+        FROM ACT_MASTER
+        JOIN CUSTOMER on act_master.CUST_ID = customer.CUST_ID 
+        JOIN CUST_ADDR ca on CA.CUST_ID = customer.CUST_ID and ca.addr_type = customer.comm_addr_type  
+        LEFT JOIN Share_acct SA on SA.CUST_ID = customer.CUST_ID 
+        WHERE (PROD_ID = #PROD_ID:VARCHAR#) and 
+        (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))
+        AND (AUTHORIZATION_STATUS = 'AUTHORIZED') 
+        <dynamic> <!-- This dynamic statement given by Rajesh. This statement passes the branchcode if we passed -->
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SELECTED_BRANCH"> 
+                    ACT_MASTER.BRANCH_CODE = #SELECTED_BRANCH:VARCHAR# 
+                </isNotNull> 
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    UPPER(get_cust_name(CUSTOMER.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(ACT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Branch">
+                    UPPER(ACT_MASTER.BRANCH_CODE) LIKE UPPER('%$Branch$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>
+                <!-- AND ACT_MASTER.BRANCH_CODE = #BRANCH_CODE# -->
+                <!--dynamic>
+                <iterate prepend="AND ACT_NUM NOT IN" property="ACT NUM" open = "(" close=")" conjunction="," >
+                #ACT NUM[]#
+                </iterate>
+                </dynamic-->
+    </dynamic-mapped-statement>                
+       
+ <!-- ============================Outward Clearing======================================== -->
+         
+    <result-map name="getAccountHeadID4PISDResultOA" class="java.util.HashMap">
+        <property name="accHeadID" column="AC_HD_ID"/>
+        <property name="accHeadDesc" column="AC_HD_DESC"/>
+    </result-map>
+        
+    <mapped-statement name="getAccountHeadID4PISDOA" result-map="getAccountHeadID4PISDResultOA" >        
+        SELECT OP_AC_PRODUCT.AC_HD_ID, AC_HD_DESC FROM OP_AC_PRODUCT, AC_HD 
+        WHERE PROD_ID = #value:VARCHAR# AND OP_AC_PRODUCT.AC_HD_ID=AC_HD.AC_HD_ID
+    </mapped-statement>        
+      
+        <!--result-map name="getAccountDetailsPISDResultOA" class="java.util.HashMap">
+            <property name="fName" column="FNAME"/>
+            <property name="mName" column="MNAME"/>
+            <property name="lName" column="LNAME"/>
+            <property name="openingDt" column="CREATE_DT"/>
+            <property name="category" column="ACT_CAT_ID"/>
+            <property name="optMode" column="OPT_MODE_ID"/>
+            <property name="groupCode" column="GROUP_CODE_ID"/>
+            <property name="remarks" column="REMARKS"/>
+            <property name="CLEAR_BALANCE" column="CLEAR_BALANCE"/>  
+            <property name="EFFECTIVE_BALANCE" column="TOTAL_BALANCE"/>   
+            <property name="AVAILABLE_BALANCE" column="AVAILABLE_BALANCE"/>   
+            <property name="UNCLEAR_BALANCE" column="UNCLEAR_BALANCE"/>   
+            <property name="SHADOW_DEBIT" column="SHADOW_DEBIT"/>
+            <property name="SHADOW_CREDIT" column="SHADOW_CREDIT"/>       
+        </result-map-->        
+        <!--> This query 'll fetch the details of given account no<-->
+        <!--mapped-statement name="getAccountDetailsPISDOA" result-map="getAccountDetailsPISDResultOA" >        
+            SELECT FNAME, MNAME, LNAME, CREATE_DT, ACT_CAT_ID, OPT_MODE_ID, GROUP_CODE_ID,'' as REMARKS,
+            CLEAR_BALANCE, AVAILABLE_BALANCE, SHADOW_DEBIT, SHADOW_CREDIT,
+            TOTAL_BALANCE,UNCLEAR_BALANCE
+            FROM ACT_MASTER, CUSTOMER
+            WHERE ACT_NUM = #value# AND ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID
+        </mapped-statement-->  
+        
+    <mapped-statement name="getCustomerHouseName" result-class="java.util.HashMap">
+        <!--SELECT DISTINCT STREET AS HOUSE_NAME FROM CUST_ADDR CA, CUSTOMER CU WHERE CA.CUST_ID=CA.CUST_ID AND 
+        CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND CA.CUST_ID=(SELECT distinct CUST_ID FROM ALL_CUSTOMER WHERE ACT_NUM=#ACC_NUM:VARCHAR#)-->
+        SELECT GET_CUSTOMER_ADDRESS(#ACC_NUM:VARCHAR#) AS HOUSE_NAME FROM DUAL 
+    </mapped-statement>  
+    
+    <mapped-statement name="getSelectCardAcctNum" result-class="java.util.HashMap">        
+        SELECT LPAD(CARD_ACCT_NUM,35,'0')AS CARD_ACCT_NUM,CARD_ACCT_NUM AS CARD_ORG_NO FROM ACT_MASTER A,OP_AC_SPCLITEM_PARAM OP WHERE 
+        A.ACT_NUM = #ACCT_NUM:VARCHAR# AND A.PROD_ID=OP.PROD_ID AND ATM_CARD_ISSUED='Y'
+    </mapped-statement>     
+    
+    <mapped-statement name="getSelectCardAcctNumStatus" result-class="java.util.HashMap">        
+        <!--SELECT LPAD(CAS.CARD_ACCT_NUM,35,'0')AS CARD_ACCT_NUM,CAS.CARD_ACCT_NUM AS CARD_ORG_NO,ACTION,SPONSOR_BANK_STATUS,REQUESTED_TIME,
+        (SELECT SYS_DATE() FROM DUAL) SYSTEM_DATE FROM CARD_ACCT_STATUS CAS,ACT_MASTER AM,OP_AC_SPCLITEM_PARAM OP WHERE AM.PROD_ID = OP.PROD_ID AND 
+        ATM_CARD_ISSUED='Y' AND AM.CARD_ACCT_NUM = CAS.CARD_ACCT_NUM AND AM.ACT_NUM = #ACCT_NUM:VARCHAR# AND 
+        CAS.ROWID IN(SELECT MAX(ROWID)FROM CARD_ACCT_STATUS WHERE CARD_ACCT_NUM = CAS.CARD_ACCT_NUM AND 
+        STATUS != 'DELETED') ORDER BY CAS.STATUS_DT DESC-->
+        SELECT  lpad(to_number (AM.CARD_ACCT_NUM), 35, 0) AS CARD_ACCT_NUM, AM.CARD_ACCT_NUM AS CARD_ORG_NO,
+        SPONSOR_BANK_STATUS AS ACTION, REQUESTED_TIME, 
+        (SELECT CURRENT_TIMESTAMP SYSTEM_DATE FROM DUAL)
+        FROM ACT_MASTER AM, OP_AC_SPCLITEM_PARAM OP
+        WHERE AM.PROD_ID = OP.PROD_ID AND ATM_CARD_ISSUED = 'Y'
+        AND AM.ACT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>  
+
+     <mapped-statement name="getCustomerAccountOperatingType" result-class="java.util.HashMap">
+        select ACT.ACT_CAT_ID,ACT.OPT_MODE_ID from act_master act
+        where ACT.ACT_NUM = #ACT_NUM:VARCHAR#
+     </mapped-statement>
+        
+</sql-map>

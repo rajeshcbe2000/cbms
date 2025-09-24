@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="StateTalukTOMap">
+
+	<!-- Use StateTalukTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertStateTO" inline-parameters="true">
+        INSERT INTO CUSTOMER_STATE
+        (STATE_CODE, STATE_NAME, ST_STATUS,ST_CREATED_BY,ST_STATUS_BY,ST_AUTHORIZE_STATUS, ST_AUTHORIZE_BY, ST_AUTHORIZE_DT,STATUS_DT,BRANCH_CODE
+        ) VALUES (
+        #stateCode:VARCHAR#,#stateName:VARCHAR#,#status:VARCHAR#,#stateCreatedBy:VARCHAR#,#sateStatusBy:VARCHAR#,#authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#,#stateStatusDt:DATE#,#branCode:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use StateTalukTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateStateTO" inline-parameters="true">
+        UPDATE CUSTOMER_STATE SET 
+        STATE_NAME = #stateName:VARCHAR#,
+        ST_STATUS = #status:VARCHAR#,
+        ST_STATUS_BY=#sateStatusBy:VARCHAR#,
+        ST_AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        ST_AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        ST_AUTHORIZE_DT = #authorizeDt:DATE#,
+        STATUS_DT= #stateStatusDt:DATE#,
+        BRANCH_CODE =#branCode:VARCHAR#
+        WHERE STATE_CODE = #stateCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteStateTO" inline-parameters="true">
+        UPDATE CUSTOMER_STATE SET 
+        ST_STATUS = #status:VARCHAR#,
+        ST_STATUS_BY=#sateStatusBy:VARCHAR#
+        WHERE STATE_CODE = #stateCode:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectStateDisTO" result-map="getStateDisTalukTOResult" >
+        SELECT * FROM CUSTOMER_STATE CS, CUSTOMER_DISTRICT CD WHERE CS.STATE_CODE=CD.STATE_CODE
+        AND CS.STATE_CODE=#value:VARCHAR#
+        AND ( CS.ST_STATUS != 'DELETED' OR CS.ST_STATUS IS NULL )
+                <!--AND (ST_AUTHORIZE_STATUS != 'REJECTED' OR ST_AUTHORIZE_STATUS IS NULL)-->
+        AND
+                <!--((CD.DIS_STATUS IN('CREATED','MODIFIED') AND DIS_AUTHORIZE_STATUS='AUTHORIZED') OR 
+                (CD.DIS_STATUS='DELETED' AND (DIS_AUTHORIZE_STATUS!='AUTHORIZED') Or DIS_AUTHORIZE_STATUS IS NULL) )-->
+        CD.DIS_STATUS!='DELETED'
+        ORDER BY CD.SL_NO
+    </mapped-statement>
+    <mapped-statement name="getSelectStateDisTOAuthorize" result-map="getStateDisTalukTOResult" >
+        SELECT * FROM CUSTOMER_STATE CS, CUSTOMER_DISTRICT CD WHERE CS.STATE_CODE=CD.STATE_CODE
+        AND CS.STATE_CODE=#value:VARCHAR#
+        AND DIS_AUTHORIZE_STATUS is NULL
+        ORDER BY CD.SL_NO
+    </mapped-statement>
+
+        
+    <mapped-statement name="insertDistrictTO" inline-parameters="true">
+        INSERT INTO CUSTOMER_DISTRICT
+        (STATE_CODE,DISTRICT_CODE, DISTRICT_NAME, DIS_STATUS,SL_NO,DIS_CREATED_BY,DIS_STATUS_BY,DIS_AUTHORIZE_STATUS, DIS_AUTHORIZE_BY, DIS_AUTHORIZE_DT
+        ) VALUES (
+        #stateCode#,#disCode#,#disName:VARCHAR#,#disStatus:VARCHAR#,#stateSlno:VARCHAR#,#disCreatedBy:VARCHAR#,#disStatusBy:VARCHAR#,#disAuthorizeStatus:VARCHAR#,#disAuthorizeBy:VARCHAR#,#disAuthorizeDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use StateTalukTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDistrictTO" inline-parameters="true">
+        UPDATE CUSTOMER_DISTRICT SET 
+        DISTRICT_NAME = #disName:VARCHAR#,
+        DIS_STATUS = #disStatus:VARCHAR#,
+        DIS_STATUS_BY=#disStatusBy:VARCHAR#,
+        DIS_AUTHORIZE_STATUS = #disAuthorizeStatus:VARCHAR#,
+        DIS_AUTHORIZE_BY = #disAuthorizeBy:VARCHAR#,
+        DIS_AUTHORIZE_DT = #disAuthorizeDt:DATE#
+        WHERE STATE_CODE = #stateCode:VARCHAR# AND DISTRICT_CODE = #disCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDistrictTO" inline-parameters="true">
+        UPDATE CUSTOMER_DISTRICT SET 
+        DIS_STATUS = #disStatus:VARCHAR#,
+        DIS_STATUS_BY=#disStatusBy:VARCHAR#,
+        DIS_AUTHORIZE_STATUS = null,
+        DIS_AUTHORIZE_BY = null,
+        DIS_AUTHORIZE_DT = null
+        WHERE STATE_CODE = #stateCode:VARCHAR# AND DISTRICT_CODE = #disCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OtherBankTO object (JavaBean) properties -->
+    <result-map name="getStateDisTalukTOResult" class="com.see.truetransact.transferobject.sysadmin.stateTalukMaster.StateTalukTO">
+        <property name="stateCode" column="STATE_CODE"/>
+        <property name="stateName" column="STATE_NAME"/>
+        <property name="status" column="ST_STATUS"/>
+        <property name="disCode" column="DISTRICT_CODE"/>
+        <property name="disName" column="DISTRICT_NAME"/>
+        <property name="stateSlno" column="SL_NO"/>
+        <property name="disStatusBy" column="DIS_STATUS_BY"/>
+        <property name="disCreatedBy" column="DIS_CREATED_BY"/>
+        <property name="disStatus" column="DIS_STATUS"/>
+        <property name="sateStatusBy" column="ST_STATUS_BY"/>
+        <property name="stateCreatedBy" column="ST_CREATED_BY"/>
+        <property name="authorizeStatus" column="ST_AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="ST_AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="ST_AUTHORIZE_DT"/>
+        <property name="disAuthorizeStatus" column="DIS_AUTHORIZE_STATUS"/>
+        <property name="disAuthorizeBy" column="DIS_AUTHORIZE_BY"/>
+        <property name="disAuthorizeDt" column="DIS_AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectTaluk" result-map="getTalukTOResult" >
+        SELECT CD.DISTRICT_NAME,CT.* FROM CUSTOMER_TALUK CT, CUSTOMER_DISTRICT CD 
+		<!--WHERE CT.STATE_CODE = #value# AND -->
+        WHERE CT.STATE_CODE = #value:VARCHAR# AND
+        CT.STATE_CODE=CD.STATE_CODE AND 
+        CD.DISTRICT_CODE=CT.DISTRICT_CODE
+        AND CT.TAL_STATUS!='DELETED'
+        ORDER BY CT.TALUK_CODE<!-- AND 
+                 ((CT.TAL_STATUS IN('CREATED','MODIFIED') AND TAL_AUTHORIZE_STATUS='AUTHORIZED') OR 
+                (CT.TAL_STATUS='DELETED' AND (TAL_AUTHORIZE_STATUS!='AUTHORIZED') Or TAL_AUTHORIZE_STATUS IS NULL) ) 
+                ORDER BY CT.TALUK_CODE-->
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTalukTOAuthorize" result-map="getTalukTOResult" >
+        SELECT CD.DISTRICT_NAME,CT.* FROM CUSTOMER_TALUK CT, CUSTOMER_DISTRICT CD 
+        WHERE CT.STATE_CODE = #value:VARCHAR# AND  CT.STATE_CODE=CD.STATE_CODE AND  
+        CD.DISTRICT_CODE=CT.DISTRICT_CODE AND TAL_AUTHORIZE_STATUS IS NULL
+        ORDER BY CD.DISTRICT_CODE,CT.TALUK_CODE,CT.SL_NO
+    </mapped-statement>
+        
+    <mapped-statement name="insertTalukTO" inline-parameters="true">
+        INSERT INTO CUSTOMER_TALUK
+        (DISTRICT_CODE,TALUK_CODE,TALUK_NAME, TAL_STATUS,SL_NO,STATE_CODE,TAL_CREATED_BY,TAL_STATUS_BY,TAL_AUTHORIZE_STATUS, TAL_AUTHORIZE_BY, TAL_AUTHORIZE_DT
+        ) VALUES (
+        #disCode:VARCHAR#,#talukCode:VARCHAR#,#talukName:VARCHAR#,#talukStatus:VARCHAR#,#slno:VARCHAR#,#stateCode:VARCHAR#,#talCreatedBy:VARCHAR#,#talStatusBy:VARCHAR#,#talAuthorizeStatus:VARCHAR#,#talAuthorizeBy:VARCHAR#,#talAuthorizeDt:DATE#)
+    </mapped-statement>
+    <mapped-statement name="updateTalukTO" inline-parameters="true">
+        UPDATE CUSTOMER_TALUK SET 
+        TALUK_NAME = #talukName:VARCHAR#,
+        TAL_STATUS = #talukStatus:VARCHAR#,
+        TALUK_CODE = #talukCode:VARCHAR#,
+        TAL_STATUS_BY=#talStatusBy:VARCHAR#,
+        TAL_AUTHORIZE_STATUS = #talAuthorizeStatus:VARCHAR#,
+        TAL_AUTHORIZE_BY = #talAuthorizeBy:VARCHAR#,
+        TAL_AUTHORIZE_DT = #talAuthorizeDt:DATE#
+        WHERE STATE_CODE = #stateCode:VARCHAR# AND 
+        DISTRICT_CODE = #disCode:VARCHAR# AND
+        TALUK_CODE = #talukCode:VARCHAR# AND SL_NO = #slno:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteTalukTO" inline-parameters="true">
+        UPDATE CUSTOMER_TALUK SET 
+        TAL_STATUS = #talukStatus:VARCHAR#,
+        TAL_STATUS_BY=#talStatusBy:VARCHAR#,
+        TAL_AUTHORIZE_STATUS = null,
+        TAL_AUTHORIZE_BY = null,
+        TAL_AUTHORIZE_DT = null
+        WHERE STATE_CODE = #stateCode:VARCHAR# AND DISTRICT_CODE = #disCode:VARCHAR#
+        AND TALUK_CODE = #talukCode:VARCHAR#
+    </mapped-statement>
+
+        
+    <mapped-statement name="viewStateCode" result-class = "java.util.LinkedHashMap" >
+        SELECT DISTINCT CUSTOMER_STATE.STATE_CODE AS "STATE_CODE", 
+        STATE_NAME
+        FROM CUSTOMER_STATE <!--WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND
+                (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)-->
+    </mapped-statement>
+    <result-map name="getTalukTOResult" class="com.see.truetransact.transferobject.sysadmin.stateTalukMaster.StateTalukTO">
+        <property name="stateCode" column="STATE_CODE"/>
+        <property name="talukStatus" column="TAL_STATUS"/>
+        <property name="disCode" column="DISTRICT_CODE"/>
+        <property name="slno" column="SL_NO"/>
+        <property name="talukName" column="TALUK_NAME"/>
+        <property name="talukCode" column="TALUK_CODE"/>
+        <property name="disName" column="DISTRICT_NAME"/>
+        <property name="talCreatedBy" column="TAL_CREATED_BY"/>
+        <property name="talStatusBy" column="TAL_STATUS_BY"/>
+        <property name="talAuthorizeStatus" column="TAL_AUTHORIZE_STATUS"/>
+        <property name="talAuthorizeBy" column="TAL_AUTHORIZE_BY"/>
+        <property name="talAuthorizeDt" column="TAL_AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="countStateCode" result-class = "java.lang.Integer">
+        SELECT COUNT(DISTRICT_CODE) AS "COUNT" FROM CUSTOMER_DISTRICT WHERE STATE_CODE = #stateCode:VARCHAR#
+        AND DISTRICT_CODE=#disCode:VARCHAR#
+        AND  (DIS_STATUS != 'DELETED' OR DIS_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="countTalukCode" result-class = "java.lang.Integer">
+        SELECT COUNT(TALUK_CODE) AS "COUNT" FROM CUSTOMER_TALUK    
+        WHERE STATE_CODE = #stateCode:VARCHAR#   
+        AND DISTRICT_CODE=#disCode:VARCHAR#    AND TALUK_CODE=#talukCode:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="viewAuthorizeState" result-class = "java.util.LinkedHashMap" >
+                <!--SELECT DISTINCT STATE_CODE AS "STATE_CODE", STATE_NAME  FROM CUSTOMER_STATE
+                WHERE ( ST_STATUS != 'DELETED' OR ST_STATUS IS NULL ) AND
+                (ST_AUTHORIZE_STATUS NOT IN ('AUTHORIZED','REJECTED') OR ST_AUTHORIZE_STATUS IS NULL)-->
+        SELECT  DISTINCT ST.STATE_CODE AS "STATE_CODE", STATE_NAME  FROM CUSTOMER_STATE ST 
+        WHERE ( ST_STATUS != 'DELETED' OR ST_STATUS IS NULL ) 
+        and (ST.STATE_CODE IN (SELECT DISTINCT CD.STATE_CODE FROM CUSTOMER_DISTRICT CD, CUSTOMER_STATE CS
+        WHERE CD.STATE_CODE IN CS.STATE_CODE AND CD.DIS_AUTHORIZE_STATUS IS NULL) or 
+        ST.STATE_CODE IN (SELECT DISTINCT CD.STATE_CODE FROM CUSTOMER_TALUK CD, CUSTOMER_STATE CS
+        WHERE CD.STATE_CODE= CS.STATE_CODE AND CD.TAL_AUTHORIZE_STATUS IS NULL))
+    </mapped-statement>
+    <mapped-statement name="authorizeDistrict" result-class="java.util.HashMap">
+        UPDATE CUSTOMER_DISTRICT SET 
+        DIS_AUTHORIZE_STATUS = 'AUTHORIZED',
+        DIS_AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        DIS_AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE STATE_CODE = #STATE_CODE# AND DISTRICT_CODE = #DISTRICT_CODE#
+    </mapped-statement>
+    <mapped-statement name="authorizeTaluk" result-class="java.util.HashMap">
+        UPDATE CUSTOMER_TALUK SET 
+        TAL_AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        TAL_AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        TAL_AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE STATE_CODE = #STATE_CODE:VARCHAR# AND DISTRICT_CODE = #DISTRICT_CODE:VARCHAR#
+        AND  TALUK_CODE = #TALUK_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="authorizeState" result-class="java.util.HashMap">
+        UPDATE CUSTOMER_STATE SET 
+        ST_AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        ST_AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        ST_AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE STATE_CODE = #STATE_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getStateCodeName" result-class="java.util.HashMap">
+        SELECT STATE_CODE,STATE_NAME FROM CUSTOMER_STATE WHERE STATE_CODE=#STATE_CODE:VARCHAR#
+        AND ST_STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="countStateCodeName" result-class = "java.lang.Integer">
+        SELECT COUNT(STATE_CODE) AS "COUNT" FROM CUSTOMER_STATE WHERE STATE_CODE = #STATE_CODE:VARCHAR#
+        AND  (ST_STATUS != 'DELETED' OR ST_STATUS IS NULL)
+    </mapped-statement>
+    <mapped-statement name="getMaxTalukCode" result-class = "java.lang.Integer">
+        SELECT MAX(TALUK_CODE) AS "MAX_TALUK_CODE" FROM CUSTOMER_TALUK WHERE STATE_CODE=#STATE_CODE:VARCHAR#
+        AND DISTRICT_CODE=#DISTRICT_CODE:VARCHAR# 
+    </mapped-statement>
+</sql-map>

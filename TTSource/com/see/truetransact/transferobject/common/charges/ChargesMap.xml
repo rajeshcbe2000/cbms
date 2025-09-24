@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ChargesTOMap">
+
+	<!-- Use ChargesTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertChargesTO" inline-parameters="true">
+        INSERT INTO CHARGES
+        (CHARGE_TYPE, PRODUCT_ID, PRODUCT_TYPE, PERCENTAGE, FIXED_RATE, FROM_AMT, 
+        TO_AMT, FOR_EVERY_AMT, FOR_EVERY_RATE, FOR_EVERY_TYPE, STATUS, STATUS_BY, 
+        STATUS_DATE, AUTHORISED, AUTHORISED_BY, AUTHORISED_DATE, START_DT, END_DT
+        ) VALUES (
+        #chargeType:VARCHAR#, #productId:VARCHAR#, #productType:VARCHAR#, #percentage:NUMERIC#, 
+        #fixedRate:NUMERIC#, #fromAmt:NUMERIC#, #toAmt:NUMERIC#, #forEveryAmt:NUMERIC#, #forEveryRate:NUMERIC#, 
+        #forEveryType:VARCHAR#, 'CREATED', #statusBy:VARCHAR#,#statusDate:DATE#, #authorised:VARCHAR#, #authorisedBy:VARCHAR#, 
+        #authorisedDate:DATE#, #startDate:DATE#, #endDate:DATE#)
+    </mapped-statement>
+
+	<!-- Use ChargesTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateChargesTO" inline-parameters="true">
+        UPDATE CHARGES SET 
+        PERCENTAGE = #percentage:NUMERIC#,
+        FIXED_RATE = #fixedRate:NUMERIC#,
+        FOR_EVERY_AMT = #forEveryAmt:NUMERIC#,
+        FOR_EVERY_RATE = #forEveryRate:NUMERIC#,
+        FOR_EVERY_TYPE = #forEveryType:VARCHAR#,
+        STATUS = 'MODIFIED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#,
+        AUTHORISED = #authorised:VARCHAR#,
+        AUTHORISED_BY = #authorisedBy:VARCHAR#,
+        AUTHORISED_DATE = #authorisedDate:DATE#
+        WHERE PRODUCT_ID=#productId:VARCHAR# AND PRODUCT_TYPE=#productType:VARCHAR#  
+        AND CHARGE_TYPE=#chargeType:VARCHAR# AND FROM_AMT = #fromAmt:NUMBER# 
+        AND START_DT = #startDate:DATE# AND END_DT = #endDate:DATE# AND
+        FROM_AMT = #fromAmt:NUMBER# AND TO_AMT = #toAmt:NUMBER#
+    </mapped-statement>
+
+	<!-- Use ChargesTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteChargesTO" inline-parameters="true">
+        UPDATE CHARGES SET 
+        STATUS = 'DELETED', 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDate:DATE#
+        WHERE PRODUCT_ID=#productId:VARCHAR# AND PRODUCT_TYPE=#productType:VARCHAR#  
+        AND CHARGE_TYPE=#chargeType:VARCHAR# AND FROM_AMT = #fromAmt:NUMBER# 
+        AND START_DT = #startDate:DATE# AND END_DT = #endDate:DATE# AND
+        FROM_AMT = #fromAmt:NUMBER# AND TO_AMT = #toAmt:NUMBER#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeCharges" inline-parameters="true">
+        UPDATE CHARGES SET 
+        AUTHORISED = #STATUS:VARCHAR#, 
+        AUTHORISED_BY = #USER_ID:VARCHAR#, 
+        AUTHORISED_DATE = #AUTHORIZEDT:DATE# 
+        WHERE PRODUCT_ID=#PRODUCT ID:VARCHAR# AND PRODUCT_TYPE=#PRODUCT TYPE:VARCHAR#  
+        AND CHARGE_TYPE=#CHARGE TYPE:VARCHAR# <!--AND FROM_AMT = #FROM AMT:NUMERIC# 
+                AND START_DT = #START DT:DATE# AND END_DT = #END DT:DATE# AND
+                TO_AMT = #TO AMT:NUMERIC# -->
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getChargesAuthorizeList" result-class="java.util.LinkedHashMap" >
+        SELECT PRODUCT_TYPE as "Product_Type", PRODUCT_ID as "Product_Id", 
+        CHARGE_TYPE as "Charge_Type", START_DT as "Start_Dt", END_DT as "End_Dt",  
+        FROM_AMT as "From_Amt", TO_AMT AS "To_Amt" ,
+        PERCENTAGE as Percentage, FIXED_RATE as "Fixed_Rate" 
+        FROM CHARGES C
+        WHERE C.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORISED = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORISED IS NULL OR 
+                C.AUTHORISED NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ChargesTO object (JavaBean) properties -->
+    <result-map name="getChargesTOResult" class="com.see.truetransact.transferobject.common.charges.ChargesTO">
+        <property name="chargeType" column="CHARGE_TYPE"/>
+        <property name="productId" column="PRODUCT_ID"/>
+        <property name="productType" column="PRODUCT_TYPE"/>
+        <property name="percentage" column="PERCENTAGE"/>
+        <property name="fixedRate" column="FIXED_RATE"/>
+        <property name="fromAmt" column="FROM_AMT"/>
+        <property name="toAmt" column="TO_AMT"/>
+        <property name="forEveryAmt" column="FOR_EVERY_AMT"/>
+        <property name="forEveryRate" column="FOR_EVERY_RATE"/>
+        <property name="forEveryType" column="FOR_EVERY_TYPE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="authorised" column="AUTHORISED"/>
+        <property name="authorisedBy" column="AUTHORISED_BY"/>
+        <property name="authorisedDate" column="AUTHORISED_DATE"/>
+        <property name="startDate" column="START_DT"/>
+        <property name="endDate" column="END_DT"/>
+    </result-map>
+     
+        <!-- map statement to calculate the charges and save the same -->
+    <mapped-statement name="Charges.getChargesAmount" result-class="java.util.HashMap">        
+        SELECT FROM_AMT, FIXED_RATE, PERCENTAGE, FOR_EVERY_AMT, FOR_EVERY_RATE, 
+        FOR_EVERY_TYPE, TO_AMT FROM CHARGES 
+        WHERE (#ACT_AMT:NUMBER# BETWEEN FROM_AMT AND TO_AMT OR 
+        #ACT_AMT:NUMBER# > (SELECT MAX(TO_AMT) FROM CHARGES 
+        WHERE PRODUCT_ID=#PRODUCT_ID:VARCHAR# AND 
+        PRODUCT_TYPE=#PRODUCT_TYPE:VARCHAR# AND CHARGE_TYPE=#CHRG_TYPE:VARCHAR# 
+        AND AUTHORISED = 'AUTHORIZED'))
+        AND PRODUCT_ID=#PRODUCT_ID:VARCHAR# AND 
+        PRODUCT_TYPE=#PRODUCT_TYPE:VARCHAR# AND CHARGE_TYPE=#CHRG_TYPE:VARCHAR# 
+        AND AUTHORISED = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="Charges.insertCalcCharges" inline-parameters="true">        
+        INSERT INTO ACT_CHARGES (ACT_NUM, CHRG_DT, CHRG_TYPE, CHRG_AMT, AC_HD_ID, 
+        PRODUCT_TYPE, PRODUCT_ID, ACT_AMT, ACT_COUNT, TRANS_LOG_ID,REMAIN_FOLIO,UPTO_BALANCE_TYPE,REMAIN_AMT) VALUES
+        (#ACT_NUM:VARCHAR#, #TODAY_DT:DATE#, #CHRG_TYPE:VARCHAR#, #CHRG_AMT:NUMERIC#, 
+        #AC_HD_ID:VARCHAR#, #PRODUCT_TYPE:VARCHAR#, #PRODUCT_ID:VARCHAR#, 
+        #ACT_AMT:NUMERIC#, #ACT_COUNT:NUMERIC#, #LOG_ID:VARCHAR#,#REMAIN_FOLIO:NUMERIC#,#CHCK_UPTO_BALANCE:VARCHAR#,#REMAIN_AMT:NUMERIC#) 
+    </mapped-statement>
+        
+    <mapped-statement name="updateActChargesLogID" inline-parameters="true">        
+        UPDATE ACT_CHARGES SET TRANS_LOG_ID = NULL WHERE TRANS_LOG_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+
+        <!-- end of map statement to calculate the charges and save the same --> 
+         
+        <!-- map statement for retriving FOLIO charges for batch process -->          
+    <dynamic-mapped-statement name="Charges.getFolioParamsOA" result-class="java.util.HashMap">        
+        SELECT OCP.PROD_ID, OCP.FOLIO_CHG_APPLICABLE AS FOLIO_CHG_APPLICABLE,
+        OCP.TO_CHARGE_ON AS TO_CHARGE_ON,
+        OCP.TO_CHARGE_ON_TYPE AS TO_CHARGE_ON_TYPE, 
+        OCP.TO_COLLECT_FOLIO_CHG AS TO_COLLECT_FOLIO_CHG,
+        OCP.NO_ENTRIESPER_FOLIO AS NO_OFENTRIESPER_FOLIO,
+        OP.AC_HD_ID, 
+        OAP.FOLIO_CHRG AS FOLIO ,
+        OCP.FOLIO_CHG_APPL_FREQ  as FOLIO_CHRG_APPLFREQ,OCP.RATE_PER_FOLIO as RATE_PER_FOLIO,
+        OCP.FOLIO_CHARGE_TYPE,OCP.FOLIO_RESTRICTION_FRQ,OCP.FOLIO_RESTRICTION_PERIOD
+        FROM 
+        OP_AC_CHARGES_PARAM OCP, OP_AC_ACHEAD_PARAM OAP, OP_AC_PRODUCT OP WHERE
+        OAP.PROD_ID = OP.PROD_ID AND OCP.PROD_ID = OP.PROD_ID AND 
+        OAP.PROD_ID = OCP.PROD_ID AND OCP.FOLIO_CHG_APPLICABLE = 'Y'
+            <!--AND OP.PROD_ID ='CAGen'-->
+        <dynamic>
+            <isParameterPresent>
+                    <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PROD_ID">
+                    OCP.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PRODUCT_ID">
+                    OCP.PROD_ID = #PRODUCT_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Charges.getFolioParamsTL_AD" result-class="java.util.HashMap">        
+        SELECT LPC.PROD_ID, LPC.FOLIO_CHRG_APPL AS FOLIO_CHG_APPLICABLE,LPC.TO_COLLECT_FOLIOCHRG,
+        LPC.TO_COLLECT_CHRG_ON AS TO_CHARGE_ON,   
+        LPC.TO_CHARGE_ON_TYPE, LPC.FOLIO_CHRG_APPLFREQ,
+        LPC.TO_COLLECT_FOLIOCHRG AS TO_COLLECT_FOLIO_CHG,
+        LPC.NO_ENTRIES_PER_FOLIO AS NO_OFENTRIESPER_FOLIO,
+        LP.ACCT_HEAD AS AC_HD_ID, LPC.RATE_PER_FOLIO,
+        LPA.FOLIO_CHRG_AC AS FOLIO FROM 
+        LOANS_PROD_CHARGES LPC, LOANS_PROD_ACHD LPA, LOANS_PRODUCT LP WHERE
+        LPA.PROD_ID = LP.PROD_ID AND LPC.PROD_ID = LP.PROD_ID AND 
+        LPA.PROD_ID = LPC.PROD_ID  AND LPC.FOLIO_CHRG_APPL = 'Y'
+        <dynamic>
+            <isEqual prepend="AND" property="BEHAVES_LIKE" compareValue="AD">
+                LP.BEHAVES_LIKE IN ('OD','CC')
+            </isEqual>
+            <isEqual prepend="AND" property="BEHAVES_LIKE" compareValue="TL">
+                LP.BEHAVES_LIKE NOT IN ('OD','CC')
+            </isEqual>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PROD_ID">
+                    LPC.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Charges.getAllAccountDataOA" result-class="java.util.HashMap">        
+        SELECT AM.ACT_NUM, AVAILABLE_BALANCE, BRANCH_CODE,DECODE(APD.LAST_FOLIO_CHG_RUN_DT,NULL,AM.CREATE_DT, APD.LAST_FOLIO_CHG_RUN_DT) AS LAST_FOLIO_CHG_RUN_DT
+        FROM ACT_MASTER AM  ,ACT_PARAM_DETAIL APD
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_CODE= #BRANCH_ID:VARCHAR#
+        AND AM.ACT_NUM=APD.ACT_NUM
+        AND ACT_STATUS_ID IN ('NEW', 'OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE','PART_FREEZE') AND AM.STATUS !='DELETED' AND AUTHORIZATION_STATUS='AUTHORIZED'
+        and DECODE(APD.LAST_FOLIO_CHG_RUN_DT,NULL,AM.CREATE_DT, APD.LAST_FOLIO_CHG_RUN_DT)&lt; #NEXT_CHARG_CALC_DT:DATE#
+           
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AM.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AM.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CREATE_LIMIT_DT">
+                   AM.CREATE_DT &lt;=#CREATE_LIMIT_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Charges.getAllAccountDataTL_AD" result-class="java.util.HashMap">        
+        SELECT ACCT_NUM AS ACT_NUM, AVAILABLE_BALANCE, BRANCH_ID AS BRANCH_CODE 
+        FROM LOANS_FACILITY_DETAILS WHERE PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID=#BRANCH_ID:VARCHAR# 
+        AND ACCT_STATUS IN ('NEW', 'OPERATIONAL') AND STATUS !='DELETED' AND AUTHORIZE_STATUS_1='AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    ACCT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    ACCT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Charges.getIndiFolioAccountsCash" result-class="java.lang.String">
+           <!-- SELECT COUNT(*) FROM CASH_TRANS CT, OP_AC_CHARGES_PARAM OCP WHERE 
+            CT.PROD_ID = #PROD_ID# AND ACT_NUM = #ACT_NUM#
+            AND (TRANS_DT > (SELECT MAX(CHRG_DT) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG') OR 0 = (SELECT COUNT(*) FROM ACT_CHARGES           //BY ABI
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG')) AND CT.PROD_ID = OCP.PROD_ID AND 
+            CT.TRANS_DT BETWEEN OCP.LAST_FOLIO_CHRG_APPLIED AND OCP.NEXT_FOLIO_CHG_DUE-->
+            <!--SELECT COUNT(*) FROM CASH_TRANS CT,  ALL_CHARGES_MAINTENANCE OCP WHERE 
+            CT.PROD_ID = #PROD_ID# AND ACT_NUM = #ACT_NUM# AND CHARGE_TYPE=#TASK_NAME#
+            AND CT.PROD_ID = OCP.PROD_ID AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+            CT.TRANS_DT BETWEEN OCP.LAST_CHARG_CALC_DT AND OCP.NEXT_CHARG_CALC_DT-->
+            
+        SELECT COUNT(*) FROM CASH_TRANS CT WHERE 
+        CT.PROD_ID = #PROD_ID:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+        CT.TRANS_DT BETWEEN #LAST_CHARG_CALC_DT:DATE# AND #NEXT_CHARG_CALC_DT:DATE#
+           
+        <dynamic>
+            <isNotEmpty prepend= "AND" property = "TO_CHARGE_ON_TYPE" >
+                TRANS_TYPE  = #TO_CHARGE_ON_TYPE:VARCHAR#
+            </isNotEmpty>
+                
+               <!-- <isNotEmpty property = "DATE_FROM" >
+                    <isNotEmpty prepend= "AND" property = "DATE_TO" >
+                        (OCP.LAST_FOLIO_CHRG_APPLIED BETWEEN #DATE_FROM# AND #DATE_TO#)            BY ABI
+                    </isNotEmpty>
+                </isNotEmpty> -->
+        </dynamic>
+            
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getAllChargesTO" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT(PRODUCT_TYPE) AS PRODUCT_TYPE, PRODUCT_ID AS PRODUCT_ID,CHARGE_TYPE AS CHARGE_TYPE 
+        FROM  CHARGES WHERE <!-- AUTHORISED='AUTHORIZED' AND -->
+        STATUS !='DELETED'
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PRODUCT_TYPE">
+                    UPPER(PRODUCT_TYPE) LIKE UPPER('%$PRODUCT_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="PRODUCT_ID">
+                    UPPER(PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="CHARGE_TYPE">
+                    UPPER(CHARGE_TYPE) LIKE UPPER('%$CHARGE_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="Charges.getIndiFolioAccountsTransfer" result-class="java.lang.String">
+           <!-- SELECT COUNT(*) FROM TRANSFER_TRANS TT, OP_AC_CHARGES_PARAM OCP WHERE 
+            TT.PROD_ID = #PROD_ID# AND ACT_NUM = #ACT_NUM#
+            AND (TRANS_DT > (SELECT MAX(CHRG_DT) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG') OR 0 = (SELECT COUNT(*) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG')) AND TT.PROD_ID = OCP.PROD_ID AND 
+            TT.TRANS_DT BETWEEN OCP.LAST_FOLIO_CHRG_APPLIED AND OCP.NEXT_FOLIO_CHG_DUE  -->
+            <!--SELECT COUNT(*) FROM TRANSFER_TRANS TT, ALL_CHARGES_MAINTENANCE OCP WHERE 
+            TT.PROD_ID = #PROD_ID# AND ACT_NUM = #ACT_NUM# AND CHARGE_TYPE=#TASK_NAME#
+            AND TT.PROD_ID = OCP.PROD_ID AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+            TT.TRANS_DT BETWEEN OCP.LAST_CHARG_CALC_DT AND OCP.NEXT_CHARG_CALC_DT-->
+        SELECT COUNT(*) FROM TRANSFER_TRANS TT  WHERE 
+        TT.PROD_ID = #PROD_ID:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+        TT.TRANS_DT  BETWEEN #LAST_CHARG_CALC_DT:DATE# AND #NEXT_CHARG_CALC_DT:DATE#
+        <dynamic>
+            <isNotEmpty prepend= "AND" property = "TO_CHARGE_ON_TYPE" >
+                TRANS_TYPE  = #TO_CHARGE_ON_TYPE:VARCHAR#
+            </isNotEmpty>
+                
+            <isNotEmpty property = "TO_CHARGE_ON">
+                <isEqual prepend= "AND" property = "TO_CHARGE_ON"  compareValue="SYSTEM">
+                    INIT_TRANS_ID  = #SYSTEM:VARCHAR#
+                </isEqual> 
+
+                <isEqual prepend= "AND" property = "TO_CHARGE_ON"  compareValue="MANUAL">
+                    INIT_TRANS_ID  != #SYSTEM:VARCHAR#
+                </isEqual>
+            </isNotEmpty>
+                
+               <!-- <isNotEmpty property = "DATE_FROM" >
+                    <isNotEmpty prepend= "AND" property = "DATE_TO" >
+                        (OCP.LAST_FOLIO_CHRG_APPLIED BETWEEN #DATE_FROM# AND #DATE_TO#)
+                    </isNotEmpty>
+                </isNotEmpty>  -->
+                
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement  name = "insertallcharges" result-class="java.util.HashMap">
+        INSERT INTO ALL_CHARGES_MAINTENANCE (APPLIED_DATE,PROD_TYPE,PROD_ID,CHARGE_TYPE,LAST_CHARG_CALC_DT,NEXT_CHARG_CALC_DT,
+            
+        BRANCH_ID)VALUES(#APPLIED_DATE:TIMESTAMP#,#PROD_TYPE:VARCHAR#,#PROD_ID:VARCHAR#,#CHARGE_TYPE:VARCHAR#,
+        #LAST_CHARG_CALC_DT:TIMESTAMP#,#NEXT_CHARG_CALC_DT:TIMESTAMP#,#BRANCH_ID:VARCHAR#)
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="Charges.getIndiFolioAccountsOutward" result-class="java.lang.String">
+           <!-- SELECT COUNT(*) FROM PAY_IN_SLIP PS, OP_AC_CHARGES_PARAM OCP WHERE 
+            PS.PROD_ID = #PROD_ID# AND ACCT_NO = #ACT_NUM#
+            AND STATUS != 'DELETED' AND (PAY_IN_SLIP_DT > 
+            (SELECT MAX(CHRG_DT) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG') OR 0 = (SELECT COUNT(*) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG')) AND PS.PROD_ID = OCP.PROD_ID AND 
+            PS.PAY_IN_SLIP_DT BETWEEN OCP.LAST_FOLIO_CHRG_APPLIED AND OCP.NEXT_FOLIO_CHG_DUE
+            
+            <dynamic>
+                <isNotEmpty property = "DATE_FROM" >
+                    <isNotEmpty prepend= "AND" property = "DATE_TO" >
+                        (OCP.LAST_FOLIO_CHRG_APPLIED BETWEEN #DATE_FROM# AND #DATE_TO#)
+                    </isNotEmpty>
+                </isNotEmpty>
+            </dynamic> -->
+            <!--SELECT COUNT(*) FROM PAY_IN_SLIP PS, ALL_CHARGES_MAINTENANCE OCP WHERE 
+            PS.PROD_ID = #PROD_ID# AND ACCT_NO = #ACT_NUM# AND CHARGE_TYPE=#TASK_NAME#
+              AND PS.PROD_ID = OCP.PROD_ID AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+            PS.PAY_IN_SLIP_DT BETWEEN OCP.LAST_CHARG_CALC_DT AND OCP.NEXT_CHARG_CALC_DT -->
+        SELECT COUNT(*) FROM PAY_IN_SLIP PS WHERE 
+        PS.PROD_ID = #PROD_ID:VARCHAR# AND ACCT_NO = #ACT_NUM:VARCHAR# AND
+        AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+        PS.PAY_IN_SLIP_DT BETWEEN #LAST_CHARG_CALC_DT:DATE# AND #NEXT_CHARG_CALC_DT:DATE# 
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Charges.getIndiFolioAccountsInward" result-class="java.lang.String">
+            <!--SELECT COUNT(*) FROM INWARD_CLEARING IC, OP_AC_CHARGES_PARAM OCP WHERE 
+            IC.PROD_ID = #PROD_ID# AND ACCT_NO = #ACT_NUM#
+            AND STATUS != 'DELETED' AND (INWARD_DT > 
+            (SELECT MAX(CHRG_DT) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG')OR 0 = (SELECT COUNT(*) FROM ACT_CHARGES
+            WHERE ACT_NUM = #ACT_NUM# AND CHRG_TYPE = 'FOLIOCHG')) AND IC.PROD_ID = OCP.PROD_ID AND 
+            IC.CLEARING_DT BETWEEN OCP.LAST_FOLIO_CHRG_APPLIED AND OCP.NEXT_FOLIO_CHG_DUE
+            
+            <dynamic>
+                <isNotEmpty property = "DATE_FROM" >
+                    <isNotEmpty prepend= "AND" property = "DATE_TO" >
+                        (OCP.LAST_FOLIO_CHRG_APPLIED BETWEEN #DATE_FROM# AND #DATE_TO#)
+                    </isNotEmpty>
+                </isNotEmpty>
+            </dynamic>
+            -->
+        SELECT COUNT(*) FROM INWARD_CLEARING IC WHERE 
+        IC.PROD_ID = #PROD_ID:VARCHAR# AND ACCT_NO = #ACT_NUM:VARCHAR#
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+        IC.CLEARING_DT BETWEEN #LAST_CHARG_CALC_DT:DATE# AND #NEXT_CHARG_CALC_DT:DATE#     
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="Charges.getSavedCharges" result-map="getChargesTOResult">
+        SELECT * FROM CHARGES WHERE PRODUCT_ID=#PRODUCT_ID:VARCHAR# AND 
+        PRODUCT_TYPE=#PRODUCT_TYPE:VARCHAR# AND CHARGE_TYPE=#CHRG_TYPE:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND (AUTHORISED IS NULL OR AUTHORISED != 'REJECTED')  
+        AND (#TODAY_DT:DATE# BETWEEN START_DT AND END_DT OR START_DT > #TODAY_DT:DATE#)
+    </mapped-statement>
+
+    <mapped-statement name="getSelectChargesTO" result-map="getChargesTOResult">
+        SELECT * FROM CHARGES WHERE PRODUCT_ID=#PRODUCT_ID:VARCHAR# AND 
+        PRODUCT_TYPE=#PRODUCT_TYPE:VARCHAR# AND CHARGE_TYPE=#CHRG_TYPE:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND (AUTHORISED IS NULL OR AUTHORISED != 'REJECTED')  
+    </mapped-statement>  
+        
+    <mapped-statement name="Charges.sumAmtAD" result-class="java.util.HashMap">
+        SELECT SUM(AMT)  FROM ADVANCES_DAYEND_BALANCE   WHERE 
+        ACT_NUM = #ACT_NUM:VARCHAR# AND DAY_END_DT BETWEEN #DATE_FROM:DATE# AND #DATE_TO:DATE# 
+    </mapped-statement>  
+        
+    <mapped-statement name="Charges.checkNagetiveBalance" result-class="java.util.HashMap">
+        select count(*) as COUNTER from advances_dayend_balance where act_num=#ACT_NUM:VARCHAR# and 
+        day_end_dt &gt; =#DATE_FROM:DATE# and day_end_dt &lt;=#DATE_TO:DATE# and amt &lt;=0 
+    </mapped-statement> 
+        
+    <mapped-statement name="Charges.sumAmtOA" result-class="java.util.HashMap">
+        SELECT SUM(AMT)  FROM ACT_DAYEND_BALANCE   WHERE 
+        ACT_NUM = #ACT_NUM:VARCHAR# AND DAY_END_DT BETWEEN #DATE_FROM:DATE# AND #DATE_TO:DATE# 
+    </mapped-statement>
+        
+    <mapped-statement name="Charges.getFreeFolio" result-class="java.util.HashMap">
+        SELECT PERCENTAGE AS NO_FREE_FOLIO  FROM CHARGES WHERE TOT_AMT BETWEEN FROM_AMT AND TO_AMT  AND PRODUCT_ID=#PROD_ID:VARCHAR# AND CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+        AND AUTHORISED='AUTHORIZED' AND STATUS !='DELETED'
+    </mapped-statement>
+         
+    <mapped-statement name="getSelectCommonFolioCharges" result-class="java.util.HashMap"> 
+        SELECT * FROM ALL_CHARGES_MAINTENANCE WHERE BRANCH_ID=#BRANCH_ID:VARCHAR# AND PROD_ID=#PROD_ID:VARCHAR# 
+        AND PROD_TYPE=#PROD_TYPE:VARCHAR# AND CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#          
+    </mapped-statement>  
+        
+    <mapped-statement name="Charges.getPreviousFolio" result-class="java.util.HashMap"> 
+        SELECT distinct(REMAIN_FOLIO)    FROM  ACT_CHARGES WHERE 
+        CHRG_DT= (SELECT MAX(CHRG_DT) FROM  ACT_CHARGES WHERE  ACT_NUM =#ACT_NUM:VARCHAR#)
+        AND ACT_NUM =#ACT_NUM:VARCHAR# AND PRODUCT_ID=#PROD_ID:VARCHAR# AND CHRG_TYPE=#TASK_NAME:VARCHAR# 
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="updateFolioCharges" inline-parameters="true">
+        UPDATE ALL_CHARGES_MAINTENANCE SET LAST_CHARG_CALC_DT=#LAST_CHARG_CALC_DT:TIMESTAMP#,NEXT_CHARG_CALC_DT=#NEXT_CHARG_CALC_DT:TIMESTAMP# WHERE BRANCH_ID=#BRANCH_ID:VARCHAR# AND PROD_ID=#PROD_ID:VARCHAR#
+        <dynamic>
+           
+            <isParameterPresent>
+                <isNotNull prepend ="AND" property="CHARGE_TYPE">
+                    CHARGE_TYPE=#CHARGE_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    <mapped-statement name="updateLastFolioChgRunDateOA" inline-parameters="true">
+        update act_param_detail set LAST_FOLIO_CHG_RUN_DT=#NEXT_CHARG_CALC_DT:DATE# where ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="updateLastFolioChgRunDateAD" inline-parameters="true">
+        update act_param_detail set LAST_FOLIO_CHG_RUN_DT=#NEXT_CHARG_CALC_DT:DATE# where ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+    
+         
+    <dynamic-mapped-statement name="Charges.getIndividualFolioAccounts" result-class="java.lang.String">
+        SELECT COUNT(*) FROM PASS_BOOK CT WHERE 
+            ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND 
+        CT.TRANS_DT BETWEEN #LAST_CHARG_CALC_DT:DATE# AND #NEXT_CHARG_CALC_DT:DATE#  
+        <dynamic>
+            <isNotEmpty prepend= "AND" property = "TO_CHARGE_ON_TYPE" >
+                TRANS_TYPE  = #TO_CHARGE_ON_TYPE:VARCHAR#
+            </isNotEmpty>
+        </dynamic>
+    </dynamic-mapped-statement>
+</sql-map>

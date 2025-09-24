@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InstrumentAllotmentTOMap">
+
+	<!-- Use TokenIssueTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInstrumentIssueTO" inline-parameters="true">
+        INSERT INTO INSTRUMENT_ISSUE
+        (ISSUE_ID, ISSUE_DT, NO_OF_INSTRUMENTS, RECEIVED_BY, SERIES_NO, INSTRUMENT_START_NO, INSTRUMENT_END_NO, BRANCH_ID, CREATED_BY, CREATED_DT, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #issueId:VARCHAR#, #issueDt:DATE#, #noOfInstruments:NUMERIC#, #receivedBy:VARCHAR#, #seriesNo:VARCHAR#, #instrumentStartNo:NUMERIC#, #instrumentEndNo:NUMERIC#, #branchId:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectInstrumentIssue" result-class="java.util.LinkedHashMap" >
+        SELECT ISSUE_ID,ISSUE_DT,SERIES_NO,INSTRUMENT_START_NO, INSTRUMENT_END_NO FROM INSTRUMENT_ISSUE 
+        WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateInstrumentIssueTO" inline-parameters="true">
+        UPDATE INSTRUMENT_ISSUE SET 
+        ISSUE_ID = #issueId:VARCHAR#,
+        NO_OF_INSTRUMENTS = #noOfInstruments:NUMERIC#,
+        RECEIVED_BY = #receivedBy:VARCHAR#,
+        SERIES_NO = #seriesNo:VARCHAR#,
+        INSTRUMENT_START_NO = #instrumentStartNo:NUMERIC#,
+        INSTRUMENT_END_NO = #instrumentEndNo:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE ISSUE_ID = #issueId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getInstrumentAllotmentTOResult" class="com.see.truetransact.transferobject.remittance.InstrumentAllotmentTO">
+        <property name="issueId" column="ISSUE_ID"/>
+        <property name="issueDt" column="ISSUE_DT"/>
+        <property name="noOfInstruments" column="NO_OF_INSTRUMENTS"/>
+        <property name="receivedBy" column="RECEIVED_BY"/>
+        <property name="seriesNo" column="SERIES_NO"/>
+        <property name="instrumentStartNo" column="INSTRUMENT_START_NO"/>
+        <property name="instrumentEndNo" column="INSTRUMENT_END_NO"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectInstrumentIssueTO" result-map="getInstrumentAllotmentTOResult" >
+        SELECT * FROM INSTRUMENT_ISSUE 
+        WHERE ISSUE_ID = #ISSUE_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name = "getInstrumentIssueAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  ISSUE_ID, BRANCH_ID , INSTRUMENT_START_NO , INSTRUMENT_END_NO , RECEIVED_BY FROM INSTRUMENT_ISSUE ISS
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ISS.STATUS_BY)
+        AND
+        (AUTHORIZE_STATUS IS NULL OR 
+        AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+        ORDER BY  ISSUE_ID
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeInstrumentIssue" result-class="java.util.HashMap">
+        UPDATE INSTRUMENT_ISSUE  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  ISSUE_ID = #ISSUE_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#  
+    </mapped-statement>  
+        
+    <mapped-statement name="checkInventoryDetailsForInstrumentIssue" result-class="java.util.HashMap">
+        SELECT LEAVES_SLNO_FROM,LEAVES_SLNO_TO FROM INVENTORY_DETAILS WHERE STATUS!='DELETED' 
+        AND INITIATED_BRANCH =#BRANCH_ID:VARCHAR#  AND INSTRUMENT_PREFIX= #SERIES_NO:VARCHAR# 
+    </mapped-statement>  
+        
+    <mapped-statement name="deleteInstrumentIssueTO" inline-parameters="true">
+        UPDATE INSTRUMENT_ISSUE SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE  ISSUE_ID = #issueId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID = #branchId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getStartAndEndNo" result-class="java.util.HashMap">
+        SELECT SERIES_NO, INSTRUMENT_START_NO, INSTRUMENT_END_NO, SERIES_NO FROM INSTRUMENT_ISSUE WHERE 
+        ISSUE_DT= #CURRENT_DT:DATE#  AND
+        BRANCH_ID= #BRANCH_CODE:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED' AND
+        STATUS !='DELETED'  AND RECEIVED_BY= #RECEIVED_BY:VARCHAR# order by ISSUE_ID
+    </mapped-statement> 
+        
+    <mapped-statement name="getMaxInstrumentNoFromRemitIsuue" result-class="java.util.HashMap">
+        SELECT  NVL(MAX(INSTRUMENT_NO2),1) as INS2 , INSTRUMENT_NO1 as INS1
+        FROM REMIT_ISSUE where  BRANCH_ID=  #BRANCH_ID:VARCHAR# AND
+        STATUS !='DELETED' AND INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR# AND STATUS_BY = #RECEIVED_BY:VARCHAR# group by INSTRUMENT_NO1
+    </mapped-statement> 
+ 
+    <mapped-statement name="ToCheckInstrumentIssueForManualEntry" result-class="java.util.HashMap">
+        SELECT INSTRUMENT_START_NO,INSTRUMENT_END_NO FROM INSTRUMENT_ISSUE WHERE STATUS!='DELETED' 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND SERIES_NO= #INSTRUMENT_NO1:VARCHAR# AND CREATED_BY = #RECEIVED_BY:VARCHAR#
+    </mapped-statement> 
+</sql-map>

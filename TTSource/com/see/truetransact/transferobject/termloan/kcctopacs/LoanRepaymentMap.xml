@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanRepaymentMap">
+
+    <mapped-statement name="getFinYearWiseOutstanding" result-class="java.util.LinkedHashMap">
+        SELECT A.FIN_YEAR,A.TOT_OUTSTANDING,A.OVER_DUE FROM(SELECT A.START_FIN_YEAR||'-'||A.END_FIN_YEAR AS FIN_YEAR, SUM(CLEAR_BALANCE) AS TOT_OUTSTANDING, 0 AS OVER_DUE
+        FROM
+        (SELECT NSD.NCL_SANCTION_NO, NSL.START_FIN_YEAR, NSL.END_FIN_YEAR
+        FROM NCL_SANCTION_DETAILS NSD, NCL_SUB_LIMIT NSL 
+        WHERE NSD.NCL_SANCTION_NO=NSL.NCL_SANCTION_NO AND NSD.AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED') A,
+        (SELECT NCL_SANCTION_NO, RELEASE_DATE, CLEAR_BALANCE FROM NCL_RELEASE_DETAILS WHERE AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED') B
+        WHERE A.NCL_SANCTION_NO=B.NCL_SANCTION_NO 
+        AND RELEASE_DATE BETWEEN '01-APR-'||A.START_FIN_YEAR AND '31-MAR-'||A.END_FIN_YEAR AND A.NCL_SANCTION_NO=B.NCL_SANCTION_NO
+        AND A.NCL_SANCTION_NO=#NCL_SANCTION_NO:VARCHAR#
+        GROUP BY A.NCL_SANCTION_NO, A.START_FIN_YEAR, A.END_FIN_YEAR) A WHERE TOT_OUTSTANDING>0
+        ORDER BY 1
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getIntSubsidyRateOfInt" result-class="java.util.HashMap">
+        SELECT ROI AS "ROI_INTEREST", SRGP.PROD_ID, TOTAL_ROI AS "INTEREST" , CUST_ROI,INSTITUTION_NAME AS "NAME" 
+        FROM SUBSIDY_ROI_GROUP SRG, SUBSIDY_ROI_GROUP_CAT SRGC, SUBSIDY_ROI_GROUP_PROD SRGP,
+        SUBSIDY_ROI_GROUP_TYPE_RATE SRGTR 
+        WHERE SRG.ROI_GROUP_ID = SRGC.ROI_GROUP_ID AND
+        SRG.ROI_GROUP_ID = SRGP.ROI_GROUP_ID AND
+        SRG.ROI_GROUP_ID = SRGTR.ROI_GROUP_ID AND
+        SRG.PRODUCT_TYPE = #PRODUCT_TYPE:VARCHAR# AND
+        SRGP.PROD_ID = #PROD_ID:VARCHAR# AND 
+        SRGC.CATEGORY_ID = #CATEGORY_ID:VARCHAR# AND
+        ((#CUR_DT:DATE# BETWEEN ROI_DATE AND ROI_END_DATE)
+        OR (ROI_DATE &lt;= #CUR_DT:DATE# AND ROI_END_DATE IS NULL))
+        AND SRG.STATUS != 'DELETED'   AND SRGC.STATUS != 'DELETED'  AND SRGP.STATUS != 'DELETED'  
+        AND SRGTR.STATUS != 'DELETED' AND SRG.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getFinancialYearReleaseDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM NCL_RELEASE_DETAILS WHERE (RELEASE_DATE BETWEEN '01-APR-'||#START_YEAR# AND '31-MAR-'||#END_YEAR#) 
+        AND NCL_SANCTION_NO = #NCL_SANCTION_NO:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' AND CLEAR_BALANCE &gt;0 
+        AND CLOSED_STATUS IS NULL 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DUE_DATE">
+                    DUE_DATE &lt;=#DUE_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY 1
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="getNCLPrincipalPaidDetails" result-class="java.util.LinkedHashMap">
+        SELECT NVL(SUM(PRINCIPLE),0) AS PAID_PRINCIPAL_AMT FROM LOAN_TRANS_DETAILS WHERE TRN_CODE='C*' 
+        AND ACT_NUM=#RELEASE_NO:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getInstallmentDetailsUptoCurrentDate" result-class="java.util.LinkedHashMap">
+        SELECT * FROM NCL_REL_INSTALLMENT WHERE RELEASE_NO=#RELEASE_NO:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CURR_DT">
+                    INSTALLMENT_DT&lt;=#CURR_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY INSTALLMENT_DT
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="insertLoanRepaymentDetails" result-class="java.util.LinkedHashMap">
+        INSERT INTO NCL_LOAN_REPAY_DETAILS
+        (LOAN_REPAY_NO, NCL_SANCTION_NO, RELEASE_NO, REPAY_DATE, DUE_DATE, CLEAR_BALANCE, 
+        PRINCIPAL, INT_UPTO_DUE_DT, INT_AFTER_DUE_DT, PENAL, CHARGES, REPAY_AMOUNT, STATUS, STATUS_BY, 
+        STATUS_DT,CALCULATED_INT_UPTO_DUE_DT, CALCULATED_INT_AFTER_DUE_DT
+        ) VALUES (
+        #LOAN_REPAY_NO:VARCHAR#, #NCL_SANCTION_NO:VARCHAR#, #RELEASE_NO:VARCHAR#, #REPAY_DATE:DATE#, #DUE_DATE:DATE#, 
+        #CLEAR_BALANCE:VARCHAR#, #PRINCIPAL_TO_PAY:VARCHAR#, #INT_UP_TO_DATE_AMT:VARCHAR#, #INT_AFTER_DUE_DATE_AMT:VARCHAR#, 
+        #PENAL:VARCHAR#, #CHARGES:VARCHAR#, #REPAY_AMOUNT:VARCHAR#, #STATUS:VARCHAR#, #STATUS_BY:VARCHAR#, #STATUS_DT:DATE#,
+        #CALCULATED_INT_UP_TO_DATE_AMT:VARCHAR#, #CALCULATED_INT_AFTER_DUE_DATE_AMT:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertAppropriateLoanRepaymentDetails" result-class="java.util.LinkedHashMap">
+        INSERT INTO NCL_APPROPRIATE_REPAY_DETAILS
+        (LOAN_REPAY_NO, RELEASE_NO, PRINCIPAL, INT_UPTO_DUE_DT, INT_AFTER_DUE_DT, PENAL, CHARGES
+        ) VALUES (
+        #LOAN_REPAY_NO:VARCHAR#, #RELEASE_NO:VARCHAR#, #PRINCIPAL_TO_PAY:VARCHAR#, #INT_UP_TO_DATE_AMT:VARCHAR#, 
+        #INT_AFTER_DUE_DATE_AMT:VARCHAR#, #PENAL:VARCHAR#, #CHARGES:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getAllLoanAccountHeads" result-class="java.util.LinkedHashMap">
+        SELECT LP.ACCT_HEAD,LPA.* FROM LOANS_PROD_ACHD LPA, LOANS_PRODUCT LP WHERE  LPA.PROD_ID = LP.PROD_ID AND LPA.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLoanRepaymentAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT LOAN_REPAY_NO,NRD.NCL_SANCTION_NO,REPAY_DATE,REPAY_AMOUNT,NRD.STATUS FROM NCL_LOAN_REPAY_DETAILS NRD, NCL_SANCTION_DETAILS NSD WHERE 
+        NRD.STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND 
+        RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = NRD.STATUS_BY) AND NRD.STATUS_BY!= #USER_ID:VARCHAR# AND NSD.NCL_SANCTION_NO=NRD.NCL_SANCTION_NO
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY LOAN_REPAY_NO
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getLoanRepaymentDelete" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT LOAN_REPAY_NO,NRD.NCL_SANCTION_NO,REPAY_DATE,REPAY_AMOUNT,NRD.STATUS FROM NCL_LOAN_REPAY_DETAILS NRD,
+        NCL_SANCTION_DETAILS NSD WHERE NRD.STATUS!='DELETED' AND NSD.NCL_SANCTION_NO=NRD.NCL_SANCTION_NO AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        AND AUTHORIZED_STATUS IS NULL 
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOAN_REPAY_NO">
+                    UPPER(LOAN_REPAY_NO) LIKE UPPER('%$LOAN_REPAY_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="NCL_SANCTION_NO">
+                    UPPER(NRD.NCL_SANCTION_NO) LIKE UPPER('%$NCL_SANCTION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="REPAY_DATE">
+                    UPPER(REPAY_DATE) LIKE UPPER('%$REPAY_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="REPAY_AMOUNT">
+                    UPPER(REPAY_AMOUNT) LIKE UPPER('%$REPAY_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(NRD.STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY LOAN_REPAY_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateLoanRepaymentStatus" result-class="java.util.LinkedHashMap">
+        UPDATE NCL_LOAN_REPAY_DETAILS SET STATUS='DELETED' WHERE LOAN_REPAY_NO =#LOAN_REPAY_NO:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getLoanRepaymentEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT LOAN_REPAY_NO,NRD.NCL_SANCTION_NO,REPAY_DATE,REPAY_AMOUNT,NRD.STATUS FROM NCL_LOAN_REPAY_DETAILS NRD,
+        NCL_SANCTION_DETAILS NSD WHERE NRD.STATUS!='DELETED' AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS='AUTHORIZED') 
+        AND NSD.NCL_SANCTION_NO=NRD.NCL_SANCTION_NO AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOAN_REPAY_NO">
+                    UPPER(LOAN_REPAY_NO) LIKE UPPER('%$LOAN_REPAY_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="NCL_SANCTION_NO">
+                    UPPER(NRD.NCL_SANCTION_NO) LIKE UPPER('%$NCL_SANCTION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="REPAY_DATE">
+                    UPPER(REPAY_DATE) LIKE UPPER('%$REPAY_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="REPAY_AMOUNT">
+                    UPPER(REPAY_AMOUNT) LIKE UPPER('%$REPAY_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(NRD.STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY LOAN_REPAY_NO 
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getLoanRepaymentDetails" result-class="java.util.LinkedHashMap">
+        SELECT LOAN_REPAY_NO,NCL_SANCTION_NO,RELEASE_NO,REPAY_DATE,DUE_DATE,CLEAR_BALANCE,PRINCIPAL,
+        INT_UPTO_DUE_DT,INT_AFTER_DUE_DT,PENAL,CHARGES,REPAY_AMOUNT FROM NCL_LOAN_REPAY_DETAILS WHERE LOAN_REPAY_NO=#LOAN_REPAY_NO:VARCHAR#
+        UNION ALL
+        SELECT LOAN_REPAY_NO,'' AS NCL_SANCTION_NO,RELEASE_NO,NULL AS REPAY_DATE,NULL AS DUE_DATE,NULL AS CLEAR_BALANCE,PRINCIPAL,
+        INT_UPTO_DUE_DT,INT_AFTER_DUE_DT,PENAL,CHARGES,NULL AS ASREPAY_AMOUNT FROM NCL_APPROPRIATE_REPAY_DETAILS 
+        WHERE LOAN_REPAY_NO=#LOAN_REPAY_NO:VARCHAR# ORDER BY 3,4
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeLoanRepayment" result-class="java.util.HashMap">
+        UPDATE NCL_LOAN_REPAY_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND LOAN_REPAY_NO=#LOAN_REPAY_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAppropriateRepaymentDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM NCL_APPROPRIATE_REPAY_DETAILS WHERE LOAN_REPAY_NO=#LOAN_REPAY_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateRepaymentClearBalance" result-class="java.util.HashMap">
+        UPDATE NCL_RELEASE_DETAILS SET CLEAR_BALANCE=CLEAR_BALANCE-#PRINCIPLE:NUMBER#,LAST_TRANS_DT=#TODAY_DT:DATE# WHERE RELEASE_NO=#ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLoanRepayDetails" result-class="java.util.LinkedHashMap">
+        SELECT RELEASE_NO,LOAN_REPAY_NO,INT_UPTO_DUE_DT,CLEAR_BALANCE,DUE_DATE FROM NCL_LOAN_REPAY_DETAILS WHERE LOAN_REPAY_NO=#LOAN_REPAY_NO:VARCHAR# AND RELEASE_NO=#RELEASE_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateReleaseLastIntCalcDate" result-class="java.util.HashMap">
+        UPDATE NCL_RELEASE_DETAILS SET LAST_INT_CALC_DT=#LAST_INT_CALC_DT:DATE# WHERE RELEASE_NO=#RELEASE_NO:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

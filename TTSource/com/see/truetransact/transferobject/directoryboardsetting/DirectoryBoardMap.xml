@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DirectoryBoardMap">
+
+	
+    <mapped-statement name="insertDirectoryBoardTO" inline-parameters="true">
+        INSERT INTO DIRECTOR_BOARD(MEMBER_NO,DESIGNATION, PRIORITY, ID,SELECTION_DT,ACCT_HD,TRANS_PROD_TYPE,TRANS_PROD_ID,TRANS_ACC_NO) VALUES(#memno:VARCHAR#, #desig:VARCHAR#, #priority:NUMBER#, 
+        #id:VARCHAR#,#selDate:DATE#,#accHead:VARCHAR#,#prodType:VARCHAR#,#prodId:VARCHAR#,#actNo:VARCHAR#)
+ 
+    </mapped-statement>
+    <result-map name="getDirectoryBoardTOResult" class="com.see.truetransact.transferobject.directoryboardsetting.DirectoryBoardTO">
+        <property name="memno" column="MEMBER_NO"/>
+        <property name="desig" column="DESIGNATION"/>
+        <property name="priority" column="PRIORITY"/>
+        <property name="id" column="id"/>
+		<property name="selDate" column="SELECTION_DT"/>	
+		<property name="accHead" column="ACCT_HD"/>		
+    </result-map>
+    <mapped-statement name="getDirectoryBoardEdit" result-class="java.util.LinkedHashMap">
+        SELECT MEMBER_NO,DESIGNATION, PRIORITY, ID,SELECTION_DT,ACCT_HD FROM DIRECTOR_BOARD
+               
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectDirectoryBoardTO" result-map="getDirectoryBoardTOResult" >
+        SELECT * FROM DIRECTOR_BOARD 
+        WHERE ID =#ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getMemberName" result-class="java.util.LinkedHashMap" >
+          select c.FNAME,c.CUST_ID,CA.STREET AS HNAME ,CA.AREA  AS PLACE,c.RETIREMENT_DT AS RETIREMENT_DT  from customer c,CUST_ADDR CA where CA.CUST_ID =C.CUST_ID  
+          AND MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateDirectoryBoardTO" inline-parameters="true">
+        UPDATE DIRECTOR_BOARD SET 
+        MEMBER_NO =  #memno:VARCHAR#,
+        DESIGNATION = #desig:VARCHAR#,
+        PRIORITY=  #priority:NUMBER#,
+        SELECTION_DT = #selDate:DATE#,
+        ACCT_HD = #accHead:VARCHAR#,
+        TRANS_PROD_TYPE = #prodType:VARCHAR#,
+        TRANS_PROD_ID = #prodId:VARCHAR#,
+        TRANS_ACC_NO = #actNo:VARCHAR#
+        WHERE ID = #id:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteDirectoryBoardTO" inline-parameters="true">
+        UPDATE DIRECTOR_BOARD_MEETING SET 
+        MEMBER_NO =  #memno:VARCHAR#,
+        DESIGNATION = #desig:VARCHAR#,
+        PRIORITY=  #priority:NUMBER#
+        WHERE ID =#id:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAllMemberDetails" result-class="java.util.LinkedHashMap" >
+        SELECT   SA.SHARE_TYPE ,SA.SHARE_ACCT_NO,get_cust_name(c.cust_id) AS NAME ,C.CUST_ID,CA.STREET AS HNAME ,CA.AREA  AS PLACE     
+        FROM share_acct sa,  lookup_master lm,CUSTOMER C,CUST_ADDR CA  WHERE lm.lookup_id = 'SHARE_TYPE' AND lm.lookup_desc = 'A Class'
+        AND lm.lookup_ref_id = sa.share_type AND CA.CUST_ID =C.CUST_ID  AND C.CUST_ID = SA.CUST_ID ORDER BY SA.SHARE_ACCT_NO
+    </mapped-statement>    
+        
+</sql-map>

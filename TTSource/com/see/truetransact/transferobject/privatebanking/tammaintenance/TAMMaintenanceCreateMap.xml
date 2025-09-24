@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TAMMaintenanceCreateTOMap">
+
+<!-- Use TAMMaintenanceCreatTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTAMMaintenanceCreateTO" inline-parameters="true">
+        INSERT INTO PVT_TAM_MAINTENANCE
+        (TAM_ID, ASSET_CLS_ID, ASSET_SUB_CLS_ID, TAM_ORDER_TYPE, TAM_DEF_TYPE, TAM_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #tamId:VARCHAR#, #assetClsId:VARCHAR#, #assetSubClsId:VARCHAR#, #tamOrderType:VARCHAR#, #tamDefType:VARCHAR#, #tamStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, TODAY_DT, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+<!-- Use TAMMaintenanceCreatTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTAMMaintenanceCreateTO" inline-parameters="true">
+        UPDATE PVT_TAM_MAINTENANCE SET 
+<!--	TAM_ID = #tamId:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+	AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+	AUTHORIZE_DT = #authorizeDt:DATE#, -->
+        ASSET_CLS_ID = #assetClsId:VARCHAR#,
+        ASSET_SUB_CLS_ID = #assetSubClsId:VARCHAR#,
+        TAM_ORDER_TYPE = #tamOrderType:VARCHAR#,
+        TAM_DEF_TYPE = #tamDefType:VARCHAR#,
+        TAM_STATUS = #tamStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT	
+        WHERE TAM_ID = #tamId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use TAMMaintenanceCreatTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTAMMaintenanceCreateTO" inline-parameters="true">
+<!--	DELETE FROM PVT_TAM_MAINTENANCE 
+	WHERE -->
+        UPDATE PVT_TAM_MAINTENANCE SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE TAM_ID = #tamId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to TAMMaintenanceCreatTO object (JavaBean) properties -->
+    <result-map name="getTAMMaintenanceCreateTOResult" class="com.see.truetransact.transferobject.privatebanking.tammaintenance.TAMMaintenanceCreateTO">
+        <property name="tamId" column="TAM_ID"/>
+        <property name="assetClsId" column="ASSET_CLS_ID"/>
+        <property name="assetSubClsId" column="ASSET_SUB_CLS_ID"/>
+        <property name="tamOrderType" column="TAM_ORDER_TYPE"/>
+        <property name="tamDefType" column="TAM_DEF_TYPE"/>
+        <property name="tamStatus" column="TAM_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectTAMMaintenanceCreateTO" result-map="getTAMMaintenanceCreateTOResult" >
+        SELECT * FROM PVT_TAM_MAINTENANCE 
+        WHERE TAM_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="ViewAllTAMMaintenanceCreateTO" result-class="java.util.LinkedHashMap" >
+        SELECT TAM_ID AS "TAM Maintenance ID", ASSET_CLS_ID AS "Asset Class ID", ASSET_SUB_CLS_ID AS "Asset Sub Class ID", DECODE(TAM_STATUS, 'OPEN', 'Open', 'Close') AS "TAM Status"
+        FROM PVT_TAM_MAINTENANCE
+        WHERE STATUS NOT IN ('DELETED')
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TAM Maintenance ID" >
+                    UPPER(TAM_ID) LIKE UPPER('%$TAM Maintenance ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Asset Class ID" >
+                    UPPER(ASSET_CLS_ID) LIKE UPPER('%$Asset Class ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Asset Sub Class ID" >
+                    UPPER(ASSET_SUB_CLS_ID) LIKE UPPER('%$Asset Sub Class ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TAM Status" >
+                    UPPER(DECODE(TAM_STATUS, 'OPEN', 'Open', 'Close')) LIKE UPPER('%$TAM Status$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+<!-- =================================================================================== -->        
+<!--Authorization Queries -->
+    <mapped-statement name="getTAMMaintenanceCreateAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT TAM_ID AS "TAM Maintenance ID", ASSET_CLS_ID AS "Asset Class ID", ASSET_SUB_CLS_ID AS "Asset Sub Class ID", DECODE(TAM_STATUS, 'OPEN', 'Open', 'Close') AS "TAM Status"
+        FROM PVT_TAM_MAINTENANCE
+        WHERE  STATUS NOT IN ('DELETED') AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+     
+    <mapped-statement name="authorizeTAMMaintenanceCreate" result-class="java.util.HashMap">
+        UPDATE PVT_TAM_MAINTENANCE SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,	
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = TODAY_DT
+        WHERE TAM_ID = #TAM MAINTENANCE ID:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== --> 
+
+</sql-map>

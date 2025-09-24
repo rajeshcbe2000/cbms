@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InventoryMovementToMap">
+
+	<!-- Use RemitStopPaymentTo object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInventoryMovementTO" inline-parameters="true">
+        INSERT INTO MISSING_INSTRUMENTS
+        (MISSING_INSTRUMENT_ID, DD_LEAF_TYPE, START_INSTRUMENT_NO1, START_INSTRUMENT_NO2, END_INSTRUMENT_NO1, END_INSTRUMENT_NO2, REMARKS, CREATED_BY, CREATED_DT, STATUS, BRANCH_CODE, MISSING_DT, PROD_ID, REASON, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #id:VARCHAR#, #ddLeafType:VARCHAR#, #startNo1:VARCHAR#, #startNo2:VARCHAR#, #endNo1:VARCHAR#, #endNo2:VARCHAR#, #remarks:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #status:VARCHAR#,  #branchId:VARCHAR#, #missingDt:TIMESTAMP#, #prodId:VARCHAR#, #reason:VARCHAR#,#statusBy:VARCHAR#,#statusDt:TIMESTAMP#  )
+    </mapped-statement>
+    <result-map name="getInventoryMovementToResult" class="com.see.truetransact.transferobject.supporting.InventoryMovement.InventoryMovementTO">
+        <property name="id" column="MISSING_INSTRUMENT_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="ddLeafType" column="DD_LEAF_TYPE"/>
+        <property name="startNo1" column="START_INSTRUMENT_NO1"/>
+        <property name="startNo2" column="START_INSTRUMENT_NO2"/>
+        <property name="endNo1" column="END_INSTRUMENT_NO1"/>
+        <property name="endNo2" column="END_INSTRUMENT_NO2"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+        <property name="reason" column="REASON"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="missingDt" column="MISSING_DT"/>
+    </result-map>
+        
+    <mapped-statement name="updateInventoryMovementTO" inline-parameters="true">
+        UPDATE MISSING_INSTRUMENTS SET 
+        DD_LEAF_TYPE = #ddLeafType:VARCHAR#,
+        START_INSTRUMENT_NO1 = #startNo1:VARCHAR#,
+        START_INSTRUMENT_NO2 = #startNo2:VARCHAR#,
+        END_INSTRUMENT_NO1 = #endNo1:VARCHAR#,
+        END_INSTRUMENT_NO2 = #endNo2:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZED_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        BRANCH_CODE = #branchId:VARCHAR#,
+        MISSING_DT =  #missingDt:TIMESTAMP#
+        WHERE MISSING_INSTRUMENT_ID = #id:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name = "viewMissingInstruments" result-class="java.util.LinkedHashMap">
+        SELECT MISSING_INSTRUMENT_ID AS MISSINGID, START_INSTRUMENT_NO1 AS StartInstrNo1, START_INSTRUMENT_NO2 AS StartInstrNo2,
+        END_INSTRUMENT_NO1 AS EndInstrNo1 , END_INSTRUMENT_NO2 AS EndInstrNo2, REASON AS reason , MISSING_DT as missingDt,
+        PROD_ID AS prod_id, CREATED_BY as created_by FROM MISSING_INSTRUMENTS WHERE BRANCH_CODE = #BRANCH_CODE#
+        AND STATUS != 'DELETED'  ORDER BY MISSING_INSTRUMENT_ID
+    </mapped-statement>
+   
+    <mapped-statement name="getSelectInventoryMovementTO" result-map="getInventoryMovementToResult" >
+        SELECT * FROM MISSING_INSTRUMENTS 
+        WHERE MISSING_INSTRUMENT_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteInventoryMovementTO" inline-parameters="true">
+        UPDATE MISSING_INSTRUMENTS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE MISSING_INSTRUMENT_ID = #id:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectInventoryMovementAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT MISSING_INSTRUMENT_ID as MISSINGID, BRANCH_CODE , START_INSTRUMENT_NO1 , START_INSTRUMENT_NO2 , END_INSTRUMENT_NO1, END_INSTRUMENT_NO2, MISSING_DT as missingDt, STATUS_BY, STATUS_DT FROM MISSING_INSTRUMENTS ISS
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND BRANCH_CODE =  #BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ISS.STATUS_BY)
+        AND
+        (AUTHORIZED_STATUS IS NULL OR 
+        AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+        ORDER BY  MISSING_INSTRUMENT_ID
+                         
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeInventoryMovement" result-class="java.util.HashMap">
+        UPDATE MISSING_INSTRUMENTS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE MISSING_INSTRUMENT_ID = #id:VARCHAR# 
+    </mapped-statement>
+     
+</sql-map>

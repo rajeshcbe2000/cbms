@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TDSConfigTOMap">
+
+    <!-- Use TDSConfigTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShopMasterTO" inline-parameters="true">
+        INSERT INTO SHOP_MASTER (SHOP_MASTER_ID,SHOP_MASTER__NAME,SHOP_MASTER_PLACE,SHOP_MASTER_BRANCHID,AC_HD_ID,TRANSP_AC_HD_ID,
+        KVAT_AC_HD_ID, STATUS,STATUS_BY , STATUS_DT)
+        VALUES(
+        #txtStoreID:VARCHAR#,#txtName:VARCHAR#,#txtPlace:VARCHAR#,#cboBranchID:VARCHAR#,#cboCashACHead:VARCHAR#,#cboTransACHead:VARCHAR#,#cboKVATACHead:NUMERIC#,
+        #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+
+    <!-- Use TDSConfigTO object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateShopeMasterTO" inline-parameters="true">
+        UPDATE SHOP_MASTER SET 
+        SHOP_MASTER_ID=#txtStoreID:VARCHAR#,
+        SHOP_MASTER__NAME=#txtName:VARCHAR#,
+        SHOP_MASTER_PLACE=#txtPlace:VARCHAR#,
+        SHOP_MASTER_BRANCHID=#cboBranchID:VARCHAR#,
+        AC_HD_ID=#cboCashACHead:VARCHAR#,
+        TRANSP_AC_HD_ID=#cboTransACHead:VARCHAR#,
+        KVAT_AC_HD_ID=#cboKVATACHead:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE SHOP_MASTER_ID = #txtStoreID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <!-- Use TDSConfigTO object (JavaBean) properties as parameters for delete. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteShopeMasterTO" inline-parameters="true">
+        UPDATE SHOP_MASTER SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE SHOP_MASTER_ID = #txtStoreID:VARCHAR# AND STATUS NOT IN  ('DELETED')
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to TDSConfigTO object (JavaBean) properties -->
+    <result-map name="getShopMasterTOResult" class="com.see.truetransact.transferobject.trading.shopmaster.ShopMasterTO">
+        <property name="txtStoreID" column="SHOP_MASTER_ID"/>
+        <property name="txtName" column="SHOP_MASTER__NAME"/>
+        <property name="txtPlace" column="SHOP_MASTER_PLACE"/>
+        <property name="cboBranchID" column="SHOP_MASTER_BRANCHID"/>
+        <property name="cboCashACHead" column="AC_HD_ID"/>
+        <property name="cboTransACHead" column="TRANSP_AC_HD_ID"/>
+        <property name="cboKVATACHead" column="KVAT_AC_HD_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getAcHeadForTrading" result-class="java.util.HashMap">
+        SELECT ACCOUNTHEAD_ID as KEY, ACCOUNTHEAD_DESC as VALUE, ACCOUNTHEAD_DESC FROM TRADING_AC_HD WHERE 
+        AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED' AND ACCOUNTHEAD_TYPE='Bank A/c' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACCOUNTHEAD_TYPE">
+                    ACCOUNTHEAD_TYPE = #ACCOUNTHEAD_TYPE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY ACCOUNTHEAD_ID
+    </dynamic-mapped-statement> 
+    
+    <dynamic-mapped-statement name="getShopEdit" result-class="java.util.LinkedHashMap" >
+        SELECT SHOP_MASTER_ID,SHOP_MASTER__NAME,STATUS ,STATUS_DT as CREATED_DT,AUTHORIZE_STATUS FROM SHOP_MASTER
+        WHERE STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')  
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHOP_MASTER_ID">
+                    UPPER(SHOP_MASTER_ID) LIKE UPPER('%$SHOP_MASTER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHOP_MASTER__NAME">
+                    UPPER(SHOP_MASTER__NAME) LIKE UPPER('%$SHOP_MASTER__NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(STATUS_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SHOP_MASTER_ID  
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getShopDelete" result-class="java.util.LinkedHashMap" >
+        SELECT SHOP_MASTER_ID,SHOP_MASTER__NAME,STATUS ,STATUS_DT as CREATED_DT,AUTHORIZE_STATUS FROM SHOP_MASTER
+        WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL AND AUTHORIZED_DT IS NULL
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHOP_MASTER_ID">
+                    UPPER(SHOP_MASTER_ID) LIKE UPPER('%$SHOP_MASTER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHOP_MASTER__NAME">
+                    UPPER(SHOP_MASTER__NAME) LIKE UPPER('%$SHOP_MASTER__NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(STATUS_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SHOP_MASTER_ID  
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectShopMasterTO" result-map="getShopMasterTOResult" >
+        SELECT * FROM SHOP_MASTER WHERE STATUS!='DELETED' AND SHOP_MASTER_ID =#SHOP_MASTER_ID#   
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getShopMasterAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT SHOP_MASTER_ID,SHOP_MASTER__NAME,STATUS,STATUS_DT as CREATED_DT,AUTHORIZE_STATUS  FROM SHOP_MASTER WHERE STATUS!='DELETED' AND
+        AUTHORIZE_STATUS IS NULL AND STATUS_BY!= #USER_ID# 
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" > 
+                AUTHORIZED_DT IS NULL
+            </isEqual>
+        </dynamic>
+        ORDER BY  SHOP_MASTER_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeShopMaster" result-class="java.util.HashMap">
+        UPDATE SHOP_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND SHOP_MASTER_ID =#SHOP_MASTER_ID#  
+    </mapped-statement>
+    
+   <dynamic-mapped-statement name="getShopMasterView" result-class="java.util.LinkedHashMap">
+        SELECT SHOP_MASTER_ID,SHOP_MASTER__NAME,STATUS FROM SHOP_MASTER
+        WHERE STATUS!='DELETED'  
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHOP_MASTER_ID">
+                    UPPER(SHOP_MASTER_ID) LIKE UPPER('%$SHOP_MASTER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHOP_MASTER__NAME">
+                    UPPER(SHOP_MASTER__NAME) LIKE UPPER('%$SHOP_MASTER__NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+            ORDER BY SHOP_MASTER_ID 
+    </dynamic-mapped-statement>
+        
+</sql-map>

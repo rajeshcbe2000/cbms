@@ -1,0 +1,1358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AgentTOMap">
+
+	<!-- Use AgentTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgentTO" inline-parameters="true">
+        INSERT INTO AGENT_MASTER
+        (AGENT_ID, BRANCH_ID, APPOINTED_DT, REMARKS, TYPE, CREATED_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT, AUTHORIZED_STATUS, AUTHORIZED_DT, AUTHORIZED_BY, INITIATED_BRANCH, OA_ACT_NUM,
+        PROD_TYPE,PROD_ID,ACCT_NUM,DP_ACT_NUM,DP_PROD_ID,DP_PROD_TYPE,LAST_COM_PAID_DT,AGENT_MACHINE_ID,REGION,TXN_TYPE
+        ) VALUES (
+        #agentId:VARCHAR#, #branchId:VARCHAR#, #appointedDt:DATE#, #remarks:VARCHAR#, #agentType:VARCHAR#,
+        #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#,
+        #statusDt:TIMESTAMP#, #authorizedStatus:VARCHAR#, #authorizedDt:DATE#, 
+        #authorizedBy:VARCHAR#, #initiatedBranch:VARCHAR#, #operativeAcNo:VARCHAR#,
+        #dpProdType:VARCHAR#,#dpProdId:VARCHAR#,#dpacnum:VARCHAR#,
+        #collSuspACNum:VARCHAR#,#collSuspProdID:VARCHAR#,#collSuspProdtype:VARCHAR#,
+        #lastComPaidDt:DATE#,#agentMachineId:VARCHAR#,#region:VARCHAR#,#txnType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use AgentTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgentTO" inline-parameters="true">
+        UPDATE AGENT_MASTER SET 
+<!--		AGENT_ID = #agentId:VARCHAR#,
+		BRANCH_ID = #branchId:VARCHAR#, -->
+        APPOINTED_DT = #appointedDt:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        TYPE = #agentType:VARCHAR#,
+<!--		CREATED_DT = #createdDt:DATE#,
+		CREATED_BY = #createdBy:VARCHAR#, -->
+        OA_ACT_NUM =#operativeAcNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZED_STATUS = null,
+        ACCT_NUM=#dpacnum:VARCHAR#,
+        PROD_ID= #dpProdId:VARCHAR#,
+        PROD_TYPE = #dpProdType:VARCHAR#,
+        DP_ACT_NUM=#collSuspACNum:VARCHAR#,
+        DP_PROD_ID= #collSuspProdID:VARCHAR#,
+        DP_PROD_TYPE = #collSuspProdtype:VARCHAR#,
+        REGION = #region:VARCHAR#,
+        TXN_TYPE = #txnType:VARCHAR#
+           	<!--AUTHORIZED_DT = #authorizedDt:DATE#,
+		AUTHORIZED_BY = #authorizedBy:VARCHAR# -->
+        WHERE AGENT_ID = #agentId:VARCHAR# AND TYPE = #agentType:VARCHAR#
+<!--                AND BRANCH_ID = #branchId:VARCHAR# -->
+    </mapped-statement>
+
+	<!-- Use AgentTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgentTO" inline-parameters="true">
+        UPDATE AGENT_MASTER SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZED_STATUS = null
+        WHERE AGENT_ID = #agentId:VARCHAR# AND TYPE = #agentType:VARCHAR#
+<!--                AND BRANCH_ID = #branchId:VARCHAR#-->
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to AgentTO object (JavaBean) properties -->
+    <result-map name="getAgentTOResult" class="com.see.truetransact.transferobject.agent.AgentTO">
+        <property name="agentId" column="AGENT_ID"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="appointedDt" column="APPOINTED_DT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="agentType" column="TYPE"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="operativeAcNo" column="OA_ACT_NUM"/>
+        <property name="collSuspProdtype" column="DP_PROD_TYPE"/>
+        <property name="collSuspProdID" column="DP_PROD_ID"/>
+        <property name="collSuspACNum" column="DP_ACT_NUM"/>
+        <property name="dpacnum" column="ACCT_NUM"/>
+        <property name="dpProdId" column="PROD_ID"/>
+        <property name="dpProdType" column="PROD_TYPE"/>
+        <property name="lastComPaidDt" column="LAST_COM_PAID_DT"/>
+        <property name="region" column="REGION"/>
+        <property name="txnType" column="TXN_TYPE"/>
+    </result-map>
+    
+    <result-map name="getAgentProdDetailsTo" class="com.see.truetransact.transferobject.agent.AgentColProdTO">
+        <property name="agentId" column="AGENT_ID"/>  
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="lastColDt" column="LAST_COL_DT"/>     
+        <property name="lastIntPaidDt" column="LAST_INTRO_PAID_DT"/>     
+    </result-map>
+    
+    <mapped-statement name="getSelectAgentProductTo" result-map="getAgentProdDetailsTo" >
+        SELECT * FROM AGENT_COLLECTION_PROD WHERE AGENT_ID = #AGENTID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectAgentTO" result-map="getAgentTOResult" >
+        SELECT * FROM AGENT_MASTER 
+        WHERE AGENT_ID = #AGENTID:VARCHAR# AND TYPE = #TYPE:VARCHAR#
+<!--                AND BRANCH_ID = #BRANCHID# -->
+    </mapped-statement>
+    <mapped-statement name="getSelectDepNO" result-class="java.util.HashMap" >
+        SELECT  D.DEPOSIT_NO  from DEPOSIT_ACINFO D where D.REFERENCE_NO=#REFNO:VARCHAR#  AND D.AGENT_ID=#AGENT_ID:VARCHAR#  AND D.BRANCH_ID=#BRANCH_ID:VARCHAR# AND
+        D.STATUS !='CLOSED' AND D.DEPOSIT_STATUS !='CLOSED' AND D.AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getSelectAgentTO1" result-map="getAgentTOResult" >
+        SELECT * FROM AGENT_MASTER 
+        WHERE AGENT_MACHINE_ID = #AGENTID:VARCHAR#
+<!--                AND BRANCH_ID = #BRANCHID# -->
+    </mapped-statement>
+          
+    <mapped-statement name="InsertIntoTemp" inline-parameters="true" >
+        INSERT INTO TEMPDAILY (AGENT_ID,REFERENCE_NO,AMOUNT,DATE1,BRANCH_ID)values(#AGENT_ID:varchar#,#REF_NO:varchar#,#AMOUNT:NUMERIC#,to_date(#date1:DATE#,'dd-MM-yyyy'),#BRANCH_ID:varchar#)
+    </mapped-statement>
+    
+    <mapped-statement name="InsertIntoTempKor" inline-parameters="true" >
+    INSERT INTO TEMPDAILY_KOR (AGENT_ID,REFERENCE_NO,AMOUNT,DATE1,BRANCH_ID,COMM_AMT)
+    values(#AGENT_ID:varchar#,#REF_NO:varchar#,#AMOUNT:NUMERIC#,#date1:DATE#,#BRANCH_ID:varchar#,#COMM_AMT:NUMBER#)
+    </mapped-statement>
+    
+     <mapped-statement name="getCollectedClosedAccount" result-class="java.util.HashMap">
+     SELECT D.DEPOSIT_NO FROM TEMPDAILY I JOIN DEPOSIT_ACINFO D  ON TRIM(I.REFERENCE_NO)=D.REFERENCE_NO WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR# 
+     AND D.BRANCH_ID=#BRANCH_ID:VARCHAR#   AND I.AGENT_ID=#AGENT_ID:VARCHAR# AND D.DEPOSIT_STATUS ='CLOSED'
+    </mapped-statement>
+    
+    <mapped-statement name="getCollectionAmount" result-class="java.util.HashMap">
+        SELECT SUM(I.AMOUNT) AS AMOUNT,D.PROD_ID,DP.ACCT_HEAD FROM TEMPDAILY I JOIN DEPOSIT_ACINFO D ON TRIM(I.REFERENCE_NO)=D.REFERENCE_NO and i.agent_id=d.agent_id
+        JOIN DEPOSITS_PRODUCT DP ON D.PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR# AND D.BRANCH_ID=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR# AND D.DEPOSIT_STATUS !='CLOSED' GROUP BY D.PROD_ID,DP.ACCT_HEAD
+    </mapped-statement>
+    <mapped-statement name="getCollectionAmountKor" result-class="java.util.HashMap">
+        SELECT SUM(I.AMOUNT) AS AMOUNT,D.PROD_ID,DP.ACCT_HEAD FROM TEMPDAILY_KOR I JOIN DEPOSIT_ACINFO D ON TRIM(I.REFERENCE_NO)=D.DEPOSIT_NO
+        JOIN DEPOSITS_PRODUCT DP ON D.PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR# AND D.BRANCH_ID=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR# GROUP BY D.PROD_ID,DP.ACCT_HEAD
+    </mapped-statement>
+    <mapped-statement name="getCollectionAmountCashKor" result-class="java.util.HashMap">
+     	SELECT SUM(I.AMOUNT) AS AMOUNT,Da.PROD_ID,DP.COL_AC_HD_ID AS ACCT_HEAD FROM 
+        TEMPDAILY_KOR I JOIN  DEPOSIT_SUB_ACINFO dsa ON (TRIM (I.REFERENCE_NO) = DSA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO OR TRIM (I.REFERENCE_NO) = DSA.DEPOSIT_NO)       
+        join DEPOSIT_ACINFO da on DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        JOIN AGENT_PROD_MAPPING DP ON Da.PROD_ID= DP.PROD_ID  
+        JOIN DEPOSITS_PRODUCT DD ON DD.PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR#
+        AND Da.BRANCH_ID=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR#
+        GROUP BY Da.PROD_ID,DP.COL_AC_HD_ID
+   		UNION 
+    	SELECT SUM(I.AMOUNT) AS AMOUNT,D.SUSPENSE_PROD_ID AS PROD_ID,DP.COL_AC_HD_ID AS ACCT_HEAD FROM TEMPDAILY_KOR I JOIN SUSPENSE_ACCOUNT_MASTER D ON TRIM(I.REFERENCE_NO)=D.SUSPENSE_ACCT_NUM
+        JOIN AGENT_PROD_MAPPING DP ON D.SUSPENSE_PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR# AND D.BRANCH_CODE=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR# 
+        GROUP BY D.SUSPENSE_PROD_ID,DP.COL_AC_HD_ID
+        UNION
+        SELECT SUM(I.AMOUNT) 
+        AS AMOUNT,D.PROD_ID,DP.COL_AC_HD_ID AS ACCT_HEAD FROM TEMPDAILY_KOR I JOIN ACT_MASTER D ON TRIM(I.REFERENCE_NO)=D.ACT_NUM        
+        JOIN AGENT_PROD_MAPPING DP ON D.PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR# AND D.BRANCH_CODE=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR#       
+        GROUP BY D.PROD_ID,DP.COL_AC_HD_ID  
+    </mapped-statement>
+    
+    <mapped-statement name="getCollectionAmountIndKor" result-class="java.util.HashMap">
+        SELECT I.AMOUNT AS AMOUNT,Da.PROD_ID,DP.COL_AC_HD_ID AS ACCT_HEAD,DP.PROD_TYPE,DD.ACCT_HEAD AS CR_HEAD,I.COMM_AMT,DP.COMM_COL_AC_HD_ID,
+        I.REFERENCE_NO FROM TEMPDAILY_KOR I JOIN  DEPOSIT_SUB_ACINFO dsa ON (TRIM (I.REFERENCE_NO) = DSA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO OR TRIM (I.REFERENCE_NO) = DSA.DEPOSIT_NO)       
+        join DEPOSIT_ACINFO da on DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        JOIN AGENT_PROD_MAPPING DP ON Da.PROD_ID= DP.PROD_ID  
+        JOIN DEPOSITS_PRODUCT DD ON DD.PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR#
+        AND Da.BRANCH_ID=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR#
+   		UNION ALL
+    	SELECT I.AMOUNT AS AMOUNT,D.SUSPENSE_PROD_ID AS PROD_ID,DP.COL_AC_HD_ID AS ACCT_HEAD,DP.PROD_TYPE,SS.AC_HD_ID AS CR_HEAD,I.COMM_AMT,DP.COMM_COL_AC_HD_ID,
+    	I.REFERENCE_NO FROM TEMPDAILY_KOR I JOIN SUSPENSE_ACCOUNT_MASTER D ON TRIM(I.REFERENCE_NO)=D.SUSPENSE_ACCT_NUM
+        JOIN AGENT_PROD_MAPPING DP ON D.SUSPENSE_PROD_ID=DP.PROD_ID 
+        JOIN SUSPENSE_PRODUCT SS ON SS.PROD_ID=DP.PROD_ID WHERE I.BRANCH_ID=#BRANCH_ID:VARCHAR# AND D.BRANCH_CODE=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR#
+        UNION ALL
+            SELECT i.amount AS amount, D.PROD_ID AS prod_id,
+           dp.col_ac_hd_id AS acct_head, dp.prod_type, SS.AC_HD_ID AS cr_head,
+           i.comm_amt, dp.comm_col_ac_hd_id, i.reference_no
+           FROM tempdaily_kor i JOIN ACT_MASTER d
+           ON TRIM (i.reference_no) = D.ACT_NUM
+           JOIN agent_prod_mapping dp ON D.PROD_ID = dp.prod_id
+           JOIN OP_AC_PRODUCT ss ON SS.PROD_ID = dp.prod_id
+           WHERE i.branch_id = #BRANCH_ID:VARCHAR# AND D.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND i.agent_id = #AGENT_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getCollectionAgentPercentage" result-class="java.util.HashMap">
+         SELECT D.PROD_ID,A.COMM_PER_AC_HOLDR FROM DEPOSIT_ACINFO D JOIN AGENT_PROD_MAPPING A ON A.PROD_ID=D.PROD_ID WHERE 
+         D.AGENT_ID=A.AGENT_ID AND D.DEPOSIT_NO =#ACT_NUM:VARCHAR# AND D.AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED'
+         UNION
+          SELECT S.SUSPENSE_PROD_ID AS PROD_ID,COMM_PER_AC_HOLDR   FROM SUSPENSE_ACCOUNT_MASTER S JOIN AGENT_PROD_MAPPING B ON B.PROD_ID =S.SUSPENSE_PROD_ID 
+          WHERE S.AGENT_ID=B.AGENT_ID AND S.SUSPENSE_ACCT_NUM =#ACT_NUM:VARCHAR# AND S.AUTHORIZE_STATUS='AUTHORIZED' AND STATUS !='DELETED'
+    </mapped-statement>
+    <mapped-statement name="TruncateTempDaily" inline-parameters="true">
+        <!-- TRUNCATE TABLE TEMPDAILY-->
+        DELETE FROM  TEMPDAILY I WHERE  I.BRANCH_ID=#BRANCH_ID:VARCHAR# AND I.AGENT_ID=#AGENT_ID:VARCHAR#
+    </mapped-statement>
+    <dynamic-mapped-statement name="TruncateTempDailyKor" inline-parameters="true">
+        <!-- TRUNCATE TABLE TEMPDAILY-->
+        DELETE FROM  TEMPDAILY_KOR I WHERE  I.BRANCH_ID=#BRANCH_ID:VARCHAR# 
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AGENT_ID">
+                   I.AGENT_ID=#AGENT_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "REFERENCE_NO">
+                   I.REFERENCE_NO=#REFERENCE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>  
+    </dynamic-mapped-statement>
+    <mapped-statement name="getAgentProdData" result-class="java.util.HashMap">
+        SELECT PROD_TYPE,PROD_ID,AGENT_MACHINE_ID,COL_AC_HD_ID,AGENT_ID,COMM_PER_BANK,
+        COMM_PER_AC_HOLDR,COMM_COL_AC_HD_ID,PROD_EXP_CODE FROM AGENT_PROD_MAPPING apm WHERE APM.AGENT_MACHINE_ID=#AGENT_ID:VARCHAR# AND PROD_EXP_CODE=#TYPE:VARCHAR#
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getAgentDetails" result-class="java.util.HashMap">
+        SELECT  get_cust_name(cust_id) AS "Agent Name", CUST_ID AS "Agent Id"
+        FROM CUSTOMER
+        WHERE BRANCH_CODE = #BRANCHID:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+           <!-- AND CUST_ID NOT IN (SELECT AGENT_ID FROM AGENT_MASTER WHERE STATUS !='DELETED' 
+                                AND (AUTHORIZED_STATUS != 'REJECTED' OR  AUTHORIZED_STATUS IS NULL))-->
+        AND NOT EXISTS (SELECT AGENT_ID FROM AGENT_MASTER WHERE STATUS !='DELETED' 
+        AND (AUTHORIZED_STATUS != 'REJECTED' OR  AUTHORIZED_STATUS IS NULL)AND  CUST_ID=AGENT_ID) 
+        AND  NOT EXISTS (SELECT CUST_ID FROM CUSTOMER_SUSPENDED  WHERE   STATUS='SUSPENDED'
+        AND CUSTOMER.CUST_ID=CUST_ID)
+                <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Agent Name">
+                    UPPER(get_cust_name(customer.cust_id)) LIKE UPPER('%$Agent Name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="Agent Id">
+                    UPPER(CUST_ID) LIKE UPPER('%$Agent Id$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+   </dynamic-mapped-statement>
+    <mapped-statement name="getAccountNumberForLoan" result-class="java.util.HashMap">
+        SELECT CONCAT(CONCAT(CONCAT(CONCAT(C.FNAME, ' '), C.MNAME), ' '), C.LNAME) CUSTOMER_NAME,LFD.CLEAR_BALANCE AS AMOUNT
+        FROM LOANS_FACILITY_DETAILS  LFD,LOANS_BORROWER LB,CUSTOMER C  WHERE LB.BORROW_NO=LFD.BORROW_NO AND LB.CUST_ID=C.CUST_ID
+        AND  LFD.ACCT_NUM =#ACC_NUM:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getAgentRefwrenceNo" result-class="java.util.HashMap">
+        SELECT A.REF_NO  FROM AGENT_MASTER A  WHERE  A.AGENT_ID=#Agent_Id:VARCHAR# AND A.AUTHORIZED_STATUS='AUTHORIZED' AND A.STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="getAgentId1" result-class="java.util.HashMap">
+        SELECT A.AGENT_ID  FROM AGENT_MASTER A  WHERE  A.REF_NO=#Ref_NO:VARCHAR# AND A.AUTHORIZED_STATUS='AUTHORIZED' AND A.STATUS!='DELETED'
+    </mapped-statement>
+<!--        <mapped-statement name="viewAgentData" result-class="java.util.HashMap" >
+            SELECT FNAME || ' ' || MNAME || ' ' || LNAME AS "Agent Name", AGENT_ID AS "Agent Id", APPOINTED_DT "Appointed Date"
+            FROM AGENT_MASTER AM, CUSTOMER C
+            WHERE (AM.STATUS != 'DELETED')
+            AND AM.BRANCH_ID = #BRANCHID#
+            AND CUST_ID = AGENT_ID
+            AND (AM.AUTHORIZED_STATUS !=  'REJECTED' OR AM.AUTHORIZED_STATUS IS NULL)
+        </mapped-statement>  -->
+
+   <dynamic-mapped-statement name="viewAgentData" result-class="java.util.LinkedHashMap" >
+        SELECT AM.AGENT_ID AS "Agent Id" ,get_cust_name(c.cust_id) AS "Agent Name", 
+        DECODE (AM.TYPE,'A','AGENT','DEALER') AS AGENT_TYPE,AM.APPOINTED_DT  AS "Appointed Date",
+        AM.OA_ACT_NUM  AS "Operative Account No",am.agent_machine_id as "Machine ID",AUTHORIZED_STATUS
+        FROM AGENT_MASTER AM, CUSTOMER C 
+        WHERE (AM.STATUS != 'DELETED')
+        AND AM.BRANCH_ID = #BRANCHID:VARCHAR#
+        AND C.CUST_ID = AM.AGENT_ID
+        AND (AM.AUTHORIZED_STATUS !=  'REJECTED' OR AM.AUTHORIZED_STATUS IS NULL)
+           <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Agent Name">
+                    UPPER(get_cust_name(c.cust_id)) LIKE UPPER('%$Agent Name$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="Agent Id">
+                    UPPER(AM.AGENT_ID) LIKE UPPER('%$Agent Id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="Operative Account No">
+                    UPPER(AM.OA_ACT_NUM) LIKE UPPER('%$Operative Account No$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="Machine ID">
+                    UPPER(am.agent_machine_id) LIKE UPPER('%$Machine ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+       ORDER BY AM.AGENT_ID     
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getCustIdAgent" result-class="java.util.HashMap" >
+        SELECT AGENT_ID FROM AGENT_MASTER WHERE AGENT_MACHINE_ID =#AGENT_MACHINE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDailyLoanDetails1" result-class="java.util.HashMap" >
+        SELECT distinct RLN.ACCT_NUM AS ACT_NUM , FNAME, NVL(LIMIT,0) AS LIMIT , LAST_INT_CALC_DT, 
+        NVL(PRINCIPAL,0) AS BALANCE ,         CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0    
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)  ELSE 0  END  AS PRINC_DUE ,             
+        NVL(INTEREST_DEMAND,0) AS INT_DUE, PENAL, CHARGES,RLN.PROD_ID  FROM REP_LOAN_NOTICE_TWO RLN,  LOANS_BORROWER LB,
+        DAILY_LOAN_SANCTION_DETAILS DLSD 
+        WHERE               LB.BORROW_NO=RLN.BORROW_NO AND  LB.BRANCH_CODE =#BRANCH_CODE:VARCHAR# AND LB.CUST_ID=RLN.CUST_ID 
+                           
+        AND AGENT_ID IS NOT NULL AND DLSD.STATUS!='DELETED'              AND DLSD.AGENT_ID=#AGENT_ID:VARCHAR#
+        AND RLN.ACCT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="Agent.getAgentDepositsDetails" result-class="java.util.HashMap" >
+           <!-- SELECT C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "NAME",  DAI.DEPOSIT_NO AS "DEPOSIT_NO", DSI.DEPOSIT_DT AS "DEPOSIT_DT",
+            DSI.DEPOSIT_AMT AS "DEPOSIT_AMT"
+            FROM CUSTOMER C, DEPOSIT_ACINFO DAI, DEPOSIT_SUB_ACINFO DSI
+            WHERE  DSI.DEPOSIT_NO =  DAI.DEPOSIT_NO
+            AND DAI.AGENT_ID = C.CUST_ID 
+            AND C.CUST_ID = #CUSTID:VARCHAR# -->
+<!--            AND C.BRANCH_CODE = #BRANCHID#-->
+           <!--  AND C.STATUS != 'DELETED'
+            AND DAI.STATUS != 'DELETED'
+            AND DSI.STATUS != 'DELETED'
+            AND C.AUTHORIZE_STATUS =  'AUTHORIZED'
+            AND DAI.AUTHORIZE_STATUS =  'AUTHORIZED'
+            AND DSI.AUTHORIZE_STATUS =  'AUTHORIZED'-->
+            
+        SELECT get_cust_name(c.cust_id) AS "NAME", DAI.DEPOSIT_NO AS "DEPOSIT_NO", DSI.DEPOSIT_DT AS 
+        "DEPOSIT_DT", DSI.CLEAR_BALANCE AS "DEPOSIT_AMT" FROM CUSTOMER C, DEPOSIT_ACINFO DAI, DEPOSIT_SUB_ACINFO DSI 
+        WHERE 
+        DSI.DEPOSIT_NO = DAI.DEPOSIT_NO AND 
+        DAI.CUST_ID = C.CUST_ID AND 
+        DAI.AGENT_ID = #CUSTID:VARCHAR# AND
+        C.STATUS != 'DELETED' AND 
+        DAI.STATUS != 'DELETED' 
+        AND DSI.STATUS != 'DELETED'  AND 
+        C.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND DAI.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        DSI.AUTHORIZE_STATUS = 'AUTHORIZED'
+
+    </mapped-statement>
+        
+
+<!-- ========================================================================================================== -->
+
+   
+
+    <dynamic-mapped-statement name="getAgentAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT AGENT_ID AS "Agent Id",get_cust_name(c.cust_id) AS "Agent Name",DECODE (AM.TYPE,'A','AGENT','DEALER') AS AGENT_TYPE, APPOINTED_DT "Appointed Date"
+        FROM AGENT_MASTER AM, CUSTOMER C
+        WHERE <!--  (AM.STATUS != 'DELETED')
+          AND  AM.BRANCH_ID = #BRANCH_CODE:VARCHAR#-->
+        AM.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND CUST_ID = AGENT_ID
+<!--            AND (AM.AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AM.AUTHORIZED_STATUS IS NULL)-->
+        AND AM.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = AM.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AM.AUTHORIZED_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AM.AUTHORIZED_STATUS IS NULL OR 
+                AM.AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY AGENT_ID
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authorizeAgentData" result-class="java.util.HashMap">
+        UPDATE AGENT_MASTER SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE AGENT_ID = #AGENT ID:VARCHAR#
+        AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TYPE = #TYPE:VARCHAR# 
+    </mapped-statement>
+
+   <dynamic-mapped-statement name="getOperativeDetails" result-class="java.util.LinkedHashMap">
+        SELECT ACT_NUM AS OA_ACT_NUM,PROD_ID AS PROD_ID,AVAILABLE_BALANCE AS AMOUNT FROM ACT_MASTER
+        WHERE CUST_ID = #AGENT_ID:VARCHAR# AND STATUS != 'DELETED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="OA_ACT_NUM">
+                    UPPER(ACT_NUM) LIKE UPPER('%$OA_ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="AMOUNT">
+                    UPPER(AVAILABLE_BALANCE) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+<!--        <mapped-statement name="viewOperativeDetails" result-class="java.util.HashMap">
+            SELECT ACT_NUM AS OA_ACT_NUM, PROD_ID AS PROD_ID, 
+            AVAILABLE_BALANCE AS AMOUNT FROM ACT_MASTER  
+            WHERE CUST_ID = #AGENT_ID#
+            AND STATUS != 'DELETED'
+            AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+	</mapped-statement>  -->
+
+   <dynamic-mapped-statement name="getDepositIdForCustomer" result-class="java.util.HashMap">
+        SELECT DEPOSIT_NO AS DEP_ACT_NUM, PROD_ID  AS PROD_ID FROM DEPOSIT_ACINFO  
+        WHERE CUST_ID =#AGENT_ID:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="DEP_ACT_NUM">
+                    UPPER(DEPOSIT_NO) LIKE UPPER('%$DEP_ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+   </dynamic-mapped-statement>
+
+<!--        <mapped-statement name="viewDepositIdForCustomer" result-class="java.util.HashMap">
+            SELECT DEPOSIT_NO AS DEP_ACT_NUM, PROD_ID  AS PROD_ID FROM DEPOSIT_ACINFO  
+            WHERE CUST_ID =#AGENT_ID#
+            AND STATUS != 'DELETED'
+            AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        </mapped-statement>  -->
+
+    <mapped-statement name="getOAProdDescription" result-class="java.util.HashMap">
+        SELECT PROD_DESC FROM 
+        OP_AC_PRODUCT WHERE PROD_ID IN( SELECT PROD_ID FROM ACT_MASTER WHERE PROD_ID = #PROD_ID:VARCHAR#) 
+    </mapped-statement>
+        
+    <mapped-statement name="getDepositProdDescription" result-class="java.util.HashMap">
+        SELECT PROD_DESC FROM 
+        DEPOSITS_PRODUCT WHERE PROD_ID IN( SELECT PROD_ID FROM DEPOSIT_ACINFO WHERE PROD_ID = #PROD_ID:VARCHAR#) 
+    </mapped-statement>
+
+    <mapped-statement name="getAgentDetailsName" result-class="java.util.HashMap">
+        SELECT get_cust_name(customer.cust_id) AS AGENT_NAME, CUSTOMER.CUST_ID AS AGENT_ID,AGENT_MACHINE_ID,COLSEP,TXT_QUALIFIER,EXP_QUERY,IMP_QUERY,SKIP_FIRST_LINE,CONSOLIDATE_TRANS,
+        IMPORT_FILE_PATH,EXPORT_FILE_PATH,IMPORT_BAT_FILE,EXPORT_BAT_FILE
+        FROM CUSTOMER,AGENT_MASTER
+        WHERE CUSTOMER.CUST_ID = AGENT_ID 
+        AND CUSTOMER.CUST_ID =  #AGENT_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAgentCommision" result-class="java.util.HashMap">
+        SELECT (COMM_PER_BANK + COMM_PER_AC_HOLDR) AS COMMISION_PERCENTAGE
+        FROM AGENT_PROD_MAPPING WHERE AGENT_ID = #AGENT_ID:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAgentCommisionDetails" result-class="java.util.HashMap">        
+          <!--  <SELECT NVL(SUM(AMOUNT),0) AS AMOUNT
+            from  Daily_deposit_trans WHERE COLL_DT--> <!--FROM CASH_TRANS WHERE TRANS_DT -->
+            <!--BETWEEN #MONTH_START_DATE# 
+            AND #MONTH_END_DATE# 
+            AND AGENT_NO =#AGENT_ID# --> <!--Particulers-->
+              <!--  select NVL(SUM(DDT.AMOUNT),0) AS AMOUNT ,DSA.DEPOSIT_PERIOD_MM AS PERIOD
+                from deposit_sub_acinfo  DSA ,deposit_acinfo DA,daily_deposit_trans DDT 
+                where DSA.DEPOSIT_NO=DA.DEPOSIT_NO and 
+                DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO=DDT.ACC_NUM AND -->
+                <!--DDT.AUTHORIZE_STATUS='AUTHORIZED'--> 
+               <!-- DDT.COLL_DT FROM CASH_TRANS WHERE TRANS_DT 
+                BETWEEN #MONTH_START_DATE# 
+                AND #MONTH_END_DATE# 
+                AND AGENT_NO =#AGENT_ID# 
+                GROUP BY DSA.DEPOSIT_PERIOD_MM -->
+        select distinct(DSA.DEPOSIT_PERIOD_MM) as PERIOD 
+        from deposit_sub_acinfo DSA 
+        ,deposit_acinfo DA, deposits_product DP 
+        where DSA.DEPOSIT_NO=DA.DEPOSIT_NO AND 
+        DA.PROD_ID=DP.PROD_ID AND DP.BEHAVES_LIKE='DAILY'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AGENT_ID">
+                    DA.AGENT_ID = #AGENT_ID:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend = "AND" property = "DEPOSIT_NO">
+                    DA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            order by dsa.deposit_period_mm asc
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getAgentCollectionAmt" result-class="java.util.HashMap"> 
+        <!--SELECT SUM(D.AMOUNT) AS AMOUNT FROM DAILY_DEPOSIT_TRANS D JOIN DEPOSIT_ACINFO A ON  D.ACC_NUM = A.DEPOSIT_NO||'_'||'1'
+        WHERE D.AGENT_NO=#AGENT_ID:varchar#  AND D.TRN_DT BETWEEN #MONTH_START_DATE:DATE# and #MONTH_END_DATE:DATE# AND A.PROD_ID=#PROD_ID:VARCHAR# 
+        AND D.AUTHORIZE_STATUS='AUTHORIZED' AND A.AUTHORIZE_STATUS='AUTHORIZED' group by D.AGENT_NO-->
+        SELECT   SUM (D.AMOUNT) AS AMOUNT
+        FROM DAILY_DEPOSIT_TRANS D JOIN AGENTMASTDET A
+         ON (D.ACC_NUM = A.ACT_NUM || '_' || '1' OR D.ACC_NUM = A.ACT_NUM )
+        WHERE D.AGENT_NO = #AGENT_ID:varchar#
+        AND D.TRN_DT BETWEEN #MONTH_START_DATE:DATE# and #MONTH_END_DATE:DATE#
+        AND A.PROD_ID = #PROD_ID:VARCHAR#
+        AND D.AUTHORIZE_STATUS = 'AUTHORIZED'
+        GROUP BY D.AGENT_NO
+    </mapped-statement>
+    
+   <mapped-statement name="getAgentAllProductCollectionAmt" result-class="java.util.LinkedHashMap"> 
+         <!--SELECT * FROM(SELECT AP.PROD_DESC, AG.PROD_ID, AC.LAST_COL_DT,
+         SUM (D.AMOUNT) AS COLLECTION_AMOUNT,
+         (SUM (D.AMOUNT) * AM.COMM_PER_BANK / 100) AS COMMISION,
+         ((SUM (D.AMOUNT) * AM.COMM_PER_BANK / 100) * #VAT_PER:NUMBER# / 100) AS VAT
+         FROM DAILY_DEPOSIT_TRANS D,
+         AGENTMASTDET AG,
+         ALL_PRODUCTS AP,
+         AGENT_COLLECTION_PROD AC,
+         AGENT_PROD_MAPPING AM
+         WHERE (D.ACC_NUM = AG.ACT_NUM || '_' || '1' OR D.ACC_NUM = AG.ACT_NUM)
+         AND AG.AGENT_ID = D.AGENT_NO
+         AND AC.AGENT_ID = AG.AGENT_ID
+         AND AP.PROD_ID = AG.PROD_ID
+         AND AC.PROD_ID = AP.PROD_ID
+         AND AP.PROD_ID = AG.PROD_ID
+         AND AC.AGENT_ID = AG.AGENT_ID
+         AND AM.PROD_ID = AG.PROD_ID
+         AND D.AGENT_NO = #AGENT_ID:VARCHAR#
+         AND D.TRN_DT BETWEEN AC.LAST_COL_DT AND #CURR_DT:DATE#
+         AND D.AUTHORIZE_STATUS = 'AUTHORIZED'
+         GROUP BY D.AGENT_NO, AG.PROD_ID, AP.PROD_DESC, AC.LAST_COL_DT,
+         AM.COMM_PER_BANK
+         UNION ALL
+         SELECT al.PROD_DESC, lf.PROD_ID, AC.LAST_COL_DT,
+         GET_DAILY_LOAN_COLLECTION(lf.ACCT_NUM,AC.LAST_COL_DT) AS COLLECTION_AMOUNT,
+         (GET_DAILY_LOAN_COLLECTION(lf.ACCT_NUM,AC.LAST_COL_DT) * AP.COMM_PER_BANK / 100) AS COMMISION,
+         ((GET_DAILY_LOAN_COLLECTION(lf.ACCT_NUM,AC.LAST_COL_DT) * AP.COMM_PER_BANK / 100) * #VAT_PER:NUMBER# / 100) AS VAT
+         FROM DAILY_LOAN_SANCTION_DETAILS DL,AGENT_COLLECTION_PROD AC,
+         AGENT_PROD_MAPPING AP,ALL_PRODUCTS AL,LOANS_FACILITY_DETAILS lf
+         WHERE LF.ACCT_NUM = DL.ACCT_NUM 
+         AND dl.AGENT_ID  = #AGENT_ID:VARCHAR#         
+         AND AC.PROD_ID = LF.PROD_ID 
+         AND AP.PROD_ID =  lf.PROD_ID 
+         and AC.AGENT_ID = DL.AGENT_ID
+         and AL.PROD_ID = LF.PROD_ID
+         AND DL.STATUS !='DELETED'
+         AND DL.AGENT_ID  =#AGENT_ID:VARCHAR#) WHERE COLLECTION_AMOUNT>0-->
+         SELECT * FROM GET_AGENTCOMM ( #AGENT_ID:VARCHAR#,CAST(#CURR_DT# AS DATE),cast(#VAT_PER# as numeric))
+   </mapped-statement>
+  
+    <mapped-statement name="dailyBehavesLike" result-class="java.util.HashMap">        
+            <!--SELECT ROI_GROUP_ID, FROM_AMOUNT, TO_AMOUNT, ROI FROM 
+            DEPOSIT_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID IN 
+            (SELECT PROD_ID FROM DEPOSITS_PRODUCT WHERE BEHAVES_LIKE ='DAILY')-->
+        SELECT ROI_GROUP_ID, FROM_AMOUNT, TO_AMOUNT, ROI FROM 
+        DEPOSIT_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID IN 
+        (SELECT PROD_ID FROM DEPOSITS_PRODUCT WHERE BEHAVES_LIKE ='DAILY') AND 
+        FROM_AMOUNT &lt;= #AMOUNT:NUMBER# AND TO_AMOUNT &gt;=#AMOUNT:NUMBER# 
+        AND (#PERIOD:NUMERIC# BETWEEN FROM_PERIOD AND TO_PERIOD)
+<!--        AND FROM_PERIOD&lt;=#PERIOD:NUMERIC#  AND TO_PERIOD&gt;=#PERIOD:NUMERIC#-->
+        AND STATUS not in('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="getOperativeAccNum" result-class="java.util.HashMap">        
+        SELECT ACT_NUM, PROD_ID FROM ACT_MASTER WHERE CUST_ID =#AGENT_ID:VARCHAR#
+    </mapped-statement>   
+
+    <mapped-statement name="getAgentCommisionAcHd" result-class="java.util.HashMap">        
+        SELECT PROD_ID, COMMISION_HEAD FROM DEPOSITS_PROD_ACHD WHERE 
+        PROD_ID IN (SELECT PROD_ID FROM DEPOSITS_PRODUCT WHERE 
+        BEHAVES_LIKE ='DAILY')
+    </mapped-statement>   
+
+    <mapped-statement name="getOperativeAccProd" result-class="java.util.HashMap">        
+        SELECT PROD_ID FROM ACT_MASTER WHERE CUST_ID = #ACT_NUM:VARCHAR#
+    </mapped-statement>   
+        
+    <mapped-statement name="getOperativeAccHeadId" result-class="java.util.HashMap">        
+        SELECT PROD_DESC FROM OP_AC_PRODUCT WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>   
+        
+    <mapped-statement name="getDepositAccProd" result-class="java.util.HashMap">        
+        SELECT PROD_ID FROM DEPOSIT_ACINFO WHERE DEPOSIT_NO = #ACT_NUM:VARCHAR#
+    </mapped-statement>   
+        
+    <mapped-statement name="getDepositAccHeadId" result-class="java.util.HashMap">        
+        SELECT PROD_DESC FROM DEPOSITS_PRODUCT WHERE PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>   
+    <mapped-statement name="getGlhead" result-class="java.util.HashMap">        
+        select AC_HD_ID,AC_HD_DESC from ac_hd  where AC_HD_ID=#AC_HD_ID:VARCHAR#
+    </mapped-statement>   
+    <mapped-statement name="getACheadANDPRODID" result-class="java.util.HashMap">        
+<!--            select   AM.PROD_ID as PROD_ID ,OAP.AC_HD_ID as AC_HD_ID  
+            from act_master AM,OP_AC_PRODUCT OAP
+            where AM.PROD_ID=OAP.PROD_ID and AM.ACT_NUM =#ACT_NUM# -->            
+        SELECT DP_ACT_NUM,DP_PROD_ID,DP_PROD_TYPE,OA_ACT_NUM,AM.PROD_ID as PROD_ID,OAP.AC_HD_ID as AC_HD_ID
+        FROM ACT_MASTER AM,OP_AC_PRODUCT OAP,AGENT_MASTER AG WHERE ag.AGENT_ID = #AGENT_ID:VARCHAR# AND
+        AM.PROD_ID=OAP.PROD_ID and AM.ACT_NUM = #ACT_NUM:VARCHAR# AND AG.STATUS !='DELETED' AND 
+        AG.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>  
+        
+    <dynamic-mapped-statement name="selectIndivalAccSumforagCom" result-class="java.util.LinkedHashMap">        
+<!--            SELECT DDT.ACC_NUM AS ACC_NUM,SUM(DDT.AMOUNT) AS AMOUNT
+            from DAILY_DEPOSIT_TRANS DDT,
+            DEPOSIT_SUB_ACINFO DSA
+            WHERE DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO=DDT.ACC_NUM 
+            AND DDT.AUTHORIZE_STATUS='AUTHORIZED' 
+            AND DDT.COLL_DT BETWEEN #MONTH_START_DATE# 
+            AND #MONTH_END_DATE# AND AGENT_NO =#AGENT_ID# 
+            AND DSA.DEPOSIT_PERIOD_MM=#PERIOD# AND DSA.TOTAL_BALANCE >0 -->             
+        SELECT DDT.ACC_NUM,SUM(DDT.AMOUNT) AS AMOUNT,DSA.DEPOSIT_AMT AS DEPOSIT_AMT,DSA.CLOSE_DT AS CLOSE_DT,
+        DSA.ACCT_STATUS AS DEPOSIT_STATUS,DSA.DEPOSIT_DT AS DEPOSIT_DT,AGENT_COMMISION_PERIOD 
+        FROM DAILY_DEPOSIT_TRANS DDT,DEPOSIT_SUB_ACINFO DSA,DEPOSITS_PROD_RD DPR,DEPOSIT_ACINFO DA WHERE 
+        DDT.TRN_DT BETWEEN #MONTH_START_DATE:DATE# AND #MONTH_END_DATE:DATE# AND DDT.STATUS !='DELETED' AND 
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DSA.DEPOSIT_DT NOT IN (SELECT DSA.DEPOSIT_DT FROM DEPOSIT_SUB_ACINFO 
+        WHERE DSA.DEPOSIT_DT BETWEEN #MONTH_START_DATE:DATE# AND #MONTH_END_DATE:DATE#) AND DPR.PROD_ID = DA.PROD_ID 
+        AND DSA.DEPOSIT_NO ||'_'|| DSA.DEPOSIT_SUB_NO = DDT.ACC_NUM AND DDT.AGENT_NO = #AGENT_ID:VARCHAR#
+        AND DDT.AUTHORIZE_STATUS='AUTHORIZED' AND DDT.STATUS!='DELETED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "DEPOSIT_NO">
+                    DSA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+<!--                    GROUP BY DDT.ACC_NUM ORDER BY DDT.ACC_NUM -->
+        GROUP BY DDT.ACC_NUM,DSA.DEPOSIT_AMT,DSA.ACCT_STATUS,DSA.DEPOSIT_DT,DSA.DEPOSIT_DT,
+        DSA.CLOSE_DT,AGENT_COMMISION_PERIOD ORDER BY DDT.ACC_NUM            
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="calcualtingthroughDepositClosing" result-class="java.util.LinkedHashMap">        
+        SELECT DDT.ACC_NUM,SUM(DDT.AMOUNT) AS AMOUNT,DSA.DEPOSIT_AMT AS DEPOSIT_AMT,DSA.CLOSE_DT AS CLOSE_DT,
+        DSA.ACCT_STATUS AS DEPOSIT_STATUS,DSA.DEPOSIT_DT AS DEPOSIT_DT,AGENT_COMMISION_PERIOD 
+        FROM DAILY_DEPOSIT_TRANS DDT,DEPOSIT_SUB_ACINFO DSA,DEPOSITS_PROD_RD DPR,DEPOSIT_ACINFO DA WHERE 
+        DDT.TRN_DT BETWEEN #MONTH_START_DATE:DATE# AND #MONTH_END_DATE:DATE# AND DDT.STATUS !='DELETED' AND 
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DPR.PROD_ID = DA.PROD_ID 
+        AND DSA.DEPOSIT_NO ||'_'|| DSA.DEPOSIT_SUB_NO = DDT.ACC_NUM AND DDT.AGENT_NO = #AGENT_ID:VARCHAR#
+        AND DDT.STATUS !='DELETED' AND DDT.AUTHORIZE_STATUS='AUTHORIZED' AND DSA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#            
+        GROUP BY DDT.ACC_NUM,DSA.DEPOSIT_AMT,DSA.ACCT_STATUS,DSA.DEPOSIT_DT,DSA.DEPOSIT_DT,
+        DSA.CLOSE_DT,AGENT_COMMISION_PERIOD ORDER BY DDT.ACC_NUM            
+    </mapped-statement> 
+                
+    <mapped-statement name="selectCurrentMonthOpenedAccts" result-class="java.util.LinkedHashMap">        
+        SELECT DDT.ACC_NUM,SUM(DDT.AMOUNT) AS AMOUNT,DSA.DEPOSIT_AMT AS DEPOSIT_AMT,DSA.DEPOSIT_DT AS DEPOSIT_DT 
+        FROM DAILY_DEPOSIT_TRANS DDT,DEPOSIT_SUB_ACINFO DSA WHERE DDT.TRN_DT BETWEEN #MONTH_START_DATE:DATE# AND #MONTH_END_DATE:DATE# 
+        AND DDT.STATUS !='DELETED' AND DSA.DEPOSIT_DT IN (SELECT DSA.DEPOSIT_DT FROM DEPOSIT_SUB_ACINFO WHERE
+        DSA.DEPOSIT_DT BETWEEN #MONTH_START_DATE:DATE# AND #MONTH_END_DATE:DATE#) AND DSA.ACCT_STATUS != 'CLOSED' AND
+        DSA.DEPOSIT_NO ||'_'|| DSA.DEPOSIT_SUB_NO = DDT.ACC_NUM AND DSA.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        DDT.AGENT_NO = #AGENT_ID:VARCHAR# AND DDT.AUTHORIZE_STATUS='AUTHORIZED' 
+        GROUP BY DDT.ACC_NUM,DSA.DEPOSIT_AMT,DSA.ACCT_STATUS,DSA.DEPOSIT_DT ORDER BY DDT.ACC_NUM
+    </mapped-statement> 
+                
+    <mapped-statement name="updateLastComPaidDate" inline-parameters="true">
+        UPDATE AGENT_MASTER SET 
+        LAST_COM_PAID_DT=#LAST_COM_PAID_DT:DATE#
+        WHERE AGENT_ID=#AGENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateLastComPaidDateForAgentProducts" inline-parameters="true">
+        UPDATE AGENT_COLLECTION_PROD SET LAST_COL_DT = #LAST_COM_PAID_DT:DATE# WHERE AGENT_ID = #AGENT_ID:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="getLastCommisionPaidDt" result-class="java.util.HashMap">        
+        SELECT AC.AGENT_ID,AC.LAST_COL_DT,AM.APPOINTED_DT,AP.COMM_COL_AC_HD_ID,AC.LAST_INTRO_PAID_DT
+        FROM AGENT_MASTER AM,AGENT_COLLECTION_PROD AC,AGENT_PROD_MAPPING AP
+        WHERE AC.AGENT_ID = AM.AGENT_ID
+        AND AP.PROD_ID = AC.PROD_ID
+        AND AM.STATUS!='DELETED'
+        AND AM.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND AC.PROD_ID = #PROD_ID:VARCHAR#
+        AND AC.AGENT_ID = #AGENT_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getStandingProcessedDetails" result-class="java.util.HashMap">        
+        SELECT MAX(ST.LAST_RUN_DT) AS LAST_DT, MAX(ST.NEXT_RUN_DT) AS NEXT_DT
+        FROM STANDING_INSTRUCTION ST,
+        STANDING_INSTRUCTION_CREDIT STC,
+        AGENT_COLLECTION_PROD AP,
+        STANDING_INSTRUCTION_DEBIT STD
+        WHERE STC.SI_ID = ST.SI_ID
+        AND STD.SI_ID = ST.SI_ID
+        AND AP.PROD_ID = STD.PROD_ID
+        AND AP.PROD_ID = #PROD_ID:VARCHAR#
+        AND AP.AGENT_ID = #AGENT_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getProdTypeDaily" result-class="java.util.HashMap">        
+        SELECT DISTINCT PROD_TYPE FROM DAILY_DEPOSIT_TRANS 
+        WHERE ACC_NUM= #ACT_NUM:VARCHAR# AND STATUS!='DELETED' AND BATCH_ID=#BATCH_ID:VARCHAR# AND TRN_DT= #TRANS_DT:DATE#
+    </mapped-statement> 
+        
+    <mapped-statement name = "insertMonthlyScheduleList" result-class = "java.util.HashMap">
+        INSERT INTO AGENTS_MONTHLY_SCHEDULE (AGENT_ID,FROM_DATE,TO_DATE,COLLECTED_AMT,COMMISION_AMT,COMMISION_TO_OA,
+        COMMISION_TO_TD,COMMISION_TO_TDS,COMMISION_GIVEN_DT,COMMISION_GIVEN_BY,TYPE_OF_COMMISION,COMMISION_TO_NEW_AC)
+        VALUES(#AGENT_ID:VARCHAR#,#FROM_DATE:DATE#,#TO_DATE:DATE#,cast(#COLLECTED_AMT# as numeric),cast(#COMMISION_AMT# as numeric),#COMMISION_TO_OA:NUMBER#,
+        #COMMISION_TO_TD:NUMBER#,#COMMISION_TO_TDS:NUMBER#,#COMMISION_GIVEN_DT:DATE#,#COMMISION_GIVEN_BY:VARCHAR#,#TYPE_OF_COMMISION:VARCHAR#,#COMMISION_TO_NEW_AC:NUMBER#)
+    </mapped-statement>
+    <mapped-statement name="getDailyDepositCusotmerForPulllpully" result-class="java.util.HashMap" >  
+        <!--SELECT DA.PROD_ID, CA.STREET, DA.DEPOSIT_NO, FNAME, LAST_COLL_DT, CLEAR_BALANCE, 0 AS MULT_AMT, 0 AS FINE_AMT, 
+        0 AS LIMIT_AMT, 0 AS FLAG, '' AS CREDITOR_NOTICE FROM 
+        DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PRODUCT DP ,AGENT_MASTER AM, CUSTOMER C, CUST_ADDR CA,
+        (SELECT AGENT_NO, TO_CHAR(MAX(COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT FROM DAILY_DEPOSIT_TRANS GROUP BY AGENT_NO) DDT
+        WHERE DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND DA.PROD_ID=DP.PROD_ID AND DP.BEHAVES_LIKE='DAILY' AND 
+        DA.STATUS !='DELETED' AND DA.AUTHORIZE_STATUS ='AUTHORIZED' AND DA.DEPOSIT_STATUS !='CLOSED' AND 
+        DDT.AGENT_NO(+)=DA.AGENT_ID AND DA.CUST_ID=C.CUST_ID AND C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE AND
+        DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# AND AM.AGENT_MACHINE_ID=DA.AGENT_ID
+        AND DA.AGENT_ID=#AGENT_ID:VARCHAR#-->        
+        SELECT DA.PROD_ID, CA.STREET, DA.DEPOSIT_NO, FNAME, LAST_COLL_DT,
+       CLEAR_BALANCE, 0 AS MULT_AMT, 0 AS FINE_AMT, 0 AS LIMIT_AMT, 0 AS FLAG,
+       '' AS CREDITOR_NOTICE
+        FROM DEPOSIT_ACINFO DA,
+       DEPOSIT_SUB_ACINFO DSA,
+       DEPOSITS_PRODUCT DP,
+       AGENT_MASTER AM,
+       CUSTOMER C,
+       CUST_ADDR CA LEFT JOIN
+       (SELECT   AGENT_NO, TO_CHAR (MAX (COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT
+            FROM DAILY_DEPOSIT_TRANS
+        GROUP BY AGENT_NO) DDT ON DDT.AGENT_NO = DA.AGENT_ID
+        WHERE DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+       AND DA.PROD_ID = DP.PROD_ID
+       AND DP.BEHAVES_LIKE = 'DAILY'
+       AND DA.STATUS != 'DELETED'
+       AND DA.AUTHORIZE_STATUS = 'AUTHORIZED'
+       AND DA.DEPOSIT_STATUS != 'CLOSED'
+       AND DA.CUST_ID = C.CUST_ID
+       AND C.CUST_ID = CA.CUST_ID
+       AND C.COMM_ADDR_TYPE = CA.ADDR_TYPE
+       AND DA.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+       AND AM.AGENT_MACHINE_ID = DA.AGENT_ID
+       AND DA.AGENT_ID =#AGENT_ID:VARCHAR#
+        UNION ALL
+        SELECT PROD_ID, STREET, ACT_NUM AS DEPOSIT_NO, CU.FNAME, LAST_COLL_DT,
+       ABS (NVL (CLEAR_BALANCE, 0)), 0 AS MULT_AMT, 0 AS FINE_AMT,
+       0 AS LIMIT_AMT, 0 AS FLAG, '' AS CREDITOR_NOTICE
+        FROM ACT_MASTER AM JOIN CUSTOMER CU ON CU.CUST_ID = AM.CUST_ID
+       JOIN OP_AC_PRODUCT OA ON OA.PROD_ID = AM.PROD_ID
+       LEFT JOIN CUST_ADDR CA
+       ON CU.CUST_ID = CA.CUST_ID AND CU.COMM_ADDR_TYPE = CA.ADDR_TYPE
+       ,
+       (SELECT   AGENT_NO, TO_CHAR (MAX (COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT
+            FROM DAILY_DEPOSIT_TRANS
+        GROUP BY AGENT_NO) DDT
+         WHERE AGENT_ID IS NOT NULL
+           AND AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+           AND AM.AGENT_ID =#AGENT_ID:VARCHAR#
+            UNION ALL
+            SELECT SUSPENSE_PROD_ID AS PROD_ID, SUSPENSE_ADDRESS AS STREET,
+           SUSPENSE_ACCT_NUM AS DEPOSIT_NO, SUSPENSE_NAME AS FNAME, LAST_COLL_DT,
+           ABS (CLEAR_BALANCE), 0 AS MULT_AMT, 0 AS FINE_AMT, 0 AS LIMIT_AMT,
+           0 AS FLAG, '' AS CREDITOR_NOTICE
+          FROM SUSPENSE_ACCOUNT_MASTER JOIN SUSPENSE_PRODUCT SP
+            ON SP.PROD_ID = SUBSTR (SUSPENSE_ACCT_NUM, 5, 3)
+        ,
+            (SELECT   AGENT_NO, TO_CHAR (MAX (COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT
+            FROM DAILY_DEPOSIT_TRANS
+            GROUP BY AGENT_NO) DDT
+            WHERE AGENT_ID IS NOT NULL AND AGENT_ID = #AGENT_ID:VARCHAR#
+            AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDailyDepositCusotmer" result-class="java.util.HashMap" >  
+        <!--SELECT * FROM DEPOSIT_ACINFO DA,DEPOSITS_PRODUCT DP ,AGENT_MASTER AM WHERE DA.PROD_ID=DP.PROD_ID AND DP.BEHAVES_LIKE='DAILY' AND 
+        DA.STATUS !='DELETED' AND DA.AUTHORIZE_STATUS ='AUTHORIZED' AND DA.DEPOSIT_STATUS !='CLOSED' AND DA.BRANCH_ID=#BRANCH_CODE# AND AM.AGENT_ID=DA.AGENT_ID
+        AND DA.AGENT_ID=#AGENT_ID#-->
+      <!--  SELECT DA.PROD_ID, CA.STREET, DA.DEPOSIT_NO, FNAME, LAST_COLL_DT, CLEAR_BALANCE, 0 AS MULT_AMT, 0 AS FINE_AMT, 
+        0 AS LIMIT_AMT, 0 AS FLAG, '' AS CREDITOR_NOTICE FROM 
+        DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PRODUCT DP ,AGENT_MASTER AM, CUSTOMER C, CUST_ADDR CA,
+        (SELECT AGENT_NO, TO_CHAR(MAX(COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT FROM DAILY_DEPOSIT_TRANS GROUP BY AGENT_NO) DDT
+        WHERE DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND DA.PROD_ID=DP.PROD_ID AND DP.BEHAVES_LIKE='DAILY' AND 
+        DA.STATUS !='DELETED' AND DA.AUTHORIZE_STATUS ='AUTHORIZED' AND DA.DEPOSIT_STATUS !='CLOSED' AND 
+        DDT.AGENT_NO(+)=DA.AGENT_ID AND DA.CUST_ID=C.CUST_ID AND C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE AND
+        DA.BRANCH_ID=#BRANCH_CODE# AND AM.AGENT_ID=DA.AGENT_ID
+        AND DA.AGENT_ID=#AGENT_ID# -->
+        SELECT 'D' AS PROD_ID, CA.STREET, DA.DEPOSIT_NO,DA.REFERENCE_NO,FNAME, LAST_COLL_DT, CLEAR_BALANCE,0 AS PRIN_BALANCE, 0 AS MULT_AMT, 0 AS FINE_AMT, 
+        0 AS LIMIT_AMT, 0 AS FLAG, '' AS CREDITOR_NOTICE FROM 
+        DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PRODUCT DP ,AGENT_MASTER AM, CUSTOMER C, CUST_ADDR CA LEFT JOIN 
+        (SELECT AGENT_NO, TO_CHAR(MAX(COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT FROM DAILY_DEPOSIT_TRANS GROUP BY AGENT_NO) DDT ON DDT.AGENT_NO=DA.AGENT_ID 
+        WHERE DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND DA.PROD_ID=DP.PROD_ID AND DP.BEHAVES_LIKE='DAILY' AND 
+        DA.STATUS !='DELETED' AND DA.AUTHORIZE_STATUS ='AUTHORIZED' AND DA.DEPOSIT_STATUS !='CLOSED' AND 
+        DA.CUST_ID=C.CUST_ID AND C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE AND
+        DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# AND AM.AGENT_ID=DA.AGENT_ID
+        AND DA.AGENT_ID=#AGENT_ID:VARCHAR#
+        
+          
+    
+    </mapped-statement>
+    <mapped-statement name="getDailyDepositCusotmerKorr" result-class="java.util.HashMap" >  
+        SELECT apm.prod_exp_code AS prod_id, ca.street, da.deposit_no,
+       da.reference_no, fname, nvl(last_coll_dt,da.AUTHORIZED_DT) as last_coll_dt, clear_balance, 0 AS prin_balance,
+       0 AS mult_amt, 0 AS fine_amt, 0 AS limit_amt, 0 AS flag,
+       '' AS creditor_notice,DP.PROD_DESC as PROD_DESC,DSA.DEPOSIT_AMT,'DEPOSIT' AS SCREEN
+  FROM deposit_acinfo da,
+       deposit_sub_acinfo dsa,
+       deposits_product dp,
+       agent_master am,
+       customer c,
+       cust_addr ca,
+       agent_prod_mapping apm LEFT JOIN 
+       (SELECT   agent_no, MAX(coll_dt) last_coll_dt
+            FROM daily_deposit_trans
+        GROUP BY agent_no) ddt ON ddt.agent_no = da.agent_id
+ WHERE da.deposit_no = dsa.deposit_no
+   AND da.prod_id = dp.prod_id
+   AND apm.prod_id = da.prod_id
+   AND dp.behaves_like = 'DAILY'
+   AND da.status != 'DELETED'
+   AND da.authorize_status = 'AUTHORIZED'
+   AND da.deposit_status != 'CLOSED'
+   AND da.cust_id = c.cust_id
+   AND c.cust_id = ca.cust_id
+   AND c.comm_addr_type = ca.addr_type
+   AND da.branch_id = #BRANCH_CODE:VARCHAR#
+   AND am.agent_id = da.agent_id
+   AND da.agent_id = #AGENT_ID:VARCHAR#
+   AND da.DEPOSIT_STATUS !='CLOSED'
+UNION
+SELECT apm.prod_exp_code AS prod_id, sa.suspense_address AS street,
+       sa.suspense_acct_num AS deposit_no, '' AS reference_no,
+       sa.suspense_name AS fname, nvl(last_coll_dt,sa.LAST_TRANS_DT) as last_coll_dt, sa.clear_balance,
+       0 AS prin_balance, 0 AS mult_amt, 0 AS fine_amt, 0 AS limit_amt,
+       0 AS flag, '' AS creditor_notice,sp.PROD_DESC as PROD_DESC,0 AS DEPOSIT_AMT,'SUSPENCE' AS SCREEN
+  FROM suspense_account_master sa,
+       agent_master am,
+       agent_prod_mapping apm,
+        SUSPENSE_PRODUCT sp LEFT JOIN
+       (SELECT   agent_no, MAX(coll_dt) last_coll_dt
+            FROM daily_deposit_trans
+        GROUP BY agent_no) ddt ON ddt.agent_no = sa.agent_id
+ WHERE apm.prod_id = sa.suspense_prod_id
+   and sp.PROD_ID= SUSPENSE_PROD_ID
+   AND sa.agent_id = am.agent_id
+   AND sa.status != 'DELETED'
+   AND sa.authorize_status = 'AUTHORIZED'
+   AND sa.branch_code = #BRANCH_CODE:VARCHAR#
+   AND am.agent_id = sa.agent_id
+   AND apm.agent_id = sa.agent_id
+   AND sa.agent_id = #AGENT_ID:VARCHAR#
+   UNION
+   SELECT apm.prod_exp_code AS prod_id, (select street from CUST_ADDR c where C.CUST_ID=SA.CUST_ID) AS street,
+       SA.ACT_NUM AS deposit_no, '' AS reference_no,
+       SA.ACCT_NAME AS fname, nvl(last_coll_dt,SA.LAST_TRANS_DT) as last_coll_dt, sa.clear_balance,
+       0 AS prin_balance, 0 AS mult_amt, 0 AS fine_amt, 0 AS limit_amt,
+       0 AS flag, '' AS creditor_notice,sp.PROD_DESC as PROD_DESC,0 AS DEPOSIT_AMT,'OPERATIVE' AS SCREEN
+  FROM ACT_MASTER sa,
+       agent_master am,
+       agent_prod_mapping apm,
+        OP_AC_PRODUCT sp LEFT JOIN
+       (SELECT   agent_no,MAX(coll_dt) last_coll_dt
+            FROM daily_deposit_trans
+        GROUP BY agent_no) ddt ON ddt.agent_no = sa.agent_id
+ WHERE apm.prod_id = SA.PROD_ID
+   and sp.PROD_ID= SA.PROD_ID
+   AND sa.agent_id = am.agent_id
+   AND sa.status != 'DELETED'
+   AND SA.AUTHORIZATION_STATUS = 'AUTHORIZED'
+   AND sa.branch_code = #BRANCH_CODE:VARCHAR#
+   AND am.agent_id = sa.agent_id
+   AND apm.agent_id = sa.agent_id
+   AND sa.agent_id = #AGENT_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDailyDepositCusotmerNew" result-class="java.util.LinkedHashMap" >  
+        SELECT 'DD' AS PROD_ID, CA.STREET, DA.DEPOSIT_NO,DA.REFERENCE_NO,FNAME, LAST_COLL_DT, nvl(CLEAR_BALANCE,0) AS CLEAR_BALANCE,0 AS PRIN_BALANCE, 0 AS MULT_AMT, 0 AS FINE_AMT, 
+        0 AS LIMIT_AMT, 0 AS FLAG, '' AS CREDITOR_NOTICE,TO_CHAR(DSA.DEPOSIT_DT,'DD/MM/YYYY') AS DEPOSIT_DT,TO_CHAR(DSA.MATURITY_DT,'DD/MM/YYYY') AS MATURITY_DT FROM 
+        DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PRODUCT DP ,AGENT_MASTER AM, CUSTOMER C, CUST_ADDR CA LEFT JOIN
+        (SELECT AGENT_NO, TO_CHAR(MAX(COLL_DT), 'DD/MM/YYYY') LAST_COLL_DT FROM DAILY_DEPOSIT_TRANS GROUP BY AGENT_NO) DDT ON DDT.AGENT_NO=DA.AGENT_ID 
+        WHERE DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND DA.PROD_ID=DP.PROD_ID AND DP.BEHAVES_LIKE='DAILY' AND 
+        DA.STATUS !='DELETED' AND DA.AUTHORIZE_STATUS ='AUTHORIZED' AND DA.DEPOSIT_STATUS !='CLOSED' AND 
+        DA.CUST_ID=C.CUST_ID AND C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE AND
+        DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# AND AM.AGENT_ID=DA.AGENT_ID
+        AND DA.AGENT_ID=#AGENT_ID:VARCHAR# ORDER BY DA.DEPOSIT_NO
+    </mapped-statement>
+    <mapped-statement name="getDailyLoanCusotmer" result-class="java.util.HashMap" >  
+      <!--   SELECT 'L' AS PROD_ID , CA.STREET, LFD.ACCT_NUM AS DEPOSIT_NO, FNAME, LAST_TRANS_DT AS LAST_COLL_DT,0 AS CLEAR_BALANCE,
+        LOAN_BALANCE_PRINCIPAL AS PRIN_BALANCE, 
+        0 AS MULT_AMT, 0 AS FINE_AMT, 
+        0 AS LIMIT_AMT, 0 AS FLAG, '' AS CREDITOR_NOTICE FROM 
+        LOANS_FACILITY_DETAILS LFD,DAILY_LOAN_SANCTION_DETAILS DLSD ,loans_product LP,AGENT_MASTER AM, CUSTOMER C, CUST_ADDR CA,LOANS_BORROWER LB,
+          (SELECT AGENT_NO, TO_CHAR(MAX(COLL_DT), 'DD-MM-YYYY') LAST_COLL_DT FROM DAILY_DEPOSIT_TRANS GROUP BY AGENT_NO) DDT
+        WHERE LB.BORROW_NO=LFD.BORROW_NO AND
+             LFD.PROD_ID=LP.PROD_ID AND 
+             LP.AUTHORIZE_REMARK ='DAILY_LOAN' AND 
+        LFD.STATUS !='DELETED' AND LFD.AUTHORIZE_STATUS_1 ='AUTHORIZED' AND LFD.ACCT_STATUS !='CLOSED' AND 
+        DDT.AGENT_NO(+)=DLSD.AGENT_ID AND
+         LB.CUST_ID=C.CUST_ID  AND C.CUST_ID=CA.CUST_ID AND C.COMM_ADDR_TYPE=CA.ADDR_TYPE AND
+       LFD.BRANCH_ID=#BRANCH_CODE# AND AM.AGENT_ID=DLSD.AGENT_ID AND  CLEAR_BALANCE!=0 
+         AND DLSD.AGENT_ID=#AGENT_ID# -->
+        SELECT 'L' AS prod_id, ca.street, lfd.acct_num AS deposit_no, fname,
+        last_trans_dt AS last_coll_dt, 0 AS clear_balance,
+        loan_balance_principal AS prin_balance, 0 AS mult_amt, 0 AS fine_amt,
+        0 AS limit_amt, 0 AS flag, '' AS creditor_notice
+        FROM loans_facility_details lfd,
+        loans_borrower lb,
+        loans_product lp,
+        customer c,
+        cust_addr ca,
+        agent_master am,
+        daily_loan_sanction_details dlsd,
+        (SELECT   agent_no, TO_CHAR (MAX (coll_dt), 'DD-MM-YYYY') last_coll_dt
+        FROM daily_deposit_trans
+        GROUP BY agent_no) ddt
+        WHERE lb.borrow_no = lfd.borrow_no
+        AND lfd.prod_id = lp.prod_id
+        AND lb.cust_id = c.cust_id
+        AND c.cust_id = ca.cust_id
+        AND c.comm_addr_type = ca.addr_type
+        AND am.agent_id = dlsd.agent_id
+        And LFD.ACCT_NUM = DLSD.ACCT_NUM
+        AND ddt.agent_no(+) = dlsd.agent_id
+        AND lp.authorize_remark = 'DAILY_LOAN'
+        AND lfd.status != 'DELETED'
+        AND lfd.authorize_status_1 = 'AUTHORIZED'
+        AND lfd.acct_status != 'CLOSED'
+        AND lfd.branch_id =#BRANCH_CODE:VARCHAR#
+        AND clear_balance != 0
+        AND dlsd.agent_id =#AGENT_ID:VARCHAR# order by LFD.ACCT_NUM  
+    </mapped-statement>
+    
+    <mapped-statement name="getLoanProductDescription" result-class="java.util.HashMap">
+        SELECT PROD_ID,ACCT_HEAD,PROD_DESC FROM    LOANS_PRODUCT  WHERE AUTHORIZE_REMARK='DAILY_LOAN'
+    </mapped-statement>   
+    
+    <dynamic-mapped-statement name="getDailyDepositTransForAuthorize1" result-class="java.util.HashMap">
+        SELECT distinct CT.BATCH_ID ,CT.TRANS_DT,CT.GL_TRANS_ACT_NUM AS AGENT_ID,( SELECT SUM(AMOUNT) FROM TRANSFER_TRANS 
+        WHERE  TRANS_TYPE='CREDIT' AND BATCH_ID=CT.BATCH_ID AND GL_TRANS_ACT_NUM =CT.GL_TRANS_ACT_NUM AND CT.TRANS_DT=TRANS_DT) AS AMOUNT , CT.STATUS, CT.INIT_TRANS_ID
+        ,CT.AUTHORIZE_STATUS, CT.BRANCH_ID, CT.INITIATED_BRANCH, CT.INIT_CHANN_TYPE,CT.INST_DT ,CT.STATUS_BY
+        FROM TRANSFER_TRANS  CT ,AGENT_MASTER A WHERE CT.TRANS_TYPE='CREDIT' AND CT.STATUS NOT IN('DELETED') AND CT.TRANS_DT=#TRANS_DT:DATE# 
+        AND    CT.GL_TRANS_ACT_NUM = A.AGENT_ID
+        AND  CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND CT.AUTHORIZE_STATUS='DAILY' 
+        AND CT.STATUS_BY!=#USER_ID:VARCHAR# AND 
+        AC_HD_ID IN 
+        ((SELECT ACCT_HEAD FROM LOANS_PRODUCT WHERE (AUTHORIZE_REMARK ='DAILY_LOAN' or behaves_like='OD')) UNION (SELECT ACCT_HEAD FROM DEPOSITS_PRODUCT WHERE BEHAVES_LIKE IN ('DAILY','RECURRING')) UNION
+                     (SELECT AC_HD_ID FROM OP_AC_PRODUCT)
+                     UNION
+                   (SELECT ac_hd_id
+                      FROM SUSPENSE_PRODUCT))
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CT.AUTHORIZE_STATUS = 'EXCEPTION' AND 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getTotalNoOfTransactionCredit" result-class="java.util.HashMap">
+        SELECT SUM(COUNT) AS COUNT FROM (SELECT COUNT(*) AS COUNT FROM ALL_TRANS AT WHERE AT.ACT_NUM = #DEPOSIT_NO:VARCHAR# AND 
+        AT.TRANS_TYPE = #TRANS_TYPE:VARCHAR# AND AT.AUTHORIZE_STATUS = 'AUTHORIZED' AND AT.STATUS != 'DELETED'
+        UNION ALL 
+        SELECT COUNT(*) AS COUNT FROM DAILY_DEPOSIT_TRANS DD WHERE DD.ACC_NUM = #DEPOSIT_NO:VARCHAR# AND DD.AUTHORIZE_STATUS = 'AUTHORIZED' AND DD.STATUS != 'DELETED')a  
+    </mapped-statement>
+    
+     <mapped-statement name="getDataAlreadyExistsTemp" result-class="java.util.HashMap">
+        SELECT * FROM TEMPDAILY_KOR WHERE BRANCH_ID=#BRANCH_ID:VARCHAR# AND REFERENCE_NO=#REF_NO:VARCHAR# AND 
+        AGENT_ID=#AGENT_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDataForAuthorizeWeekly" result-class="java.util.HashMap">
+    	SELECT ap.prod_id, dd.agent_no
+    	FROM daily_deposit_trans dd, all_product_accts1 ap
+    	WHERE dd.acc_num = #ACT_NUM:VARCHAR#
+   		AND dd.trn_dt = #TRANS_DT:DATE#
+   		AND initiated_branch = #BRANCH_ID:VARCHAR#
+   		AND ap.prod_type = dd.prod_type
+   		AND REPLACE (dd.acc_num, '_1', NULL) = ap.act_num 
+        AND AP.ACCT_STATUS!='CLOSED' AND AP.AUTHORIZATION_STATUS='AUTHORIZED'
+    </mapped-statement> 
+    
+   <dynamic-mapped-statement name="getDataForAuthorizeWeeklyImport" result-class="java.util.HashMap">
+    SELECT ap.prod_id, DD.AGENT_ID AS AGENT_NO     FROM 
+    TEMPDAILY_KOR dd,all_product_accts1 ap WHERE 
+    DD.REFERENCE_NO =#ACT_NUM:VARCHAR#    AND DD.DATE1 = #TRANS_DT:DATE#
+    AND DD.BRANCH_ID = #BRANCH_ID:VARCHAR# AND dd.REFERENCE_NO = ap.act_num 
+    AND AP.ACCT_STATUS!='CLOSED' AND AP.AUTHORIZATION_STATUS='AUTHORIZED'
+  </dynamic-mapped-statement> 
+  
+  <mapped-statement name="getTdsAcHd" result-class="java.util.HashMap">
+        SELECT TDS_AC_HD FROM AGENT_PROD_MAPPING AP WHERE AP.PROD_ID = #PROD_ID:VARCHAR#
+  </mapped-statement> 
+  
+  <mapped-statement name="getAgentCommAcHd" result-class="java.util.HashMap">
+    SELECT COMM_COL_AC_HD_ID,PROD_ID
+    FROM AGENT_PROD_MAPPING AP
+    WHERE AP.PROD_ID = #PROD_ID:VARCHAR#
+ </mapped-statement> 
+ 
+  <mapped-statement name="getSlabWiseCommissionAmount" result-class="java.util.HashMap">
+    SELECT COMMISSION_AMOUNT
+    FROM  AGENT_COMMISION_SLAB WHERE #COLLECTION_AMOUNT:NUMERIC# BETWEEN FROM_AMOUNT AND TO_AMOUNT
+    AND  ((#FROM_DT:DATE# BETWEEN FROM_DT AND TO_DT) OR (FROM_DT &lt;= #FROM_DT:DATE#  AND TO_DT IS NULL))
+    AND PROD_ID = #PROD_ID:VARCHAR#
+    AND STATUS !='DELETED'
+    AND AUTHORIZE_STATUS = 'AUTHORIZED'
+ </mapped-statement> 
+ 
+ <mapped-statement name="getProductTypeForProductId" result-class="java.util.HashMap">
+    SELECT PROD_TYPE FROM ALL_PRODUCTS WHERE PROD_ID=#value:VARCHAR#
+ </mapped-statement>
+        
+    <mapped-statement name="insertAgentLeaveDetailsTO" inline-parameters="true">
+        INSERT INTO AGENT_LEAVE_DETAILS
+        (L_AGENT_ID, L_AGENT_NAME, L_REGION, C_AGENT_ID, C_AGENT_NAME, C_REGION, TXN_TYPE, FROM_DATE, TO_DATE, STATUS_DT, STATUS_BY, STATUS, 
+        SL_NO, AGENT_LEAVE_ID ) VALUES (
+        #lAgentId:VARCHAR#, #lAgentName:VARCHAR#, #lRegion:VARCHAR#, #cAgentId:VARCHAR#, #cAgentName:VARCHAR#, #cRegion:VARCHAR#, 
+		#txnType:VARCHAR#, #fromDate:DATE#, #toDate:DATE#, #statusDt:DATE#, #statusBy:VARCHAR#, #status:VARCHAR#, #slNo:VARCHAR#, #agentLeaveId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use AgentLeaveDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgentLeaveDetailsTO" inline-parameters="true">
+        UPDATE AGENT_LEAVE_DETAILS SET 
+        C_AGENT_ID = #cAgentId:VARCHAR#, 
+        C_AGENT_NAME = #cAgentName:VARCHAR#, 
+        C_REGION = #cRegion:VARCHAR#, 
+        TXN_TYPE = #txnType:VARCHAR#, 
+        FROM_DATE = #fromDate:DATE#, 
+        TO_DATE = #toDate:DATE#, 
+        STATUS_DT = #statusDt:DATE#, 
+        STATUS_BY = #statusBy:DATE#, 
+        STATUS = #status:VARCHAR#
+        WHERE L_AGENT_ID = #lAgentId:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND AGENT_LEAVE_ID = #agentLeaveId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use AgentLeaveDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgentLeaveDetailsTO" inline-parameters="true">
+        UPDATE AGENT_LEAVE_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE L_AGENT_ID = #lAgentId:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND AGENT_LEAVE_ID = #agentLeaveId:VARCHAR# AND AUTHORIZE_STATUS IS NULL
+<!--                AND BRANCH_ID = #branchId:VARCHAR#-->
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to AgentLeaveDetailsTO object (JavaBean) properties -->
+    <result-map name="getAgentLeaveDetailsTO" class="com.see.truetransact.transferobject.agent.AgentLeaveDetailsTO">
+        <property name="lAgentId" column="L_AGENT_ID"/>
+        <property name="lAgentName" column="L_AGENT_NAME"/>
+        <property name="lRegion" column="L_REGION"/>
+        <property name="cAgentId" column="C_AGENT_ID"/>
+        <property name="cAgentName" column="C_AGENT_NAME"/>
+        <property name="cRegion" column="C_REGION"/>
+        <property name="txnType" column="TXN_TYPE"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZE_BY"/>
+        <property name="authorizedDt" column="AUTHORIZE_DT"/>
+        <property name="agentLeaveId" column="AGENT_LEAVE_ID"/>
+        <property name="slNo" column="SL_NO"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectAgentLeaveDetailsTo" result-map="getAgentLeaveDetailsTO" >
+        SELECT * FROM AGENT_LEAVE_DETAILS WHERE L_AGENT_ID = #L_AGENT_ID:VARCHAR# AND STATUS != 'DELETED' ORDER BY SL_NO
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAgentLeaveDetailsData" result-class="java.util.HashMap" >
+        SELECT get_cust_name(c.cust_id) AS "Agent Name", AM.AGENT_ID AS "Agent Id", 
+        AM.APPOINTED_DT  AS "Appointed Date",AM.OA_ACT_NUM  AS "Operative Account No",am.agent_machine_id as "Machine ID"
+        FROM AGENT_MASTER AM, CUSTOMER C WHERE (AM.STATUS != 'DELETED') AND C.CUST_ID = AM.AGENT_ID
+        AND (AM.AUTHORIZED_STATUS !=  'REJECTED' OR AM.AUTHORIZED_STATUS IS NULL)
+        AND AM.AGENT_ID NOT IN(SELECT L_AGENT_ID FROM AGENT_LEAVE_DETAILS WHERE (
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS != 'REJECTED')
+          <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "CHECK_DATE">
+                   TO_DATE >= #CHECK_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ))
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_ID">
+                   AM.BRANCH_ID = #BRANCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AGENT_ID">
+                   AM.AGENT_ID &lt;&gt; #AGENT_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY AM.AGENT_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAgentLeaveDetailsRecord" result-class="java.util.HashMap" >
+        SELECT ALD.L_AGENT_ID "AGENT ID",ALD.L_AGENT_NAME AS "L AGENT NAME",ALD.L_REGION,
+        ALD.C_AGENT_ID,ALD.C_AGENT_NAME AS "C AGENT NAME",ALD.C_REGION,
+        ALD.FROM_DATE AS FROM_DATE,ALD.TO_DATE AS END_DATE,ALD.AUTHORIZE_STATUS "STATUS" FROM AGENT_LEAVE_DETAILS ALD
+        WHERE ALD.STATUS != 'DELETED' AND (ALD.AUTHORIZE_STATUS IS NULL OR ALD.AUTHORIZE_STATUS = 'AUTHORIZED')
+    </dynamic-mapped-statement>
+     
+     <mapped-statement name="getAgentLeaveAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT ALD.L_AGENT_ID "AGENT ID",ALD.L_AGENT_NAME AS "L AGENT NAME",ALD.L_REGION,
+        ALD.C_AGENT_ID,ALD.C_AGENT_NAME AS "C AGENT NAME",ALD.C_REGION,
+        ALD.FROM_DATE AS FROM_DATE,ALD.TO_DATE AS END_DATE FROM AGENT_LEAVE_DETAILS ALD
+        WHERE ALD.STATUS_BY != #USER_ID:VARCHAR# AND ALD.AUTHORIZE_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ALD.STATUS_BY)            
+    </mapped-statement> 
+    
+    <mapped-statement name="authorizeAgentLeaveDetails" result-class="java.util.HashMap">
+        UPDATE AGENT_LEAVE_DETAILS SET AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE L_AGENT_ID = #AGENT ID:VARCHAR# AND AUTHORIZE_STATUS IS NULL AND SL_NO = #SL_NO:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAppAgentCollectionDetailsList" result-class="java.util.LinkedHashMap">
+        SELECT ATD.CUST_ID "CUSTOMER ID",get_cust_name(c.cust_id) AS "CUSTOMER NAME",ACT_NUM,TXN_TYPE, 
+        PROD_TYPE,AMOUNT,ATD.AGENT_CUST_ID "AGENT CUST ID",APP_ID "APP ID",CREATED_DT "APP CREATED DT",VALUE_DT,
+        GET_ACCOUNT_STATUS(ACT_NUM,PROD_TYPE) AS "ACT_STATUS" FROM 
+        APP_TRANS_DETAILS ATD,CUSTOMER C WHERE ATD.CUST_ID = C.CUST_ID AND NVL(IS_TXN,'N') = 'N' 
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AGENT_ID">
+                   ATD.AGENT_CUST_ID = #AGENT_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "LEAVE_AGENT_ID">
+                   ATD.AGENT_CUST_ID IN($LEAVE_AGENT_ID$)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "NEW_MODE">
+                   ATD.BATCH_ID IS NULL AND ATD.AUTHORIZE_STATUS IS NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AUTHORIZE">
+                   ATD.BATCH_ID IS NOT NULL AND BATCH_ID = #BATCH_ID:VARCHAR# AND ATD.TRANS_DT = #CURR_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         ORDER BY TXN_TYPE,CREATED_DT,VALUE_DT
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getAcctHeadUsingActNum" result-class="java.util.LinkedHashMap">
+        SELECT PKGGENREPORTS.GETHEADTYPE(PKGGENREPORTS.GETPRODIDBYACCOUNTNO(#ACCOUNT_NO:VARCHAR#)) AS ACCT_HEAD FROM DUAL
+    </mapped-statement>
+
+    <mapped-statement name="getProdIdUsingActNum" result-class="java.util.LinkedHashMap">
+        SELECT PKGGENREPORTS.GETPRODIDBYACCOUNTNO(#ACCOUNT_NO:VARCHAR#) AS PROD_ID FROM DUAL
+    </mapped-statement>
+
+    <mapped-statement name="getAppSuspenseAchd" result-class="java.util.HashMap" >
+        SELECT APP_SUSPENSE_ACHD FROM PARAMETERS WHERE AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAppAgentCollectionAuthorizeList" result-class="java.util.LinkedHashMap">
+        <!--SELECT BATCH_ID,ATD.AGENT_CUST_ID FROM APP_TRANS_DETAILS ATD,CUSTOMER C 
+        WHERE ATD.CUST_ID = C.CUST_ID AND NVL(IS_TXN,'N') = 'N' AND TRANS_DT = #TRANS_DT:DATE# AND ATD.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND BATCH_ID IS NOT NULL AND 
+        ATD.STATUS_BY != #USER_ID:VARCHAR# AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = ATD.STATUS_BY)-->
+        SELECT ATD.BATCH_ID, ATD.AGENT_CUST_ID
+        FROM APP_TRANS_DETAILS ATD, CUSTOMER C,TRANSFER_TRANS TT
+        WHERE     ATD.CUST_ID = C.CUST_ID
+        AND ATD.BATCH_ID = TT.BATCH_ID
+        AND ATD.TRANS_DT = TT.TRANS_DT
+        AND NVL (IS_TXN, 'N') = 'N'
+        AND ATD.TRANS_DT = #TRANS_DT:DATE#
+        AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND ATD.BATCH_ID IS NOT NULL
+        AND ATD.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+        (SELECT DISTINCT
+        DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+        'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM
+        WHERE     RM.ROLE_ID = UM.USER_ROLE
+        AND RM.GROUP_ID = UM.USER_GROUP
+        AND UM.USER_ID = ATD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ATD.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (ATD.AUTHORIZE_STATUS IS NULL OR 
+                ATD.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>            
+        <!--GROUP BY BATCH_ID,ATD.AGENT_CUST_ID ORDER BY ATD.AGENT_CUST_ID-->
+        GROUP BY ATD.BATCH_ID, ATD.AGENT_CUST_ID
+        ORDER BY ATD.AGENT_CUST_ID
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="updateAppAgentCollectionDate" result-class="java.util.LinkedHashMap">
+        UPDATE APP_TRANS_DETAILS SET BATCH_ID = #BATCH_ID:VARCHAR#, TRANS_DT = #TRANS_DT:DATE#,STATUS_BY = #USER_ID:VARCHAR# WHERE 
+        ACT_NUM = #ACT_NUM:VARCHAR# AND APP_ID = #APP_ID:VARCHAR# AND VALUE_DT = #VALUE_DT:VARCHAR# AND TRANS_DT IS NULL
+    </mapped-statement> 
+    
+    <mapped-statement name="updateAppAgentTxnFlag" result-class="java.util.LinkedHashMap">
+        UPDATE APP_TRANS_DETAILS SET IS_TXN = 'Y', AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#, AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#, 
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL) WHERE TRANS_DT = #TRANS_DT:DATE# AND ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        BRANCH_ID = #BRANCH_ID:VARCHAR# AND APP_ID = #APP_ID:VARCHAR# AND VALUE_DT = #VALUE_DT:VARCHAR# AND TRANS_DT IS NOT NULL
+    </mapped-statement> 
+    
+	<mapped-statement name="updateAppAgentReject" result-class="java.util.LinkedHashMap">
+        UPDATE APP_TRANS_DETAILS SET IS_TXN = 'N', BATCH_ID=NULL, TRANS_DT=NULL WHERE TRANS_DT = #TRANS_DT:DATE# AND ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        BRANCH_ID = #BRANCH_ID:VARCHAR# AND APP_ID = #APP_ID:VARCHAR# AND VALUE_DT = #VALUE_DT:VARCHAR# AND TRANS_DT IS NOT NULL
+    </mapped-statement>
+
+    <mapped-statement name="updateAppAgentTxnNull" result-class="java.util.LinkedHashMap">
+        UPDATE TRANSFER_TRANS SET INST_DT = NULL, AUTHORIZE_REMARKS = NULL WHERE TRANS_DT = #TRANS_DT:DATE# AND ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        BRANCH_ID = #BRANCH_ID:VARCHAR# AND AUTHORIZE_REMARKS = #APP_ID:VARCHAR# 
+    </mapped-statement> 
+    
+    <mapped-statement name="getSelectAgentCustomerName" result-class="java.util.LinkedHashMap">
+        SELECT nvl(FNAME,'')  ||  nvl(MNAME,'')  ||  nvl(LNAME,'')  AS "VALUE" FROM AGENT_MASTER D JOIN CUSTOMER C ON D.AGENT_ID=C.CUST_ID WHERE 
+        D.AUTHORIZED_STATUS = 'AUTHORIZED' AND D.STATUS !='DELETED' AND D.AGENT_ID IS NOT NULL AND CUST_ID = #AGENT_CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="UpdateCancelSyncedEntryAppAgentCollectionDate" result-class="java.util.LinkedHashMap">
+        UPDATE APP_TRANS_DETAILS SET TRANS_DT = #TRANS_DT:DATE#, STATUS_BY = #USER_ID:VARCHAR#, STATUS = 'DELETED', AUTHORIZE_STATUS = 'REJECTED',
+        IS_TXN = 'Y', AUTHORIZE_BY = #USER_ID:VARCHAR#, AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL) WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND 
+        APP_ID = #APP_ID:VARCHAR# AND VALUE_DT = #VALUE_DT:VARCHAR#
+    </mapped-statement>    
+    
+    <mapped-statement name="updateAppAgentAuthorizeStatus" result-class="java.util.LinkedHashMap">
+        UPDATE DAILY_DEPOSIT_TRANS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:DATE#, AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#, 
+        AUTHORIZE_DT = #TRANS_DT:DATE# WHERE ACC_NUM = #ACT_NUM:VARCHAR# AND TRN_DT = #TRANS_DT:DATE# AND PARTICULARS = #APP_ID:VARCHAR#
+        AND BATCH_ID = #BATCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectAgentCommisionSlabRates" result-class="java.util.LinkedHashMap">
+        SELECT * FROM AGENT_COMMISION_SLAB_RATES WHERE PROD_TYPE = #PROD_TYPE:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectAgentIntroCount" result-class="java.util.LinkedHashMap">
+        SELECT PKGGENREPORTS.ACOPEN_FROM_AGENT_CUR_MONTH(#AGENT_ID:VARCHAR#,#MONTH_START_DATE:DATE#,#MONTH_END_DATE:DATE#) TOTAL_COUNT FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="updateLastIntroComPaidDate" inline-parameters="true">
+        UPDATE AGENT_MASTER SET LAST_INTRO_PAID_DT = #LAST_COM_PAID_DT:DATE# WHERE AGENT_ID=#AGENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateLastIntroComPaidDateForAgentProducts" inline-parameters="true">
+        UPDATE AGENT_COLLECTION_PROD SET LAST_INTRO_PAID_DT = #LAST_COM_PAID_DT:DATE# WHERE AGENT_ID = #AGENT_ID:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="checkingAgentIDExist" result-class="java.util.HashMap">
+        SELECT * FROM AGENT_MASTER WHERE AGENT_ID = #AGENT_ID# AND TYPE = #TYPE# AND STATUS!='DELETED' AND    
+        (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED') 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getOperativeDetailsForAgentMaster" result-class="java.util.LinkedHashMap">
+        SELECT ACT_NUM AS OA_ACT_NUM,PROD_ID AS PROD_ID,AVAILABLE_BALANCE AS AMOUNT FROM ACT_MASTER
+        WHERE CUST_ID = #AGENT_ID# AND STATUS != 'DELETED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="getAgentIDNew" result-class="java.util.HashMap">
+       SELECT DISTINCT FNAME,AGENT_ID FROM AGENT_MASTER AM, CUSTOMER C
+       WHERE AM.AGENT_ID=C.CUST_ID AND AM.STATUS !='DELETED'
+       AND (AM.AUTHORIZED_STATUS IS NULL OR AM.AUTHORIZED_STATUS = 'AUTHORIZED') AND TYPE = #TYPE#
+    </mapped-statement>  
+    
+    <mapped-statement name="getParameterDetails" result-class="java.util.HashMap">
+      SELECT * FROM PARAMETERS 
+    </mapped-statement>
+    
+    <mapped-statement name="getRTGSMaxTime" result-class="java.lang.Double">
+      SELECT RTGS_CHECK_TIME FROM PARAMETERS 
+    </mapped-statement>
+
+    <mapped-statement name="checkSysTime" result-class="java.util.HashMap" >
+        SELECT to_char(SYS_DATE(), 'hh24.mi')AS SYS_TIME FROM DUAL
+    </mapped-statement>
+    
+      <mapped-statement name="getDataAlreadyExistsTempDaily" result-class="java.util.HashMap">
+        SELECT * FROM TEMPDAILY WHERE BRANCH_ID=#BRANCH_ID:VARCHAR# AND REFERENCE_NO=#REF_NO:VARCHAR# AND 
+        AGENT_ID=#AGENT_ID:VARCHAR#
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="TruncateTempDailyInd" inline-parameters="true">
+        <!-- TRUNCATE TABLE TEMPDAILY-->
+        DELETE FROM  TEMPDAILY I WHERE  I.BRANCH_ID=#BRANCH_ID:VARCHAR# 
+        <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AGENT_ID">
+                   I.AGENT_ID=#AGENT_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         <dynamic>      
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "REFERENCE_NO">
+                   I.REFERENCE_NO=#REFERENCE_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>  
+    </dynamic-mapped-statement>
+    
+       <mapped-statement name="InsertIntoTempChell" inline-parameters="true" >
+        INSERT INTO TEMPDAILY (AGENT_ID,REFERENCE_NO,AMOUNT,DATE1,BRANCH_ID)values(#AGENT_ID:varchar#,#REF_NO:varchar#,#AMOUNT:NUMERIC#,#date1:DATE#,#BRANCH_ID:varchar#)
+    </mapped-statement> 
+    
+    <mapped-statement name="getDepositReferenceNo" result-class="java.util.HashMap">
+      SELECT D.REFERENCE_NO   FROM DEPOSIT_ACINFO D where D.DEPOSIT_NO  =#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+   
+    <mapped-statement name="getAgentCommSlabRequiredForProd" result-class="java.util.HashMap">
+      select GET_AGENT_COMM_SLAB_REQUIRED(#PROD_ID:VARCHAR#) as SLAB_REQUIRED from dual
+    </mapped-statement>
+    
+    <mapped-statement name="getAgentCommissionDetailsForProduct" result-class="java.util.HashMap">
+      SELECT * FROM TABLE( GET_AGENT_COMMISSION_DETAILS(#AGENT_ID:VARCHAR#,#PROD_ID:VARCHAR#,#TO_DT:DATE#,#VAT:NAUMBER#))
+    </mapped-statement>
+   
+</sql-map>

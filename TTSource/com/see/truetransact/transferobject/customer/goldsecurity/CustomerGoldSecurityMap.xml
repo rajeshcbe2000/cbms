@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : SecurityInsuranceMap.xml
+    Created on : January 13, 2005, 4:00 PM
+    Author     : 152713
+    Description:
+        Purpose of the document follows.
+-->
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerGoldSecurityMap">
+
+ <mapped-statement name="insertCustomerGoldSecurityTO" inline-parameters="true">
+        INSERT INTO CUST_GOLD_SECURITY_DETAILS
+        (GOLD_SECURITY_ID,CUST_ID, SECURITY_NO, SECURITY_CATEGORY, PURITY,GROSS_WEIGHT,NET_WEIGHT,SECURITY_VALUE,MARKET_RATE,
+        PARTICULARS,PLEDGE_AMT,APPRAISER_ID,AS_ON, AVAILABLE_SECURITY_VALUE,AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_BY, AUTHORIZE_DT, BRANCH_CODE		
+        ) VALUES (
+        #goldSecurityId:VARCHAR#,#custId:VARCHAR#, #securityNo:NUMERIC#, #securityCategory:VARCHAR#,  #purity:VARCHAR#,#grossWeight:NUMERIC#,
+        #netWeight:NUMERIC#,#securityValue:NUMERIC#,#marketRate:VARCHAR#,#particulars:VARCHAR#,#pledgeAmt:NUMERIC#,
+        #appraiserId:VARCHAR#,#asondt:DATE#,#availableSecurityValue:NUMERIC#,#authorizeRemarks:VARCHAR#,
+        #authorizeStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #branchCode:VARCHAR#)
+    </mapped-statement>
+    
+     <mapped-statement name="popUpEditCustomerGoldSecurity" result-class = "java.util.LinkedHashMap" >
+        SELECT DISTINCT CSD.CUST_ID AS "CUSTOMER ID", get_cust_name(cust_id) AS "CUSTOMER NAME"
+        FROM CUST_GOLD_SECURITY_DETAILS CSD, CUSTOMER WHERE (CSD.STATUS = 'CREATED' OR CSD.STATUS = 'MODIFIED')
+        AND (CSD.CUST_ID = CUSTOMER.CUST_ID) AND CSD.BRANCH_CODE = #BRANCH_CODE:VARCHAR#  ORDER BY "CUSTOMER ID"
+    </mapped-statement>
+    
+     <result-map name="getCustomerGoldSecurityTOResult" class="com.see.truetransact.transferobject.customer.goldsecurity.CustomerGoldSecurityTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="securityNo" column="SECURITY_NO"/>
+        <property name="securityCategory" column="SECURITY_CATEGORY"/>
+        <property name="purity" column="PURITY"/>
+        <property name="grossWeight" column="GROSS_WEIGHT"/>
+        <property name="netWeight" column="NET_WEIGHT"/>
+        <property name="securityValue" column="SECURITY_VALUE"/>
+        <property name="marketRate" column="MARKET_RATE"/>
+        <property name="particulars" column="PARTICULARS"/>
+        <property name="pledgeAmt" column="PLEDGE_AMT"/>
+        <property name="appraiserId" column="APPRAISER_ID"/>
+        <property name="asondt" column="AS_ON"/>
+        <property name="availableSecurityValue" column="AVAILABLE_SECURITY_VALUE"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>       
+        <property name="goldSecurityId" column="GOLD_SECURITY_ID"/> 
+    </result-map>
+    <mapped-statement name="getSelectCustomerGoldSecurityTO" result-map="getCustomerGoldSecurityTOResult" >
+        SELECT * FROM CUST_GOLD_SECURITY_DETAILS 
+        WHERE CUST_ID = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+        AND IS_RELEASE IS NULL
+        ORDER BY TO_NUMBER(SECURITY_NO) 
+    </mapped-statement>    
+    
+    <mapped-statement name="getSelectCustomerGoldSecurityMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SECURITY_NO) AS MAX_SECURITY_NO FROM CUST_GOLD_SECURITY_DETAILS WHERE CUST_ID = #custId:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+    
+     <mapped-statement name="getMemberNoOfCustomer" result-class="java.util.HashMap">
+        SELECT GET_CUST_MEMBER_NO(#custId:VARCHAR#) as MEMBER_NO from dual
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerGoldSecurityReleaseDt" inline-parameters="true">              
+        UPDATE CUST_GOLD_SECURITY_DETAILS CU
+        SET CU.RELEASE_DT = #RELEASE_DT:DATE#,
+        CU.IS_RELEASE = 'Y',
+        CU.STATUS = 'DELETED'
+        WHERE CU.CUST_ID = #CUST_ID:VARCHAR# AND CU.IS_RELEASE IS NULL    
+    </mapped-statement>
+  
+     <dynamic-mapped-statement name="getSelectCust_Gold_Security_AuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT CSD.CUST_ID "Customer ID", get_cust_name(C.CUST_ID)  AS "Customer Name", 
+        CSD.SECURITY_CATEGORY "Security Type", CSD.AVAILABLE_SECURITY_VALUE "Available Security Value", CSD.PARTICULARS "Particulars" 
+        FROM CUST_GOLD_SECURITY_DETAILS CSD, CUSTOMER C  
+        WHERE CSD.STATUS != 'DELETED' AND C.CUST_ID = CSD.CUST_ID 
+        AND CSD.STATUS_BY != #STATUS_BY:VARCHAR# 
+        AND CSD.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = CSD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CSD.AUTHORIZE_STATUS = 'EXCEPTION' 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CSD.AUTHORIZE_STATUS IS NULL OR 
+                CSD.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeCustomerGoldSecurity"  inline-parameters="true">
+        UPDATE CUST_GOLD_SECURITY_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZESTATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE CUST_ID = #CUSTOMER ID:VARCHAR# AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>    
+    
+    <mapped-statement name="getSelectLoanAvailedWithGoldStock" result-class="java.util.LinkedHashMap" >
+        SELECT a.prod_type AS "Prod Type",
+        a.prod_id AS "Prod Id",
+        a.chittal_no AS "Acct No",
+        a.as_on AS "As On Dt",
+        a.pledge_amount AS "Pledge Amt",
+        SUM ( (NO_OF_INSTALLMENTS - paidInst) * INSTALLMENT_AMOUNT)
+        AS "Liability Amt"
+        FROM (  SELECT SUM (NO_OF_INST) AS paidInst,
+        mt.CHITTAL_NO,
+        msd.NO_OF_INSTALLMENTS,
+        msd.INSTALLMENT_AMOUNT,
+        LSG.AS_ON,
+        LSG.PLEDGE_AMOUNT,
+        LSG.PROD_TYPE,
+        LSG.PROD_ID
+        FROM MDS_TRANS_DETAILS mt
+        JOIN MDS_SCHEME_DETAILS msd
+        ON mt.SCHEME_NAME = msd.SCHEME_NAME
+        JOIN LOANS_SECURITY_GOLD_STOCK lsg
+        ON mt.CHITTAL_NO = LSG.ACCT_NUM
+        WHERE     mt.AUTHORIZE_STATUS IN ('AUTHORIZED')
+        AND lsg.GOLD_STOCK_ID = #GOLD_STOCK_ID:VARCHAR#
+        AND lsg.RELEASE_STOCK_FROM_LOAN IS NULL
+        GROUP BY mt.CHITTAL_NO,
+        msd.NO_OF_INSTALLMENTS,
+        msd.INSTALLMENT_AMOUNT,
+        LSG.AS_ON,
+        LSG.PLEDGE_AMOUNT,
+        LSG.PROD_TYPE,
+        LSG.PROD_ID) a
+        GROUP BY chittal_no,
+        as_on,
+        pledge_amount,
+        prod_type,
+        prod_id
+        UNION ALL
+        SELECT LSG.PROD_TYPE AS "Prod Type",
+        LSG.PROD_ID AS "Prod Id",
+        LSG.ACCT_NUM AS "Acct No",
+        LSG.AS_ON AS "As On Dt",
+        LSG.PLEDGE_AMOUNT AS "Pledge Amt",
+        CASE
+        WHEN LSG.PLEDGE_AMOUNT &lt; (-1 * CLEAR_BALANCE)
+        THEN
+        LSG.PLEDGE_AMOUNT
+        ELSE
+        -1 * lfd.CLEAR_BALANCE
+        END
+        AS "Liability Amt"
+        FROM LOANS_FACILITY_DETAILS lfd
+        JOIN LOANS_SECURITY_GOLD_STOCK lsg ON LFD.ACCT_NUM = LSG.ACCT_NUM
+        WHERE     lsg.GOLD_STOCK_ID = #GOLD_STOCK_ID:VARCHAR#
+        AND lsg.RELEASE_STOCK_FROM_LOAN IS NULL
+        AND LFD.ACCT_STATUS != 'CLOSED'
+        GROUP BY lsg.prod_type,
+        lsg.Prod_id,
+        lsg.Acct_num,
+        As_on,
+        lsg.Pledge_amount,
+        LFD.CLEAR_BALANCE
+    </mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getClosedLoansForGoldStockRelease" result-class="java.util.HashMap" >
+        SELECT DISTINCT LFD.ACCT_NUM,' Net Weight : '||
+        LS.NET_WEIGHT||'   Gross Weight : '||
+        ls.GROSS_WEIGHT || '  Stock Details :'||LS.PARTICULARS as STOCK
+        FROM LOANS_FACILITY_DETAILS LFD , SECURITY_DETAILS LS ,LOANS_PRODUCT LP
+        WHERE LFD.ACCT_NUM = LS.ACCT_NUM
+        AND LFD.ACCT_STATUS = 'CLOSED'
+        AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND (LS.IS_RELEASE = 'N' OR LS.IS_RELEASE IS NULL)
+        AND LP.PROD_ID = LFD.PROD_ID
+        and lp.AUTHORIZE_REMARK not in ('GOLD_LOAN')
+        AND LFD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend= "AND"  property="ACCT_NUM">
+                    LFD.ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getAllClosedLoansForGoldStockRelease" result-class="java.util.HashMap" >       
+        SELECT DISTINCT LFD.ACCT_NUM as "Acct No",GET_CUST_ID(LFD.ACCT_NUM) as "Customer ID",
+        GET_CUST_NAME(GET_CUST_ID(LFD.ACCT_NUM)) as "Name",
+        ' Net Weight : '||LS.NET_WEIGHT||'   Gross Weight : '||
+        ls.GROSS_WEIGHT || '  Stock Details :'||LS.PARTICULARS as "Stock",
+        lfd.ACCT_open_DT as "Open Dt",lfd.ACCT_CLOSE_DT as "Close Dt"
+        FROM LOANS_FACILITY_DETAILS LFD , SECURITY_DETAILS LS ,LOANS_PRODUCT LP
+        WHERE LFD.ACCT_NUM = LS.ACCT_NUM
+        AND LFD.ACCT_STATUS = 'CLOSED'
+        AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND (LS.IS_RELEASE = 'N' OR LS.IS_RELEASE IS NULL)
+        AND LP.PROD_ID = LFD.PROD_ID
+        and lp.AUTHORIZE_REMARK not in ('GOLD_LOAN')
+        AND LFD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend= "AND"  property="ACCT_NUM">
+                    LFD.ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateGoldStockReleaseStatus" inline-parameters="true">
+        UPDATE SECURITY_DETAILS SET
+        IS_RELEASE = 'Y',
+        RELEASE_DT = #RELEASE_DT:DATE#,
+        RELEASED_BY = #RELEASE_BY:VARCHAR#
+        WHERE ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    
+    <dynamic-mapped-statement name="getChittalsForGoldStockRelease" result-class="java.util.HashMap" >
+        SELECT DISTINCT MM.CHITTAL_NO,' Net Weight : '||
+        LS.NET_WEIGHT||'   Gross Weight : '||
+        ls.GROSS_WEIGHT || '  Stock Details :'||LS.PARTICULARS as STOCK
+        FROM MDS_MASTER_MAINTENANCE MM , SECURITY_DETAILS LS 
+        WHERE MM.CHITTAL_NO = LS.ACCT_NUM
+        AND MM.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND (LS.IS_RELEASE = 'N' OR LS.IS_RELEASE IS NULL)
+        AND MM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend= "AND"  property="CHITTAL_NO">
+                    MM.CHITTAL_NO LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getAllChittalsForGoldStockRelease" result-class="java.util.HashMap" >       
+        SELECT DISTINCT MM.CHITTAL_NO as "Chittal",mm.scheme_name as "Scheme",
+        ma.cust_id as "Customer ID",GET_CUST_NAME(ma.cust_id) as "Name",
+        ' Net Weight : '||LS.NET_WEIGHT||'   Gross Weight : '||
+        ls.GROSS_WEIGHT || '  Stock Details :'||LS.PARTICULARS as "Stock"
+        FROM MDS_MASTER_MAINTENANCE MM , SECURITY_DETAILS LS, mds_application ma 
+        WHERE MM.CHITTAL_NO = LS.ACCT_NUM
+        and ma.chittal_no = mm.chittal_no
+        AND MM.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND (LS.IS_RELEASE = 'N' OR LS.IS_RELEASE IS NULL)
+        AND MM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend= "AND"  property="CHITTAL_NO">
+                    MM.CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+        
+</sql-map>

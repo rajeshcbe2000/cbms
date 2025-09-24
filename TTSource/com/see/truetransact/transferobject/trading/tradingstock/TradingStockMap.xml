@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingacheadMap">
+    <mapped-statement name="insertTradingStockTO" inline-parameters="true">
+        INSERT INTO TRADING_STOCK
+        (STOCK_ID,STOCK_TYPE,STOCK_SALES_PRICE,STOCK_PURCHASE_PRICE,PRODUCT_ID,STOCK_QUANT ,SALES_TAX,PRO_NAME,LOOSE_QTY, EXPIRY_DT,<!--TRNSCHARGE,-->
+        STOCK_MRP,STATUS,STATUS_BY,STATUS_DT,AUTHORIZE_STATUS) 
+        VALUES (#stockID:VARCHAR#,#stock_Type:VARCHAR#,#stock_Sales_Price:VARCHAR#,#stock_Purchase_Price:VARCHAR#,#product_ID:VARCHAR#,#stock_Quant:VARCHAR#,
+        #sales_Tax:VARCHAR#,#prod_Name:VARCHAR#,#loose_Qty:VARCHAR#,#expiry_Dt:DATE#,<!--#trans_Charge:VARCHAR#,-->#stock_MRP:VARCHAR#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#authorizeStatus:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertPhysicalVerificationTO" inline-parameters="true">
+        INSERT INTO STOCK_PHYSICAL_VERIFICATION (PV_ID, SL_NO, PROD_ID, STOCK_ID,
+        PROD_NAME,UNIT_TYPE,PV_QTY,AVAIL_QTY,DIFF,REMARKS,PV_DT,TOTAL_AMT,STATUS,STATUS_BY ,STATUS_DT)
+        VALUES(
+        #phy_ID:VARCHAR#, #sl_No:VARCHAR#,#product_ID:VARCHAR#,#stockID:VARCHAR#,#prod_Name:VARCHAR#,
+        #stock_Type:VARCHAR#,#phy_Qty:NUMERIC#,#stock_Quant:NUMERIC#,#stock_Diff:NUMERIC#,#remarks:VARCHAR#,#phy_Dt:DATE#,
+        #totAmt:NUMERIC#,#status:VARCHAR#, #statusBy:VARCHAR#,(SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="insertRestoreStock" result-class="java.util.HashMap">
+        INSERT INTO RESTORE_STOCK (RESTORE_ID,FROM_PROD_ID, TO_PROD_ID, FROM_PV_ID,
+        TO_PV_ID,FROM_DT,TO_DT,STATUS,STATUS_BY ,STATUS_DT)
+        VALUES(
+        #RESTORE_ID#, #FROM_PROD_ID#,#TO_PROD_ID#,#FROM_PV_ID#,#TO_PV_ID#,
+        #FROM_DT:DATE#,#TO_DT:DATE#,#STATUS#, #STATUS_BY#,(SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="insertRestoreStockDetails" result-class="java.util.HashMap">
+        INSERT INTO RESTORE_STOCK_DETAILS (RESTORE_ID,PV_ID, SL_NO, PROD_ID, STOCK_ID,
+        PROD_NAME,UNIT_TYPE,PV_QTY,AVAIL_QTY,DIFF,RESTORE_QTY,RESTORE_AMOUNT,STATUS,STATUS_BY ,STATUS_DT)
+        VALUES(
+        #RESTORE_ID#, #PV_ID#,#SL_NO#,#PROD_ID#,#STOCK_ID#,
+        #PROD_NAME#,#UNIT_TYPE#,#PV_QTY#,#AVAIL_QTY#,#DIFF#,#RESTORE_QTY#,
+        #RESTORE_AMT#,#STATUS#, #STATUS_BY#,(SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingStockTO" inline-parameters="true">
+        UPDATE TRADING_STOCK SET 
+        STOCK_TYPE = #stock_Type:VARCHAR#,  
+        STOCK_SALES_PRICE = #stock_Sales_Price:VARCHAR#,
+        STOCK_PURCHASE_PRICE = #stock_Purchase_Price:VARCHAR#,
+        PRODUCT_ID = #product_ID:VARCHAR#,
+        STOCK_QUANT = #stock_Quant:VARCHAR#,
+        SALES_TAX = #sales_Tax:VARCHAR#,
+        PRO_NAME = #prod_Name:VARCHAR#,
+        LOOSE_QTY= #loose_Qty:VARCHAR#, 
+        EXPIRY_DT= #expiry_Dt:DATE#,
+        TRNSCHARGE= #trans_Charge:VARCHAR#,
+        STOCK_MRP= #stock_MRP:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT =(SELECT SYS_DATE() FROM DUAL)
+        WHERE STOCK_ID = #stockID:VARCHAR#,
+    </mapped-statement>
+    
+    <mapped-statement name="updatePhysicalVerificationTO" inline-parameters="true">
+        UPDATE STOCK_PHYSICAL_VERIFICATION SET 
+        PROD_ID = #product_ID:VARCHAR#,
+        STOCK_ID = #stockID:VARCHAR#,
+        PROD_NAME = #prod_Name:VARCHAR#,
+        UNIT_TYPE = #stock_Type:VARCHAR#,
+        PV_QTY = #phy_Qty:NUMERIC#,
+        AVAIL_QTY = #stock_Quant:NUMERIC#,
+        DIFF = #stock_Diff:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        PV_DT = #phy_Dt:DATE#,
+        TOTAL_AMT = #totAmt:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE PV_ID = #phy_ID:VARCHAR# AND SL_NO = #sl_No:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="deletePhysicalVerificationTO" inline-parameters="true">
+        UPDATE STOCK_PHYSICAL_VERIFICATION SET STATUS = #status:VARCHAR# WHERE 
+        PV_ID = #phy_ID:VARCHAR# AND SL_NO = #sl_No:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingStockQuant" inline-parameters="true">
+        UPDATE TRADING_STOCK SET STOCK_QUANT = STOCK_QUANT+#STOCK_QUANT# WHERE STOCK_ID = #STOCK_ID# AND PRODUCT_ID = #PRODUCT_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="updateReturnStockQuant" inline-parameters="true">
+        UPDATE TRADING_STOCK SET STOCK_QUANT = STOCK_QUANT-#RETURN_QTY# WHERE STOCK_ID = #STOCK_ID# AND PRODUCT_ID = #PRODUCT_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalesStockQuant" inline-parameters="true">
+        UPDATE TRADING_STOCK SET STOCK_QUANT = STOCK_QUANT-#STOCK_QUANT# WHERE STOCK_ID = #STOCK_ID# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateSalesRetStockQuant" inline-parameters="true">
+        UPDATE TRADING_STOCK SET STOCK_QUANT = STOCK_QUANT+#RETURN_QTY# WHERE STOCK_ID = #STOCK_ID# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateRestoreStockQuant" result-class="java.util.HashMap">
+        UPDATE TRADING_STOCK SET STOCK_QUANT = STOCK_QUANT+#RESTORE_QTY# WHERE STOCK_ID = #STOCK_ID# 
+    </mapped-statement>
+    
+    <mapped-statement name="updatePvStockQuant" result-class="java.util.HashMap">
+        UPDATE STOCK_PHYSICAL_VERIFICATION SET RESTORE_QTY = NVL(RESTORE_QTY,0)+#RESTORE_QTY# WHERE PV_ID = #PV_ID# AND 
+        PROD_ID = #PROD_ID# AND STOCK_ID = #STOCK_ID# 
+    </mapped-statement>
+    
+    <mapped-statement name="updatePvStockBalQty" result-class="java.util.HashMap">
+        UPDATE STOCK_PHYSICAL_VERIFICATION SET BALANCE_QTY = (SELECT NVL(DIFF,0) FROM STOCK_PHYSICAL_VERIFICATION WHERE PV_ID = #PV_ID# 
+        AND PROD_ID = #PROD_ID# AND STOCK_ID = #STOCK_ID#)-(SELECT NVL(RESTORE_QTY,0) FROM STOCK_PHYSICAL_VERIFICATION WHERE PV_ID = #PV_ID# AND 
+        PROD_ID = #PROD_ID# AND STOCK_ID = #STOCK_ID#)WHERE PV_ID = #PV_ID# AND PROD_ID = #PROD_ID# AND STOCK_ID = #STOCK_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="authorizePhysicalVerificationTO" result-class="java.util.HashMap">
+        UPDATE STOCK_PHYSICAL_VERIFICATION SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND PV_ID = #PV_ID# 
+    </mapped-statement>
+    
+     <mapped-statement name="authorizeRestoreStock" result-class="java.util.HashMap">
+        UPDATE RESTORE_STOCK SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND RESTORE_ID =#RESTORE_ID#  
+    </mapped-statement>
+    
+    <result-map name="getTradingStockTOResult" class="com.see.truetransact.transferobject.trading.tradingstock.TradingStockTO">
+        <property name="stockID" column="STOCK_ID"/>
+        <property name="stock_Type" column="STOCK_TYPE"/>
+        <property name="stock_Sales_Price" column="STOCK_SALES_PRICE"/>
+        <property name="stock_Purchase_Price" column="STOCK_PURCHASE_PRICE"/>
+        <property name="product_ID" column="PRODUCT_ID"/>
+        <property name="stock_Quant" column="STOCK_QUANT"/>
+        <property name="prod_Name" column="PRO_NAME"/>
+        <property name="loose_Qty" column="LOOSE_QTY"/>
+        <property name="expiry_Dt" column="EXPIRY_DT"/>
+        <property name="stock_MRP" column="STOCK_MRP"/>
+        <property name="sales_Tax" column="SALES_TAX"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <result-map name="getStockPVTOResult" class="com.see.truetransact.transferobject.trading.tradingstock.PhysicalVerificationTO">
+        <property name="phy_ID" column="PV_ID"/>
+        <property name="sl_No" column="SL_NO"/>
+        <property name="product_ID" column="PROD_ID"/>
+        <property name="stockID" column="STOCK_ID"/>
+        <property name="prod_Name" column="PROD_NAME"/>
+        <property name="stock_Type" column="UNIT_TYPE"/>
+        <property name="phy_Qty" column="PV_QTY"/>
+        <property name="stock_Quant" column="AVAIL_QTY"/>
+        <property name="stock_Diff" column="DIFF"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="phy_Dt" column="PV_DT"/>
+        <property name="stock_Purchase_Price" column="STOCK_PURCHASE_PRICE"/>
+        <property name="stock_MRP" column="STOCK_MRP"/>
+        <property name="stock_Sales_Price" column="STOCK_SALES_PRICE"/>
+        <property name="totAmt" column="TOTAL_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getTradingProductList" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,PRODUCT_NAME,GROUP_ID,SUB_GROUP_ID FROM TRADING_PRODUCT WHERE 
+        STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        <dynamic>
+            <isEqual prepend="AND" property="TO_PROD_ID" compareValue="TO_PROD_ID" > 
+                PRODUCT_ID >= #PRODUCT_ID# 
+            </isEqual>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PRODUCT_NAME">
+                    UPPER (PRODUCT_NAME) LIKE UPPER ('%$PRODUCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent> 
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_ID">
+                    UPPER(PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY PRODUCT_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFromPVIDList" result-class="java.util.LinkedHashMap">
+        SELECT PV_ID,PV_DT,SUM(DIFF) AS DIFF,SUM(TOTAL_AMT) AS AMOUNT  FROM STOCK_PHYSICAL_VERIFICATION SPV 
+        WHERE SPV.STATUS !='DELETED' AND SPV.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        <dynamic>
+            <isEqual prepend="AND" property="TO_PV_ID" compareValue="TO_PV_ID" > 
+                PV_ID >= #PV_ID# 
+            </isEqual>
+        </dynamic>
+        GROUP BY PV_ID,PV_DT ORDER BY PV_ID 
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="displayStockDiffDetails" result-class="java.util.LinkedHashMap">
+        SELECT SPV.*,TS.STOCK_PURCHASE_PRICE,TS.STOCK_MRP,TS.STOCK_SALES_PRICE,CASE WHEN BALANCE_QTY>0 THEN BALANCE_QTY ELSE DIFF END AS DIFFERENCE
+        FROM STOCK_PHYSICAL_VERIFICATION SPV,
+        TRADING_STOCK TS WHERE SPV.STATUS!='DELETED' AND SPV.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_PROD_ID">
+                    SPV.PROD_ID &gt;= #FROM_PROD_ID# AND SPV.PROD_ID &lt;=#TO_PROD_ID#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+         <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_DT">
+                    PV_DT &gt;= #FROM_DT# AND PV_DT &lt;=#TO_DT#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="FROM_PV_ID">
+                    PV_ID &gt;=#FROM_PV_ID# AND PV_ID &lt;=#TO_PV_ID#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        AND DIFF &gt; 0 AND DIFF != NVL(RESTORE_QTY,0) AND SPV.PROD_ID = TS.PRODUCT_ID AND SPV.STOCK_ID = TS.STOCK_ID ORDER BY PROD_ID  
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getTradingStockList" result-map="getTradingStockTOResult">
+        SELECT * FROM TRADING_STOCK WHERE PRODUCT_ID BETWEEN(#FROM_PROD_ID#) AND (#TO_PROD_ID#) AND STATUS!='DELETED' AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED' ORDER BY PRODUCT_ID
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingStockSingleList" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,STOCK_ID,STOCK_TYPE AS TYPE,STOCK_SALES_PRICE AS SALES_PRICE,STOCK_PURCHASE_PRICE AS PURCHASE_PRICE,STOCK_MRP AS MRP,STOCK_QUANT AS QTY FROM TRADING_STOCK 
+        WHERE PRODUCT_ID = #PRODUCT_ID# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+          <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_ID">
+                    UPPER(PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STOCK_ID">
+                    UPPER(STOCK_ID) LIKE UPPER('%$STOCK_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TYPE">
+                    UPPER(STOCK_TYPE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_PRICE">
+                    UPPER(STOCK_SALES_PRICE) LIKE UPPER('%$SALES_PRICE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_PRICE">
+                    UPPER(STOCK_PURCHASE_PRICE) LIKE UPPER('%$PURCHASE_PRICE$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="MRP">
+                    UPPER(STOCK_MRP) LIKE UPPER('%$MRP$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="QTY">
+                    UPPER(STOCK_QUANT) LIKE UPPER('%$QTY$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY PRODUCT_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getEditRestoreStock" result-class="java.util.LinkedHashMap">
+        SELECT RESTORE_ID,FROM_PROD_ID,TO_PROD_ID,FROM_PV_ID,TO_PV_ID,FROM_DT,TO_DT FROM RESTORE_STOCK 
+        WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="USER_ID">
+                    STATUS_BY!= #USER_ID#
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    
+    
+    <mapped-statement name="getRestoreDetailsForStock" result-class="java.util.HashMap">
+        SELECT RSD.*,TS.STOCK_PURCHASE_PRICE,TS.STOCK_MRP,TS.STOCK_SALES_PRICE FROM RESTORE_STOCK_DETAILS RSD,TRADING_STOCK TS WHERE 
+        RSD.STATUS!='DELETED' AND RESTORE_ID = #RESTORE_ID# AND RSD.PROD_ID = TS.PRODUCT_ID AND RSD.STOCK_ID = TS.STOCK_ID ORDER BY SL_NO
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getPvStockList" result-class="java.util.LinkedHashMap">
+        SELECT PV_ID AS PHYSICAL_VERIFICATION_ID,SUM(DIFF) AS STOCK_DIFF,PV_DT AS PHYSICAL_VERIFICATION_DT,AUTHORIZE_STATUS FROM 
+        STOCK_PHYSICAL_VERIFICATION WHERE STATUS!='DELETED'AND AUTHORIZE_STATUS IS NULL 
+        <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PHYSICAL_VERIFICATION_ID">
+                    UPPER(PV_ID) LIKE UPPER('%$PHYSICAL_VERIFICATION_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend="AND"      property="PHYSICAL_VERIFICATION_DT">
+                    UPPER(PV_DT) LIKE UPPER('%$PHYSICAL_VERIFICATION_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZE_STATUS">
+                    UPPER(AUTHORIZE_STATUS) LIKE UPPER('%$AUTHORIZE_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY PV_ID,PV_DT,AUTHORIZE_STATUS
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getPvStockListForView" result-class="java.util.LinkedHashMap">
+        SELECT PV_ID AS PHYSICAL_VERIFICATION_ID,SUM(DIFF) AS STOCK_DIFF,PV_DT AS PHYSICAL_VERIFICATION_DT,AUTHORIZE_STATUS FROM 
+        STOCK_PHYSICAL_VERIFICATION WHERE STATUS!='DELETED'
+              <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PHYSICAL_VERIFICATION_ID">
+                    UPPER(PV_ID) LIKE UPPER('%$PHYSICAL_VERIFICATION_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend="AND"      property="PHYSICAL_VERIFICATION_DT">
+                    UPPER(PV_DT) LIKE UPPER('%$PHYSICAL_VERIFICATION_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZE_STATUS">
+                    UPPER(AUTHORIZE_STATUS) LIKE UPPER('%$AUTHORIZE_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY PV_ID,PV_DT,AUTHORIZE_STATUS
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getTradingPVStockDetailsTO" result-map="getStockPVTOResult" >
+        SELECT SPV.*,TS.STOCK_PURCHASE_PRICE,TS.STOCK_MRP,TS.STOCK_SALES_PRICE
+        FROM STOCK_PHYSICAL_VERIFICATION SPV,TRADING_STOCK TS WHERE PV_ID = #PHYSICAL_VERIFICATION_ID# AND SPV.PROD_ID = TS.PRODUCT_ID 
+        AND SPV.STOCK_ID = TS.STOCK_ID AND SPV.STATUS != 'DELETED' ORDER BY SL_NO
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingPVStock" result-class="java.util.LinkedHashMap">
+        SELECT PV_ID,PV_DT,SUM(TOTAL_AMT)AS AMOUNT,BATCH_ID  FROM STOCK_PHYSICAL_VERIFICATION SPV ,TRANSFER_TRANS TT WHERE PV_DT 
+        BETWEEN (#FROM_DT:DATE#) AND (#TO_DT:DATE#)AND TRANS_TYPE='CREDIT' AND SPV.STATUS !='DELETED' AND SPV.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND PV_ID = TT.LINK_BATCH_ID GROUP BY PV_ID,PV_DT,BATCH_ID ORDER BY PV_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getRestorePVStock" result-class="java.util.LinkedHashMap">
+        SELECT PV_ID,PV_DT,SPV.PROD_ID,TT.AMOUNT AS AMOUNT,BATCH_ID  FROM STOCK_PHYSICAL_VERIFICATION SPV ,TRANSFER_TRANS TT WHERE PV_DT 
+        BETWEEN (#FROM_DT:DATE#) AND (#TO_DT:DATE#)AND SPV.PROD_ID = #PROD_ID# AND TRANS_TYPE='CREDIT' AND SPV.STATUS !='DELETED' AND SPV.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND PV_ID = TT.LINK_BATCH_ID GROUP BY PV_ID,PV_DT,BATCH_ID,SPV.PROD_ID,AMOUNT ORDER BY PV_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getDefStockDetails" result-class="java.util.LinkedHashMap">
+        SELECT SPV.*,TS.STOCK_PURCHASE_PRICE,TS.STOCK_MRP,TS.STOCK_SALES_PRICE
+        FROM STOCK_PHYSICAL_VERIFICATION SPV,TRADING_STOCK TS WHERE SPV.STATUS != 'DELETED' AND SPV.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        PV_ID = #PV_ID# AND SPV.PROD_ID = TS.PRODUCT_ID AND SPV.DIFF>0
+        AND SPV.STOCK_ID = TS.STOCK_ID   ORDER BY PROD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getRestoreStockDetails" result-class="java.util.LinkedHashMap">
+        SELECT SPV.*,TS.STOCK_PURCHASE_PRICE,TS.STOCK_MRP,TS.STOCK_SALES_PRICE
+        FROM STOCK_PHYSICAL_VERIFICATION SPV,TRADING_STOCK TS WHERE SPV.STATUS != 'DELETED' AND SPV.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        PV_ID = #PV_ID# AND PROD_ID = #PROD_ID# AND SPV.PROD_ID = TS.PRODUCT_ID AND SPV.DIFF>0
+        AND SPV.STOCK_ID = TS.STOCK_ID   ORDER BY PROD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="checkPvAuthStatus" result-class="java.util.HashMap">
+        SELECT * FROM STOCK_PHYSICAL_VERIFICATION WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="deleteRestoreDetails" inline-parameters="true">
+        UPDATE RESTORE_STOCK_DETAILS SET STATUS = #STATUS# WHERE 
+        RESTORE_ID = #RESTORE_ID# AND PV_ID = #PV_ID# AND SL_NO = #SL_NO# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateRestoreDetails" inline-parameters="true">
+        UPDATE RESTORE_STOCK_DETAILS SET RESTORE_QTY = #RESTORE_QTY#,RESTORE_AMOUNT = #RESTORE_AMT#,STATUS = #STATUS# WHERE 
+        RESTORE_ID = #RESTORE_ID# AND PV_ID = #PV_ID# AND SL_NO = #SL_NO# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="checkRestoreStockAuthStatus" result-class="java.util.HashMap">
+        SELECT * FROM RESTORE_STOCK WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectRestoreStock" result-class="java.util.HashMap">
+        SELECT * FROM RESTORE_STOCK_DETAILS WHERE STATUS!='DELETED' AND RESTORE_ID = #RESTORE_ID#
+    </mapped-statement>
+    
+    
+</sql-map>

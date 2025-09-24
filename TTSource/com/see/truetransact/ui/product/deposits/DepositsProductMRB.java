@@ -1,0 +1,155 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.
+ * 
+ *
+ * DepositsProductMRB.java
+ * 
+ * Created on Thu Jul 08 14:13:43 IST 2004
+ */
+
+package com.see.truetransact.ui.product.deposits;
+
+import java.util.ListResourceBundle;
+
+public class DepositsProductMRB extends ListResourceBundle {
+    public DepositsProductMRB(){
+    }
+
+    public Object[][] getContents() {
+        return contents;
+    }
+
+    static final String[][] contents = {
+        {"cboNoOfDays", "NoOfDays should be a proper value!!!"},
+        {"cboIntType", "IntType should be a proper value!!!"},
+        {"rdoCanReceiveExcessInstal_yes", "CanReceiveExcessInstal should be selected!!!"},
+        {"rdoCanReceiveExcessInstal_no", "CanReceiveExcessInstal should be selected!!!"},
+        {"txtAcctNumberPattern", "AcctNumberPattern should not be empty!!!"},
+        {"txtLastAcctNumber", "AcctNumberPattern should not be empty!!!"},
+        {"setTxtSuffix", "Suffix should not be empty"},
+        {"cboProvisioningLevel", "ProvisioningLevel should be a proper value!!!"},
+        {"cboIntApplnFreq", "IntApplnFreq should be a proper value!!!"},
+        {"cboMaxDepositPeriod", "MaxDepositPeriod should be a proper value!!!"},
+        {"txtWithdrawalsInMultiplesOf", "WithdrawalsInMultiplesOf should not be empty!!!"},
+        {"rdoInstallmentInRecurringDepositAcct_Yes", "InstallmentInRecurringDepositAcct should be selected!!!"},
+        {"txtAcctHd", "AcctHd should not be empty!!!"},
+        {"rdoCalcTDS_Yes", "CalcTDS should be selected!!!"},
+        {"cboDepositPerUnit", "DepositPerUnit should be a proper value!!!"},
+        {"cboChangeValue", "ChangeValue should be a proper value!!!"},
+        {"rdoInterestAfterMaturity_Yes", "InterestAfterMaturity should be selected!!!"},
+        {"txtIntPaybleGLHead", "IntPaybleGLHead should not be empty!!!"},
+        {"txtCommisionPaybleGLHead", "Commision Payable GLHead Should not Be empty!!!"},
+        {"rdoWithdrawalWithInterest_Yes", "WithdrawalWithInterest should be selected!!!"},
+        {"txtFixedDepositAcctHead", "FixedDepositAcctHead should not be empty!!!"},
+        {"txtDepositPerUnit", "DepositPerUnit should not be empty!!!"},
+        {"rdoRenewalOfDepositAllowed_Yes", "RenewalOfDepositAllowed should be selected!!!"},
+        {"rdoSystemCalcValues_Yes", "SystemCalcValues should be selected!!!"},
+        {"txtAlphaSuffix", "AlphaSuffix should not be empty!!!"},
+        {"rdoTermDeposit_Yes", "TermDeposit should be selected!!!"},
+        {"rdoProvisionOfInterest_Yes", "ProvisionOfInterest should be selected!!!"},
+        {"cboMinNoOfDays", "MinNoOfDays should be a proper value!!!"},
+        {"txtIntPeriodForBackDatedRenewal", "IntPeriodForBackDatedRenewal should not be empty!!!"},
+        {"tdtLastInterestAppliedDate", "LastInterestAppliedDate should not be empty!!!"},
+        {"cboIntProvisioningFreq", "IntProvisioningFreq should be a proper value!!!"},
+        {"cboMaturityDateAfterLastInstalPaid", "MaturityDateAfterLastInstalPaid should be a proper value!!!"},
+        {"txtLimitForBulkDeposit", "LimitForBulkDeposit should not be empty!!!"},
+        {"txtMinAmtOfPAN", "MinAmtOfPAN should not be empty!!!"},
+        {"rdoAutoAdjustment_Yes", "AutoAdjustment should be selected!!!"},
+        {"cboPeriodInMultiplesOf", "PeriodInMultiplesOf should be a proper value!!!"},
+        {"rdoIntProvisioningApplicable_Yes", "IntProvisioningApplicable should be selected!!!"},
+        {"cboMaturityInterestType", "MaturityInterestType should be a proper value!!!"},
+        {"rdoFlexiFromSBCA_Yes", "FlexiFromSBCA should be selected!!!"},
+        {"txtMaturityDateAfterLastInstalPaid", "MaturityDateAfterLastInstalPaid should not be empty!!!"},
+//        {"rdoAmountRounded_Yes", "AmountRounded should be selected!!!"},
+        {"cboInstallmentToBeCharged", "InstallmentToBeCharged should be a proper value!!!"},
+        {"txtLastAcctNumber","Next Account Number Should be a proper value!!!"},
+        //added for daily deposits scheme
+        {"cboDepositsFrequency", "Deposits Frequency should be a proper value!!!"},
+        
+        {"tdtSchemeIntroDate", "SchemeIntroDate should not be empty!!!"},
+        {"txtMaxPeriodMDt", "MaxPeriodMDt should not be empty!!!"},
+        {"tdtNextIntProvisionalDate", "NextIntProvisionalDate should not be empty!!!"},
+        {"txtMinDepositPeriod", "MinDepositPeriod should not be empty!!!"},
+        {"rdoCalcMaturityValue_Yes", "CalcMaturityValue should be selected!!!"},
+        {"txtIntOnMaturedDepositAcctHead", "IntOnMaturedDepositAcctHead should not be empty!!!"},
+        {"rdoTransferToMaturedDeposits_Yes", "TransferToMaturedDeposits should be selected!!!"},
+        {"cboIntCalcMethod", "IntCalcMethod should be a proper value!!!"},
+        {"cboIntPeriodForBackDatedRenewal", "IntPeriodForBackDatedRenewal should be a proper value!!!"},
+        {"txtNoOfPartialWithdrawalAllowed", "NoOfPartialWithdrawalAllowed should not be empty!!!"},
+        {"txtServiceCharge", "Service Charge should not be empty!!!"},
+        {"txtInterestOnMaturedDeposits", "InterestOnMaturedDeposits should not be empty!!!"},
+        {"rdoIntroducerReqd_Yes", "IntroducerReqd should be selected!!!"},
+        {"tdtNextInterestAppliedDate", "NextInterestAppliedDate should not be empty!!!"},
+        {"txtAdvanceMaturityNoticeGenPeriod", "AdvanceMaturityNoticeGenPeriod should not be empty!!!"},
+        {"txtPrematureWithdrawal", "PrematureWithdrawal should not be empty!!!"},
+        {"txtAmtInMultiplesOf", "AmtInMultiplesOf should not be empty!!!"},
+        {"txtAfterHowManyDays", "AfterHowManyDays should not be empty!!!"},
+        {"txtIntDebitPLHead", "IntDebitPLHead should not be empty!!!"},
+        {"txtMaxAmtOfCashPayment", "MaxAmtOfCashPayment should not be empty!!!"},
+        {"txtMinDepositAmt", "MinDepositAmt should not be empty!!!"},
+        {"cboMinDepositPeriod", "MinDepositPeriod should be a proper value!!!"},
+        {"txtDesc", "Desc should not be empty!!!"},
+        {"cboProdCurrency", "ProdCurrency should be a proper value!!!"},
+        {"cboOperatesLike", "OperatesLike should be a proper value!!!"},
+        {"cboIntCriteria", "IntCriteria should be a proper value!!!"},
+        {"txtCutOffDayForPaymentOfInstal", "CutOffDayForPaymentOfInstal should not be empty!!!"},
+        {"txtAcctHeadForFloatAcct", "AcctHeadForFloatAcct should not be empty!!!"},
+        {"cboRoundOffCriteria", "RoundOffCriteria should be a proper value!!!"},
+        {"txtIntProvisioningAcctHd", "IntProvisioningAcctHd should not be empty!!!"},
+        {"cboMaxPeriodMDt", "MaxPeriodMDt should be a proper value!!!"},
+        {"txtMaxDepositAmt", "MaxDepositAmt should not be empty!!!"},
+        {"txtAfterNoDays", "AfterNoDays should not be empty!!!"},
+        {"rdoLastInstallmentAllowed_Yes", "LastInstallmentAllowed should be selected!!!"},
+        {"cboCutOffDayForPaymentOfInstal", "CutOffDayForPaymentOfInstal should be a proper value!!!"},
+        {"tdtLastIntProvisionalDate", "LastIntProvisionalDate should not be empty!!!"},
+        {"txtMinIntToBePaid", "MinIntToBePaid should not be empty!!!"},
+        {"txtMaxNopfTimes", "MaxNopfTimes should not be empty!!!"},
+        {"txtProductID", "ProductID should not be empty!!!"},
+        {"cboIntCompoundingFreq", "IntCompoundingFreq should be a proper value!!!"},
+        {"rdoAdjustPrincipleToLoan_Yes", "AdjustPrincipleToLoan should be selected!!!"},
+        {"rdoAdjustIntOnDeposits_No", "AdjustIntOnDeposits should be selected!!!"},
+        {"rdoAutoRenewalAllowed_Yes", "AutoRenewalAllowed should be selected!!!"},
+        {"txtMinAmtOfPartialWithdrawalAllowed", "MinAmtOfPartialWithdrawalAllowed should not be empty!!!"},
+        {"txtPeriodInMultiplesOf", "PeriodInMultiplesOf should not be empty!!!"},
+        {"rdoPartialWithdrawalAllowed_Yes", "PartialWithdrawalAllowed should be selected!!!"},
+        {"cboMaturityInterestRate", "MaturityInterestRate should be a proper value!!!"},
+        {"cboIntMaintainedAsPartOf", "IntMaintainedAsPartOf should be a proper value!!!"},
+        {"txttMaturityDepositAcctHead", "tMaturityDepositAcctHead should not be empty!!!"},
+        {"txtMinNoOfDays", "MinNoOfDays should not be empty!!!"},
+        {"txtMaxNoOfPartialWithdrawalAllowed", "MaxNoOfPartialWithdrawalAllowed should not be empty!!!"},
+        {"txtMaxAmtOfPartialWithdrawalAllowed", "MaxAmtOfPartialWithdrawalAllowed should not be empty!!!"},
+        {"txtMaxDepositPeriod", "MaxDepositPeriod should not be empty!!!"},
+        {"rdoIntPayableOnExcessInstal_Yes", "IntPayableOnExcessInstal should be selected!!!"},
+        {"rdoPenaltyOnLateInstallmentsChargeble_Yes", "PenaltyOnLateInstallmentsChargeble should be selected!!!"},
+        {"txtIntProvisionOfMaturedDeposit", "IntProvisionOfMaturedDeposit should not be empty!!!"},
+        {"rdoExtnOfDepositBeforeMaturity_Yes", "ExtnOfDepositBeforeMaturity should be selected!!!"},
+        {"cboIntRoundOff", "IntRoundOff should be a proper value!!!"},
+        {"cboInterestType", "InterestType should be a proper value!!!"},
+        {"rdoPayInterestOnHoliday_Yes", "PayInterestOnHoliday should be selected!!!"},
+        {"rdoRecurringDepositToFixedDeposit_Yes", "RecurringDepositToFixedDeposit should be selected!!!"},
+        {"rdoRecalcOfMaturityValue_Yes", "RecalcOfMaturityValue should be selected!!!"},
+        {"txtTDSGLAcctHd", "TDSGLAcctHd should not be empty!!!"}, 
+
+        {"cboFromAmount", "FromAmount should be a proper value!!!"},
+        {"cboToAmount", "ToAmount should be a proper value!!!"},
+        {"txtFromPeriod", "FromPeriod should not be empty!!!"},
+        {"txtToPeriod", "ToPeriod should not be empty!!!"},
+        {"tdtToDate", "ToDate should not be empty!!!"},
+        {"tdtDate", "Date should not be empty!!!"},
+        {"cboFromPeriod", "FromPeriod should be a proper value!!!"} ,
+        {"cboToPeriod", "ToPeriod should be a proper value!!!"} ,
+        {"txtCommisionRate", "Commision Rate Should be a proper value!!!"},
+        {"rdoRegular", "Type of Deposit Should be selected!!!"},
+        {"rdoStaffAccount_Yes", "Staff Account allowed Should be selected!!!"},
+//        {"rdoDiscounted_Yes", "Staff Account allowed Should be selected!!!"},
+        {"cboProductType", "Please select Product Type!!!"},
+        {"txtInstallmentFrom", "Please enter Installment From!!!"},
+        {"txtInstallmentTo", "Please enter Installment To!!!"},
+        {"txtPenal", "Penal should be a proper value!!!"},
+        {"txtInstallmentNo", "Installment No. should be a proper value!!!"},
+        {"rdoMonthEnd", "Month End should be selected!!!"},
+        {"rdoInstallmentDay", "Installment Day should be selected!!!"}
+   };
+}

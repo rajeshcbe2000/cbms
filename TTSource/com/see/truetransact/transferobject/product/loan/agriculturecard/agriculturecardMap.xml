@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="agriculturecardMap">
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertIntoAgriCardTo" inline-parameters="true">
+        INSERT INTO AGRI_CARD_DETAILS (AGRI_CARD_TYPE,NO_YEARS,YEARS,PROD_TYPE,PROD_ID,SB_INTEREST,
+        STATUS,STATUS_BY,STATUS_DT,PROD_NO)VALUES
+        (#agriCardType:VARCHAR#,#txtNoOfYears:NUMERIC#,#agriCardValidity:VARCHAR#,
+        #prodType:VARCHAR#,#prodId:VARCHAR#,#cRadio_SB_Yes:VARCHAR#,#status:VARCHAR#,
+        #statusBy:VARCHAR#,#statusDt:DATE#,#prodNo:numeric#) 
+
+    </mapped-statement>
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriCardTo" inline-parameters="true">
+        UPDATE AGRI_CARD_DETAILS SET 		
+        NO_YEARS = #txtNoOfYears:NUMERIC#,
+        YEARS = #agriCardValidity:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#,
+        SB_INTEREST = #cRadio_SB_Yes:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        PROD_NO=#prodNo:numeric#
+        WHERE AGRI_CARD_TYPE = #agriCardType:VARCHAR# AND STATUS NOT IN ('DELETED') AND
+        PROD_NO=#prodNo:numeric#
+    </mapped-statement>
+
+	<!-- Use BillsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriCardTo" inline-parameters="true">
+        UPDATE AGRI_CARD_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE PROD_ID = #prodId:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND AGRI_CARD_TYPE = #agriCardType:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeAgriCard" inline-parameters="true">
+        UPDATE AGRI_CARD_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:TIMESTAMP# 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND AGRI_CARD_TYPE = #AGRI_CARD_TYPE:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BillsTO object (JavaBean) properties -->
+    <result-map name="getAgriCardToResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriCardTo">
+        <property name="agriCardType" column="AGRI_CARD_TYPE"/>
+        <property name="txtNoOfYears" column="NO_YEARS"/>
+        <property name="agriCardValidity" column="YEARS"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="cRadio_SB_Yes" column="SB_INTEREST"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="prodNo" column="PROD_NO"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="prodNo" column="PROD_NO"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectAgriCardTo" result-map="getAgriCardToResult" >
+        SELECT * FROM AGRI_CARD_DETAILS
+        WHERE AGRI_CARD_TYPE = #value:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectAuthorizeAgriCardTo" result-map="getAgriCardToResult" >
+        SELECT * FROM AGRI_CARD_DETAILS
+        WHERE AGRI_CARD_TYPE = #AGRI_CARD_TYPE:VARCHAR# AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS IS NULL)
+        AND PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectProdNo" result-class="java.util.HashMap" >
+        SELECT nvl(max(PROD_NO),0)+1 as MAX_NO FROM AGRI_CARD_DETAILS
+        WHERE AGRI_CARD_TYPE = #AGRI_CARD_TYPE:varchar# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCardDetails" result-class="java.util.HashMap" >
+        SELECT AGRI_CARD_TYPE,PROD_TYPE,PROD_ID FROM AGRI_CARD_DETAILS
+        WHERE <!--AGRI_CARD_TYPE = #AGRI_CARD_TYPE:varchar# AND --> STATUS != 'DELETED' 
+        AND ((AUTHORIZE_STATUS IS NULL) OR AUTHORIZE_STATUS IN('AUTHORIZED'))
+    </mapped-statement>
+        
+    <mapped-statement name="viewAuthorizeCardDetails" result-class="java.util.HashMap" >
+        SELECT AGRI_CARD_TYPE,PROD_TYPE,PROD_ID FROM AGRI_CARD_DETAILS
+        WHERE <!--AGRI_CARD_TYPE = #AGRI_CARD_TYPE:varchar# AND --> STATUS != 'DELETED' 
+        AND ((AUTHORIZE_STATUS IS NULL) OR AUTHORIZE_STATUS NOT IN('REJECTED','EXCEPTION','AUTHORIZED'))
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductAccountTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PRODUCT
+        (PROD_ID, PROD_DESC, ACCT_HEAD, BEHAVES_LIKE, REMARKS, STATUS, AUTHORIZE_STATUS, AUTHORIZE_USER, AUTHORIZE_DT, BASE_CURRENCY, CREATED_BY, CREATED_DT, STATUS_BY, STATUS_DT, AUTHORIZE_REMARK
+        ) VALUES (
+        #prodId:VARCHAR#, #prodDesc:VARCHAR#, #acctHead:VARCHAR#, #behavesLike:VARCHAR#, #remarks:VARCHAR#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#, #baseCurrency:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeRemark:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+                    
+    <mapped-statement name="viewAgriLoanProduct" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID as "PROD_ID", PROD_DESC as "Product Description",ACCT_HEAD as "Account Head" 
+        FROM AGRILOANS_PRODUCT 
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="updateAgriLoanProductAccountTO" inline-parameters="true">
+        UPDATE AGRILOANS_PRODUCT SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        PROD_DESC = #prodDesc:VARCHAR#,
+        ACCT_HEAD = #acctHead:VARCHAR#,
+        BEHAVES_LIKE = #behavesLike:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+<!--		AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#,
+                CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#,
+                AUTHORIZE_REMARK = #authorizeRemark:VARCHAR#,-->
+        BASE_CURRENCY = #baseCurrency:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductAccountTO" inline-parameters="true">
+<!--		DELETE FROM LOANS_PRODUCT 
+		WHERE PROD_ID = #prodId# -->
+        UPDATE AGRILOANS_PRODUCT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE PROD_ID = #prodId:VARCHAR#
+                
+    </mapped-statement>
+              
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductAccountTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductAccountTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductAccountTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+        <property name="acctHead" column="ACCT_HEAD"/>
+        <property name="behavesLike" column="BEHAVES_LIKE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZE_USER"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="baseCurrency" column="BASE_CURRENCY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeRemark" column="AUTHORIZE_REMARK"/>
+    </result-map>
+               
+    <mapped-statement name="getSelectAgriLoanProductAccountTO" result-map="getAgriLoanProductAccountTOResult" >
+        SELECT * FROM AGRILOANS_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+<!-- =================================================================================== -->
+<!-- Use LoanProductAccountParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductAccountParamTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_ACPARAM
+        (PROD_ID, NUMBER_PATTERN, LAST_AC_NO, LIMIT_DEF_ALLOWED, STAFF_AC_OPENED, DEBIT_INT_CLEARINGAPPL, NUMBER_PATTERN_SUFFIX
+        ) VALUES (
+        #prodId:VARCHAR#, #numberPattern:VARCHAR#, #lastAcNo:VARCHAR#, #limitDefAllowed:VARCHAR#, #staffAcOpened:VARCHAR#, #debitIntClearingappl:VARCHAR#, #numberPatternSuffix:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductAccountParamTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_ACPARAM SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        NUMBER_PATTERN = #numberPattern:VARCHAR#,
+        LAST_AC_NO = #lastAcNo:VARCHAR#,
+        LIMIT_DEF_ALLOWED = #limitDefAllowed:VARCHAR#,
+        STAFF_AC_OPENED = #staffAcOpened:VARCHAR#,
+        DEBIT_INT_CLEARINGAPPL = #debitIntClearingappl:VARCHAR#,
+        NUMBER_PATTERN_SUFFIX = #numberPatternSuffix:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductAccountParamTO" inline-parameters="true">
+<!--		DELETE FROM LOANS_PROD_ACPARAM -->
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductAccountParamTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductAccountParamTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductAccountParamTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="numberPattern" column="NUMBER_PATTERN"/>
+        <property name="lastAcNo" column="LAST_AC_NO"/>
+        <property name="limitDefAllowed" column="LIMIT_DEF_ALLOWED"/>
+        <property name="staffAcOpened" column="STAFF_AC_OPENED"/>
+        <property name="debitIntClearingappl" column="DEBIT_INT_CLEARINGAPPL"/>
+        <property name="numberPatternSuffix" column="NUMBER_PATTERN_SUFFIX"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductAccountParamTO" result-map="getAgriLoanProductAccountParamTOResult" >
+        SELECT * FROM AGRILOANS_PROD_ACPARAM 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+<!-- Use LoanProductAccountParamTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductInsuranceTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_INSURANCE
+        (PROD_ID, SLNO,INSURANCE_TYPE, INSURANCE_UNDER_SCHEME, BANK_SHARE, CUSTOMER_SHARE, STATUS,INSURANCE_AMT
+        ) VALUES (
+        #prodId:VARCHAR#, #slno:VARCHAR#, #insuranceType:VARCHAR#, #insuranceUnderScheme:VARCHAR#, #bankSharePremium:VARCHAR#, 
+        #customerSharePremium:VARCHAR#, #status:VARCHAR#,#insuranceAmt:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountParamTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductInsuranceTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_INSURANCE SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        PROD_ID = #prodId:VARCHAR#,
+        INSURANCE_TYPE = #insuranceType:VARCHAR#,
+        INSURANCE_UNDER_SCHEME = #insuranceUnderScheme:VARCHAR#,
+        BANK_SHARE = #bankSharePremium:VARCHAR#, 
+        CUSTOMER_SHARE = #customerSharePremium:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        INSURANCE_AMT=#insuranceAmt:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR#
+        AND SLNO=#slno:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LoanProductAccountParamTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductInsuranceTO" inline-parameters="true">
+        DELETE FROM AGRILOANS_PROD_INSURANCE
+        WHERE PROD_ID = #prodId# AND SLNO=#slno:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductAccountParamTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductInsuranceTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductInsuranceTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="slno" column="SLNO"/>
+        <property name="insuranceType" column="INSURANCE_TYPE"/>
+        <property name="insuranceUnderScheme" column="INSURANCE_UNDER_SCHEME"/>
+        <property name="bankSharePremium" column="BANK_SHARE"/>
+        <property name="customerSharePremium" column="CUSTOMER_SHARE"/>
+        <property name="status" column="STATUS"/>
+        <property name="insuranceAmt" column="INSURANCE_AMT"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductInsuranceTO" result-map="getAgriLoanProductInsuranceTOResult" >
+        SELECT * FROM AGRILOANS_PROD_INSURANCE
+        WHERE PROD_ID = #value:VARCHAR# AND STATUS !='DELETED' ORDER BY SLNO
+    </mapped-statement>
+        
+<!-- =================================================================================== -->
+<!-- Use LoanProductInterReceivableTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductInterReceivableTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_INTREC
+        (PROD_ID, DEBIT_INT_CHARGED, MIN_DEBITINT_RATE, MAX_DEBITINT_RATE, MIN_DEBITINT_AMT, MAX_DEBITINT_AMT, DEBITINT_CALC_FREQ, DEBITINT_APPL_FREQ, DEBITINT_COMP_FREQ, DEBIT_PROD_ROUNDOFF, DEBIT_INT_ROUNDOFF, LAST_INTCALC_DTDEBIT, LAST_INTAPPL_DTDEBIT, PROD_FREQ, PLR_RATE_APPL, PLR_RATE, PLR_APPL_FROM, PLR_APPL_NEWAC, PLR_APPL_EXISTAC, PLR_APPL_SANCFROM, PENAL_APPL, LIMIT_EXPIRY_INT, PENAL_INT_RATE, EXPO_LMT_PRUDENTIALAMT, EXPO_LMT_POLICYAMT, EXPO_LMT_PRUDENTIALPER, EXPO_LMT_POLICYPER,PENAL_APP_PRINCIPAL,PENAL_APP_INTEREST,AS_CUSTOMER_COMES,CALENDAR_FREQ,PENAL_EXCEPTION_AMT
+        ) VALUES (
+        #prodId:VARCHAR#, #debitIntCharged:VARCHAR#, #minDebitintRate:NUMERIC#, #maxDebitintRate:NUMERIC#, #minDebitintAmt:NUMERIC#, #maxDebitintAmt:NUMERIC#, #debitintCalcFreq:NUMERIC#, #debitintApplFreq:NUMERIC#, #debitintCompFreq:NUMERIC#, #debitProdRoundoff:VARCHAR#, #debitIntRoundoff:VARCHAR#, #lastIntcalcDtdebit:DATE#, #lastIntapplDtdebit:DATE#, #prodFreq:NUMERIC#, #plrRateAppl:VARCHAR#, #plrRate:NUMERIC#, #plrApplFrom:DATE#, #plrApplNewac:VARCHAR#, #plrApplExistac:VARCHAR#, #plrApplSancfrom:DATE#, #penalAppl:VARCHAR#, #limitExpiryInt:VARCHAR#, #penalIntRate:NUMERIC#, #expoLmtPrudentialamt:NUMERIC#, #expoLmtPolicyamt:NUMERIC#, #expoLmtPrudentialper:NUMERIC#, #expoLmtPolicyper:NUMERIC#,#principalDue:VARCHAR#,#interestDue:VARCHAR#,#asAndWhenCustomer_Yes:VARCHAR#,#calendarFrequency_Yes:VARCHAR#,#penalExceptionAmt:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use LoanProductInterReceivableTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductInterReceivableTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_INTREC SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        PENAL_EXCEPTION_AMT =#penalExceptionAmt:NUMERIC#,
+        DEBIT_INT_CHARGED = #debitIntCharged:VARCHAR#,
+        MIN_DEBITINT_RATE = #minDebitintRate:NUMERIC#,
+        MAX_DEBITINT_RATE = #maxDebitintRate:NUMERIC#,
+        MIN_DEBITINT_AMT = #minDebitintAmt:NUMERIC#,
+        MAX_DEBITINT_AMT = #maxDebitintAmt:NUMERIC#,
+        DEBITINT_CALC_FREQ = #debitintCalcFreq:NUMERIC#,
+        DEBITINT_APPL_FREQ = #debitintApplFreq:NUMERIC#,
+        DEBITINT_COMP_FREQ = #debitintCompFreq:NUMERIC#,
+        DEBIT_PROD_ROUNDOFF = #debitProdRoundoff:VARCHAR#,
+        DEBIT_INT_ROUNDOFF = #debitIntRoundoff:VARCHAR#,
+        LAST_INTCALC_DTDEBIT = #lastIntcalcDtdebit:DATE#,
+        LAST_INTAPPL_DTDEBIT = #lastIntapplDtdebit:DATE#,
+        PROD_FREQ = #prodFreq:NUMERIC#,
+        PLR_RATE_APPL = #plrRateAppl:VARCHAR#,
+        PLR_RATE = #plrRate:NUMERIC#,
+        PLR_APPL_FROM = #plrApplFrom:DATE#,
+        PLR_APPL_NEWAC = #plrApplNewac:VARCHAR#,
+        PLR_APPL_EXISTAC = #plrApplExistac:VARCHAR#,
+        PLR_APPL_SANCFROM = #plrApplSancfrom:DATE#,
+        PENAL_APPL = #penalAppl:VARCHAR#,
+        LIMIT_EXPIRY_INT = #limitExpiryInt:VARCHAR#,
+        PENAL_INT_RATE = #penalIntRate:NUMERIC#,
+        EXPO_LMT_PRUDENTIALAMT = #expoLmtPrudentialamt:NUMERIC#,
+        EXPO_LMT_POLICYAMT = #expoLmtPolicyamt:NUMERIC#,
+        EXPO_LMT_PRUDENTIALPER = #expoLmtPrudentialper:NUMERIC#,
+        EXPO_LMT_POLICYPER = #expoLmtPolicyper:NUMERIC#,
+        PENAL_APP_PRINCIPAL=#principalDue:VARCHAR#,
+        PENAL_APP_INTEREST=#interestDue:VARCHAR#,
+        AS_CUSTOMER_COMES=#asAndWhenCustomer_Yes:VARCHAR#,
+        CALENDAR_FREQ=#calendarFrequency_Yes:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductInterReceivableTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductInterReceivableTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductInterReceivableTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="debitIntCharged" column="DEBIT_INT_CHARGED"/>
+        <property name="minDebitintRate" column="MIN_DEBITINT_RATE"/>
+        <property name="maxDebitintRate" column="MAX_DEBITINT_RATE"/>
+        <property name="minDebitintAmt" column="MIN_DEBITINT_AMT"/>
+        <property name="maxDebitintAmt" column="MAX_DEBITINT_AMT"/>
+        <property name="debitintCalcFreq" column="DEBITINT_CALC_FREQ"/>
+        <property name="debitintApplFreq" column="DEBITINT_APPL_FREQ"/>
+        <property name="debitintCompFreq" column="DEBITINT_COMP_FREQ"/>
+        <property name="debitProdRoundoff" column="DEBIT_PROD_ROUNDOFF"/>
+        <property name="debitIntRoundoff" column="DEBIT_INT_ROUNDOFF"/>
+        <property name="lastIntcalcDtdebit" column="LAST_INTCALC_DTDEBIT"/>
+        <property name="lastIntapplDtdebit" column="LAST_INTAPPL_DTDEBIT"/>
+        <property name="prodFreq" column="PROD_FREQ"/>
+        <property name="plrRateAppl" column="PLR_RATE_APPL"/>
+        <property name="plrRate" column="PLR_RATE"/>
+        <property name="plrApplFrom" column="PLR_APPL_FROM"/>
+        <property name="plrApplNewac" column="PLR_APPL_NEWAC"/>
+        <property name="plrApplExistac" column="PLR_APPL_EXISTAC"/>
+        <property name="plrApplSancfrom" column="PLR_APPL_SANCFROM"/>
+        <property name="penalAppl" column="PENAL_APPL"/>
+        <property name="limitExpiryInt" column="LIMIT_EXPIRY_INT"/>
+        <property name="penalIntRate" column="PENAL_INT_RATE"/>
+        <property name="expoLmtPrudentialamt" column="EXPO_LMT_PRUDENTIALAMT"/>
+        <property name="expoLmtPolicyamt" column="EXPO_LMT_POLICYAMT"/>
+        <property name="expoLmtPrudentialper" column="EXPO_LMT_PRUDENTIALPER"/>
+        <property name="expoLmtPolicyper" column="EXPO_LMT_POLICYPER"/>
+        <property name="principalDue" column ="PENAL_APP_PRINCIPAL"/>
+        <property name="interestDue" column ="PENAL_APP_INTEREST"/>
+        <property name="asAndWhenCustomer_Yes" column ="AS_CUSTOMER_COMES"/>
+        <property name="calendarFrequency_Yes" column ="CALENDAR_FREQ"/> 
+        <property name="penalExceptionAmt" column ="PENAL_EXCEPTION_AMT"/>
+
+    </result-map>
+         
+    <mapped-statement name="getSelectAgriLoanProductInterReceivableTO" result-map="getAgriLoanProductInterReceivableTOResult" >
+        SELECT * FROM AGRILOANS_PROD_INTREC 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+<!-- Use LoanProductChargesTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductChargesTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_CHARGES
+        (PROD_ID, AC_CLOSING_CHRG, MISC_SERV_CHRG, STAT_CHRG, STAT_CHRG_RATE, FOLIO_CHRG_APPL, LAST_FOLIO_CHRGON, NO_ENTRIES_PER_FOLIO, NEXT_FOLIO_DUEDATE, RATE_PER_FOLIO, FOLIO_CHRG_APPLFREQ, TO_COLLECT_FOLIOCHRG, TO_COLLECT_CHRG_ON, INCOMP_FOLIO_ROUNDOFF, PROC_CHRG, PROC_CHRG_PER, PROC_CHRG_AMT, COMMIT_CHRG, COMMIT_CHRG_PER, COMMIT_CHRG_AMT,TO_CHARGE_ON_TYPE
+        ) VALUES (
+        #prodId:VARCHAR#, #acClosingChrg:NUMERIC#, #miscServChrg:NUMERIC#, #statChrg:VARCHAR#, #statChrgRate:NUMERIC#, #folioChrgAppl:VARCHAR#, #lastFolioChrgon:DATE#, #noEntriesPerFolio:NUMERIC#, #nextFolioDuedate:DATE#, #ratePerFolio:NUMERIC#, #folioChrgApplfreq:NUMERIC#, #toCollectFoliochrg:VARCHAR#, #toCollectChrgOn:VARCHAR#, #incompFolioRoundoff:NUMERIC#, #procChrg:VARCHAR#, #procChrgPer:NUMERIC#, #procChrgAmt:NUMERIC#, #commitChrg:VARCHAR#, #commitChrgPer:NUMERIC#, #commitChrgAmt:NUMERIC#,#folioChargeType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LoanProductChargesTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductChargesTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_CHARGES SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        AC_CLOSING_CHRG = #acClosingChrg:NUMERIC#,
+        MISC_SERV_CHRG = #miscServChrg:NUMERIC#,
+        STAT_CHRG = #statChrg:VARCHAR#,
+        STAT_CHRG_RATE = #statChrgRate:NUMERIC#,
+        FOLIO_CHRG_APPL = #folioChrgAppl:VARCHAR#,
+        LAST_FOLIO_CHRGON = #lastFolioChrgon:DATE#,
+        NO_ENTRIES_PER_FOLIO = #noEntriesPerFolio:NUMERIC#,
+        NEXT_FOLIO_DUEDATE = #nextFolioDuedate:DATE#,
+        RATE_PER_FOLIO = #ratePerFolio:NUMERIC#,
+        FOLIO_CHRG_APPLFREQ = #folioChrgApplfreq:NUMERIC#,
+        TO_COLLECT_FOLIOCHRG = #toCollectFoliochrg:VARCHAR#,
+        TO_COLLECT_CHRG_ON = #toCollectChrgOn:VARCHAR#,
+        INCOMP_FOLIO_ROUNDOFF = #incompFolioRoundoff:NUMERIC#,
+        PROC_CHRG = #procChrg:VARCHAR#,
+        PROC_CHRG_PER = #procChrgPer:NUMERIC#,
+        PROC_CHRG_AMT = #procChrgAmt:NUMERIC#,
+        COMMIT_CHRG = #commitChrg:VARCHAR#,
+        COMMIT_CHRG_PER = #commitChrgPer:NUMERIC#,
+        COMMIT_CHRG_AMT = #commitChrgAmt:NUMERIC#,
+        TO_CHARGE_ON_TYPE=#folioChargeType:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductChargesTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductChargesTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductChargesTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acClosingChrg" column="AC_CLOSING_CHRG"/>
+        <property name="miscServChrg" column="MISC_SERV_CHRG"/>
+        <property name="statChrg" column="STAT_CHRG"/>
+        <property name="statChrgRate" column="STAT_CHRG_RATE"/>
+        <property name="folioChrgAppl" column="FOLIO_CHRG_APPL"/>
+        <property name="lastFolioChrgon" column="LAST_FOLIO_CHRGON"/>
+        <property name="noEntriesPerFolio" column="NO_ENTRIES_PER_FOLIO"/>
+        <property name="nextFolioDuedate" column="NEXT_FOLIO_DUEDATE"/>
+        <property name="ratePerFolio" column="RATE_PER_FOLIO"/>
+        <property name="folioChrgApplfreq" column="FOLIO_CHRG_APPLFREQ"/>
+        <property name="toCollectFoliochrg" column="TO_COLLECT_FOLIOCHRG"/>
+        <property name="toCollectChrgOn" column="TO_COLLECT_CHRG_ON"/>
+        <property name="incompFolioRoundoff" column="INCOMP_FOLIO_ROUNDOFF"/>
+        <property name="procChrg" column="PROC_CHRG"/>
+        <property name="procChrgPer" column="PROC_CHRG_PER"/>
+        <property name="procChrgAmt" column="PROC_CHRG_AMT"/>
+        <property name="commitChrg" column="COMMIT_CHRG"/>
+        <property name="commitChrgPer" column="COMMIT_CHRG_PER"/>
+        <property name="commitChrgAmt" column="COMMIT_CHRG_AMT"/>
+        <property name="folioChargeType" column= "TO_CHARGE_ON_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductChargesTO" result-map="getAgriLoanProductChargesTOResult" >
+        SELECT * FROM AGRILOANS_PROD_CHARGES 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+   <!-- Use LoanProductChargesTabTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductChargesTabTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_CHQCHRG
+        (PROD_ID, CHQ_RETURN_CHRG_RATE, CHQ_RETURN_CHRG_FROM, CHQ_RETURN_CHRG_TO,NOTICE_TYPE,ISSUE_AFTER,NOTICE_CHARGE_AMT,POSTAGE_AMT
+        ) VALUES (
+        #prodId:VARCHAR#, #chqReturnChrgRate:NUMERIC#, #chqReturnChrgFrom:NUMERIC#, #chqReturnChrgTo:NUMERIC#,#noticeType:VARCHAR#,#issueAfter:VARCHAR#,#noticeChargeAmt:NUMERIC#,#postageAmt:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use LoanProductChargesTabTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductChargesTabTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_CHQCHRG SET 
+<!--		PROD_ID = #prodId:VARCHAR#,
+		CHQ_RETURN_CHRG_FROM = #chqReturnChrgFrom:NUMERIC#,
+		CHQ_RETURN_CHRG_TO = #chqReturnChrgTo:NUMERIC#,-->
+        CHQ_RETURN_CHRG_RATE = #chqReturnChrgRate:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR# AND CHQ_RETURN_CHRG_FROM = #chqReturnChrgFrom:NUMERIC#
+        AND CHQ_RETURN_CHRG_TO = #chqReturnChrgTo:NUMERIC#
+    </mapped-statement>
+
+	<!-- Use LoanProductChargesTabTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductChargesTabTO" inline-parameters="true">
+        DELETE FROM AGRILOANS_PROD_CHQCHRG 
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductChargesTabTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductChargesTabTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductChargesTabTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="chqReturnChrgRate" column="CHQ_RETURN_CHRG_RATE"/>
+        <property name="chqReturnChrgFrom" column="CHQ_RETURN_CHRG_FROM"/>
+        <property name="chqReturnChrgTo"   column="CHQ_RETURN_CHRG_TO"/>
+        <property name="noticeType"        column="NOTICE_TYPE"/>
+        <property name="issueAfter"       column="ISSUE_AFTER"/>  
+        <property name="noticeChargeAmt"   column="NOTICE_CHARGE_AMT"/>
+        <property name="postageAmt"        column="POSTAGE_AMT"/>
+
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductChargesTabTO" result-map="getAgriLoanProductChargesTabTOResult" >
+        SELECT * FROM AGRILOANS_PROD_CHQCHRG 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>     
+<!-- =================================================================================== -->
+<!-- Use LoanProductSpeItemsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductSpeItemsTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_SPECIALITEM
+        (PROD_ID, ATM_CARD_ISSUED, CR_CARD_ISSUED, MOBILE_BANK_CLIENT, BRANCH_BANKING_ALLOWED
+        ) VALUES (
+        #prodId:VARCHAR#, #atmCardIssued:VARCHAR#, #crCardIssued:VARCHAR#, #mobileBankClient:VARCHAR#, #branchBankingAllowed:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LoanProductSpeItemsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductSpeItemsTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_SPECIALITEM SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        ATM_CARD_ISSUED = #atmCardIssued:VARCHAR#,
+        CR_CARD_ISSUED = #crCardIssued:VARCHAR#,
+        MOBILE_BANK_CLIENT = #mobileBankClient:VARCHAR#,
+        BRANCH_BANKING_ALLOWED = #branchBankingAllowed:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductSpeItemsTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductSpeItemsTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductSpeItemsTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="atmCardIssued" column="ATM_CARD_ISSUED"/>
+        <property name="crCardIssued" column="CR_CARD_ISSUED"/>
+        <property name="mobileBankClient" column="MOBILE_BANK_CLIENT"/>
+        <property name="branchBankingAllowed" column="BRANCH_BANKING_ALLOWED"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductSpeItemsTO" result-map="getAgriLoanProductSpeItemsTOResult" >
+        SELECT * FROM AGRILOANS_PROD_SPECIALITEM 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+
+<!-- =================================================================================== -->
+<!-- Use LoanProductAccHeadTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductAccHeadTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_ACHD
+        (PROD_ID, AC_CLOSING_CHRG, MISC_SERV_CHRG, STAT_CHRG, AC_DEBIT_INT, PENAL_INT, AC_CREDIT_INT, EXPIRY_INT, CHQ_RET_CHRG_OUTWARD, CHQ_RET_CHRG_INWARD, FOLIO_CHRG_AC, COMMITMENT_CHRG, PROC_CHRG,NOTICE_CHARGES,POSTAGE_CHARGES,INT_PAYABLE_ACHD,LEGAL_CHARGES,ARBITRARY_CHARGES,INSURANCE_CHARGES,EXECUTION_DECREE_CHARGES,INSURANCE_PREMIUM
+        ) VALUES (
+        #prodId:VARCHAR#, #acClosingChrg:VARCHAR#, #miscServChrg:VARCHAR#, #statChrg:VARCHAR#, #acDebitInt:VARCHAR#, #penalInt:VARCHAR#, #acCreditInt:VARCHAR#, #expiryInt:VARCHAR#, #chqRetChrgOutward:VARCHAR#, #chqRetChrgInward:VARCHAR#, #folioChrgAc:VARCHAR#, #commitmentChrg:VARCHAR#, #procChrg:VARCHAR#,#noticeCharges:VARCHAR#,#postageCharges:VARCHAR#,#intPayableAcHd:VARCHAR#,#legalCharges:VARCHAR#,#arbitraryCharges:VARCHAR#,#insuranceCharges:VARCHAR#,
+        #executionDecreeCharges:VARCHAR#,#insurancePremiumDebit:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LoanProductAccHeadTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductAccHeadTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_ACHD SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        AC_CLOSING_CHRG = #acClosingChrg:VARCHAR#,
+        MISC_SERV_CHRG = #miscServChrg:VARCHAR#,
+        STAT_CHRG = #statChrg:VARCHAR#,
+        AC_DEBIT_INT = #acDebitInt:VARCHAR#,
+        PENAL_INT = #penalInt:VARCHAR#,
+        AC_CREDIT_INT = #acCreditInt:VARCHAR#,
+        EXPIRY_INT = #expiryInt:VARCHAR#,
+        CHQ_RET_CHRG_OUTWARD = #chqRetChrgOutward:VARCHAR#,
+        CHQ_RET_CHRG_INWARD = #chqRetChrgInward:VARCHAR#,
+        FOLIO_CHRG_AC = #folioChrgAc:VARCHAR#,
+        COMMITMENT_CHRG = #commitmentChrg:VARCHAR#,
+        PROC_CHRG = #procChrg:VARCHAR#,
+        NOTICE_CHARGES=#noticeCharges:VARCHAR#,
+        POSTAGE_CHARGES=#postageCharges:VARCHAR#,
+        INT_PAYABLE_ACHD=#intPayableAcHd:VARCHAR#,
+        LEGAL_CHARGES=#legalCharges:VARCHAR#,
+        ARBITRARY_CHARGES=#arbitraryCharges:VARCHAR#,
+        INSURANCE_CHARGES=#insuranceCharges:VARCHAR#,
+        EXECUTION_DECREE_CHARGES=#executionDecreeCharges:VARCHAR#,
+        INSURANCE_PREMIUM=#insurancePremiumDebit:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LoanProductAccHeadTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductAccHeadTO" inline-parameters="true">
+<!--		DELETE FROM LOANS_PROD_ACHD -->
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductAccHeadTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductAccHeadTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductAccHeadTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acClosingChrg" column="AC_CLOSING_CHRG"/>
+        <property name="miscServChrg" column="MISC_SERV_CHRG"/>
+        <property name="statChrg" column="STAT_CHRG"/>
+        <property name="acDebitInt" column="AC_DEBIT_INT"/>
+        <property name="penalInt" column="PENAL_INT"/>
+        <property name="acCreditInt" column="AC_CREDIT_INT"/>
+        <property name="expiryInt" column="EXPIRY_INT"/>
+        <property name="chqRetChrgOutward" column="CHQ_RET_CHRG_OUTWARD"/>
+        <property name="chqRetChrgInward" column="CHQ_RET_CHRG_INWARD"/>
+        <property name="folioChrgAc" column="FOLIO_CHRG_AC"/>
+        <property name="commitmentChrg" column="COMMITMENT_CHRG"/>
+        <property name="procChrg" column="PROC_CHRG"/>
+        <property name="noticeCharges" column="NOTICE_CHARGES"/>
+        <property name="postageCharges" column="POSTAGE_CHARGES"/>
+        <property name="intPayableAcHd" column="INT_PAYABLE_ACHD"/>
+        <property name="legalCharges" column="LEGAL_CHARGES"/>
+        <property name="arbitraryCharges" column="ARBITRARY_CHARGES"/>
+        <property name="insuranceCharges" column="INSURANCE_CHARGES"/>
+        <property name="executionDecreeCharges" column="EXECUTION_DECREE_CHARGES"/>
+        <property name="insurancePremiumDebit" column="INSURANCE_PREMIUM"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductAccHeadTO" result-map="getAgriLoanProductAccHeadTOResult" >
+        SELECT * FROM AGRILOANS_PROD_ACHD 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+<!-- =================================================================================== -->
+<!-- Use LoanProductNonPerAssetsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductNonPerAssetsTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_NONPERASSET
+        (PROD_ID, MIN_PERIOD_ARREARS, PERIOD_TRANS_SUBSTANDARD, PROVISION_SUBSTANDARD, PERIOD_TRANS_DOUBTFUL, PROVISION_DOUBTFUL, PERIOD_TRANS_LOSS, PERIOD_TRANS_NOPERFORMING, PROVISION_STD_ASSETS, PROVISION_LOSE_ASSETS, PERIOD_TRANS_DOUBTFUL_2, PROVISION_DOUBTFUL_2, PERIOD_TRANS_DOUBTFUL_3, PROVISION_DOUBTFUL_3
+        ) VALUES (
+        #prodId:VARCHAR#, #minPeriodArrears:NUMERIC#, #periodTransSubstandard:NUMERIC#, #provisionSubstandard:NUMERIC#, #periodTransDoubtful:NUMERIC#, #provisionDoubtful:NUMERIC#, #periodTransLoss:NUMERIC#, #periodTransNoperforming:NUMERIC#, #provisionStdAssets:NUMERIC#, #provisionLoseAssets:NUMERIC#, #periodTransDoubtful2:NUMERIC#, #provisionDoubtful2:NUMERIC#, #periodTransDoubtful3:NUMERIC#, #provisionDoubtful3:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use LoanProductNonPerAssetsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductNonPerAssetsTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_NONPERASSET SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        MIN_PERIOD_ARREARS = #minPeriodArrears:NUMERIC#,
+        PERIOD_TRANS_SUBSTANDARD = #periodTransSubstandard:NUMERIC#,
+        PROVISION_SUBSTANDARD = #provisionSubstandard:NUMERIC#,
+        PERIOD_TRANS_DOUBTFUL = #periodTransDoubtful:NUMERIC#,
+        PROVISION_DOUBTFUL = #provisionDoubtful:NUMERIC#,
+        PERIOD_TRANS_LOSS = #periodTransLoss:NUMERIC#,
+        PERIOD_TRANS_NOPERFORMING = #periodTransNoperforming:NUMERIC#,
+        PROVISION_STD_ASSETS = #provisionStdAssets:NUMERIC#,
+        PROVISION_LOSE_ASSETS = #provisionLoseAssets:NUMERIC#,
+        PERIOD_TRANS_DOUBTFUL_2 = #periodTransDoubtful2:NUMERIC#,
+        PROVISION_DOUBTFUL_2 = #provisionDoubtful2:NUMERIC#,
+        PERIOD_TRANS_DOUBTFUL_3 = #periodTransDoubtful3:NUMERIC#,
+        PROVISION_DOUBTFUL_3 = #provisionDoubtful3:NUMERIC#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductNonPerAssetsTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductNonPerAssetsTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductNonPerAssetsTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="minPeriodArrears" column="MIN_PERIOD_ARREARS"/>
+        <property name="periodTransSubstandard" column="PERIOD_TRANS_SUBSTANDARD"/>
+        <property name="provisionSubstandard" column="PROVISION_SUBSTANDARD"/>
+        <property name="periodTransDoubtful" column="PERIOD_TRANS_DOUBTFUL"/>
+        <property name="provisionDoubtful" column="PROVISION_DOUBTFUL"/>
+        <property name="periodTransLoss" column="PERIOD_TRANS_LOSS"/>
+        <property name="periodTransNoperforming" column="PERIOD_TRANS_NOPERFORMING"/>
+        <property name="provisionStdAssets" column="PROVISION_STD_ASSETS"/>
+        <property name="provisionLoseAssets" column="PROVISION_LOSE_ASSETS"/>
+        <property name="periodTransDoubtful2" column="PERIOD_TRANS_DOUBTFUL_2"/>
+        <property name="provisionDoubtful2" column="PROVISION_DOUBTFUL_2"/>
+        <property name="periodTransDoubtful3" column="PERIOD_TRANS_DOUBTFUL_3"/>
+        <property name="provisionDoubtful3" column="PROVISION_DOUBTFUL_3"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductNonPerAssetsTO" result-map="getAgriLoanProductNonPerAssetsTOResult" >
+        SELECT * FROM AGRILOANS_PROD_NONPERASSET 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+
+<!-- =================================================================================== -->
+<!-- Use LoanProductInterCalcTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductInterCalcTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_INTCALC
+        (PROD_ID, CALC_TYPE, MIN_PERIOD, MAX_PERIOD, MIN_AMT_LOAN, MAX_AMT_LOAN, MIN_INT_DEBIT, SUBSIDY, LOAN_PERIODS_MULTIPLES, APPL_INTEREST,REVIEW_PERIOD
+        ) VALUES (
+        #prodId:VARCHAR#, #calcType:VARCHAR#, #minPeriod:NUMERIC#, #maxPeriod:NUMERIC#, #minAmtLoan:NUMERIC#, #maxAmtLoan:NUMERIC#, #minIntDebit:NUMERIC#, #subsidy:VARCHAR#, #loanPeriodsMultiples:NUMERIC#, #applInterest:NUMERIC#,#reviewPeriod:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use LoanProductInterCalcTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductInterCalcTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_INTCALC SET 
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        CALC_TYPE = #calcType:VARCHAR#,
+        MIN_PERIOD = #minPeriod:NUMERIC#,
+        MAX_PERIOD = #maxPeriod:NUMERIC#,
+        MIN_AMT_LOAN = #minAmtLoan:NUMERIC#,
+        MAX_AMT_LOAN = #maxAmtLoan:NUMERIC#,
+        MIN_INT_DEBIT = #minIntDebit:NUMERIC#,
+        SUBSIDY = #subsidy:VARCHAR#,
+        LOAN_PERIODS_MULTIPLES = #loanPeriodsMultiples:NUMERIC#,
+        APPL_INTEREST = #applInterest:NUMERIC#,
+        REVIEW_PERIOD =#reviewPeriod:NUMERIC#               
+                <!--DEP_ELIGIBLE_LOAN_AMT =#eligibleDepForLoanAmt:NUMERIC#-->
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductInterCalcTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductInterCalcTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductInterCalcTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="calcType" column="CALC_TYPE"/>
+        <property name="minPeriod" column="MIN_PERIOD"/>
+        <property name="maxPeriod" column="MAX_PERIOD"/>
+        <property name="minAmtLoan" column="MIN_AMT_LOAN"/>
+        <property name="maxAmtLoan" column="MAX_AMT_LOAN"/>
+        <property name="minIntDebit" column="MIN_INT_DEBIT"/>
+        <property name="subsidy" column="SUBSIDY"/>
+        <property name="loanPeriodsMultiples" column="LOAN_PERIODS_MULTIPLES"/>
+        <property name="applInterest" column="APPL_INTEREST"/>
+        <property name="loanPeriodsMultiples" column="LOAN_PERIODS_MULTIPLES"/>
+        <property name="reviewPeriod" column="REVIEW_PERIOD"/>
+                <!--property name="eligibleDepForLoanAmt" column="DEP_ELIGIBLE_LOAN_AMT"/-->
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductInterCalcTO" result-map="getAgriLoanProductInterCalcTOResult" >
+        SELECT * FROM AGRILOANS_PROD_INTCALC 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+        <!-- =================================================================================== -->
+        
+        <!-- Use LoanProductClassificationsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductClassificationsTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_CLASSIFICATION
+        (PROD_ID, COMMODITY_CODE, FACILITY_TYPE, PURPOSE_CODE, INDUSTRY_CODE, TWENTY_CODE, GOVT_SCHEME_CODE, ECGC, GUARANTEE_COVER_CODE, HEALTH_CODE, SECTOR_CODE, REFINANCING_INSTITUTION, DIRECT_FINANCE, QIS, STATUS, STATUS_BY, STATUS_DT, SECURITY_DETAILS
+        ) VALUES (
+        #prodId:VARCHAR#, #commodityCode:VARCHAR#, #facilityType:VARCHAR#, #purposeCode:VARCHAR#, #industryCode:VARCHAR#, #twentyCode:VARCHAR#, #govtSchemeCode:VARCHAR#, #ecgc:VARCHAR#, #guaranteeCoverCode:VARCHAR#, #healthCode:VARCHAR#, #sectorCode:VARCHAR#, #refinancingInstitution:VARCHAR#, #directFinance:VARCHAR#, #qis:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #securityDetails:VARCHAR#)
+    </mapped-statement>
+                
+	<!-- Use LoanProductClassificationsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductClassificationsTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_CLASSIFICATION SET 
+<!--		PROD_ID = #prodId:VARCHAR#, -->
+        COMMODITY_CODE = #commodityCode:VARCHAR#,
+        FACILITY_TYPE = #facilityType:VARCHAR#,
+        PURPOSE_CODE = #purposeCode:VARCHAR#,
+        INDUSTRY_CODE = #industryCode:VARCHAR#,
+        TWENTY_CODE = #twentyCode:VARCHAR#,
+        GOVT_SCHEME_CODE = #govtSchemeCode:VARCHAR#,
+        ECGC = #ecgc:VARCHAR#,
+        GUARANTEE_COVER_CODE = #guaranteeCoverCode:VARCHAR#,
+        HEALTH_CODE = #healthCode:VARCHAR#,
+        SECTOR_CODE = #sectorCode:VARCHAR#,
+        REFINANCING_INSTITUTION = #refinancingInstitution:VARCHAR#,
+        DIRECT_FINANCE = #directFinance:VARCHAR#,
+        QIS = #qis:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        SECURITY_DETAILS = #securityDetails:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use LoanProductClassificationsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductClassificationsTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_CLASSIFICATION SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductClassificationsTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductClassificationsTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductClassificationsTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="commodityCode" column="COMMODITY_CODE"/>
+        <property name="facilityType" column="FACILITY_TYPE"/>
+        <property name="purposeCode" column="PURPOSE_CODE"/>
+        <property name="industryCode" column="INDUSTRY_CODE"/>
+        <property name="twentyCode" column="TWENTY_CODE"/>
+        <property name="govtSchemeCode" column="GOVT_SCHEME_CODE"/>
+        <property name="ecgc" column="ECGC"/>
+        <property name="guaranteeCoverCode" column="GUARANTEE_COVER_CODE"/>
+        <property name="healthCode" column="HEALTH_CODE"/>
+        <property name="sectorCode" column="SECTOR_CODE"/>
+        <property name="refinancingInstitution" column="REFINANCING_INSTITUTION"/>
+        <property name="directFinance" column="DIRECT_FINANCE"/>
+        <property name="qis" column="QIS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="securityDetails" column="SECURITY_DETAILS"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductClassificationsTO" result-map="getAgriLoanProductClassificationsTOResult" >
+        SELECT * FROM AGRILOANS_PROD_CLASSIFICATION 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+                <!-- **************************************************************-->
+        <!-- Use LoanProductDocumentsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgriLoanProductDocumentsTO" inline-parameters="true">
+        INSERT INTO AGRILOANS_PROD_DOC
+        (PROD_ID, DOC_TYPE, DOC_NO, DOC_DESC, STATUS, SL_NO
+        ) VALUES (
+        #prodId:VARCHAR#, #docType:VARCHAR#, #docNo:VARCHAR#, #docDesc:VARCHAR#, #status:VARCHAR#, #sINo:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LoanProductDocumentsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgriLoanProductDocumentsTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_DOC SET 
+        SL_NO = #sINo:VARCHAR#,DOC_DESC = #docDesc:VARCHAR#,STATUS = #status:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR# AND DOC_TYPE = #docType:VARCHAR# AND DOC_NO = #docNo:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use LoanProductDocumentsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgriLoanProductDocumentsTO" inline-parameters="true">
+        UPDATE AGRILOANS_PROD_DOC SET 
+        STATUS = #status:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR# AND DOC_TYPE = #docType:VARCHAR# AND DOC_NO = #docNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LoanProductDocumentsTO object (JavaBean) properties -->
+    <result-map name="getAgriLoanProductDocumentsTOResult" class="com.see.truetransact.transferobject.product.loan.agriculturecard.AgriLoanProductDocumentsTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="docType" column="DOC_TYPE"/>
+        <property name="docNo" column="DOC_NO"/>
+        <property name="docDesc" column="DOC_DESC"/>
+        <property name="status" column="STATUS"/>
+        <property name="sINo" column="SL_NO"/>
+    </result-map>
+    <mapped-statement name="getSelectAgriLoanProductDocumentsTO" result-map="getAgriLoanProductDocumentsTOResult" >
+        SELECT * FROM AGRILOANS_PROD_DOC 
+        WHERE PROD_ID = #value:VARCHAR# 
+        AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+    </mapped-statement>
+        
+        <!--========================================================================= -->
+    <dynamic-mapped-statement name="getAgriLoanProductAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID as "PROD_ID", PROD_DESC as "Product Description",
+        ACCT_HEAD as "Account Head"
+        FROM AGRILOANS_PRODUCT
+        WHERE STATUS != 'DELETED' 
+<!--            AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)-->
+        AND STATUS_BY != #USER_ID:VARCHAR#  
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = AGRILOANS_PRODUCT.STATUS_BY)           
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="authorizeAgriLoanProduct" result-class="java.util.HashMap">
+        UPDATE AGRILOANS_PRODUCT SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE PROD_ID = #PROD_ID:VARCHAR# 
+    </mapped-statement>
+<!-- ===       -->         
+    <mapped-statement name="getNextActNumForAgriLoan" result-class="java.util.HashMap">  
+        <!--SELECT NUMBER_PATTERN , NUMBER_PATTERN_SUFFIX, LAST_AC_NO FROM LOANS_PROD_ACPARAM LPA, LOANS_PRODUCT LP WHERE LPA.PROD_ID= #PROD_ID# 
+        AND LPA.PROD_ID = LP.PROD_ID AND STATUS!='DELETED'-->
+        SELECT LPA.NUMBER_PATTERN AS PREFIX,NVL(LPA.NUMBER_PATTERN_SUFFIX,0) AS SUFFIX, decode(LPA.LAST_AC_NO,null,LPA.NUMBER_PATTERN_SUFFIX,LPA.LAST_AC_NO) AS LAST_VALUE
+        FROM AGRILOANS_PROD_ACPARAM LPA, AGRILOANS_PRODUCT LP  WHERE LPA.PROD_ID = #PROD_ID# AND LPA.PROD_ID=LP.PROD_ID
+        AND LPA.LAST_AC_NO IS NULL AND LP.STATUS != 'DELETED' AND LP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        UNION
+        SELECT LPA.NUMBER_PATTERN AS PREFIX,NVL(LPA.NUMBER_PATTERN_SUFFIX,0) AS SUFFIX, decode(LPA.LAST_AC_NO,null,LPA.NUMBER_PATTERN_SUFFIX,LPA.LAST_AC_NO) AS LAST_VALUE
+        FROM AGRILOANS_PROD_ACPARAM LPA, AGRILOANS_PRODUCT LP  WHERE LPA.PROD_ID = #PROD_ID# AND LPA.PROD_ID=LP.PROD_ID
+        AND LPA.LAST_AC_NO IS NOT NULL AND LP.STATUS != 'DELETED' AND LP.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+      
+    <mapped-statement name="AgriTermLoan.getProdId" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_DESC FROM AGRILOANS_PRODUCT 
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="updateNextIdForAgriLoan" result-class="java.util.HashMap" >
+        UPDATE AGRILOANS_PROD_ACPARAM SET 
+        LAST_AC_NO =#VALUE:VARCHAR# WHERE  PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>
+
+
+</sql-map>

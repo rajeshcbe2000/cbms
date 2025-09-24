@@ -1,0 +1,1295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DepositTransMap">
+<!-- Used in DepositTransMap -->    
+    <result-map name="getAccProductresultTD" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>    
+    <mapped-statement name="Cash.getAccProductTD" result-map="getAccProductresultTD">
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+        order by PROD_DESC
+    </mapped-statement>
+        
+    <result-map name="get-LookUp-resultTD" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    
+    <mapped-statement name="getOpAccProductLookUpTD" result-map="get-LookUp-resultTD">
+        SELECT PROD_ID AS LOOKUP_REF_ID,PROD_DESC AS LOOKUP_DESC FROM DEPOSITS_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where CR_CLR='Y')
+    </mapped-statement>
+        <!--!==================================-->
+
+    <mapped-statement name="getActDataTD" result-class="java.util.HashMap">
+<!--	       SELECT OPENING_MODE as OPT_MODE_ID, CATEGORY, CONSTITUTION,
+               DEPOSIT_DT as CREATE_DT, DEPOSIT_DT,
+               DP.BASE_CURRENCY AS "PRODCURRENCY" , AM.REMARKS as REMARKS, AM.BRANCH_ID AS BRANCH_CODE 
+               FROM DEPOSIT_ACINFO  AM,DEPOSITS_PRODUCT  DP,DEPOSIT_SUB_ACINFO DS
+               WHERE AM.PROD_ID = DP.PROD_ID AND 
+               AM.DEPOSIT_NO = DS.DEPOSIT_NO  and
+               (DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO = #ACT_NUM#)-->
+        SELECT ACCT_STATUS as STATUS, CATEGORY, CONSTITUTION,
+        DEPOSIT_DT as CREATE_DT, DEPOSIT_DT,MATURITY_DT,
+        DP.BASE_CURRENCY AS "PRODCURRENCY" , AM.REMARKS as REMARKS, AM.BRANCH_ID AS BRANCH_CODE,
+        CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,membership_no  
+        FROM DEPOSIT_ACINFO  AM,DEPOSITS_PRODUCT  DP,DEPOSIT_SUB_ACINFO DS,CUSTOMER C
+        WHERE AM.PROD_ID = DP.PROD_ID AND 
+        AM.DEPOSIT_NO = DS.DEPOSIT_NO  and
+        (DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO = #ACT_NUM:VARCHAR#)  
+        AND C.CUST_ID=AM.CUST_ID             
+    </mapped-statement>
+
+    <result-map name="getAccountResultListTD" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+            <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="ProductType" column="TYPE"/>
+        <property name="Amount" column="AMOUNT"/>
+        
+            <!--<property name="ReminingAmount" column="REMINING_AMT"/> -->           
+    </result-map>
+    
+     <result-map name="getAccountResultListSITD" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+            <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="ProductType" column="TYPE"/>
+        <property name="Amount" column="AMOUNT"/>
+        <property name="Branch_Id" column="branch_id"/>
+            <!--<property name="ReminingAmount" column="REMINING_AMT"/> -->           
+    </result-map>
+    <result-map name="getAccountResultTDWithMemberNo" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+            <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="ProductType" column="TYPE"/>
+        <property name="Amount" column="AMOUNT"/>
+        <property name="MemberNo" column="MemNo"/>
+        <property name="EmployeNo" column="EmpNo"/>
+        <property name="DEPOSIT_AMT" column="DEPOSIT_AMT"/>
+            <!--<property name="ReminingAmount" column="REMINING_AMT"/> -->           
+    </result-map>
+         <dynamic-mapped-statement name="Cash.getAccountListSITD" result-map="getAccountResultListTD" >
+        SELECT 
+        DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+            <!--CU.CUST_TYPE as CUST_TYPE_ID,--> DP.BEHAVES_LIKE AS TYPE, DS.DEPOSIT_AMT AS AMOUNT,DA.BRANCH_ID<!--,
+            DS.DEPOSIT_AMT - (NVL(DS.TOTAL_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0)) AS REMINING_AMT -->
+        FROM DEPOSIT_ACINFO DA, CUSTOMER CU, CUST_ADDR CA, DEPOSIT_SUB_ACINFO DS,
+        DEPOSITS_PRODUCT DP
+        WHERE DA.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        DP.PROD_ID = DA.PROD_ID AND 
+        DA.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND
+        (DS.ACCT_STATUS NOT IN ('CLOSED','MATURED') or DS.ACCT_STATUS is null) AND 
+        DS.STATUS NOT IN ('DELETED') AND 
+        DS.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR# AND
+            <!--DS.INTPAY_MODE = 'TRANSFER' AND-->
+          <!--  DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO NOT IN 
+            (SELECT ACCT_NO FROM STANDING_INSTRUCTION_CREDIT WHERE STATUS!='DELETED' AND -->
+        NOT EXISTS
+        (SELECT ACCT_NO FROM STANDING_INSTRUCTION_CREDIT WHERE STATUS!='DELETED' AND DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO=ACCT_NO AND 
+        SI_ID IN 
+        (SELECT SI_ID FROM STANDING_INSTRUCTION WHERE AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED')) AND
+           <!-- DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO NOT IN 
+            (SELECT ACCT_NO FROM STANDING_INSTRUCTION_DEBIT WHERE STATUS!='DELETED' AND  -->
+        NOT EXISTS
+        (SELECT ACCT_NO FROM STANDING_INSTRUCTION_DEBIT WHERE STATUS!='DELETED'  AND DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO=ACCT_NO AND
+        SI_ID IN 
+        (SELECT SI_ID FROM STANDING_INSTRUCTION WHERE AUTHORIZE_STATUS='AUTHORIZED'  AND STATUS != 'CLOSED' AND STATUS!='DELETED'))
+            <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="CustomerName">
+                        UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="AccountNo">
+                        UPPER(DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) LIKE UPPER('%$AccountNo$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="HouseName">
+                        UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="ProductType">
+                        UPPER(DP.BEHAVES_LIKE) LIKE UPPER('%$ProductType$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="Amount">
+                        DS.DEPOSIT_AMT = $Amount$
+                    </isNotNull>
+                </isParameterPresent>
+            </dynamic>
+            ORDER BY DA.DEPOSIT_NO
+            <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>          
+        </dynamic-mapped-statement>
+
+ <dynamic-mapped-statement name="Cash.getAccountListSIForLienCheck" result-map="getAccountResultListTD">
+        SELECT 
+        DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+            <!--CU.CUST_TYPE as CUST_TYPE_ID,--> DP.BEHAVES_LIKE AS TYPE, DS.DEPOSIT_AMT AS AMOUNT<!--,
+            DS.DEPOSIT_AMT - (NVL(DS.TOTAL_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0)) AS REMINING_AMT -->
+        FROM DEPOSIT_ACINFO DA, CUSTOMER CU, CUST_ADDR CA, DEPOSIT_SUB_ACINFO DS,
+        DEPOSITS_PRODUCT DP
+        WHERE DA.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        DP.PROD_ID = DA.PROD_ID AND 
+        DA.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND
+        (DS.ACCT_STATUS NOT IN ('CLOSED','MATURED') or DS.ACCT_STATUS is null) AND 
+        DS.STATUS NOT IN ('DELETED') AND
+        DS.STATUS NOT IN ('LIEN') AND
+        DS.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR# AND 
+            <!--DS.INTPAY_MODE = 'TRANSFER' AND-->
+          <!--  DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO NOT IN 
+            (SELECT ACCT_NO FROM STANDING_INSTRUCTION_CREDIT WHERE STATUS!='DELETED' AND -->
+        NOT EXISTS
+        (SELECT ACCT_NO FROM STANDING_INSTRUCTION_CREDIT WHERE STATUS!='DELETED' AND DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO=ACCT_NO AND 
+        SI_ID IN 
+        (SELECT SI_ID FROM STANDING_INSTRUCTION WHERE AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED')) AND
+           <!-- DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO NOT IN 
+            (SELECT ACCT_NO FROM STANDING_INSTRUCTION_DEBIT WHERE STATUS!='DELETED' AND  -->
+        NOT EXISTS
+        (SELECT ACCT_NO FROM STANDING_INSTRUCTION_DEBIT WHERE STATUS!='DELETED'  AND DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO=ACCT_NO AND
+        SI_ID IN 
+        (SELECT SI_ID FROM STANDING_INSTRUCTION WHERE AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'))
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TYPE">
+                    UPPER(DP.BEHAVES_LIKE) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(DS.DEPOSIT_AMT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+
+        <!-- The following mapped statement commented by Rajesh -->   
+    <result-map name="getAccountResultTD" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+            <!-- <property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="ProductType" column="TYPE"/>
+        <property name="Amount" column="AMOUNT"/>
+        <!--<property name="ReminingAmount" column="REMINING_AMT"/> -->           
+    </result-map>   
+    
+    <dynamic-mapped-statement name="Cash.getAccountListTD" result-map="getAccountResultTDWithMemberNo" >
+<!--        commented by Sathiya...             SELECT 
+            DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACT_NUM, 
+            DECODE(CU.CUST_TYPE, 'CORPORATE', COMP_NAME, FNAME || ' ' || MNAME || ' ' || LNAME) AS CUSTOMER_NAME,
+            CU.CUST_TYPE as CUST_TYPE_ID, DP.BEHAVES_LIKE AS TYPE, DS.DEPOSIT_AMT AS AMOUNT
+            FROM DEPOSIT_ACINFO DA, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS,
+            DEPOSITS_PRODUCT DP 
+            WHERE DA.CUST_ID = CU.CUST_ID AND 
+            DP.PROD_ID = DA.PROD_ID AND 
+            DA.PROD_ID = #PROD_ID# AND 
+            DP.BEHAVES_LIKE != 'DAILY' AND
+            DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND
+            AVAILABLE_BALANCE changed as CLEAR_BALANCE
+            ((DS.DEPOSIT_AMT != NVL(DS.AVAILABLE_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0) AND
+            ((DS.DEPOSIT_AMT != NVL(DS.CLEAR_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0) AND
+            (DS.DEPOSIT_AMT > NVL(DS.AVAILABLE_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0)
+            OR DP.BEHAVES_LIKE = 'RECURRING')) OR  
+            ((DS.DEPOSIT_AMT &lt; DS.TOTAL_BALANCE) OR DP.BEHAVES_LIKE = 'RECURRING')) AND 
+            (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND 
+            DS.STATUS NOT IN ('DELETED') AND 
+            DS.AUTHORIZE_STATUS='AUTHORIZED' AND
+            DA.BRANCH_ID = #SELECTED_BRANCH#
+            ORDER BY DA.DEPOSIT_NO-->
+        SELECT DA.DEPOSIT_NO as ACT_NUM, get_cust_name(cu.cust_id) AS CUSTOMER_NAME, CA.STREET AS HOUSE_NAME, <!--CU.CUST_TYPE as 
+            CUST_TYPE_ID,--> DP.BEHAVES_LIKE AS TYPE, DS.AVAILABLE_BALANCE AS AMOUNT ,SA.SHARE_ACCT_NO as MemNo,SA.EMP_REFNO_NEW as EmpNo,DS.DEPOSIT_AMT<!--,
+            DS.DEPOSIT_AMT - (NVL(DS.TOTAL_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0)) AS REMINING_AMT --> FROM DEPOSIT_ACINFO DA, 
+         CUST_ADDR CA,DEPOSIT_SUB_ACINFO DS, DEPOSITS_PRODUCT DP,CUSTOMER CU LEFT OUTER JOIN SHARE_acct SA on  sa.cust_id = cu.cust_id WHERE DA.CUST_ID = CU.CUST_ID AND 
+        CA.CUST_ID = CU.CUST_ID AND  CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        DP.PROD_ID = DA.PROD_ID AND DA.PROD_ID = #PROD_ID:VARCHAR# AND DA.DEPOSIT_NO=DS.DEPOSIT_NO    AND 
+        (DS.AVAILABLE_BALANCE >=(NVL(DS.CLEAR_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0) - 
+        NVL(DS.SHADOW_DEBIT,0)) OR DP.BEHAVES_LIKE = 'RECURRING' OR dp.behaves_like = 'DAILY') AND (DS.ACCT_STATUS IN 
+        ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND DS.STATUS NOT IN 
+        ('DELETED') AND DS.AUTHORIZE_STATUS='AUTHORIZED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="CustomerName">
+                        UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="AccountNo">
+                        UPPER(DA.DEPOSIT_NO) LIKE UPPER('%$AccountNo$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="HouseName">
+                        UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="ProductType">
+                        UPPER(DP.BEHAVES_LIKE) LIKE UPPER('%$ProductType$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="Amount">
+                        DS.DEPOSIT_AMT = $Amount$
+                    </isNotNull>
+                </isParameterPresent>
+                        <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="ACT_NUM">
+                    DS.DEPOSIT_NO=#ACT_NUM:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+            <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="SELECTED_BRANCH">
+             DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+            </isPropertyAvailable>
+        </dynamic>
+        ORDER BY DA.DEPOSIT_NO  
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic> 
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="Report.getAccountListTD" result-map="getAccountResultTDWithMemberNo" >
+<!--        commented by Sathiya...             SELECT 
+            DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACT_NUM, 
+            DECODE(CU.CUST_TYPE, 'CORPORATE', COMP_NAME, FNAME || ' ' || MNAME || ' ' || LNAME) AS CUSTOMER_NAME,
+            CU.CUST_TYPE as CUST_TYPE_ID, DP.BEHAVES_LIKE AS TYPE, DS.DEPOSIT_AMT AS AMOUNT
+            FROM DEPOSIT_ACINFO DA, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS,
+            DEPOSITS_PRODUCT DP 
+            WHERE DA.CUST_ID = CU.CUST_ID AND 
+            DP.PROD_ID = DA.PROD_ID AND 
+            DA.PROD_ID = #PROD_ID# AND 
+            DP.BEHAVES_LIKE != 'DAILY' AND
+            DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND
+            AVAILABLE_BALANCE changed as CLEAR_BALANCE
+            ((DS.DEPOSIT_AMT != NVL(DS.AVAILABLE_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0) AND
+            ((DS.DEPOSIT_AMT != NVL(DS.CLEAR_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0) AND
+            (DS.DEPOSIT_AMT > NVL(DS.AVAILABLE_BALANCE, 0) + NVL(DS.SHADOW_CREDIT, 0)
+            OR DP.BEHAVES_LIKE = 'RECURRING')) OR  
+            ((DS.DEPOSIT_AMT &lt; DS.TOTAL_BALANCE) OR DP.BEHAVES_LIKE = 'RECURRING')) AND 
+            (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND 
+            DS.STATUS NOT IN ('DELETED') AND 
+            DS.AUTHORIZE_STATUS='AUTHORIZED' AND
+            DA.BRANCH_ID = #SELECTED_BRANCH#
+            ORDER BY DA.DEPOSIT_NO-->
+            SELECT   da.deposit_no AS act_num,
+                 get_cust_name(cu.cust_id) AS customer_name,
+                 ca.street AS house_name, dp.behaves_like AS TYPE,
+                 ds.deposit_amt AS amount, sa.share_acct_no AS memno,
+                 sa.emp_refno_new AS empno,ds.deposit_amt
+            FROM deposit_acinfo da 
+                 join deposits_product dp on dp.prod_id = da.prod_id
+                 join deposit_sub_acinfo ds on da.deposit_no = ds.deposit_no
+                 join customer cu on da.cust_id = cu.cust_id
+                 join cust_addr ca on ca.cust_id = cu.cust_id AND ca.addr_type = cu.comm_addr_type      
+                 left join share_acct sa on sa.cust_id = da.cust_id
+             WHERE 
+             da.prod_id = #PROD_ID:VARCHAR#
+             AND dp.behaves_like != 'DAILY'
+             AND ds.status NOT IN ('DELETED')
+             AND ds.authorize_status = 'AUTHORIZED'
+             AND da.branch_id = #SELECTED_BRANCH:VARCHAR#
+             <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="act_num">
+                    UPPER(da.deposit_no) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="customer_name">
+                    UPPER( get_cust_name(cu.cust_id)) LIKE UPPER('%$customer_name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="house_name">
+                    UPPER(ca.street) LIKE UPPER('%$house_name$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="TYPE">
+                    UPPER(dp.behaves_like) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="memno">
+                    UPPER(sa.share_acct_no) LIKE UPPER('%$memno$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="empno">
+                    UPPER(sa.emp_refno_new) LIKE UPPER('%$empno$%')
+                </isNotNull>
+            </isParameterPresent>
+             </dynamic>
+            ORDER BY da.deposit_no
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getAccountHeadProdTD" result-class="java.util.HashMap">
+<!--        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #PROD_ID# -->
+        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC,CR_CASH,DR_CASH
+        FROM AC_HD, DEPOSITS_PRODUCT,AC_HD_PARAM
+        WHERE AC_HD.AC_HD_ID = DEPOSITS_PRODUCT.ACCT_HEAD
+        and AC_HD.AC_HD_ID=AC_HD_PARAM.AC_HD_ID     
+        AND DEPOSITS_PRODUCT.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getBalanceTD" result-class="java.util.HashMap">
+        SELECT nvl(AVAILABLE_BALANCE,0) as "AVAILABLE_BALANCE", 
+        nvl(CLEAR_BALANCE,0) as "CLEAR_BALANCE",
+        nvl(TOTAL_BALANCE,0) as "TOTAL_BALANCE", 
+        nvl(SHADOW_CREDIT,0) as "SHADOW_CREDIT", 
+        nvl(SHADOW_DEBIT,0) as "SHADOW_DEBIT" ,
+        nvl(UNCLEAR_BALANCE,0) as "UNCLEAR_BALANCE"
+        FROM DEPOSIT_SUB_ACINFO
+        WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACT_NUM:VARCHAR# 
+                <!--AND  
+                (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))-->
+    </mapped-statement> 
+                
+    <dynamic-mapped-statement name="getAccountNumberNameTD" result-class="java.util.HashMap">
+        SELECT get_cust_name(c.cust_id) AS CUSTOMER_NAME, 
+        DSA.PERIODIC_INT_AMT INT_AMT,
+        DSA.INTPAY_FREQ PAY_FREQ,
+        DSA.DEPOSIT_DT DP_DT,
+        DSA.MATURITY_DT MT_DT,
+        C.CUST_ID AS CUST_ID,   C.CUST_TYPE,BRANCH_ID as BRANCH_CODE,MEMBERSHIP_NO , STREET || ', ' || AREA || ', ' || CITY AS ADDRESS
+        FROM DEPOSIT_ACINFO DA, CUSTOMER C,DEPOSIT_SUB_ACINFO DSA, CUST_ADDR CA 
+        WHERE DA.CUST_ID = C.CUST_ID  and
+        DSA.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        CA.CUST_ID = C.CUST_ID
+		AND CA.ADDR_TYPE = DA.ADDR_TYPE AND
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO 
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="CLOSECHECK">
+                DSA.ACCT_STATUS != 'CLOSED'
+            </isNotPropertyAvailable>
+        </dynamic>
+        and 
+        DSA.DEPOSIT_NO || '_' || dsa.DEPOSIT_SUB_NO = #ACC_NUM:VARCHAR#
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="getProdIdForActNoTD" result-class="java.util.HashMap">
+        SELECT PROD_ID FROM DEPOSIT_ACINFO,DEPOSIT_SUB_ACINFO DSA WHERE DEPOSIT_ACINFO.DEPOSIT_NO = DSA.DEPOSIT_NO AND 
+        DSA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACC_NUM:VARCHAR# 
+            <!--AND BRANCH_ID = #BRANCH_ID#--> <!-- Commented by Rajesh because to allow Interbranch Trans -->
+    </mapped-statement> 
+        <!--Following mapped statement commented -->
+        <!--mapped-statement name="getAccountNumberNameTD" result-class="java.util.HashMap">
+            SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME, 
+            DEPOSIT_SUB_ACINFO.PERIODIC_INT_AMT INT_AMT,
+            DEPOSIT_SUB_ACINFO.INTPAY_FREQ PAY_FREQ,
+            FROM DEPOSIT_ACINFO, CUSTOMER,DEPOSIT_SUB_ACINFO
+            WHERE DEPOSIT_ACINFO.CUST_ID = CUSTOMER.CUST_ID  and
+            DEPOSIT_ACINFO.DEPOSIT_NO = DEPOSIT_SUB_ACINFO.DEPOSIT_NO and 
+            DEPOSIT_SUB_ACINFO.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACC_NUM:VARCHAR#
+        </mapped-statement--> 
+        
+         <!-- Following mapped statement commented  --> 
+         <!--mapped-statement name="getAccountNumberNameTD" result-class="java.util.HashMap">
+            SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME, 
+            DEPOSIT_SUB_ACINFO.PERIODIC_INT_AMT INT_AMT,
+            DEPOSIT_SUB_ACINFO.INTPAY_FREQ PAY_FREQ
+            FROM DEPOSIT_ACINFO, CUSTOMER,DEPOSIT_SUB_ACINFO
+            WHERE DEPOSIT_ACINFO.CUST_ID = CUSTOMER.CUST_ID  and
+            DEPOSIT_ACINFO.DEPOSIT_NO = DEPOSIT_SUB_ACINFO.DEPOSIT_NO and 
+            DEPOSIT_SUB_ACINFO.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACC_NUM:VARCHAR#
+        </mapped-statement-->        
+        <!-- Following mapped statement commented by Rajesh -->
+         <!--mapped-statement name="getAccountNumberNameTD" result-class="java.util.HashMap">
+            SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME
+            FROM DEPOSIT_ACINFO, CUSTOMER,DEPOSIT_SUB_ACINFO
+            WHERE DEPOSIT_ACINFO.CUST_ID = CUSTOMER.CUST_ID  and
+            DEPOSIT_ACINFO.DEPOSIT_NO = DEPOSIT_SUB_ACINFO.DEPOSIT_NO and 
+            DEPOSIT_SUB_ACINFO.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACC_NUM:VARCHAR#
+        </mapped-statement-->        
+        
+        <!-- ==============================Common Transactions operation on Account===================================================== -->        
+
+    <dynamic-mapped-statement name="updateShadowDebitTD" inline-parameters="true">
+<!--            UPDATE DEPOSIT_SUB_ACINFO SET 
+                SHADOW_DEBIT = NVL(SHADOW_DEBIT,0) + #AMOUNT#,
+                LAST_TRANS_DT = #TODAY_DT#                  
+            WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACCOUNTNO:VARCHAR#-->
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        SHADOW_DEBIT = NVL(SHADOW_DEBIT,0) + #AMOUNT:NUMBER#,
+        LAST_TRANS_DT = #TODAY_DT:DATE#                  
+        WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACCOUNTNO:VARCHAR#
+<!--            AND TOTAL_BALANCE >0-->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_STATUS">
+                    ACCT_STATUS = #ACCT_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>            
+    </dynamic-mapped-statement>
+
+        <!--To Update the Data in Business Rule ...-->
+    <dynamic-mapped-statement name="updateShadowCreditTD" inline-parameters="true">
+<!--            UPDATE DEPOSIT_SUB_ACINFO SET 
+                SHADOW_CREDIT = nvl(SHADOW_CREDIT,0) + #AMOUNT#,
+                LAST_TRANS_DT = #TODAY_DT#                
+            WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACCOUNTNO:VARCHAR#-->
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        SHADOW_CREDIT = nvl(SHADOW_CREDIT,0) + #AMOUNT:NUMBER#,
+        LAST_TRANS_DT = #TODAY_DT:DATE#                
+        WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACCOUNTNO:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_STATUS">
+                    ACCT_STATUS = #ACCT_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>            
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="updateOtherBalancesTD" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        CLEAR_BALANCE = NVL (CLEAR_BALANCE, 0) + #AMOUNT:NUMBER# - #UNCLEAR_AMT:NUMBER#, 
+        TOTAL_BALANCE = NVL (TOTAL_BALANCE, 0) + #AMOUNT:NUMBER# , 
+        UNCLEAR_BALANCE = NVL (UNCLEAR_BALANCE, 0) + #UNCLEAR_AMT:NUMBER#,
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACCOUNTNO:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_STATUS">
+                    ACCT_STATUS = #ACCT_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>            
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="updateAvailBalanceTD" result-class="java.util.HashMap">
+        UPDATE DEPOSIT_SUB_ACINFO SET
+        AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT:NUMBER#,
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT:NUMBER#,
+        CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#,
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACCOUNTNO:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_STATUS">
+                    ACCT_STATUS = #ACCT_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>            
+    </dynamic-mapped-statement>
+    
+    <!--Below code block line no (362 - 379) added by Ajay Sharma for mantis ID 9086 dated 14 May 2014-->
+    <dynamic-mapped-statement name="updateTEMPBalanceTD" result-class="java.util.HashMap">
+        UPDATE DEPOSIT_SUB_ACINFO SET
+        TEMP_CLEAR_BALANCE = nvl(TEMP_CLEAR_BALANCE,0) + #CLEAR_BALANCE:NUMBER#,
+        TEMP_AVAILABLE_BALANCE = nvl(TEMP_AVAILABLE_BALANCE,0) + #AVAILABLE_BALANCE:NUMBER#,
+        TEMP_TOTAL_BALANCE = nvl(TEMP_TOTAL_BALANCE,0) + #TOTAL_BALANCE:NUMBER#
+        WHERE DEPOSIT_NO = #DEPOSITNO:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="updateTEMPBalanceSAMENO" result-class="java.util.HashMap">
+        UPDATE DEPOSIT_SUB_ACINFO_SAMENO SET
+        TEMP_CLEAR_BALANCE = nvl(TEMP_CLEAR_BALANCE,0) + #CLEAR_BALANCE:NUMBER#,
+        TEMP_AVAILABLE_BALANCE = nvl(TEMP_AVAILABLE_BALANCE,0) + #AVAILABLE_BALANCE:NUMBER#,
+        TEMP_TOTAL_BALANCE = nvl(TEMP_TOTAL_BALANCE,0) + #TOTAL_BALANCE:NUMBER#
+        WHERE DEPOSIT_NO = #DEPOSITNO:VARCHAR#
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="insertRecurringDeposit" inline-parameters="true">
+        INSERT INTO DEPOSIT_RECURRING (DEPOSIT_NO_SUB, TRANS_DT, AMOUNT,DUE_DATE,DELAYED_COUNT,SL_NO,ADT_AMT)
+        VALUES (#ACCOUNTNO:VARCHAR#, #TODAY_DT:DATE#, #AMOUNT:NUMBER#,#DUE_DATE:DATE#,#DELAYED_COUNT:VARCHAR#,#SL_NO:VARCHAR#,#ADT_AMT:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertAgentColProducts" inline-parameters="true">
+        INSERT INTO AGENT_COLLECTION_PROD (PROD_TYPE, PROD_ID, AGENT_ID,LAST_COL_DT,LAST_INTRO_PAID_DT)
+        VALUES (#prodType:VARCHAR#,#prodId:VARCHAR#,#agentId:VARCHAR#,#lastColDt:DATE#,#lastIntPaidDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="deleteAgentColProducts" result-class="java.util.HashMap">
+        DELETE FROM AGENT_COLLECTION_PROD WHERE AGENT_ID = #agentId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateRecurringDeposit" inline-parameters="true">
+        UPDATE DEPOSIT_RECURRING SET TRANS_DT = #TRANS_DT:DATE#, AMOUNT = #AMOUNT:NUMBER#,
+        DELAYED_COUNT = #DELAYED_COUNT:VARCHAR# WHERE DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectDepositTransDt" result-class="java.util.HashMap">
+        SELECT SL_NO, DUE_DATE FROM DEPOSIT_RECURRING WHERE 
+        DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# AND TRANS_DT IS NULL AND SL_NO 
+        IN(SELECT MIN(SL_NO) FROM DEPOSIT_RECURRING WHERE DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# AND TRANS_DT IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="checkFullInsPaidRD" result-class="java.util.HashMap">
+        SELECT * FROM DEPOSIT_RECURRING WHERE  DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# 
+        AND SL_NO::numeric=(SELECT MAX(TO_NUMBER(SL_NO))  FROM DEPOSIT_RECURRING WHERE  DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR#) AND TRANS_DT IS NOT NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectDepositMaxTransDt" result-class="java.util.HashMap">        
+        SELECT SL_NO, TRANS_DT FROM DEPOSIT_RECURRING WHERE 
+        DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# AND TRANS_DT IS NOT NULL AND TRANS_DT 
+        IN(SELECT MAX(TRANS_DT) FROM DEPOSIT_RECURRING WHERE DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# AND TRANS_DT IS NOT NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectDepositDueDt" result-class="java.util.HashMap">
+        SELECT DUE_DATE FROM DEPOSIT_RECURRING WHERE 
+        DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# AND TRANS_DT IS NULL
+    </mapped-statement>
+
+    <mapped-statement name="updateDepositTransDate" inline-parameters="true">
+        UPDATE DEPOSIT_RECURRING SET TRANS_DT = #TRANS_DT:DATE#,DELAYED_COUNT = #COUNT:VARCHAR#,
+        AMOUNT = #AMOUNT:NUMBER# WHERE DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR# AND SL_NO = #SL_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateDepositTransDateAmountNull" inline-parameters="true">
+        UPDATE DEPOSIT_RECURRING SET TRANS_DT = null,AMOUNT = '0' WHERE DEPOSIT_NO_SUB = #DEPOSIT_NO_SUB:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getRecurringDeposit" result-class="java.lang.Integer" >
+        SELECT COUNT(*) FROM 
+        DEPOSITS_PRODUCT DP, DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA 
+        WHERE DP.PROD_ID = DA.PROD_ID AND
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND 
+        DP.BEHAVES_LIKE = 'RECURRING' AND 
+        DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO = #value:VARCHAR#
+    </mapped-statement>
+        
+        <!-- ============================Transfer Transaction======================================== -->
+        
+    <mapped-statement name="Transfer.getCreditProductTD" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM DEPOSITS_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where cr_trans='Y')
+        order by PROD_DESC
+    </mapped-statement>
+        
+    <mapped-statement name="Transfer.getDebitProductTD" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID, PROD_DESC as PRODDESC FROM DEPOSITS_PRODUCT 
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where dr_trans='Y')
+        order by PROD_DESC
+    </mapped-statement> 
+        
+    <result-map name="getTransferAccountResultList" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+            <!--<property name="CustomerType" column="CUST_TYPE_ID"/> -->
+        <property name="ProductType" column="TYPE"/>
+        <property name="Amount" column="AMOUNT"/>
+        <property name="MemberNo" column="SHARE_ACCT_NO"/>
+        <property name="EmployeeNo" column="EMP_REFNO_NEW"/>
+        
+    </result-map>  
+    <mapped-statement name="Transfer.getAmountTD" result-map="getTransferAccountResultList" >
+        SELECT
+        DA.DEPOSIT_NO as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        DP.BEHAVES_LIKE AS TYPE,sh.share_acct_no,sh.emp_refno_new, DS.DEPOSIT_AMT AS AMOUNT
+        FROM DEPOSIT_ACINFO DA left join share_acct sh on da.cust_id = sh.cust_id, CUSTOMER CU, CUST_ADDR CA, DEPOSIT_SUB_ACINFO DS,
+        DEPOSITS_PRODUCT DP ,DEPOSITS_PROD_RENEWAL DPR
+        WHERE DA.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        DP.PROD_ID = DA.PROD_ID AND 
+        DA.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND 
+        DPR.PROD_ID = DP.PROD_ID  AND <!--da.cust_id = sh.cust_id(+) AND-->
+        (DP.BEHAVES_LIKE != 'DAILY' AND (DS.DEPOSIT_AMT > (NVL(DS.CLEAR_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0) - NVL(DS.SHADOW_DEBIT,0)) 
+        OR DP.BEHAVES_LIKE = 'RECURRING')
+        OR (DPR.PARTIAL_WITHDRAWAL_ALLOWED = 'Y' AND DP.BEHAVES_LIKE = 'DAILY'))
+        AND 
+        (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND 
+        DS.STATUS NOT IN ('DELETED') AND 
+        DS.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DS.DEPOSIT_NO=#ACCOUNTNO:VARCHAR# AND
+        DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+    </mapped-statement>    
+    <dynamic-mapped-statement name="Transfer.getAccountListTD" result-map="getTransferAccountResultList">
+                <!--SELECT CUSTOMER.CUST_ID as "Customer Id", DOB, get_cust_name(CUSTOMER.CUST_ID) "Name", GENDER , CUSTOMERGROUP, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE from CUSTOMER , CUST_ADDR  WHERE ((CUSTOMER.STATUS = 'MODIFIED') or (CUSTOMER.STATUS = 'UPDATED') or (CUSTOMER.STATUS = 'CREATED')) and (CUST_ADDR.CUST_ID = CUSTOMER.CUST_ID) and (CUSTOMER.COMM_ADDR_TYPE = CUST_ADDR.ADDR_TYPE)-->
+        SELECT
+        DA.DEPOSIT_NO as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+            <!--CU.CUST_TYPE as CUST_TYPE_ID, --> DP.BEHAVES_LIKE AS TYPE, 
+        SH.SHARE_ACCT_NO,SH.EMP_REFNO_NEW,
+        DS.DEPOSIT_AMT AS AMOUNT
+        FROM <!--DEPOSIT_ACINFO DA, CUSTOMER CU, CUST_ADDR CA, DEPOSIT_SUB_ACINFO DS,
+        DEPOSITS_PRODUCT DP ,DEPOSITS_PROD_RENEWAL DPR,SHARE_ACCT sh
+        WHERE DA.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        DP.PROD_ID = DA.PROD_ID AND 
+        DA.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DA.DEPOSIT_NO=DS.DEPOSIT_NO  AND 
+        DPR.PROD_ID = DP.PROD_ID  
+        and DA.CUST_ID = SH.CUST_ID(+)-->
+        DEPOSIT_ACINFO DA left join
+	CUSTOMER CU on DA.CUST_ID = CU.CUST_ID join
+	DEPOSIT_SUB_ACINFO DS on
+	DA.DEPOSIT_NO = DS.DEPOSIT_NO join
+	CUST_ADDR CA on CA.CUST_ID = CU.CUST_ID and
+	CA.ADDR_TYPE = CU.COMM_ADDR_TYPE join
+	DEPOSITS_PRODUCT DP on
+	DP.PROD_ID = DA.PROD_ID join DEPOSITS_PROD_RENEWAL DPR on 
+	DPR.PROD_ID = DP.PROD_ID LEFT join SHARE_ACCT SH on  DA.CUST_ID = SH.CUST_ID
+        WHERE
+        <!--AND 
+        (DP.BEHAVES_LIKE != 'DAILY') --> DA.PROD_ID = #PROD_ID:VARCHAR# AND(DS.DEPOSIT_AMT > (NVL(DS.CLEAR_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0) - NVL(DS.SHADOW_DEBIT,0)) 
+        OR DP.BEHAVES_LIKE IN ('RECURRING','THRIFT','BENEVOLENT')
+        OR (DPR.PARTIAL_WITHDRAWAL_ALLOWED = 'Y' AND DP.BEHAVES_LIKE = 'DAILY'))
+            
+           <!-- DP.BEHAVES_LIKE != 'DAILY' AND
+            (DS.DEPOSIT_AMT > (NVL(DS.CLEAR_BALANCE,0) + NVL(DS.SHADOW_CREDIT,0) - NVL(DS.SHADOW_DEBIT,0))
+            OR DP.BEHAVES_LIKE = 'RECURRING')-->
+            
+        AND 
+        (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null) AND 
+        DS.STATUS NOT IN ('DELETED') AND 
+        DS.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+        <dynamic>
+            <iterate prepend="AND DS.DEPOSIT_NO||'_'||DS.DEPOSIT_SUB_NO NOT IN" property="ACT NUM" open = "(" close=")" conjunction="," >
+                #ACT NUM[]#
+            </iterate>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="CustomerName">
+                        UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="AccountNo">
+                        UPPER(DA.DEPOSIT_NO) LIKE UPPER('%$AccountNo$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="HouseName">
+                        UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="ProductType">
+                        UPPER(DP.BEHAVES_LIKE) LIKE UPPER('%$ProductType$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="Amount">
+                         UPPER(DS.DEPOSIT_AMT) =  UPPER('%$Amount$%')
+                    </isNotNull>
+                </isParameterPresent>
+                <isParameterPresent>
+                    <isNotNull prepend="AND"      property="MemberNo">
+                         UPPER(SH.SHARE_ACCT_NO) LIKE  UPPER('%$MemberNo$%')
+                    </isNotNull>
+                </isParameterPresent>
+                 <isParameterPresent>
+                    <isNotNull prepend="AND"      property="EmployeeNo">
+                         UPPER(SH.EMP_REFNO_NEW) LIKE  UPPER('%$EmployeeNo$%')
+                    </isNotNull>
+                </isParameterPresent>
+            </dynamic>
+            ORDER BY DA.DEPOSIT_NO
+            <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>                
+    </dynamic-mapped-statement>       
+       <!--
+                   (DS.DEPOSIT_AMT != DS.AVAILABLE_BALANCE OR
+            DS.DEPOSIT_AMT != DS.SHADOW_CREDIT OR (
+            DS.AVAILABLE_BALANCE IS NULL AND DS.SHADOW_CREDIT IS NULL)
+            OR DP.BEHAVES_LIKE = 'RECURRING') AND 
+            -->
+        <!-- ============================Outward Clearing======================================== -->
+    <result-map name="getAccountHeadID4PISDResultTD" class="java.util.HashMap">
+        <property name="accHeadID" column="ACCT_HEAD"/>
+        <property name="accHeadDesc" column="AC_HD_DESC"/>
+    </result-map>        
+    <mapped-statement name="getAccountHeadID4PISDTD" result-map="getAccountHeadID4PISDResultTD" >        
+        SELECT DEPOSITS_PRODUCT.ACCT_HEAD,AC_HD_DESC FROM DEPOSITS_PRODUCT, AC_HD 
+        WHERE PROD_ID = #value:VARCHAR# AND DEPOSITS_PRODUCT.ACCT_HEAD=AC_HD.AC_HD_ID
+    </mapped-statement>
+        
+        <!--result-map name="getAccountDetailsPISDResultTD" class="java.util.HashMap">
+            <property name="fName" column="FNAME"/>
+            <property name="mName" column="MNAME"/>
+            <property name="lName" column="LNAME"/>
+            <property name="openingDt" column="CREATE_DT"/>
+            <property name="category" column="ACT_CAT_ID"/>
+            <property name="optMode" column="OPT_MODE_ID"/>
+            <property name="groupCode" column="GROUP_CODE_ID"/>
+            <property name="remarks" column="REMARKS"/>
+            <property name="CLEAR_BALANCE" column="CLEAR_BALANCE"/>  
+             <property name="EFFECTIVE_BALANCE" column="TOTAL_BALANCE"/>   
+            <property name="AVAILABLE_BALANCE" column="AVAILABLE_BALANCE"/>   
+            <property name="UNCLEAR_BALANCE" column="UNCLEAR_BALANCE"/>
+            <property name="SHADOW_DEBIT" column="SHADOW_DEBIT"/>
+            <property name="SHADOW_CREDIT" column="SHADOW_CREDIT"/>       
+        </result-map-->        
+        <!--> This query 'll fetch the details of given account no<-->
+        <!--mapped-statement name="getAccountDetailsPISDTD" result-map="getAccountDetailsPISDResultTD" >        
+            SELECT FNAME, MNAME, LNAME,DEPOSIT_DT as CREATE_DT,
+             CATEGORY as ACT_CAT_ID, OPENING_MODE as OPT_MODE_ID, CONSTITUTION as GROUP_CODE_ID,AM.REMARKS as REMARKS, 
+             CLEAR_BALANCE, AVAILABLE_BALANCE, SHADOW_DEBIT, SHADOW_CREDIT,
+             UNCLEAR_BALANCE,TOTAL_BALANCE
+             FROM DEPOSIT_ACINFO AM,CUSTOMER,DEPOSIT_SUB_ACINFO DS
+            WHERE AM.DEPOSIT_NO = DS.DEPOSIT_NO  and
+               (DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO = #value#)
+                AND AM.CUST_ID = CUSTOMER.CUST_ID
+        </mapped-statement-->
+
+    <mapped-statement name="insertDailyDeposit" inline-parameters="true">
+        INSERT INTO DAILY_DEPOSIT_INTEREST (DEPOSIT_NO, AMOUNT, TOTAL_AMOUNT, TRANS_DT, AGENT_ID )
+        VALUES (#ACCOUNTNO:VARCHAR#, #AMOUNT:NUMBER#, #TOTAL_AMOUNT:NUMBER#, #TODAY_DT:TIMESTAMP#, #AGENT_ID:VARCHAR#)
+    </mapped-statement>
+     
+    <mapped-statement name="insertDailyCollectionDetails" inline-parameters="true">
+        INSERT INTO COLLECTION_DET (COL1, COL2, COL3, COL4, COL5,COL6,COL7,COL8,COL9,COL10,COL11,COL12,COL13,COL14,COL15,AGENT_ID,INITIATED_BRANCH,COL_DATE )
+        values (#col1:varchar#,#col2:varchar#,#col3:varchar#,#col4:varchar#,#col5:varchar#,#col6:varchar#,#col7:varchar#,#col8:varchar#
+        ,#col9:varchar#,#col10:varchar#,#col11:varchar#,#col12:varchar#,#col13:varchar#,#col14:varchar#,#col15:varchar#,#agentId:varchar#,
+        #initiatedBranch:varchar#,#colDate:date#)
+   </mapped-statement>
+   
+<!--        <mapped-statement name="updateDailyDeposit" inline-parameters="true">
+            INSERT INTO DAILY_DEPOSIT_INTEREST (DEPOSIT_NO, AMOUNT, TOTAL_AMOUNT, TRANS_DT )
+            VALUES (#ACCOUNTNO:VARCHAR#, #AMOUNT:NUMBER#, #TOTAL_AMOUNT:NUMBER#, #TODAY_DT# )
+        </mapped-statement>  -->
+        
+    <mapped-statement name="getDailyDeposit" result-class="java.lang.Integer" >
+        SELECT COUNT(*) FROM 
+        DEPOSITS_PRODUCT DP, DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA 
+        WHERE DP.PROD_ID = DA.PROD_ID AND
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND 
+        DP.BEHAVES_LIKE = 'DAILY' AND 
+        DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO = #value:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getDepositNoForDaily" result-class="java.util.HashMap">
+        SELECT DEPOSIT_NO FROM DAILY_DEPOSIT_INTEREST
+        WHERE DEPOSIT_NO = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getAmountDailyDeposit" result-class="java.util.HashMap">
+        SELECT DEPOSIT_NO, TRANS_DT, TOTAL_AMOUNT FROM DAILY_DEPOSIT_INTEREST
+        WHERE DEPOSIT_NO = #ACCOUNTNO:VARCHAR# AND
+        TRANS_DT = (SELECT MAX(TRANS_DT) FROM DAILY_DEPOSIT_INTEREST )
+    </mapped-statement>
+
+    <mapped-statement name="getAgentIdName" result-class="java.util.HashMap">
+        SELECT DISTINCT AGENT_ID AS "KEY", AGENT_ID AS "VALUE" FROM DEPOSIT_ACINFO WHERE
+        AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS !='DELETED' AND AGENT_ID IS NOT NULL AND 
+        BRANCH_ID = #BRANCH_ID:VARCHAR# 
+    </mapped-statement>  
+    
+    <mapped-statement name="getAgentMasterDetails" result-class="java.util.HashMap">
+        SELECT AGENT_MACHINE_ID AS "KEY" , AGENT_ID AS "VALUE"
+        FROM AGENT_MASTER AM,CUSTOMER C
+        WHERE C.CUST_ID = AM.AGENT_ID
+        AND AM.TYPE = 'A'
+        AND AM.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND AM.STATUS !='DELETED'
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getTransIdForDailyCash" result-class="java.util.HashMap">
+        SELECT TRANS_ID FROM CASH_TRANS WHERE GL_TRANS_ACT_NUM=#GL_TRANS_ACT_NUM:VARCHAR#
+        AND STATUS!='DELETED' AND TRANS_DT = #TODAY_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AUTHORIZED_STATUS" >
+                    AUTHORIZE_STATUS IS NULL
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic> 
+     </dynamic-mapped-statement > 
+    
+    <mapped-statement name="getDailyAccountTransData" result-class="java.util.HashMap">
+       SELECT mastdata FROM  $TABLE_NAME$ WHERE AGENT_ID=#AGENT_ID:varchar# <!--and BRANCH_ID =#BRANCH_CODE:VARCHAR# -->
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getImportDailyAccountDataDetails" result-class="java.util.HashMap">
+           SELECT DCD.*, MST.AC_HD_ID AS CR_ACHD,COMM_COL_AC_HD_ID
+           FROM $TABLE_NAME$ DCD 
+           JOIN  AGENT_PROD_MAPPING AM ON AM.PROD_ID = DCD.PROD_ID
+           JOIN  AGENTMASTDET MST ON MST.PROD_ID = DCD.PROD_ID AND MST.ACT_NUM = DCD.CBMS_ACTNUM AND MST.AGENT_ID = DCD.AGENT_ID
+           <!--and AM.AGENT_ID = DCD.AGENT_ID-->
+           WHERE DCD.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+           AND DCD.AGENT_ID= #AGENT_ID:varchar#
+           <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PROD_ID" >
+                    DCD.PROD_ID = #PROD_ID:varchar#
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic> 
+            <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BRANCH_ID" >
+                    DCD.BRANCH_ID = #BRANCH_ID:varchar#
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic> 
+     </dynamic-mapped-statement > 
+     
+     <mapped-statement name="getImportDailyAccountConsolidateDataDetails" result-class="java.util.HashMap">
+           SELECT   DCD.AGENT_ID,DCD.PROD_TYPE ,DCD.PROD_ID,DCD.BRANCH_ID,DCD.INITIATED_BRANCH, sum(DCD.AMT) AS AMT, 
+           SUM (DCD.COMM_AMT) AS COMM_AMT, MST.AC_HD_ID AS CR_ACHD,
+            COMM_COL_AC_HD_ID,CONSOLIDATE_TRANS
+            FROM $TABLE_NAME$ DCD JOIN AGENT_PROD_MAPPING AM
+            ON AM.PROD_ID = DCD.PROD_ID
+            JOIN AGENTMASTDET MST
+            ON MST.PROD_ID = DCD.PROD_ID
+            AND MST.ACT_NUM = DCD.CBMS_ACTNUM
+            AND MST.AGENT_ID = DCD.AGENT_ID
+            <!--AND DCD.AGENT_ID = AM.AGENT_ID-->
+            WHERE DCD.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# AND DCD.AGENT_ID = #AGENT_ID:varchar#
+            GROUP BY MST.AC_HD_ID, COMM_COL_AC_HD_ID,DCD.AGENT_ID,DCD.BRANCH_ID,DCD.INITIATED_BRANCH,DCD.PROD_TYPE,DCD.PROD_ID,CONSOLIDATE_TRANS
+     </mapped-statement>  
+     
+     <mapped-statement name="getImportDailyAccountDataDetailsForCash" result-class="java.util.HashMap">
+         SELECT DCD.AGENT_ID ,(SUM (amt)+SUM(COMM_AMT)) AS AMT,DCD.INITIATED_BRANCH,SUBSTR(DCD.COL_AC_HD_ID,1,4) AS BRANCH_ID,
+         DCD.COL_AC_HD_ID, DCD.COL_PROD_TYPE,DCD.COL_PROD_ID,AP.AC_HD_ID as DEBIT_AC_HD
+         FROM $TABLE_NAME$ DCD 
+         JOIN  AGENT_PROD_MAPPING AM ON AM.PROD_ID = DCD.PROD_ID
+         JOIN  AGENTMASTDET MST ON MST.PROD_ID = DCD.PROD_ID AND MST.ACT_NUM = DCD.CBMS_ACTNUM AND MST.AGENT_ID = DCD.AGENT_ID
+         <!--AND DCD.AGENT_ID = AM.AGENT_ID-->
+         LEFT JOIN ALL_PRODUCTS AP ON AP.PROD_ID=DCD.COL_PROD_ID AND AP.PROD_TYPE = DCD.COL_PROD_TYPE
+         WHERE DCD.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+         AND trim (DCD.AGENT_ID) = #AGENT_ID:varchar# 
+         GROUP BY DCD.AGENT_ID,AM.COL_AC_HD_ID,DCD.INITIATED_BRANCH,DCD.BRANCH_ID,            
+         DCD.COL_AC_HD_ID, DCD.COL_PROD_TYPE,DCD.COL_PROD_ID,AP.AC_HD_ID       
+     </mapped-statement>   
+          
+    <mapped-statement name="getImportDailyAccountData" result-class="java.util.LinkedHashMap">
+       SELECT * FROM  $TABLE_NAME$ WHERE AGENT_ID=#AGENT_ID:varchar# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getUnauthorizedAgentTransaction" result-class="java.util.HashMap">
+       SELECT * FROM  TRANSFER_TRANS WHERE TRANS_DT = #TRANS_DT:DATE#
+        AND GL_TRANS_ACT_NUM =#AGENT_ID:varchar# AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND AUTHORIZE_STATUS ='DAILY' AND STATUS !='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getImportAgentDataExist" result-class="java.util.HashMap">
+        SELECT * FROM $TABLE_NAME$ WHERE AGENT_ID=#AGENT_ID:varchar# AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="DeleteImportedData" result-class="java.util.HashMap">
+        DELETE FROM COLLECTION_DET WHERE AGENT_ID=#AGENT_ID:varchar# AND INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#  AND
+        COL_DATE = #COL_DATE:DATE#
+    </mapped-statement>
+    
+   <mapped-statement name="getAgentNameID" result-class="java.util.HashMap">
+         SELECT DISTINCT AGENT_ID AS "KEY", FNAME  ||  MNAME  ||  LNAME  AS "VALUE" FROM AGENT_MASTER D JOIN CUSTOMER C ON D.AGENT_ID=C.CUST_ID WHERE
+        D.AUTHORIZED_STATUS = 'AUTHORIZED' AND D.STATUS !='DELETED' AND D.AGENT_ID IS NOT NULL AND D.BRANCH_ID = #BRANCH_ID:VARCHAR# and D.TYPE IN ('A')
+    </mapped-statement>   
+        
+    <mapped-statement name="getAccountNumberForDeposit" result-class="java.util.HashMap">
+        SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME, 
+        DSA.PERIODIC_INT_AMT INT_AMT,DSA.INTPAY_FREQ PAY_FREQ,DSA.DEPOSIT_DT DP_DT,
+        DSA.MATURITY_DT MT_DT,DSA.CLEAR_BALANCE AS  AMOUNT,dsa.DEPOSIT_NO,prod_id
+        FROM DEPOSIT_ACINFO, CUSTOMER,DEPOSIT_SUB_ACINFO DSA
+        WHERE DEPOSIT_ACINFO.CUST_ID = CUSTOMER.CUST_ID  and
+        DEPOSIT_ACINFO.DEPOSIT_NO = DSA.DEPOSIT_NO and 
+        DSA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO = #ACC_NUM:VARCHAR#
+    </mapped-statement>  
+    <mapped-statement name="getAccountNumberForDepositNew" result-class="java.util.HashMap">
+        SELECT CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME, 
+        DSA.PERIODIC_INT_AMT INT_AMT,DSA.INTPAY_FREQ PAY_FREQ,DSA.DEPOSIT_DT DP_DT,
+        DSA.MATURITY_DT MT_DT,DSA.CLEAR_BALANCE AS  AMOUNT,DEPOSIT_ACINFO.DEPOSIT_NO
+        FROM DEPOSIT_ACINFO, CUSTOMER,DEPOSIT_SUB_ACINFO DSA
+        WHERE DEPOSIT_ACINFO.CUST_ID = CUSTOMER.CUST_ID  and
+        DEPOSIT_ACINFO.DEPOSIT_NO = DSA.DEPOSIT_NO and 
+        DEPOSIT_ACINFO.REFERENCE_NO = #ACC_NUM:VARCHAR#
+    </mapped-statement> 
+
+    <dynamic-mapped-statement name="getDepositDetailsForEdit" result-class="java.util.LinkedHashMap">                    
+        SELECT CT.BATCH_ID AS BATCH_ID, CT.PARTICULARS AS AGENT_ID, 
+        SUM(CT.AMOUNT) AS AMOUNT ,CT.INST_DT AS COLL_DT ,CT.STATUS_BY FROM transfer_trans CT WHERE              
+        AUTHORIZE_STATUS = 'DAILY'AND 
+        CT.STATUS NOT IN ('DELETED') AND CT.TRANS_TYPE='CREDIT' AND 
+        CT.PARTICULARS IN(SELECT DISTINCT AGENT_ID FROM DEPOSIT_ACINFO)
+        AND  AC_HD_ID IN              
+        (SELECT ACCT_HEAD FROM DEPOSITS_PRODUCT WHERE BEHAVES_LIKE='DAILY') 
+          <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BATCH_ID">
+                    UPPER(CT.BATCH_ID) LIKE UPPER('%$BATCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AGENT_ID">
+                    UPPER(CT.PARTICULARS) LIKE UPPER('%$AGENT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="COLL_DT">
+                    UPPER(CT.INST_DT) LIKE UPPER('%$COLL_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="COLL_DT">
+                    UPPER(CT.INST_DT) LIKE UPPER('%$COLL_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY BATCH_ID, PARTICULARS,CT.INST_DT,CT.STATUS_BY
+    </dynamic-mapped-statement> 
+            
+    <dynamic-mapped-statement name="getDepositDetailsForDaily" result-class="java.util.LinkedHashMap">                    
+        SELECT DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO as ACCOUNT_NUMBER,
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+        CU.CUST_TYPE as CUST_TYPE_ID, <!--        DP.PROD_ID AS TYPE--> 'TD' AS TYPE,
+        DS.DEPOSIT_AMT AS AMOUNT,NVL(DS.TOTAL_BALANCE,0) AS BALANCE 
+        FROM DEPOSIT_ACINFO DA, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS, DEPOSITS_PRODUCT DP WHERE 
+        DA.CUST_ID = CU.CUST_ID AND DP.PROD_ID = DA.PROD_ID AND DA.AGENT_ID = #AGENT_ID:VARCHAR# AND
+        DA.DEPOSIT_NO=DS.DEPOSIT_NO AND (DS.ACCT_STATUS IN ('NEW','PART_FREEZE','OPERATIONAL') or DS.ACCT_STATUS is null)
+        AND DS.STATUS NOT IN ('DELETED') AND DS.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DA.BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DEPOSIT_NO">
+                    DA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PROD_ID">
+                   DA.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT_NUMBER">
+                    UPPER(DA.DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) LIKE UPPER('%$ACCOUNT_NUMBER$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_TYPE_ID">
+                    UPPER(CU.CUST_TYPE) LIKE UPPER('%$CUST_TYPE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TYPE">
+                    UPPER(DP.PROD_ID) LIKE UPPER('%$TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT">
+                    UPPER(DS.DEPOSIT_AMT) LIKE UPPER('%$AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BALANCE">
+                    UPPER(NVL(DS.TOTAL_BALANCE,0)) LIKE UPPER('%$BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+            UNION
+            SELECT   DA.ACT_NUM  AS ACCOUNT_NUMBER,
+            get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+            CU.CUST_TYPE AS CUST_TYPE_ID, 'OA' AS TYPE,
+            0 AS AMOUNT, NVL (DA.TOTAL_BALANCE, 0) AS BALANCE
+            FROM ACT_MASTER DA,
+            CUSTOMER CU,
+            OP_AC_PRODUCT DP
+            WHERE DA.CUST_ID = CU.CUST_ID
+            AND DP.PROD_ID = DA.PROD_ID
+            AND DA.AGENT_ID = #AGENT_ID:VARCHAR#   
+            AND DA.ACT_STATUS_ID !='CLOSED'     
+            AND DA.STATUS NOT IN ('DELETED')     
+            AND DA.AUTHORIZATION_STATUS = 'AUTHORIZED'     
+            AND DA.BRANCH_CODE = #BRANCH_ID:VARCHAR#     
+            <dynamic>
+                <isParameterPresent>
+                    <isNotNull prepend="AND" property="ACT_NUM">
+                    DA.ACT_NUM = #ACT_NUM:VARCHAR#
+                    </isNotNull>
+                </isParameterPresent>
+            </dynamic>
+            <dynamic>
+                <isParameterPresent>
+                    <isNotNull prepend="AND" property="PROD_ID">
+                       DA.PROD_ID = #PROD_ID:VARCHAR#
+                    </isNotNull>
+                </isParameterPresent>
+                 <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT_NUMBER">
+                    UPPER(DA.ACT_NUM) LIKE UPPER('%$ACCOUNT_NUMBER$%')
+                </isNotNull>
+            </isParameterPresent>
+            
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_TYPE_ID">
+                    UPPER(CU.CUST_TYPE) LIKE UPPER('%$CUST_TYPE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BALANCE">
+                    UPPER(NVL(DA.TOTAL_BALANCE,0)) LIKE UPPER('%$BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>  
+               UNION
+            SELECT   DA.SUSPENSE_ACCT_NUM AS ACCOUNT_NUMBER,
+            SUSPENSE_NAME AS customer_name,NULL AS cust_type_id, 'SA' AS TYPE, 0 AS AMOUNT,
+            NVL (DA.TOTAL_BALANCE, 0) AS BALANCE
+            FROM SUSPENSE_ACCOUNT_MASTER DA, SUSPENSE_PRODUCT DP
+            WHERE  DP.PROD_ID = DA.SUSPENSE_PROD_ID   
+            AND DA.AGENT_ID = #AGENT_ID:VARCHAR#    
+            AND DA.STATUS NOT IN ('DELETED')     
+            AND DA.AUTHORIZE_STATUS = 'AUTHORIZED'     
+            AND DA.BRANCH_CODE = #BRANCH_ID:VARCHAR#
+            <dynamic>
+                <isParameterPresent>
+                    <isNotNull prepend="AND" property="ACT_NUM">
+                    DA.ACT_NUM = #ACT_NUM:VARCHAR#
+                    </isNotNull>
+                </isParameterPresent>
+            </dynamic>
+            <dynamic>
+                <isParameterPresent>
+                    <isNotNull prepend="AND" property="PROD_ID">
+                       DA.SUSPENSE_PROD_ID = #PROD_ID:VARCHAR#
+                    </isNotNull>
+                </isParameterPresent>
+                 <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT_NUMBER">
+                    UPPER(DA.SUSPENSE_ACCT_NUM) LIKE UPPER('%$ACCOUNT_NUMBER$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="customer_name">
+                    UPPER(SUSPENSE_NAME) LIKE UPPER('%$customer_name$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BALANCE">
+                    UPPER(NVL(DA.TOTAL_BALANCE,0)) LIKE UPPER('%$BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic> 
+        ORDER BY TYPE,ACCOUNT_NUMBER   
+    </dynamic-mapped-statement>  
+
+    <mapped-statement name="getTransIdForDailyDeposit" result-class="java.util.HashMap">                    
+        SELECT TRANS_ID AS TRANS_ID, PARTICULARS AS AGENT_ID,
+        AMOUNT AS AMOUNT FROM CASH_TRANS 
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>  
+
+    <mapped-statement name="getDepositAmountForRecurring" result-class="java.util.HashMap">                    
+        SELECT DA.PROD_ID,DEPOSIT_AMT, TOTAL_INSTALLMENTS, TOTAL_INSTALL_PAID,NVL(TOTAL_BALANCE,0)AS "TOTAL_BALANCE",
+        DEPOSIT_DT,DA.AUTHORIZE_STATUS, MATURITY_DT, LAST_INT_APPL_DT, LAST_TRANS_DT,OPENING_MODE,BRANCH_ID AS BRANCH_CODE,ADT_AMT
+        FROM DEPOSIT_SUB_ACINFO DSA,DEPOSIT_ACINFO DA WHERE DA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+        AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+    </mapped-statement>  
+        
+    <mapped-statement name="updateInstallmentPaid" inline-parameters="true">                    
+        UPDATE DEPOSIT_SUB_ACINFO SET
+<!--            TOTAL_INSTALLMENTS = NVL(TOTAL_INSTALLMENTS,0) - #INSTALLMENT_PAID#, -->
+        TOTAL_INSTALL_PAID = NVL(TOTAL_INSTALL_PAID,0) + #INSTALLMENT_PAID#
+        WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>  
+                
+    <mapped-statement name="updateMaturityDate" inline-parameters="true">                    
+        UPDATE DEPOSIT_SUB_ACINFO SET
+        MATURITY_DT = #MATURITY_DT:DATE# WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>  
+        
+    <mapped-statement name = "selectAllRecordsFromDepRec" result-class = "java.util.HashMap">
+        SELECT * FROM DEPOSIT_RECURRING WHERE DEPOSIT_NO_SUB = #ORIGINAL_AC_NUMBER:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getBranchTD" result-class="java.lang.String">
+        SELECT BRANCH_ID FROM DEPOSIT_ACINFO WHERE DEPOSIT_NO = #value:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getAccProductresultINV" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>    
+    <mapped-statement name="Cash.getAccProductINV" result-map="getAccProductresultINV">
+        SELECT INVESTMENT_PROD_ID AS PROD_ID,IINVESTMENT_PROD_DESC AS PROD_DESC FROM INVESTMENT_CONF_DETAILS WHERE  
+        INVESTMENT_TYPE IN('OTHER_BANK_SB','OTHER_BANK_CA','OTHER_BANK_SPD')  AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="Cash.getAccountListINV" result-map="getAccountResultListTD" >
+        SELECT INVESTMENT_REF_NO AS ACT_NUM ,' ' AS CUSTOMER_NAME,' ' AS HOUSE_NAME,INVESTMENT_TYPE AS TYPE, AVAILABLE_BALANCE AS AMOUNT FROM
+        INVESTMENT_MASTER WHERE AVAILABLE_BALANCE>0 AND INVESTMENT_PROD_ID=#PROD_ID:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED' ORDER BY INVESTMENT_REF_NO
+    </mapped-statement>
+        
+    <mapped-statement name = "getInvestmentDetails" result-class = "java.util.HashMap">
+        SELECT * FROM INVESTMENT_MASTER WHERE INVESTMENT_REF_NO=#INT_PAY_ACC_NO:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+    </mapped-statement>
+       
+    <mapped-statement name="getAccountStatusINV" result-class="java.util.HashMap">
+        SELECT DECODE(ACCT_STATUS,'','NEW',ACCT_STATUS) AS ACT_STATUS_ID FROM INVESTMENT_MASTER  WHERE INVESTMENT_REF_NO=#ACT_NUM:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSIProducts" result-map="get-SIProductId-result"> 
+        SELECT DISTINCT AP.PROD_ID, '('||AP.PROD_TYPE||') '||AP.PROD_DESC AS PROD_DESC FROM DEPOSIT_SUB_ACINFO DSA, ALL_PRODUCTS AP
+        WHERE DSA.INT_PAY_PROD_TYPE=AP.PROD_TYPE AND DSA.INT_PAY_PROD_ID=AP.PROD_ID AND DSA.INT_PAY_PROD_TYPE IS NOT NULL
+    </mapped-statement>
+    <mapped-statement name="getDepositNumFromOldValue" result-class="java.util.HashMap"> 
+        select NEW_ACT_NUM from OLD_AC_NOS
+        where OLD_ACT_NUM=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    <result-map name="get-SIProductId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map> 
+    <mapped-statement name="getMinMaxInstalmentNo" result-class = "java.util.HashMap">
+        SELECT MIN (sl_no) AS frommin, MAX (sl_no) AS toin
+  FROM (SELECT   *
+            FROM deposit_recurring d
+           WHERE d.deposit_no_sub = #DEPOSIT_NO_SUB:VARCHAR#
+             AND d.trans_dt IS NULL
+             AND to_number(sl_no) &gt;=
+                    to_number((SELECT MIN (to_number(sl_no))
+                       FROM deposit_recurring
+                      WHERE trans_dt IS NULL
+                        AND deposit_no_sub = d.deposit_no_sub))
+             AND to_number(sl_no) &lt;=
+                      to_number((SELECT MIN (to_number(sl_no))
+                         FROM deposit_recurring
+                        WHERE trans_dt IS NULL
+                          AND deposit_no_sub = d.deposit_no_sub))
+                    + (#NO_OF_INSTALLMENT:NUMBER#-1)
+        ORDER BY sl_no)
+    </mapped-statement>
+    
+    <mapped-statement name="getDailyDepositBalnce" result-class="java.util.HashMap">
+        SELECT NVL((DSA.AVAILABLE_BALANCE-DS.MIN_DEPOSIT_AMT),0)  AS BALANCE
+        FROM DEPOSITS_PROD_SCHEME DS, DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA
+        WHERE DA.PROD_ID = DS.PROD_ID
+        AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO
+        AND DA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="getDepositRecuringSlNo" result-class="java.util.HashMap">
+     select NVL(max(to_number(D.SL_NO)),0) as SL_NO from DEPOSIT_RECURRING  d where D.DEPOSIT_NO_SUB=#ACCOUNTNO:varchar#
+     </mapped-statement>
+     
+     <mapped-statement name="getPenaltyForDeposit" result-class="java.util.HashMap">
+         SELECT NO_OF_INST  AS NO_OF_PENDING_INST, NO_OF_INST * (NO_OF_INST+1)/2 AS DELAY_MONTHS FROM
+         (SELECT CEIL(MONTHS_BETWEEN ((#CURR_DT#), (#DEPOSIT_DT#))/(#FREQ#))-#PAID_INST# NO_OF_INST FROM DUAL)a
+     </mapped-statement>
+     
+     <mapped-statement name="getPenaltyForDepositToPay" result-class="java.util.HashMap">
+         SELECT NO_OF_INST AS NO_OF_PENDING_INST, getRDPenalMonths(NO_OF_INST,#INST_TO_PAY#) AS DELAY_MONTHS
+         FROM (SELECT CEIL (MONTHS_BETWEEN ((#CURR_DT#), (#DEPOSIT_DT#))/(#FREQ#))-#PAID_INST# NO_OF_INST FROM DUAL)a
+     </mapped-statement>
+     
+      <mapped-statement name="getDailyDepositTransEntryRequiredForProd" result-class="java.util.HashMap">
+         SELECT DP.DD_TRANS_ENTRY FROM DEPOSITS_PROD_SCHEME DP WHERE DP.PROD_ID = #PROD_ID:VARCHAR#
+      </mapped-statement>
+      
+    <mapped-statement name="getRecurringDepositInstCount" result-class="java.util.HashMap">
+        select count(*) as INST_COUNT from DEPOSIT_RECURRING dr where DR.DEPOSIT_NO_SUB = #ACCOUNTNO:VARCHAR#
+    </mapped-statement>
+      
+     
+</sql-map>

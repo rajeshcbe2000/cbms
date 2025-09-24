@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="FixedAssetsTOMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertFixedAssetsTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSETS_PRODUCT
+        (FIXED_ASSETS_ID, ASSET_TYPE, ASSET_DESC, DEPRECIATION_RATE, BRANCH_CODE, PURCHASE_DEBIT, PROVISION_DEBIT,SELLING_AC_ID,
+        EXCESS_DEBIT,EXCESS_CREDIT,STATUS,STATUS_DT,STATUS_BY,CREATED_BY,CREATED_DT,AUTHORIZED_STATUS,AUTHORIZED_DT,AUTHORIZED_BY,DEPRECIATION,CURR_VAL_ROUND_OFF,ROUND_OFF_TYPE
+        ) VALUES (
+        #assetsID:VARCHAR#, #assetType:VARCHAR#, #assetDesc:VARCHAR#, #provision:VARCHAR#, #branCode:VARCHAR#, #purchaseDebit:VARCHAR#, 
+        #provisionDebit:VARCHAR#,#sellingAcID:VARCHAR#,#nullifyingDebit:VARCHAR#,#nullifyingCredit:VARCHAR#,#status:VARCHAR#,#statusDt:DATE#,
+        #statusBy:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeDt:DATE#,#authorizeBy:VARCHAR#,#rdoDepYesNo:VARCHAR#,#curValRoundOff:VARCHAR#,#roundOffType:VARCHAR#
+        ) 
+    </mapped-statement>
+        
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateFixedAssetsTO" inline-parameters="true">
+        UPDATE FIXED_ASSETS_PRODUCT SET 
+        ASSET_TYPE = #assetType:VARCHAR#,
+        ASSET_DESC = #assetDesc:VARCHAR#,
+        DEPRECIATION_RATE = #provision:VARCHAR#,  
+        CURR_VAL_ROUND_OFF = #curValRoundOff:VARCHAR#,
+        ROUND_OFF_TYPE = #roundOffType:VARCHAR#,
+        PURCHASE_DEBIT = #purchaseDebit:VARCHAR#,
+        PROVISION_DEBIT = #provisionDebit:VARCHAR#,
+        SELLING_AC_ID = #sellingAcID:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        EXCESS_DEBIT =#nullifyingDebit:VARCHAR#,
+        EXCESS_CREDIT = #nullifyingCredit:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#,
+        DEPRECIATION = #rdoDepYesNo:VARCHAR#
+        WHERE FIXED_ASSETS_ID = #assetsID:VARCHAR#
+    </mapped-statement>
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteFixedAssetsTO" inline-parameters="true">
+        UPDATE FIXED_ASSETS_PRODUCT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE FIXED_ASSETS_ID = #assetsID:VARCHAR#
+    </mapped-statement>
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getFixedAssetsTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetsTO">
+        <property name="assetsID" column="FIXED_ASSETS_ID"/>
+        <property name="assetType" column="ASSET_TYPE"/>
+        <property name="assetDesc" column="ASSET_DESC"/>
+        <property name="provision" column="DEPRECIATION_RATE"/>
+        <property name="curValRoundOff" column="CURR_VAL_ROUND_OFF"/>
+        <property name="roundOffType" column="ROUND_OFF_TYPE"/>
+        <property name="purchaseDebit" column="PURCHASE_DEBIT"/>
+        <property name="provisionDebit" column="PROVISION_DEBIT"/>
+        <property name="sellingAcID" column="SELLING_AC_ID"/>
+        <property name="nullifyingCredit" column="EXCESS_CREDIT"/>
+        <property name="nullifyingDebit" column="EXCESS_DEBIT"/>
+        <property name="branCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="rdoDepYesNo" column="DEPRECIATION"/>
+    </result-map>
+	
+    <mapped-statement name="getSelectFixedAssetsTO" result-map="getFixedAssetsTOResult" >
+        SELECT * FROM FIXED_ASSETS_PRODUCT 
+        WHERE FIXED_ASSETS_ID = #FIXED_ASSETS_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+
+
+    <mapped-statement name="authorizeFixedAssets" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSETS_PRODUCT SET
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:DATE#
+        WHERE FIXED_ASSETS_ID = #FIXED_ASSETS_ID:VARCHAR#
+    </mapped-statement>
+ 
+    <mapped-statement name="getFixedAssetsDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT FIXED_ASSETS_ID,ASSET_TYPE,AUTHORIZED_STATUS FROM FIXED_ASSETS_PRODUCT
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsDetailsDelete" result-class="java.util.LinkedHashMap">
+        SELECT FIXED_ASSETS_ID,ASSET_TYPE,ASSET_DESC FROM FIXED_ASSETS_PRODUCT
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsDetailsView" result-class="java.util.LinkedHashMap">
+        SELECT FIXED_ASSETS_ID,ASSET_TYPE,ASSET_DESC,AUTHORIZED_STATUS FROM FIXED_ASSETS_PRODUCT
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getFixedAssetsDetailsAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT FIXED_ASSETS_ID,ASSET_TYPE,ASSET_DESC FROM FIXED_ASSETS_PRODUCT
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="fixedAssetTypeChk" result-class="java.util.LinkedHashMap">
+        SELECT ASSET_TYPE FROM FIXED_ASSETS_PRODUCT WHERE ASSET_TYPE=#ASSET_TYPE:VARCHAR#
+    </mapped-statement>
+
+
+</sql-map>

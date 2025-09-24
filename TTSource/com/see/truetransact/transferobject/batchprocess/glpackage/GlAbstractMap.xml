@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GlAbstractMap">
+    <result-map name="getGlAbbstract" class="com.see.truetransact.transferobject.batchprocess.glpackage.GlAbstractTO">
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="opnBal" column="OPN_BAL"/>
+        <property name="closeBal" column="CLOSE_BAL"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="dt" column="DT"/>
+        <property name="balanceType" column="BALANCE_TYPE"/>
+    </result-map>
+
+    <mapped-statement name="insertGlAbstract" inline-parameters="true">
+         call pkgdayend.INS_GL_ABSTRACT(#dt:DATE#, #branchCode:VARCHAR#)       
+    </mapped-statement>
+    
+    <mapped-statement name="insertGlAbstractDB" inline-parameters="true">
+        call pkgdayend.INS_GL_ABSTRACTDB(#dt:DATE#, #branchCode:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateGlAbstract" inline-parameters="true">
+        UPDATE GL_ABSTRACT SET 
+        CLOSE_BAL = #closeBal:NUMERIC#, 
+        BALANCE_TYPE = #balanceType:VARCHAR#
+        WHERE upper(BRANCH_CODE) = upper(#branchCode:VARCHAR#) 
+        AND DT = #dt:DATE# AND AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="selectGlDayBegin" result-map="getGlAbbstract">
+        SELECT AC_HD_ID, CUR_BAL AS OPN_BAL, BRANCH_CODE,
+        null as CLOSE_BAL, null as DT, BALANCE_TYPE
+        FROM GL WHERE  NOT EXISTS
+        (SELECT AC_HD_ID FROM GL_ABSTRACT WHERE 
+        TO_CHAR(DT, 'DD-MM-YYYY') = TO_CHAR(#CURR_DT:DATE#, 'DD-MM-YYYY') 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND GL.AC_HD_ID=AC_HD_ID )
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <!-- In the below Query First Query will get all the daybegin a/c heads
+         with closing balance... Second Query will get newly added A/c heads
+         which doesn't have day begin balance. Day Begin balance treated as Zero. -->
+    <dynamic-mapped-statement name="selectGlDayEnd" result-map="getGlAbbstract">
+        SELECT AC_HD_ID, CUR_BAL AS CLOSE_BAL, BRANCH_CODE,
+        null as OPN_BAL, null as DT, BALANCE_TYPE
+        FROM GL WHERE AC_HD_ID IN 
+        (SELECT AC_HD_ID FROM GL_ABSTRACT WHERE 
+        TO_CHAR(DT, 'DD-MM-YYYY') = TO_CHAR(#CURR_DT:DATE#, 'DD-MM-YYYY')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        )
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        UNION 
+        SELECT AC_HD_ID, CUR_BAL AS CLOSE_BAL, BRANCH_CODE,
+        0 as OPN_BAL, null as DT, BALANCE_TYPE
+           <!-- FROM GL WHERE AC_HD_ID NOT IN 
+            (SELECT AC_HD_ID FROM GL_ABSTRACT WHERE 
+            upper(BRANCH_CODE) = upper(#branchCode:VARCHAR#)
+            AND TO_CHAR(DT, 'DD-MM-YYYY') = TO_CHAR(#dt:DATE#, 'DD-MM-YYYY'))-->
+        FROM GL WHERE  NOT EXISTS 
+        (SELECT AC_HD_ID FROM GL_ABSTRACT WHERE 
+        TO_CHAR(DT, 'DD-MM-YYYY') = TO_CHAR(#CURR_DT:DATE#, 'DD-MM-YYYY') 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND AC_HD_ID=GL.AC_HD_ID)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="selectTotalGlDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT gla.AC_HD_ID, nvl(gla.OPN_BAL,0) as OPN_BAL , nvl(gla.CLOSE_BAL,0) as CLOSE_BAL, gla.BALANCE_TYPE ,
+        (SELECT  balance_type from gl_abstract ga where ga.ac_hd_id=gla.ac_hd_id and ga.branch_code=gla.BRANCH_CODE and ga.dt =
+        (SELECT MaX(DT) FROM gl_abstract WHERE branch_code=gla.BRANCH_CODE and dt &lt;=gla.dt-1)
+        )as openbalance_type FROM GL_ABSTRACT gla WHERE UPPER(gla.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND TO_CHAR(gla.DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+    </mapped-statement>
+    
+    <mapped-statement name="getTransferTransDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_ID,
+        SUM(DECODE(TRANS_TYPE, 'CREDIT', AMOUNT, 0)) AS CREDIT,
+        SUM(DECODE(TRANS_TYPE, 'DEBIT', AMOUNT, 0)) AS DEBIT
+        FROM TRANSFER_TRANS TT WHERE UPPER(BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND  STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        TO_CHAR(TRANS_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY AC_HD_ID ORDER BY AC_HD_ID
+    </mapped-statement> 
+    
+    <mapped-statement name="getCashTransDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_ID,
+        SUM(DECODE(TRANS_TYPE, 'CREDIT', AMOUNT, 0)) AS CREDIT,
+        SUM(DECODE(TRANS_TYPE, 'DEBIT', AMOUNT, 0)) AS DEBIT
+        FROM CASH_TRANS TT WHERE UPPER(BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND  STATUS != 'DELETED' AND  AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        TO_CHAR(TRANS_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY AC_HD_ID ORDER BY AC_HD_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getCSHANDTransDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT (SELECT CASH_AC_HD FROM PARAMETERS) "AC_HD_ID",
+        SUM(DECODE(TRANS_TYPE, 'DEBIT', AMOUNT, 0)) AS CREDIT,
+        SUM(DECODE(TRANS_TYPE, 'CREDIT', AMOUNT, 0)) AS DEBIT
+        FROM CASH_TRANS TT WHERE UPPER(BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND  STATUS != 'DELETED' AND  AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        TO_CHAR(TRANS_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY 1 ORDER BY AC_HD_ID    
+        <!--GROUP BY TT.AC_HD_ID ORDER BY AC_HD_ID    -->
+    </mapped-statement>
+
+    <mapped-statement name="getAccBalancesDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT OAP.AC_HD_ID, ABS(SUM(AM.TOTAL_BALANCE)) AS BALANCE FROM
+        OP_AC_PRODUCT OAP, ACT_MASTER AM, GL WHERE AM.PROD_ID = OAP.PROD_ID AND
+        OAP.AC_HD_ID = GL.AC_HD_ID AND AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+        OAP.AUTHORIZED_STATUS='AUTHORIZED' AND OAP.STATUS != 'DELETED' AND
+        AM.AUTHORIZATION_STATUS='AUTHORIZED' AND AM.STATUS != 'DELETED' AND
+        GL.BRANCH_CODE = AM.BRANCH_CODE
+        GROUP BY OAP.AC_HD_ID
+        UNION
+        SELECT DP.ACCT_HEAD, ABS(SUM(DSA.TOTAL_BALANCE)) AS BALANCE FROM
+        DEPOSITS_PRODUCT DP, DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, GL WHERE 
+        DA.PROD_ID = DP.PROD_ID AND DP.ACCT_HEAD = GL.AC_HD_ID AND 
+        DA.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO AND
+        DP.AUTHORIZE_STATUS='AUTHORIZED' AND DP.STATUS != 'DELETED' AND
+        DA.AUTHORIZE_STATUS='AUTHORIZED' AND DA.STATUS != 'DELETED' AND
+        DSA.AUTHORIZE_STATUS='AUTHORIZED' AND DSA.STATUS != 'DELETED' AND
+        GL.BRANCH_CODE = DA.BRANCH_ID
+        GROUP BY DP.ACCT_HEAD
+        UNION
+        SELECT LP.ACCT_HEAD, ABS(SUM(LFD.TOTAL_BALANCE)) AS BALANCE FROM
+        LOANS_PRODUCT LP, LOANS_FACILITY_DETAILS LFD, GL WHERE LFD.PROD_ID = LP.PROD_ID AND
+        LP.ACCT_HEAD = GL.AC_HD_ID AND LFD.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND
+        LP.AUTHORIZE_STATUS='AUTHORIZED' AND LP.STATUS != 'DELETED' AND
+        LFD.AUTHORIZE_STATUS_1='AUTHORIZED' AND LFD.STATUS != 'DELETED' AND
+        GL.BRANCH_CODE = LFD.BRANCH_ID
+        GROUP BY LP.ACCT_HEAD
+        UNION
+        SELECT RPR.ISSUE_HD, (SELECT ABS(SUM(AMOUNT)) FROM REMIT_ISSUE RI WHERE
+        RI.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND RI.STATUS != 'DELETED' AND 
+        RI.AUTHORIZE_STATUS = 'AUTHORIZED' AND RI.PROD_ID = RPR.PROD_ID
+        AND PAID_STATUS IS NULL AND INSTRUMENT_NO2 IS NOT NULL
+        ) <!--
+        (SELECT ABS(SUM(PAY_AMT)) FROM REMIT_PAYMENT RP WHERE
+        RP.BRANCH_ID = #BRANCH_CODE# AND RP.STATUS != 'DELETED' AND 
+        RP.AUTHORIZE_STATUS = 'AUTHORIZED' AND RP.INSTRUMENT_TYPE = RPR.PROD_ID)--> 
+        AS BALANCE FROM REMITTANCE_PRODUCT RPR, GL WHERE 
+        RPR.ISSUE_HD = GL.AC_HD_ID AND
+        RPR.AUTHORIZE_STATUS='AUTHORIZED' AND RPR.STATUS != 'DELETED' AND
+        GL.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+            
+    <mapped-statement name="getInwardClgDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_ID, SUM(AMOUNT) AS DEBIT FROM INWARD_CLEARING WHERE 
+        UPPER(BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND  STATUS != 'DELETED' AND  AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        TO_CHAR(INWARD_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY AC_HD_ID ORDER BY AC_HD_ID     
+    </mapped-statement>
+    
+    <mapped-statement name="getOutwardClgDayEnd" result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_ID, SUM(AMOUNT) AS CREDIT FROM PAY_IN_SLIP 
+        WHERE UPPER(BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND  STATUS != 'DELETED' AND  AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        TO_CHAR(PAY_IN_SLIP_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY AC_HD_ID ORDER BY AC_HD_ID    
+    </mapped-statement> 
+    
+    <mapped-statement name="getCashMovementTallyAmount" result-class="java.util.LinkedHashMap">
+        SELECT INIT_TRANS_ID, SUM(DECODE(TRANS_TYPE, 'CREDIT', AMOUNT, 0)) AS CREDIT,
+        SUM(DECODE(TRANS_TYPE, 'DEBIT', AMOUNT, 0)) AS DEBIT FROM CASH_TRANS 
+        WHERE UPPER(BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#) AND
+        TO_CHAR(TRANS_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY INIT_TRANS_ID 
+    </mapped-statement> 
+    
+    <mapped-statement name="getVaultCashTallyAmount" result-class="java.util.LinkedHashMap">
+        SELECT RECEIVED_CASHIER_ID, SUM(CASH_BOX_BALANCE) AS CASH_BOX_BALANCE, 
+        SUM(DECODE(TRANS_TYPE, 'P', DENOMINATION_TOTAL, 0)) AS VAULT_PAYMENT,
+        SUM(DECODE(TRANS_TYPE, 'R', DENOMINATION_TOTAL, 0)) AS VAULT_RECEIPT
+        FROM CASH_MOVEMENT CM, CASH_MOVEMENT_DETAILS CMD
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID
+        AND VAULT_CASH = 'Y' AND UPPER(CM.BRANCH_ID) = UPPER(#BRANCH_CODE#) AND
+        TO_CHAR(CASH_DT, 'DD-MM-YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'DD-MM-YYYY')
+        GROUP BY RECEIVED_CASHIER_ID
+    </mapped-statement> 
+    
+    <mapped-statement name="getContraDiff" result-class="java.util.LinkedHashMap">
+        SELECT 
+        SUM(DECODE(MJR_AC_HD_TYPE, 'CONTRALIABILITY', CUR_BAL, 0)) AS CONTRA_LIABILITY,
+        SUM(DECODE(MJR_AC_HD_TYPE, 'CONTRAASSETS', CUR_BAL, 0)) AS CONTRA_ASSETS
+        FROM GL, AC_HD AC, MJR_AC_HD MJ WHERE GL.AC_HD_ID = AC.AC_HD_ID AND
+        AC.MJR_AC_HD_ID = MJ.MJR_AC_HD_ID AND UPPER(GL.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#) 
+        HAVING SUM(DECODE(MJR_AC_HD_TYPE, 'CONTRAASSETS', CUR_BAL, 0)) 
+        - SUM(DECODE(MJR_AC_HD_TYPE, 'CONTRALIABILITY', CUR_BAL, 0)) &lt;&gt; 0
+    </mapped-statement>
+    
+    <mapped-statement name="getOABalCheck" result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_ID, SUM(AM_BAL) AS ACCOUNT_BALANCE, SUM(GL_BAL) AS GL_BALANCE 
+        FROM
+        (SELECT GL.AC_HD_ID, 0 AS AM_BAL, SUM(GL.CUR_BAL) AS GL_BAL FROM GL
+        WHERE UPPER(GL.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#) AND
+        GL.AC_HD_ID IN (SELECT AC_HD_ID FROM OP_AC_PRODUCT)
+        GROUP BY GL.AC_HD_ID
+        UNION
+        SELECT OP.AC_HD_ID, SUM(AM.AVAILABLE_BALANCE) AS AM_BAL, 0 AS GL_BAL
+        FROM OP_AC_PRODUCT OP, ACT_MASTER AM
+        WHERE OP.PROD_ID = AM.PROD_ID AND
+        UPPER(AM.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#)
+        GROUP BY OP.AC_HD_ID )
+        GROUP BY AC_HD_ID 
+        HAVING (SUM(AM_BAL) - SUM(GL_BAL)) &lt;&gt; 0
+    </mapped-statement>
+    
+    <mapped-statement name="getCashInHand" result-class="java.util.LinkedHashMap">
+        SELECT SUM(CUR_BAL) AS CASH_IN_HAND FROM GL, PARAMETERS TP 
+        WHERE TP.CASH_AC_HD = GL.AC_HD_ID AND 
+        UPPER(GL.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#) 
+        HAVING SUM(CUR_BAL) &lt; 0
+    </mapped-statement>
+    
+    <mapped-statement name="getUnclearedClrgSchedule" result-class="java.util.LinkedHashMap">
+        SELECT OT.SCHEDULE_NO, OT.CLEARING_TYPE, OT.CLEARING_TYPE, OT.CLOSING_DT,
+        OT.STATUS, OT.STATUS_BY, OT.STATUS_DT FROM OUTWARD_TALLY OT, CLEARING_PARAM CP
+  <!--  WHERE #TODAY_DT# - CLEARING_PERIOD &lt;= CLEARING_DT AND -->
+        WHERE cast(#TODAY_DT# as date) - CLEARING_PERIOD  &gt;= CLEARING_DT AND
+        OT.CLEARING_TYPE = CP.CLEARING_TYPE AND CLOSING_DT IS NULL AND 
+        UPPER(OT.BRANCH_ID) = UPPER(#BRANCH_CODE:VARCHAR#)
+        AND SCHEDULE_NO IN (SELECT MAX(SCHEDULE_NO) FROM OUTWARD_CLEARING
+        WHERE CLEARING_TYPE = OT.CLEARING_TYPE)
+    </mapped-statement>
+    
+    <mapped-statement name="getOAInoperativeBalCheck" result-class="java.util.LinkedHashMap">
+        SELECT SUM(AC.AVAILABLE_BALANCE) AS ACT_SUM, 
+        (SELECT GL.CUR_BAL FROM GL WHERE GL.AC_HD_ID = OAAP.INOPT AND 
+        UPPER(BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#) ) AS GL_SUM,
+        OAP.AC_HD_ID AS ACT_HD, OAAP.INOPT AS GL_HD
+        FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP, OP_AC_PRODUCT OAP,
+        OP_AC_ACHEAD_PARAM OAAP, GL
+        WHERE ACT_STATUS_ID = 'IN_OPERATIVE' AND
+        OAAP.PROD_ID  = AC.PROD_ID AND OAAP.PROD_ID  = OP.PROD_ID AND
+        OAAP.PROD_ID  = OAP.PROD_ID AND
+        OAP.PROD_ID  = AC.PROD_ID AND OAP.PROD_ID  = OP.PROD_ID AND
+        AC.PROD_ID = OP.PROD_ID AND AC.STATUS != 'DELETED'
+        AND AC.AUTHORIZATION_STATUS = 'AUTHORIZED' AND
+        UPPER(AC.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#)
+        GROUP BY OAP.AC_HD_ID, OAAP.INOPT
+    </mapped-statement>
+    
+    <mapped-statement name="getZeroBalAccountHeads" result-class="java.util.LinkedHashMap">
+        SELECT CUR_BAL, GL.AC_HD_ID FROM  AC_HD_PARAM AP, GL 
+        WHERE GL.AC_HD_ID = AP.AC_HD_ID AND CUR_BAL != 0 AND 
+        DAY_END_ZERO_CHECK  = 'Y' AND
+        UPPER(GL.BRANCH_CODE) = UPPER(#BRANCH_CODE:VARCHAR#)                            
+    </mapped-statement>
+    
+    <!--<mapped-statement name="getVaultCheckTally" result-class="java.util.LinkedHashMap">
+        WITH TEST AS (SELECT '' AS CASH_MOVEMENT_ID, A.DENOMINATION_NAME,
+        (NVL(B.COUNT,0) - NVL(C.COUNT,0) + NVL(D.COUNT,0) - NVL(E.COUNT,0)
+        + NVL(F.COUNT,0) - NVL(G.COUNT,0)) AS DENOMINATION_COUNT, 
+        A.DENOMINATION_VALUE, '' AS STATUS, A.DENOMINATION_TYPE FROM
+        (SELECT DENOMINATION_NAME, DENOMINATION_VALUE, DENOMINATION_TYPE FROM   
+        FOREX_DENOMINATION_MASTER WHERE AUTHORIZE_STATUS='AUTHORIZED') A,       
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        
+        AND CM.CASH_DT IN #TODAY_DT#
+        AND CMD.DENOMINATION_TYPE IN ('CASH BOX')
+        AND CM.TRANS_TYPE = 'R'
+        AND CM.BRANCH_ID = #BRANCH_CODE# 
+        GROUP BY DENOMINATION_NAME) B,                                          
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        
+        AND CM.CASH_DT IN #TODAY_DT#
+        AND CMD.DENOMINATION_TYPE IN ('CASH BOX')
+        AND CM.TRANS_TYPE = 'P'
+        AND CM.BRANCH_ID = #BRANCH_CODE# 
+        GROUP BY DENOMINATION_NAME) C,                                          
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        
+        AND CM.CASH_DT IN #TODAY_DT#
+        AND CMD.DENOMINATION_TYPE IN ('RECEIPT')
+        AND CM.BRANCH_ID = #BRANCH_CODE# 
+        GROUP BY DENOMINATION_NAME) D,                                          
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" FROM      
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        
+        AND CM.CASH_DT IN #TODAY_DT#
+        AND CMD.DENOMINATION_TYPE = 'PAYMENT' 
+        AND CM.BRANCH_ID = #BRANCH_CODE# 
+        GROUP BY DENOMINATION_NAME) E,                                          
+        (SELECT FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE,                  
+        SUM(FDT.DENOMINATION_COUNT) AS "COUNT" FROM                             
+        FOREX_DENOMINATION_TRANS FDT, CASH_TRANS CT,                                           
+        FOREX_DENOMINATION_MASTER FDM
+        WHERE FDT.TRANS_ID = CT.TRANS_ID 
+        AND CT.TRANS_DT IN #TODAY_DT#
+        AND CT.TRANS_TYPE = 'CREDIT' AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        FDT.DENOMINATION_TYPE = FDM.DENOMINATION_TYPE AND
+        FDT.DENOMINATION_VALUE = FDM.DENOMINATION_VALUE
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE#
+        GROUP BY FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE) F,              
+        (SELECT FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE,                  
+        SUM(FDT.DENOMINATION_COUNT) AS "COUNT" FROM                             
+        FOREX_DENOMINATION_TRANS FDT, CASH_TRANS CT,                            
+        FOREX_DENOMINATION_MASTER FDM
+        WHERE FDT.TRANS_ID = CT.TRANS_ID 
+        AND CT.TRANS_DT IN #TODAY_DT#
+        AND CT.TRANS_TYPE = 'DEBIT' AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED' AND
+        FDT.DENOMINATION_TYPE = FDM.DENOMINATION_TYPE AND
+        FDT.DENOMINATION_VALUE = FDM.DENOMINATION_VALUE
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE#
+        GROUP BY FDM.DENOMINATION_NAME, FDT.DENOMINATION_VALUE) G               
+        WHERE A.DENOMINATION_NAME = B.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = C.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = D.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = E.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = F.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = G.DENOMINATION_NAME(+)
+        ORDER BY A.DENOMINATION_TYPE DESC, A.DENOMINATION_VALUE DESC)
+        SELECT CASH_MOVEMENT_ID, DENOMINATION_NAME,
+        DECODE(DENOMINATION_COUNT, 0, NULL, DENOMINATION_COUNT) AS DENOMINATION_COUNT, 
+        DENOMINATION_VALUE * DENOMINATION_COUNT 
+        AS DENOMINATION_TOTAL, STATUS, 'CASH BOX' AS DENOMINATION_TYPE FROM TEST
+        
+    </mapped-statement>-->
+    
+    <dynamic-mapped-statement name="getVaultCheckTally" result-class="java.util.HashMap" >
+        WITH TEST AS (SELECT '' AS CASH_MOVEMENT_ID, A.DENOMINATION_NAME,
+        (NVL(B.COUNT,0) - NVL(C.COUNT,0) + NVL(D.COUNT,0) - NVL(E.COUNT,0)+NVL(F.COUNT,0)-NVL(G.COUNT,0)
+        ) AS DENOMINATION_COUNT, 
+        A.DENOMINATION_VALUE, '' AS STATUS, A.DENOMINATION_TYPE FROM
+        (SELECT DENOMINATION_NAME, DENOMINATION_VALUE, DENOMINATION_TYPE FROM   <!-- ****** Table A starts here ****** -->
+        FOREX_DENOMINATION_MASTER WHERE AUTHORIZE_STATUS='AUTHORIZED') A,       <!-- gets the available denominations End of Table A -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT",DENOM_TYPE FROM      <!-- ****** Table B starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Cash Box Receipts        -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#TODAY_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('CASH BOX')
+        AND CM.TRANS_TYPE = 'R' AND CM.STATUS != 'DELETED'
+        AND CM.AUTHORIZE_STATUS ='AUTHORIZED' AND CMD.STATUS !='DELETED'
+        AND CMD.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME,DENOM_TYPE) B,                                          <!-- ******    End of Table B   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT",DENOM_TYPE FROM      <!-- ****** Table C starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Cash Box Payments        -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#TODAY_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                       <!-- CM.RECEIVED_CASHIER_ID = #USER_ID# -->
+                    CM.ISSUED_CASHIER_ID=#USER_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('CASH BOX')
+        AND CM.TRANS_TYPE = 'P' AND CM.STATUS!='DELETED'
+        AND CM.AUTHORIZE_STATUS='AUTHORIZED' AND CMD.STATUS!='DELETED'
+        AND CMD.AUTHORIZE_STATUS='AUTHORIZED'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME,DENOM_TYPE) C,                                          <!-- ******    End of Table C   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT",DENOM_TYPE FROM      <!-- ****** Table D starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Receipts                 -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#TODAY_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('VAULTREC') AND CM.STATUS != 'DELETED'
+        AND CM.AUTHORIZE_STATUS = 'AUTHORIZED' AND CMD.STATUS != 'DELETED'
+        AND CMD.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME,DENOM_TYPE) D,                                          <!-- ******    End of Table D   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT",DENOM_TYPE FROM      <!-- ****** Table E starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Payment Denomination     -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- only                              -->
+        AND CM.CASH_DT IN (#TODAY_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                        <!--CM.RECEIVED_CASHIER_ID = #USER_ID# -->
+                    CM.ISSUED_CASHIER_ID=#USER_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE = 'VAULTPAYMENT' AND CM.STATUS != 'DELETED'
+        AND CM.AUTHORIZE_STATUS = 'AUTHORIZED' AND CMD.STATUS != 'DELETED'
+        AND CMD.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME,DENOM_TYPE) E,
+            
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT",DENOM_TYPE FROM      <!-- ****** Table D starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Receipts                 -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- Denominations                     -->
+        AND CM.CASH_DT IN (#TODAY_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                    CM.RECEIVED_CASHIER_ID = #USER_ID:VARCHAR# 
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE IN ('CASHMOV') AND CM.STATUS != 'DELETED'
+        AND CM.AUTHORIZE_STATUS ='AUTHORIZED' AND CMD.STATUS !='DELETED'
+        AND CMD.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME,DENOM_TYPE) F,                                          <!-- ******    End of Table D   ****** -->
+        (SELECT DENOMINATION_NAME, SUM(DENOMINATION_COUNT) AS "COUNT" ,DENOM_TYPE FROM      <!-- ****** Table E starts here ****** -->
+        CASH_MOVEMENT_DETAILS CMD, CASH_MOVEMENT CM                             <!-- gets the Payment Denomination     -->
+        WHERE CM.CASH_MOVEMENT_ID = CMD.CASH_MOVEMENT_ID                        <!-- only                              -->
+        AND CM.CASH_DT IN (#TODAY_DT:DATE#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "USER_ID" >
+                        <!--CM.RECEIVED_CASHIER_ID = #USER_ID# -->
+                    CM.ISSUED_CASHIER_ID=#USER_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND CMD.DENOMINATION_TYPE = 'CASHMOV' AND CM.STATUS != 'DELETED'
+        AND CM.AUTHORIZE_STATUS = 'AUTHORIZED' AND CMD.STATUS != 'DELETED'
+        AND CMD.AUTHORIZE_STATUS ='AUTHORIZED'
+        AND CM.BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+        GROUP BY DENOMINATION_NAME,DENOM_TYPE) G                                                                                                                <!-- ******    End of Table G   ****** -->
+        WHERE A.DENOMINATION_NAME = B.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = C.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = D.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = E.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = F.DENOMINATION_NAME(+) AND
+        A.DENOMINATION_NAME = G.DENOMINATION_NAME(+) AND
+           
+        A.DENOMINATION_TYPE = B.DENOM_TYPE(+) AND
+        A.DENOMINATION_TYPE = C.DENOM_TYPE(+) AND
+        A.DENOMINATION_TYPE = D.DENOM_TYPE(+) AND
+        A.DENOMINATION_TYPE = E.DENOM_TYPE(+) AND
+        A.DENOMINATION_TYPE = F.DENOM_TYPE(+) AND
+        A.DENOMINATION_TYPE = G.DENOM_TYPE(+) 
+           
+        ORDER BY A.DENOMINATION_TYPE DESC, A.DENOMINATION_VALUE DESC)
+        SELECT CASH_MOVEMENT_ID, DENOMINATION_NAME,
+        DECODE(DENOMINATION_COUNT, 0, NULL, DENOMINATION_COUNT) AS DENOMINATION_COUNT, 
+        DENOMINATION_VALUE * DENOMINATION_COUNT 
+        AS DENOMINATION_TOTAL, STATUS, 'CASH BOX' AS DENOMINATION_TYPE FROM TEST
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getcrDrCheckTally" result-class="java.util.LinkedHashMap">
+        SELECT AMOUNT as "INP_AMOUNT" ,TRANS_TYPE FROM CASH_TRANS WHERE AUTHORIZE_STATUS='AUTHORIZED' AND (PAYMENT_BY = #USER_ID# OR STATUS_BY = #USER_ID#) 
+        AND TRANS_DT = #TODAY_DT:DATE# AND BRANCH_ID=#BRANCH_CODE:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getCurbalGl" result-class="java.util.LinkedHashMap">
+        SELECT CUR_BAL FROM GL WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#  
+        AND AC_HD_ID = (SELECT CASH_AC_HD FROM PARAMETERS) AND LAST_TRANS_DT = #TODAY_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getDenoValueCount" result-class="java.util.LinkedHashMap">
+        SELECT SUM(OPENING_COUNT * DENOMINATION_VALUE) AS OPENING_COUNT
+        FROM FOREX_TELLER_DENOMINATION WHERE BRANCH_CODE = #BRANCH_CODE:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="getCashMovementDetails" result-class="java.util.LinkedHashMap">
+        <!--SELECT DISTINCT RECEIVED_CASHIER_ID FROM CASH_MOVEMENT WHERE CASH_DT = #TODAY_DT#-->
+        
+        SELECT DISTINCT RECEIVED_CASHIER_ID FROM CASH_MOVEMENT WHERE CASH_DT = #TODAY_DT:DATE# AND RECEIVED_CASHIER_ID IS NOT NULL AND STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="getLockerOp" result-class="java.util.LinkedHashMap">
+        SELECT LOP.OPERATION_ID,LOP.LOCKER_NUM,LOP.OPERATION_DT,LOP.CUST_ID,get_cust_name(C.CUST_ID) AS "NAME" FROM CUSTOMER C ,LOCKER_OPERATION LOP 
+        WHERE LOP.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND LOP.OPERATION_DT=#TODAY_DT:DATE# AND LOP.STATUS!='DELETED' AND C.CUST_ID=LOP.CUST_ID
+        AND LOCKER_OUT_DT IS NULL
+        
+    </mapped-statement>
+    
+    <mapped-statement name="selectInterBranchGlAbstract"  result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_ID AS BRANCH_CODE, OTHER_BRANCH_DT AS OTHER_BRANCH_APP_DT, TRANS_DT AS INITIATED_BRANCH_APP_DT
+        FROM INTERBRANCH_TRANS IT ,DAY_END DE WHERE (BRANCH_ID =#BRANCH_CODE# OR INITIATED_BRANCH = #BRANCH_CODE#)
+        AND ((#CURR_DT:DATE#  BETWEEN TRANS_DT AND OTHER_BRANCH_DT) OR (#CURR_DT:DATE#  BETWEEN OTHER_BRANCH_DT AND TRANS_DT ))
+        AND IT.INITIATED_BRANCH != IT.BRANCH_ID AND DE.BRANCH_CODE =IT.BRANCH_ID 
+        GROUP BY BRANCH_ID, OTHER_BRANCH_DT, TRANS_DT, INITIATED_BRANCH,CURR_APPL_DT ORDER BY BRANCH_ID
+    </mapped-statement>
+    
+    <mapped-statement name="updateInterBranchGlAbstract"  result-class="java.lang.String">
+        SELECT GL_ABSTRACT_BALANCE_FUNCTION(#BRANCH_CODE#,cast(#INITIATED_BRANCH_APP_DT# as date)-1 ,CAST(#INITIATED_BRANCH_APP_DT# AS DATE),CAST(#OTHER_BRANCH_APP_DT# AS DATE)) as RESULT FROM DUAL
+    </mapped-statement >
+    
+    <mapped-statement name="getSelectGLLog"  result-class="java.util.HashMap">
+        SELECT * FROM GL_UPDATE_LOG WHERE UPDATE_ID= #value#
+    </mapped-statement >
+    
+    <mapped-statement name="deleteGLLog"  result-class="java.lang.String">
+        SELECT EXECUTE_DELETE_GL_UPDATE_LOG(#value#) FROM DUAL
+    </mapped-statement >    
+    
+    <mapped-statement name="selectDiffBranchTxnGlAbstract"  result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_ID AS BRANCH_CODE, OTHER_BRANCH_DT AS OTHER_BRANCH_APP_DT, TRANS_DT AS INITIATED_BRANCH_APP_DT
+        FROM DIFF_BRANCH_TRANS IT ,DAY_END DE WHERE LOGGED_IN_BRANCH = #BRANCH_CODE:VARCHAR# AND
+<!--        (BRANCH_ID =#BRANCH_CODE# OR INITIATED_BRANCH = #BRANCH_CODE#) AND -->
+        ((#CURR_DT:DATE#  BETWEEN TRANS_DT AND OTHER_BRANCH_DT) OR (#CURR_DT:DATE#  BETWEEN OTHER_BRANCH_DT AND TRANS_DT ))
+        AND IT.INITIATED_BRANCH = IT.BRANCH_ID AND DE.BRANCH_CODE = IT.BRANCH_ID 
+        GROUP BY BRANCH_ID, OTHER_BRANCH_DT, TRANS_DT, INITIATED_BRANCH,CURR_APPL_DT ORDER BY BRANCH_ID
+    </mapped-statement>
+    
+    <mapped-statement name="updateDiffBranchTxnGlAbstract"  result-class="java.lang.String">
+        SELECT DIFF_BR_GL_ABSTRACT_BAL_FN(#BRANCH_CODE#,cast(#INITIATED_BRANCH_APP_DT# as date)-1,cast(#INITIATED_BRANCH_APP_DT# as timestamp without time zone),cast(#OTHER_BRANCH_APP_DT# as timestamp without time zone)) as RESULT FROM DUAL
+    </mapped-statement >
+    
+    <mapped-statement name="getDiffBranchSelectGLLog"  result-class="java.util.HashMap">
+        SELECT * FROM DIFF_BR_GL_UPDATE_LOG WHERE UPDATE_ID= #value#
+    </mapped-statement >
+    
+    <mapped-statement name="deleteDiffBranchGLLog"  result-class="java.lang.String">
+        SELECT DIFF_BR_EXECUTE_DELETE_GL_LOG(#value#) FROM DUAL
+    </mapped-statement >  
+    
+</sql-map>

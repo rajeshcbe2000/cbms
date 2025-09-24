@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SuspiciousConfigTOMap">
+
+	<!-- Use SuspiciousConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSuspiciousConfigTO" inline-parameters="true">
+        INSERT INTO SUSPECIOUS_CONF
+        (CONF_KEY, CONF_FOR, CUST_NO, PROD_TYPE, PROD_ID, ACCT_NO, COUNT_EXCEEDS, WORTH_EXCEEDS, PERIOD, STATUS, STATUS_BY, STATUS_DT, SL_NO, CR_CLR, CR_TRANS, CR_CASH, DR_CLR, DR_TRANS, DR_CASH, CREATED_DT, CREATED_BY, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #confKey:VARCHAR#, #confFor:VARCHAR#, #custNo:VARCHAR#, #prodType:VARCHAR#, #prodId:VARCHAR#, #acctNo:VARCHAR#, #countExceeds:NUMERIC#, #worthExceeds:NUMERIC#, #period:NUMERIC#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #slNo:VARCHAR#, #crClr:VARCHAR#, #crTrans:VARCHAR#, #crCash:VARCHAR#, #drClr:VARCHAR#, #drTrans:VARCHAR#, #drCash:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use SuspiciousConfigTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateSuspiciousConfigTO" inline-parameters="true">                
+        UPDATE SUSPECIOUS_CONF SET 
+<!--		CONF_KEY = #confKey:VARCHAR#, -->
+        CONF_FOR = #confFor:VARCHAR#,
+        CUST_NO = #custNo:VARCHAR#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#,
+        ACCT_NO = #acctNo:VARCHAR#,
+        COUNT_EXCEEDS = #countExceeds:NUMERIC#,
+        WORTH_EXCEEDS = #worthExceeds:NUMERIC#,
+        PERIOD = #period:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+<!--		SL_NO = #slNo:VARCHAR#, -->
+        CR_CLR = #crClr:VARCHAR#,
+        CR_TRANS = #crTrans:VARCHAR#,
+        CR_CASH = #crCash:VARCHAR#,
+        DR_CLR = #drClr:VARCHAR#,
+        DR_TRANS = #drTrans:VARCHAR#,
+        DR_CASH = #drCash:VARCHAR#,
+<!--		CREATED_DT = #createdDt:DATE#,
+		CREATED_BY = #createdBy:VARCHAR#,  -->
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE CONF_KEY = #confKey:VARCHAR# AND SL_NO = #slNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use SuspiciousConfigTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteSuspiciousConfigTO" inline-parameters="true">
+        UPDATE SUSPECIOUS_CONF SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE CONF_KEY = #confKey:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SuspiciousConfigTO object (JavaBean) properties -->
+    <result-map name="getSuspiciousConfigTOResult" class="com.see.truetransact.transferobject.sysadmin.suspiciousconfig.SuspiciousConfigTO">
+        <property name="confKey" column="CONF_KEY"/>
+        <property name="confFor" column="CONF_FOR"/>
+        <property name="custNo" column="CUST_NO"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="countExceeds" column="COUNT_EXCEEDS"/>
+        <property name="worthExceeds" column="WORTH_EXCEEDS"/>
+        <property name="period" column="PERIOD"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="crClr" column="CR_CLR"/>
+        <property name="crTrans" column="CR_TRANS"/>
+        <property name="crCash" column="CR_CASH"/>
+        <property name="drClr" column="DR_CLR"/>
+        <property name="drTrans" column="DR_TRANS"/>
+        <property name="drCash" column="DR_CASH"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectSuspiciousConfigTO" result-map="getSuspiciousConfigTOResult" >
+        SELECT * FROM SUSPECIOUS_CONF 
+        WHERE CONF_KEY = #value:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL)
+    </mapped-statement>
+    <dynamic-mapped-statement name="viewSuspiciousConfig" result-class = "java.util.LinkedHashMap" >
+        SELECT  DISTINCT CONF_KEY AS "CONF_KEY", CONF_FOR AS "CONF_FOR"
+        FROM SUSPECIOUS_CONF WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+           <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "CONF_KEY" >
+                    UPPER(CONF_KEY) LIKE UPPER('%$CONF_KEY$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "CONF_FOR" >
+                    UPPER(CONF_FOR) LIKE UPPER('%$CONF_FOR$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY CONF_KEY,CONF_FOR              
+    </dynamic-mapped-statement>
+    <mapped-statement name="NoOfRecForParticularConfig" result-class = "java.util.LinkedHashMap" >
+        SELECT  COUNT (CONF_FOR) AS "COUNT" 
+        FROM SUSPECIOUS_CONF WHERE CONF_KEY = #CONF_KEY:VARCHAR#
+    </mapped-statement>
+        
+        <!-- ================================ Authorization ===================================== --> 
+    <dynamic-mapped-statement name="getSelectSuspiciousConfigList" result-class="java.util.LinkedHashMap" >
+        SELECT  DISTINCT CONF_KEY AS "CONF_KEY", CONF_FOR AS "CONF_FOR"
+        FROM SUSPECIOUS_CONF 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+<!--            AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL) -->
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SUSPECIOUS_CONF.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY CONF_KEY, CONF_FOR
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authSuspiciousConfig" result-class="java.util.HashMap">
+        UPDATE SUSPECIOUS_CONF SET 
+        AUTHORIZE_STATUS = #AUTHORIZESTATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE CONF_KEY = #CONF_KEY:VARCHAR#
+    </mapped-statement>   
+        
+        <!-- ===================================================================== -->
+        
+        <!-- To get the number of Credit and/or Debit Transaction for th particular Account -->
+    <dynamic-mapped-statement name="getCashTrasnCount" result-class = "java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "ROWS", SUM(AMOUNT) AS "AMOUNT"
+        FROM CASH_TRANS WHERE
+               <!-- WHERE ACT_NUM = #ACCOUNTNO#-->
+        PROD_TYPE = #PROD_TYPE:VARCHAR#
+        AND (TRANS_DT BETWEEN  ((#CURRENT_DT# - #PERIOD#)+1)  AND #CURRENT_DT#) 
+        AND STATUS != 'DELETED'
+                <!--AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+        <dynamic>
+            <isParameterPresent>
+                AND TRANS_TYPE IN (
+                <isNotNull property="CREDIT">
+                    #CREDIT:VARCHAR#
+                </isNotNull>
+
+                <isNotNull property="CREDIT">
+                    <isNotNull property="DEBIT">
+                        ,
+                    </isNotNull>
+                </isNotNull>
+
+                <isNotNull property="DEBIT">
+                    #DEBIT:VARCHAR#
+                </isNotNull>
+                )
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PROD_ID">
+                    PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    ACT_NUM = #ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!-- To get the number of Credit and/or Debit Transaction for th particular Account -->
+    <dynamic-mapped-statement name="getTransferTrasnCount" result-class = "java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "ROWS", SUM(AMOUNT) AS "AMOUNT" 
+        FROM TRANSFER_TRANS
+        WHERE 
+                <!--ACT_NUM = #ACCOUNTNO# AND--> 
+        PROD_TYPE = #PROD_TYPE:VARCHAR#
+       <!-- AND (TRANS_DT BETWEEN  (TO_NUMBER(TO_CHAR(#CURRENT_DT#,'J')) - TO_NUMBER(TO_CHAR(#PERIOD#,'J')))  AND #CURRENT_DT:DATE#) -->
+        AND (TRANS_DT BETWEEN  ((#CURRENT_DT# - #PERIOD#)+1)  AND #CURRENT_DT#) 
+        AND STATUS != 'DELETED'
+                <!--AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+        <dynamic>
+            <isParameterPresent>
+                AND TRANS_TYPE IN (
+                <isNotNull property="CREDIT">
+                    #CREDIT:VARCHAR#
+                </isNotNull>
+
+                <isNotNull property="CREDIT">
+                    <isNotNull property="DEBIT">
+                        ,
+                    </isNotNull>
+                </isNotNull>
+
+                <isNotNull property="DEBIT">
+                    #DEBIT:VARCHAR#
+                </isNotNull>
+                )
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    ACT_NUM = #ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+        <!-- To get the number of Credit and/or Debit Transaction for th particular Account -->
+    <dynamic-mapped-statement name="getInwardClearingCount" result-class = "java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "ROWS", SUM(AMOUNT) AS "AMOUNT" 
+        FROM INWARD_CLEARING
+        WHERE 
+                <!--ACCT_NO = #ACCOUNTNO# AND -->
+        PROD_TYPE = #PROD_TYPE:VARCHAR#
+        AND (INWARD_DT BETWEEN  (TO_NUMBER(TO_CHAR(#CURRENT_DT#,'J')) - TO_NUMBER(TO_CHAR(#PERIOD#,'J')))  AND #CURRENT_DT:DATE#) 
+        AND STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    ACT_NUM = #ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                <!--AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+    </dynamic-mapped-statement>
+        
+         <!-- To get the number of Credit and/or Debit Transaction for th particular Account -->
+    <dynamic-mapped-statement name="getPaySlipCount" result-class = "java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS "ROWS", SUM(AMOUNT) AS "AMOUNT"  
+        FROM PAY_IN_SLIP
+        WHERE 
+                <!--ACCT_NO = #ACCOUNTNO# AND -->
+        PROD_TYPE = #PROD_TYPE:VARCHAR#
+        AND (PAY_IN_SLIP_DT BETWEEN  (TO_NUMBER(TO_CHAR(#CURRENT_DT#,'J')) - TO_NUMBER(TO_CHAR(#PERIOD#,'J')))  AND #CURRENT_DT:DATE#) 
+        AND STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    ACT_NUM = #ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                <!--AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getCustInfoData" result-class = "java.util.LinkedHashMap" >
+        (SELECT ACT_NUM, 'OA' AS PROD_TYPE
+        FROM ACT_MASTER 
+        WHERE CUST_ID = #value:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZATION_STATUS = 'AUTHORIZED')
+        UNION
+        (SELECT DSA.DEPOSIT_NO || '_' || DSA. DEPOSIT_SUB_NO AS "ACT_NUM", 'TD' AS "PROD_TYPE"
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA
+        WHERE CUST_ID = #value:VARCHAR#
+        AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO 
+        AND DA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND DSA.AUTHORIZE_STATUS = 'AUTHORIZED')
+        UNION
+        (SELECT ACCT_NUM AS "ACT_NUM", 'TL' AS "PROD_TYPE"
+        FROM LOANS_BORROWER LB, LOANS_FACILITY_DETAILS LFD
+        WHERE CUST_ID = #value:VARCHAR#
+        AND LB.BORROW_NO = LFD.BORROW_NO
+        AND LB.STATUS != 'DELETED'
+        AND LB.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND LFD.STATUS != 'DELETED'
+        AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED')
+    </mapped-statement>
+        
+        
+    <dynamic-mapped-statement name="getSuspeciousConfigData" result-class = "java.util.LinkedHashMap" >
+        SELECT PERIOD, WORTH_EXCEEDS AS "WORTH", COUNT_EXCEEDS AS "COUNT",
+        CR_CLR, CR_TRANS, CR_CASH, DR_CLR, DR_TRANS, DR_CASH,PROD_ID
+        FROM SUSPECIOUS_CONF
+        WHERE CONF_FOR = #CONF_FOR:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    CUST_NO = #CUST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    ACCT_NO = #ACCOUNTNO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PROD_ID">
+                    PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement >
+        
+        
+        <!--mapped-statement name="getSuspeciousConfigData" result-class = "java.util.LinkedHashMap" >
+            SELECT PERIOD, WORTH_EXCEEDS AS "WORTH", COUNT_EXCEEDS AS "COUNT",
+            CR_CLR, CR_TRANS, CR_CASH, DR_CLR, DR_TRANS, DR_CASH
+            FROM SUSPECIOUS_CONF
+            WHERE CONF_FOR = #CONF_FOR#
+            AND STATUS != 'DELETED'
+            AND AUTHORIZE_STATUS = 'AUTHORIZED'
+            AND (
+                Check for the Account No
+                ACCT_NO = #ACCOUNTNO# 
+                Check for the Product Id
+                 OR 
+                ((CUST_NO = (SELECT CUST_ID FROM ACT_MASTER WHERE ACT_NUM = #ACCOUNTNO#))
+                 OR (CUST_NO = (SELECT CUST_ID FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA
+                                WHERE (DSA.DEPOSIT_NO || '_' || DSA. DEPOSIT_SUB_NO) = #ACCOUNTNO#
+                                AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO))
+                 OR (CUST_NO = (SELECT CUST_ID FROM LOANS_BORROWER LB, LOANS_FACILITY_DETAILS LFD 
+                                WHERE LFD.ACCT_NUM = #ACCOUNTNO#
+                                AND LB.BORROW_NO = LFD.BORROW_NO)))
+                  Check for the Product Id
+                 OR 
+                 ((PROD_ID = (SELECT PROD_ID FROM ACT_MASTER WHERE ACT_NUM = #ACCOUNTNO#))
+                   OR (PROD_ID = (SELECT PROD_ID FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA
+                                WHERE (DSA.DEPOSIT_NO || '_' || DSA. DEPOSIT_SUB_NO) = #ACCOUNTNO#
+                                AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO))
+                   OR (PROD_ID = (SELECT PROD_ID FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM = #ACCOUNTNO# )))
+                 )
+        </mapped-statement >   -->
+        
+
+</sql-map>

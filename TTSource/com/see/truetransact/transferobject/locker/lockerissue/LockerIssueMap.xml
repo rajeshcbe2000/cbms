@@ -1,0 +1,760 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LockerIssueMap">
+
+
+    <mapped-statement name="getLockerList" result-class="java.util.LinkedHashMap" >
+        SELECT LCD.FROM_LOC_NO,LCD.LOCKER_KEY_NO FROM locker_config_details LCD
+        WHERE PROD_ID = #PRODUCT_ID:VARCHAR# and BRANCH_ID = #BRANCH_ID:VARCHAR# and LOCKER_STATUS = 'AVAILABLE' 
+        AND FROM_LOC_NO NOT IN(SELECT cast(LOCKER_NUM as numeric) FROM locker_master WHERE 
+        BRANCH_CODE = #BRANCH_ID:VARCHAR# AND PROD_ID = #PRODUCT_ID:VARCHAR#
+        AND (AUTHORIZATION_STATUS IS NULL OR AUTHORIZATION_STATUS = 'AUTHORIZED')
+        and LOCKER_STATUS_ID NOT IN ('CLOSED','DEFAULTER') and LOCKER_MASTER.STATUS != 'DELETED')
+        ORDER BY LCD.FROM_LOC_NO
+    </mapped-statement> 
+    
+    <mapped-statement name="insertLockerMasterTO" inline-parameters="true">
+        INSERT INTO LOCKER_MASTER
+        (LOCKER_NUM, PROD_ID, CUST_ID, BRANCH_CODE, ISSUE_DT, LOCKER_STATUS_ID, LOCKER_CAT_ID, OPT_MODE_ID, 
+        SETTMT_MODE_ID, CREATED_BY, AUTHORIZED_BY, AUTHORIZATION_STATUS, CLOSED_BY, CLOSED_DT, AUTHORIZED_DT, 
+        STATUS, STATUS_BY, STATUS_DT, COMM_ADDR_TYPE, CATEGORY_ID, ACCT_NAME, REMARKS, INITIATED_BRANCH, DEPOSIT_LINK_NO,EXP_DT,
+        COLLECT_RENT_MM,COLLECT_RENT_YYYY,S_I,PROD_TYPE,PRODUCT_ID,CUSTOMER_ID_CR,CUSTOMER_NAME,PASSWORD_REQUIRED,ACT_NUM
+        ) VALUES (
+        #locNum:VARCHAR#, #prodId:VARCHAR#, #custId:VARCHAR#, #branchCode:VARCHAR#, #createDt:TIMESTAMP#, 
+        #locStatusId:VARCHAR#, #locCatId:VARCHAR#, #optModeId:VARCHAR#, #settmtModeId:VARCHAR#, #createdBy:VARCHAR#, 
+        #authorizedBy:VARCHAR#, #authorizationStatus:VARCHAR#, #closedBy:VARCHAR#, #closedDt:DATE#, #authorizedDt:DATE#, 
+        #status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL) , #commAddrType:VARCHAR#, #categoryId:VARCHAR#, 
+        #acctName:VARCHAR#, #remarks:VARCHAR#, #initiatedBranch:VARCHAR#, #depositNo:VARCHAR# ,#expDt:DATE# , 
+        #collectRentMM:VARCHAR# , #collectRentYYYY:VARCHAR# , #si:VARCHAR# , #prodType:VARCHAR#,#txtProdId:VARCHAR# , 
+        #customerIdCr:VARCHAR#,#customerNameCrValue:VARCHAR#,#pwd:VARCHAR#,#actNum:VARCHAR#)
+    </mapped-statement>      
+    
+    <mapped-statement name="updateLockerMasterTO" inline-parameters="true">
+        UPDATE LOCKER_MASTER
+        SET CUST_ID = #custId:VARCHAR#, LOCKER_CAT_ID = #locCatId:VARCHAR#, 
+        OPT_MODE_ID = #optModeId:VARCHAR#, SETTMT_MODE_ID = #settmtModeId:VARCHAR#, 
+        AUTHORIZATION_STATUS = null, STATUS = #status:VARCHAR#, 
+        COLLECT_RENT_MM=#collectRentMM:VARCHAR#,COLLECT_RENT_YYYY=#collectRentYYYY:VARCHAR#,
+        S_I=#si:VARCHAR#,PASSWORD_REQUIRED=#pwd:VARCHAR#,PROD_TYPE=#prodType:VARCHAR#, PRODUCT_ID=#txtProdId:VARCHAR#, CUSTOMER_ID_CR=#customerIdCr:VARCHAR#,
+        CUSTOMER_NAME=#customerNameCrValue:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, STATUS_DT = (SELECT SYS_DATE() FROM DUAL), 
+        CATEGORY_ID = #categoryId:VARCHAR#, ACCT_NAME = #acctName:VARCHAR#,
+        EXP_DT = #expDt:DATE#,
+        DEPOSIT_LINK_NO = #depositNo:VARCHAR#
+        WHERE REMARKS = #remarks:VARCHAR#
+    </mapped-statement>     
+    
+    <mapped-statement name="insertLockerFreezeTO" inline-parameters="true">
+        INSERT INTO LOCKER_FREEZE
+        (LOCKER_NUM, PROD_ID, CUST_ID, BRANCH_CODE,REMARKS,FREEZE_STATUS,FREEZE_REMARKS,FREEZE_DT,UNFREEZE_STATUS,UNFREEZE_REMARKS,UNFREEZE_DT,SLNO
+        ) VALUES (
+        #locNum:VARCHAR#, #prodId:VARCHAR#, #custId:VARCHAR#, #branchCode:VARCHAR#, #remarks:VARCHAR#,#freezeStatus:VARCHAR#,#freezeRemarks:VARCHAR#,#freezeDt:DATE#,#unFreezeStatus:VARCHAR#,#unFreezeRemarks:VARCHAR#,#unFreezeDt:DATE#,#slNo:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateLockerFreezeTO" inline-parameters="true">
+        UPDATE LOCKER_FREEZE
+        SET CUST_ID = #custId:VARCHAR#, 
+        FREEZE_STATUS=#freezeStatus:VARCHAR#,
+        FREEZE_REMARKS=#freezeRemarks:VARCHAR#,
+        FREEZE_DT=#freezeDt:DATE#
+        WHERE REMARKS = #remarks:VARCHAR# AND SLNO=#slNo:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="updateLockerUnFreezeTO" inline-parameters="true">
+        UPDATE LOCKER_FREEZE
+        SET CUST_ID = #custId:VARCHAR#, 
+        UNFREEZE_STATUS=#unFreezeStatus:VARCHAR#,
+        UNFREEZE_REMARKS=#unFreezeRemarks:VARCHAR#,
+        UNFREEZE_DT=#unFreezeDt:DATE#
+        WHERE REMARKS = #remarks:VARCHAR# AND SLNO=#slNo:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="insertLockerPwdTO" inline-parameters="true">
+        INSERT INTO LOCKER_PASSWORD_DETAILS
+        (PROD_ID, CUST_ID, LOCKER_NUM, PWD, STATUS, STATUS_DT, BRANCH_CODE, REMARKS
+        ) VALUES (
+        #prodID:VARCHAR#, #custID:VARCHAR#, #locNum:VARCHAR#, #pwd:VARCHAR#, #status:VARCHAR#, (SELECT SYS_DATE() FROM DUAL) <!--#statusDt:DATE#-->, #branID:VARCHAR#, #remarks:VARCHAR#)
+    </mapped-statement> 
+    
+    <mapped-statement name="updateLockerPwdTO" inline-parameters="true">
+        update LOCKER_PASSWORD_DETAILS set PWD = #pwd:VARCHAR# where LOCKER_NUM = #locNum:VARCHAR# and 
+        CUST_ID = #custID:VARCHAR# and PROD_ID = #prodID:VARCHAR#
+    </mapped-statement> 
+    
+    
+    <mapped-statement name="insertLockerIssueChrgsTO" inline-parameters="true">
+        INSERT INTO LOCKER_ISSUE_CHARGES
+        (PROD_ID, CHARGE_TYPE, START_DT, END_DT, COMMISION, SERVICE_TAX, STATUS, STATUS_DT, CUST_ID, LOCKER_NUM, BRANCH_CODE, REMARKS
+        ) VALUES (
+        #prodID:VARCHAR#, #chargeType:VARCHAR#, #fromDate:DATE#, #toDate:DATE#, #commision:NUMERIC#, #serviceTax:NUMERIC#, #status:VARCHAR#, (SELECT SYS_DATE() FROM DUAL) <!--#statusDt:DATE#-->, #custID:VARCHAR#, #locNum:VARCHAR#, #branID:VARCHAR#, #remarks:VARCHAR#)
+    </mapped-statement> 
+    
+    <mapped-statement name="updateLockerIssueChrgsTO" inline-parameters="true">
+        UPDATE LOCKER_ISSUE_CHARGES SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE REMARKS = #remarks:VARCHAR#
+    </mapped-statement> 
+        
+    <mapped-statement name="insertLockerIssueJointTO" inline-parameters="true">
+        INSERT INTO LOCKER_ISSUE_JOINT
+        (LOC_NUM, CUST_ID, STATUS
+        ) VALUES (
+        #locNum:VARCHAR#, #custId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement> 
+       
+    <mapped-statement name="updateLockerStatus" inline-parameters="true">
+        update locker_config_details set LOCKER_STATUS = #LOCKER_STATUS:VARCHAR# where FROM_LOC_NO = cast(#LOC_NO# as numeric)
+    </mapped-statement> 
+    
+    <result-map name="getLockerResultList" class="java.util.LinkedHashMap">
+        <property name="locNo" column="LOCKER_NUM"/>
+        <property name="Issue Date" column="ISSUE_DT"/>
+        <property name="customerName" column="CUSTOMER_NAME"/>
+        <property name="customerType ID" column="CUST_TYPE_ID"/>
+        <property name="customerType" column="CUST_TYPE"/>
+        <property name="Name" column="ACCT_NAME"/>
+        <property name="custid" column="CUST_ID"/>
+        <property name="prodid" column="PROD_ID"/>
+        <property name="issueid" column="REMARKS"/>
+    </result-map>
+    
+    <dynamic-mapped-statement name="getLockerListEdit" result-map="getLockerResultList" >
+        SELECT LOCKER_NUM, ISSUE_DT, CUSTOMER_NAME, 
+        get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,            
+        CUST_TYPE_ID AS CUST_TYPE_ID, (SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND 
+        LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) AS CUST_TYPE, ACCT_NAME AS ACCT_NAME,locker_master.CUST_ID,locker_master.PROD_ID, locker_master.REMARKS AS REMARKS 
+        FROM locker_master, CUSTOMER         
+        WHERE locker_master.CUST_ID = CUSTOMER.CUST_ID and       
+        locker_master.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        (locker_master.AUTHORIZATION_STATUS != 'REJECTED' OR locker_master.AUTHORIZATION_STATUS IS NULL) AND        
+        (CUSTOMER.status!='DELETED' or CUSTOMER.status is null) and       
+        (locker_master.STATUS!='DELETED' or locker_master.STATUS is null)
+        and (locker_master.LOCKER_STATUS_ID!='CLOSED')
+
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DELETED" >
+                    <!--(locker_master.AUTHORIZATION_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR locker_master.AUTHORIZATION_STATUS IS NULL)-->
+                    locker_master.AUTHORIZED_DT IS NULL
+                </isNotEmpty>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_NUM">
+                    UPPER(LOCKER_NUM) LIKE UPPER('%$LOCKER_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE_DT">
+                    UPPER(ISSUE_DT) LIKE UPPER('%$ISSUE_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(CUSTOMER_NAME) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(CUSTOMER.CUST_ID)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_TYPE_ID">
+                    UPPER(CUST_TYPE_ID) LIKE UPPER('%$CUST_TYPE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCT_NAME">
+                    UPPER(ACCT_NAME) LIKE UPPER('%$ACCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(locker_master.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(locker_master.PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="REMARKS">
+                    UPPER(locker_master.REMARKS) LIKE UPPER('%$REMARKS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY LOCKER_NUM
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectLockerJointTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM LOCKER_ISSUE_JOINT 
+        WHERE LOC_NUM = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getLockerFreezeDetails" result-class="java.util.HashMap" >
+        SELECT * FROM LOCKER_FREEZE 
+        WHERE REMARKS = #remarks:VARCHAR#  
+    </mapped-statement>
+        
+    <result-map name="getLockerTOResult" class="com.see.truetransact.transferobject.locker.lockerissue.LockerIssueTO">
+        <property name="locNum" column="LOCKER_NUM"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="createDt" column="ISSUE_DT"/>
+        <property name="expDt" column="EXP_DT"/>
+        <property name="locStatusId" column="LOCKER_STATUS_ID"/>
+        <property name="locCatId" column="LOCKER_CAT_ID"/>
+        <property name="optModeId" column="OPT_MODE_ID"/>
+        <property name="settmtModeId" column="SETTMT_MODE_ID"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizationStatus" column="AUTHORIZATION_STATUS"/>
+        <property name="closedBy" column="CLOSED_BY"/>
+        <property name="closedDt" column="CLOSED_DT"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="commAddrType" column="COMM_ADDR_TYPE"/>
+        <property name="categoryId" column="CATEGORY_ID"/>
+        <property name="acctName" column="ACCT_NAME"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="depositNo" column="DEPOSIT_LINK_NO"/>
+        <property name="collectRentMM" column="COLLECT_RENT_MM"/>
+        <property name="collectRentYYYY" column="COLLECT_RENT_YYYY"/>
+        <property name="si" column="S_I"/>
+        <property name="pwd" column="PASSWORD_REQUIRED"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="txtProdId" column="PRODUCT_ID"/>
+        <property name="customerIdCr" column="CUSTOMER_ID_CR"/>
+        <property name="customerNameCrValue" column="CUSTOMER_NAME"/>
+    </result-map>
+        
+    <result-map name="getLockerTOFreezeResult" class="com.see.truetransact.transferobject.locker.lockerissue.LockerIssueTO">
+        <property name="locNum" column="LOCKER_NUM"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="createDt" column="ISSUE_DT"/>
+        <property name="expDt" column="EXP_DT"/>
+        <property name="locStatusId" column="LOCKER_STATUS_ID"/>
+        <property name="locCatId" column="LOCKER_CAT_ID"/>
+        <property name="optModeId" column="OPT_MODE_ID"/>
+        <property name="settmtModeId" column="SETTMT_MODE_ID"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizationStatus" column="AUTHORIZATION_STATUS"/>
+        <property name="closedBy" column="CLOSED_BY"/>
+        <property name="closedDt" column="CLOSED_DT"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="commAddrType" column="COMM_ADDR_TYPE"/>
+        <property name="categoryId" column="CATEGORY_ID"/>
+        <property name="acctName" column="ACCT_NAME"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+        <property name="depositNo" column="DEPOSIT_LINK_NO"/>
+        <property name="collectRentMM" column="COLLECT_RENT_MM"/>
+        <property name="collectRentYYYY" column="COLLECT_RENT_YYYY"/>
+        <property name="si" column="S_I"/>
+        <property name="pwd" column="PASSWORD_REQUIRED"/>
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="txtProdId" column="PRODUCT_ID"/>
+        <property name="customerIdCr" column="CUSTOMER_ID_CR"/>
+        <property name="customerNameCrValue" column="CUSTOMER_NAME"/>
+        <property name="freezeStatus" column="FREEZE_STATUS"/>
+        <property name="freezeRemarks" column="FREEZE_REMARKS"/>
+        <property name="freezeDt" column="FREEZE_DT"/>
+        <property name="unFreezeStatus" column="UNFREEZE_STATUS"/>
+        <property name="unFreezeRemarks" column="UNFREEZE_REMARKS"/>
+        <property name="unFreezeDt" column="UNFREEZE_DT"/>
+        <property name="slNo" column="SLNO"/>
+                   
+    </result-map>
+        
+    <mapped-statement name="getSelectLockerTO" result-map="getLockerTOResult" >
+        SELECT * FROM LOCKER_MASTER 
+        WHERE REMARKS = #value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLockerFreeze" result-class="java.util.HashMap" >
+        SELECT * FROM LOCKER_FREEZE
+        WHERE REMARKS = #value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectLockerFreezeTO" result-map="getLockerTOFreezeResult" >
+       <!-- SELECT * FROM LOCKER_MASTER 
+	WHERE REMARKS = #value#-->
+        
+        SELECT LM.*,LF.FREEZE_STATUS,LF.FREEZE_REMARKS,LF.FREEZE_DT,LF.UNFREEZE_STATUS,LF.UNFREEZE_REMARKS,LF.UNFREEZE_DT,LF.SLNO FROM LOCKER_MASTER LM ,LOCKER_FREEZE LF
+        WHERE LM.REMARKS =  #value:VARCHAR# AND LM.REMARKS=LF.REMARKS AND SLNO=(SELECT MAX(SLNO) FROM LOCKER_FREEZE  WHERE REMARKS=#value:VARCHAR#)
+    </mapped-statement>
+    
+    
+    
+    <mapped-statement name="getSelectLockerPwdDetailsTO" result-class="java.util.LinkedHashMap" >
+        select lpd.CUST_ID, 
+        get_cust_name(C.CUST_ID) AS ACCT_NAME, 
+        lm.CATEGORY_ID, lpd.PWD
+        from locker_password_details lpd,locker_master lm, customer c where 
+        lpd.LOCKER_NUM = lm.LOCKER_NUM and lpd.PROD_ID = lm.PROD_ID
+                <!--and lpd.CUST_ID = lm.CUST_ID and lpd.CUST_ID = #CUST_ID#-->
+        and lpd.PROD_ID = #PROD_ID:VARCHAR# and lpd.REMARKS = #ISSUE_ID:VARCHAR#
+        and lm.REMARKS = #ISSUE_ID:VARCHAR#
+        and c.cust_id=lpd.CUST_ID
+    </mapped-statement>
+        
+          
+        
+    <mapped-statement name="getSelectLockerIssueChrgsTO" result-class="java.util.LinkedHashMap" >
+        select CHARGE_TYPE,START_DT,END_DT,COMMISION,SERVICE_TAX
+        from locker_issue_charges where  (status != 'DELETED' or status is null)
+        AND CUST_ID= #CUST_ID:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR# AND 
+        REMARKS = #ISSUE_ID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectLockerMasterAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        <!--SELECT LOCKER_NUM AS LOCNO, PROD_ID as PRODID, locker_master.CUST_ID AS CUSTID,
+        get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,
+        ISSUE_DT,(SELECT LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) 
+        AS "CustomerType",locker_master.REMARKS AS ISSUEID
+        FROM locker_master,CUSTOMER 
+        WHERE locker_master.CUST_ID=CUSTOMER.CUST_ID 
+        AND locker_master.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND locker_master.STATUS_BY != #USER_ID:VARCHAR#
+        AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = locker_master.STATUS_BY)
+        <dynamic>-->
+            <!--isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                locker_master.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (locker_master.AUTHORIZATION_STATUS IS NULL OR 
+                 locker_master.AUTHORIZATION_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual-->
+           <!-- <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Authorize" >
+                locker_master.AUTHORIZATION_STATUS IS NULL AND
+                locker_master.STATUS != 'DELETED'
+            </isEqual>
+            
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Reject" >
+                locker_master.AUTHORIZED_DT IS NULL AND
+                locker_master.STATUS != 'DELETED'
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Exception" >
+                locker_master.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+            
+            
+        </dynamic>
+        ORDER BY LOCKER_NUM -->
+        
+        SELECT DISTINCT 
+        CASE
+        WHEN AT.trans_mode = 'TRANSFER'
+        THEN AT.batch_id
+        ELSE AT.trans_id
+        END AS trans_id,
+        LOCKER_NUM AS LOCNO,    
+        locker_master.PROD_ID as PRODID, locker_master.CUST_ID AS CUSTID,
+        get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,
+        ISSUE_DT,(SELECT LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) 
+        AS "CustomerType",locker_master.REMARKS AS ISSUEID
+        FROM locker_master,CUSTOMER ,all_trans AT
+        WHERE locker_master.CUST_ID=CUSTOMER.CUST_ID 
+        AND AT.link_batch_id = locker_master.remarks
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND locker_master.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND locker_master.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = locker_master.STATUS_BY)
+        <dynamic>           
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Authorize" >
+                locker_master.AUTHORIZATION_STATUS IS NULL AND
+                locker_master.STATUS != 'DELETED'
+            </isEqual>            
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Reject" >
+                locker_master.AUTHORIZED_DT IS NULL AND
+                locker_master.STATUS != 'DELETED'
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Exception" >
+                locker_master.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>                    
+        </dynamic>         
+        ORDER BY LOCKER_NUM
+        
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeLockerMaster" result-class="java.util.HashMap">
+        UPDATE locker_master SET 
+        AUTHORIZATION_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #TODAY_DT:TIMESTAMP#,
+        EXP_DT = #EXP_DT:TIMESTAMP#
+        WHERE LOCKER_NUM = #LOCKER_NUM:VARCHAR#
+        AND REMARKS = #ISSUE_ID:VARCHAR#
+                
+    </mapped-statement>
+    
+    
+    
+    <dynamic-mapped-statement name="getLockerDepList" result-class="java.util.LinkedHashMap" >
+        select DA.DEPOSIT_NO, DEPOSIT_AMT, TOTAL_BALANCE from deposit_acinfo DA, DEPOSIT_SUB_ACINFO DSA 
+        where CUST_ID = #CUST_ID:VARCHAR# and DEPOSIT_STATUS != 'CLOSED' AND MATURITY_DT&gt;#TODAY_DT:DATE#
+        AND DA.DEPOSIT_NO=DSA.DEPOSIT_NO
+        AND NOT EXISTS (SELECT DEPOSIT_LINK_NO FROM LOCKER_MASTER WHERE DEPOSIT_LINK_NO=DA.DEPOSIT_NO AND LOCKER_STATUS_ID!='CLOSED')
+        AND NOT EXISTS (SELECT DEPOSIT_NO FROM DEPOSIT_LIEN WHERE DEPOSIT_NO=DA.DEPOSIT_NO AND STATUS!='UNLIENED')
+        
+        <!--select DEPOSIT_NO from deposit_acinfo da where CUST_ID = #CUST_ID# and DEPOSIT_STATUS != 'CLOSED'
+            AND NOT EXISTS (SELECT DEPOSIT_LINK_NO FROM LOCKER_MASTER WHERE DEPOSIT_LINK_NO=DA.DEPOSIT_NO AND LOCKER_STATUS_ID!='CLOSED')
+        AND NOT EXISTS (SELECT DEPOSIT_NO FROM DEPOSIT_LIEN WHERE DEPOSIT_NO=DA.DEPOSIT_NO AND STATUS!='UNLIENED')-->
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_NO">
+                    UPPER(DA.DEPOSIT_NO) LIKE UPPER('%$DEPOSIT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_AMT">
+                    UPPER(DEPOSIT_AMT) LIKE UPPER('%$DEPOSIT_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TOTAL_BALANCE">
+                    UPPER(TOTAL_BALANCE) LIKE UPPER('%$TOTAL_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+   <dynamic-mapped-statement name="getLockerSusList" result-class="java.util.LinkedHashMap" >
+        select SUSPENSE_ACCT_NUM as DEPOSIT_NO,TOTAL_BALANCE as DEPOSIT_AMT,TOTAL_BALANCE from SUSPENSE_ACCOUNT_MASTER
+        where SUSPENSE_CUSTOMER_ID=#CUST_ID:VARCHAR# AND NOT EXISTS (SELECT DEPOSIT_LINK_NO FROM LOCKER_MASTER
+        WHERE DEPOSIT_LINK_NO=SUSPENSE_ACCOUNT_MASTER.SUSPENSE_ACCT_NUM AND LOCKER_STATUS_ID!='CLOSED')
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_NO">
+                    UPPER(SUSPENSE_ACCT_NUM) LIKE UPPER('%$DEPOSIT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_AMT">
+                    UPPER(TOTAL_BALANCE) LIKE UPPER('%$DEPOSIT_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TOTAL_BALANCE">
+                    UPPER(TOTAL_BALANCE) LIKE UPPER('%$TOTAL_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getLockerPwd" result-class="java.util.LinkedHashMap" >
+        select pwd,STATUS,CUST_ID from locker_password_details where cust_id = #CUST_ID:VARCHAR# and LOCKER_NUM = #LOCKER_NUM:VARCHAR# and prod_id = #PROD_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="Locker.getCustData" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT CUSTOMER.CUST_ID AS "CUSTOMER ID",
+        get_cust_name(CUSTOMER.CUST_ID) AS "Name",
+        (SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND 
+        LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) AS "Customer Type",   CUSTOMER.BRANCH_CODE AS "Branch ID"
+        FROM CUSTOMER
+        WHERE CUSTOMER.STATUS != 'DELETED'
+        AND CUSTOMER.AUTHORIZE_STATUS='AUTHORIZED'
+        AND  NOT EXISTS (SELECT CUST_ID FROM DEATH_MARKING 
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND CUSTOMER.CUST_ID=CUST_ID)
+        AND  NOT EXISTS (SELECT CUST_ID FROM CUSTOMER_SUSPENDED  WHERE   STATUS='SUSPENDED'
+        AND CUSTOMER.CUST_ID=CUST_ID)
+        <dynamic>
+            <isEqual prepend="AND" property="CONSTITUTION" compareValue="INDIVIDUAL" >
+                CUSTOMER.CUST_TYPE = 'INDIVIDUAL'
+            </isEqual>
+            <isEqual property="CUST_TYPE" compareValue="SB" >
+                <isEqual prepend="AND" property="CONSTITUTION" compareValue="CORPORATE" >
+                    CUSTOMER.CUST_TYPE IN ('CLUB','06','07','0903')
+                </isEqual>
+            </isEqual>
+            <isNotEqual property="CUST_TYPE" compareValue="SB" >
+                <isEqual prepend="AND" property="CONSTITUTION" compareValue="CORPORATE" >
+                    CUSTOMER.CUST_TYPE != 'INDIVIDUAL'
+                </isEqual>
+            </isNotEqual>
+            <isEqual prepend="AND" property="CONSTITUTION" compareValue="JOINT" >
+                CUSTOMER.CUST_TYPE = 'INDIVIDUAL'
+            </isEqual>
+                   <!-- </isEqual>-->
+            <isNotEqual prepend="AND" property="CUST_TYPE" compareValue="SB" >
+                (CUSTOMER.MINOR = 'N' OR CUSTOMER.MINOR IS NULL)
+            </isNotEqual>
+                    <!-- Non Duplication of the Customer in case of Joint account...-->
+            <isEqual prepend="AND" property="RESIDENTIAL_STATUS" compareValue="NONRESIDENT" >
+                CUSTOMER.RESIDENTIALSTATUS = 'NONRESIDENT'
+            </isEqual>
+            <isEqual prepend="AND" property="RESIDENTIAL_STATUS" compareValue="" >
+                CUSTOMER.RESIDENTIALSTATUS != 'NONRESIDENT'
+            </isEqual>
+            <isParameterPresent>
+                <isNotEmpty prepend=" AND CUSTOMER.CUST_ID NOT IN ( " property="CUSTOMER_ID">
+                    $CUSTOMER_ID$ )
+                </isNotEmpty>
+                <isNotEmpty prepend="AND" property="CUST_ID">
+                    CUST_ID = #CUST_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic> 
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_ID">
+                    CUSTOMER.BRANCH_CODE = #BRANCH_ID:VARCHAR#
+                </isNotNull> 
+            </isParameterPresent>      
+        </dynamic>
+        <dynamic> 
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="STAFF_ID">
+                    LENGTH(CUSTOMER.STAFF_ID) &gt; 0
+                </isNotNull> 
+            </isParameterPresent>  
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER ID">
+                    UPPER(CUSTOMER.CUST_ID) LIKE UPPER('%$CUSTOMER ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Name">
+                    UPPER(get_cust_name(CUSTOMER.CUST_ID)) LIKE UPPER('%$Name$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Branch ID">
+                    UPPER(CUSTOMER.BRANCH_CODE) LIKE UPPER('%$Branch ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+   <dynamic-mapped-statement name="DeletedLockerDetails" result-class="java.util.HashMap" >
+        SELECT LOCKER_NUM as LOCNO, ISSUE_DT as "ISSUE DATE", get_cust_name(CUSTOMER.CUST_ID) NAME,            
+        (SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE 
+        (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND 
+        LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) AS "CUSTOMER TYPE", locker_master.CUST_ID as CUSTID,locker_master.PROD_ID as PRODID, 
+        locker_master.REMARKS AS ISSUEID, locker_master.STATUS, LOCKER_STATUS_ID
+        FROM locker_master, CUSTOMER         
+        WHERE locker_master.CUST_ID = CUSTOMER.CUST_ID and       
+        locker_master.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        locker_master.STATUS is not null and (locker_master.STATUS='DELETED'  
+        or locker_master.LOCKER_STATUS_ID='CLOSED')
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCNO">
+                    UPPER(LOCKER_NUM) LIKE UPPER('%$LOCNO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUE DATE">
+                    UPPER(ISSUE_DT) LIKE UPPER('%$ISSUE DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="NAME">
+                    UPPER(get_cust_name(CUSTOMER.CUST_ID)) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTID">
+                    UPPER(locker_master.CUST_ID) LIKE UPPER('%$CUSTID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODID">
+                    UPPER(locker_master.PROD_ID) LIKE UPPER('%$PRODID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ISSUEID">
+                    UPPER(locker_master.REMARKS) LIKE UPPER('%$ISSUEID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(locker_master.STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_STATUS_ID">
+                    UPPER(LOCKER_STATUS_ID) LIKE UPPER('%$LOCKER_STATUS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY LOCKER_NUM
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getCountLockerJointHolders" result-class="java.util.HashMap" >
+        SELECT COUNT(*) COUNT FROM LOCKER_ISSUE_JOINT WHERE LOC_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <!-- Use AccountJointTO object (JavaBean) properties as parameters for update. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLockerIssueJointTO" inline-parameters="true">
+        UPDATE LOCKER_ISSUE_JOINT SET 
+        LOC_NUM = #locNum:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE LOC_NUM = #locNum:VARCHAR# AND
+        CUST_ID = #custId:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getCountLockerPwdDetails" result-class="java.lang.String" >
+        select cust_id from locker_password_details where remarks=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getMaxFreezNo" result-class="java.util.HashMap" >
+        SELECT NVL(MAX(SLNO),0) AS "SLNO" FROM LOCKER_FREEZE WHERE REMARKS=#remarks:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getFrezeLockerDetails" result-class="java.util.HashMap" >
+        SELECT * FROM LOCKER_FREEZE WHERE FREEZE_STATUS='Y' AND LOCKER_NUM=#LOCKER_NO:VARCHAR# AND REMARKS=#ISSUE_ID:VARCHAR# AND UNFREEZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getLockerOperActList" result-class="java.util.HashMap" >
+        SELECT ACT_NUM AS DEPOSIT_NO, AVAILABLE_BALANCE AS DEPOSIT_AMT,AVAILABLE_BALANCE
+        FROM ACT_MASTER AM, CUSTOMER CU WHERE AM.CUST_ID = CU.CUST_ID AND AM.CUST_ID = #CUST_ID:VARCHAR#
+        AND (AM.ACT_STATUS_ID IN('NEW', 'PART_FREEZE', 'OPERATIONAL', 'CREDIT_FREEZE',
+        'DEBIT_FREEZE', 'TOTAL_FREEZE', 'COMP_FREEZE')) AND AM.STATUS NOT IN ('DELETED')
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED' AND NOT EXISTS (SELECT DEPOSIT_LINK_NO FROM LOCKER_MASTER 
+        WHERE DEPOSIT_LINK_NO = AM.ACT_NUM AND LOCKER_STATUS_ID !='CLOSED') 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_NO">
+                    UPPER(ACT_NUM) LIKE UPPER('%$DEPOSIT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DEPOSIT_AMT">
+                    UPPER(AVAILABLE_BALANCE) LIKE UPPER('%$DEPOSIT_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="AVAILABLE_BALANCE">
+                    UPPER(AVAILABLE_BALANCE) LIKE UPPER('%$AVAILABLE_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY ACT_NUM
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectLockerMasterCashierAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT 
+        CASE
+        WHEN AT.trans_mode = 'TRANSFER'
+        THEN AT.batch_id
+        ELSE AT.trans_id
+        END AS trans_id,
+        LOCKER_NUM AS LOCNO,    
+        locker_master.PROD_ID as PRODID, locker_master.CUST_ID AS CUSTID,
+        get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,
+        ISSUE_DT,(SELECT LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) 
+        AS "CustomerType",locker_master.REMARKS AS ISSUEID
+        FROM locker_master,CUSTOMER ,all_trans AT
+        WHERE locker_master.CUST_ID=CUSTOMER.CUST_ID 
+        AND AT.link_batch_id = locker_master.remarks
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND locker_master.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND locker_master.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = locker_master.STATUS_BY)
+        <dynamic>           
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Authorize" >
+                locker_master.AUTHORIZATION_STATUS IS NULL AND
+                locker_master.STATUS != 'DELETED'
+            </isEqual>            
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Reject" >
+                locker_master.AUTHORIZED_DT IS NULL AND
+                locker_master.STATUS != 'DELETED'
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Exception" >
+                locker_master.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>                    
+        </dynamic>
+        AND CASE
+        WHEN AT.trans_mode = 'TRANSFER'
+        THEN 'AUTHORIZED'
+        ELSE AT.payment_status
+        END IS NOT NULL  
+        ORDER BY LOCKER_NUM
+    </dynamic-mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getSelectLockerMasterEditAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT LOCKER_NUM AS LOCNO, PROD_ID as PRODID, locker_master.CUST_ID AS CUSTID,
+        get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,
+        ISSUE_DT,(SELECT LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) 
+        AS "CustomerType",locker_master.REMARKS AS ISSUEID
+        FROM locker_master,CUSTOMER 
+        WHERE locker_master.CUST_ID=CUSTOMER.CUST_ID 
+        AND locker_master.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND locker_master.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = locker_master.STATUS_BY)
+        <dynamic>           
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Authorize" >
+                locker_master.AUTHORIZATION_STATUS IS NULL AND
+                locker_master.STATUS not in ('DELETED','CREATED')
+            </isEqual>
+            
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Reject" >
+                locker_master.AUTHORIZED_DT IS NULL AND
+                locker_master.STATUS not in ('DELETED','CREATED')
+            </isEqual>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="Exception" >
+                locker_master.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>   
+        </dynamic>
+        ORDER BY LOCKER_NUM
+    </dynamic-mapped-statement>
+    
+</sql-map>

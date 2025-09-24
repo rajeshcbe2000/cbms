@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GoldConfigurationMap">
+    <mapped-statement name="insertGoldConfigurationTO" inline-parameters="true">   
+        INSERT INTO GOLD_CONFIGURATION (REFERENCE_NO,SET_NO,PURITY_OF_GOLD,PER_GRAM_RATE,FROM_DATE,TO_DATE,STATUS,
+        STATUS_DT,STATUS_BY,AUTHORIZE_STATUS,AUTHORIZE_DT,AUTHORIZE_BY,DEFAULT_ITEM
+        ) VALUES (
+        #referenceNo:NUMBER#,#setNo:NUMBER#,#purityOfGold:VARCHAR#,#perGramRate:NUMBER#,#fromDate:DATE#,#toDate:DATE#,
+        #status:VARCHAR#,#statusDt:DATE#,#statusBy:VARCHAR#, #authorizedStatus:VARCHAR#,#authorizedDt:DATE#,#authorizedBy:VARCHAR#,#defaultItem:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateGoldConfigurationTO" inline-parameters="true">   
+        UPDATE GOLD_CONFIGURATION SET PER_GRAM_RATE = #perGramRate:VARCHAR#,FROM_DATE = cast(#fromDate# as timestamp without time zone),
+        TO_DATE = #toDate:DATE#,STATUS = #status:VARCHAR#,STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,DEFAULT_ITEM=#defaultItem:VARCHAR# WHERE SET_NO = #setNo:NUMBER# AND PURITY_OF_GOLD = #purityOfGold:VARCHAR# 
+        AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="deleteGoldConfigurationTO" inline-parameters="true">   
+        DELETE FROM GOLD_CONFIGURATION WHERE SET_NO = #setNo:NUMBER# AND TO_DATE IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="rejectGoldConfigurationTO" result-class="java.util.HashMap">   
+        DELETE FROM GOLD_CONFIGURATION WHERE SET_NO = #SET_NO:NUMBER# AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="updateToDate" inline-parameters="true">   
+        UPDATE GOLD_CONFIGURATION SET TO_DATE = #TO_DATE:DATE#
+        WHERE SET_NO = #SET_NO:NUMBER#
+    </mapped-statement>
+    
+    <mapped-statement name="updateNullValueforToDate" inline-parameters="true">   
+        UPDATE GOLD_CONFIGURATION SET TO_DATE = NULL
+        WHERE SET_NO = #SET_NO:NUMBER#
+    </mapped-statement>
+    
+    <mapped-statement name="updateAuthorizeStatus" inline-parameters="true">   
+        UPDATE GOLD_CONFIGURATION SET
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:DATE#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#
+        WHERE SET_NO = CAST(#SET_NO# AS NUMERIC)
+    </mapped-statement>
+    
+    <result-map name="getGoldConfigurationTOResult" class="com.see.truetransact.transferobject.termloan.goldLoanConfiguration.GoldConfigurationTO">
+        <property name="referenceNo" column="REFERENCE_NO"/>
+        <property name="setNo" column="SET_NO"/>
+        <property name="purityOfGold" column="PURITY_OF_GOLD"/>
+        <property name="perGramRate" column="PER_GRAM_RATE"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="branchId" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZE_DT"/>
+        <property name="authorizedBy" column="AUTHORIZE_BY"/>
+        <property name="defaultItem" column="DEFAULT_ITEM"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectGoldConfiguration" result-map = "getGoldConfigurationTOResult">
+        SELECT * FROM GOLD_CONFIGURATION WHERE STATUS != 'DELETED' AND 
+        (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL)ORDER BY SET_NO,PURITY_OF_GOLD
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectNotAuthRecords" result-class = "java.util.LinkedHashMap">
+        SELECT SET_NO,PURITY_OF_GOLD,PER_GRAM_RATE,FROM_DATE,TO_DATE,AUTHORIZE_STATUS FROM GOLD_CONFIGURATION WHERE 
+        STATUS != 'DELETED' AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL) ORDER BY SET_NO,PURITY_OF_GOLD
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectNotAuthRecordsinAuthMode" result-class = "java.util.LinkedHashMap">
+        SELECT SET_NO,PURITY_OF_GOLD,PER_GRAM_RATE,FROM_DATE,TO_DATE,AUTHORIZE_STATUS FROM GOLD_CONFIGURATION WHERE 
+        STATUS != 'DELETED' AND AUTHORIZE_STATUS IS NULL AND TO_DATE IS NULL ORDER BY SET_NO,PURITY_OF_GOLD
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectRecordsForDelete" result-class = "java.util.LinkedHashMap">
+        SELECT SET_NO,PURITY_OF_GOLD,PER_GRAM_RATE,FROM_DATE,TO_DATE,AUTHORIZE_STATUS FROM GOLD_CONFIGURATION WHERE 
+        STATUS != 'DELETED' AND TO_DATE IS NULL ORDER BY SET_NO,PURITY_OF_GOLD
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectMaxRefMaxSetNo" result-class  = "java.util.Hashtable">
+        SELECT DISTINCT NVL(MAX(REFERENCE_NO),0) AS REFERENCE_NO, NVL(MAX(SET_NO),0) SET_NO FROM GOLD_CONFIGURATION 
+        WHERE STATUS!= 'DELETED' AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+    <mapped-statement name="getSelectTodaysMarketRate" result-class="java.util.HashMap">
+<!--        SELECT * FROM GOLD_CONFIGURATION WHERE FROM_DATE &lt;= #TODAY_DATE# AND PURITY_OF_GOLD = #PURITY# AND 
+        STATUS!='DELETED' AND SET_NO IN (SELECT MAX(SET_NO) FROM GOLD_CONFIGURATION WHERE FROM_DATE &lt;= #TODAY_DATE# AND 
+        PURITY_OF_GOLD = #PURITY#) AND AUTHORIZE_STATUS = 'AUTHORIZED' -->
+        SELECT * FROM GOLD_CONFIGURATION WHERE PURITY_OF_GOLD = #PURITY:VARCHAR# AND STATUS!='DELETED'AND AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        (SET_NO IN(SELECT MAX(SET_NO) FROM GOLD_CONFIGURATION WHERE FROM_DATE &lt;= #TODAY_DATE:DATE# AND TO_DATE IS NULL  AND 
+        PURITY_OF_GOLD = #PURITY:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED') OR 
+        SET_NO IN (SELECT MAX(SET_NO) FROM GOLD_CONFIGURATION WHERE (#TODAY_DATE:DATE# BETWEEN FROM_DATE AND TO_DATE) AND 
+        PURITY_OF_GOLD = #PURITY:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'))         
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectExistingFromDate" result-class="java.util.HashMap">
+        SELECT FROM_DATE FROM GOLD_CONFIGURATION WHERE STATUS!='DELETED' AND 
+        (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL) AND SET_NO = #SET_NO:NUMBER#
+    </mapped-statement>
+    
+</sql-map>

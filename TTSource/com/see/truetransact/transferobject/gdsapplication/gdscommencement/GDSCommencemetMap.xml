@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GDSCommencemetMap">
+
+ <dynamic-mapped-statement name = "getSelectEachGroupMDSDetailsForCommence" result-class = "java.util.LinkedHashMap">
+         <!--     select distinct scheme_start_dt, scheme_end_dt,
+              installment_amount, no_of_divisions,msd.group_no,a.TOTAL_AMOUNT_DIVISION from MDS_SCHEME_DETAILS msd ,
+              (select Group_NO,TOTAL_AMOUNT_DIVISION from 
+              (select msd.group_no, sum(MSD.TOTAL_AMOUNT_DIVISION) as TOTAL_AMOUNT_DIVISION from MDS_SCHEME_DETAILS msd           
+              group by msd.group_no)) a where a.group_no = msd.group_no
+              and a.TOTAL_AMOUNT_DIVISION = (SELECT SUM (inst_amt)
+              FROM mds_application ma
+              WHERE msd.group_no = ma.group_no
+              AND status != 'DELETED'
+              AND (authorize_status IS NULL OR authorize_status = 'AUTHORIZED'
+                  )
+              AND commencement_authorize_status IS NULL
+              AND commencement_trans_id IS NULL) -->
+              
+             <!-- SELECT DISTINCT scheme_start_dt, scheme_end_dt, installment_amount,
+                no_of_divisions, msd.group_no, a.total_amount_scheme
+           FROM mds_scheme_details msd,(SELECT group_no, total_amount_scheme
+                   FROM (SELECT   msd.group_no,
+                                  SUM
+                                     (msd.total_amount_scheme
+                                     ) AS total_amount_scheme
+                             FROM mds_scheme_details msd
+                         GROUP BY msd.group_no)) a
+          WHERE a.group_no = msd.group_no
+            AND a.total_amount_scheme =(SELECT SUM (inst_amt)
+                      FROM mds_application ma, mds_scheme_details msd
+                     WHERE msd.group_no = ma.group_no
+                       AND ma.status != 'DELETED'
+                       AND (   ma.authorize_status IS NULL
+                            OR ma.authorize_status = 'AUTHORIZED'
+                           )
+                       AND ma.commencement_authorize_status IS NULL
+                       AND ma.commencement_trans_id IS NULL
+                       )-->
+                       
+                    <!--   SELECT DISTINCT scheme_start_dt, scheme_end_dt, installment_amount,
+                no_of_divisions, msd.group_no,GD.GROUP_NAME, a.total_amount_scheme
+           FROM mds_scheme_details msd,mds_application ma,GROUP_DEPOSIT gd,
+             (SELECT group_no, total_amount_scheme
+                   FROM (SELECT   msd.group_no,
+                                  SUM
+                                     (msd.total_amount_scheme
+                                     ) AS total_amount_scheme
+                             FROM mds_scheme_details msd where MSD.GROUP_NO is not null
+                         GROUP BY msd.group_no))
+                          a
+          WHERE a.group_no = msd.group_no
+           and MA.GROUP_NO =  a.group_no
+           and GD.GROUP_NO = MSD.GROUP_NO
+           AND a.total_amount_scheme =
+            (SELECT SUM (inst_amt)
+                     FROM MDS_APPLICATION ma join
+                     MDS_SCHEME_DETAILS msd on MA.GROUP_NO = MSD.GROUP_NO and ma.scheme_name = msd.scheme_name
+                     WHERE ma.group_no = msd.GROUP_NO
+                     AND ma.status != 'DELETED'
+                       AND (   ma.authorize_status IS NULL
+                            OR ma.authorize_status = 'AUTHORIZED'
+                           )
+                       AND ma.commencement_authorize_status IS NULL
+                       AND ma.commencement_trans_id IS NULL
+                        and MSD.GROUP_NO is not null
+                       ) -->
+                       
+   SELECT a.scheme_start_dt, a.scheme_end_dt, a.installment_amount,
+       a.no_of_divisions, a.group_no, a.group_name, a.total_amount_scheme
+  FROM (SELECT DISTINCT scheme_start_dt, scheme_end_dt, installment_amount,
+                        no_of_divisions, msd.group_no, gd.group_name,
+                        a.total_amount_scheme
+                   FROM mds_scheme_details msd,
+                        mds_application ma,
+                        group_deposit gd,
+                        (SELECT group_no, total_amount_scheme
+                           FROM (SELECT   msd.group_no,
+                                          SUM
+                                             (msd.total_amount_scheme
+                                             ) AS total_amount_scheme
+                                     FROM mds_scheme_details msd
+                                    WHERE msd.group_no IS NOT NULL
+                                 GROUP BY msd.group_no)c) a
+                  WHERE a.group_no = msd.group_no
+                    AND ma.group_no = a.group_no
+                    AND gd.group_no = msd.group_no) a,
+       (SELECT   SUM (inst_amt) AS tot
+            FROM mds_application ma JOIN mds_scheme_details msd
+                 ON ma.group_no = msd.group_no          
+        WHERE    ma.group_no = msd.group_no
+             AND ma.scheme_name = msd.scheme_name
+             AND ma.status != 'DELETED'
+             AND ( ma.authorize_status = 'AUTHORIZED'
+                 )
+             AND ma.commencement_authorize_status IS NULL
+             AND ma.commencement_trans_id IS NULL
+             AND msd.group_no IS NOT NULL
+        GROUP BY ma.group_no) b
+ WHERE a.total_amount_scheme = b.tot                    
+                       
+                       
+ </dynamic-mapped-statement>
+ 
+ <mapped-statement name = "getSelectGDSCommencementList" result-class = "java.util.LinkedHashMap">
+     SELECT DISTINCT MDSA.GROUP_NO,COMMENCEMENT_TRANS_ID,MS.PREDEFINITION_INSTALLMENT FROM MDS_APPLICATION MDSA ,MDS_SCHEME_DETAILS ms
+        WHERE (MDSA.STATUS != 'DELETED' OR MDSA.STATUS IS NULL)
+        AND MS.SCHEME_NAME IN (SELECT SCHEME_NAME from MDS_APPLICATION)
+        AND MDSA.STATUS_BY != #USER_ID:VARCHAR# AND MDSA.BRANCH_CODE =  #SELECTED_BRANCH_ID:VARCHAR# AND 
+        AUTHORIZE_STATUS= 'AUTHORIZED' AND COMMENCEMENT_AUTHORIZE_STATUS IS NULL AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND #HIERARCHY_ID# &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = MDSA.STATUS_BY)
+     
+     
+     <!--  SELECT DISTINCT MDSA.SCHEME_NAME,COMMENCEMENT_TRANS_ID,MS.PREDEFINITION_INSTALLMENT FROM MDS_APPLICATION MDSA ,MDS_SCHEME_DETAILS ms
+        WHERE (MDSA.STATUS != 'DELETED' OR MDSA.STATUS IS NULL)
+        AND MS.SCHEME_NAME = MDSA.SCHEME_NAME AND
+        MDSA.STATUS_BY != #USER_ID:VARCHAR# AND MDSA.BRANCH_CODE = #SELECTED_BRANCH_ID:VARCHAR# AND 
+        AUTHORIZE_STATUS= 'AUTHORIZED' AND COMMENCEMENT_AUTHORIZE_STATUS IS NULL AND 
+        COMMENCEMENT_TRANS_ID IS NOT NULL AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = MDSA.STATUS_BY) -->
+        
+    </mapped-statement>
+ <dynamic-mapped-statement name = "getSelectEachGroupMDSSchemeDetails" result-class = "java.util.LinkedHashMap">
+    SELECT  msd.no_of_divisions, msd.total_no_of_members,MSD.INSTALLMENT_AMOUNT,
+    MSD.TOTAL_AMOUNT_SCHEME        
+    FROM mds_scheme_details msd                
+    WHERE msd.group_no = #GROUP_NO:VARCHAR# and MSD.AUTHORIZED_STATUS in ('AUTHORIZED')   
+ </dynamic-mapped-statement>    
+    
+   <result-map name="getGDSMDSApplicationTOResult" class="com.see.truetransact.transferobject.mdsapplication.MDSApplicationTO">
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="chittalNo" column="CHITTAL_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="chitStartDt" column="CHIT_START_DT"/>
+        <property name="chitEndDt" column="CHIT_END_DT"/>
+        <property name="instAmt" column="INST_AMT"/>
+        <property name="applnNo" column="APPLN_NO"/>
+        <property name="applnDate" column="APPLN_DT"/>
+        <property name="thalayal" column="THALAYAL"/>
+        <property name="coChittal" column="CO_CHITTAL"/>
+        <property name="salaryRecovery" column="SALARY_RECOVERY"/>
+        <property name="munnal" column="MUNNAL"/>
+        <property name="membershipNo" column="MEMBER_NO"/>
+        <property name="membershipType" column="MEMBER_TYPE"/>
+        <property name="membershipName" column="MEMBER_NAME"/>
+        <property name="houseStNo" column="HOUSE_ST"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pin" column="PIN"/>
+        <property name="standingInstn" column="STANDING_INSTN"/>
+        <property name="nominee" column="NOMINEE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="commencementStatus" column="COMMENCEMENT_STATUS"/>
+        <property name="commencementDate" column="COMMENCEMENT_DATE"/>
+        <property name="lastTransDt" column="LAST_TRANS_DT"/>
+        <property name="totalBalance" column="TOTAL_BALANCE"/>
+        <property name="clearBalance" column="CLEAR_BALANCE"/>
+        <property name="availableBalance" column="AVAILABLE_BALANCE"/>
+        <property name="shadowCredit" column="SHADOW_CREDIT"/>
+        <property name="shadowDebit" column="SHADOW_DEBIT"/>       
+        <property name="commencementAuthStatus" column="COMMENCEMENT_AUTHORIZE_STATUS"/>       
+        <property name="lastTransDt" column="LAST_TRANS_DT"/>       
+        <property name="commencementTransId" column="COMMENCEMENT_TRANS_ID"/>       
+        <property name="chitNo" column="CHIT_NO"/>       
+        <property name="prodType" column="PROD_TYPE"/>    
+        <property name="prodId" column="PROD_ID"/>    
+        <property name="drAccNo" column="DR_ACT_NO"/>    
+        <property name="deletedUsed" column="DELETED_USED"/>       
+        <property name="instCount" column="INST_COUNT"/> 
+        <property name="cudt_id" column="CUST_ID"/>      
+    </result-map>        
+       
+    
+  <dynamic-mapped-statement name = "getSelectGLTransGDSMDSApplicationTO" result-map = "getGDSMDSApplicationTOResult">
+        SELECT * FROM MDS_APPLICATION WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' AND COMMENCEMENT_STATUS IS NULL
+        AND COMMENCEMENT_DATE IS NULL AND GROUP_NO = #GROUP_NO:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CHITTAL_NO">
+                    CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY CHITTAL_NO
+    </dynamic-mapped-statement>   
+    
+     <mapped-statement name = "getSelectGDSGroupAcctHead" result-class = "java.util.LinkedHashMap">
+        SELECT MAH.*,MSD.*,MPOD.*,MPGD.* FROM MDS_SCHEME_DETAILS MSD,MDS_PRODUCT_GENERAL_DETAILS MPGD,MDS_ACCT_HEAD MAH,MDS_PRODUCT_OTHER_DETAILS MPOD WHERE 
+        MSD.PROD_ID = MPGD.PROD_ID AND MSD.STATUS!='DELETED' AND MSD.AUTHORIZED_STATUS = 'AUTHORIZED' AND 
+        MAH.SCHEME_NAME = MSD.SCHEME_NAME AND MSD.PROD_ID = MPOD.PROD_ID AND msd.group_no = #SCHEME_NAME:VARCHAR#
+    </mapped-statement>
+    
+   <mapped-statement name = "updateGDSCommencementTransId" result-class = "java.util.HashMap">
+        UPDATE MDS_APPLICATION SET COMMENCEMENT_TRANS_ID = #TRANS_ID:VARCHAR# WHERE GROUP_NO = #SCHEME_NAME:VARCHAR#
+    </mapped-statement>
+    <result-map name="getGDSApplicationTOResult" class="com.see.truetransact.transferobject.gdsapplication.GDSApplicationTO">
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="chittalNo" column="CHITTAL_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="chitStartDt" column="CHIT_START_DT"/>
+        <property name="chitEndDt" column="CHIT_END_DT"/>
+        <property name="installmentAmount" column="INST_AMT"/>
+        <property name="applnNo" column="APPLN_NO"/>
+        <property name="applnDate" column="APPLN_DT"/>
+        <property name="thalayal" column="THALAYAL"/>
+        <property name="coChittal" column="CO_CHITTAL"/>
+        <property name="salaryRecovery" column="SALARY_RECOVERY"/>
+        <property name="munnal" column="MUNNAL"/>
+        <property name="membershipNo" column="MEMBER_NO"/>
+        <property name="membershipType" column="MEMBER_TYPE"/>
+        <property name="membershipName" column="MEMBER_NAME"/>
+        <property name="houseStNo" column="HOUSE_ST"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pin" column="PIN"/>
+        <property name="standingInstn" column="STANDING_INSTN"/>
+        <property name="nominee" column="NOMINEE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="commencementStatus" column="COMMENCEMENT_STATUS"/>
+        <property name="commencementDate" column="COMMENCEMENT_DATE"/>
+        <property name="lastTransDt" column="LAST_TRANS_DT"/>
+        <property name="totalBalance" column="TOTAL_BALANCE"/>
+        <property name="clearBalance" column="CLEAR_BALANCE"/>
+        <property name="availableBalance" column="AVAILABLE_BALANCE"/>
+        <property name="shadowCredit" column="SHADOW_CREDIT"/>
+        <property name="shadowDebit" column="SHADOW_DEBIT"/>       
+        <property name="commencementAuthStatus" column="COMMENCEMENT_AUTHORIZE_STATUS"/>       
+        <property name="lastTransDt" column="LAST_TRANS_DT"/>       
+        <property name="commencementTransId" column="COMMENCEMENT_TRANS_ID"/>       
+        <property name="chitNo" column="CHIT_NO"/>       
+        <property name="prodType" column="PROD_TYPE"/>    
+        <property name="prodId" column="PROD_ID"/>    
+        <property name="drAccNo" column="DR_ACT_NO"/>    
+        <property name="deletedUsed" column="DELETED_USED"/>       
+        <property name="instCount" column="INST_COUNT"/> 
+        <property name="cudt_id" column="CUST_ID"/>      
+        <property name="groupNo" column="GROUP_NO"/>
+        <property name="gds_No" column="GDS_NO"/>
+    </result-map>       
+    
+    <mapped-statement name = "getSelectGroupGLTransNotAuthGDSApplicationTO" result-map = "getGDSApplicationTOResult">
+        SELECT * FROM MDS_APPLICATION WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED' AND COMMENCEMENT_STATUS = 'Y'
+        AND GROUP_NO = #GROUP_NO:VARCHAR# AND COMMENCEMENT_AUTHORIZE_STATUS IS NULL
+    </mapped-statement>    
+  
+     <mapped-statement name = "getInstalmmentAmtForBonusFrstInstallment" result-class = "java.util.LinkedHashMap">
+        select T.AMOUNT from TRANSFER_TRANS t 
+        where T.TRANS_DT = #TRANS_DT:DATE#
+        and T.GL_TRANS_ACT_NUM = #GL_TRANS_ACT_NUM:VARCHAR#
+        and T.BATCH_ID = #BATCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    
+</sql-map>

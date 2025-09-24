@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="NmfMaintenanceTOMap">
+    
+    <mapped-statement name="getNmfAcHead" result-class="java.util.LinkedHashMap">
+        SELECT NMF_HD FROM SI_CHARGES_AC_HD   
+    </mapped-statement>
+
+    <mapped-statement name="insertNmfTO" inline-parameters="true">
+        INSERT INTO NMF_MAINTENANCE(NOMINAL_MEM_NO,CUST_ID,OPENING_DT,NOMINAL_MEM_FEE,NOMINEE_REQ,STATUS,STATUS_BY,STATUS_DT,CREATED_BY,CREATED_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,BRANCH_CODE,CUST_NAME) VALUES
+        (#nominalMemNo:VARCHAR#,#custId:VARCHAR#,#openingDt:DATE#,#nominalMemFee:NUMERIC#,#nomineeReq:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#createdBy:VARCHAR#,#createdDt:DATE#,
+        #authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:DATE#,#branchCode:VARCHAR#,#customerName:VARCHAR#)
+    </mapped-statement>
+ 
+    <mapped-statement name="getSelectNominalMemFee" result-class="java.util.LinkedHashMap">
+        SELECT NOMINAL_MEM_FEE,ALLOW_AUTH_BY_STAFF FROM PARAMETERS
+    </mapped-statement>
+  
+    <mapped-statement name="getSelectNmfEdit" result-class="java.util.LinkedHashMap">
+        SELECT NOMINAL_MEM_NO,CUST_ID,CUST_NAME,OPENING_DT,NOMINAL_MEM_FEE FROM NMF_MAINTENANCE WHERE STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS='AUTHORIZED') AND BRANCH_CODE=#BRANCH_ID:VARCHAR#
+    </mapped-statement>
+  
+    <mapped-statement name="getSelectNmfDelete" result-class="java.util.LinkedHashMap">
+        SELECT NOMINAL_MEM_NO,CUST_ID,CUST_NAME,OPENING_DT,NOMINAL_MEM_FEE FROM NMF_MAINTENANCE WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL  AND BRANCH_CODE=#BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectNmfAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT NOMINAL_MEM_NO,CUST_ID,CUST_NAME,OPENING_DT,NOMINAL_MEM_FEE FROM NMF_MAINTENANCE WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL  AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS_BY!=#USER_ID:VARCHAR#
+    </mapped-statement>
+  
+    <mapped-statement name="getCustName" result-class="java.util.LinkedHashMap">
+        SELECT get_cust_name(CUSTOMER.CUST_ID)  AS "NAME" FROM CUSTOMER WHERE CUST_ID=#CUST_ID:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+ 
+    <mapped-statement name="updateNmfTO" inline-parameters="true">
+        UPDATE NMF_MAINTENANCE SET 
+        CUST_ID =#custId:VARCHAR#,
+        CUST_NAME=#customerName:VARCHAR#,
+        OPENING_DT = #openingDt:DATE#,
+        NOMINAL_MEM_FEE= #nominalMemFee:NUMERIC#,
+        NOMINEE_REQ = #nomineeReq:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        STATUS=#status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE  NOMINAL_MEM_NO=#nominalMemNo:VARCHAR# AND BRANCH_CODE=#branchCode:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteNmfTO" inline-parameters="true">
+        UPDATE NMF_MAINTENANCE SET 
+        STATUS=#status:VARCHAR#,STATUS_BY=#statusBy:VARCHAR#,STATUS_DT=#statusDt:DATE#
+        WHERE  NOMINAL_MEM_NO=#nominalMemNo:VARCHAR# AND BRANCH_CODE=#branchCode:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeNMF" result-class="java.util.HashMap">
+        UPDATE NMF_MAINTENANCE SET AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,AUTHORIZE_DT=#AUTHORIZE_DT:DATE#
+        WHERE NOMINAL_MEM_NO=#NOMINAL_MEM_NO:VARCHAR#
+    </mapped-statement>
+ 
+    <result-map name="getNmfTOResult" class="com.see.truetransact.transferobject.share.NmfMaintenanceTO">
+        <property name="nominalMemNo" column="NOMINAL_MEM_NO"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="openingDt" column="OPENING_DT"/>
+        <property name="nominalMemFee" column="NOMINEE_REQ"/>
+        <property name="nomineeReq" column="SPECIAL_CHARS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="customerName" column="CUST_NAME"/>
+    </result-map>
+	
+<!-- ==============================END OF RESOLUTION QUERIES===================================================== -->
+</sql-map>

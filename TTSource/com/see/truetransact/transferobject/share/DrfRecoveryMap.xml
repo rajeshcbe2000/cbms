@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DrfRecoveryMap">
+
+    <result-map name="getDrfRecTOResult" class="com.see.truetransact.transferobject.share.DrfRecoveryTO">
+        <property name="drfTransID" column="DRF_TRANSID"/>
+        <property name="cboDrfTransProdID" column="DRF_PROD_ID"/>
+        <property name="txtDrfTransMemberNo" column="MEMBER_NO"/>
+        <property name="txtDrfTransAmount" column="Amount"/>
+        <property name="statusDate" column="RECOVER_DATE"/>
+        <property name="recover_status" column="RECOVER_STATUS"/>
+        <property name="drfPaidDate" column="DRF_PAID_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="txtDrfTransName" column="Name"/>
+        <property name="lblDrfTransAddressCont" column="Address"/>
+    </result-map>
+       
+
+    <mapped-statement name="getDrfMemberDetails" result-class="java.util.LinkedHashMap">
+        Select distinct get_cust_name(customer.cust_id) As Name,Drf_Recover.Member_No 
+        From Drf_Recover Join Customer 
+        On Drf_Recover.Member_No = Customer.Membership_No
+        Where Drf_Recover.Drf_Prod_Id = #PRODUCT_ID:VARCHAR# 
+        And Drf_Recover.Recover_Status Is Null And Drf_Recover.Recover_Date Is Null
+    </mapped-statement>
+              
+    <mapped-statement name="getMemberDrfDueDetails" result-class="java.util.LinkedHashMap">
+        Select Drf_Paid_Date,Recovery_Amount,DRF_TRANSID From Drf_Recover 
+        where MEMBER_NO= #MEMBERSHIP_NO:VARCHAR# and DRF_PROD_ID= #PROD_ID:VARCHAR# and
+        Drf_Recover.Recover_Status Is Null And Drf_Recover.Recover_Status is null
+    </mapped-statement>
+              
+              <!-- <mapped-statement name="insertDrfDueDetailsTO" inline-parameters="true">
+		INSERT INTO DRF_TRANSACTION
+		(DRF_TRANS_ID,DRF_PROD_ID,MEMBER_NO, RECIEPT_OR_PAYMENT,DUE_AMOUNT,AMOUNT, STATUS, STATUS_DATE, STATUS_BY, AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE
+		) VALUES (
+		#drfTransID:VARCHAR#,#cboDrfTransProdID:VARCHAR#, #txtDrfTransMemberNo:VARCHAR#, 
+                #rdoDrfTransaction:VARCHAR#,#chkDueAmtPayment:VARCHAR#, 
+                #txtDrfTransAmount:VARCHAR#,#status:VARCHAR#, #statusDate:DATE#,
+                 #statusBy:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeDate:DATE#)
+	      </mapped-statement>-->
+    <mapped-statement name="updateDrfRecovery" inline-parameters="true">
+        update DRF_RECOVER set RECOVER_DATE=#statusDate:DATE#,RECOVER_STATUS='Y',LINK_ID=#linkid:VARCHAR#,STATUS='Updated'
+        where DRF_TRANSID=#drfTransID:VARCHAR#
+    </mapped-statement>
+              
+    <mapped-statement name="getDrfRecoveryHead" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID,PROD_NAME, DRF_RECOVERY_ACHD AS RECOVERY_HEAD
+        FROM  DRF_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+              
+    <mapped-statement name="getDrfRecAuth" result-class="java.util.LinkedHashMap" >
+        Select distinct Link_Batch_Id As Trans_Id,Amount,Recover_Date From 
+        Transfer_Trans Join Drf_Recover On Transfer_Trans.Link_Batch_Id= Drf_Recover.Link_Id
+        Where Drf_Recover.Recover_Date Is Not Null And 
+        Drf_Recover.Recover_Status Is Not Null And Drf_Recover.Recover_Status='Y'  And
+        (Drf_Recover.Authorize_Status Is Null Or (Drf_Recover.Authorize_Status!='REJECTED' and Drf_Recover.Authorize_Status!='AUTHORIZED'))
+        and Transfer_Trans.STATUS_BY!= #USER_ID:VARCHAR#
+        Union
+        Select distinct LINK_BATCH_ID As Trans_Id,Amount,Recover_Date From 
+        CASH_TRANS Join Drf_Recover On CASH_TRANS.Link_Batch_Id= Drf_Recover.Link_Id
+        Where Drf_Recover.Recover_Date Is Not Null And 
+        Drf_Recover.Recover_Status Is Not Null And Drf_Recover.Recover_Status='Y'  And
+        (Drf_Recover.Authorize_Status Is Null Or (Drf_Recover.Authorize_Status!='REJECTED' and Drf_Recover.Authorize_Status!='AUTHORIZED'))
+        and CASH_TRANS.STATUS_BY!= #USER_ID:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="getSelectDrfRec" result-map="getDrfRecTOResult">
+        Select D.Drf_Transid,D.Drf_Prod_Id,D.Member_No,D.Recovery_Amount,D.Recover_Date,
+        D.Recover_Status,D.Drf_Paid_Date,D.Authorize_Status,D.Authorize_Date,
+        D.Authorize_By,D.Status,
+        get_cust_name(c.cust_id) As Name,
+        Ca.Street ||' '||Ca.Area ||' '||Ca.City As Address,
+        Ct.Amount
+        From Drf_Recover  D 
+        Join Customer  C On D.Member_No=C.Membership_No 
+        Join Cust_Addr  Ca On C.Cust_Id = Ca.Cust_Id
+        Join Cash_Trans Ct On Ct.Link_Batch_Id= D.Link_Id
+               
+        Where (D.Status NOT IN ('DELETED') Or D.Status Is Null) And 
+        (D.Authorize_Status Is Null Or D.Authorize_Status!='REJECTED') 
+        And D.Link_Id=#TRANS_ID:VARCHAR#
+        Union
+        Select D.Drf_Transid,D.Drf_Prod_Id,D.Member_No,D.Recovery_Amount,D.Recover_Date,
+        D.Recover_Status,D.Drf_Paid_Date,D.Authorize_Status,D.Authorize_Date,
+        D.Authorize_By,D.Status,
+        get_cust_name(c.cust_id) As Name,
+        Ca.Street ||' '||Ca.Area ||' '||Ca.City As Address,
+        Tt.Amount
+        From Drf_Recover  D 
+        Join Customer  C On D.Member_No=C.Membership_No 
+        Join Cust_Addr  Ca On C.Cust_Id = Ca.Cust_Id
+        join TRANSFER_TRANS tt on tt.LINK_BATCH_ID= D.Link_Id
+               
+        Where (D.Status NOT IN ('DELETED') Or D.Status Is Null) And 
+        (D.Authorize_Status Is Null Or D.Authorize_Status!='REJECTED') 
+        And D.Link_Id=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+              
+    <mapped-statement name="getSelectDrfRecAuthList" result-class="java.util.LinkedHashMap" >
+        SELECT DRF_TRANSID,DRF_PAID_DATE,RECOVERY_AMOUNT FROM DRF_RECOVER WHERE LINK_ID = #DRF_TRANS_ID#
+    </mapped-statement>
+                
+    <mapped-statement name="authorizeDrfRec" result-class="java.util.HashMap">
+        UPDATE DRF_RECOVER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DATE = #CURR_DATE:DATE#
+        WHERE  LINK_ID = #DRF_TRANS_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="RejectDrfRec" result-class="java.util.HashMap">
+        Update Drf_Recover  Set 
+        Recover_Date=Null,Recover_Status=Null,Authorize_Date=Null,
+        AUTHORIZE_BY=null,LINK_ID=null,AUTHORIZE_STATUS=null
+        WHERE  LINK_ID = #DRF_TRANS_ID:VARCHAR#
+    </mapped-statement>
+               
+    <mapped-statement name="getMemberDetailsForDrfRec" result-class = "java.util.HashMap">
+        SELECT get_cust_name(c.cust_id) AS NAME ,STREET  || '  '  || AREA || CITY
+        AS ADDRESS,MEMBERSHIP_NO AS MEMBER_NO FROM CUSTOMER C,CUST_ADDR  CA WHERE MEMBERSHIP_NO = #MEMBERSHIP_NO:VARCHAR# AND
+        C.CUST_ID = CA.CUST_ID  AND ADDR_TYPE = COMM_ADDR_TYPE
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+               
+      
+
+</sql-map>

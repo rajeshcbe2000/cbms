@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ViewLogImportanceTOMap">
+
+	<!-- Use ViewLogImportanceTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertViewLogImportanceTO" inline-parameters="true">
+        INSERT INTO LOG_IMPORTANCE
+        (IMP_ID, MODULE, SCREEN, ACTIVITY, IMPORTANCE, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #impId:VARCHAR#, #module:VARCHAR#, #screen:VARCHAR#, #activity:VARCHAR#, #importance:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use ViewLogImportanceTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateViewLogImportanceTO" inline-parameters="true">
+        UPDATE LOG_IMPORTANCE SET 
+        MODULE = #module:VARCHAR#,
+        SCREEN = #screen:VARCHAR#,
+        ACTIVITY = #activity:VARCHAR#,
+        IMPORTANCE = #importance:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE IMP_ID = #impId:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use ViewLogImportanceTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteViewLogImportanceTO" inline-parameters="true">
+        UPDATE LOG_IMPORTANCE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE IMP_ID = #impId:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ViewLogImportanceTO object (JavaBean) properties -->
+    <result-map name="getViewLogImportanceTOResult" class="com.see.truetransact.transferobject.sysadmin.viewlogimportance.ViewLogImportanceTO">
+        <property name="impId" column="IMP_ID"/>
+        <property name="module" column="MODULE"/>
+        <property name="screen" column="SCREEN"/>
+        <property name="activity" column="ACTIVITY"/>
+        <property name="importance" column="IMPORTANCE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectViewLogImportanceTO" result-map="getViewLogImportanceTOResult" >
+        SELECT * FROM LOG_IMPORTANCE 
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectViewLogImportanceMaxSLNO" result-class = "java.util.LinkedHashMap" >
+        SELECT MAX(IMP_ID) AS MAX_SL_NO FROM LOG_IMPORTANCE WHERE STATUS = 'DELETED'
+    </mapped-statement>
+</sql-map>

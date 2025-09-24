@@ -1,0 +1,1028 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RollBackMap">
+
+    <dynamic-mapped-statement name="getSelectCashTransactionRollBackTOList" result-class="java.util.LinkedHashMap" >
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(CU.CUST_ID)  AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.PARTICULARS,CT.PROD_ID,CT.PROD_TYPE
+
+        FROM CASH_TRANS CT, ACT_MASTER AM, CUSTOMER CU 
+        WHERE CT.ACT_NUM = AM.ACT_NUM AND AM.CUST_ID = CU.CUST_ID 
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND 
+        CT.STATUS !='DELETED'
+        AND CT.LINK_BATCH_ID IS NULL 
+        AND (CT.AUTHORIZE_STATUS IS NOT NULL AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        AND CT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+              <!-- ========================= FOR SUSPENSE ACCOUNT =================================== -->
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        SAM.SUSPENSE_NAME  AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.PARTICULARS,CT.PROD_ID,CT.PROD_TYPE
+
+        FROM CASH_TRANS CT left join SUSPENSE_ACCOUNT_MASTER SAM on CT.ACT_NUM = SAM.SUSPENSE_ACCT_NUM
+        join CUSTOMER CU on SAM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID
+        WHERE   
+        CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND 
+        CT.STATUS !='DELETED'
+        AND CT.LINK_BATCH_ID IS NULL 
+        AND (CT.AUTHORIZE_STATUS IS NOT NULL AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        AND CT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+              <!--========================= END SUSPENSE ACCOUNT ===================================-->
+
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(cu.cust_id) AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.PARTICULARS,CT.PROD_ID,CT.PROD_TYPE
+        FROM CASH_TRANS CT, DEPOSIT_ACINFO DP, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS
+        WHERE CT.ACT_NUM = DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO AND
+        (CT.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL) AND                                            
+        NOT EXISTS (SELECT DPS.PROD_ID FROM DEPOSITS_PRODUCT DPS,DEPOSITS_PROD_RENEWAL DPR WHERE BEHAVES_LIKE = 'DAILY' AND DP.PROD_ID=DPS.PROD_ID AND DPS.PROD_ID=DPR.PROD_ID
+        AND (DPR.PARTIAL_WITHDRAWAL_ALLOWED = 'N' OR  DPR.PARTIAL_WITHDRAWAL_ALLOWED IS NULL)) AND
+        DP.DEPOSIT_NO = DS.DEPOSIT_NO 
+        AND DP.CUST_ID = CU.CUST_ID AND
+        CT.STATUS !='DELETED'
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND (CT.AUTHORIZE_STATUS IS NOT NULL AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        AND CT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", 
+        DECODE(CT.ACT_NUM, NULL, CT.LINK_BATCH_ID, CT.ACT_NUM) as "Account No",
+        AC.AC_HD_DESC AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.PARTICULARS,CT.PROD_ID,CT.PROD_TYPE
+
+        FROM CASH_TRANS CT, GL G, AC_HD AC 
+        WHERE CT.ACT_NUM IS NULL AND 
+        CT.AC_HD_ID = G.AC_HD_ID AND 
+        G.AC_HD_ID = AC.AC_HD_ID AND 
+        CT.AC_HD_ID = AC.AC_HD_ID AND
+        CT.STATUS !='DELETED'                                        
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND (CT.AUTHORIZE_STATUS IS NOT NULL AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        AND CT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(cu.cust_id) AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.PARTICULARS,CT.PROD_ID,CT.PROD_TYPE
+
+              FROM CASH_TRANS CT, LOANS_FACILITY_DETAILS AM, CUSTOMER CU, LOANS_BORROWER LB
+              WHERE CT.ACT_NUM = AM.ACCT_NUM AND LB.CUST_ID = CU.CUST_ID 
+              AND LB.BORROW_NO = AM.BORROW_NO 
+              AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND
+               CT.STATUS !='DELETED'
+                    AND (CT.AUTHORIZE_STATUS IS NOT NULL AND
+                     CT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+              AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+              <!-- Below "AND" condition is modified by Ajay Sharma on 16-May-2014-->
+              AND CT.TRANS_DT = #TRANS_DT:DATE#
+                <dynamic>
+                    <isParameterPresent>
+                        <isNotNull  property="TRANS_ID">
+                            TRANS_ID = #TRANS_ID:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+                </dynamic>
+                UNION
+                SELECT   CT.TRANS_ID AS "TRANS_ID", CT.AC_HD_ID AS "ACCT_HD_ID",
+         DECODE(CT.ACT_NUM,NULL,CT.LINK_BATCH_ID,CT.ACT_NUM) AS "Account No",
+         AB.PROD_DESC AS "Customer",
+         CT.AMOUNT, CT.TRANS_TYPE, CT.PARTICULARS, CT.PROD_ID, CT.PROD_TYPE
+         FROM CASH_TRANS CT,
+         OTHER_BANKS_ACT_MASTER AB
+        WHERE (AB.ACT_MASTER_ID=CT.ACT_NUM OR AB.ACT_MASTER_ID=CT.LINK_BATCH_ID)
+            AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+            AND CT.STATUS != 'DELETED'
+            AND CT.AUTHORIZE_STATUS = 'AUTHORIZED'
+            AND CT.TRANS_DT = #TRANS_DT:DATE#
+       <dynamic>
+                    <isParameterPresent>
+                        <isNotNull  property="TRANS_ID">
+                            TRANS_ID = #TRANS_ID:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+                </dynamic>
+          UNION
+              SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+              get_cust_name(cu.cust_id) AS "Customer", CT.Amount,
+              CT.TRANS_TYPE, CT.PARTICULARS,CT.PROD_ID,CT.PROD_TYPE
+
+        FROM CASH_TRANS CT, AGRI_LOANS_FACILITY_DETAILS AM, CUSTOMER CU, AGRI_LOANS_BORROWER LB
+        WHERE CT.ACT_NUM = AM.ACCT_NUM AND LB.CUST_ID = CU.CUST_ID 
+        AND LB.BORROW_NO = AM.BORROW_NO 
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND
+        CT.STATUS !='DELETED'
+        AND (CT.AUTHORIZE_STATUS IS NOT NULL AND
+        CT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        AND CT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY 1
+    </dynamic-mapped-statement>
+	
+    <mapped-statement name="getSelectOperativeActOpeningList" result-class="java.util.LinkedHashMap">
+        SELECT ACT_NUM,get_cust_name(c.cust_id) AS "CUSTOMER NAME", C.MEMBERSHIP_NO AS MEMBER_NO, C.CUST_ID,CLEAR_BALANCE AS AMOUNT,AM.PROD_ID, 
+        'OA' AS PROD_TYPE FROM ACT_MASTER AM,CUSTOMER C WHERE AM.CUST_ID=C.CUST_ID AND AM.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND AM.CREATE_DT=#TRANS_DT:DATE# AND AM.STATUS!='DELETED' 
+        AND AM.ACT_STATUS_ID!='CLOSED' AND AM.AUTHORIZATION_STATUS='AUTHORIZED' ORDER BY ACT_NUM
+    </mapped-statement>
+    <mapped-statement name = "updateIndendRegister" result-class = "java.util.LinkedHashMap">
+    UPDATE INDEND_REGISTER SET STATUS=#STATUS:VARCHAR#,AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#
+   WHERE TRAN_DATE=#TRANS_DT:DATE# AND IRID=#IRID:VARCHAR#
+        </mapped-statement>
+
+    <mapped-statement name = "updateTradeExpenseRegister" result-class = "java.util.LinkedHashMap">
+      UPDATE tradeexpense_entry SET STATUS=#STATUS:VARCHAR#,AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#
+      WHERE  TRADEEXEPENSE_ID=#TRADEEXEPENSE_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name = "updateABMaster" result-class = "java.util.LinkedHashMap">
+    UPDATE OTHER_BANKS_ACT_MASTER SET STATUS=#STATUS:VARCHAR#,AUTHORIZED_STATUS=#AUTHORIZE_STATUS:VARCHAR#
+    WHERE ACT_OPEN_DT=#TRANS_DT:DATE# AND ACT_MASTER_ID=#ACT_MASTER_ID:VARCHAR#
+        </mapped-statement>
+    <mapped-statement name = "updateInvMaster" result-class = "java.util.LinkedHashMap">
+        UPDATE INVESTMENT_MASTER SET STATUS=#STATUS:VARCHAR#,AUTHORIZED_STATUS=#AUTHORIZE_STATUS:VARCHAR#
+        WHERE INVESTMENT_ISSUE_DT=#TRANS_DT:DATE# AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateInvDeposit" result-class = "java.util.LinkedHashMap">
+        UPDATE INVESTMENT_DEPOSIT SET STATUS=#STATUS:VARCHAR#,AUTHORIZED_STATUS=#AUTHORIZE_STATUS:VARCHAR#
+        WHERE INVESTMENT_ISSUE_DT=#TRANS_DT:DATE# AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name = "updateInvTransDetails" result-class = "java.util.LinkedHashMap">
+        UPDATE INVESTMENT_TRANS_DETAILS SET STATUS=#STATUS:VARCHAR#,AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR#
+        WHERE TRANS_DT=#TRANS_DT:DATE# AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectIndendTrans" result-class="java.util.LinkedHashMap">
+    select distinct(IR.IRID),IR.DEPID,IR.TRANS_TYPE,IR.STORE_NAME,IR.AMOUNT,IR.TIN_NO,IR.SALES_DATE
+    from INDEND_REGISTER ir
+    where  IR.TRAN_DATE =#TRANS_DT:DATE#
+    and IR.STATUS='CREATED'
+    and ir.AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name="getABDetails" result-class="java.util.LinkedHashMap">
+    SELECT ACT_MASTER_ID,ACCOUNT_TYPE,PROD_ID,PROD_DESC,ACT_REF_NO,AVAILABLE_BALANCE
+    FROM OTHER_BANKS_ACT_MASTER WHERE AUTHORIZED_STATUS='AUTHORIZED' AND STATUS='CREATED' 
+    AND ACT_OPEN_DT=#TRANS_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getInvDetails" result-class="java.util.LinkedHashMap">
+    SELECT INVESTMENT_ID,INVESTMENT_TYPE,INVESTMENT_PROD_ID,INVESTMENT_PROD_DESC,
+    INVESTMENT_REF_NO,AVAILABLE_BALANCE FROM INVESTMENT_MASTER WHERE 
+    AUTHORIZED_STATUS='AUTHORIZED' AND INVESTMENT_ISSUE_DT=#TRANS_DT:DATE# AND STATUS!='DELETED'
+    AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#    
+    </mapped-statement>
+    <mapped-statement name="updateABMasterRollBack11" result-class="java.util.LinkedHashMap">
+	UPDATE OTHER_BANKS_ACT_MASTER SET
+	AVAILABLE_BALANCE= AVAILABLE_BALANCE+#AMOUNT:NUMERIC#,
+	CLEAR_BALANCE= CLEAR_BALANCE+#AMOUNT:NUMERIC#
+	WHERE ACT_MASTER_ID=#ACT_MASTER_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getABTransDetails" result-class="java.util.LinkedHashMap">
+        SELECT CT.TRANS_ID,AB.ACT_MASTER_ID,CT.AMOUNT,CT.TRANS_TYPE FROM OTHER_BANKS_ACT_MASTER AB,CASH_TRANS CT
+        WHERE AB.ACT_MASTER_ID=CT.ACT_NUM
+        AND AB.AUTHORIZED_STATUS=CT.AUTHORIZE_STATUS
+        AND AB.STATUS=CT.STATUS
+        AND CT.TRANS_DT=#TRANS_DT:DATE#
+        AND CT.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND CT.STATUS='CREATED'
+        AND CT.TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getABTransferTransDetails" result-class="java.util.LinkedHashMap">
+        SELECT CT.BATCH_ID,AB.ACT_MASTER_ID,CT.AMOUNT,CT.TRANS_TYPE 
+        FROM OTHER_BANKS_ACT_MASTER AB,TRANSFER_TRANS CT
+        WHERE AB.ACT_MASTER_ID=CT.ACT_NUM
+        AND AB.AUTHORIZED_STATUS=CT.AUTHORIZE_STATUS
+        AND AB.STATUS=CT.STATUS
+        AND CT.TRANS_DT=#TRANS_DT:DATE#
+        AND CT.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND CT.STATUS='CREATED'
+        AND CT.BATCH_ID=#BATCH_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectOperativeActClosingList" result-class="java.util.LinkedHashMap">
+        SELECT ACT_NUM,get_cust_name(c.cust_id) AS "CUSTOMER NAME", C.MEMBERSHIP_NO AS MEMBER_NO, C.CUST_ID,AM.PROD_ID, 'OA' AS PROD_TYPE FROM 
+        ACT_MASTER AM,CUSTOMER C WHERE AM.CUST_ID=C.CUST_ID AND AM.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND AM.LAST_TRANS_DT=#TRANS_DT:DATE# AND AM.STATUS!='DELETED' AND 
+        AM.ACT_STATUS_ID='CLOSED' AND CLEAR_BALANCE ='0' AND AM.AUTHORIZATION_STATUS='AUTHORIZED' ORDER BY ACT_NUM
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectDepositOpeningList" result-class="java.util.LinkedHashMap">
+        SELECT DSA.DEPOSIT_NO AS ACT_NUM,get_cust_name(c.cust_id) AS "CUSTOMER NAME", C.MEMBERSHIP_NO AS MEMBER_NO, C.CUST_ID,DSA.DEPOSIT_AMT AS AMOUNT,
+        DA.PROD_ID, 'TD' AS PROD_TYPE FROM DEPOSIT_SUB_ACINFO DSA, DEPOSIT_ACINFO DA, CUSTOMER C WHERE C.CUST_ID=DA.CUST_ID AND  DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# AND 
+        DSA.DEPOSIT_DT=#TRANS_DT:DATE# AND DA.STATUS!='DELETED' AND RENEWAL_FROM_DEPOSIT IS NULL AND RENEWAL_COUNT IS NULL AND DA.AUTHORIZE_STATUS='AUTHORIZED' AND 
+        DA.DEPOSIT_STATUS!='CLOSED' AND DA.DEPOSIT_NO=DSA.DEPOSIT_NO ORDER BY DSA.DEPOSIT_NO
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getSelectDepositClosingList" result-class="java.util.LinkedHashMap">
+<!--        SELECT DSA.DEPOSIT_NO AS ACT_NUM,C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "CUSTOMER NAME", C.MEMBERSHIP_NO AS MEMBER_NO, C.CUST_ID,DA.PROD_ID, 'TD' AS PROD_TYPE 
+        FROM DEPOSIT_SUB_ACINFO DSA, DEPOSIT_ACINFO DA, CUSTOMER C WHERE C.CUST_ID=DA.CUST_ID AND  DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# AND DSA.CLOSE_DT=#TRANS_DT:DATE# AND 
+        DA.STATUS!='DELETED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="ACT_NUM">
+                    and DA.DEPOSIT_NO = #ACT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND DA.AUTHORIZE_STATUS='AUTHORIZED' AND DA.DEPOSIT_STATUS='CLOSED' AND 
+        DA.DEPOSIT_NO=DSA.DEPOSIT_NO ORDER BY DSA.DEPOSIT_NO-->        
+        SELECT DISTINCT DSA.DEPOSIT_NO AS ACT_NUM, get_cust_name(c.cust_id) AS "CUSTOMER NAME",
+        C.MEMBERSHIP_NO AS MEMBER_NO, C.CUST_ID, DA.PROD_ID, 'TD' AS PROD_TYPE
+        FROM DEPOSIT_SUB_ACINFO DSA, DEPOSIT_ACINFO DA, CUSTOMER C,ALL_TRANS AT
+        WHERE C.CUST_ID = DA.CUST_ID AND DSA.CLOSE_DT = #TRANS_DT:DATE# AND AT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="ACT_NUM">
+                    and DA.DEPOSIT_NO = #ACT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND DA.STATUS != 'DELETED' AND DA.AUTHORIZE_STATUS = 'AUTHORIZED' AND DA.DEPOSIT_STATUS = 'CLOSED' AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        AND AT.ACT_NUM = DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND AT.AUTHORIZE_STATUS = 'AUTHORIZED' AND (AT.AUTHORIZE_REMARKS IS NULL OR AT.AUTHORIZE_REMARKS != 'REVERSED') ORDER BY DSA.DEPOSIT_NO        
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectMDSReceiptList" result-class="java.util.LinkedHashMap">
+        SELECT MRE.CHITTAL_NO ||'_'||MRE.SUB_NO AS CHITTAL_NO, MEMBER_NAME, MRE.NET_AMT,MRE.NET_TRANS_ID AS TRANS_ID,MRE.SCHEME_NAME,'MDS' AS PROD_TYPE  FROM MDS_RECEIPT_ENTRY MRE,
+        MDS_TRANS_DETAILS MTD WHERE INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# AND TRANS_DT=#TRANS_DT:DATE# AND MRE.STATUS!='DELETED'
+        AND MRE.CHITTAL_NO=MTD.CHITTAL_NO AND MRE.NET_TRANS_ID=MTD.NET_TRANS_ID AND MTD.TRANS_DT=MRE.STATUS_DT
+        AND MTD.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND MRE.GDS_NO IS NULL
+        ORDER BY CHITTAL_NO
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectMDSTransIDList" result-class = "java.util.LinkedHashMap">
+        SELECT SCHEME_NAME,CHITTAL_NO,SUB_NO,CURR_INST-NVL(PENDING_INST,0) AS INSTALLMENT_NO,INST_TRANS_ID,PENAL_TRANS_ID,BONUS_TRANS_ID,DISCOUNT_TRANS_ID,MDS_INT_TRANS_ID,NET_TRANS_ID,
+        ARBITRATION_ID,NOTICE_ID,PENAL_WAIVE_TRANS_ID,ARC_WAIVE_TRANS_ID,NOTICE_WAIVE_TRANS_ID FROM MDS_RECEIPT_ENTRY WHERE NET_TRANS_ID = #TRANS_ID:VARCHAR# AND INITIATED_BRANCH=#INITIATED_BRANCH:VARCHAR# AND STATUS_DT=#TRANS_DT:DATE# 
+        AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectRollBackBankAdvanceDetailsData" result-class = "java.util.LinkedHashMap">
+        SELECT * FROM MDS_BANK_ADVANCE WHERE REPAID='Y' AND  SCHEME_NAME=#SCHEME_NAME:VARCHAR# AND CHITTAL_NO = #CHITTAL_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER# AND 
+        INSTALLMENT_NO&gt;=#INSTALLMENT_NO:NUMBER# AND STATUS!='DELETED' AND AUTHORIZE_STATUS ='AUTHORIZED' ORDER BY BANK_ADV_ID
+    </mapped-statement>
+    
+    <mapped-statement name = "updateMDSTransRollBackStatus" result-class = "java.util.LinkedHashMap">
+        <!--UPDATE MDS_TRANS_DETAILS SET AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,AUTHORIZE_DT = (SELECT SYSDATE FROM DUAL), AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR# 
+        WHERE NET_TRANS_ID = #NET_TRANS_ID:VARCHAR# AND STATUS_DT=#TRANS_DT:DATE# -->
+        
+        DELETE FROM MDS_TRANS_DETAILS WHERE NET_TRANS_ID = #NET_TRANS_ID:VARCHAR# AND STATUS_DT=#TRANS_DT:DATE#        
+        
+    </mapped-statement>
+    
+    <mapped-statement name="updateRollBackMDSBankAdvanceRepaidStatus" result-class="java.util.HashMap">
+        UPDATE MDS_BANK_ADVANCE SET REPAID='N' WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' AND 
+        INSTALLMENT_NO &gt;= #INSTALLMENT_NO:NUMBER# AND CHITTAL_NO = #CHITTAL_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectTransferTransactionRollBackTOList" result-class="java.util.LinkedHashMap" >
+        SELECT TT.BATCH_ID as "BATCH_ID", TT.AC_HD_ID as "ACCT_HD_ID", TT.ACT_NUM as "Account No",
+        get_cust_name(CU.CUST_ID)  AS "Customer", TT.Amount,
+        TT.TRANS_TYPE, TT.PARTICULARS,TT.PROD_ID,TT.PROD_TYPE
+
+        FROM TRANSFER_TRANS TT, ACT_MASTER AM, CUSTOMER CU 
+        WHERE TT.ACT_NUM = AM.ACT_NUM AND AM.CUST_ID = CU.CUST_ID 
+        AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND 
+        TT.STATUS !='DELETED'
+        AND TT.LINK_BATCH_ID IS NULL 
+        AND (TT.AUTHORIZE_STATUS IS NOT NULL AND
+        TT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (TT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL)
+        AND TT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+              <!-- ========================= FOR SUSPENSE ACCOUNT =================================== -->
+        UNION
+        SELECT  TT.BATCH_ID as "BATCH_ID", TT.AC_HD_ID as "ACCT_HD_ID", TT.ACT_NUM as "Account No",
+        SAM.SUSPENSE_NAME  AS "Customer", TT.Amount,
+        TT.TRANS_TYPE, TT.PARTICULARS,TT.PROD_ID,TT.PROD_TYPE
+
+        FROM SUSPENSE_ACCOUNT_MASTER SAM left join CUSTOMER CU on 
+        SAM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID join TRANSFER_TRANS TT on TT.ACT_NUM = SAM.SUSPENSE_ACCT_NUM
+        WHERE <!--TT.ACT_NUM = SAM.SUSPENSE_ACCT_NUM AND SAM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID(+) 
+        AND -->TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND 
+        TT.STATUS !='DELETED'
+        AND TT.LINK_BATCH_ID IS NULL 
+        AND (TT.AUTHORIZE_STATUS IS NOT NULL AND
+        TT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (TT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL)
+        AND TT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+              <!--========================= END SUSPENSE ACCOUNT ===================================-->
+
+        UNION
+        SELECT TT.BATCH_ID as "BATCH_ID", TT.AC_HD_ID as "ACCT_HD_ID", TT.ACT_NUM as "Account No",
+       get_cust_name(cu.cust_id) AS "Customer", TT.Amount,
+        TT.TRANS_TYPE, TT.PARTICULARS,TT.PROD_ID,TT.PROD_TYPE
+        FROM TRANSFER_TRANS TT, DEPOSIT_ACINFO DP, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS
+        WHERE TT.ACT_NUM = DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO AND
+        (TT.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL) AND                                            
+        NOT EXISTS (SELECT DPS.PROD_ID FROM DEPOSITS_PRODUCT DPS,DEPOSITS_PROD_RENEWAL DPR WHERE BEHAVES_LIKE = 'DAILY' AND DP.PROD_ID=DPS.PROD_ID AND DPS.PROD_ID=DPR.PROD_ID
+        AND (DPR.PARTIAL_WITHDRAWAL_ALLOWED = 'N' OR  DPR.PARTIAL_WITHDRAWAL_ALLOWED IS NULL)) AND
+        DP.DEPOSIT_NO = DS.DEPOSIT_NO 
+        AND DP.CUST_ID = CU.CUST_ID AND
+        TT.STATUS !='DELETED'
+        AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND (TT.AUTHORIZE_STATUS IS NOT NULL AND
+        TT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (TT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL)
+        AND TT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        UNION
+        SELECT TT.BATCH_ID as "BATCH_ID", TT.AC_HD_ID as "ACCT_HD_ID", 
+        DECODE(TT.ACT_NUM, NULL, TT.LINK_BATCH_ID, TT.ACT_NUM) as "Account No",
+        AC.AC_HD_DESC AS "Customer", TT.Amount,
+        TT.TRANS_TYPE, TT.PARTICULARS,TT.PROD_ID,TT.PROD_TYPE
+
+        FROM TRANSFER_TRANS TT, GL G, AC_HD AC 
+        WHERE TT.ACT_NUM IS NULL AND 
+        TT.AC_HD_ID = G.AC_HD_ID AND 
+        G.AC_HD_ID = AC.AC_HD_ID AND 
+        TT.AC_HD_ID = AC.AC_HD_ID AND
+        TT.STATUS !='DELETED'                                        
+        AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND (TT.AUTHORIZE_STATUS IS NOT NULL AND
+        TT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (TT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL)
+        AND TT.TRANS_DT = #TRANS_DT:DATE#
+        and TT.SCREEN_NAME not in ('MDS Standing Instruction')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        UNION
+        SELECT TT.BATCH_ID as "BATCH_ID", TT.AC_HD_ID as "ACCT_HD_ID", TT.ACT_NUM as "Account No",
+        get_cust_name(cu.cust_id) AS "Customer", TT.Amount,
+        TT.TRANS_TYPE, TT.PARTICULARS,TT.PROD_ID,TT.PROD_TYPE
+
+              FROM TRANSFER_TRANS TT, LOANS_FACILITY_DETAILS AM, CUSTOMER CU, LOANS_BORROWER LB
+              WHERE TT.ACT_NUM = AM.ACCT_NUM AND LB.CUST_ID = CU.CUST_ID 
+              AND LB.BORROW_NO = AM.BORROW_NO 
+              AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND
+               TT.STATUS !='DELETED'
+                    AND (TT.AUTHORIZE_STATUS IS NOT NULL AND
+                     TT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+              AND (TT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL)
+              AND TT.TRANS_DT = #TRANS_DT:DATE#
+                <dynamic>
+                    <isParameterPresent>
+                        <isNotNull  property="TRANS_ID">
+                            TRANS_ID = #TRANS_ID:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+                </dynamic>
+                UNION
+             SELECT   TT.BATCH_ID AS "BATCH_ID", TT.AC_HD_ID AS "ACCT_HD_ID",
+         TT.ACT_NUM AS "Account No",
+         AM.PROD_DESC AS "Customer",
+         TT.AMOUNT, TT.TRANS_TYPE, TT.PARTICULARS, TT.PROD_ID, TT.PROD_TYPE
+    FROM TRANSFER_TRANS TT,
+         OTHER_BANKS_ACT_MASTER AM
+         WHERE  AM.ACT_MASTER_ID=TT.ACT_NUM
+     AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+    AND TT.STATUS != 'DELETED'
+     AND (    TT.AUTHORIZE_STATUS IS NOT NULL
+     AND TT.AUTHORIZE_STATUS = 'AUTHORIZED'
+       )
+     AND TT.TRANS_DT = #TRANS_DT:DATE#
+                <dynamic>
+                    <isParameterPresent>
+                        <isNotNull  property="TRANS_ID">
+                            TRANS_ID = #TRANS_ID:VARCHAR# 
+                        </isNotNull>
+                    </isParameterPresent>
+                </dynamic>
+          UNION
+              SELECT TT.BATCH_ID as "BATCH_ID", TT.AC_HD_ID as "ACCT_HD_ID", TT.ACT_NUM as "Account No",
+              get_cust_name(cu.cust_id) AS "Customer", TT.Amount,
+              TT.TRANS_TYPE, TT.PARTICULARS,TT.PROD_ID,TT.PROD_TYPE
+
+        FROM TRANSFER_TRANS TT, AGRI_LOANS_FACILITY_DETAILS AM, CUSTOMER CU, AGRI_LOANS_BORROWER LB
+        WHERE TT.ACT_NUM = AM.ACCT_NUM AND LB.CUST_ID = CU.CUST_ID 
+        AND LB.BORROW_NO = AM.BORROW_NO 
+        AND TT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND
+        TT.STATUS !='DELETED'
+        AND (TT.AUTHORIZE_STATUS IS NOT NULL AND
+        TT.AUTHORIZE_STATUS = 'AUTHORIZED') 
+        AND (TT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR TT.AUTHORIZE_STATUS_2 IS NULL)
+        AND TT.TRANS_DT = #TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull  property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY 1
+    </dynamic-mapped-statement>
+    
+        
+    <!-- Use CashTransactionTO object (JavaBean) properties as parameters for delete. 
+         Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="rollbackCashTransactionTO" inline-parameters="true">
+        UPDATE CASH_TRANS SET 
+        STATUS = 'DELETED',
+        AUTHORIZE_STATUS = 'REJECTED',
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZE_REMARKS = 'REVERSED'
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#   
+    </mapped-statement>
+
+    <mapped-statement name="rollbackCashTransactionToForTrade" inline-parameters="true">
+        UPDATE CASH_TRANS SET 
+        STATUS = 'DELETED',
+        AUTHORIZE_STATUS = 'REJECTED',
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZE_REMARKS = 'REVERSED'
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# AND
+        TRANS_ID = #TRANS_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#   
+    </mapped-statement>
+    
+        
+    <mapped-statement name="rollbackTransferTransactionTO" inline-parameters="true">
+        UPDATE TRANSFER_TRANS SET 
+        STATUS = 'DELETED',
+        AUTHORIZE_STATUS = 'REJECTED',
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZE_REMARKS = 'REVERSED'
+        WHERE BATCH_ID = #BATCHID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#   
+    </mapped-statement>
+    
+        
+    <mapped-statement name="insertRollBackDetails" inline-parameters="true">
+        INSERT INTO ROLL_BACK_DETAILS
+        (ROLL_BACK_ID, ROLL_BACK_DT, KEY_FIELD, SCREEN_NAME,
+        ROLL_BACK_REASON, STATUS_BY, STATUS_DT, AUTHORIZED_BY
+        ) VALUES (
+        #ROLL_BACK_ID:VARCHAR#, #ROLL_BACK_DT:DATE#, #KEY_FIELD:VARCHAR#, #SCREEN_NAME:VARCHAR#, 
+        #ROLL_BACK_REASON:VARCHAR#, #STATUS_BY:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #AUTHORIZED_BY:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="insertPassBookRollBack" inline-parameters="true">
+        INSERT INTO PASS_BOOK_ROLLBACK
+        ( ROLL_BACK_ID, ACT_NUM, TRANS_DT,  PARTICULARS, INSTRUMENT_NO1, 
+        INSTRUMENT_NO2, DEBIT, CREDIT, BALANCE, PBOOK_FLAG, 
+        SLNO, TRANS_ID, BATCH_ID, INST_TYPE, INST_DT,
+        STATUS, AUTHORIZE_STATUS, AUTHORIZE_DT, PAGENO, CREATED_DT
+        ) VALUES (
+        #ROLL_BACK_ID:VARCHAR#, #ACT_NUM:VARCHAR#, #TRANS_DT:DATE#, #PARTICULARS:VARCHAR#, #INSTRUMENT_NO1:VARCHAR#, 
+        #INSTRUMENT_NO2:VARCHAR#, #DEBIT:NUMERIC#, #CREDIT:NUMERIC#, #BALANCE:NUMERIC#, #PBOOKFLAG:NUMERIC#,
+        #SLNO:NUMERIC#, #TRANS_ID:VARCHAR#, #BATCH_ID:VARCHAR#, #INST_TYPE:VARCHAR#, #INST_DT:DATE#,
+        #STATUS:VARCHAR#, #AUTHORIZE_STATUS:VARCHAR#, #AUTHORIZE_DT:DATE#, #PAGENO:NUMERIC#, #CREATED_DT#)  
+    </mapped-statement>
+    
+    <mapped-statement name="deletePassBookEntry" inline-parameters="true">
+        DELETE FROM PASS_BOOK 
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND
+        TRANS_ID = #TRANS_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND 
+        PAGENO = #PAGENO:NUMBER# AND
+        SLNO = #SLNO:NUMBER#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteMaster" inline-parameters="true">
+	    DELETE FROM OTHER_BANKS_ACT_MASTER 
+	    WHERE ACT_MASTER_ID = #ACT_MASTER_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getPassBookEntryForTransID" result-class="java.util.LinkedHashMap">
+        SELECT * FROM PASS_BOOK PB WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND TRANS_ID=#TRANS_ID:VARCHAR#
+        AND TRANS_DT=#TRANS_DT:DATE# AND DECODE(NVL(DEBIT,0),0.0,NVL(CREDIT,0),NVL(DEBIT,0))=#AMT:NUMBER#
+    </mapped-statement>
+
+    <mapped-statement name="getPassBookEntryForSlNo" result-class="java.util.LinkedHashMap">
+        SELECT * FROM PASS_BOOK PB WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND TRANS_DT&gt;=#TRANS_DT:DATE#
+        AND PAGENO&gt;=#PAGENO:NUMBER# AND SLNO&gt;#SLNO:NUMBER# ORDER BY PAGENO, SLNO
+    </mapped-statement>
+    
+    <mapped-statement name="updatePassBook" inline-parameters="true">
+        UPDATE PASS_BOOK SET 
+        BALANCE = #BALANCE:NUMERIC#,
+        SLNO = #SLNO_NEW:NUMERIC#
+        WHERE
+        ACT_NUM = #ACT_NUM:VARCHAR# AND
+        TRANS_ID = #TRANS_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        PAGENO = #PAGENO:NUMERIC# AND
+        SLNO = #SLNO:NUMERIC#
+    </mapped-statement>
+    
+    <mapped-statement name="getUserDetails" result-class="java.util.HashMap">
+        SELECT *
+        FROM USER_MASTER U
+        WHERE 400 >=
+        (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+        'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1
+        )
+        FROM USER_MASTER UM, ROLE_MASTER RM
+        WHERE RM.ROLE_ID = UM.USER_ROLE
+        AND UM.USER_ID = #APPROVE_USER:VARCHAR#
+        AND UM.PWD = #PWD:VARCHAR#
+        AND UM.USER_ID != #CURR_USER:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+        AND U.USER_ID = #APPROVE_USER:VARCHAR#
+        AND U.PWD = #PWD:VARCHAR#
+        AND U.USER_ID != #CURR_USER:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>    
+    <mapped-statement name="deleteTransDetailsTL" inline-parameters="true">
+        DELETE FROM LOAN_TRANS_DETAILS WHERE ACT_NUM=#ACCOUNTNO:VARCHAR# AND TRANS_ID=#TRANS_ID:VARCHAR# AND TRANS_DT=#TRANS_DT:DATE#
+    </mapped-statement>
+
+    <mapped-statement name="deleteTransDetailsAD" inline-parameters="true">
+        DELETE FROM ADV_TRANS_DETAILS WHERE ACT_NUM=#ACCOUNTNO:VARCHAR# AND TRANS_ID=#TRANS_ID:VARCHAR# AND TRANS_DT=#TRANS_DT:DATE#
+    </mapped-statement>
+
+    <mapped-statement name="selectTransDetailsTL" result-class="java.util.HashMap">
+         SELECT   LTD.ACT_NUM,LTD.BRANCH_ID,LTD.TRANS_DT,LTD.PROD_ID,LTD.TRANS_TYPE,LTD.TRN_CODE,nvl(LTD.PRINCIPLE,0) as PRINCIPLE ,nvl(LTD.PBAL,0) as PBAL,nvl(LTD.INTEREST,0) as INTEREST,
+         nvl(LTD.IBAL,0) as IBAL ,nvl(LTD.PENAL,0) as PENAL ,
+         nvl(LTD.PIBAL,0) as PIBAL,nvl(LTD.EXPENSE,0) as EXPENSE,nvl(LTD.EBAL,0) as EBAL ,
+         LTD.UPTO_DT_INT,LTD.TRN_TYPE,LTD.EFFECTIVE_DATE,LTD.AUTHORIZE_DT,LTD.AUTHORIZE_BY,LTD.AUTHORIZE_STATUS,LTD.TRANS_ID,LTD.TRANS_SLNO,nvl(LTD.NPA_INTEREST,0) as NPA_INTEREST ,
+         nvl(LTD.NPA_INT_BAL,0) as NPA_INT_BAL ,nvl(LTD.NPA_PENAL,0) as NPA_PENAL ,nvl(LTD.NPA_PENAL_BAL,0) as NPA_PENAL_BAL,nvl(LTD.EXCESS_AMT,0) as EXCESS_AMT ,nvl(LTD.POSTAGE_CHARGE,0) as POSTAGE_CHARGE ,nvl(LTD.POSTAGE_CHARGE_BAL,0) as POSTAGE_CHARGE_BAL ,
+         NVL(LTD.ARBITARY_CHARGE,0) as ARBITARY_CHARGE ,NVL(LTD.ARBITARY_CHARGE_BAL,0) as ARBITARY_CHARGE_BAL,NVL(LTD.LEGAL_CHARGE,0) as LEGAL_CHARGE,NVL(LTD.INSURANCE_CHARGE,0) as INSURANCE_CHARGE ,NVL(LTD.INSURANCE_CHARGE_BAL,0) as INSURANCE_CHARGE_BAL,
+         NVL(LTD.LEGAL_CHARGE_BAL,0) as LEGAL_CHARGE_BAL ,NVL(LTD.MISC_CHARGES,0) as MISC_CHARGES,NVL(LTD.MISC_CHARGES_BAL,0) as MISC_CHARGES_BAL ,NVL(LTD.EXE_DEGREE,0) as EXE_DEGREE ,NVL(LTD.EXE_DEGREE_BAL,0) as EXE_DEGREE_BAL,LTD.PRIORITY,LTD.PARTICULARS,
+         LTD.TRANS_MODE,NVL(CAST(LTD.ADVERTISE_CHARGE AS NUMERIC),0) as ADVERTISE_CHARGE ,NVL(CAST(LTD.ADVERTISE_CHARGE_BAL AS NUMERIC),0) as ADVERTISE_CHARGE_BAL ,NVL(LTD.NOTICE_CHARGES,0) as NOTICE_CHARGES,PARTICULARS
+         FROM LOAN_TRANS_DETAILS LTD WHERE ACT_NUM=#ACCOUNTNO:VARCHAR# AND TRANS_SLNO>=(SELECT MIN(TRANS_SLNO) FROM LOAN_TRANS_DETAILS WHERE 
+         LTD.ACT_NUM=ACT_NUM AND ACT_NUM=#ACCOUNTNO:VARCHAR# AND TRANS_ID =#TRANS_ID:VARCHAR# )
+         ORDER BY TRANS_SLNO
+    </mapped-statement>
+
+    <mapped-statement name="selectTransDetailsAD" result-class="java.util.HashMap">
+        SELECT * FROM ADV_TRANS_DETAILS LTD WHERE ACT_NUM=#ACCOUNTNO:VARCHAR# AND TRANS_SLNO>=(SELECT MIN(TRANS_SLNO) FROM ADV_TRANS_DETAILS WHERE 
+        LTD.ACT_NUM=ACT_NUM AND ACT_NUM=#ACCOUNTNO:VARCHAR# AND TRANS_ID =#TRANS_ID:VARCHAR# )
+        ORDER BY TRANS_SLNO
+    </mapped-statement>
+        
+    <mapped-statement name="insertLoanRollBackTransactionDetails" result-class="java.util.HashMap"> 
+        INSERT INTO LOAN_ROLLBACK_TRANS_DETAILS(ROLL_BACK_ID,ACT_NUM,PROD_ID,TRANS_TYPE,BRANCH_ID,TRN_CODE,PRINCIPLE,PBAL,INTEREST,IBAL,
+        PENAL,PIBAL,EXPENSE,EBAL,UPTO_DT_INT,TRANS_DT,TRANS_ID,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,TRANS_SLNO,NPA_INTEREST,NPA_INT_BAL,
+        NPA_PENAL,NPA_PENAL_BAL,EXCESS_AMT,POSTAGE_CHARGE,POSTAGE_CHARGE_BAL,ARBITARY_CHARGE,ARBITARY_CHARGE_BAL,LEGAL_CHARGE,
+        INSURANCE_CHARGE,INSURANCE_CHARGE_BAL,LEGAL_CHARGE_BAL,EXE_DEGREE,EXE_DEGREE_BAL,MISC_CHARGES,MISC_CHARGES_BAL,PARTICULARS,TRANS_MODE,ADVERTISE_CHARGE,ADVERTISE_CHARGE_BAL)
+        VALUES
+        (#ROLL_BACK_ID:VARCHAR#,#ACCOUNTNO:VARCHAR#,#PROD_ID:VARCHAR#,#TRANS_TYPE:VARCHAR#,#BRANCH_ID:VARCHAR#,#TRN_CODE:VARCHAR#,#PRINCIPLE:NUMBER#,#PBAL:NUMBER#,
+        #INTEREST:NUMBER#,#IBAL:NUMBER#,#PENAL:NUMBER#,#PIBAL:NUMBER#,#EXPENSE:NUMBER#,#EBAL:NUMBER#,#UPTO_DT_INT:VARCHAR#,
+        #TRANS_DT:TIMESTAMP#,#TRANS_ID:VARCHAR#,#AUTHORIZE_STATUS:VARCHAR#,#AUTHORIZE_BY:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#TRANS_SLNO:NUMBER#,
+        #NPA_INTEREST:NUMBER#,#NPA_INT_BAL:NUMBER#,#NPA_PENAL:NUMBER#,#NPA_PENAL_BAL:NUMBER#,#EXCESS_AMT:NUMBER#,
+        #POSTAGE_CHARGE:NUMBER#,#POSTAGE_CHARGE_BAL:NUMBER#,#ARBITARY_CHARGE:NUMBER#,#ARBITARY_CHARGE_BAL:NUMBER#,
+        #LEGAL_CHARGE:NUMBER#,#INSURANCE_CHARGE:NUMBER#,#INSURANCE_CHARGE_BAL:NUMBER#,#LEGAL_CHARGE_BAL:NUMBER#,#EXE_DEGREE:NUMBER#,
+        #EXE_DEGREE_BAL:NUMBER#,#MISC_CHARGES:NUMBER#,#MISC_CHARGES_BAL:NUMBER#,#PARTICULARS:VARCHAR#,#TRANS_MODE:VARCHAR#,#ADVERTISE_CHARGE:VARCHAR#,#ADVERTISE_CHARGE_BAL:VARCHAR#)
+    </mapped-statement>  
+
+    <mapped-statement name="getSelectLoanMaxTransDt"  result-class="java.util.HashMap">
+        SELECT MAX(TRANS_DT) AS TRANS_DT FROM LOAN_TRANS_DETAILS WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED' AND UPTO_DT_INT='Y'  AND TRANS_DT &lt;#TRANS_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLoanMaxTransDtAD"  result-class="java.util.HashMap">
+        SELECT MAX(TRANS_DT) AS TRANS_DT FROM ADV_TRANS_DETAILS WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND AUTHORIZE_STATUS='AUTHORIZED'  AND UPTO_DT_INT='Y'  AND TRANS_DT &lt;#TRANS_DT:DATE#
+    </mapped-statement>
+
+    <mapped-statement name="getTermLoanChargePaidAmount" result-class="java.util.HashMap">
+        SELECT * FROM LOANS_ACCT_CHARGE_DETAILS WHERE NVL(PAID_AMT,0) >= 0 AND ACT_NUM = #ACT_NUM:VARCHAR# AND CHARGE_TYPE=#CHARGE_TYPE:VARCHAR# 
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectTermLoanRollBackList" result-class="java.util.LinkedHashMap" >
+        SELECT FD.ACCT_NUM,fd.renewal_acct_no AS renewed_loan_no,get_cust_name(CUST.CUST_ID) AS Name ,FD.PROD_ID,  FD.BORROW_NO,  LSD.LIMIT AS SANCTION_AMT 
+            <!--,FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1, FD.AUTHORIZE_BY_2, FD.AUTHORIZE_STATUS_2 -->
+        FROM LOANS_BORROWER LB, LOANS_FACILITY_DETAILS FD, CUSTOMER CUST ,LOANS_SANCTION_DETAILS LSD
+        WHERE LB.CUST_ID = CUST.CUST_ID AND LB.BORROW_NO = FD.BORROW_NO  AND  FD.BORROW_NO =LSD.BORROW_NO
+        AND FD.STATUS NOT IN ('DELETED') AND LSD.STATUS !='DELETED' AND
+        FD.BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        (DECODE((SELECT BEHAVES_LIKE FROM LOANS_PRODUCT WHERE STATUS IN ('CREATED', 'MODIFIED') AND PROD_ID = FD.PROD_ID), 
+        'OD', 1, 
+        (DECODE((SELECT BEHAVES_LIKE FROM LOANS_PRODUCT WHERE STATUS IN ('CREATED', 'MODIFIED') AND PROD_ID = FD.PROD_ID), 
+        'CC', 1,(SELECT COUNT(ACCT_NUM) FROM LOANS_REPAY_SCHEDULE WHERE ACCT_NUM = FD.ACCT_NUM AND STATUS IN ('CREATED', 'MODIFIED'))))) > 0) 
+        AND (FD.STATUS_BY != #STATUS_BY:VARCHAR# 
+            <!-- (FD.AUTHORIZE_BY_1 IS NULL OR FD.AUTHORIZE_BY_1 != #STATUS_BY#) -->) AND 
+            <!--(FD.AUTHORIZE_BY_2 IS NULL  OR FD.AUTHORIZE_BY_2 != #STATUS_BY#)))
+            AND -->#HIERARCHY_ID#::numeric &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FD.STATUS_BY AND BRANCH_CODE=#BRANCH_ID#)
+                    
+        AND FD.AUTHORIZE_STATUS_1 IN ('AUTHORIZED')  AND FD.ACCT_OPEN_DT =#CURR_DATE:DATE#
+                    
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="AUTHORIZE_REMARK">
+                    NOT EXISTS (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE PROD_ID IN          
+                    (SELECT PROD_ID FROM LOANS_PRODUCT WHERE AUTHORIZE_REMARK $AUTHORIZE_REMARK$)         
+                    AND LB.BORROW_NO = LOANS_FACILITY_DETAILS.BORROW_NO)
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="LOAN_OPENING">
+                   RENEWAL_ACCT_NO IS NULL
+                </isNotNull>
+            </isParameterPresent>
+            
+        </dynamic>   
+                
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PROD_ID">
+                    FD.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+                  
+        AND  NOT EXISTS  <!-- The following 3 lines added to exclude the LTD loans -->
+        (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE PROD_ID IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS')AND BORROW_NO=LB.BORROW_NO)
+    </dynamic-mapped-statement>
+                
+    <dynamic-mapped-statement name="viewTermLoanForLTDForRollBack" result-class = "java.util.LinkedHashMap" >
+       <!-- SELECT LOANS_BORROWER.BORROW_NO AS "BORROWER NO", LOANS_BORROWER.CUST_ID AS "CUSTOMER ID", 
+        CUSTOMER.FNAME || ' ' || CUSTOMER.MNAME || ' ' || CUSTOMER.LNAME AS "CUSTOMER NAME"
+        FROM LOANS_BORROWER, CUSTOMER WHERE LOANS_BORROWER.BRANCH_CODE = #BRANCH_ID# AND 
+        (LOANS_BORROWER.STATUS = 'CREATED' OR LOANS_BORROWER.STATUS = 'MODIFIED')
+        AND (LOANS_BORROWER.CUST_ID = CUSTOMER.CUST_ID) AND BORROW_NO IN 
+        (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE PROD_ID IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS'))
+        ORDER BY "BORROWER NO"  -->
+        SELECT LOANS_FACILITY_DETAILS.ACCT_NUM,get_cust_name(CUSTOMER.CUST_ID)  AS "CUSTOMER NAME",
+        LOANS_FACILITY_DETAILS.PROD_ID,LOANS_BORROWER.BORROW_NO , LSD.LIMIT AS SANCTION_AMT 
+        FROM LOANS_BORROWER, CUSTOMER ,LOANS_FACILITY_DETAILS  ,LOANS_SANCTION_DETAILS LSD WHERE LOANS_BORROWER.BRANCH_CODE = #BRANCH_ID#  AND LOANS_FACILITY_DETAILS.BORROW_NO=LOANS_BORROWER.BORROW_NO AND
+        (LOANS_BORROWER.STATUS = 'CREATED' OR LOANS_BORROWER.STATUS = 'MODIFIED') AND LOANS_FACILITY_DETAILS.STATUS !='DELETED' AND 
+        LOANS_FACILITY_DETAILS.AUTHORIZE_STATUS_1='AUTHORIZED'
+        AND ACCT_STATUS !='CLOSED' AND ACCT_OPEN_DT=#CURR_DATE:DATE# 
+        AND LSD.BORROW_NO=LOANS_FACILITY_DETAILS.BORROW_NO AND LSD.STATUS !='DELETED'  
+        AND (LOANS_BORROWER.CUST_ID = CUSTOMER.CUST_ID) AND EXISTS 
+        (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE EXISTS 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS' AND 
+        PROD_ID=LOANS_FACILITY_DETAILS.PROD_ID)AND BORROW_NO=LOANS_BORROWER.BORROW_NO)
+        ORDER BY BORROW_NO       
+    </dynamic-mapped-statement>    
+    
+    <mapped-statement name="updateSubAcInfoBalForRollBack" result-class = "java.util.HashMap">
+        UPDATE DEPOSIT_SUB_ACINFO SET 		
+        AVAILABLE_BALANCE = AVAILABLE_BALANCE - #LIENAMOUNT:NUMERIC#,
+        SHADOW_LIEN=SHADOW_LIEN - #SHADOWLIEN:NUMERIC#,
+        STATUS =#STATUS:VARCHAR#	
+        WHERE DEPOSIT_NO=#DEPOSIT_ACT_NUM:VARCHAR#  and DEPOSIT_SUB_NO=#SUBNO#
+    </mapped-statement>   
+    
+    <mapped-statement name="updateSubAcInfoBalForDepositLoanRollBack" result-class = "java.util.HashMap">
+        UPDATE DEPOSIT_SUB_ACINFO SET 		
+        AVAILABLE_BALANCE = AVAILABLE_BALANCE + #LIENAMOUNT:NUMERIC#,
+        SHADOW_LIEN=SHADOW_LIEN - #SHADOWLIEN:NUMERIC#,
+        STATUS =#STATUS:VARCHAR#	
+        WHERE DEPOSIT_NO=#DEPOSIT_ACT_NUM:VARCHAR#  and DEPOSIT_SUB_NO= cast(#SUBNO# as numeric)
+    </mapped-statement> 
+    
+    <mapped-statement name="authorizeLienTOForRollBack" inline-parameters="true">
+        UPDATE DEPOSIT_LIEN SET 		
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DATE:TIMESTAMP#,
+        STATUS=#STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#                		
+        WHERE LIEN_AC_NO=#LIENNO:VARCHAR#     
+    </mapped-statement>    
+
+    <mapped-statement name="getSelectLoanAccountCloseRollBackTOList" result-class="java.util.LinkedHashMap" >
+<!--        SELECT ACT_CLOSING.ACT_NUM AS ACCT_NUM,  
+        CUSTOMER.CUST_ID, CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME, PROD_ID AS "PRODUCT ID",
+        CREATE_DT, ACT_CLOSING.STATUS AS STATUS FROM ACT_CLOSING, LOANS_FACILITY_DETAILS, CUSTOMER ,LOANS_BORROWER
+        WHERE CUSTOMER.CUST_ID  =LOANS_BORROWER.CUST_ID  AND LOANS_BORROWER.BORROW_NO=LOANS_FACILITY_DETAILS .BORROW_NO AND LOANS_FACILITY_DETAILS.ACCT_NUM = ACT_CLOSING.ACT_NUM 
+        AND LOANS_FACILITY_DETAILS.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND ACT_CLOSING.STATUS_BY != #USER_ID:VARCHAR#  
+        AND (ACT_CLOSING.REMARKS IS NULL OR ACT_CLOSING.REMARKS !='DEPOSIT_TRANSACTION')    
+        AND  #HIERARCHY_ID#::numeric &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)    
+        FROM USER_MASTER UM, ROLE_MASTER RM    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ACT_CLOSING.STATUS_BY) AND
+        ACT_CLOSING.AUTHORIZE_STATUS IS NOT NULL AND
+        ACT_CLOSING.AUTHORIZE_STATUS  IN ('AUTHORIZED') AND  ACT_CLOSING.AUTHORIZE_DT=#CURR_DATE:DATE#
+        AND (ACT_CLOSING.STATUS IS NULL OR ACT_CLOSING.STATUS!='DELETED') -->
+        
+        SELECT DISTINCT ACT_CLOSING.ACT_NUM AS ACCT_NUM,
+       	CUSTOMER.CUST_ID,
+       	CONCAT (CONCAT (CONCAT (CONCAT (FNAME, ' '), MNAME), ' '), LNAME)
+        CUSTOMER_NAME,
+       	LFD.PROD_ID AS "PRODUCT ID",
+       	CREATE_DT,
+       	ACT_CLOSING.STATUS AS STATUS
+  		FROM ACT_CLOSING,
+       	LOANS_FACILITY_DETAILS LFD,
+       	CUSTOMER,
+       	LOANS_BORROWER LB,
+       	ALL_TRANS AT
+ 		WHERE     CUSTOMER.CUST_ID = LB.CUST_ID
+       	AND LB.BORROW_NO = LFD.BORROW_NO
+       	AND LFD.ACCT_NUM = ACT_CLOSING.ACT_NUM
+       	AND (   ACT_CLOSING.REMARKS IS NULL
+        OR ACT_CLOSING.REMARKS != 'DEPOSIT_TRANSACTION')
+       	AND #HIERARCHY_ID#::numeric &gt;=
+        (SELECT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+        'Y', HIERARCHY_ID,
+        HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM
+        WHERE     RM.ROLE_ID = UM.USER_ROLE
+        AND UM.USER_ID = ACT_CLOSING.STATUS_BY)
+       	AND ACT_CLOSING.AUTHORIZE_STATUS IS NOT NULL
+       	AND ACT_CLOSING.AUTHORIZE_STATUS IN ('AUTHORIZED')
+       	AND ACT_CLOSING.AUTHORIZE_DT = #CURR_DATE:DATE#
+       	AND (ACT_CLOSING.STATUS IS NULL OR ACT_CLOSING.STATUS != 'DELETED')
+       	AND AT.TRANS_DT = ACT_CLOSING.AUTHORIZE_DT
+       	AND AT.ACT_NUM = LFD.ACCT_NUM
+       	AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND AT.SCREEN_NAME = 'Loan Closing'
+           
+    </mapped-statement>
+            
+    <mapped-statement name="getSelectDepositRenewalRollBackList" result-class="java.util.LinkedHashMap" >
+    SELECT deposit_no AS "ACT_NUM",
+      get_cust_name(c.cust_id) AS "Name",
+      opening_mode, renewal_from_deposit,A.SINGLE_TRANS_ID as SINGLE_TRANS_ID
+    FROM deposit_acinfo da, customer c ,ALL_TRANS A
+    WHERE c.cust_id = da.cust_id
+    AND da.authorize_status = 'AUTHORIZED'
+    AND da.status_dt = #CURR_DATE:DATE#
+    AND renewal_from_deposit IS NOT NULL
+    AND da.branch_id = #BRANCH_CODE:VARCHAR#
+   <!-- AND A.ACT_NUM =da.DEPOSIT_NO||'_1'-->
+    AND A.LINK_BATCH_ID =da.DEPOSIT_NO||'_1'
+    AND A.TRANS_DT = #CURR_DATE:DATE#
+    AND (da.authorize_status IS NOT NULL AND da.authorize_status = 'AUTHORIZED'
+      )
+    AND #HIERARCHY_ID#::numeric &gt;=
+         (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                         'Y', hierarchy_id,
+                         hierarchy_id + 1
+                        )
+    FROM user_master um, role_master rm
+    WHERE rm.role_id = um.user_role AND um.user_id = da.status_by)
+    AND da.authorize_status IS NOT NULL
+    AND da.authorize_status IN ('AUTHORIZED')
+    AND da.authorized_dt = #CURR_DATE:DATE#
+    AND (da.status IS NULL OR da.status != 'DELETED')
+    AND A.AUTHORIZE_STATUS IN ('AUTHORIZED')
+    AND A.SINGLE_TRANS_ID=(SELECT MAX(AT.SINGLE_TRANS_ID) FROM ALL_TRANS AT WHERE AT.LINK_BATCH_ID=da.DEPOSIT_NO||'_1' AND   AT.AUTHORIZE_STATUS IN ('AUTHORIZED')
+    AND AT.TRANS_DT = #CURR_DATE:DATE#
+    )
+    GROUP BY deposit_no ,get_cust_name(c.cust_id) ,opening_mode ,renewal_from_deposit,A.SINGLE_TRANS_ID
+     <!--   SELECT DEPOSIT_NO AS "ACT_NUM" , get_cust_name(C.CUST_ID) AS "Name" , OPENING_MODE,RENEWAL_FROM_DEPOSIT FROM DEPOSIT_ACINFO DA,CUSTOMER C
+        WHERE C.CUST_ID = DA.CUST_ID AND  DA.AUTHORIZE_STATUS='AUTHORIZED' AND DA.STATUS_DT =#CURR_DATE:DATE#  AND 
+        RENEWAL_FROM_DEPOSIT IS NOT NULL AND DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# AND (DA.AUTHORIZE_STATUS IS NOT NULL AND DA.AUTHORIZE_STATUS ='AUTHORIZED') AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)    
+        FROM USER_MASTER UM, ROLE_MASTER RM    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = DA.STATUS_BY) AND
+        DA.AUTHORIZE_STATUS IS NOT NULL AND
+        DA.AUTHORIZE_STATUS  IN ('AUTHORIZED') AND  DA.AUTHORIZED_DT=#CURR_DATE#
+        AND (DA.STATUS IS NULL OR DA.STATUS!='DELETED')--> 
+           
+    </mapped-statement>
+        
+    <mapped-statement name="updateSubDepositTO" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        DEPOSIT_SUB_NO = #DEPOSIT_SUB_NO:NUMERIC#,
+        DEPOSIT_DT = #DEPOSIT_DT:DATE#,
+        DEPOSIT_PERIOD_YY = #DEPOSIT_PERIOD_YY:NUMERIC#,
+        DEPOSIT_PERIOD_MM = #DEPOSIT_PERIOD_MM:NUMERIC#,
+        DEPOSIT_PERIOD_DD = #DEPOSIT_PERIOD_DD:NUMERIC#,
+        DEPOSIT_AMT = #DEPOSIT_AMT:NUMERIC#,
+        INTPAY_MODE = #INTPAY_MODE:VARCHAR#,
+        INTPAY_FREQ = #INTPAY_FREQ:NUMERIC#,
+        MATURITY_DT = #MATURITY_DT:DATE#,
+        RATE_OF_INT = #RATE_OF_INT:NUMERIC#,
+        MATURITY_AMT = #MATURITY_AMT:NUMERIC#,
+        TOT_INT_AMT = #TOT_INT_AMT:NUMERIC#,
+        PERIODIC_INT_AMT = #PERIODIC_INT_AMT:NUMERIC#,
+        STATUS = #STATUS:VARCHAR#,
+        CLOSE_DT = NULL,
+        CLOSE_BY =  NULL,
+        CREATE_BY = #CREATE_BY:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:DATE#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        SHADOW_LIEN = #SHADOW_LIEN:NUMERIC#,
+        SHADOW_FREEZE = #SHADOW_FREEZE:NUMERIC#,
+        SUBSTATUS_BY = #SUBSTATUS_BY :VARCHAR#,
+        SUBSTATUS_DT = #SUBSTATUS_DT:DATE#,
+        TOTAL_INT_CREDIT = #TOTAL_INT_CREDIT:NUMERIC#,
+        TOTAL_INT_DRAWN  = #TOTAL_INT_DRAWN:NUMERIC#,
+        INTEREST_AMT    =#INTEREST_AMT:NUMERIC#,
+        PENAL_RATE   =#PENAL_RATE:VARCHAR#,
+        SB_INT_AMT=#SB_INT_AMT:NUMERIC#
+                
+        WHERE  DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteDepositInterest" result-class="java.util.LinkedHashMap" >
+        DELETE FROM DEPOSIT_INTEREST WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND APPL_DT=#CURR_DATE:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDepositInterestWithTransId" result-class="java.util.LinkedHashMap" >
+        DELETE FROM DEPOSIT_INTEREST WHERE ACT_NUM=#ACT_NUM:VARCHAR# AND INT_PAID_DATE=#CURR_DATE:DATE# AND LAST_TDS_RECIVED_FROM=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="rollBackNomineeStatusUpdationTD" inline-parameters="true">
+        UPDATE DEPOSIT_NOMINEE_DETAIL SET STATUS ='CREATED', 
+        STATUS_BY = #USER_ID:VARCHAR#, STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# and STATUS ='EXISTING'
+    </mapped-statement>
+        
+    <mapped-statement name="updateDepositAcinfoCloseNewRollBack">
+        UPDATE DEPOSIT_ACINFO SET DEPOSIT_STATUS = 'NEW',
+        OPENING_MODE=CASE WHEN NVL(RENEWAL_COUNT,1)>2 THEN 'Renewal' ELSE 'Normal' END,
+        RENEWAL_COUNT=NVL(RENEWAL_COUNT,1)-1
+        WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+                
+    <mapped-statement name="rollbackedAccountsStatusUpdation">
+        UPDATE REMIT_ISSUE_TRANS SET STATUS = 'DELETED' WHERE BATCH_ID IN (SELECT MAX(BATCH_ID) FROM 
+        REMIT_ISSUE_TRANS WHERE BATCH_ID = #ACT_NUM:VARCHAR# AND STATUS != 'DELETED')
+    </mapped-statement>
+    <mapped-statement name="updateLoanInterestWaiveOff">
+        UPDATE LOAN_INTEREST_WAIVE_OFF SET STATUS = 'DELETED',AUTH_STATUS='REJECTED' 
+        WHERE ACCT_NUM =#ACCT_NUM:VARCHAR# AND WAIVE_OFF_DT=#PENAL_WAIVE_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getAccountIsPenalWaive" result-class="java.util.HashMap">
+        SELECT PENAL_WAIVE_OFF FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# AND PENAL_WAIVE_DT=#PENAL_WAIVE_DT:DATE# 
+    </mapped-statement>
+
+    <mapped-statement name = "updateTransRefGLStatus" result-class = "java.util.LinkedHashMap">
+        UPDATE TRANS_REF_GL SET STATUS = #STATUS:VARCHAR# WHERE TRANS_ID = #TRANS_ID:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE# AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+  
+    <mapped-statement name = "updateTDRolledBackStatus" result-class = "java.util.LinkedHashMap">
+        UPDATE DEPOSIT_ACINFO SET ROLLED_BACK_STATUS = #ROLLED_BACK_STATUS:VARCHAR# WHERE DEPOSIT_NO = #DEPOSIT NO:VARCHAR#
+        <!--AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+    </mapped-statement>
+    
+    <mapped-statement name = "updateOARolledBackStatus" result-class = "java.util.LinkedHashMap">
+        UPDATE ACT_MASTER SET ROLLED_BACK_STATUS = #ROLLED_BACK_STATUS:VARCHAR# WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+        <!--AND STATUS != 'DELETED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'-->
+    </mapped-statement>
+    
+    <mapped-statement name = "updateTLRolledBackStatus" result-class = "java.util.LinkedHashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET ROLLED_BACK_STATUS = #ROLLED_BACK_STATUS:VARCHAR# WHERE ACCT_NUM = #ACCT_NUM:VARCHAR#
+        <!--AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+    </mapped-statement>
+    
+    <mapped-statement name = "updateMDSRolledBackStatus" result-class = "java.util.LinkedHashMap">
+        UPDATE DEPOSIT_ACINFO SET ROLLED_BACK_STATUS = #ROLLED_BACK_STATUS:VARCHAR# WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+        <!--AND STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+    </mapped-statement>    
+  
+    <mapped-statement name="updateRollbackAccountMasterStatusId" inline-parameters="true">
+        UPDATE ACT_MASTER SET ACT_STATUS_ID = #ACT_STATUS_ID:VARCHAR#, ACT_STATUS_DT = #ACT_STATUS_DT:TIMESTAMP#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#<!-- AND STATUS != 'DELETED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'-->
+    </mapped-statement>
+     <mapped-statement name="rollBackDepositSubAcInfoSameNo" result-class="java.util.LinkedHashMap" >
+        UPDATE  DEPOSIT_SUB_ACINFO_SAMENO SET
+        AUTHORIZE_STATUS = 'REJECTED',
+        ACCT_STATUS = 'CLOSED',
+        AUTHORIZE_DT = null
+        WHERE DEPOSIT_NO=#DEPOSIT_NO:VARCHAR# AND CREATED_DT=#CURR_DATE:DATE#
+        AND SL_NO = (SELECT MAX(DS.SL_NO) FROM DEPOSIT_SUB_ACINFO_SAMENO DS 
+        WHERE DS.DEPOSIT_NO=#DEPOSIT_NO:VARCHAR# AND DS.CREATED_DT=#CURR_DATE:DATE# AND DS.AUTHORIZE_STATUS ='AUTHORIZED')
+    </mapped-statement>
+    
+    <mapped-statement name="updateDepositBalance" result-class="java.util.LinkedHashMap" >
+        update DEPOSIT_SUB_ACINFO set AVAILABLE_BALANCE = AVAILABLE_BALANCE-(#COUNT:NUMBER#*DEPOSIT_AMT),TOTAL_BALANCE = TOTAL_BALANCE-(#COUNT:NUMBER#*DEPOSIT_AMT),
+        CLEAR_BALANCE = CLEAR_BALANCE-(#COUNT:NUMBER#*DEPOSIT_AMT),TOTAL_INSTALL_PAID = TOTAL_INSTALL_PAID-#COUNT:NUMBER# where DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+     <mapped-statement name="getCurrDepositReccCount" result-class="java.util.LinkedHashMap" >
+         select count(*) as count_no from DEPOSIT_RECURRING dr where DR.TRANS_DT = #TRANS_DT:DATE# and DR.DEPOSIT_NO_SUB = #DEPOSIT_NO_SUB:VARCHAR#
+     </mapped-statement>
+     <mapped-statement name="rollbackServiceTaxDetails" inline-parameters="true">
+        UPDATE SERVICE_TAX_DETAILS SET 
+        STATUS = 'DELETED',
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DATE = (SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZED_STATUS = 'REJECTED'
+        WHERE ACCT_NUM = #TRANS_ID:VARCHAR# AND
+        CREATED_DT = #TRANS_DT:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="getMultipleCashTransactionRollBackList" result-class="java.util.LinkedHashMap" >
+        SELECT  CT.TRANS_ID AS "TRANS_ID", CT.AC_HD_ID AS "ACCT_HD_ID",
+        CT.ACT_NUM AS "Account No" ,  
+        ac.ac_hd_desc AS "Customer",
+        ct.amount, ct.trans_type, ct.particulars, ct.prod_id, ct.prod_type
+        FROM cash_trans ct,ac_hd ac
+        WHERE authorize_remarks = 'MULTIPLE_CASH'
+        and CT.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT'
+        and AC.AC_HD_ID = CT.AC_HD_ID
+        AND (ct.authorize_status IS NOT NULL
+            AND
+            ct.authorize_status = 'AUTHORIZED')
+        AND ct.status != 'DELETED'
+        AND ct.trans_dt = #TRANS_DT:DATE# 
+        AND ct.initiated_branch = #SELECTED_BRANCH_ID:VARCHAR#           
+    </mapped-statement>
+    <mapped-statement name="getmaxOfSingleTransID" result-class="java.util.LinkedHashMap" >
+        select max(at.SINGLE_TRANS_ID) as SINGLE_TRANS_ID from ALL_TRANS at where 
+        at.LINK_BATCH_ID = #ACT_NUM:VARCHAR# and
+        at.STATUS != 'DELETED' and at.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and AT.TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getRenewedNewDepositNumber" result-class="java.util.LinkedHashMap" >
+        select DA.DEPOSIT_NO from DEPOSIT_ACINFO da join DEPOSIT_SUB_ACINFO dsa on DA.DEPOSIT_NO = DSA.DEPOSIT_NO where DSA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DA.AUTHORIZE_STATUS = 'AUTHORIZED' and DA.STATUS != 'DELETED' and DSA.STATUS != 'DELETED' and DA.RENEWAL_FROM_DEPOSIT = #DEPOSIT_NO:VARCHAR# 
+        and DA.AUTHORIZED_DT = #TRANS_DT:DATE# and DSA.AUTHORIZE_DT = #TRANS_DT:DATE# and DA.STATUS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteIBRRollbackRecords" result-class="java.util.LinkedHashMap" >
+        DELETE FROM INTERBRANCH_TRANS WHERE TRANS_ID = #TRANS_ID:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND TRANS_DT = #APP_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getOperativePassBookEntry" result-class="java.util.LinkedHashMap" >
+        SELECT DECODE(P.BATCH_ID,NULL,P.TRANS_ID,P.BATCH_ID) AS TRANS_ID FROM
+        PASS_BOOK P JOIN
+        (SELECT SLNO,ACT_NUM FROM PASS_BOOK WHERE  TRANS_DT=#TRANS_DT:DATE# AND  
+        DECODE(BATCH_ID,NULL,TRANS_ID,BATCH_ID)=#TRANS_ID:VARCHAR#) C 
+        ON P.ACT_NUM=C.ACT_NUM WHERE P.SLNO>C.SlNO AND NVL(P.DEBIT,0)>0 AND TRANS_DT=#TRANS_DT:DATE#
+    </mapped-statement>
+      
+    <mapped-statement name="getOperativeTxnPassBookEntry" result-class="java.util.LinkedHashMap" >
+        SELECT DECODE(P.BATCH_ID,NULL,P.TRANS_ID,P.BATCH_ID) AS TRANS_ID FROM
+        PASS_BOOK P WHERE P.ACT_NUM=#ACT_NUM:VARCHAR# and P.TRANS_DT=#TRANS_DT:DATE#  AND P.PARTICULARS NOT LIKE 'AccountOpening%'
+    </mapped-statement>
+    
+    <mapped-statement name = "updateMDSTransRollBackChitCloseDt" result-class = "java.util.LinkedHashMap">
+        UPDATE MDS_MASTER_MAINTENANCE 
+        SET CHIT_CLOSE_DT = NULL
+        WHERE CHIT_CLOSE_DT IS NOT NULL
+        AND CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name = "getChittalBranchCode" result-class = "java.util.HashMap">
+        select m.BRANCH_CODE from MDS_APPLICATION m where M.CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateRollBackSecurityReleaseStatus" result-class = "java.util.LinkedHashMap">
+        update security_details set is_release = 'N', release_dt = null where acct_num = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+    
+      
+</sql-map>

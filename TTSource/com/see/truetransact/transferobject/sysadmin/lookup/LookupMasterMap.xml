@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="LookupMasterTOMap">
+
+<!-- Use LookupMasterTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLookupMasterTO" inline-parameters="true">
+        INSERT INTO LOOKUP_MASTER
+        (LOOKUP_ID, LOOKUP_REF_ID, LOOKUP_DESC, STATUS, EDITABLE, AUTHORIZED
+        ) VALUES (
+        #lookupId:VARCHAR#, #lookupRefId:VARCHAR#, #lookupDesc:VARCHAR#, #status:VARCHAR#, #editable:VARCHAR#, #authorized:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use LookupMasterTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLookupMasterTO" inline-parameters="true">
+        UPDATE LOOKUP_MASTER SET 
+<!--	LOOKUP_ID = #lookupId:VARCHAR#, 
+	LOOKUP_REF_ID = #lookupRefId:VARCHA R#, -->
+        LOOKUP_DESC = #lookupDesc:VARCHAR#,
+        STATUS = #status:VARCHAR#
+<!--    AUTHORIZED = #authorized:VARCHAR# -->
+        WHERE LOOKUP_ID = #lookupId:VARCHAR# and LOOKUP_REF_ID = #lookupRefId:VARCHAR#
+    </mapped-statement>
+
+<!-- Use LookupMasterTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLookupMasterTO" inline-parameters="true">
+        UPDATE LOOKUP_MASTER SET 
+<!--    LOOKUP_ID = #lookupId:VARCHAR#, 
+        LOOKUP_REF_ID = #lookupRefId:VARCHAR#,
+        LOOKUP_DESC = #lookupDesc:VARCHAR#,  -->
+        STATUS = #status:VARCHAR#
+        WHERE LOOKUP_ID = #lookupId:VARCHAR# and LOOKUP_REF_ID = #lookupRefId:VARCHAR#
+    </mapped-statement>
+    
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to LookupMasterTO object (JavaBean) properties -->
+    <result-map name="getLookupMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.lookup.LookupMasterTO">
+        <property name="lookupId" column="LOOKUP_ID"/>
+        <property name="lookupRefId" column="LOOKUP_REF_ID"/>
+        <property name="lookupDesc" column="LOOKUP_DESC"/>
+        <property name="status" column="STATUS"/>
+        <property name="editable" column="EDITABLE"/>
+        <property name="authorized" column="AUTHORIZED"/>
+    </result-map>
+
+    <!--mapped-statement name="getSelectLookupMasterTO" result-class="java.util.LinkedHashMap" >
+	SELECT  DISTINCT LOOKUP_ID FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID =  #value#
+    </mapped-statement -->  
+        
+    <dynamic-mapped-statement name="ViewAllLookupMasterTO" result-class="java.util.LinkedHashMap" >
+<!--        SELECT DISTINCT LOOKUP_ID
+        FROM LOOKUP_MASTER
+        WHERE STATUS NOT IN ('DELETED') AND (EDITABLE = 'Y' OR EDITABLE is NULL) -->
+<!--        SELECT DISTINCT  LM.LOOKUP_ID AS "Lookup ID",  LD.LOOKUP_ID_DESC AS "Lookup Description",
+        LD.EDITABLE AS "Is Editable"
+        FROM LOOKUP_MASTER LM, LOOKUP_MASTER_DESC LD
+        WHERE LM.STATUS NOT IN ('DELETED') 
+        AND LM.LOOKUP_ID =  LD.LOOKUP_ID-->
+        SELECT DISTINCT LM.LOOKUP_ID AS "Lookup ID", LM.LOOKUP_DESC AS "Lookup Description" ,
+        NVL(EDITABLE,'N') AS "Is Editable" FROM LOOKUP_MASTER LM WHERE LM.STATUS NOT IN ('DELETED')
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Lookup ID">
+                    UPPER(LM.LOOKUP_ID) LIKE UPPER('%$Lookup ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Lookup Description">
+                    UPPER(LM.LOOKUP_DESC) LIKE UPPER('%$Lookup Description$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Is Editable">
+                    UPPER(LM.EDITABLE) LIKE UPPER('%$Is Editable$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY LM.LOOKUP_ID 
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="ViewLookupMaster" result-class="java.util.LinkedHashMap" >
+        SELECT LOOKUP_ID, LOOKUP_REF_ID, LOOKUP_DESC
+        FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID = #value:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    
+    <!-- ======================================Autorization==============================================  -->        
+
+
+    <mapped-statement name="getLookUpAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT  LOOKUP_ID AS "Lookup ID",  LOOKUP_REF_ID AS "Lookup Reference ID",
+        LOOKUP_DESC AS "Lookup Description"
+        FROM LOOKUP_MASTER 
+        WHERE ( UPPER(AUTHORIZED) NOT IN ('Y', 'N') OR AUTHORIZED IS NULL)  AND STATUS NOT IN ('DELETED')
+        ORDER BY LOOKUP_ID 
+    </mapped-statement> 
+        
+        <!--mapped-statement name="authorizeLookUpData" result-class="java.util.HashMap">
+            UPDATE LOOKUP_MASTER_DESC SET 
+            AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+            AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+            AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+            WHERE LOOKUP_ID = #LOOKUP ID:VARCHAR#  
+	</mapped-statement -->
+        
+        
+    <dynamic-mapped-statement name="authorizeLookUpMasterData" result-class="java.util.HashMap">
+        UPDATE LOOKUP_MASTER SET 
+        AUTHORIZED = #AUTH_KEY:VARCHAR#
+        WHERE LOOKUP_ID = #LOOKUP ID:VARCHAR# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="LOOKUP REFERENCE ID">
+                    LOOKUP_REF_ID = #LOOKUP REFERENCE ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getLookUpDescRecordCnt" result-class="java.util.LinkedHashMap">
+        SELECT COUNT(*) AS RECORD_COUNT FROM LOOKUP_MASTER_DESC WHERE LOOKUP_ID='CUSTOMER.CITY'
+    </mapped-statement>
+    
+    <mapped-statement name="insertLookupMasterDesc" result-class="java.util.HashMap" >
+        INSERT INTO LOOKUP_MASTER_DESC
+        (LOOKUP_ID, LOOKUP_ID_DESC, EDITABLE, STATUS_BY, STATUS_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT) VALUES 
+        (#LOOKUP_ID#, #LOOKUP_DESC#, #EDITABLE#, #STATUS_BY#,#STATUS_DT#,#AUTHORIZE_STATUS#,#STATUS_BY#,#STATUS_DT#)
+    </mapped-statement>
+    
+    <mapped-statement name="ViewLookupMasterDesc" result-class="java.util.HashMap" >
+        SELECT LOOKUP_ID, LOOKUP_ID_DESC, EDITABLE FROM LOOKUP_MASTER_DESC 
+        WHERE LOOKUP_ID = #value:VARCHAR#
+    </mapped-statement>
+          
+</sql-map>

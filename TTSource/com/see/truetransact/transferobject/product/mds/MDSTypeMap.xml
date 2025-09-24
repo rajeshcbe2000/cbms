@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MDSTypeMap">
+
+
+	<!-- Use ExternalWireTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+             
+             
+    <mapped-statement name="insertMDSProductSchemeTO" inline-parameters="true">
+        INSERT INTO MDS_SCHEME_DETAILS
+        (PROD_ID, SCHEME_NAME, PROD_DESC, CHITTAL_NO_PATTERN, SUFFIX_NO, NEXT_CHITTAL_NO, RESOLUTION_NO, RESOLUTION_DT, 
+        ACCT_HEAD, NO_OF_DIVISIONS, NO_OF_AUCTIONS, NO_OF_DRAWS, NO_OF_MEMBER_PER_DIVISION, TOTAL_NO_OF_MEMBERS, 
+        INSTALLMENT_AMOUNT, NO_OF_INSTALLMENTS, TOTAL_AMOUNT_DIVISION, TOTAL_AMOUNT_SCHEME, INSTALLMENT_FREQUENCY, 
+        SCHEME_START_DT, SCHEME_END_DT, INSTALLMENT_DAY, DRAW_AUCT_DAY, THALAYAL, MUNNAL, PREDEFINITION_INSTALLMENT, 
+        ALL_DIVISION, DIVISION1, DIVISION2, DIVISION3, DIVISION4, AFTER_PAYMENT, INSTALLMENTS, DAY_PAYMENT, STATUS, 
+        STATUS_DT, STATUS_BY,SCHEME_DESC,MULTIPLE_MEMBER,NO_OF_CHITTALS,CO_NO_OF_INSTALLMENTS,LAST_BOND_NO,
+        MAX_NO_OF_MEMBERS,PENAL_CLOSED_RATE,LAST_APPLICATION_NO,SANCTION_NO,SANCTION_DT,REMARKS,AUTION_TIME,IS_REV_POST_ADV,
+        MP_MDS_CODE,BRANCH_CODE, IS_SPECIAL_SCHEME,BONUS_PRINT,CHANGE_MEMBER_SETTLEMENT,GROUP_NO,SCHEME_GRACE_PERIOD,DISCOUNT_FIRST_INSTALLMENT,
+        FIRST_DISCOUNT_AMT) VALUES (
+        #prodId#, #schemeName#, #prodDesc#, #chittal_No_Pattern#, #suffix_No#, 
+        #next_Chittal_No#, #resolutionNo#, #resolutionDt#, #acctHead#, #noOfDivisions#, 
+        #noOfAuctions#, #noOfDraws#, #noOfMemberPerDivision#, #totalNoOfMembers#, 
+        #installmentAmount#, #noOfInstallments#, #totalAmountDivision#, #totalAmountScheme#, 
+        #installmentFrequency#, #schemeStartDt#, #schemeEndDt#, #installmentDay#, #drawAuctDay#, 
+        #thalayal#, #munnal#, #predefinitionInstallment#, #allDivision#, #division1#, 
+        #division2#, #division3#, #division4#, #afterPayment#, #installments#, 
+        #day#, #status#, #statusDt#, #statusBy#,#schemeDesc#, #multipleMember#, 
+        #noOfChittals#, #coNoOfInstallments#,0, #maxNoOfMembers#,#closureRate#,0,#sancNo#,
+        #sancDt#,#remarks#,#autionTime#,#isRevPostAdv#,#mdsType#,#branchCode#,
+        #isSpecialScheme#, #chkBonusPrint#,#bankSettlement#,#groupNo#,#schemeGracePeriod#,#discountFirstInst#,
+        #discountAmt#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertMDSProductInstallmentScheduleTO" inline-parameters="true">
+        INSERT INTO MDS_INSTALLMENT_SCHEDULE
+        (PROD_ID, SCHEME_NAME, INSTALLMENT_NO, INSTALLMENT_DT, AMOUNT, BONUS, PAYMENT_AMOUNT, STATUS, STATUS_DT, STATUS_BY
+        ) VALUES (
+        #prodId#, #schemeName#, #installmentNo#, #installmentDt#, #amount#, #bonus#, 
+        #paymentAmount#, #status#, #statusDt#, #statusBy#)
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getMDSProductEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID,SCHEME_NAME,SCHEME_DESC,STATUS,MP_MDS_CODE FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED'
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="MP_MDS_CODE">
+                    UPPER(MP_MDS_CODE) LIKE UPPER('%$MP_MDS_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DESC">
+                    UPPER(SCHEME_DESC) LIKE UPPER('%$SCHEME_DESC$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+              </isParameterPresent>
+             </dynamic>
+        ORDER BY PROD_ID 
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getMDSProductView" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID,SCHEME_NAME,SCHEME_DESC,STATUS FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' ORDER BY PROD_ID 
+    <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"   property="SCHEME_DESC">
+                    UPPER(SCHEME_DESC) LIKE UPPER('%$SCHEME_DESC$%')
+                </isNotNull>
+              </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"   property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+              </isParameterPresent>
+             </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getMDSProductAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID,SCHEME_NAME,SCHEME_DESC,STATUS FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE# AND AUTHORIZED_STATUS IS NULL ORDER BY PROD_ID 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMDSProductSchemeTO" result-map="getMDSProductSchemeTOResult" >
+        SELECT * FROM MDS_SCHEME_DETAILS WHERE STATUS!='DELETED' AND PROD_ID = #PROD_ID# AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMDSProductInstallmentScheduleTO" result-map="getMDSProductInstallmentScheduleTOResult" >
+        SELECT * FROM MDS_INSTALLMENT_SCHEDULE WHERE STATUS!='DELETED' AND PROD_ID = #PROD_ID# AND SCHEME_NAME = #SCHEME_NAME# 
+        ORDER BY TO_NUMBER(INSTALLMENT_NO)
+    </mapped-statement>
+        
+    <mapped-statement name="updateMDSProductSchemeTO" inline-parameters="true">
+        UPDATE MDS_SCHEME_DETAILS SET 
+        RESOLUTION_NO = #resolutionNo#,
+        RESOLUTION_DT = #resolutionDt#,
+        ACCT_HEAD = #acctHead#,
+        NO_OF_DIVISIONS = #noOfDivisions#,
+        NO_OF_AUCTIONS = #noOfAuctions#,
+        NO_OF_DRAWS = #noOfDraws#,
+        NO_OF_MEMBER_PER_DIVISION = #noOfMemberPerDivision#,
+        TOTAL_NO_OF_MEMBERS = #totalNoOfMembers#,
+        INSTALLMENT_AMOUNT = #installmentAmount#,
+        NO_OF_INSTALLMENTS = #noOfInstallments#,
+        TOTAL_AMOUNT_DIVISION = #totalAmountDivision#,
+        TOTAL_AMOUNT_SCHEME = #totalAmountScheme#,
+        INSTALLMENT_FREQUENCY = #installmentFrequency#,
+        PROD_DESC = #prodDesc#,
+        CHITTAL_NO_PATTERN = #chittal_No_Pattern#,
+        SCHEME_START_DT = #schemeStartDt#,
+        SCHEME_END_DT = #schemeEndDt#,
+        INSTALLMENT_DAY = #installmentDay#,
+        SUFFIX_NO = #suffix_No#,
+        NEXT_CHITTAL_NO = #next_Chittal_No#,
+        DRAW_AUCT_DAY = #drawAuctDay#,
+        THALAYAL = #thalayal#,
+        MUNNAL = #munnal#,
+        PREDEFINITION_INSTALLMENT = #predefinitionInstallment#,
+        ALL_DIVISION = #allDivision#,
+        DIVISION1 = #division1#,
+        DIVISION2 = #division2#,
+        DIVISION3 = #division3#,
+        DIVISION4 = #division4#,
+        AFTER_PAYMENT = #afterPayment#,
+        INSTALLMENTS = #installments#,
+        DAY_PAYMENT = #day#,
+        STATUS = #status#,
+        STATUS_DT = #statusDt#,
+        STATUS_BY = #statusBy#,
+        AUTHORIZED_STATUS = #authorizedStatus#,
+        AUTHORIZED_BY = #authorizedBy#,
+        AUTHORIZED_DT = #authorizedDt#,
+        SCHEME_DESC = #schemeDesc#,
+        MULTIPLE_MEMBER = #multipleMember#,
+        NO_OF_CHITTALS = #noOfChittals#,
+        CO_NO_OF_INSTALLMENTS = #coNoOfInstallments#,
+        MAX_NO_OF_MEMBERS = #maxNoOfMembers#,
+        PENAL_CLOSED_RATE=#closureRate#,
+        SANCTION_NO=#sancNo#,
+        SANCTION_DT=#sancDt#,
+        REMARKS=#remarks#,
+        AUTION_TIME=#autionTime#,
+        IS_REV_POST_ADV=#isRevPostAdv#,
+        MP_MDS_CODE=#mdsType#,
+        IS_SPECIAL_SCHEME=#isSpecialScheme#,
+        BONUS_PRINT = #chkBonusPrint#,
+        CHANGE_MEMBER_SETTLEMENT = #bankSettlement#,
+        GROUP_NO= #groupNo#,
+        SCHEME_GRACE_PERIOD = #schemeGracePeriod#,
+        DISCOUNT_FIRST_INSTALLMENT = #discountFirstInst#,
+        FIRST_DISCOUNT_AMT = #discountAmt:NUMBER#,
+        CREDIT_STAMP_ADVANCES = #creditStampAdvance:VARCHAR#
+        WHERE PROD_ID = #prodId:VARCHAR# AND SCHEME_NAME = #schemeName:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+        
+    <mapped-statement name="updateMDSProductInstallmentScheduleTO" inline-parameters="true">
+        UPDATE MDS_INSTALLMENT_SCHEDULE SET 
+        INSTALLMENT_DT = #installmentDt#,
+        AMOUNT = #amount#,
+        BONUS = #bonus#,
+        PAYMENT_AMOUNT = #paymentAmount#,
+        STATUS = #status#,
+        STATUS_DT = #statusDt#,
+        STATUS_BY = #statusBy#,
+        AUTHORIZED_STATUS = #authorizedStatus#,
+        AUTHORIZED_BY = #authorizedBy#,
+        AUTHORIZED_DT = #authorizedDt#
+        WHERE PROD_ID = #prodId# AND SCHEME_NAME = #schemeName# AND INSTALLMENT_NO = CAST(#installmentNo# AS VARCHAR) AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteMDSProductSchemeTO" inline-parameters="true">
+        UPDATE MDS_SCHEME_DETAILS SET 
+        STATUS = #status#,
+        STATUS_BY = #statusBy#,
+        STATUS_DT = #statusDt#
+        WHERE PROD_ID = #prodId# AND SCHEME_NAME = #schemeName#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteMDSProductInstallmentScheduleTO" inline-parameters="true">
+        UPDATE MDS_INSTALLMENT_SCHEDULE SET 
+        STATUS = #status#,
+        STATUS_BY = #statusBy#,
+        STATUS_DT = #statusDt#
+        WHERE PROD_ID = #prodId# AND SCHEME_NAME = #schemeName#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteMDSProductScheduleTO" inline-parameters="true">
+        UPDATE MDS_INSTALLMENT_SCHEDULE SET 
+        STATUS = #status#,
+        STATUS_BY = #statusBy#,
+        STATUS_DT = #statusDt#
+        WHERE PROD_ID = #prodId# AND SCHEME_NAME = #schemeName#
+        AND INSTALLMENT_NO = #installmentNo#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeMDSSchemeDetails" result-class="java.util.HashMap">
+        UPDATE MDS_SCHEME_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND PROD_ID = #PROD_ID# AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeMDSScheduleDetails" result-class="java.util.HashMap">
+        UPDATE MDS_INSTALLMENT_SCHEDULE SET 
+        AUTHORIZED_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND PROD_ID = #PROD_ID# AND SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement>
+        
+    <mapped-statement name="getProductIdFromMDSProduct" result-map="get-getMDSProductId-result"> 
+        SELECT PROD_ID FROM MDS_PRODUCT_GENERAL_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <result-map name="get-getMDSProductId-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_ID" />
+    </result-map> 
+        
+    <mapped-statement name="getMDSProdDescription" result-class="java.util.HashMap">
+        SELECT PROD_DESC,IS_GDS FROM MDS_PRODUCT_GENERAL_DETAILS WHERE PROD_ID=#PROD_ID# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <result-map name="getMDSProductSchemeTOResult" class="com.see.truetransact.transferobject.product.mds.MDSProductSchemeTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="resolutionNo" column="RESOLUTION_NO"/>
+        <property name="resolutionDt" column="RESOLUTION_DT"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+        <property name="chittal_No_Pattern" column="CHITTAL_NO_PATTERN"/>
+        <property name="suffix_No" column="SUFFIX_NO"/>
+        <property name="next_Chittal_No" column="NEXT_CHITTAL_NO"/>
+        <property name="acctHead" column="ACCT_HEAD"/>
+        <property name="noOfDivisions" column="NO_OF_DIVISIONS"/>
+        <property name="noOfAuctions" column="NO_OF_AUCTIONS"/>
+        <property name="noOfDraws" column="NO_OF_DRAWS"/>
+        <property name="noOfMemberPerDivision" column="NO_OF_MEMBER_PER_DIVISION"/>
+        <property name="totalNoOfMembers" column="TOTAL_NO_OF_MEMBERS"/>
+        <property name="installmentAmount" column="INSTALLMENT_AMOUNT"/>
+        <property name="noOfInstallments" column="NO_OF_INSTALLMENTS"/>
+        <property name="totalAmountDivision" column="TOTAL_AMOUNT_DIVISION"/>
+        <property name="totalAmountScheme" column="TOTAL_AMOUNT_SCHEME"/>
+        <property name="installmentFrequency" column="INSTALLMENT_FREQUENCY"/>
+        <property name="schemeStartDt" column="SCHEME_START_DT"/>
+        <property name="schemeEndDt" column="SCHEME_END_DT"/>
+        <property name="installmentDay" column="INSTALLMENT_DAY"/>
+        <property name="drawAuctDay" column="DRAW_AUCT_DAY"/>
+        <property name="thalayal" column="THALAYAL"/>
+        <property name="munnal" column="MUNNAL"/>
+        <property name="predefinitionInstallment" column="PREDEFINITION_INSTALLMENT"/>
+        <property name="allDivision" column="ALL_DIVISION"/>
+        <property name="division1" column="DIVISION1"/>
+        <property name="division2" column="DIVISION2"/>
+        <property name="division3" column="DIVISION3"/>
+        <property name="division4" column="DIVISION4"/>
+        <property name="afterPayment" column="AFTER_PAYMENT"/>
+        <property name="installments" column="INSTALLMENTS"/>
+        <property name="day" column="DAY_PAYMENT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="schemeDesc" column="SCHEME_DESC"/>
+        <property name="multipleMember" column="MULTIPLE_MEMBER"/>
+        <property name="noOfChittals" column="NO_OF_CHITTALS"/>
+        <property name="coNoOfInstallments" column="CO_NO_OF_INSTALLMENTS"/>
+        <property name="isRevPostAdv" column="IS_REV_POST_ADV"/>
+        <property name="maxNoOfMembers" column="MAX_NO_OF_MEMBERS"/>
+        <property name="closureRate" column="PENAL_CLOSED_RATE"/>
+        <property name="sancNo" column="SANCTION_NO"/>
+        <property name="sancDt" column="SANCTION_DT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="autionTime" column="AUTION_TIME"/>
+        <property name="mdsType" column="MP_MDS_CODE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="isSpecialScheme" column="IS_SPECIAL_SCHEME"/>
+        <property name="chkBonusPrint" column="BONUS_PRINT"/>
+        <property name="bankSettlement" column="CHANGE_MEMBER_SETTLEMENT"/>
+        <property name="groupNo" column="GROUP_NO"/>
+        <property name="schemeGracePeriod" column="SCHEME_GRACE_PERIOD"/>
+        <property name="discountFirstInst" column="DISCOUNT_FIRST_INSTALLMENT"/>
+        <property name="discountAmt" column="FIRST_DISCOUNT_AMT"/>
+        <property name="creditStampAdvance" column="CREDIT_STAMP_ADVANCES"/>        
+    </result-map>
+
+        
+    <result-map name="getMDSProductInstallmentScheduleTOResult" class="com.see.truetransact.transferobject.product.mds.MDSProductInstallmentScheduleTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="installmentNo" column="INSTALLMENT_NO"/>
+        <property name="installmentDt" column="INSTALLMENT_DT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="bonus" column="BONUS"/>
+        <property name="paymentAmount" column="PAYMENT_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+    </result-map>
+        
+    <mapped-statement name="insertMDSNoticeChargeTO" inline-parameters="true">
+        INSERT INTO MDS_NOTICE_CHARGE_DETAILS
+        (SCHEME_NAME, NOTICE_TYPE, NOTICE_CHARGE_AMT, POSTAGE_AMT
+        ) VALUES (
+        #prodId#, #noticeType#, cast(#noticeChargeAmt# as NUMERIC), cast(#postageAmt# as NUMERIC))
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMDSProductNoticeTO" result-map="getMDSProductNoticeTOResult" >
+        SELECT * FROM MDS_NOTICE_CHARGE_DETAILS WHERE SCHEME_NAME = #SCHEME_NAME#
+    </mapped-statement> 
+        
+    <result-map name="getMDSProductNoticeTOResult" class="com.see.truetransact.transferobject.product.loan.LoanProductChargesTabTO">
+        <property name="prodId" column="SCHEME_NAME"/>
+        <property name="noticeType"        column="NOTICE_TYPE"/>
+        <property name="noticeChargeAmt"   column="NOTICE_CHARGE_AMT"/>
+        <property name="postageAmt"        column="POSTAGE_AMT"/>
+    </result-map>
+        
+    <mapped-statement name="deleteMDSNoticeChargesTO" inline-parameters="true">
+        DELETE FROM MDS_NOTICE_CHARGE_DETAILS WHERE SCHEME_NAME = #prodId#
+    </mapped-statement>
+    
+    <mapped-statement name="getSchemeCommission" result-class="java.util.HashMap">
+        SELECT CASE WHEN MP.COMMISION_RATE_TYPE = 'Percent' THEN
+        MP.COMMISION_RATE_AMT *(#TOTAL_AMOUNT#)/100 
+        ELSE COMMISION_RATE_AMT 
+        END AS COMMISSION
+        FROM MDS_PRODUCT_OTHER_DETAILS MP WHERE MP.PROD_ID = #PROD_ID#
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getAllGDSGroup" result-class="java.util.HashMap" > 
+        WITH GRP
+        AS
+        (SELECT g.group_name,g.group_no, COUNT (D.group_no) as group_count ,G.SCHEME_COUNT as scheme_count , G.PROD_TYPE
+        FROM group_deposit g 
+        LEFT JOIN MDS_SCHEME_DETAILS d ON D.GROUP_NO = G.GROUP_NO
+        where G.PROD_TYPE=  #PROD_ID# and G.BRANCH_ID = #BRANCH_ID# 
+        GROUP BY G.group_name ,G.SCHEME_COUNT,G.PROD_TYPE,g.group_no)
+        SELECT P.group_name ,p.group_no , group_count, SCHEME_COUNT
+        FROM GRP P
+        WHERE 
+          <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend=""    property="EDIT">
+                    group_count &lt;= SCHEME_COUNT
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend=""    property="NEW">
+                    group_count &lt; SCHEME_COUNT
+                </isNotNull>
+            </isParameterPresent>
+          </dynamic>  
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="getPredefinedChittalcount" result-class="java.util.HashMap">
+        select COUNT(*) AS CHIT_CNT from MDS_PRIZED_MONEY_DETAILS mp where 
+        MP.SCHEME_NAME = #SCHEME_NAME:VARCHAR# 
+        and MP.CHITTAL_NO is not null 
+        and MP.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement> 
+    
+    <mapped-statement name="getSchemeCommencementStatus" result-class="java.util.HashMap">
+        select count(*) as COMMENCEMENT_CNT from MDS_APPLICATION ma where scheme_name = #SCHEME_NAME:VARCHAR# 
+        and ma.COMMENCEMENT_STATUS = 'Y' and ma.COMMENCEMENT_DATE is not null
+    </mapped-statement> 
+        
+</sql-map>

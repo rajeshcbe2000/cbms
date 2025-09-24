@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ForexExchangeTOMap">
+
+	<!-- Use ForexExchangeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertForexExchangeTO" inline-parameters="true">
+        INSERT INTO FOREX_EXCHANGE_RATE_DETAIL
+        (EXCHANGE_ID, VALUE_DATE, TRANS_CURRENCY, MIDDLE_RATE, STATUS, BASE_CURRENCY, VALUE_HRS, VALUE_MINS
+        ) VALUES (
+        #exchangeId:VARCHAR#, #valueDate:DATE#, #transCurrency:VARCHAR#, #middleRate:NUMERIC#, #status:VARCHAR#, #baseCurrency:VARCHAR#, #valueHrs:VARCHAR#, #valueMins:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ForexExchangeTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateForexExchangeTO" inline-parameters="true">
+        UPDATE FOREX_EXCHANGE_RATE_DETAIL SET 
+<!--		EXCHANGE_ID = #exchangeId:VARCHAR#,
+		VALUE_DATE = #valueDate:DATE#,
+		TRANS_CURRENCY = #transCurrency:VARCHAR#,
+		BASE_CURRENCY = #baseCurrency:VARCHAR#,
+		VALUE_HRS = #valueHrs:VARCHAR#,
+		VALUE_MINS = #valueMins:VARCHAR#-->
+        MIDDLE_RATE = #middleRate:NUMERIC#,
+        STATUS = #status:VARCHAR#
+        WHERE EXCHANGE_ID = #exchangeId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use ForexExchangeTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteForexExchangeTO" inline-parameters="true">
+<!--		DELETE FROM FOREX_EXCHANGE_RATE_DETAIL -->
+        UPDATE FOREX_EXCHANGE_RATE_DETAIL SET 
+        STATUS = #status:VARCHAR#
+        WHERE EXCHANGE_ID = #exchangeId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ForexExchangeTO object (JavaBean) properties -->
+    <result-map name="getForexExchangeTOResult" class="com.see.truetransact.transferobject.forex.ForexExchangeTO">
+        <property name="exchangeId" column="EXCHANGE_ID"/>
+        <property name="valueDate" column="VALUE_DATE"/>
+        <property name="transCurrency" column="TRANS_CURRENCY"/>
+        <property name="middleRate" column="MIDDLE_RATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="baseCurrency" column="BASE_CURRENCY"/>
+        <property name="valueHrs" column="VALUE_HRS"/>
+        <property name="valueMins" column="VALUE_MINS"/>
+    </result-map>
+    <mapped-statement name="getSelectForexExchangeTO" result-map="getForexExchangeTOResult" >
+        SELECT * FROM FOREX_EXCHANGE_RATE_DETAIL 
+        WHERE EXCHANGE_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="viewForexExchange" result-class="java.util.HashMap">
+        SELECT EXCHANGE_ID AS "Exchange ID", TO_CHAR(VALUE_DATE, 'MM/DD/YYYY') AS "Value Date", TRANS_CURRENCY AS "Transaction Currency", MIDDLE_RATE AS "Middle Rate" 
+        FROM FOREX_EXCHANGE_RATE_DETAIL WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Exchange ID" >
+                    UPPER(EXCHANGE_ID) LIKE UPPER('%$Exchange ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Value Date" >
+                    UPPER(TO_CHAR(VALUE_DATE, 'MM/DD/YYYY')) LIKE UPPER('%$Value Date$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Transaction Currency" >
+                    UPPER(TRANS_CURRENCY) LIKE UPPER('%$Transaction Currency$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Middle Rate" >
+                    UPPER(MIDDLE_RATE) LIKE UPPER('%$Middle Rate$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getForexExchangeTab" result-class="java.util.HashMap">
+        SELECT TO_CHAR(VALUE_DATE, 'MM/DD/YYYY') AS "VALUE_DATE" , BASE_CURRENCY, TRANS_CURRENCY , MIDDLE_RATE FROM FOREX_EXCHANGE_RATE_DETAIL 
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED') AND TO_CHAR(VALUE_DATE, 'MM/DD/YYYY') = #VALUEDATE:DATE#
+    </mapped-statement>
+
+    <mapped-statement name="getBaseCurrency" result-class="java.util.HashMap">
+        SELECT BASE_CURRENCY, LOOKUP_DESC AS CURRENCY_NAME FROM BANK B, LOOKUP_MASTER LM
+        WHERE B.BASE_CURRENCY = LM.LOOKUP_REF_ID AND LM.LOOKUP_ID = 'FOREX.CURRENCY'
+    </mapped-statement>
+                
+</sql-map>

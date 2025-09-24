@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ServiceTaxMaintenanceTOMap">
+
+
+	<!-- Use InterestMaintenanceGroupTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="ServiceTaxMaintenanceGroupTO" inline-parameters="true">
+        INSERT INTO DEPOSIT_ROI_GROUP
+        (ROI_GROUP_ID, ROI_GROUP_NAME, STATUS, AUTHORIZED_BY, AUTHORIZED_DT, AUTHORIZE_STATUS, CREATED_BY, CREATED_DT, STATUS_BY, STATUS_DT, PRODUCT_TYPE
+        ) VALUES (
+        #roiGroupId:VARCHAR#, #roiGroupName:VARCHAR#, #status:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #authorizeStatus:VARCHAR#, #createdBy:VARCHAR#, #createdDt:TIMESTAMP#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #productType:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceGroupTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateServiceTaxMaintenanceGroupTO" inline-parameters="true">
+        UPDATE DEPOSIT_ROI_GROUP SET 
+<!--		ROI_GROUP_ID = #roiGroupId:VARCHAR#,-->
+        ROI_GROUP_NAME = #roiGroupName:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        PRODUCT_TYPE = #productType:VARCHAR#,
+<!--		AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+		AUTHORIZED_DT = #authorizedDt:DATE#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		CREATED_BY = #createdBy:VARCHAR#,
+		CREATED_DT = #createdDt:DATE#, -->
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceGroupTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteServiceTaxMaintenanceGroupTO" inline-parameters="true">
+<!--		DELETE FROM DEPOSIT_ROI_GROUP--> 
+        UPDATE DEPOSIT_ROI_GROUP SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestMaintenanceGroupTO object (JavaBean) properties -->
+    <result-map name="getServiceTaxMaintenanceGroupTOResult" class="com.see.truetransact.transferobject.sysadmin.servicetax.ServiceTaxMaintenanceGroupTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="roiGroupName" column="ROI_GROUP_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="productType" column="PRODUCT_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectServiceTaxMaintenanceGroupTO" result-map="getServiceTaxMaintenanceTOResult" >
+        SELECT * FROM DEPOSIT_ROI_GROUP 
+        WHERE ROI_GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+<!--********************************************************************************************-->        
+
+<!-- Use InterestMaintenanceCategotyTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertServiceTaxMaintenanceCategotyTO" inline-parameters="true">
+        INSERT INTO SERIVECTAX_RATE_GROUP
+        (ROI_GROUP_ID, CATEGORY_ID, STATUS,STATUS_BY
+        ) VALUES (
+        #roiGroupId:VARCHAR#, #categoryId:VARCHAR#, #status:VARCHAR#,
+        #statusBy:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceCategotyTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateServiceTaxMaintenanceCategotyTO" inline-parameters="true">
+        UPDATE DEPOSIT_ROI_GROUP_CAT SET 
+<!--		ROI_GROUP_ID = #roiGroupId:VARCHAR#,-->
+        CATEGORY_ID = #categoryId:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceCategotyTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteServiceTaxMaintenanceCategotyTO" inline-parameters="true">
+        DELETE FROM  SERIVECTAX_RATE_GROUP 
+<!--            UPDATE DEPOSIT_ROI_GROUP_CAT SET
+                STATUS = #status:VARCHAR#-->
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestMaintenanceCategotyTO object (JavaBean) properties -->
+    <result-map name="getServiceTaxMaintenanceCategotyTOResult" class="com.see.truetransact.transferobject.sysadmin.servicetax.ServiceTaxMaintenanceCategotyTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="categoryId" column="CATEGORY_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectServiceTaxMaintenanceCategotyTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SERIVECTAX_RATE_GROUP 
+        WHERE ROI_GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+   
+<!--********************************************************************************************-->        
+           
+	<!-- Use InterestMaintenanceProdTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertServiceTaxMaintenanceProdTO" inline-parameters="true">
+        INSERT INTO SERIVECTAX_AC_HD
+        (ROI_GROUP_ID, SERVICE_TAX_HD_ID, CESS1_TAX_HD_ID,CESS2_TAX_HD_ID,STATUS
+        ) VALUES (
+        #roiGroupId:VARCHAR#, #stAcHdId:VARCHAR#, #cess1HdId:VARCHAR#,
+        #cess2HdId:VARCHAR#,#status:VARCHAR#
+        )
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceProdTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateServiceTaxMaintenanceProdTO" inline-parameters="true">
+        UPDATE DEPOSIT_ROI_GROUP_PROD SET 
+<!--		ROI_GROUP_ID = #roiGroupId:VARCHAR#,-->
+        PROD_ID = #prodId:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceProdTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteServiceTaxMaintenanceProdTO" inline-parameters="true">
+        DELETE FROM SERIVECTAX_AC_HD
+<!--                UPDATE DEPOSIT_ROI_GROUP_PROD SET
+		STATUS = #status:VARCHAR#  -->
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestMaintenanceProdTO object (JavaBean) properties -->
+    <result-map name="getServiceTaxMaintenanceProdTOResult" class="com.see.truetransact.transferobject.sysadmin.servicetax.ServiceTaxMaintenanceProdTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getSelectServiceTaxMaintenanceProdTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SERIVECTAX_AC_HD 
+        WHERE ROI_GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAllServiceTaxGroupNames" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(*) AS COUNT  FROM   SERIVECTAX_RATE_GROUP
+        where status!='DELETED' AND ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR#
+    </mapped-statement>
+
+ <!--********************************************************************************************-->        
+
+	<!-- Use InterestMaintenanceTypeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!-- mapped-statement name="insertInterestMaintenanceTypeTO" inline-parameters="true">
+		INSERT INTO DEPOSIT_ROI_GROUP_TYPE
+		(ROI_GROUP_ID, RATE_TYPE_ID, STATUS
+		) VALUES (
+		#roiGroupId:VARCHAR#, #rateTypeId:VARCHAR#, #status:VARCHAR#)
+	</mapped-statement -->
+
+	<!-- Use InterestMaintenanceTypeTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--mapped-statement name="updateInterestMaintenanceTypeTO" inline-parameters="true">
+		UPDATE DEPOSIT_ROI_GROUP_TYPE SET 
+		ROI_GROUP_ID = #roiGroupId:VARCHAR#,
+		RATE_TYPE_ID = #rateTypeId:VARCHAR#,
+		STATUS = #status:VARCHAR#
+		WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+	</mapped-statement -->
+
+	<!-- Use InterestMaintenanceTypeTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--mapped-statement name="deleteInterestMaintenanceTypeTO" inline-parameters="true">
+		DELETE FROM DEPOSIT_ROI_GROUP_TYPE 
+                UPDATE DEPOSIT_ROI_GROUP_TYPE SET
+		STATUS = #status:VARCHAR#
+		WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+	</mapped-statement> -->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestMaintenanceTypeTO object (JavaBean) properties -->
+	<!-- result-map name="getInterestMaintenanceTypeTOResult" class="com.see.truetransact.transferobject.deposit.interestmaintenance.InterestMaintenanceTypeTO">
+		<property name="roiGroupId" column="ROI_GROUP_ID"/>
+		<property name="rateTypeId" column="RATE_TYPE_ID"/>
+		<property name="status" column="STATUS"/>
+	</result-map -->
+	<!-- mapped-statement name="getSelectInterestMaintenanceTypeTO" result-class="java.util.LinkedHashMap" >
+		SELECT * FROM DEPOSIT_ROI_GROUP_TYPE 
+		WHERE ROI_GROUP_ID = #value#
+	</mapped-statement -->
+
+<!--********************************************************************************************-->        
+
+	<!-- Use InterestMaintenanceRateTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertServiceTaxMaintenanceRateTO" inline-parameters="true">
+        INSERT INTO SERIVECTAX_RATE_FOR_CHARGES
+        (ROI_GROUP_ID, RATE_TYPE_ID, ROI_DATE, FROM_AMOUNT, TO_AMOUNT, FROM_PERIOD, TO_PERIOD, SERVICE_TAX, CESS1_TAX, STATUS, ROI_END_DATE, AGAINST_CLEARING_INT, LIMIT_AMOUNT, INT_EXPIRY_LIMIT, TOTAL_TAX, CESS2_TAX ,AUTHORIZE_BY, AUTHORIZE_DT, AUTHORIZE_STATUS
+        ) VALUES (
+        #roiGroupId:VARCHAR#, #rateTypeId:VARCHAR#, #roiDate:DATE#, #fromAmount:NUMERIC#, #toAmount:NUMERIC#, #fromPeriod:NUMERIC#, #toPeriod:NUMERIC#, #serviceTax:NUMERIC#, #cess1Tax:NUMERIC#, #status:VARCHAR#, #roiEndDate:DATE#, #againstClearingInt:NUMERIC#, #limitAmount:NUMERIC#, #intExpiryLimit:NUMERIC#, #totTax:NUMERIC#, #cess2Tax:NUMERIC#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #authorizedStatus:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceRateTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateServiceTaxMaintenanceRateTO" inline-parameters="true">
+        UPDATE DEPOSIT_ROI_GROUP_TYPE_RATE SET 
+<!--		ROI_GROUP_ID = #roiGroupId:VARCHAR#,-->
+        RATE_TYPE_ID = #rateTypeId:VARCHAR#,
+        ROI_DATE = #roiDate:DATE#,
+        FROM_AMOUNT = #fromAmount:NUMERIC#,
+        TO_AMOUNT = #toAmount:NUMERIC#,
+        FROM_PERIOD = #fromPeriod:NUMERIC#,
+        TO_PERIOD = #toPeriod:NUMERIC#,
+        ROI = #serviceTax:NUMERIC#,
+        PENAL_INT = #cess1Tax:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        ROI_END_DATE = #roiEndDate:DATE#,
+        AGAINST_CLEARING_INT = #againstClearingInt:NUMERIC#,
+        LIMIT_AMOUNT = #limitAmount:NUMERIC#,
+        INT_EXPIRY_LIMIT = #intExpiryLimit:NUMERIC#,
+        STATEMENT_PENEL = #totTax:NUMERIC#,
+        OD_INT_RATE = #cess2Tax:NUMERIC#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use InterestMaintenanceRateTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteServiceTaxMaintenanceRateTO" inline-parameters="true">
+        DELETE FROM SERIVECTAX_RATE_FOR_CHARGES 
+<!--                UPDATE DEPOSIT_ROI_GROUP_TYPE_RATE SET
+		STATUS = #status:VARCHAR#-->
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#
+        AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestMaintenanceRateTO object (JavaBean) properties -->
+    <result-map name="getServiceTaxMaintenanceRateTOResult" class="com.see.truetransact.transferobject.sysadmin.servicetax.ServiceTaxMaintenanceRateTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="rateTypeId" column="RATE_TYPE_ID"/>
+        <property name="roiDate" column="ROI_DATE"/>
+        <property name="fromAmount" column="FROM_AMOUNT"/>
+        <property name="toAmount" column="TO_AMOUNT"/>
+        <property name="fromPeriod" column="FROM_PERIOD"/>
+        <property name="toPeriod" column="TO_PERIOD"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>
+        <property name="cess1Tax" column="CESS1_TAX"/>
+        <property name="status" column="STATUS"/>
+        <property name="roiEndDate" column="ROI_END_DATE"/>
+        <property name="againstClearingInt" column="AGAINST_CLEARING_INT"/>
+        <property name="limitAmount" column="LIMIT_AMOUNT"/>
+        <property name="intExpiryLimit" column="INT_EXPIRY_LIMIT"/>
+        <property name="totTax" column="TOTAL_TAX"/>
+        <property name="cess2Tax" column="CESS2_TAX"/>
+        <property name="authorizedStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZE_BY"/>
+        <property name="authorizedDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectServiceTaxMaintenanceRateTO" result-map="getServiceTaxMaintenanceRateTOResult" >
+        SELECT * FROM SERIVECTAX_RATE_FOR_CHARGES
+        WHERE ROI_GROUP_ID = #value:VARCHAR#
+        AND (STATUS NOT IN ('DELETED') OR STATUS IS NULL)
+        ORDER BY ROI_DATE, FROM_PERIOD
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectServiceTaxMaintenanceRatewhere" result-map="getServiceTaxMaintenanceRateTOResult" >
+        SELECT * FROM DEPOSIT_ROI_GROUP_TYPE_RATE 
+        WHERE ROI_GROUP_ID = #ROI_GROUP_ID:VARCHAR#
+        AND (STATUS NOT IN ('DELETED')OR STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="ServiceTaxMaintenance.getProductDataOA" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM OP_AC_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+                <!-- AND AUTHORIZED_STATUS = 'AUTHORIZED' --> 
+    </mapped-statement>
+        
+    <mapped-statement name="ServiceTaxMaintenance.getProductDataTD" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM DEPOSITS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="ServiceTaxMaintenance.getProductDataTL" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND BEHAVES_LIKE != 'OD'
+    </mapped-statement>
+
+    <mapped-statement name="ServiceTaxMaintenance.getProductDataAD" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID, PROD_DESC FROM LOANS_PRODUCT
+        WHERE (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND BEHAVES_LIKE = 'OD'
+    </mapped-statement>
+        
+    <mapped-statement name="ServiceTaxMaintenance.getProductDataGL" result-class="java.util.LinkedHashMap" >
+        SELECT AH.AC_HD_ID AS "A/C HEAD", AC_HD_DESC AS "A/C HEAD DESCRIPTION",
+        CR_CASH,DR_CASH
+        FROM AC_HD_PARAM AHP, AC_HD AH
+        WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN ('DELETED')) and 
+        AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y') AND
+        AHP.TRANSPOST IN ('MANUAL', 'BOTH') AND 
+        AH.AC_HD_ID IN (SELECT BG.AC_HD_ID FROM BRANCH_GL BG, BRANCH_MASTER BM 
+        WHERE BG.GROUP_ID = BM.GL_GROUP_ID AND BM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+                
+    <mapped-statement name="ServiceTaxMaintenance.getCategoryData" result-class="java.util.LinkedHashMap" >
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER
+        WHERE LOOKUP_ID = 'CATEGORY'
+        AND (STATUS = 'CREATED' OR STATUS = 'MOFIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>
+
+    <mapped-statement name="ServiceTaxMaintenance.getRateType" result-class="java.util.LinkedHashMap" >
+        SELECT LOOKUP_REF_ID, LOOKUP_DESC FROM LOOKUP_MASTER
+        WHERE LOOKUP_Id = 'DEPOSIT.RATE_TYPE'
+        AND (STATUS = 'CREATED' OR STATUS = 'MOFIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>
+
+    <mapped-statement name="viewServiceTaxMaintenance" result-class="java.util.LinkedHashMap">
+        SELECT  distinct(ROI_GROUP_ID) AS "ROI GroupID"
+        FROM SERIVECTAX_RATE_GROUP
+        WHERE (STATUS NOT IN ('DELETED')OR STATUS IS NULL)
+    </mapped-statement>
+        
+    <mapped-statement name="getAlreadyAvailCatgoryList" result-class="java.util.LinkedHashMap">
+        SELECT  distinct(CATEGORY_ID) AS "CATEGORY_ID"               
+        FROM SERIVECTAX_RATE_GROUP             
+        WHERE (STATUS NOT IN ('DELETED')OR STATUS IS NULL)
+    </mapped-statement>
+        
+        <!--mapped-statement name="selectInterestMaintenanceRate" result-map="getInterestMaintenanceRateTOResult">
+		SELECT * FROM DEPOSIT_ROI_GROUP_TYPE_RATE 
+		WHERE ROI_GROUP_ID = #ROIGROUPID# AND  RATE_TYPE_ID = #RATETYPEID# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+	</mapped-statement-->
+        
+        
+    <mapped-statement name="getServiceTaxRate" result-class="java.util.LinkedHashMap" >
+        SELECT service_tax, cess1_tax, cess2_tax, service_tax_hd_id, cess1_tax_hd_id,
+        cess2_tax_hd_id
+        FROM serivectax_rate_group drg,
+        serivectax_rate_for_charges drgtr,
+        serivectax_ac_hd sah
+        WHERE drg.roi_group_id = drgtr.roi_group_id
+        AND drg.roi_group_id = sah.roi_group_id
+        AND drgtr.roi_group_id = sah.roi_group_id
+        AND cast(#CAL_AMT# as numeric) BETWEEN from_amount AND to_amount
+        AND (   #CURR_DT:DATE# BETWEEN roi_date AND roi_end_date
+        OR (#CURR_DT:DATE#  &gt;= roi_date AND roi_end_date IS NULL)
+        )
+        AND sah.status != 'DELETED'
+        AND drgtr.status != 'DELETED'
+        AND drg.status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        AND category_id = #CHARGE_TYPE:VARCHAR#
+    </mapped-statement>
+        
+<!-- ==============================AUTHORIZATION===================================================== -->
+    <dynamic-mapped-statement name="getSelectServiceTaxMaintenance" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT DRG.ROI_GROUP_ID AS "ROI GROUPID", DRG.ROI_GROUP_ID AS "ROI Group Name"
+        FROM SERIVECTAX_RATE_GROUP DRG,SERIVECTAX_RATE_FOR_CHARGES DRGTR 
+        WHERE (DRG.STATUS NOT IN ('DELETED')OR DRG.STATUS IS NULL)  AND DRG.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = DRG.STATUS_BY and DRG.ROI_GROUP_ID=DRGTR.ROI_GROUP_ID)
+
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                DRGTR.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (DRGTR.AUTHORIZE_STATUS IS NULL OR 
+                DRGTR.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY DRG.ROI_GROUP_ID                                                                        
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authServiceTaxMaintenance" result-class="java.util.HashMap">
+        UPDATE DEPOSIT_ROI_GROUP SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+<!--                AUTHORIZE_REMARKS = #REMARKS:VARCHAR#-->
+        WHERE ROI_GROUP_ID = #ROI GROUPID:VARCHAR# 
+    </mapped-statement>        
+    <mapped-statement name="authServiceTaxMaintenanceForDepositRoiGroupTypeRate" result-class="java.util.HashMap">
+        UPDATE SERIVECTAX_RATE_FOR_CHARGES SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+<!--                AUTHORIZE_REMARKS = #REMARKS:VARCHAR#-->
+        WHERE ROI_GROUP_ID = #ROI GROUPID:VARCHAR# 
+        AND STATUS !='DELETED'
+    </mapped-statement>        
+	
+ <!--============================================================================================-->        
+
+      <!--  <dynamic-mapped-statement name="getDuplicateGroupData" result-class="java.util.LinkedHashMap" >
+	    select distinct grp.roi_group_name || ': ' || prod.prod_id || ' , ' || cat.category_id 
+            from deposit_roi_group_cat cat, deposit_roi_group_prod prod, deposit_roi_group grp
+            where cat.roi_group_id = prod.roi_group_id
+            and grp.roi_group_id = prod.roi_group_id 
+            and (grp.status NOT IN ('DELETED') OR grp.status is null)
+            and grp.product_Type = #PRODUCT_TYPE#
+                <dynamic>
+                    <iterate prepend="AND" property="prodList" open="(" close=")" conjunction="OR">
+                        prod.prod_id||cat.CATEGORY_ID = #prodList[]#
+                        <isParameterPresent>
+                            <isNotNull prepend="AND" property="ROIGROUPID">
+                                    prod.roi_group_id != #ROIGROUPID#
+                            </isNotNull>
+                        </isParameterPresent>
+                    </iterate>
+                    
+                </dynamic>
+	</dynamic-mapped-statement>
+        
+	<mapped-statement name="getSelectDepositsCommision" result-map="getInterestMaintenanceRateTOResult" >
+                SELECT * FROM 
+                DEPOSIT_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID = #ROI_GROUP_ID# 
+                AND STATUS != 'DELETED'
+	</mapped-statement> -->
+
+</sql-map>

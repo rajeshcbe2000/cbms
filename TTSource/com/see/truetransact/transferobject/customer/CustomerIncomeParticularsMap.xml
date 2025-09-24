@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerIncomeParticularMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerIncomeParticularsTO" inline-parameters="true">
+        INSERT INTO CUST_INC_PARTICULARS
+        (CUST_ID,NAME,RELATION,AMOUNT,PACKAGE_TYPE,STATUS,SL_NO,BRANCH_CODE,INC_DET_PROFESSION,INC_DET_COMPANY 
+        ) VALUES (
+        #custId:VARCHAR#,#incName:VARCHAR#,#incRelation:VARCHAR#,#incAmount:VARCHAR#,#incPackage:VARCHAR#,#status:VARCHAR#,#slno:VARCHAR#,#branchCode:VARCHAR#,#incDetProfession:VARCHAR#,#incDetCompany:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateCustomerIncomeParticularsTO" inline-parameters="true">
+        UPDATE CUST_INC_PARTICULARS SET 
+        NAME = #incName:VARCHAR#,
+        RELATION = #incRelation:VARCHAR#,
+        AMOUNT = #incAmount:VARCHAR#,
+        PACKAGE_TYPE = #incPackage:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        INC_DET_PROFESSION=#incDetProfession:VARCHAR#,
+        INC_DET_COMPANY=#incDetCompany:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND SL_NO=#slno:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="deleteCustomerIncomeParticularsTO" inline-parameters="true">
+        UPDATE CUST_INC_PARTICULARS SET 
+        STATUS = #status:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND SL_NO=#slno:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getCustomerIncomeParticularsTOResult" class="com.see.truetransact.transferobject.customer.CustomerIncomeParticularsTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="incName" column="NAME"/>
+        <property name="incRelation" column="RELATION"/>
+        <property name="incAmount" column="AMOUNT"/>
+        <property name="incPackage" column="PACKAGE_TYPE"/>
+        <property name="status" column="STATUS"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="slno" column="SL_NO"/>
+        <property name="incDetProfession" column="INC_DET_PROFESSION"/>
+        <property name="incDetCompany" column="INC_DET_COMPANY"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectCustomerIncomeParticularsTO" result-map="getCustomerIncomeParticularsTOResult" >
+        SELECT * FROM CUST_INC_PARTICULARS WHERE CUST_ID=#CUST_ID:VARCHAR# AND STATUS!='DELETED' 
+        ORDER BY SL_NO
+	<!--<dynamic>
+                    <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                        (STATUS NOT IN ('DELETED')
+                    </isNotPropertyAvailable>
+                    <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                       ( STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                    <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                        STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                   )
+        </dynamic>-->
+                
+    </dynamic-mapped-statement>
+    <mapped-statement name="checkForLengthIncomeParticulars" result-class="java.util.HashMap" >
+        select cust_id from CUSTOMER_PASSPORT where cust_id = #custId:VARCHAR#
+    </mapped-statement>
+</sql-map>        

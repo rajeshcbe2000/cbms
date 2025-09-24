@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="PaymentVoucherTOMap">
+
+	<!-- Use PaymentVoucherTOMap object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->  
+             
+    <result-map name="PayCodesResult" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PAY_ACC_NO" />
+        <property name="lookUpDesc" column="PAY_DESCRI" />
+    </result-map>
+    
+    <mapped-statement name="getPayAcc" result-map="PayCodesResult">
+       select PAY_ACC_NO,PAY_DESCRI from paycodes pc,ac_hd ac where pay_earndedu='DEDUCTIONS' 
+       and (payment_voucher='NO' or payment_voucher is null) and pc.pay_acc_no=ac.AC_HD_ID
+    </mapped-statement> 
+    
+    <mapped-statement name="getPayCodesDed" result-class="java.util.HashMap">
+       select PAY_CODE from paycodes pc,ac_hd ac where PAY_ACC_NO = #PAY_ACC_NO:varchar# and pay_earndedu='DEDUCTIONS' 
+       and (payment_voucher='NO' or payment_voucher is null) and pc.pay_acc_no=ac.AC_HD_ID
+    </mapped-statement> 
+       
+    <mapped-statement name="checkAlreadyMappedAcc" result-class="java.util.HashMap">
+       SELECT COUNT(*) AS COUNT FROM payroll_deduction_mapping WHERE MAPPED_HEAD=#MAPPED_HEAD:varchar#
+    </mapped-statement>
+    
+    <mapped-statement name="insertPayrollDeductionMapping" inline-parameters="true">
+       INSERT INTO PAYROLL_DEDUCTION_MAPPING(MAPPED_HEAD,MAPPING_HEAD,PAY_CODE,STATUS) VALUES(#mapHead:VARCHAR#,
+       #accHead:VARCHAR#,#payCode:VARCHAR#,#status:varchar#)
+    </mapped-statement>
+    
+    <mapped-statement name="editPayrollDeductionMapping" result-class="java.util.HashMap">
+       <!--SELECT MAPPED_HEAD,MAPPING_HEAD,PAY_CODE FROM PAYROLL_DEDUCTION_MAPPING WHERE STATUS != 'DELETED'-->
+       SELECT DISTINCT(MAPPING_HEAD),MAPPED_HEAD,PAY_CODE FROM PAYROLL_DEDUCTION_MAPPING WHERE STATUS != 'DELETED' 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getHeadConsolidationAuthList" result-class="java.util.HashMap">
+       SELECT MAPPED_HEAD,MAPPING_HEAD,PAY_CODE FROM PAYROLL_DEDUCTION_MAPPING
+       WHERE UPPER(CREATED_BY) != UPPER(#USER_ID:VARCHAR#)
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS IS NULL
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <result-map name="getHeadTOResult" class="com.see.truetransact.transferobject.payroll.voucherprocessing.PaymentVoucherTO">
+        <property name="mapHead" column="MAPPED_HEAD"/>
+        <property name="accHead" column="MAPPING_HEAD"/>
+        <property name="payCode" column="PAY_CODE"/> 
+    </result-map>
+
+    <mapped-statement name="selectHeadConsolidationAuthTO" result-map="getHeadTOResult">
+       SELECT PM.MAPPED_HEAD,PM.MAPPING_HEAD,PM.PAY_CODE FROM PAYROLL_DEDUCTION_MAPPING PM WHERE PM.MAPPED_HEAD = #MAPPED_HEAD:varchar#
+       AND PM.STATUS != 'DELETED'AND PM.AUTHORIZE_STATUS IS NULL AND (PM.AUTHORIZE_STATUS IS NULL OR PM.AUTHORIZE_STATUS NOT IN('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="authorizeHeadConsolidationMap" result-class="java.util.HashMap">
+        UPDATE PAYROLL_DEDUCTION_MAPPING SET 
+        AUTHORIZE_STATUS = #AUTHORIZESTATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE MAPPED_HEAD = #MAPPED_HEAD:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+    </dynamic-mapped-statement>
+    
+     <mapped-statement name="deletePayrollDeductionMappedHeads" result-map="getHeadTOResult">
+       UPDATE PAYROLL_DEDUCTION_MAPPING SET STATUS = 'DELETED' WHERE MAPPING_HEAD = #accHead:varchar#
+    </mapped-statement>
+    
+    <mapped-statement name="getHeadConsolidationEditTO" result-map="getHeadTOResult">
+       SELECT PM.MAPPED_HEAD,PM.MAPPING_HEAD,PM.PAY_CODE FROM PAYROLL_DEDUCTION_MAPPING PM WHERE PM.MAPPED_HEAD = #MAPPED_HEAD:varchar#
+       AND PM.STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="checkAlreadyMappedAccNumber" result-class="java.util.HashMap">
+       SELECT COUNT(*) AS COUNT FROM payroll_deduction_mapping WHERE MAPPING_HEAD=#PAY_ACC_NO:varchar# AND STATUS != 'DELETED'
+    </mapped-statement>   
+    
+    <mapped-statement name="getSalaryProcessedStatus" result-class="java.util.HashMap">
+       SELECT STATUS FROM PAYROLL WHERE MONTH_YEAR=#MONTH_YEAR:DATE# 
+    </mapped-statement> 
+    
+    <mapped-statement name="getPaymentVouchers" result-class="java.util.HashMap">
+      <!-- select sum(pm.AMOUNT) TOTAL,PAY_ACC_NO from paycodes pc,paymaster pm where pc.payment_voucher='YES' and pc.pay_code=pm.pay_code and pc.active='YES' 
+             and pm.employeeid in (select employeeid from payroll where MONTH_YEAR=#MONTH_YEAR:DATE#) group by PAY_ACC_NO   
+            union
+            SELECT SUM(AMOUNT) AS TOTAL,MAPPED_HEAD as PAY_ACC_NO FROM 
+             (SELECT P.MAPPED_HEAD,PY.AMOUNT  FROM PAYROLL_DEDUCTION_MAPPING P 
+             JOIN PAYROLL PY ON PY.PAY_CODE = P.PAY_CODE WHERE PY.MONTH_YEAR =#MONTH_YEAR:DATE# AND PY.STATUS ='posted') GROUP BY MAPPED_HEAD 
+             union
+            select sum(pm.AMOUNT) TOTAL,PC.CONTRA_ACC_NO AS PAY_ACC_NO  from paycodes pc,paymaster pm where PC.CONTRA_ONLY='YES' and ( PC.CONTRA_NO_STOP_PAYMENT='NO' OR  PC.CONTRA_NO_STOP_PAYMENT is NULL) and pc.pay_code=pm.pay_code 
+             and pc.active='YES' and pm.employeeid in (select employeeid from payroll 
+             where MONTH_YEAR=#MONTH_YEAR:DATE#) group by PAY_ACC_NO,CONTRA_ACC_NO 
+             union
+             select sum(pm.AMOUNT) TOTAL,PC.CONTRA_ACC_NO AS PAY_ACC_NO  from paycodes pc,paymaster pm where PC.CONTRA_ONLY='YES' and PC.CONTRA_NO_STOP_PAYMENT='YES' 
+             and pc.pay_code=pm.pay_code and pc.active='YES' and pm.employeeid in (select employeeid from EMPLOYEE_MASTER WHERE EMP_STATUS='Service') group by PAY_ACC_NO,CONTRA_ACC_NO
+             !-->
+               SELECT   SUM (pm.amount) total, PS.ACC_HD AS pay_acc_no,GET_AC_HD_NAME(PS.ACC_HD) AS AC_NAME,PC.PAY_CODE
+               FROM PAYCODES_MASTER pc, PAYROLL pm,PAY_ACCOUNT PS
+                WHERE PC.PAYMENT_VOUCHER = 'Y'
+                AND pc.pay_code = pm.pay_code
+               AND PC.PAYCODE_ID=PS.PAYCODE_ID
+               AND PS.ACC_TYPE='Credit'
+               AND pc.active = 'Y'
+              AND month_year = #MONTH_YEAR:DATE#
+              AND PM.status = 'posted'                          
+               GROUP BY PS.ACC_HD,PC.PAY_CODE
+               UNION
+             SELECT SUM(AMOUNT),PD.MAPPED_HEAD,GET_AC_HD_NAME(PD.MAPPED_HEAD) AS AC_NAME,NULL AS PAY_CODE
+              FROM PAYROLL PM,PAYROLL_DEDUCTION_MAPPING PD
+              WHERE PM.PAY_CODE=PD.PAY_CODE
+              AND PM.MONTH_YEAR=#MONTH_YEAR:DATE#  AND PM.status = 'posted'
+             GROUP BY PD.MAPPED_HEAD
+
+    </mapped-statement> 
+    
+    <mapped-statement name="updatePaymentVoucherStatus" result-class="java.util.HashMap">
+       UPDATE payroll_payment_voucher SET STATUS='posted',STATUS_DATE=#STATUS_DATE:DATE#  WHERE MONTH_YEAR=#MONTH_YEAR:varchar# 
+    </mapped-statement>
+    
+    <mapped-statement name="getPaymentVoucherStatus" result-class="java.util.HashMap">
+       SELECT COUNT(*) AS TOTAL FROM payroll_payment_voucher WHERE MONTH_YEAR=#MONTH_YEAR:varchar# AND STATUS='posted' 
+    </mapped-statement>
+    
+    
+    <mapped-statement name="insertIntoPayrollPaymentVoucher" result-class="java.util.HashMap">
+       INSERT INTO PAYROLL_PAYMENT_VOUCHER(MONTH_YEAR,PAY_CODE,EMPLOYEEID,AMOUNT,PAY_ACC_NO,PAY_PROD_TYPE,PAY_PROD_ID) 
+       values(#MONTH_YEAR:DATE#,#PAY_CODE:VARCHAR#,#EMPLOYEEID:VARCHAR#,#TOTAL:NUMBER#,#PAY_ACC_NO:VARCHAR#,#PAY_PROD_TYPE:VARCHAR#,#PAY_PROD_ID:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getPaymentVoucherWithDetails" result-class="java.util.HashMap">
+       <!--select sum(pm.AMOUNT) TOTAL,PAY_ACC_NO,pm.employeeid,pm.pay_code,pc.PAY_PROD_TYPE,pc.PAY_PROD_ID
+       from paycodes pc,paymaster pm where pc.payment_voucher='YES' and pc.pay_code=pm.pay_code 
+       and pc.active='YES' and pm.employeeid in (select employeeid from payroll where MONTH_YEAR = #MONTH_YEAR:DATE#) 
+       group by PAY_ACC_NO,pm.employeeid,pm.pay_code,pc.PAY_PROD_TYPE,pc.PAY_PROD_ID 
+       union all 
+       select sum(pm.AMOUNT) TOTAL,PAY_ACC_NO,pm.employeeid,pm.pay_code,pc.PAY_PROD_TYPE,pc.PAY_PROD_ID
+       from paycodes pc,paymaster pm,payroll_deduction_mapping pdm where (pc.payment_voucher='NO' or pc.payment_voucher is null) and pc.pay_code=pm.pay_code 
+       and pc.pay_code =pdm.pay_code and pc.active='YES' and pm.employeeid in (select employeeid from payroll where MONTH_YEAR =#MONTH_YEAR:DATE# ) 
+       group by PAY_ACC_NO,pm.employeeid,pm.pay_code,pc.PAY_PROD_TYPE,pc.PAY_PROD_ID 
+       order by pay_code-->
+       select sum(pm.AMOUNT) TOTAL,PS.ACC_HD AS pay_acc_no,pm.employeeid,PC.PAY_CODE,PC.PAY_PROD_TYPE,PM.PROD_ID as PAY_PROD_ID
+       from PAYCODES_MASTER pc,PAYROLL pm,PAY_ACCOUNT PS  WHERE PC.PAYMENT_VOUCHER = 'Y' AND pc.pay_code = pm.pay_code  AND PC.PAYCODE_ID=PS.PAYCODE_ID
+       AND month_year =#MONTH_YEAR:DATE# AND PM.status = 'posted' AND pc.active = 'Y'  AND PS.ACC_TYPE='Credit'  AND  TRANSFER_LINK_ID not in ('INDIVIDUAL')
+       group by PS.ACC_HD,pm.employeeid,pc.pay_code,pc.PAY_PROD_TYPE,PM.PROD_ID
+       UNION
+       select sum(pm.AMOUNT) TOTAL,PS.ACC_HD AS pay_acc_no,pm.employeeid,PC.PAY_CODE,PC.PAY_PROD_TYPE,PM.PROD_ID as PAY_PROD_ID
+       from PAYCODES_MASTER pc,PAYROLL pm,PAY_ACCOUNT PS ,payroll_deduction_mapping pdm WHERE PC.PAYMENT_VOUCHER = 'N'
+       AND pc.pay_code = pm.pay_code  AND PC.PAYCODE_ID=PS.PAYCODE_ID
+       AND pc.pay_code = pdm.pay_code  AND month_year =#MONTH_YEAR:DATE# AND PM.status = 'posted' AND pc.active = 'Y'  AND TRANSFER_LINK_ID not in ('INDIVIDUAL')
+       AND PS.ACC_TYPE='Credit'  group by PS.ACC_HD,pm.employeeid,pc.pay_code,pc.PAY_PROD_TYPE,PM.PROD_ID
+       ORDER BY PAY_CODE
+    </mapped-statement>
+    
+
+</sql-map>

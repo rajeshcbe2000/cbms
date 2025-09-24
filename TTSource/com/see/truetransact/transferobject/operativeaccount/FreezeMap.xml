@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="FreezeTOMap">
+
+	<!-- Use FreezeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertFreezeTO" inline-parameters="true">
+        INSERT INTO ACT_FREEZE
+        (ACT_NUM, FREEZE_ID, FREEZE_AMT, FREEZE_DT, FREEZE_TYPE, FREEZE_STATUS, UNFREEZE_DT, REMARKS, UNFREEZE_REMARKS, AUTHORIZE_STATUS, AUTHORIZE_USER, AUTHORIZE_DT, STATUS, STATUS_DT, STATUS_BY, CREATED_DT, CREATED_BY
+        ) VALUES (
+        #actNum:VARCHAR#, #freezeId:VARCHAR#, #freezeAmt:NUMERIC#, #freezeDt:TIMESTAMP#, #freezeType:VARCHAR#, #freezeStatus:VARCHAR#, #unfreezeDt:DATE#, #remarks:VARCHAR#, #unfreezeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#, #status:VARCHAR#, #statusDt:TIMESTAMP#, #statusBy:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use FreezeTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <dynamic-mapped-statement name="updateFreezeTO" inline-parameters="true">
+        UPDATE ACT_FREEZE SET 
+<!--		ACT_NUM = #actNum:VARCHAR#,
+		FREEZE_ID = #freezeId:VARCHAR#,-->
+        FREEZE_AMT = #freezeAmt:NUMERIC#,
+        FREEZE_DT = #freezeDt:TIMESTAMP#,
+        FREEZE_TYPE = #freezeType:VARCHAR#,
+        FREEZE_STATUS = #freezeStatus:VARCHAR#,
+        UNFREEZE_DT = #unfreezeDt:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        UNFREEZE_REMARKS = #unfreezeRemarks:VARCHAR#,
+        <dynamic>
+            <isEqual property="freezeStatus" compareValue="UNFREEZED">
+                AUTHORIZE_STATUS = null,
+                AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+                AUTHORIZE_DT = #authorizeDt:DATE#, 
+            </isEqual>
+        </dynamic>
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        STATUS_BY = #statusBy:VARCHAR#
+<!--		CREATED_DT = #createdDt:DATE#,
+		CREATED_BY = #createdBy:VARCHAR#-->
+        WHERE ACT_NUM = #actNum:VARCHAR# AND FREEZE_ID = #freezeId:VARCHAR#
+    </dynamic-mapped-statement>
+
+	<!-- Use FreezeTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteFreezeTO" inline-parameters="true">
+<!--		DELETE FROM ACT_FREEZE -->
+        UPDATE ACT_FREEZE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE ACT_NUM = #actNum:VARCHAR# AND FREEZE_ID = #freezeId:VARCHAR# 
+    </mapped-statement>
+        
+        
+    <mapped-statement name="deleteFreeze" inline-parameters="true">
+        DELETE FROM ACT_FREEZE 
+        WHERE ACT_NUM = #actNum:VARCHAR# 
+        AND FREEZE_ID = #freezeId:VARCHAR# 
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to FreezeTO object (JavaBean) properties -->
+    <result-map name="getFreezeTOResult" class="com.see.truetransact.transferobject.operativeaccount.FreezeTO">
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="freezeId" column="FREEZE_ID"/>
+        <property name="freezeAmt" column="FREEZE_AMT"/>
+        <property name="freezeDt" column="FREEZE_DT"/>
+        <property name="freezeType" column="FREEZE_TYPE"/>
+        <property name="freezeStatus" column="FREEZE_STATUS"/>
+        <property name="unfreezeDt" column="UNFREEZE_DT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="unfreezeRemarks" column="UNFREEZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZE_USER"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+    </result-map>
+    <mapped-statement name="getFreezeAccountDetails" result-map="getFreezeTOResult" >
+        SELECT * FROM ACT_FREEZE f WHERE (STATUS='CREATED' OR STATUS='MODIFIED') and
+        (( f.freeze_status ='FREEZED' and  (f.authorize_status in ('AUTHORIZED') or f.authorize_status is null ) 
+        OR (f.freeze_status ='UNFREEZED' and (f.authorize_status in ('REJECTED') or f.authorize_status is null))))
+        AND ACT_NUM = #ACCTNUMBER:VARCHAR#  
+                
+    </mapped-statement>
+    <mapped-statement name="getFreezeAccountDetailsForAuthDisplay" result-map="getFreezeTOResult" >
+        SELECT * FROM ACT_FREEZE 
+        WHERE (STATUS='CREATED' OR STATUS='MODIFIED')
+               <!-- AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))                
+                AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')-->
+        AND (FREEZE_STATUS = 'FREEZED' OR FREEZE_STATUS='UNFREEZED')
+        AND  (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS != 'AUTHORIZED')
+        AND ACT_NUM = #ACCTNUMBER:VARCHAR# AND  FREEZE_ID=#FREEZE_ID:VARCHAR#
+                
+    </mapped-statement>
+        
+            <!-- For generating the customer details -->
+    <mapped-statement name="getFreezeCustomerDetails" result-class="java.util.LinkedHashMap" >
+        select (select nvl(sum(af.freeze_amt), 0)
+        from act_freeze af, act_master am_in 
+        where af.act_num=am_in.act_num and af.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND AF.STATUS NOT IN ('DELETED') 
+        AND AF.FREEZE_STATUS = 'FREEZED'
+        and af.act_num=#ACCTNUMBER:VARCHAR#) as freeze_sum,
+        (select nvl(sum(al.lien_amt), 0) from act_lien al, act_master am_in
+        where al.act_num = am_in.act_num and (al.status='CREATED' or al.status='MODIFIED') 
+        and al.AUTHORIZE_STATUS  = 'AUTHORIZED' and al.LIEN_STATUS = 'LIENED' and al.act_num = #ACCTNUMBER# ) as lien_sum,  
+        am.available_balance, 
+        am.clear_balance,
+        get_cust_name(CUST.CUST_ID)  as "Customer Name" 
+        from act_master am, customer cust 
+        where cust.cust_id=am.cust_id and am.act_num=#ACCTNUMBER:VARCHAR#
+        AND AM.ACT_NUM NOT IN (SELECT ACT_NUM FROM ACT_FREEZE WHERE STATUS != 'DELETED' AND
+        FREEZE_STATUS != 'UNFREEZED' AND AUTHORIZE_STATUS != 'REJECTED')
+    </mapped-statement>
+    <mapped-statement name="getFreezeCustomerDetailsOD" result-class="java.util.LinkedHashMap" >
+        <!--select (select nvl(sum(af.freeze_amt), 0)
+        from act_freeze af, loans_facility_details lfd ,loans_borrower lb
+        where lb.borrow_no=lfd.borrow_no   and 
+         af.act_num=lfd.acct_num and af.freeze_status='AUTHORIZED' 
+        AND AF.STATUS NOT IN ('DELETED') 
+        AND AF.FREEZE_STATUS = 'FREEZED'
+        and af.act_num=#ACCTNUMBER#) as freeze_sum,  
+        lfd.total_balance, 
+        get_cust_name(CUST.CUST_ID)  as "Customer Name" 
+        from act_master am, customer cust 
+        where cust.cust_id=am.cust_id and am.act_num=#ACCTNUMBER#-->
+        select (select nvl(sum(af.freeze_amt), 0)  from act_freeze af, loans_facility_details lfd ,loans_borrower lb
+        where lb.borrow_no=lfd.borrow_no   and   af.act_num=lfd.acct_num and af.freeze_status='AUTHORIZED' AND 
+        AF.STATUS NOT IN ('DELETED')  AND AF.FREEZE_STATUS = 'FREEZED' and af.act_num=#ACCTNUMBER:VARCHAR#) as freeze_sum, 
+        lfd.available_balance, 
+        lfd.clear_balance, 
+        get_cust_name(CUST.CUST_ID)  
+        as "Customer Name"  from loans_facility_details lfd , customer cust  ,loans_borrower lb  
+        where cust.cust_id=lb.cust_id and lfd.borrow_no=lb.borrow_no and 
+        lfd.acct_num=#ACCTNUMBER:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getFreezeProductDetails" result-class="java.util.LinkedHashMap" >
+        select (select nvl(sum(af.freeze_amt), 0) 
+        from act_freeze af, act_master am_in 
+        where af.act_num=am_in.act_num  
+        AND AF.STATUS NOT IN ('DELETED') 
+       <!-- AND AF.FREEZE_STATUS = 'FREEZED' -->
+        and ((AF.AUTHORIZE_STATUS  = 'AUTHORIZED' and AF.FREEZE_STATUS='FREEZED') OR (AF.AUTHORIZE_STATUS  = 'REJECTED' and AF.FREEZE_STATUS='UNFREEZED' ))
+        and af.act_num=#ACCTNUMBER:VARCHAR#) as freeze_sum, 
+        (select nvl(sum(al.lien_amt), 0) from act_lien al, act_master am_in
+        where al.act_num = am_in.act_num and (al.status='CREATED' or al.status='MODIFIED') 
+        and al.AUTHORIZE_STATUS  = 'AUTHORIZED' and al.LIEN_STATUS = 'LIENED' and al.act_num = #ACCTNUMBER:VARCHAR# ) as lien_sum, 
+        am.available_balance, 
+        am.clear_balance,
+        get_cust_name(cust.cust_id) as "Customer Name", 
+        am.prod_id, prod.ac_hd_id, ah.ac_hd_desc 
+        from act_master am, customer cust, op_ac_product prod, 
+        ac_hd ah where cust.cust_id=am.cust_id and am.prod_id=prod.prod_id and 
+        prod.ac_hd_id=ah.ac_hd_id and am.act_num=#ACCTNUMBER:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getFreezeProductDetailsAD" result-class="java.util.LinkedHashMap" >
+        SELECT (SELECT NVL (SUM (AF.FREEZE_AMT), 0)
+        FROM ACT_FREEZE AF, LOANS_FACILITY_DETAILS AM_IN
+        WHERE AF.ACT_NUM = AM_IN.ACCT_NUM
+        AND AF.STATUS NOT IN ('DELETED')
+        AND (   (    AF.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND AF.FREEZE_STATUS = 'FREEZED'
+        )
+        OR (    AF.AUTHORIZE_STATUS = 'REJECTED'
+        AND AF.FREEZE_STATUS = 'UNFREEZED'
+        )
+        )
+        AND AF.ACT_NUM = #ACCTNUMBER:VARCHAR#) AS FREEZE_SUM,
+        LFD.CLEAR_BALANCE,
+        LFD.available_balance, 
+        get_cust_name(cust.cust_id) AS "Customer Name",
+        LFD.PROD_ID, PROD.ACCT_HEAD AS AC_HD_ID, PROD.PROD_DESC AS AC_HD_DESC
+        FROM LOANS_FACILITY_DETAILS LFD,
+        CUSTOMER CUST,
+        LOANS_PRODUCT PROD,
+        LOANS_BORROWER LB,
+        AC_HD AH
+        WHERE CUST.CUST_ID = LB.CUST_ID
+        AND LFD.PROD_ID = PROD.PROD_ID
+        AND LB.BORROW_NO = LFD.BORROW_NO
+        AND AH.AC_HD_ID = PROD.ACCT_HEAD
+        AND LFD.ACCT_NUM = #ACCTNUMBER:VARCHAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <!--
+    <mapped-statement name="getSelectFreezeAccountList" result-class="java.util.HashMap" >
+		select cust.fname || ' ' || cust.mname || ' ' || cust.lname as "Customer Name",act.act_num as "Account Number" from act_master act, customer cust where act.cust_id=cust.cust_id and act.ACT_STATUS_ID='PARTIALFREEZE' and cust.status != 'DELETED'
+    </mapped-statement>
+    -->
+    <mapped-statement name="getSelectFreezeAccountList" result-class="java.util.LinkedHashMap" >
+         <!-- SELECT  get_cust_name(C.CUST_ID) AS NAME, F.ACT_NUM AS "ACCOUNT NUMBER"
+            FROM  CUSTOMER C, ACT_FREEZE F, ACT_MASTER A
+            WHERE F.ACT_NUM = A.ACT_NUM
+            AND A.CUST_ID = C.CUST_ID
+            AND F.FREEZE_STATUS != 'UNFREEZED'
+            AND F.STATUS != 'DELETED'
+            AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            AND (F.AUTHORIZE_STATUS IS NULL OR F.AUTHORIZE_STATUS IN ('AUTHORIZED','REJECTED'))
+            AND (A.ACT_STATUS_ID = 'COMP_FREEZE' OR A.ACT_STATUS_ID='PART_FREEZE' OR A.ACT_STATUS_ID.CREDIT_FREEZE OR A.ACT_STATUS_ID.DEBIT_FREEZE OR A.ACT_STATUS_ID.TOTAL_FREEZE)
+            ORDER BY F.ACT_NUM-->
+            
+        SELECT DISTINCT get_cust_name(C.CUST_ID) AS NAME, 
+        F.ACT_NUM AS "ACCOUNT NUMBER"             FROM  CUSTOMER C, ACT_FREEZE F, ACT_MASTER A   
+        WHERE F.ACT_NUM = A.ACT_NUM  AND A.CUST_ID = C.CUST_ID              AND F.STATUS != 'DELETED'   
+        AND A.BRANCH_CODE =  #BRANCH_CODE:VARCHAR# and         
+        (( f.freeze_status ='FREEZED' and ( f.authorize_status in ('AUTHORIZED')or f.authorize_status is NULL ))  OR (f.freeze_status ='UNFREEZED' and f.authorize_status in ('REJECTED')  or f.authorize_status is NULL))              
+        AND (A.ACT_STATUS_ID = 'COMP_FREEZE' OR A.ACT_STATUS_ID='PART_FREEZE' OR A.ACT_STATUS_ID='OPERATIONAL' OR  A.ACT_STATUS_ID='NEW' OR A.ACT_STATUS_ID='CREDIT_FREEZE' OR
+        A.ACT_STATUS_ID='DEBIT_FREEZE' OR A.ACT_STATUS_ID='TOTAL_FREEZE')
+      
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectFreezeDeleteList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT get_cust_name(c.cust_id) AS NAME, F.ACT_NUM AS "ACCOUNT NUMBER"
+        FROM  CUSTOMER C, ACT_FREEZE F, ACT_MASTER A
+        WHERE F.ACT_NUM = A.ACT_NUM
+        AND A.CUST_ID = C.CUST_ID
+        AND F.STATUS != 'DELETED'
+        AND F.FREEZE_STATUS != 'UNFREEZED'
+        AND (f.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR  F.AUTHORIZE_STATUS IS NULL)
+        AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        ORDER BY F.ACT_NUM
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getSelectFreezeAccountListOD" result-class="java.util.LinkedHashMap" >
+         <!-- SELECT  get_cust_name(C.CUST_ID) AS NAME, F.ACT_NUM AS "ACCOUNT NUMBER"
+            FROM  CUSTOMER C, ACT_FREEZE F, ACT_MASTER A
+            WHERE F.ACT_NUM = A.ACT_NUM
+            AND A.CUST_ID = C.CUST_ID
+            AND F.FREEZE_STATUS != 'UNFREEZED'
+            AND F.STATUS != 'DELETED'
+            AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            AND (F.AUTHORIZE_STATUS IS NULL OR F.AUTHORIZE_STATUS IN ('AUTHORIZED','REJECTED'))
+            AND (A.ACT_STATUS_ID = 'COMP_FREEZE' OR A.ACT_STATUS_ID='PART_FREEZE' OR A.ACT_STATUS_ID='CREDIT_FREEZE' OR
+            A.ACT_STATUS_ID='DEBIT_FREEZE' OR A.ACT_STATUS_ID='TOTAL_FREEZE')
+            ORDER BY F.ACT_NUM-->
+            
+        SELECT DISTINCT get_cust_name(C.CUST_ID) 
+        AS NAME,  F.ACT_NUM AS "ACCOUNT NUMBER" FROM  CUSTOMER C, ACT_FREEZE F, LOANS_FACILITY_DETAILS A ,
+        LOANS_BORROWER LB  WHERE F.ACT_NUM = A.ACCT_NUM  AND LB.CUST_ID = C.CUST_ID  AND F.STATUS != 'DELETED'   
+        AND A.BRANCH_ID =  #BRANCH_CODE:VARCHAR# and  LB.BORROW_NO=A.BORROW_NO AND  LB.STATUS !='DELETED' AND
+        (( f.freeze_status ='FREEZED' and ( f.authorize_status in ('AUTHORIZED')or f.authorize_status is NULL ))
+        OR (f.freeze_status ='UNFREEZED' and f.authorize_status in ('REJECTED') 
+        or f.authorize_status is NULL))  AND (A.ACCT_STATUS = 'COMP_FREEZE' OR A.ACCT_STATUS='PART_FREEZE' OR
+        A.ACCT_STATUS='OPERATIONAL' OR  A.ACCT_STATUS='NEW')
+           
+    </mapped-statement>
+     
+    <mapped-statement name="Freeze.getAccountDataNumberName" result-class="java.util.LinkedHashMap">
+        SELECT A.ACT_NUM AS "Account Number", get_cust_name(C.CUST_ID) AS "Customer Name" ,
+        CLEAR_BALANCE
+        FROM  CUSTOMER C,  ACT_MASTER A 
+        WHERE C.CUST_ID = A.CUST_ID
+        AND A.PROD_ID = #PRODID:VARCHAR#
+        AND A.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND A.ACT_STATUS_ID IN ('OPERATIONAL', 'PART_FREEZE', 'NEW','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE')
+        <!--AND A.CLEAR_BALANCE > 0-->
+        AND A.ACT_NUM NOT IN (SELECT ACT_NUM FROM ACT_FREEZE WHERE STATUS != 'DELETED' AND 
+        FREEZE_STATUS != 'UNFREEZED' AND AUTHORIZE_STATUS != 'REJECTED')
+        AND A.ACT_NUM=#acct_num:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.getAccountDataNumberNameAD" result-class="java.util.LinkedHashMap">
+        SELECT LFD.ACCT_NUM AS "Account Number",
+        get_cust_name(c.cust_id) AS "Customer Name",
+        CLEAR_BALANCE
+        FROM CUSTOMER C, LOANS_FACILITY_DETAILS LFD, LOANS_BORROWER LB
+        WHERE C.CUST_ID = LB.CUST_ID
+        AND LFD.PROD_ID = #PRODID:VARCHAR#
+        AND LB.BORROW_NO = LFD.BORROW_NO
+        AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND LFD.ACCT_STATUS IN ('OPERATIONAL', 'PART_FREEZE', 'NEW')
+        AND LFD.ACCT_NUM NOT IN (
+        SELECT ACT_NUM
+        FROM ACT_FREEZE
+        WHERE STATUS != 'DELETED'
+        AND FREEZE_STATUS != 'UNFREEZED'
+        AND AUTHORIZE_STATUS != 'REJECTED')
+        AND LFD.ACCT_NUM =#acct_num:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectFreezeDeleteListOD" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT get_cust_name(c.cust_id) AS NAME, F.ACT_NUM AS "ACCOUNT NUMBER"
+        FROM  CUSTOMER C, ACT_FREEZE F, LOANS_FACILITY_DETAILS A,LOANS_BORROWER LB
+        WHERE F.ACT_NUM = A.ACCT_NUM  AND LB.BORROW_NO=A.BORROW_NO
+        AND LB.CUST_ID = C.CUST_ID
+        AND F.STATUS != 'DELETED'
+        AND F.FREEZE_STATUS != 'UNFREEZED' AND LB.STATUS !='DELETED'
+        AND (f.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR  F.AUTHORIZE_STATUS IS NULL)
+        AND A.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        ORDER BY F.ACT_NUM
+    </mapped-statement>
+
+    <mapped-statement name="getActiveAccountList" result-class="java.util.LinkedHashMap" >
+<!--        select count(act_num) as count from act_freeze
+        where act_num= #ACCTNUMBER#
+        and(STATUS='CREATED' OR STATUS='MODIFIED')
+        AND FREEZE_STATUS = 'FREEZED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+        select count(act_num) as count
+        from act_lien
+        where act_num= #ACCTNUMBER:VARCHAR# and (STATUS='CREATED' OR STATUS='MODIFIED') AND
+        LIEN_STATUS = 'LIENED' AND 
+        AUTHORIZE_STATUS='AUTHORIZED'
+        union
+        select count(act_num) as count from act_freeze
+        where act_num= #ACCTNUMBER:VARCHAR#
+        and(STATUS='CREATED' OR STATUS='MODIFIED')
+        AND FREEZE_STATUS = 'FREEZED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="getActiveAccountListAD" result-class="java.util.LinkedHashMap" >
+    <!--        select count(act_num) as count from act_freeze
+            where act_num= #ACCTNUMBER#
+            and(STATUS='CREATED' OR STATUS='MODIFIED')
+            AND FREEZE_STATUS = 'FREEZED'
+            AND AUTHORIZE_STATUS = 'AUTHORIZED'-->
+            
+        select count(act_num) as count from act_freeze
+        where act_num= #ACCTNUMBER:VARCHAR#
+        and(STATUS='CREATED' OR STATUS='MODIFIED')
+        AND FREEZE_STATUS = 'FREEZED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getFreezeAccountAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+<!--		SELECT
+                    cust.fname || ' ' || cust.mname || ' ' || cust.lname as "Customer Name",
+                    actFZ.ACT_NUM as ACT_NUM,
+                    actFZ.FREEZE_ID as FREEZE_ID,
+                    actFZ.FREEZE_TYPE as FREEZE_TYPE,
+                    actFZ.FREEZE_AMT as FREEZE_AMT,
+                    actFZ.AUTHORIZE_STATUS as AUTHORIZE_STATUS
+                FROM ACT_MASTER act, ACT_FREEZE actFZ, CUSTOMER cust
+                WHERE actFZ.ACT_NUM = act.ACT_NUM
+                      AND act.cust_id=cust.cust_id
+                      AND actFZ.FREEZE_STATUS != 'DELETED'
+                      AND (actFZ.AUTHORIZE_STATUS IS NULL OR actFZ.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))
+                ORDER BY FREEZE_ID -->
+        SELECT
+        get_cust_name(CUST.CUST_ID)  as "Customer Name",
+        actFZ.ACT_NUM as ACT_NUM,
+        actFZ.FREEZE_ID as FREEZE_ID,
+        actFZ.FREEZE_TYPE as FREEZE_TYPE,
+        actFZ.FREEZE_AMT as FREEZE_AMT,
+        actFZ.FREEZE_STATUS as FREEZE_STATUS
+        FROM ACT_MASTER act, ACT_FREEZE actFZ, CUSTOMER cust
+        WHERE actFZ.ACT_NUM = act.ACT_NUM
+        AND act.cust_id=cust.cust_id
+        AND actFZ.STATUS != 'DELETED'
+        AND actFZ.STATUS_BY != #USER_ID:VARCHAR#
+        AND act.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+<!--                AND (actFZ.AUTHORIZE_STATUS IS NULL OR actFZ.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))-->
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = actFZ.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                actFZ.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (actFZ.AUTHORIZE_STATUS IS NULL OR 
+                actFZ.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY FREEZE_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getFreezeAccountAuthorizeTOListOD" result-class="java.util.LinkedHashMap" >
+<!--		SELECT
+                    cust.fname || ' ' || cust.mname || ' ' || cust.lname as "Customer Name",
+                    actFZ.ACT_NUM as ACT_NUM,
+                    actFZ.FREEZE_ID as FREEZE_ID,
+                    actFZ.FREEZE_TYPE as FREEZE_TYPE,
+                    actFZ.FREEZE_AMT as FREEZE_AMT,
+                    actFZ.AUTHORIZE_STATUS as AUTHORIZE_STATUS
+                FROM ACT_MASTER act, ACT_FREEZE actFZ, CUSTOMER cust
+                WHERE actFZ.ACT_NUM = act.ACT_NUM
+                      AND act.cust_id=cust.cust_id
+                      AND actFZ.FREEZE_STATUS != 'DELETED'
+                      AND (actFZ.AUTHORIZE_STATUS IS NULL OR actFZ.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))
+                ORDER BY FREEZE_ID -->
+        SELECT
+        get_cust_name(CUST.CUST_ID)  as "Customer Name",
+        actFZ.ACT_NUM as ACT_NUM,
+        actFZ.FREEZE_ID as FREEZE_ID,
+        actFZ.FREEZE_TYPE as FREEZE_TYPE,
+        actFZ.FREEZE_AMT as FREEZE_AMT,
+        actFZ.FREEZE_STATUS as FREEZE_STATUS
+        FROM LOANS_FACILITY_DETAILS act, ACT_FREEZE actFZ, CUSTOMER cust ,LOANS_BORROWER LB
+        WHERE actFZ.ACT_NUM = act.ACCT_NUM
+        AND LB.BORROW_NO=act.BORROW_NO 
+        AND LB.STATUS !='DELETED'
+        AND LB.cust_id=cust.cust_id
+        AND actFZ.STATUS != 'DELETED'
+        AND actFZ.STATUS_BY != #USER_ID:VARCHAR#
+        AND act.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+<!--                AND (actFZ.AUTHORIZE_STATUS IS NULL OR actFZ.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))-->
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = actFZ.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                actFZ.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (actFZ.AUTHORIZE_STATUS IS NULL OR 
+                actFZ.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            
+        ORDER BY FREEZE_ID
+    </dynamic-mapped-statement>
+
+    
+    <mapped-statement name="authorizeUpdateFreezeTO" inline-parameters="true">
+        UPDATE ACT_FREEZE SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#,
+        FREEZE_STATUS= #FREEZE_STATUS:VARCHAR#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND FREEZE_ID = #FREEZE_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.updateAvailBalance" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET
+        AVAILABLE_BALANCE = AVAILABLE_BALANCE - #AMOUNT:NUMBER#,
+        FREEZE_AMT = NVL(FREEZE_AMT,0) + #AMOUNT:NUMBER#
+<!--          ACT_STATUS_ID = #ACCTSTATUS#-->
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.updateAvailBalanceAD" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET
+        AVAILABLE_BALANCE = AVAILABLE_BALANCE - #AMOUNT:NUMBER#,
+          <!--TOTAL_BALANCE = TOTAL_BALANCE - #AMOUNT#,
+          CLEAR_BALANCE = CLEAR_BALANCE - #AMOUNT#,-->
+        ADV_FREEZE_AMT = NVL(ADV_FREEZE_AMT,0) + #AMOUNT:NUMBER#
+<!--          ACT_STATUS_ID = #ACCTSTATUS#-->
+        WHERE ACCT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="Freeze.getAccountStatus" result-class="java.util.HashMap">
+        SELECT ACT_STATUS_ID FROM ACT_MASTER WHERE ACT_NUM = #value:VARCHAR#
+    </mapped-statement >
+    
+    <mapped-statement name="Freeze.getAccountStatusId" result-class="java.util.HashMap">
+        select count(act_num) as count from act_freeze
+        where act_num= #ACCTNUMBER:VARCHAR#
+        and(STATUS='CREATED' OR STATUS='MODIFIED')
+        AND FREEZE_STATUS = 'FREEZED'
+        AND FREEZE_TYPE = 'COMPLETE'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.getAccountStatusIdNew" result-class="java.util.HashMap">
+        select  FREEZE_TYPE from act_freeze where act_num= #ACCTNUMBER:VARCHAR#        
+        and(STATUS='CREATED' OR STATUS='MODIFIED') AND FREEZE_STATUS = 'FREEZED'       
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.getAccountData" result-class="java.util.LinkedHashMap">
+        SELECT A.ACT_NUM AS "Account Number", get_cust_name(C.CUST_ID) AS "Customer Name" 
+        FROM  CUSTOMER C,  ACT_MASTER A 
+        WHERE C.CUST_ID = A.CUST_ID
+        AND A.PROD_ID = #PRODID:VARCHAR#
+        AND A.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND A.ACT_STATUS_ID IN ('OPERATIONAL', 'PART_FREEZE', 'NEW','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE')
+        AND A.CLEAR_BALANCE > 0
+        AND A.ACT_NUM NOT IN (SELECT ACT_NUM FROM ACT_FREEZE WHERE STATUS != 'DELETED' AND 
+        FREEZE_STATUS != 'UNFREEZED' AND AUTHORIZE_STATUS != 'REJECTED')                               
+        AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.getAccountDataOD" result-class="java.util.LinkedHashMap">
+        SELECT A.ACCT_NUM AS "Account Number", get_cust_name(C.CUST_ID) AS "Customer Name" 
+        FROM  CUSTOMER C,  LOANS_FACILITY_DETAILS A ,LOANS_BORROWER LB
+        WHERE C.CUST_ID = LB.CUST_ID
+        AND LB.BORROW_NO=A.BORROW_NO
+        AND A.STATUS !='DELETED'
+        AND LB.STATUS !='DELETED'
+        AND A.PROD_ID = #PRODID:VARCHAR#
+        AND A.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND A.ACCT_STATUS IN ('OPERATIONAL', 'PART_FREEZE', 'NEW')
+        AND A.ACCT_NUM NOT IN (SELECT ACT_NUM FROM ACT_FREEZE WHERE STATUS != 'DELETED' AND 
+        FREEZE_STATUS != 'UNFREEZED' AND AUTHORIZE_STATUS != 'REJECTED')                               
+        AND A.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>    
+    
+    <mapped-statement name="Freeze.getAccountOpeningDate" result-class="java.util.LinkedHashMap">
+        SELECT ACCT_NAME FROM ACT_MASTER
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+        AND CREATE_DT &lt; #F_DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="Freeze.getAccountDataForSBOD" result-class="java.util.LinkedHashMap">
+        SELECT A.ACT_NUM AS "Account Number", get_cust_name(C.CUST_ID) AS "Customer Name" 
+        FROM  CUSTOMER C,  ACT_MASTER A 
+        WHERE C.CUST_ID = A.CUST_ID
+        AND A.PROD_ID = #PRODID:VARCHAR#
+        AND A.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND A.ACT_STATUS_ID IN ('OPERATIONAL', 'PART_FREEZE', 'NEW','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE')        
+        AND A.ACT_NUM NOT IN (SELECT ACT_NUM FROM ACT_FREEZE WHERE STATUS != 'DELETED' AND 
+        FREEZE_STATUS != 'UNFREEZED' AND AUTHORIZE_STATUS != 'REJECTED')                               
+        AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+   
+</sql-map>

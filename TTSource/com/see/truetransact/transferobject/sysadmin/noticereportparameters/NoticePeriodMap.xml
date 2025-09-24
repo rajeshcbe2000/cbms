@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="NoticePeriodTOMap">
+
+	<!-- Use NoticePeriodTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertNoticePeriod" inline-parameters="true">
+        INSERT INTO REP_NOTICEPERIOD
+        (REPORT_ID, REPORT_NAME, DATA_ENTERED,BRANCH_CODE,CREATE_DT,CREATED_BY,AUTHORIZED_BY,AUTHORIZATION_STATUS,AUTHORIZED_DT,STATUS,STATUS_BY,STATUS_DT,LANGUAGE,GRNT_DETAILS,REPORT_HEADING
+        ) VALUES (
+        #reportCode:VARCHAR#,#reportName:VARCHAR#,#dataEntered:VARCHAR#,#branCode:VARCHAR#,#createdDt:DATE#,#createdBy:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#,#authorizeDt:DATE#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#lang:VARCHAR#,#grDetails:VARCHAR#,#repHeading:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use NoticePeriodTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateNoticePeriod" inline-parameters="true">
+        UPDATE REP_NOTICEPERIOD SET 
+        DATA_ENTERED = #dataEntered:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#,
+        AUTHORIZATION_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#,
+        STATUS_DT= #statusDt:DATE#,
+        BRANCH_CODE =#branCode:VARCHAR#
+        WHERE REPORT_ID = #reportCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteNoticePeriod" inline-parameters="true">
+        UPDATE REP_NOTICEPERIOD SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE REPORT_ID = #reportCode:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectNoticePeriodTO" result-map="getNoticePeriodTOResult" >
+        SELECT * FROM REP_NOTICEPERIOD WHERE STATUS!='DELETED' AND REPORT_ID = #REPORT_ID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OtherBankTO object (JavaBean) properties -->
+    <result-map name="getNoticePeriodTOResult" class="com.see.truetransact.transferobject.sysadmin.noticereportparameters.NoticePeriodTO">
+        <property name="reportCode" column="REPORT_ID"/>
+        <property name="reportName" column="REPORT_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="dataEntered" column="DATA_ENTERED"/>
+        <property name="branCode" column="BRANCH_CODE"/>
+        <property name="createdDt" column="CREATE_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZATION_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="lang" column="LANGUAGE"/>
+        <property name="grDetails" column="GRNT_DETAILS"/>
+        <property name="repHeading" column="REPORT_HEADING"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectNotPeriodDet" result-class = "java.util.LinkedHashMap" >        
+        SELECT REPORT_ID,REPORT_NAME FROM REP_NOTICEPERIOD WHERE STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getNotPerAuthorizeList" result-class = "java.util.LinkedHashMap" >
+        SELECT REPORT_ID,REPORT_NAME FROM REP_NOTICEPERIOD WHERE STATUS!='DELETED'
+        AND AUTHORIZATION_STATUS IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeNotPer" result-class="java.util.HashMap">
+        update REP_NOTICEPERIOD set AUTHORIZATION_STATUS=#AUTH_STATUS:VARCHAR#,AUTHORIZED_BY=#AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT:DATE# where REPORT_ID=#REPORT_ID:VARCHAR#
+    </mapped-statement>
+    <result-map name="get-Notice-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="REPORT_ID" />
+        <property name="lookUpDesc" column="REPORT_NAME" />
+    </result-map> 
+    <mapped-statement name="getNoticeType" result-map="get-Notice-result">
+        SELECT REPORT_NAME, REPORT_ID FROM REP_NOTICEPERIOD
+    </mapped-statement>
+    <mapped-statement name="checkforUniqueRepName" result-class="java.util.HashMap">
+        select report_name from rep_noticeperiod where status!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="getGuarDetailsForLoanNotice" result-class="java.util.HashMap">
+        select report_name, GRNT_DETAILS,REPORT_HEADING from rep_noticeperiod
+        where status!='DELETED' AND AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND REPORT_ID=#REPORT_ID:VARCHAR#
+    </mapped-statement>
+</sql-map>

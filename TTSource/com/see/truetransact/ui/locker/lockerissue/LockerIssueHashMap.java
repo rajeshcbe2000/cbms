@@ -1,0 +1,151 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.  
+ * 
+ * LockerIssueHashMap.java
+ */
+
+package com.see.truetransact.ui.locker.lockerissue;
+import java.util.HashMap;
+import com.see.truetransact.uimandatory.UIMandatoryHashMap;
+public class LockerIssueHashMap implements UIMandatoryHashMap {
+    private HashMap mandatoryMap;
+    public LockerIssueHashMap(){
+        mandatoryMap = new HashMap();
+        mandatoryMap.put("txtCustomerIdAI", new Boolean(true));
+        mandatoryMap.put("cboCustAddrCity", new Boolean(false));
+        mandatoryMap.put("txtBranchITP2", new Boolean(false));
+        mandatoryMap.put("cboGuardianAddrState", new Boolean(false));
+        mandatoryMap.put("dtdActOpenDateAI", new Boolean(false));
+        mandatoryMap.put("chkNonMainMinBalChrgAD", new Boolean(false));
+        mandatoryMap.put("cboIdentityTypeITP4", new Boolean(false));
+        mandatoryMap.put("dtdMinorDOBNO", new Boolean(false));
+        mandatoryMap.put("txtLockerNo", new Boolean(true));
+        mandatoryMap.put("cboConstitutionAI", new Boolean(true));
+        mandatoryMap.put("dtdATMToDateAD", new Boolean(false));
+        mandatoryMap.put("txtDesignationOTP5", new Boolean(false));
+        mandatoryMap.put("txtGuardianAddrPincode", new Boolean(false));
+        mandatoryMap.put("txtPOAAddrArea", new Boolean(false));
+        mandatoryMap.put("txtMinActBalanceAD", new Boolean(false));
+        mandatoryMap.put("txtCustAddrPincode", new Boolean(false));
+        mandatoryMap.put("txtNameITP2", new Boolean(false));
+        mandatoryMap.put("txtACodeOTP5", new Boolean(false));
+        mandatoryMap.put("txtReqFlexiPeriodAD", new Boolean(false));
+        mandatoryMap.put("dtdATMFromDateAD", new Boolean(false));
+        mandatoryMap.put("txtGuardianAddrArea", new Boolean(false));
+        mandatoryMap.put("cboNomineeRelationNO", new Boolean(false));
+        mandatoryMap.put("cboNomineeAddrCity", new Boolean(false));
+        mandatoryMap.put("txtDocNoITP3", new Boolean(false));
+        mandatoryMap.put("chkChequeRetChrgAD", new Boolean(false));
+        mandatoryMap.put("cboINP5AddrCity", new Boolean(false));
+        mandatoryMap.put("txtGuardianAddrStreet", new Boolean(false));
+        mandatoryMap.put("cboCategory", new Boolean(false));
+        mandatoryMap.put("cboDocTypeITP3", new Boolean(false));
+        mandatoryMap.put("txtATMNoAD", new Boolean(false));
+        mandatoryMap.put("txtGuardianACodeNO", new Boolean(false));
+        mandatoryMap.put("txtPOAACodePA", new Boolean(false));
+        mandatoryMap.put("cboINP5AddrCountry", new Boolean(false));
+        mandatoryMap.put("dtdExpiryDateITP3", new Boolean(false));
+        mandatoryMap.put("chkABBChrgAD", new Boolean(false));
+        mandatoryMap.put("chkATMAD", new Boolean(false));
+        mandatoryMap.put("txtINP5AddrPincode", new Boolean(false));
+        mandatoryMap.put("chkNPAChrgAD", new Boolean(false));
+        mandatoryMap.put("dtdDebitFromDateAD", new Boolean(false));
+        mandatoryMap.put("txtNomineePhoneNO", new Boolean(false));
+        mandatoryMap.put("txtMinBal1FlexiAD", new Boolean(false));
+        mandatoryMap.put("chkFlexiAD", new Boolean(false));
+        mandatoryMap.put("chkStmtChrgAD", new Boolean(false));
+        mandatoryMap.put("rdoStatus_MinorNO", new Boolean(false));
+        mandatoryMap.put("txtPOAAddrStreet", new Boolean(false));
+       // mandatoryMap.put("cboSettlementModeAI", new Boolean(false));
+        mandatoryMap.put("cboDMYAD", new Boolean(false));
+        mandatoryMap.put("chkCreditAD", new Boolean(false));
+        mandatoryMap.put("txtCustAddrArea", new Boolean(false));
+        mandatoryMap.put("cboBaseCurrAI", new Boolean(false));
+        mandatoryMap.put("txtBankITP2", new Boolean(false));
+        mandatoryMap.put("txtRemarksPA", new Boolean(false));
+        mandatoryMap.put("chkChequeBookAD", new Boolean(false));        
+        mandatoryMap.put("txtGuardianNameNO", new Boolean(false));
+        mandatoryMap.put("txtTotalShareNO", new Boolean(false));
+        mandatoryMap.put("chkCustGrpLimitValidationAD", new Boolean(false));
+        mandatoryMap.put("txtAccountNoITP1", new Boolean(false));
+        mandatoryMap.put("cboINP5AddrState", new Boolean(false));
+        mandatoryMap.put("txtNomineeAddrArea", new Boolean(false));
+        mandatoryMap.put("cboCustAddrState", new Boolean(false));
+        mandatoryMap.put("txtIdITP4", new Boolean(false));
+        mandatoryMap.put("txtINP5AddrArea", new Boolean(false));
+        mandatoryMap.put("dtdDebit", new Boolean(false));
+        mandatoryMap.put("chkPayIntOnCrBalIN", new Boolean(false));
+        mandatoryMap.put("txtNomineeAddrStreet", new Boolean(false));
+        mandatoryMap.put("dtdCredit", new Boolean(false));
+        mandatoryMap.put("dtdPOAToDatePA", new Boolean(false));
+        mandatoryMap.put("txtPhoneOTP5", new Boolean(false));
+        mandatoryMap.put("dtdCreditFromDateAD", new Boolean(false));
+        mandatoryMap.put("txtAccCloseChrgAD", new Boolean(false));
+        mandatoryMap.put("cboNomineeAddrCountry", new Boolean(false));
+        mandatoryMap.put("txtNomineeShareNO", new Boolean(false));
+        mandatoryMap.put("cboNomineeAddrState", new Boolean(false));
+        mandatoryMap.put("cboCommAddr", new Boolean(true));
+        mandatoryMap.put("txtAmoutTransAI", new Boolean(false));
+        mandatoryMap.put("cboOpModeAI", new Boolean(true));
+        mandatoryMap.put("dtdOpeningDateAI", new Boolean(false));
+        mandatoryMap.put("chkNROStatusAD", new Boolean(false));
+        mandatoryMap.put("dtdPOAFromDatePA", new Boolean(false));
+        mandatoryMap.put("txtChequeBookChrgAD", new Boolean(false));
+        mandatoryMap.put("cboPOAAddrCountry", new Boolean(false));
+        mandatoryMap.put("txtIssuedAuthITP4", new Boolean(false));
+        mandatoryMap.put("txtNomineeAddrPincode", new Boolean(false));
+        mandatoryMap.put("cboPOAAddrCity", new Boolean(false));
+        mandatoryMap.put("txtGuardianPhoneNO", new Boolean(false));
+        mandatoryMap.put("txtPOAPhonePA", new Boolean(false));
+        mandatoryMap.put("cboRelationNO", new Boolean(false));
+        mandatoryMap.put("txtCreditNoAD", new Boolean(false));
+        mandatoryMap.put("txtRemarksAI", new Boolean(false));
+        mandatoryMap.put("txtExcessWithChrgAD", new Boolean(false));
+        mandatoryMap.put("dtdNPAChrgAD", new Boolean(false));
+        mandatoryMap.put("dtdDebitToDateAD", new Boolean(false));
+        mandatoryMap.put("chkMobileBankingAD", new Boolean(false));
+        mandatoryMap.put("txtIssuedByITP3", new Boolean(false));
+        mandatoryMap.put("txtPOAAddrPincode", new Boolean(false));
+        mandatoryMap.put("cboGuardianAddrCity", new Boolean(false));
+        mandatoryMap.put("cboActStatusAI", new Boolean(false));
+        mandatoryMap.put("dtdIssuedDateITP3", new Boolean(false));
+        mandatoryMap.put("dtdCreditToDateAD", new Boolean(false));
+        mandatoryMap.put("chkPayIntOnDrBalIN", new Boolean(false));
+        mandatoryMap.put("txtABBChrgAD", new Boolean(false));
+        mandatoryMap.put("txtNomineeACodeNO", new Boolean(false));
+        mandatoryMap.put("txtNomineeNameNO", new Boolean(false));
+        mandatoryMap.put("cboPreviousActNo", new Boolean(false));
+        mandatoryMap.put("chkInopChrgAD", new Boolean(false));
+        mandatoryMap.put("txtBranchCodeAI", new Boolean(false));
+        mandatoryMap.put("cboGroupCodeAI", new Boolean(false));
+        mandatoryMap.put("txtMinNominees", new Boolean(false));
+        mandatoryMap.put("txtDebitNoAD", new Boolean(false));
+        mandatoryMap.put("txtPrevActNumAI", new Boolean(false));
+       // mandatoryMap.put("txtODLimitAI", new Boolean(false));
+        mandatoryMap.put("txtINP5ddrStreet", new Boolean(false));
+        mandatoryMap.put("txtCustAddrStreet", new Boolean(false));
+        mandatoryMap.put("cboStmtFreqAD", new Boolean(false));
+        mandatoryMap.put("txtIntroNameOTP5", new Boolean(false));
+        mandatoryMap.put("cboPOAAddrState", new Boolean(false));
+        mandatoryMap.put("txtPOANamePA", new Boolean(false));
+        mandatoryMap.put("chkStopPmtChrgAD", new Boolean(false));
+        mandatoryMap.put("txtMinBal2FlexiAD", new Boolean(false));
+        mandatoryMap.put("txtMisServiceChrgAD", new Boolean(false));
+        mandatoryMap.put("txtAccountNoITP2", new Boolean(false));
+        mandatoryMap.put("chkDebitAD", new Boolean(false));
+        mandatoryMap.put("txtAccOpeningChrgAD", new Boolean(false));
+        mandatoryMap.put("cboGuardianAddrCountry", new Boolean(false));
+        mandatoryMap.put("cboCustAddrCountry", new Boolean(false));
+        mandatoryMap.put("cboProductIdAI", new Boolean(true));
+        mandatoryMap.put("txtActName", new Boolean(false));
+        mandatoryMap.put("txtRemarks", new Boolean(false));
+        mandatoryMap.put("chkHideBalanceTrans", new Boolean(false));
+        mandatoryMap.put("cboRoleHierarchy", new Boolean(false));
+           mandatoryMap.put("dtdExpiryDate", new Boolean(true));
+    }
+    public HashMap getMandatoryHashMap(){
+        return this.mandatoryMap;
+    }
+}

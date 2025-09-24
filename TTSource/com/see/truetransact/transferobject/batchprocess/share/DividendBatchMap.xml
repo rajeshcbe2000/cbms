@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DividendBatchTOMap">
+
+	<!-- Use DividendBatchTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDividendBatchTO" inline-parameters="true">
+        INSERT INTO SHARE_DIVIDEND
+        (SHARE_TYPE, SHARE_ACCT_NO, DIVIDEND_DT, SHARE_COUNT, DIVIDEND_PER, DIVIDEND_AMT, SHARE_ACCT_DETAIL_NO, DIV_UP_TO,DIV_PAY_MODE ,STATUS ,STATUS_BY ,STATUS_DT ,AUTHORIZE_STATUS,AUTHORIZE_BY ,AUTHORIZE_DT,BATCH_ID,INIT_BRANCH
+        ) VALUES (
+        #shareType:VARCHAR#, #shareAcctNo:VARCHAR#, #dividendDt:DATE#, #shareCount:NUMERIC#, #dividendPer:NUMERIC#, #dividendAmt:NUMERIC#, #shareAcctDetailNo:VARCHAR#
+        ,#dividendUpTo:DATE#,#divPayFlag:VARCHAR# ,#status:VARCHAR#,#statusBy:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:DATE#,#batchID:VARCHAR#,#initBran:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="aunthorizedDividend" result-class="java.util.HashMap">         
+        select * from  share_dividend where SHARE_ACCT_NO=#SHARE_ACCT_NO# and STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+
+	<!-- Use DividendBatchTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDividendBatchTO" inline-parameters="true">
+        UPDATE SHARE_DIVIDEND SET 
+        SHARE_TYPE = #shareType:VARCHAR#,
+        SHARE_ACCT_NO = #shareAcctNo:VARCHAR#,
+        DIVIDEND_DT = #dividendDt:DATE#,
+        SHARE_COUNT = #shareCount:NUMERIC#,
+        DIVIDEND_PER = #dividendPer:NUMERIC#,
+        DIVIDEND_AMT = #dividendAmt:NUMERIC#,
+        DIV_UP_TO=#dividendUpTo:DATE#,
+        DIV_PAY_MODE=#divPayFlag:VARCHAR#,
+        STATUS=#status:VARCHAR#  ,
+        STATUS_BY=#statusBy:VARCHAR#  ,
+        STATUS_DT=(SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDt:DATE# ,
+        BATCH_ID=#batchID:VARCHAR#
+        WHERE   SHARE_ACCT_NO  = #shareAcctNo:VARCHAR# AND  DIVIDEND_DT = #dividendDt:DATE# 
+        AND BATCH_ID=#batchID:VARCHAR# AND INIT_BRANCH=#initBran:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewShareDividendPayData" result-class="java.util.HashMap" >
+        SELECT SD.SHARE_TYPE ,SD.SHARE_ACCT_NO ,SD.DIVIDEND_AMT ,SD.STATUS_BY,SD.DIVIDEND_DT ,BATCH_ID,DIV_PAY_MODE,
+        get_cust_name(C.CUST_ID) AS FNAME from share_dividend SD , SHARE_ACCT SA,CUSTOMER C
+        WHERE SA.SHARE_ACCT_NO=SD.SHARE_ACCT_NO AND SD.STATUS!='DELETED' AND SD.AUTHORIZE_STATUS  IS NULL
+        AND SA.CUST_ID=C.CUST_ID
+         <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHARE_TYPE">
+                    UPPER(SD.SHARE_TYPE) LIKE UPPER('%$SHARE_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHARE_ACCT_NO">
+                    UPPER(SD.SHARE_ACCT_NO) LIKE UPPER('%$SHARE_ACCT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DIVIDEND_AMT">
+                    UPPER(SD.DIVIDEND_AMT) LIKE UPPER('%$DIVIDEND_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS_BY">
+                    UPPER(SD.STATUS_BY) LIKE UPPER('%$STATUS_BY$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="DIVIDEND_DT">
+                    UPPER(SD.DIVIDEND_DT) LIKE UPPER('%$DIVIDEND_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="BATCH_ID">
+                    UPPER(BATCH_ID) LIKE UPPER('%$BATCH_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DIV_PAY_MODE">
+                    UPPER(DIV_PAY_MODE) LIKE UPPER('%$DIV_PAY_MODE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FNAME">
+                    UPPER(get_cust_name(C.CUST_ID)) LIKE UPPER('%$FNAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to DividendBatchTO object (JavaBean) properties -->
+    <result-map name="getDividendBatchTOResult" class="com.see.truetransact.transferobject.batchprocess.share.DividendBatchTO">
+        <property name="shareType" column="SHARE_TYPE"/>
+        <property name="shareAcctNo" column="SHARE_ACCT_NO"/>
+        <property name="dividendDt" column="DIVIDEND_DT"/>
+        <property name="shareCount" column="SHARE_COUNT"/>
+        <property name="dividendPer" column="DIVIDEND_PER"/>
+        <property name="dividendAmt" column="DIVIDEND_AMT"/>
+        <property name="shareAcctDetailNo" column="SHARE_ACCT_DETAIL_NO"/>
+        <property name="dividendUpTo" column="DIV_UP_TO"/>
+        <property name="divPayFlag" column="DIV_PAY_MODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="batchID" column="BATCH_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectDividendBatchTO" result-map="getDividendBatchTOResult" >
+        SELECT * FROM SHARE_DIVIDEND 
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectDividendUnclaimedTransferList" result-class="java.util.LinkedHashMap" >
+       <!-- SELECT   SHARE_ACCT_NO ,decode(UPTO_DIVIDEND_PAID_DATE ,null,CREATED_DT,UPTO_DIVIDEND_PAID_DATE) as UPTO_DIVIDEND_PAID_DATE ,nvl(DIVIDEND_AMOUNT,0) as DIVIDEND_AMOUNT
+        , get_cust_name(C.CUST_ID) AS  "CUSTOMER_NAME" ,SHARE_TYPE FROM SHARE_ACCT SA ,CUSTOMER C
+        WHERE  nvl(DIVIDEND_AMOUNT,0) > 0  AND C.CUST_ID=SA.CUST_ID-->
+        SELECT share_acct_no,MAX(DECODE (upto_dividend_paid_date,NULL, sa.created_dt,upto_dividend_paid_date)) AS upto_dividend_paid_date,
+        SUM(cast(NVL(cast(SDCD.DIV_AMOUNT as numeric), 0) as numeric)) AS dividend_amount,MAX(get_cust_name(c.cust_id)) AS "CUSTOMER_NAME",
+        MAX(share_type) as share_type FROM share_acct sa join customer c on c.cust_id = sa.cust_id join SHARE_DIVIDEND_CALC_DETAILS sdcd on SA.SHARE_ACCT_NO=SDCD.MEMBER_NO
+    	join SHARE_DIVIDEND_CALC_MASTER sdcm on SDCD.DIVIDEND_CALC_ID=SDCM.DIVIDEND_CALC_ID WHERE  SA.STATUS != 'CLOSED' 
+        <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DIVIDEND_PAID_STATUS">
+                    SDCD.DIVIDEND_PAID_STATUS='UNPAID' 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+       <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_TYPE">
+                    SHARE_TYPE=#SHARE_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        <dynamic>  
+            <isParameterPresent> 
+                <isNotNull prepend="AND" property="SHARE_ACCT_NO">
+                    SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        <dynamic> 
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="UNCLAIMED_DEVIDEND_DATE">
+                    decode(UPTO_DIVIDEND_PAID_DATE ,null,CREATED_DT,UPTO_DIVIDEND_PAID_DATE) &lt;= #UNCLAIMED_DEVIDEND_DATE:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        <dynamic> 
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    SA.BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="share_acct_no">
+                    UPPER(share_acct_no) LIKE UPPER('%$share_acct_no$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="share_acct_no">
+                    UPPER(DECODE (upto_dividend_paid_date,NULL, created_dt,upto_dividend_paid_date)) LIKE UPPER('%$upto_dividend_paid_date$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(c.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="share_type">
+                    UPPER(share_type) LIKE UPPER('%$share_type$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        GROUP BY share_acct_no
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectDividendUnclaimedIndividualList" result-class="java.util.LinkedHashMap" >
+        SELECT SUM(DIVIDEND_AMT) as UNCLAIMEDAMT  FROM   SHARE_DIVIDEND  SD where SHARE_ACCT_DETAIL_NO='CREDIT' AND DIV_UP_TO &lt;=#UNCLAIMED_DEVIDEND_DATE1:DATE# 
+        AND DIV_UP_TO &gt; #UPTO_DIVIDEND_PAID_DATE:DATE#  AND  SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+              <!--AND SD.SHARE_ACCT_NO NOT IN(SELECT SHARE_ACCT_NO FROM  SHARE_DIVIDEND  WHERE SHARE_ACCT_NO=SD.SHARE_ACCT_NO 
+              AND SHARE_ACCT_DETAIL_NO='DEBIT' AND DIVIDEND_DT &lt;=#UNCLAIMED_DEVIDEND_DATE#)-->
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectDividendCalProd" result-class="java.util.HashMap" >
+        SELECT * from SHARE_CONF_DETAILS 
+        <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="where" property="SHARE_TYPE">
+                    SHARE_TYPE=#SHARE_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>
+         
+    <mapped-statement name="getSelectDividendCalAccountList" result-class="java.util.LinkedHashMap" >
+        select SHARE_ACCT_NO ,DIVIDEND_PAY_MODE,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_CREDIT_PRODUCT_ID ,DIVIDEND_CREDIT_AC ,BRANCH_CODE
+        from share_acct where AUTHORIZE = 'AUTHORIZED' and STATUS != 'DELETED'
+        AND  SHARE_TYPE=#SHARE_TYPE:VARCHAR#
+        AND (UPTO_DIVIDEND_APPLDT IS NULL OR UPTO_DIVIDEND_APPLDT &lt; #NEXT_DUE_DATE:DATE#)
+        order by SHARE_ACCT_NO
+    </mapped-statement>
+           
+    <dynamic-mapped-statement name="getDividentTransferList" result-class="java.util.LinkedHashMap" >
+        select SHARE_ACCT_NO ,DIVIDEND_PAY_MODE,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_CREDIT_PRODUCT_ID ,DIVIDEND_CREDIT_AC ,BRANCH_CODE,DIVIDEND_AMOUNT
+        from share_acct where AUTHORIZE = 'AUTHORIZED' and STATUS != 'DELETED'
+        and DIVIDEND_AMOUNT &gt;0 <!--and DIVIDEND_PAY_MODE='TRANSFER'-->
+        AND  SHARE_TYPE=#SHARE_TYPE:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#                     
+                        
+        <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_ACCT_NO_FROM">
+                    SHARE_ACCT_NO &gt;=  #SHARE_ACCT_NO_FROM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_ACCT_NO_TO">
+                    SHARE_ACCT_NO &lt;=  #SHARE_ACCT_NO_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+               
+        <dynamic>  
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DIVIDEND_PAY_MODE">
+                    DIVIDEND_PAY_MODE =  #DIVIDEND_PAY_MODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        order by SHARE_ACCT_NO
+    </dynamic-mapped-statement>
+           
+           
+    <mapped-statement name="getSelectDividendCalAcctDetBF1Q" result-class="java.util.LinkedHashMap" >
+        select sum(NO_OF_SHARES)-(select sum(NO_OF_SHARES) from  SHARE_acct_DETAILS  sad
+        where sad.SHARE_ACCT_NO=SHARE_ACCT_NO and SAD.SHARE_NO_FROM!='ADD' and sad.STATUS!='DELETED' AND 
+        SAD.AUTHORIZE='AUTHORIZED' AND SHARE_CERT_ISSUE_DT &lt;= #LAST_DIVIDEND_CALC:DATE#
+        AND SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+                   
+        ) AS NO_OF_SHARES
+                    
+        from  SHARE_acct_DETAILS 
+        WHERE  SHARE_NO_FROM='ADD' AND STATUS!='DELETED' AND 
+        AUTHORIZE='AUTHORIZED' AND SHARE_CERT_ISSUE_DT &lt;= #LAST_DIVIDEND_CALC:DATE#
+                   <!-- AND (UPTO_DIVIDEND_APPLDT IS NULL OR UPTO_DIVIDEND_APPLDT &lt;= #LAST_DIVIDEND_CALC#)-->
+        AND SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+        GROUP BY SHARE_ACCT_NO                              
+		        
+    </mapped-statement>
+                     
+    <mapped-statement name="getSelectDividendCalAcctDetQu" result-class="java.util.LinkedHashMap" >
+                    
+        select sum(NO_OF_SHARES) as "ADD",
+        (select sum(NO_OF_SHARES) from  SHARE_acct_DETAILS  sad
+        where sad.SHARE_ACCT_NO=SHARE_ACCT_NO and SAD.SHARE_NO_FROM!='ADD' and sad.STATUS!='DELETED' AND 
+        SAD.AUTHORIZE='AUTHORIZED' <!--AND SHARE_CERT_ISSUE_DT &lt;= #LAST_DIVIDEND_CALC#-->
+        AND SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+        and SHARE_CERT_ISSUE_DT between #NEXT_DATE:DATE# AND #END_DATE:DATE#
+                   
+        ) AS "WITHDRAWAL" from SHARE_acct_DETAILS 
+        WHERE  SHARE_NO_FROM='ADD' AND STATUS!='DELETED' AND 
+        AUTHORIZE='AUTHORIZED'<!--AND SHARE_CERT_ISSUE_DT &lt;= #LAST_DIVIDEND_CALC#-->
+        AND SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#  AND  SHARE_CERT_ISSUE_DT between #NEXT_DATE:DATE# AND #END_DATE:DATE#
+        GROUP BY SHARE_ACCT_NO
+                    
+    </mapped-statement>
+        
+    <mapped-statement name="Dividend.getShareAcctDet" result-class="java.util.HashMap" >
+                <!--SELECT * FROM SHARE_ACCT_DETAILS SAC
+		WHERE STATUS != 'DELETED' AND AUTHORIZE = 'AUTHORIZED' AND SHARE_ACCT_DET_NO NOT IN  (SELECT SHARE_ACCT_DETAIL_NO 
+                FROM SHARE_DIVIDEND WHERE SHARE_DIVIDEND.SHARE_ACCT_NO = SAC.SHARE_ACCT_NO) AND SHARE_ACCT_NO NOT IN  (SELECT 
+                SHARE_ACCT_NO FROM SHARE_DIVIDEND WHERE SHARE_DIVIDEND.SHARE_ACCT_NO = SAC.SHARE_ACCT_NO)
+                AND (SELECT NEXT_DUE_DATE FROM SHARE_CONF_DETAILS WHERE SHARE_CONF_DETAILS.SHARE_TYPE = (SELECT SHARE_TYPE FROM SHARE_ACCT WHERE SHARE_ACCT.SHARE_ACCT_NO = SAC.SHARE_ACCT_NO )) = -->
+                <!--SELECT SHARE_ACCT_NO, SHARE_ACCT_DET_NO, NO_OF_SHARES, SHARE_NO_FROM, SHARE_NO_TO, SHARE_CERT_ISSUE_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE, AUTHORIZE_BY, AUTHORIZE_DT , 
+                (SELECT SHARE_TYPE FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)  AS SHARE_TYPE,
+                (SELECT DIVIDEND_CREDIT_AC FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)  AS DIVIDEND_CREDIT_AC,
+                (SELECT DIVIDEND_PAYMENT_ACHD FROM SHARE_CONF_DETAILS WHERE SHARE_CONF_DETAILS.SHARE_TYPE =  (SELECT SHARE_TYPE FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)  AND SHARE_CONF_DETAILS.STATUS != 'DELETED'  AND SHARE_CONF_DETAILS.AUTHORIZE_STATUS = 'AUTHORIZED')  AS DIVIDEND_PAYMENT_ACHD,      
+                (SELECT DIVIDEND_CREDIT_PRODUCT FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)  AS DIVIDEND_CREDIT_PRODUCT,
+                (SELECT BRANCH_CODE FROM ACT_MASTER  WHERE STATUS != 'DELETED' AND AUTHORIZATION_STATUS = 'AUTHORIZED' AND ACT_NUM = (SELECT DIVIDEND_CREDIT_AC FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)) AS BRANCH_CODE, 
+                (SELECT AC_HD_ID FROM OP_AC_PRODUCT WHERE STATUS != 'DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND PROD_ID = (SELECT DIVIDEND_CREDIT_PRODUCT FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)) AS AC_HD_ID
+                FROM SHARE_ACCT_DETAILS SAC
+		WHERE STATUS != 'DELETED' AND AUTHORIZE = 'AUTHORIZED' AND SHARE_ACCT_DET_NO NOT IN  (SELECT SHARE_ACCT_DETAIL_NO 
+                FROM SHARE_DIVIDEND WHERE SHARE_DIVIDEND.SHARE_ACCT_NO = SAC.SHARE_ACCT_NO) AND SHARE_ACCT_NO NOT IN  (SELECT 
+                SHARE_ACCT_NO FROM SHARE_DIVIDEND WHERE SHARE_DIVIDEND.SHARE_ACCT_NO = SAC.SHARE_ACCT_NO)
+                AND (SELECT NEXT_DUE_DATE FROM SHARE_CONF_DETAILS WHERE SHARE_CONF_DETAILS.SHARE_TYPE =  (SELECT SHARE_TYPE FROM SHARE_ACCT WHERE SAC.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO)  AND SHARE_CONF_DETAILS.STATUS != 'DELETED'  AND SHARE_CONF_DETAILS.AUTHORIZE_STATUS = 'AUTHORIZED') = -->
+                <!--SELECT SAC.SHARE_ACCT_NO, SAC.SHARE_ACCT_DET_NO, NO_OF_SHARES, SHARE_NO_FROM, SHARE_NO_TO, SHARE_CERT_ISSUE_DT, SAC.STATUS, SAC.STATUS_BY, SAC.STATUS_DT, SAC.AUTHORIZE, SAC.AUTHORIZE_BY, SAC.AUTHORIZE_DT , SA.SHARE_TYPE, SA.DIVIDEND_CREDIT_AC,SCD.NEXT_DUE_DATE,
+                SCD.PERCENTAGE_DIVIDEND,SCD.LAST_DIVIDEND_CALC,SCD.DIVIDEND_PAYMENT_ACHD, SA.DIVIDEND_CREDIT_PRODUCT, AM.BRANCH_CODE, OAP.AC_HD_ID
+                FROM SHARE_ACCT_DETAILS SAC, SHARE_ACCT SA, SHARE_CONF_DETAILS SCD, ACT_MASTER AM, OP_AC_PRODUCT OAP 
+                WHERE SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO AND SCD.SHARE_TYPE = SA.SHARE_TYPE AND 
+                SCD.STATUS != 'DELETED' AND SCD.AUTHORIZE_STATUS = 'AUTHORIZED' AND AM.STATUS != 'DELETED' AND 
+                AM.AUTHORIZATION_STATUS = 'AUTHORIZED' AND AM.ACT_NUM = SA.DIVIDEND_CREDIT_AC AND OAP.STATUS != 'DELETED' AND 
+                OAP.AUTHORIZED_STATUS = 'AUTHORIZED' AND OAP.PROD_ID = SA.DIVIDEND_CREDIT_PRODUCT AND 
+                SAC.STATUS != 'DELETED' AND SAC.AUTHORIZE = 'AUTHORIZED' 
+                AND SCD.NEXT_DUE_DATE &lt;= #CURR_DATE:DATE#
+                AND-->
+               <!-- SAC.SHARE_ACCT_NO || SAC.SHARE_ACCT_DET_NO NOT IN  
+                (SELECT SHARE_ACCT_NO || SHARE_ACCT_DETAIL_NO FROM SHARE_DIVIDEND 
+                WHERE DIVIDEND_DT &gt;= SCD.NEXT_DUE_DATE) -->
+                 <!--NOT EXISTS 
+                (SELECT SHARE_ACCT_NO || SHARE_ACCT_DETAIL_NO FROM SHARE_DIVIDEND 
+                WHERE DIVIDEND_DT &gt;= SCD.NEXT_DUE_DATE AND SAC.SHARE_ACCT_NO || SAC.SHARE_ACCT_DET_NO= SHARE_ACCT_NO || SHARE_ACCT_DETAIL_NO)-->
+        SELECT SAC.SHARE_ACCT_NO, SAC.SHARE_ACCT_DET_NO, NO_OF_SHARES, SHARE_NO_FROM, SHARE_NO_TO,sac.SHARE_VALUE, SHARE_CERT_ISSUE_DT, SAC.STATUS, SAC.STATUS_BY, SAC.STATUS_DT, SAC.AUTHORIZE, SAC.AUTHORIZE_BY, SAC.AUTHORIZE_DT , SA.SHARE_TYPE, SA.DIVIDEND_CREDIT_AC,SCD.NEXT_DUE_DATE,
+        SCD.PERCENTAGE_DIVIDEND,SCD.LAST_DIVIDEND_CALC,SCD.DIVIDEND_PAYMENT_ACHD, SA.DIVIDEND_CREDIT_PRODUCT
+        FROM SHARE_ACCT_DETAILS SAC, SHARE_ACCT SA, SHARE_CONF_DETAILS SCD
+        WHERE SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO AND SCD.SHARE_TYPE = SA.SHARE_TYPE AND 
+        SCD.STATUS != 'DELETED' AND SCD.AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+                           
+        SAC.STATUS != 'DELETED' AND SAC.AUTHORIZE = 'AUTHORIZED' 
+        AND (SCD.NEXT_DUE_DATE &lt;= #CURR_DATE:DATE# OR SCD.NEXT_DUE_DATE IS NULL) and  sac.SHARE_CERT_ISSUE_DT &lt;= #CURR_DATE:DATE#
+        ORDER BY SAC.SHARE_ACCT_NO, SAC.SHARE_ACCT_DET_NO 
+                
+                
+    </mapped-statement>
+    <mapped-statement name="getShareDiviDendAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT SD.SHARE_TYPE ,SD.SHARE_ACCT_NO ,SD.DIVIDEND_AMT ,SD.STATUS_BY,SD.DIVIDEND_DT ,BATCH_ID,DIV_PAY_MODE,
+        get_cust_name(C.CUST_ID) AS FNAME from share_dividend SD , SHARE_ACCT SA,CUSTOMER C
+        WHERE SA.SHARE_ACCT_NO=SD.SHARE_ACCT_NO AND SD.STATUS!='DELETED' AND SD.AUTHORIZE_STATUS  IS NULL
+        AND SA.CUST_ID=C.CUST_ID
+        AND SD.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SD.STATUS_BY)
+    </mapped-statement>
+
+    <mapped-statement name="Dividend.getCountShareAcctDet" result-class="java.util.HashMap" >
+        SELECT COUNT(*) COUNT  FROM SHARE_ACCT_DETAILS SAC, SHARE_DIVIDEND SD WHERE  SD.SHARE_ACCT_NO = SAC.SHARE_ACCT_NO AND SD.SHARE_ACCT_DETAIL_NO = SAC.SHARE_ACCT_DET_NO
+    </mapped-statement>
+    <mapped-statement name="deleteShareDividend" inline-parameters="true">
+        UPDATE SHARE_DIVIDEND SET 
+        STATUS = #status:VARCHAR#
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR#  AND BATCH_ID=#batchID:VARCHAR#
+        and INIT_BRANCH=#initBran:VARCHAR#
+    </mapped-statement>
+        
+
+    <mapped-statement name="authorizeShareDividend" inline-parameters="true">
+        UPDATE SHARE_DIVIDEND SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #UPTO_DIVIDEND_PAID_DATE:DATE#
+        WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#  AND BATCH_ID=#BATCH_ID:VARCHAR# AND DIVIDEND_DT= #UPTO_DIVIDEND_PAID_DATE:DATE#
+    </mapped-statement>
+        
+        
+    <result-map name="getAccProductresultSH" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>   
+        
+    <mapped-statement name="Cash.getAccProductSH" result-map="getAccProductresultSH">
+        SELECT SHARE_TYPE AS PROD_ID, SHARE_TYPE AS PROD_DESC 
+        FROM SHARE_CONF_DETAILS
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED'            
+        and 
+        SHARE_ACHD in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+    </mapped-statement>
+        
+</sql-map>

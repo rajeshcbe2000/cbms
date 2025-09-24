@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CurrencyExchangeTOMap">
+
+	<!-- Use CurrencyExchangeTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCurrencyExchangeTO" inline-parameters="true">
+        INSERT INTO FOREX_CURRENCY_EXCHANGE
+        (TRANS_ID, TRANS_DT, ACCT_NO, TOURIST_NAME, PASSPORT_NO, TOURIST_NOTE, INSTRUMENT_NO, INSTRUMENT_DATE, INSTRUMENT_DETAILS, TRANS_TYPE, TRANS_CURRENCY, TRANS_AMOUNT, CONV_CURRENCY, VALUE_DATE, EXCHANGE_RATE, COMMISSION, TOTAL_AMOUNT, REMARKS, CREATED_BY, CREATED_DT, AUTHORIZED_BY, AUTHORIZED_DT, STATUS, FROM_BRANCH, FROM_TRANS_ID
+        ) VALUES (
+        #transId:VARCHAR#, #transDt:DATE#, #acctNo:VARCHAR#, #touristName:VARCHAR#, #passportNo:VARCHAR#, #touristNote:VARCHAR#, #instrumentNo:VARCHAR#, #instrumentDate:DATE#, #instrumentDetails:VARCHAR#, #transType:VARCHAR#, #transCurrency:VARCHAR#, #transAmount:NUMERIC#, #convCurrency:VARCHAR#, #valueDate:DATE#, #exchangeRate:NUMERIC#, #commission:NUMERIC#, #totalAmount:NUMERIC#, #remarks:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #status:VARCHAR#, #fromBranch:VARCHAR#, #fromTransId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use CurrencyExchangeTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCurrencyExchangeTO" inline-parameters="true">
+        UPDATE FOREX_CURRENCY_EXCHANGE SET 
+        TRANS_ID = #transId:VARCHAR#,
+        TRANS_DT = #transDt:DATE#,
+        ACCT_NO = #acctNo:VARCHAR#,
+        TOURIST_NAME = #touristName:VARCHAR#,
+        PASSPORT_NO = #passportNo:VARCHAR#,
+        TOURIST_NOTE = #touristNote:VARCHAR#,
+        INSTRUMENT_NO = #instrumentNo:VARCHAR#,
+        INSTRUMENT_DATE = #instrumentDate:DATE#,
+        INSTRUMENT_DETAILS = #instrumentDetails:VARCHAR#,
+        TRANS_TYPE = #transType:VARCHAR#,
+        TRANS_CURRENCY = #transCurrency:VARCHAR#,
+        TRANS_AMOUNT = #transAmount:NUMERIC#,
+        CONV_CURRENCY = #convCurrency:VARCHAR#,
+        VALUE_DATE = #valueDate:DATE#,
+        EXCHANGE_RATE = #exchangeRate:NUMERIC#,
+        COMMISSION = #commission:NUMERIC#,
+        TOTAL_AMOUNT = #totalAmount:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        FROM_BRANCH = #fromBranch:VARCHAR#,
+        FROM_TRANS_ID = #fromTransId:VARCHAR#
+        WHERE 
+        TRANS_ID = #transId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use CurrencyExchangeTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteCurrencyExchangeTO" inline-parameters="true">
+		<!--DELETE FROM FOREX_CURRENCY_EXCHANGE WHERE -->
+        UPDATE FOREX_CURRENCY_EXCHANGE
+        SET STATUS = 'DELETED'
+        WHERE TRANS_ID = #transId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CurrencyExchangeTO object (JavaBean) properties -->
+    <result-map name="getCurrencyExchangeTOResult" class="com.see.truetransact.transferobject.forex.CurrencyExchangeTO">
+        <property name="transId" column="TRANS_ID"/>
+        <property name="transDt" column="TRANS_DT"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="touristName" column="TOURIST_NAME"/>
+        <property name="passportNo" column="PASSPORT_NO"/>
+        <property name="touristNote" column="TOURIST_NOTE"/>
+        <property name="instrumentNo" column="INSTRUMENT_NO"/>
+        <property name="instrumentDate" column="INSTRUMENT_DATE"/>
+        <property name="instrumentDetails" column="INSTRUMENT_DETAILS"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="transCurrency" column="TRANS_CURRENCY"/>
+        <property name="transAmount" column="TRANS_AMOUNT"/>
+        <property name="convCurrency" column="CONV_CURRENCY"/>
+        <property name="valueDate" column="VALUE_DATE"/>
+        <property name="exchangeRate" column="EXCHANGE_RATE"/>
+        <property name="commission" column="COMMISSION"/>
+        <property name="totalAmount" column="TOTAL_AMOUNT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="fromBranch" column="FROM_BRANCH"/>
+        <property name="fromTransId" column="FROM_TRANS_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectCurrencyExchangeTO" result-map="getCurrencyExchangeTOResult" >
+        SELECT * FROM FOREX_CURRENCY_EXCHANGE 
+        WHERE TRANS_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectCurrencyExchangeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT TRANS_ID, TRANS_DT, ACCT_NO, TRANS_TYPE, TRANS_CURRENCY, FROM_TRANS_ID, FROM_BRANCH FROM FOREX_CURRENCY_EXCHANGE 
+        WHERE STATUS IS NULL OR STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSellingBuyingRate" result-class="java.util.LinkedHashMap" >
+        SELECT MIDDLE_RATE, SELLING_PER, SELLING_PRICE, VALUE_DATE, 
+        BUYING_PER, BUYING_PRICE, PREFERRED, COMMISSION
+        FROM FOREX_EXCHANGE_RATE  
+        WHERE STATUS IS NULL OR STATUS != 'DELETED' AND
+        TRANS_CURRENCY = #TRANS_CURRENCY:VARCHAR# AND 
+        CONVERSION_CURRENCY = #CONVERSION_CURRENCY:VARCHAR# AND
+        CUSTOMER_TYPE = #CUSTOMER_TYPE:VARCHAR# AND 
+        VALUE_DATE = (SELECT MAX(VALUE_DATE) 
+        FROM FOREX_EXCHANGE_RATE  
+        WHERE STATUS IS NULL OR STATUS != 'DELETED' AND
+        TRANS_CURRENCY = #TRANS_CURRENCY:VARCHAR# AND 
+        CONVERSION_CURRENCY = #CONVERSION_CURRENCY:VARCHAR# AND
+        CUSTOMER_TYPE = #CUSTOMER_TYPE:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getDenominations" result-class="java.util.LinkedHashMap" >
+        SELECT DENOMINATION_NAME, DENOMINATION_VALUE, DENOMINATION_TYPE 
+        FROM FOREX_DENOMINATION_MASTER 
+        WHERE CURRENCY = #CURRENCY:VARCHAR#
+        AND (STATUS != 'DELETED' OR STATUS IS NULL) AND 
+        AUTHORIZE_STATUS = 'AUTHORIZED'
+        ORDER BY DENOMINATION_TYPE DESC, DENOMINATION_VALUE DESC
+    </mapped-statement>
+
+    <mapped-statement name="getDenominationList" result-class="java.util.LinkedHashMap" >
+                <!--SELECT Currency AS "Currency Code", Lookup_Desc AS "Currency Name", Denomination_name AS "Denomination Name",
+                Denomination_count AS "Available", denomination_value * denomination_count AS "Total Amt"
+                FROM forex_denomination_master FDM, Lookup_master LM
+                WHERE LM.Lookup_id = 'FOREX.CURRENCY' AND LM.Lookup_ref_id = FDM.currency
+                UNION
+                SELECT currency, '~~~~~~~~~~~~~~~~~', 'Total', SUM(denomination_count),
+                SUM(denomination_value * denomination_count) AS "Total"
+                FROM forex_denomination_master GROUP BY currency -->
+                <!--SELECT CURRENCY as 'Currency', DENOMINATION_NAME as ', DENOMINATION_VALUE, DENOMINATION_COUNT  
+                FROM FOREX_DENOMINATION_MASTER -->
+                
+                
+        SELECT "CURRENCY CODE", "DENOMINATION_TYPE","DENOMINATION","AVAILABLE NO.","TOTAL AMT" FROM (
+        SELECT 1 as ord, DENOMINATION_VALUE, Currency AS "CURRENCY CODE", Lookup_Desc AS "Currency Name", Denomination_name AS "DENOMINATION",  OPENING_COUNT AS "AVAILABLE NO.",
+        denomination_value * OPENING_COUNT AS "TOTAL AMT",DENOMINATION_TYPE AS "DENOMINATION_TYPE"
+        FROM FOREX_TELLER_DENOMINATION FDM, Lookup_master LM   WHERE LM.Lookup_id = 'FOREX.CURRENCY' AND LM.Lookup_ref_id = FDM.currency 
+        AND SOURCE='VAULTREC' 
+        UNION 
+        SELECT 2 as ord, 0 AS DENOMINATION_VALUE, currency, '~~~~~~~~~~~~~~~~~', 'VAULTCASH TOTAL', SUM(OPENING_COUNT), SUM(denomination_value * OPENING_COUNT) AS "Total" ,'-------'
+        FROM FOREX_TELLER_DENOMINATION where SOURCE='VAULTREC'  GROUP BY currency 
+        UNION
+        SELECT 3 as ord, DENOMINATION_VALUE, Currency AS "CURRENCY CODE", Lookup_Desc AS "Currency Name", Denomination_name AS "DENOMINATION",  OPENING_COUNT AS "AVAILABLE NO.",
+        denomination_value * OPENING_COUNT AS "TOTAL AMT",DENOMINATION_TYPE as  "DENOMINATION_TYPE"
+        FROM FOREX_TELLER_DENOMINATION FDM, Lookup_master LM   WHERE LM.Lookup_id = 'FOREX.CURRENCY' AND LM.Lookup_ref_id = FDM.currency 
+        AND SOURCE='CASH BOX' 
+        UNION 
+        SELECT 4 AS ORD, 0 AS DENOMINATION_VALUE, currency, '~~~~~~~~~~~~~~~~~', 'CASHBOX TOTAL', SUM(OPENING_COUNT), SUM(denomination_value * OPENING_COUNT) AS "Total" ,'--------'
+        FROM FOREX_TELLER_DENOMINATION where SOURCE='CASH BOX'  GROUP BY currency            
+        ) ORDER BY ORD, DENOMINATION_TYPE DESC ,DENOMINATION_VALUE DESC
+               
+                
+                
+                
+    </mapped-statement>
+        
+    <mapped-statement name="getForexCustomer" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM CUSTOMER C, ACT_MASTER A 
+        WHERE A.CUST_ID = C.CUST_ID AND ACT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateDenominationCount" inline-parameters="true">
+		<!--DELETE FROM FOREX_CURRENCY_EXCHANGE WHERE -->
+        UPDATE FOREX_DENOMINATION_MASTER 
+        SET DENOMINATION_COUNT = DENOMINATION_COUNT + #COUNT:NUMBER#
+        WHERE DENOMINATION_VALUE = #DENOMINATION:NUMBER# AND
+        CURRENCY = #CURRENCY:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="tellerCountDayBegin" inline-parameters="true">
+		<!--DELETE FROM FOREX_CURRENCY_EXCHANGE WHERE -->
+        INSERT INTO FOREX_TELLER_DENOMINATION 
+        (USERID, CURR_DT, CURRENCY, 
+        DENOMINATION_VALUE, OPENING_COUNT, BRANCH_CODE,DENOMINATION_NAME,SOURCE,DENOMINATION_TYPE) 
+        VALUES 
+        (#USERID:VARCHAR#, #TODAY_DT:DATE#, #CURRENCY:VARCHAR#, 
+        #DENOMINATION:NUMBER#, #COUNT:NUMBER#, #BRANCH:VARCHAR#,#DENOMINATION_NAME:VARCHAR#,#SOURCE:VARCHAR#,#DENOMINATION_TYPE:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="tellerCountDayEnd" inline-parameters="true">
+		<!--DELETE FROM FOREX_CURRENCY_EXCHANGE WHERE -->
+        UPDATE FOREX_TELLER_DENOMINATION 
+        SET CLOSING_COUNT = #COUNT:NUMBER#
+        WHERE USERID = #USERID:VARCHAR# AND
+        BRANCH_CODE = #BRANCH:VARCHAR# AND
+        TO_CHAR(CURR_DT, 'DD/MM/YYYY') = 
+        TO_CHAR(#TODAY_DT:DATE#, 'DD/MM/YYYY') AND
+        CURRENCY = #CURRENCY:VARCHAR# AND 
+        DENOMINATION_VALUE = #DENOMINATION:NUMBER#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectImportedTransactions" result-class="java.util.HashMap" >
+        SELECT FROM_TRANS_ID FROM FOREX_CURRENCY_EXCHANGE 
+        WHERE STATUS IS NULL OR STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getAvailableForexDeno" result-class="java.util.HashMap" >
+        SELECT OPENING_COUNT, DENOMINATION_NAME
+        FROM FOREX_TELLER_DENOMINATION
+        WHERE  BRANCH_CODE = #BRANCH_CODE:VARCHAR# and SOURCE=#SOURCE:VARCHAR# and DENOMINATION_TYPE=#DENOMINATION_TYPE:VARCHAR# and DENOMINATION_NAME=#DENOMINATION_NAME:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateForexOpeningCountReciept" inline-parameters="true" >
+        UPDATE FOREX_TELLER_DENOMINATION
+        SET OPENING_COUNT = OPENING_COUNT - #DENOMINATION_COUNT:NUMBER#
+        WHERE DENOMINATION_NAME = #DENOMINATION_NAME:VARCHAR# AND SOURCE=#SOURCE:VARCHAR# AND DENOMINATION_TYPE=#DENOM_TYPE:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateForexOpeningCountCashBoxRec" inline-parameters="true" >
+        UPDATE FOREX_TELLER_DENOMINATION
+        SET OPENING_COUNT = OPENING_COUNT - #DENOMINATION_COUNT:NUMBER#
+        WHERE DENOMINATION_NAME = #DENOMINATION_NAME:VARCHAR# AND SOURCE=#SOURCE:VARCHAR# AND DENOMINATION_TYPE=#DENOM_TYPE:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateForexOpeningCountCashBoxPayment" inline-parameters="true" >
+        UPDATE FOREX_TELLER_DENOMINATION
+        SET OPENING_COUNT = OPENING_COUNT + #DENOMINATION_COUNT:NUMBER#
+        WHERE DENOMINATION_NAME = #DENOMINATION_NAME:VARCHAR# AND SOURCE=#SOURCE:VARCHAR# AND DENOMINATION_TYPE=#DENOM_TYPE:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateForexOpeningCountPayment" inline-parameters="true" >
+        UPDATE FOREX_TELLER_DENOMINATION
+        SET OPENING_COUNT = OPENING_COUNT + #DENOMINATION_COUNT:NUMBER#
+        WHERE DENOMINATION_NAME = #DENOMINATION_NAME:VARCHAR# AND SOURCE=#SOURCE:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND DENOMINATION_TYPE=#DENOM_TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getDenominationName" result-class="java.util.HashMap" >
+        SELECT DENOMINATION_NAME FROM FOREX_TELLER_DENOMINATION  WHERE DENOMINATION_NAME =#DENOMINATION_NAME:VARCHAR# AND DENOMINATION_TYPE=#DENOMINATION_TYPE:VARCHAR#
+        AND  SOURCE=#SOURCE:VARCHAR#
+    </mapped-statement>
+        
+        
+</sql-map>

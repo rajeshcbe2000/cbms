@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GDSPrizedMoneyPaymetMap">
+    
+    <mapped-statement name = "getSelectAllSchemeAcctHead" result-class = "java.util.LinkedHashMap">
+        SELECT mah.*, msd.*, mpod.*, mpgd.*
+        FROM mds_scheme_details msd,
+        mds_product_general_details mpgd,
+        mds_acct_head mah,
+        mds_product_other_details mpod
+        WHERE msd.prod_id = mpgd.prod_id
+        AND msd.status != 'DELETED'
+        AND msd.authorized_status = 'AUTHORIZED'
+        AND mah.scheme_name = msd.scheme_name
+        AND msd.prod_id = mpod.prod_id
+        AND msd.group_no =#GROUP_NO:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "getGDSSelectChangedMemberDetails" result-class = "java.util.LinkedHashMap">
+        SELECT old_member_no, old_member_name, installment_no, change_effective_date
+  FROM mds_change_member
+ WHERE status != 'DELETED'
+   AND authorized_status = 'AUTHORIZED'
+   AND gds_no =#GDS_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getGDSSelectNextInstDate" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT draw_auction_date, next_installment_date, next_bonus_amount
+        FROM mds_prized_money_details
+        WHERE scheme_name IN (SELECT scheme_name
+        FROM mds_scheme_details
+        WHERE group_no = #GROUP_NO:VARCHAR#) 
+        AND SL_NO = #SL_NO:NUMBER#
+    </mapped-statement>
+    <mapped-statement name = "getGDSChittalPendingInstAmount" result-class = "java.util.LinkedHashMap">
+        
+         SELECT SUM (MP.NEXT_BONUS_AMOUNT) AS TOTAL_BONUS
+          FROM MDS_PRIZED_MONEY_DETAILS MP
+         WHERE MP.INSTALLMENT_NO &gt; #PENDING_INST:VARCHAR#
+           AND MP.SCHEME_NAME IN (select SCHEME_NAME from MDS_SCHEME_DETAILS where group_no=#GROUP_NO:VARCHAR#)
+           AND MP.STATUS != 'DELETED'
+           AND MP.AUTHORIZED_STATUS = 'AUTHORIZED'
+         
+    </mapped-statement>
+    <mapped-statement name = "getGDSSelectChangedRecordDetails" result-class = "java.util.HashMap">
+        SELECT mds.chittal_no, thalayal, munnal, new_member_munnal, new_member_no,
+       installment_no, change_effective_date, old_member_no, old_member_name
+  FROM mds_application mds, mds_change_member mdsc
+ WHERE mds.GROUP_NO = #GROUP_NO:VARCHAR#
+   AND mdsc.gds_no = mds.gds_no
+   AND mdsc.sub_no = mds.sub_no
+   AND mdsc.gds_no = #GDS_NO:VARCHAR#
+   AND mds.status != 'DELETED' 
+    </mapped-statement>
+    <mapped-statement name="getGDSMandatorySecurityData" result-class="java.util.HashMap">
+        select scheme_name from MDS_SCHEME_DETAILS msd where scheme_end_dt &lt;( select SYS_DATE() from dual)
+        and  GROUP_NO=#GROUP_NO:VARCHAR#
+        and no_of_installments &gt; (select count(*) from mds_money_payment_details mpd 
+        where status != 'DELETED' and authorized_status='AUTHORIZED' and GROUP_NO=msd.GROUP_NO)
+    </mapped-statement>
+    <mapped-statement name="getGDSSelectBondDetails" result-class="java.util.HashMap">
+        SELECT BOND_NO,BOND_DT  FROM MDS_MASTER_MAINTENANCE WHERE STATUS!= 'DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND GDS_NO=#GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER#
+    </mapped-statement>
+    <mapped-statement name="getGDSSelectCountSecurityDetails" result-class="java.util.HashMap">
+        SELECT SUM (cnt)/SUM (cnt) AS COUNT
+        FROM (SELECT COUNT (*) AS cnt
+        FROM mds_master_maintenance
+        WHERE (   total_salary IS NOT NULL
+        OR security_type IS NOT NULL
+        OR gold_value IS NOT NULL
+        )
+        AND authorized_status = 'AUTHORIZED'
+        AND gds_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO#
+        UNION ALL
+        SELECT COUNT (*) AS cnt
+        FROM mds_member_type
+        WHERE authorized_status = 'AUTHORIZED'
+        AND chittal_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO#
+        UNION ALL
+        SELECT COUNT (*) AS cnt
+        FROM mds_deposit_type
+        WHERE authorized_status = 'AUTHORIZED'
+        AND chittal_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO:VARCHAR#
+        UNION ALL
+        SELECT COUNT (*) AS cnt
+        FROM mds_security_land
+        WHERE authorized_status = 'AUTHORIZED'
+        AND chittal_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO:VARCHAR#
+        UNION ALL
+        SELECT COUNT (*) AS cnt
+        FROM mds_salary_security_details
+        WHERE authorized_status = 'AUTHORIZED'
+        AND status != 'DELETED'
+        AND chittal_no = #GDS_NO:VARCHAR#
+        AND sub_no = #SUB_NO:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="getGDSPrizedMoneyPaymentAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT  DISTINCT mm.cash_id, NVL (mm.trans_id, mm.cash_id) AS trans_id,
+        mm.sub_no, AT.amount,
+        mm.status_by,MM.GDS_NO, MM.GROUP_NO
+        FROM mds_money_payment_details mm, mds_scheme_details msd, all_trans AT
+        WHERE mm.scheme_name = msd.scheme_name
+        AND AT.trans_dt = #TRANS_DT:DATE#
+        AND AT.trans_type = 'DEBIT'
+        AND (CASE
+        WHEN AT.trans_mode = 'TRANSFER'
+        THEN AT.batch_id
+        ELSE AT.trans_id
+        END) = NVL (mm.cash_id, mm.trans_id)
+        AND mm.status != 'DELETED'
+        AND mm.authorized_status IS NULL
+        AND mm.branch_code = #BRANCH_CODE:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+        (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+        'Y', hierarchy_id,
+        hierarchy_id + 1
+        )
+        FROM user_master um, role_master rm
+        WHERE rm.role_id = um.user_role AND um.user_id = AT.status_by)
+        AND AT.status_by != #USER_ID:VARCHAR#
+        ORDER BY mm.GDS_no
+    </mapped-statement> 
+    <mapped-statement name="getGDSChangeOfMemDetails" result-class="java.util.HashMap">
+        SELECT new_member_no, new_member_name, old_member_no, old_member_name,
+        installment_no, change_effective_date, old_member_bonus_earned,
+        total_amount
+        FROM mds_change_member
+        WHERE status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED'
+        AND gds_no = #GDS_NO:NUMBER#
+        AND sub_no = #SUB_NO:NUMBER#
+    </mapped-statement>
+    <mapped-statement name="authorizeGDSPrizedMoneyPayment" result-class="java.util.HashMap">
+        UPDATE MDS_MONEY_PAYMENT_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#,
+        PAID_STATUS = #PAID_STATUS:VARCHAR#
+        WHERE STATUS != 'DELETED' AND GDS_NO = #GDS_NO:VARCHAR# AND SUB_NO = #SUB_NO:NUMBER# 
+        AND PAID_STATUS = 'N' AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    <mapped-statement name="getSelectGDSPrizedMoneyPaymentTO" result-map="getGDSPrizedMoneyPaymentTOResult" >
+        SELECT DISTINCT GD.SCHEME_COUNT,division_no, draw_auction_date, total_installments,
+                no_of_inst_paid, no_of_overdue_inst, member_no, member_name,
+                overdue_amount, prized_inst_no, bonus_amount,
+                commision_amount, discount_amount, notice_amount,
+                aribitration_amount, prized_amount, net_amount, branch_code,
+                mpd.status, mpd.status_dt, mpd.status_by, authorized_status,
+                mpd.authorized_dt, mpd.authorized_by, trans_id, cash_id, paid_status,
+                refund_amount, sub_no, defaulters, penal_amount,
+                bonus_recovered, charge_amount, defaulter_interest,
+                defaulter_comm, defaulter_bonus_recoverd, gds_no, mpd.group_no
+           FROM mds_money_payment_details mpd,GROUP_DEPOSIT gd
+          WHERE mpd.status != 'DELETED'
+            AND gd.group_no = #GROUP_NO:VARCHAR#
+            AND gds_no =  #GDS_NO:VARCHAR#
+            AND NVL (trans_id, cash_id) = #TRANS_ID:VARCHAR#
+    </mapped-statement> 
+    <result-map name="getGDSPrizedMoneyPaymentTOResult" class="com.see.truetransact.transferobject.gdsapplication.gdsprizedmoneypayment.GDSPrizedMoneyPaymentTO">
+        <property name="groupName" column="GROUP_NO"/>
+        <property name="schemeCount" column="SCHEME_COUNT"/>
+        <property name="gdsNo" column="GDS_NO"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="drawAuctionDate" column="DRAW_AUCTION_DATE"/>
+        <property name="totalInstallments" column="TOTAL_INSTALLMENTS"/>
+        <property name="noOfInstPaid" column="NO_OF_INST_PAID"/>
+        <property name="noOfOverdueInst" column="NO_OF_OVERDUE_INST"/>
+        <property name="memberNo" column="MEMBER_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="overdueAmount" column="OVERDUE_AMOUNT"/>
+        <property name="prizedInstNo" column="PRIZED_INST_NO"/>
+        <property name="bonusAmount" column="BONUS_AMOUNT"/>
+        <property name="penalAmount" column="PENAL_AMOUNT"/>
+        <property name="bonusRecovered" column="BONUS_RECOVERED"/>
+        <property name="commisionAmount" column="COMMISION_AMOUNT"/>
+        <property name="refundAmount" column="REFUND_AMOUNT"/>
+        <property name="discountAmount" column="DISCOUNT_AMOUNT"/>
+        <property name="noticeAmount" column="NOTICE_AMOUNT"/>
+        <property name="chargeAmount" column="CHARGE_AMOUNT"/>
+        <property name="aribitrationAmount" column="ARIBITRATION_AMOUNT"/>
+        <property name="prizedAmount" column="PRIZED_AMOUNT"/>
+        <property name="netAmount" column="NET_AMOUNT"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="cashId" column="CASH_ID"/>
+        <property name="paidStatus" column="PAID_STATUS"/>
+        <property name="defaulters" column="DEFAULTERS"/>
+    </result-map>     
+    <dynamic-mapped-statement name = "getGDSSelctChittalReceiptDetailsView" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT ma.gds_no, ma.sub_no, cust.membership_no AS member_no,
+        ma.branch_code,
+        get_cust_name(cust.cust_id) AS "Customer",
+        prized_amount, auction_trans, ma.thalayal,ma.munnal
+        FROM mds_application ma, mds_prized_money_details mp,
+        customer cust
+        WHERE ma.scheme_name = mp.scheme_name
+        AND ma.group_no = #GROUP_NO:VARCHAR#
+        AND ma.cust_id = cust.cust_id
+        AND ma.chittal_no = mp.chittal_no
+        AND ma.sub_no = mp.sub_no
+        AND ma.status != 'DELETED'
+        AND ma.authorize_status = 'AUTHORIZED'
+        AND mp.authorized_status = 'AUTHORIZED'
+        AND mp.chittal_no NOT IN (
+        SELECT chittal_no
+        FROM mds_money_payment_details mpd
+        WHERE group_no = #GROUP_NO:VARCHAR#
+        AND status != 'DELETED'
+        AND mp.chittal_no = mpd.chittal_no
+        AND mp.sub_no = mpd.sub_no
+        AND (mpd.authorized_status IS NULL
+        OR mpd.authorized_status = 'AUTHORIZED')
+        )
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CHITTAL_NO">
+                    MP.CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(MA.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHITTAL_NO">
+                    UPPER(MA.CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUB_NO">
+                    UPPER(MA.SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMBER_NO">
+                    UPPER(CUST.MEMBERSHIP_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="BRANCH_CODE">
+                    UPPER(MA.BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Customer">
+                    UPPER( get_cust_name(CUST.CUST_ID)) LIKE UPPER('%$Customer$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRIZED_AMOUNT">
+                    UPPER(PRIZED_AMOUNT) LIKE UPPER('%$PRIZED_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUCTION_TRANS">
+                    UPPER(AUCTION_TRANS) LIKE UPPER('%$AUCTION_TRANS$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="THALAYAL">
+                    UPPER(MA.THALAYAL) LIKE UPPER('%$THALAYAL$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>
+    <mapped-statement name="getGDSMemberAddressDetails" result-class="java.util.HashMap">
+        SELECT DISTINCT HOUSE_ST,AREA,CITY,STATE,PIN FROM MDS_APPLICATION WHERE  GDS_NO =#GDS_NO:VARCHAR# AND SUB_NO =#SUB_NO:NUMBER#
+    </mapped-statement>
+    <dynamic-mapped-statement name = "getGDSSelctReceiptDetails" result-class = "java.util.LinkedHashMap">
+        SELECT ma.scheme_name, ma.chittal_no,ma.gds_no, ma.sub_no, chit_start_dt, inst_amt,
+        member_no, cust.cust_id, installment_paid, sl_no, next_bonus_amount,
+        total_bonus_amount, prized_amount, commision_amount, mp.division_no,
+        draw_auction_date, mp.branch_id,
+        get_cust_name(cust.cust_id) AS "CUSTOMER"
+        FROM mds_application ma, mds_prized_money_details mp, customer cust
+        WHERE ma.scheme_name = mp.scheme_name
+        AND ma.GROUP_NO =#GROUP_NO:VARCHAR#
+        AND ma.cust_id = cust.cust_id
+        AND ma.chittal_no = mp.chittal_no
+        AND ma.sub_no = mp.sub_no
+        AND mp.status != 'DELETED'
+        AND mp.authorized_status = 'AUTHORIZED'
+        AND ma.status != 'DELETED'
+        AND ma.authorize_status = 'AUTHORIZED'
+        AND mp.chittal_no NOT IN (
+        SELECT chittal_no
+        FROM mds_money_payment_details mpd
+        WHERE GROUP_NO = #GROUP_NO:VARCHAR#
+        AND status != 'DELETED'
+        AND mp.chittal_no = mpd.chittal_no
+        AND mpd.sub_no = ma.sub_no
+        AND mpd.authorized_status IS NOT NULL
+        AND mpd.authorized_status = 'AUTHORIZED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="GDS_NO">
+                    MP.GDS_NO = #GDS_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SUB_NO">
+                    MP.SUB_NO = #SUB_NO:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="insertGDSPrizedMoneyPaymentTO" inline-parameters="true">
+        INSERT INTO MDS_MONEY_PAYMENT_DETAILS
+        (SCHEME_NAME, CHITTAL_NO,TRANS_ID, DIVISION_NO, DRAW_AUCTION_DATE, TOTAL_INSTALLMENTS, NO_OF_INST_PAID, NO_OF_OVERDUE_INST, 
+        MEMBER_NO, MEMBER_NAME, OVERDUE_AMOUNT, PRIZED_INST_NO, BONUS_AMOUNT, COMMISION_AMOUNT, DISCOUNT_AMOUNT, NOTICE_AMOUNT, CHARGE_AMOUNT, 
+        ARIBITRATION_AMOUNT, PRIZED_AMOUNT, NET_AMOUNT, BRANCH_CODE, STATUS, STATUS_DT, STATUS_BY,CASH_ID,PAID_STATUS,REFUND_AMOUNT,SUB_NO,
+        DEFAULTERS, PENAL_AMOUNT, BONUS_RECOVERED,DEFAULTER_BONUS_RECOVERD,DEFAULTER_COMM,DEFAULTER_INTEREST,GDS_NO,GROUP_NO,PAYMENT_TAX_AMT
+        ) VALUES (
+        #schemeName:VARCHAR#, #chittalNo:VARCHAR#, #transId:VARCHAR#, #divisionNo:NUMERIC#, #drawAuctionDate:DATE#, #totalInstallments:NUMERIC#, 
+        #noOfInstPaid:NUMERIC#, #noOfOverdueInst:NUMERIC#, #memberNo:VARCHAR#, #memberName:VARCHAR#, #overdueAmount:NUMERIC#, 
+        #prizedInstNo:NUMERIC#, #bonusAmount:NUMERIC#, #commisionAmount:NUMERIC#, #discountAmount:NUMERIC#, #noticeAmount:NUMERIC#, #chargeAmount:NUMERIC#, 
+        #aribitrationAmount:NUMERIC#, #prizedAmount:NUMERIC#, #netAmount:NUMERIC#, #branchCode:VARCHAR#, #status:VARCHAR#, #statusDt:DATE#, 
+        #statusBy:VARCHAR#,#cashId:VARCHAR#,#paidStatus:VARCHAR#, #refundAmount:NUMERIC#,#subNo:NUMERIC#,#defaulters:VARCHAR#, #penalAmount:NUMERIC#,
+        #bonusRecovered:NUMERIC#,#defaulter_bonus_recoverd:NUMERIC#,#defaulter_comm:NUMERIC#,#defaulter_interst:NUMERIC#,
+        #gdsNo:VARCHAR#,#groupName:VARCHAR#,#paymentTaxAmt:NUMERIC#)
+    </mapped-statement> 
+    
+     <mapped-statement name="getGDSPrizedMoneyBonusPaymentisCashOrTransfer" result-class="java.util.HashMap">
+        SELECT MP.IS_PAYMENT_BONUS_TRANS FROM MDS_PRODUCT_GENERAL_DETAILS MP WHERE MP.PROD_ID = #PROD_ID:VARCHAR#
+     </mapped-statement>
+     
+     <mapped-statement name = "getGDSAccountheadForMoneyPayment" result-class = "java.util.HashMap">     
+       SELECT BONUS_RECEIVABLE_HEAD,
+       COMMISION_HEAD,
+       PENAL_INTEREST_HEAD,
+       RECEIPT_HEAD,
+       SUSPENSE_HEAD,
+       MISCELLANEOUS_HEAD,
+       CHARGE_PAYMENT_HEAD,
+       NOTICE_CHARGES_HEAD
+       FROM mds_acct_head
+       WHERE SCHEME_NAME in (SELECT SCHEME_NAME
+                        FROM mds_application
+                       WHERE gds_no = #CHITTAL_NO:VARCHAR#)  
+    </mapped-statement>
+                          
+                          
+</sql-map>

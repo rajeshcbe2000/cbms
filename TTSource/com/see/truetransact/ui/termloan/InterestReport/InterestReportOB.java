@@ -1,0 +1,1434 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.
+ * 
+ *
+ * AccountClosingOB.java
+ *
+ * Created on August 13, 2003, 4:30 PM
+ */
+
+package com.see.truetransact.ui.termloan.InterestReport;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Date;
+import com.see.truetransact.uivalidation.CurrencyValidation;
+import com.see.truetransact.ui.deposit.lien.DepositLienUI;
+import com.see.truetransact.clientutil.ComboBoxModel;
+import com.see.truetransact.clientproxy.ProxyFactory;
+import com.see.truetransact.commonutil.CommonConstants;
+import com.see.truetransact.commonutil.CommonUtil;
+import com.see.truetransact.transferobject.operativeaccount.AccountClosingTO;
+//import com.see.truetransact.transferobject.termloan.chargesTo.InterestReportTO;
+import com.see.truetransact.transferobject.TOHeader;
+import com.see.truetransact.clientutil.ClientConstants;
+import com.see.truetransact.commonutil.TTException;
+import org.apache.log4j.Logger;
+import com.see.truetransact.clientutil.ClientUtil;
+import com.see.truetransact.clientexception.ClientParseException;
+import com.see.truetransact.commonutil.DateUtil;
+import com.see.truetransact.ui.TrueTransactMain;
+import com.see.truetransact.ui.common.transaction.TransactionOB;
+import com.see.truetransact.uicomponent.COptionPane;
+import com.see.truetransact.ui.common.CommonRB;
+import com.see.truetransact.uicomponent.CObservable;
+import com.see.truetransact.clientproxy.ProxyParameters;
+import com.see.truetransact.clientutil.EnhancedTableModel;
+
+/**
+ *
+ * @author  Nikhil
+ */
+public class InterestReportOB extends CObservable {
+    private double lienAmount ;
+    private static InterestReportOB InterestReportOB;
+    private String cboProductID = "";
+    private String cboProductType="";
+    private String cboChargesType="";
+    private String txtAccountNumber = "";
+    private String txtAccountNumberTo="";
+
+    public String getTxtAccountNumberTo() {
+        return txtAccountNumberTo;
+    }
+
+    public void setTxtAccountNumberTo(String txtAccountNumberTo) {
+        this.txtAccountNumberTo = txtAccountNumberTo;
+    }
+    private ComboBoxModel cbmProductID;
+
+    public ComboBoxModel getCbmProductID() {
+        return cbmProductID;
+    }
+
+    public void setCbmProductID(ComboBoxModel cbmProductID) {
+        this.cbmProductID = cbmProductID;
+    }
+    private ComboBoxModel cbmProdType;
+    private ComboBoxModel cbmChargeType;
+    private final String AUTHORIZE="AUTHORIZE";
+    private int actionType;
+    private int result;
+    private String loanBehaves="";
+    private String lblStatus = ClientConstants.ACTION_STATUS[ClientConstants.ACTIONTYPE_CANCEL];
+    
+    private final String DELETED_TRANS_TOs = "DELETED_TRANS_TOs";
+    private final String NOT_DELETED_TRANS_TOs = "NOT_DELETED_TRANS_TOs";
+    
+    private final static Logger log = Logger.getLogger(InterestReportOB.class);
+    private final static ClientParseException parseException = ClientParseException.getInstance();
+    private String prodType="";
+    private String loanInt;
+    private HashMap map;
+    private ProxyFactory proxy;
+    private HashMap totalLoanAmount;
+    //for filling dropdown
+    private HashMap lookupMap;
+    private HashMap param;
+    private HashMap keyValue;
+    private ArrayList key;
+    private ArrayList value;
+    private ArrayList chargesTOs;
+    private ArrayList tblChargesList;
+    ArrayList tblHeadList;
+    ArrayList tblHeadTotAmtList;
+    ArrayList tblAccountHeadList;
+    ArrayList chargeTypeList;
+//    private InterestReportTO InterestReportTO;
+    private TransactionOB transactionOB;
+    private LinkedHashMap allowedTransactionDetailsTO = null;
+    private LinkedHashMap transactionDetailsTO = null;
+    private LinkedHashMap deletedTransactionDetailsTO = null;
+//    InterestReportRB objAccountClosingRB = new InterestReportRB();
+//    private final   java.util.ResourceBundle objTermLoanRB = java.util.ResourceBundle.getBundle("com.see.truetransact.ui.termloan.charges.InterestReportRB", ProxyParameters.LANGUAGE);
+    private static final CommonRB objCommonRB = new CommonRB();
+    private double  deposit_pre_int=0;
+    private String deposit_premature=null;
+    private HashMap _authorizeMap ;
+    private String prematureString="";
+    private HashMap oldTransDetMap = null;
+    private String   asAnWhen="";
+    private String transProdId = "";
+    private int operation=0;
+    
+    double postageCharges=0;
+    double arbitaryCharges=0;
+    double legalCharges=0;
+    double insuranceCharges=0;
+    double misllanCharges=0;
+    double executionCharges=0;
+    double advertisementCharges=0;
+    Date curDate=null;
+    
+    LinkedHashMap otherChargesMap;
+    //    private boolean depTrans;
+    static {
+        try {
+            InterestReportOB = new InterestReportOB();
+        } catch(Exception e) {
+            log.info("try: " + e);
+            parseException.logException(e,true);
+            e.printStackTrace();
+        }
+        
+    }
+    /** Creates a new instance of AccountClosingOB */
+    public InterestReportOB() {
+        try {
+            proxy = ProxyFactory.createProxy();
+            
+            map = new HashMap();
+            map.put(CommonConstants.JNDI, "InterestReportJNDI");
+            map.put(CommonConstants.HOME, "termloan.InterestReport.InterestReportHome");
+            map.put(CommonConstants.REMOTE, "termloan.InterestReport.InterestReport");
+            
+            
+        } catch (Exception e) {
+            parseException.logException(e,true);
+        }
+        InterestReportOB();
+    }
+    private void InterestReportOB(){
+        try{
+             curDate = ClientUtil.getCurrentDate();
+            fillDropdown();
+            
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+  
+    /** To fill the comboboxes */
+    private void fillDropdown() throws Exception{
+        lookupMap = new HashMap();
+        lookupMap.put(CommonConstants.JNDI, "LookUpJNDI");
+        lookupMap.put(CommonConstants.HOME, "common.lookup.LookUpHome");
+        lookupMap.put(CommonConstants.REMOTE, "common.lookup.LookUp");
+        
+        param = new java.util.HashMap();
+        ArrayList lookupKeys=new ArrayList();
+        key=new ArrayList();
+        value=new ArrayList();
+        chargeTypeList=new ArrayList();
+        param.put(CommonConstants.MAP_NAME,null);
+        lookupKeys.add("PRODUCTTYPE");
+        lookupKeys.add("TERMLOAN.CHARGE_TYPE");
+        param.put(CommonConstants.PARAMFORQUERY,lookupKeys);
+        final HashMap lookupValues = ClientUtil.populateLookupData(param);
+        fillData((HashMap)lookupValues.get("PRODUCTTYPE"));
+        cbmProdType = new ComboBoxModel(key,value);
+//        for(int i=0;i<key.size();i++){
+//            if((key.get(i).equals("OA"))||(key.get(i).equals("TD"))||(key.get(i).equals("GL"))){
+                cbmProdType.removeKeyAndElement("OA");
+                cbmProdType.removeKeyAndElement("TD");
+                cbmProdType.removeKeyAndElement("GL");
+                cbmProdType.removeKeyAndElement("SA");
+                cbmProdType.removeKeyAndElement("AB");
+//                cbmProdType.removeKeyAndElement("MDS");
+//            }
+//        }
+        fillData((HashMap)lookupValues.get("TERMLOAN.CHARGE_TYPE"));
+        chargeTypeList=value;
+        cbmChargeType=new ComboBoxModel(key,value);
+        key = new ArrayList();
+        value = new ArrayList();
+        key.add("");
+        value.add("");
+        cbmProductID=new ComboBoxModel(key,value);
+    }
+    public String getAccountHeadForProductId(String productId) {
+        /* may be the screen has been cleared, in that scenario we will have
+         * the cboProductId as "", and we don;t want anything to be shown in
+         * place of the account head description
+         */
+        
+        if (productId == null || productId.equals("")) {
+            return "";
+        }
+        /* based on the selection from the product combo box, one accound head
+         * will be fetched from database and displayed on screen
+         * same LookUp bean will be used for this purpose
+         */
+        /*
+        HashMap hash;
+        ArrayList key, value;
+         
+        hash = new HashMap();
+        hash.put(CommonConstants.MAP_NAME,"getAccHead");
+        hash.put(CommonConstants.PARAMFORQUERY, productId);
+        hash = (HashMap)(ClientUtil.populateLookupData(hash)).get(CommonConstants.DATA);
+        key = (ArrayList) hash.get(CommonConstants.KEY);
+        value = (ArrayList) hash.get(CommonConstants.VALUE);
+         
+          // the 0th value is blank bydefault
+        accountHeadId = (String)key.get(1);
+        accountHeadDesc = (String)value.get(1);
+         
+        hash = null;
+        key = null;
+        value = null;*/
+        
+        final HashMap accountHeadMap = new HashMap();
+        accountHeadMap.put("PROD_ID",productId);
+        final List resultList = ClientUtil.executeQuery("getAccountHeadProd"+this.getProdType(),accountHeadMap);
+        final HashMap resultMap = (HashMap)resultList.get(0);
+//        accountHeadId = (resultMap.get("AC_HEAD").toString());
+//        accountHeadDesc = (resultMap.get("AC_HEAD_DESC").toString());
+//        
+//        return accountHeadId + " [" + accountHeadDesc + "]";
+        return "";
+    }
+    /**
+     * Returns an instance of TermLoanOB
+     *
+     * @return TermLoanOB
+     */
+    public static InterestReportOB getInstance() {
+        return InterestReportOB;
+    }
+    
+    /** To set the key & value for comboboxes */
+    private void fillData(HashMap keyValue)  throws Exception{
+        key = (ArrayList)keyValue.get("KEY");
+        value = (ArrayList)keyValue.get("VALUE");
+    }
+    
+    /** To get data for comboboxes */
+    private HashMap populateData(HashMap obj)  throws Exception{
+        System.out.println("obj in OB : " + obj);
+      //  obj.put("CURR_DATE", ClientUtil.getCurrentDateProperFormat());
+        System.out.println("map in OB :MIDDLE " + obj);
+        HashMap where = proxy.executeQuery(obj, map) ;
+        return where;
+    }
+    
+    
+    void setTxtAccountNumber(String txtAccountNumber){
+        this.txtAccountNumber = txtAccountNumber;
+        setChanged();
+    }
+    String getTxtAccountNumber(){
+        return this.txtAccountNumber;
+    }
+  
+    
+    public int getActionType(){
+        return this.actionType;
+    }
+    
+    public void setActionType(int actionType) {
+        this.actionType = actionType;
+        setChanged();
+    }
+    
+    public int getResult(){
+        return this.result;
+    }
+    
+    public void setResult(int result) {
+        this.result = result;
+        setChanged();
+    }
+    
+    public String getLblStatus(){
+        return this.lblStatus;
+    }
+    
+    public void setLblStatus(String lblStatus) {
+        this.lblStatus = lblStatus;
+        setChanged();
+    }
+    
+    /** set the value of Account head ID and description based on the product selected
+     * in the UI
+     */
+    public void getAccountHeadForProduct() {
+        
+        /* based on the selection from the product combo box, one accound head
+         * will be fetched from database and displayed on screen
+         * same LookUp bean will be used for this purpose
+         */
+        param.put(CommonConstants.MAP_NAME,"getAccHead");
+        param.put(CommonConstants.PARAMFORQUERY, getCboProductID());
+        try {
+            final HashMap lookupValues = ClientUtil.populateLookupData(param);
+            fillData((HashMap)lookupValues.get("DATA"));
+            //If proper value is returned, then the size will be more than 1, else do nothing
+            if( value.size() > 1 ){
+//                setAccountHeadId((String)value.get(1));
+//                setAccountHeadDesc((String)key.get(1));
+            }
+            ttNotifyObservers();
+        } catch (Exception e) {
+            parseException.logException(e,true);
+        }
+        
+    }
+    
+    public boolean checkDeleteRecords(int row){
+//       InterestReportTO objInterestReportTO=(InterestReportTO) chargesTOs.get(row);
+//       if(CommonUtil.convertObjToDouble(objInterestReportTO.getPaidAmount()).doubleValue()>0){
+//           return true;
+//       }
+       return false;
+    }
+    public void getInterestAmount(HashMap param){
+        try {
+            HashMap dataMap = populateData(param);
+            System.out.println("param Data Map :" + dataMap);
+        }catch (Exception e) {
+            parseException.logException(e,true);
+        }
+        
+    }
+    
+    
+    
+    public void getAccountClosingCharges(HashMap param){
+        ArrayList singleList=new ArrayList();
+        ArrayList recordList=new ArrayList();
+        param.put("MODE", getCommand());
+        chargesTOs = new ArrayList();
+        postageCharges=0;
+        arbitaryCharges=0;
+        legalCharges=0;
+        insuranceCharges=0;
+        misllanCharges=0;
+        executionCharges=0;
+        advertisementCharges=0;
+        Date acctOpenDt=null;
+        Date lastIntCalDt=null;
+         double interestDoubleValue=0.0;
+        // System.out.println("param ... : " + param);
+        
+        //for premature deposit closer
+        
+        try {
+            HashMap dataMap = populateData(param);
+            System.out.println("param Data Map :" + dataMap);
+//            singleList=new ArrayList();
+//            singleList.add("Asset Status");
+//            singleList.add(CommonUtil.convertObjToStr(dataMap.get("ASSET_STATUS")));
+//            recordList.add(singleList);
+            singleList=new ArrayList();
+            singleList.add("Rate of Interest");
+            singleList.add(CommonUtil.convertObjToStr(dataMap.get("ROI"))+"%");
+            recordList.add(singleList);
+            singleList=new ArrayList();
+            singleList.add("Acct Open Dt");
+            singleList.add(CommonUtil.convertObjToStr(dataMap.get("ACCT_OPEN_DT")));
+            recordList.add(singleList);
+            singleList=new ArrayList();
+            singleList.add("Last Int Cal Dt");
+            acctOpenDt=DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(dataMap.get("ACCT_OPEN_DT")));
+            lastIntCalDt=DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(dataMap.get("LAST_INT_CALC_DT")));
+//            if(DateUtil.dateDiff(lastIntCalDt,acctOpenDt)>0)
+//                singleList.add(CommonUtil.convertObjToStr(acctOpenDt));
+//            else
+                singleList.add(CommonUtil.convertObjToStr(dataMap.get("LAST_INT_CALC_DT")));
+                
+            recordList.add(singleList);
+            
+             singleList=new ArrayList();
+            singleList.add("sanction Amt");
+            String limit = CurrencyValidation.formatCrore( (dataMap.get("LIMIT")==null) ? "0" : dataMap.get("LIMIT").toString());
+            singleList.add(limit);
+            recordList.add(singleList);
+            
+            singleList=new ArrayList();
+            singleList.add("Total Balance");
+            String totalBalance = CurrencyValidation.formatCrore( (dataMap.get("TOTAL_BALANCE")==null) ? "0" : dataMap.get("TOTAL_BALANCE").toString());
+            System.out.println("clearbalnce"+totalBalance);
+            singleList.add(totalBalance);//dataMap.get("TOTAL_BALANCE")
+            recordList.add(singleList);
+            singleList=new ArrayList();
+            singleList.add("No Of Installments");
+            singleList.add(dataMap.get("NO_OF_INSTALLMENT"));
+            recordList.add(singleList);
+            if(dataMap.containsKey("SHOW_INSTALLMENT_NO")&& dataMap.get("SHOW_INSTALLMENT_NO")!=null){
+            singleList=new ArrayList();
+            singleList.add("Pending Installment Due");
+            singleList.add(dataMap.get("SHOW_INSTALLMENT_NO"));
+            recordList.add(singleList);
+            }
+            singleList=new ArrayList();
+            if(dataMap.containsKey("INSTALL_TYPE") && dataMap.get("INSTALL_TYPE") !=null && dataMap.get("INSTALL_TYPE").equals("EMI"))
+                singleList.add("Installment EMI Amt");
+            else
+                singleList.add("Installment Amt");
+            String installmentAmt = CurrencyValidation.formatCrore( (dataMap.get("INSTALLMENT AMT")==null) ? "0" : dataMap.get("INSTALLMENT AMT").toString());
+            singleList.add(installmentAmt);
+            recordList.add(singleList);
+            
+            singleList=new ArrayList();
+            singleList.add("principal Excess Paid");
+            String paidPrincipal = CurrencyValidation.formatCrore( (dataMap.get("PAID_PRINCIPAL")==null) ? "0" : dataMap.get("PAID_PRINCIPAL").toString());
+            singleList.add(paidPrincipal);//dataMap.get("PAID_INTEREST")
+            recordList.add(singleList);
+            
+            singleList=new ArrayList();
+            singleList.add("Interest Paid");
+            String paidInterest = CurrencyValidation.formatCrore( (dataMap.get("PAID_INTEREST")==null) ? "0" : dataMap.get("PAID_INTEREST").toString());
+            singleList.add(paidInterest);//dataMap.get("PAID_INTEREST")
+            recordList.add(singleList);
+            singleList=new ArrayList();
+            singleList.add("Penal Interest Paid");
+            String paidPenal = CurrencyValidation.formatCrore( (dataMap.get("PAID_PENAL_INTEREST")==null) ? "0" : dataMap.get("PAID_PENAL_INTEREST").toString());
+            singleList.add(paidPenal);//dataMap.get("PAID_PENAL_INTEREST")
+            recordList.add(singleList);
+            
+            singleList=new ArrayList();
+            singleList.add("Penal Interest Due");
+            String penal = CurrencyValidation.formatCrore( (dataMap.get("AccountPenalInterest")==null) ? "0" : dataMap.get("AccountPenalInterest").toString());
+            double penalinterestDoubleValue = CommonUtil.convertObjToDouble(dataMap.get("AccountPenalInterest")).doubleValue();
+            if(penalinterestDoubleValue>0.0){
+                singleList.add(penal);//dataMap.get("AccountPenalInterest")
+            }else
+                 singleList.add("0.0");
+            recordList.add(singleList);
+            singleList=new ArrayList();
+            singleList.add("Interest Due");
+            String interest = CurrencyValidation.formatCrore( (dataMap.get("AccountInterest")==null) ? "0" : dataMap.get("AccountInterest").toString());
+             interestDoubleValue = CommonUtil.convertObjToDouble(dataMap.get("AccountInterest")).doubleValue();
+            if(interestDoubleValue>0.0){
+                singleList.add(interest);//dataMap.get("AccountInterest")
+            }else
+                 singleList.add("0.0");
+            recordList.add(singleList);
+            
+            if(interestDoubleValue<0.0){
+                singleList=new ArrayList();
+                singleList.add("Excess Int Collected");
+                singleList.add(interest);
+                recordList.add(singleList);
+            }
+            
+            singleList=new ArrayList();
+            singleList.add("Principal Due");
+            String prinicpalDue = CurrencyValidation.formatCrore( (dataMap.get("PRINCIPAL_DUE")==null) ? "0" : dataMap.get("PRINCIPAL_DUE").toString());
+            singleList.add(prinicpalDue);//dataMap.get("PRINCIPAL_DUE")
+            recordList.add(singleList);
+            //TOTAL DUE AMOUNT
+//             singleList=new ArrayList();
+//            singleList.add("Total Due Amount");
+//             prinicpalDue = (dataMap.get("PRINCIPAL_DUE")==null) ? "0" : dataMap.get("PRINCIPAL_DUE").toString();
+//             interest = (dataMap.get("AccountInterest")==null) ? "0" : dataMap.get("AccountInterest").toString();
+//             penal =  (dataMap.get("AccountPenalInterest")==null) ? "0" : dataMap.get("AccountPenalInterest").toString();
+//             double totDue=Double.parseDouble(prinicpalDue)+Double.parseDouble(interest)+Double.parseDouble(penal);
+//            singleList.add(String.valueOf(totDue));//dataMap.get("PRINCIPAL_DUE")
+//            recordList.add(singleList);
+//            //
+//     
+//            Class objClasses[] = new Class[2];
+//            objClasses[0] = new String().getClass();
+//            objClasses[1] = new String().getClass();
+//            tblTotAcctDetails.setColumnClasses(objClasses);
+//            tblTotAcctDetails.setDataArrayList(recordList,tblAccountHeadList);//chargeTypeList
+            
+           
+            ttNotifyObservers();
+            if(interestDoubleValue<0.0){
+              int yes_no=ClientUtil.confirmationAlert("" +
+              " Excess Interest Collected  On Retrospective Change of Interest.."+"\n"+
+              "Do  You Want to Reverse back to customer");
+              Date retDt=null;
+              if(dataMap.containsKey("UPDATE_RET_APP_DT"))
+                  retDt=(Date)dataMap.get("UPDATE_RET_APP_DT");
+              if(yes_no==0)
+                callExcessTransaction(interestDoubleValue,retDt);
+            }
+        } catch (Exception e) {
+            parseException.logException(e,true);
+        }
+    }
+    
+    private void callExcessTransaction(double interestDoubleValue,Date ret){
+        interestDoubleValue*= -1;
+        HashMap totalMap =new HashMap();
+        StringBuffer buf=new StringBuffer();
+        double excessint=interestDoubleValue;
+        try{
+        totalMap.put("TRANSACTION_AMT",new Double(interestDoubleValue));
+        if(postageCharges!=0)
+            if(excessint>=postageCharges){
+            excessint-=postageCharges;
+            buf.append("Credit Postage Amount   "+postageCharges+"\n");
+            totalMap.put("POSTAGE CHARGES",new Double(postageCharges));
+        }else{
+            buf.append("Credit Postage Amount   "+excessint+"\n");
+            totalMap.put("POSTAGE CHARGES",new Double(excessint));
+            excessint=0;
+        }
+        if(advertisementCharges!=0)
+            if(excessint>=advertisementCharges){
+            excessint-=advertisementCharges;
+             buf.append("Credit Advertisement Amount   "+advertisementCharges+"\n");
+            totalMap.put("ADVERTISE CHARGES",new Double(advertisementCharges));
+             
+        }else{
+             buf.append("Credit Advertisement Amount   "+excessint+"\n");
+            totalMap.put("ADVERTISE CHARGES",new Double(excessint));
+              excessint=0;
+            
+        }
+        if(arbitaryCharges!=0)
+            if(excessint>=arbitaryCharges){
+            excessint-=arbitaryCharges;
+             buf.append("Credit Arbitrary Amount   "+arbitaryCharges+"\n");
+            totalMap.put("ARBITRARY CHARGES",new Double(arbitaryCharges));
+             
+        }else{
+             buf.append("Credit Arbitrary Amount   "+excessint+"\n");
+            totalMap.put("ARBITRARY CHARGES",new Double(excessint));
+              excessint=0;
+            
+        }
+        if(legalCharges!=0)
+            if(excessint>=legalCharges){
+            excessint-=legalCharges;
+            buf.append("Credit Legal Amount   "+legalCharges+"\n");            
+            totalMap.put("LEGAL CHARGES",new Double(legalCharges));
+        }else{
+              buf.append("Credit Legal Amount   "+excessint+"\n");            
+            totalMap.put("LEGAL CHARGES",new Double(excessint));
+            excessint=0;
+        }
+        if(insuranceCharges!=0)
+        if(excessint>=insuranceCharges){
+            excessint-=insuranceCharges;
+             buf.append("Credit Insurance Amount   "+insuranceCharges+"\n");
+            totalMap.put("INSURANCE CHARGES",new Double(insuranceCharges));
+        }else{
+            buf.append("Credit Insurance Amount   "+excessint+"\n");
+            totalMap.put("INSURANCE CHARGES",new Double(excessint));
+            excessint=0;
+        }
+        if(misllanCharges!=0)
+        if(excessint>=misllanCharges){
+            excessint-=misllanCharges;
+             buf.append("Credit Misllan Amount   "+misllanCharges+"\n");
+            totalMap.put("MISCELLANEOUS CHARGES",new Double(misllanCharges));
+        }
+        else{
+               buf.append("Credit Misllan Amount   "+excessint+"\n");
+            totalMap.put("MISCELLANEOUS CHARGES",new Double(excessint));
+            excessint=0;
+        }
+        if(executionCharges!=0)
+            if(excessint>=executionCharges){
+            excessint-=executionCharges;
+             buf.append("Credit Execution Amount   "+executionCharges+"\n");
+            totalMap.put("EXECUTION DECREE CHARGES",new Double(executionCharges));
+        }else{
+              buf.append("Credit Execution Amount   "+excessint+"\n");
+            totalMap.put("EXECUTION DECREE CHARGES",new Double(excessint));
+            excessint=0;
+        }
+        if(excessint !=0){
+             buf.append("Credit Loan Amount   "+excessint);
+            totalMap.put("LOANAMT",new Double(excessint));
+             
+        }
+          int value=ClientUtil.confirmationAlert("Debit InterestAccount Amount   :"+(interestDoubleValue)+"\n"
+                                          + buf.toString());
+          if(value==0){
+            HashMap data=new HashMap();
+            data.put(CommonConstants.MODULE, getModule());
+            data.put(CommonConstants.SCREEN, getScreen());
+            data.put(CommonConstants.SELECTED_BRANCH_ID, getSelectedBranchID());
+            data.put(CommonConstants.BRANCH_ID, TrueTransactMain.BRANCH_ID);
+             data.put(CommonConstants.USER_ID, TrueTransactMain.USER_ID);
+            data.put("ALL_AMOUNT",totalMap);
+            data.put("ACT_NUM",getTxtAccountNumber());
+            data.put("EXCESS_TRANSACTION","EXCESS_TRANSACTION");
+            HashMap proxyResultMap = proxy.execute(data, map);
+            oldTransDetMap = null;
+            setProxyReturnMap(proxyResultMap);
+            setResult(actionType);
+            showTransactionDetails( ret);
+              System.out.println("Transaction part over");
+          }else{
+              return;
+          }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    
+    private void showTransactionDetails(Date ret){
+        HashMap transMap=new HashMap();
+        String displayStr="";
+       HashMap updateretraspectiveMap=new HashMap();
+            transMap.put("DEPOSIT_NO",getTxtAccountNumber());
+                transMap.put("CURR_DT", curDate);		//Added By Suresh R
+                List lst = ClientUtil.executeQuery("getTransferTransAuthDetails", transMap);
+                String batch_id=null;
+                if(lst !=null && lst.size()>0){
+                    displayStr += "Transfer Transaction Details...\n";
+                    for(int i = 0;i<lst.size();i++){
+                        transMap = (HashMap)lst.get(i);
+                        batch_id=CommonUtil.convertObjToStr(transMap.get("BATCH_ID"));
+                        displayStr += "Trans Id : "+transMap.get("TRANS_ID")+
+                        "   Batch Id : "+transMap.get("BATCH_ID")+
+                        "   Trans Type : "+transMap.get("TRANS_TYPE");
+                        String actNum = CommonUtil.convertObjToStr(transMap.get("ACT_NUM"));
+                        if(actNum != null && !actNum.equals("")){
+                            displayStr +="   Account No : "+transMap.get("ACT_NUM")+
+                            "   Loan Amount : "+transMap.get("AMOUNT")+"\n";
+                        }else{
+                            displayStr += "   Account Head : "+transMap.get("AC_HD_ID")+
+                            " Amount : "+transMap.get("AMOUNT")+"\n";
+                        }
+                        System.out.println("#### :" +transMap);
+                      
+                    }
+                    ClientUtil.showMessageWindow(""+displayStr);
+                    updateretraspectiveMap.put("BATCH_ID", batch_id);
+                    updateretraspectiveMap.put("RETRASPECTIVE_APP_DT", ret);
+                    updateretraspectiveMap.put("ACT_NUM", getTxtAccountNumber());
+                    ClientUtil.execute("updateRetraspectiveBatchId",updateretraspectiveMap); 
+                }
+    }
+    
+    public void deleteData(int selectedRow){
+//        InterestReportTO InterestReportTO=(InterestReportTO)chargesTOs.get(selectedRow);
+//        InterestReportTO.setStatus("DELETED");
+//        InterestReportTO.setStatus_By(TrueTransactMain.USER_ID);
+//        InterestReportTO.setStatus_Dt(ClientUtil.getCurrentDate());
+//        chargesTOs.set(selectedRow,InterestReportTO);
+        System.out.println("chargesTOsdelete"+chargesTOs);
+    }
+    public double setTotAmtTableData(){
+        ArrayList recordList=new ArrayList();
+        System.out.println("chargeTypeList#####"+chargeTypeList);
+        String chargeType="";
+        String arbitaryCharge ="";
+        String executionCharge ="";
+        String insuranceCharge ="";
+        String legalCharge ="";
+        String misllanCharge ="";
+        String postageCharge ="";
+        String advertisementCharge ="";
+        ArrayList singleList=new ArrayList();
+        if(chargeTypeList !=null && chargeTypeList.size()>0)
+            for(int i=0;i<chargeTypeList.size();i++){
+        chargeType=CommonUtil.convertObjToStr(chargeTypeList.get(i));
+        if (chargeType.equalsIgnoreCase("Arbitrary Charges")) {
+            singleList=new ArrayList();
+            singleList.add(chargeType);
+            arbitaryCharge = CurrencyValidation.formatCrore((arbitaryCharges == 0.0) ? "0" : String.valueOf(arbitaryCharges));
+            singleList.add(arbitaryCharge);//new Double(arbitaryCharges
+            recordList.add(singleList);
+        }else
+
+//        chargeType = CommonUtil.convertObjToStr(chargeTypeList.get(2));
+        if (chargeType.equalsIgnoreCase("Execution Decree Charges")) {
+            singleList = new ArrayList();
+            singleList.add(chargeType);
+             executionCharge = CurrencyValidation.formatCrore((executionCharges == 0.0) ? "0" : String.valueOf(executionCharges));
+            singleList.add(executionCharge);//new Double(executionCharges)
+            recordList.add(singleList);
+        }else
+//        chargeType = CommonUtil.convertObjToStr(chargeTypeList.get(3));
+        if (chargeType.equalsIgnoreCase("Insurance Charges")) {
+            singleList = new ArrayList();
+            singleList.add(chargeType);
+             insuranceCharge = CurrencyValidation.formatCrore((insuranceCharges == 0.0) ? "0" : String.valueOf(insuranceCharges));
+            singleList.add(insuranceCharge);//new Double(insuranceCharges)
+            recordList.add(singleList);
+        }else
+//        chargeType = CommonUtil.convertObjToStr(chargeTypeList.get(4));
+        if (chargeType.equalsIgnoreCase("Legal Charges")) {
+            singleList = new ArrayList();
+            singleList.add(chargeType);
+             legalCharge = CurrencyValidation.formatCrore((legalCharges == 0.0) ? "0" : String.valueOf(legalCharges));
+            singleList.add(legalCharge);//new Double(legalCharges)
+            recordList.add(singleList);
+        }else
+
+//        chargeType = CommonUtil.convertObjToStr(chargeTypeList.get(5));
+        if (chargeType.equalsIgnoreCase("Miscellaneous Charges")) {
+            singleList = new ArrayList();
+            singleList.add(chargeType);
+             misllanCharge = CurrencyValidation.formatCrore((misllanCharges == 0.0) ? "0" : String.valueOf(misllanCharges));
+            singleList.add(misllanCharge);//new Double(misllanCharges)
+            recordList.add(singleList);
+        }else
+//        chargeType = CommonUtil.convertObjToStr(chargeTypeList.get(6));
+        if (chargeType.equalsIgnoreCase("Postage Charges")) {
+            singleList = new ArrayList();
+            singleList.add(chargeType);
+             postageCharge = CurrencyValidation.formatCrore((postageCharges == 0.0) ? "0" : String.valueOf(postageCharges));
+            singleList.add(postageCharge);//new Double(postageCharges
+            recordList.add(singleList);
+        }else
+//        chargeType = CommonUtil.convertObjToStr(chargeTypeList.get(7));
+        if (chargeType.equalsIgnoreCase("Advertisement Charges")) {
+            singleList = new ArrayList();
+            singleList.add(chargeType);
+             advertisementCharge = CurrencyValidation.formatCrore((advertisementCharges == 0.0) ? "0" : String.valueOf(advertisementCharges));
+            singleList.add(advertisementCharge);//new Double(advertisementCharges
+            recordList.add(singleList);
+        }
+        }
+        double otherChargesTotal = 0;
+        if (otherChargesMap!=null && otherChargesMap.size()>0) {
+            Object keys[] = otherChargesMap.keySet().toArray();
+            for (int i=0; i<otherChargesMap.size(); i++) {
+        singleList=new ArrayList();
+                singleList.add(keys[i]);
+                singleList.add(CurrencyValidation.formatCrore(String.valueOf(otherChargesMap.get(keys[i]))));
+                otherChargesTotal+=CommonUtil.convertObjToDouble(otherChargesMap.get(keys[i])).doubleValue();
+                recordList.add(singleList);
+            }
+        }
+        
+        singleList=new ArrayList();
+        singleList.add("Total Charges Due");
+        executionCharge = (executionCharges==0.0) ? "0" : String.valueOf(executionCharges);
+        misllanCharge =(misllanCharges==0.0) ? "0" : String.valueOf(misllanCharges);
+        insuranceCharge = (insuranceCharges==0.0) ? "0" : String.valueOf(insuranceCharges);
+        legalCharge = (legalCharges==0.0) ? "0" : String.valueOf(legalCharges);
+        arbitaryCharge = (arbitaryCharges==0.0) ? "0" : String.valueOf(arbitaryCharges);
+        String  postagetCharges = (postageCharges==0.0) ? "0" : String.valueOf(postageCharges);
+         String  advCharge = (advertisementCharges==0.0) ? "0" : String.valueOf(advertisementCharges);
+        double totDue=Double.parseDouble(executionCharge)+Double.parseDouble(misllanCharge)+Double.parseDouble(insuranceCharge)
+        +Double.parseDouble(legalCharge)+Double.parseDouble(arbitaryCharge)+Double.parseDouble(postagetCharges) + Double.parseDouble(advCharge);
+        totDue+=otherChargesTotal;
+        singleList.add(String.valueOf(totDue));
+        recordList.add(singleList);
+//        tblChargesTotAmt.setDataArrayList(recordList,tblHeadTotAmtList);
+        return totDue;
+    }
+    public void ttNotifyObservers(){
+        notifyObservers();
+    }
+    
+    /** To perform the necessary operation */
+    public void doAction() {
+        try {
+            
+            //            if( actionType != ClientConstants.ACTIONTYPE_CANCEL ){
+            
+            doActionPerform();
+            
+            //            }
+        } catch (Exception e) {
+            // System.out.println("Error in doAction of A/c Closing OB....");
+            setResult(ClientConstants.ACTIONTYPE_FAILED);
+            parseException.logException(e,true);
+        }
+    }
+    
+    public void getProducts(){
+        List list=null;
+        ArrayList key=new ArrayList();
+        ArrayList value=new ArrayList();
+        key.add("");
+        value.add("");
+        HashMap data;
+        list=ClientUtil.executeQuery("Transfer.getCreditProduct"+getProdType(),null);
+        if(list!=null && list.size()>0){
+            int size=list.size();
+            for(int i=0;i<size;i++){
+                data=(HashMap)list.get(i);
+                key.add(data.get("PRODID"));
+                value.add(data.get("PRODDESC"));
+            }
+        }
+        data = null;
+        cbmProductID=new ComboBoxModel(key,value);
+        setChanged();
+    }
+    
+    
+    
+    
+    /** To perform the necessary action */
+    private void doActionPerform() throws Exception{
+        final AccountClosingTO objAccountClosingTO = setAccountClosingData();
+        objAccountClosingTO.setCommand(getCommand());
+        objAccountClosingTO.setStatus(getAction());
+        objAccountClosingTO.setStatusBy(TrueTransactMain.USER_ID);
+        objAccountClosingTO.setStatusDt(curDate);
+        final HashMap data = new HashMap();
+        
+        if(getAuthorizeMap()!=null)
+            data.put(CommonConstants.AUTHORIZEMAP, getAuthorizeMap()); //For Authorization added 28 Apr 2005
+        data.put("MODE",getCommand());
+        System.out.println("#### InterestReportTO : "+chargesTOs);
+        data.put(CommonConstants.MODULE, getModule());
+        data.put(CommonConstants.SCREEN, getScreen());
+        data.put(CommonConstants.SELECTED_BRANCH_ID, getSelectedBranchID());
+        data.put(CommonConstants.BRANCH_ID, TrueTransactMain.BRANCH_ID);
+        data.put("InterestReportTOs",chargesTOs);
+        System.out.println("data in A/c Closing OB : " + data);
+        HashMap proxyResultMap = proxy.execute(data, map);
+        oldTransDetMap = null;
+        setProxyReturnMap(proxyResultMap);
+        setResult(actionType);
+        
+    }
+    
+    private String getCommand(){
+        String command = null;
+        System.out.println("actionType : " + actionType);
+        switch (actionType) {
+            case ClientConstants.ACTIONTYPE_NEW:
+                command = CommonConstants.TOSTATUS_INSERT;
+                break;
+            case ClientConstants.ACTIONTYPE_EDIT:
+                command = CommonConstants.TOSTATUS_UPDATE;
+                break;
+            case ClientConstants.ACTIONTYPE_DELETE:
+                command = CommonConstants.TOSTATUS_DELETE;
+                break;
+            case ClientConstants.ACTIONTYPE_AUTHORIZE:
+                command=AUTHORIZE;
+                break;
+            default:
+        }
+        // System.out.println("command : " + command);
+        return command;
+    }
+    
+    private String getAction(){
+        String action = null;
+        // System.out.println("actionType : " + actionType);
+        switch (actionType) {
+            case ClientConstants.ACTIONTYPE_NEW:
+                action = CommonConstants.STATUS_CREATED;
+                break;
+            case ClientConstants.ACTIONTYPE_EDIT:
+                action = CommonConstants.STATUS_MODIFIED;
+                break;
+            case ClientConstants.ACTIONTYPE_DELETE:
+                action = CommonConstants.STATUS_DELETED;
+                break;
+            default:
+        }
+        // System.out.println("command : " + command);
+        return action;
+    }
+    
+    private AccountClosingTO setAccountClosingData()  throws Exception{
+        final AccountClosingTO objAccountClosingTO = new AccountClosingTO();
+        objAccountClosingTO.setActNum( getTxtAccountNumber());
+//        objAccountClosingTO.setUnusedChk( CommonUtil.convertObjToDouble(this.getTxtNoOfUnusedChequeLeafs()));
+//        objAccountClosingTO.setActClosingChrg( CommonUtil.convertObjToDouble(this.getTxtAccountClosingCharges()));
+//        objAccountClosingTO.setIntPayable( CommonUtil.convertObjToDouble(this.getTxtInterestPayable()) );
+//        objAccountClosingTO.setChrgDetails( CommonUtil.convertObjToDouble(this.getTxtChargeDetails()) );
+//        objAccountClosingTO.setPayableBal( CommonUtil.convertObjToDouble(this.getTxtPayableBalance()));
+        System.out.println("####accountto"+objAccountClosingTO);
+        return objAccountClosingTO;
+    }
+    
+    public void insertData(){
+//        if(tblChargesDetails.getRowCount()==0) {
+//            chargesTOs=new ArrayList();
+//            tblChargesList=new ArrayList();
+//            postageCharges=0;
+//            advertisementCharges=0;
+//            arbitaryCharges=0;
+//            legalCharges=0;
+//            insuranceCharges=0;
+//            misllanCharges=0;
+//            executionCharges=0;
+//        }
+//        InterestReportTO =new InterestReportTO();
+//        InterestReportTO.setProd_Type(getProdType());
+//        InterestReportTO.setProd_Id(getCboProductID());
+//        InterestReportTO.setAct_num(getTxtAccountNumber());
+//        InterestReportTO.setCharge_Type(getCboChargesType());
+//        InterestReportTO.setChargeDt(getProperFormatDate(getTdtChargesDate()));
+//        InterestReportTO.setAmount(getTxtChargesAmount());
+//        InterestReportTO.setStatus(CommonConstants.STATUS_CREATED);
+//        InterestReportTO.setStatus_By(ProxyParameters.USER_ID);
+//        if(InterestReportTO.getCharge_Type().equals("ARBITRARY CHARGES"))
+//            arbitaryCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//        if(InterestReportTO.getCharge_Type().equals("EXECUTION DECREE CHARGES"))
+//            executionCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//        if(InterestReportTO.getCharge_Type().equals("INSURANCE CHARGES"))
+//            insuranceCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//        if(InterestReportTO.getCharge_Type().equals("LEGAL CHARGES"))
+//            legalCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//        if(InterestReportTO.getCharge_Type().equals("MISCELLANEOUS CHARGES"))
+//            misllanCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//        if(InterestReportTO.getCharge_Type().equals("POSTAGE CHARGES"))
+//            postageCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//         if(InterestReportTO.getCharge_Type().equals("ADVERTISE CHARGES"))
+//            advertisementCharges+=CommonUtil.convertObjToDouble(InterestReportTO.getAmount()).doubleValue()-CommonUtil.convertObjToDouble(InterestReportTO.getPaidAmount()).doubleValue();
+//        setTotAmtTableData();
+//        ArrayList retrunList=getArrayRows(InterestReportTO);
+//        chargesTOs.add(InterestReportTO);
+//        tblChargesList.add(retrunList);
+//        tblChargesDetails.setDataArrayList(tblChargesList,tblHeadList);
+        //        ttNotifyObservers();
+    }
+//    public ArrayList getArrayRows(InterestReportTO InterestReportTO){
+//        ArrayList chargesArrayList=new ArrayList();
+//        chargesArrayList.add(InterestReportTO.getCharge_Type());
+//        chargesArrayList.add(InterestReportTO.getChargeDt());
+//        chargesArrayList.add(CurrencyValidation.formatCrore(CommonUtil.convertObjToStr(InterestReportTO.getAmount())));
+//        chargesArrayList.add(CurrencyValidation.formatCrore(CommonUtil.convertObjToStr((InterestReportTO.getPaidAmount()==null)? "0": CommonUtil.convertObjToStr(InterestReportTO.getPaidAmount()))));
+////        chargesArrayList.add(InterestReportTO.getPaidAmount());
+//        chargesArrayList.add(InterestReportTO.getAuthorize_Status());
+//        return chargesArrayList;
+//    }
+    
+     public Date getProperFormatDate(Object obj){
+        Date currDt = null;
+        if (obj!=null && obj.toString().length()>0) {
+            Date tempDt= DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(obj));
+            currDt=(Date)curDate.clone();
+            currDt.setDate(tempDt.getDate());
+            currDt.setMonth(tempDt.getMonth());
+            currDt.setYear(tempDt.getYear());
+        }
+        return currDt;
+    }
+    public String getCommandForLtd(){//if ur coming through deposit closing screen means this method will work otherwise it won't work.
+        String command = null;//last line continution for the purpose of LTD deposits.
+        System.out.println("actionType : " + actionType);
+        switch (actionType) {
+            case ClientConstants.ACTIONTYPE_NEW:
+                command = CommonConstants.TOSTATUS_INSERT;
+                break;
+            case ClientConstants.ACTIONTYPE_EDIT:
+                command = CommonConstants.TOSTATUS_UPDATE;
+                break;
+            case ClientConstants.ACTIONTYPE_DELETE:
+                command = CommonConstants.TOSTATUS_DELETE;
+                break;
+            case ClientConstants.ACTIONTYPE_AUTHORIZE:
+                command=AUTHORIZE;
+                break;
+            default:
+        }
+        // System.out.println("command : " + command);
+        return command;
+    }
+    
+    public String getActionForLtd(){//if ur coming through deposit closing screen means this method will work otherwise it won't work.
+        String action = null;//last line continution for the purpose of LTD deposits.
+        // System.out.println("actionType : " + actionType);
+        switch (actionType) {
+            case ClientConstants.ACTIONTYPE_NEW:
+                action = CommonConstants.STATUS_CREATED;
+                break;
+            case ClientConstants.ACTIONTYPE_EDIT:
+                action = CommonConstants.STATUS_MODIFIED;
+                break;
+            case ClientConstants.ACTIONTYPE_DELETE:
+                action = CommonConstants.STATUS_DELETED;
+                break;
+            default:
+        }
+        // System.out.println("command : " + command);
+        return action;
+    }
+    
+    /** To retrieve a particular customer's accountclosing record */
+    public void getData(HashMap whereMap) {
+        try{
+            // System.out.println("Ob.getActionType() : " + getActionType());
+            // System.out.println("whereMap in getData of OB : " + whereMap);
+            // System.out.println("map in getData of OB : " + map);
+            whereMap.put("MODE", getCommand());
+            if(prodType.equals("TermLoan"))
+                whereMap.put("PROD_TYPE",prodType);
+            System.out.println("map in getData OB : " + whereMap);
+            final HashMap data = (HashMap)proxy.executeQuery(whereMap,map);
+            System.out.println(">>>>> data in OBSIDE##### : " + data);
+            populateAccountClosingData(data);
+            List list = (List) data.get("TransactionTO");
+            System.out.println("transaction@@@####"+list);
+            transactionOB.setDetails(list);
+            allowedTransactionDetailsTO=transactionOB.getAllowedTransactionDetailsTO();
+            //ttNotifyObservers();
+        }catch(Exception e){
+            parseException.logException(e,true);
+            e.printStackTrace();
+        }
+    }
+    
+    /** To populate data into the screen */
+    private void populateAccountClosingData(HashMap data) throws Exception{
+        final AccountClosingTO objAccountClosingTO = new AccountClosingTO();
+        System.out.println("data in populateAccountClosingData : " + data);
+        HashMap accTo = (HashMap)data.get("AccountDetailsTO");
+        HashMap accountInterest = (HashMap)data.get("AccountInterest");
+        setStatusBy(CommonUtil.convertObjToStr(accTo.get("STATUS_BY")));
+//        setAuthorizeStatus(CommonUtil.convertObjToStr(accTo.get("AUTHORIZE_STATUS")));
+//        setCboProductID(CommonUtil.convertObjToStr(accTo.get("PROD_ID")));
+//        setCustomerName(CommonUtil.convertObjToStr(accTo.get("Customer Name")));
+//        setAccountHeadId(CommonUtil.convertObjToStr(accTo.get("AC_HD_ID")));
+//        
+//        
+//        if(prodType.equals("TermLoan")){
+//            setAvailableBalance(CommonUtil.convertObjToStr(accTo.get("LOAN_BALANCE_PRINCIPAL")));
+//            setTxtInterestPayable(CommonUtil.convertObjToStr(accTo.get("INT_PAYABLE")));
+//            setTxtAccountNumber(CommonUtil.convertObjToStr(accTo.get("ACCT_NUM")));
+//        }
+//        else{
+//            setAvailableBalance(CommonUtil.convertObjToStr(accTo.get("AVAILABLE_BALANCE")));
+//            //            setTxtInterestPayable(CommonUtil.convertObjToStr(accountInterest.get(getTxtAccountNumber())));
+//            setTxtInterestPayable(CommonUtil.convertObjToStr(accTo.get("INT_PAYABLE")));
+//            setTxtAccountNumber(CommonUtil.convertObjToStr(accTo.get("ACT_NUM")));
+//        }
+//        setTxtAccountClosingCharges(CommonUtil.convertObjToStr(accTo.get("ACT_CLOSING_CHRG")));
+//        
+//        int returndCheques = 0;
+//        
+//        setTxtNoOfUnusedChequeLeafs(String.valueOf(returndCheques));
+//        
+//        setTxtChargeDetails(CommonUtil.convertObjToStr(accTo.get("CHRG_DETAILS")));
+//        setTxtPayableBalance(CommonUtil.convertObjToStr(accTo.get("PAYABLE_BAL")));
+//        oldTransDetMap = new HashMap();
+//        if (data.containsKey("ACT_CLOSE_CHRG_TRANS_DETAILS"))
+//            oldTransDetMap.put("ACT_CLOSE_CHRG_TRANS_DETAILS", data.get("ACT_CLOSE_CHRG_TRANS_DETAILS"));
+//        if (data.containsKey("CHRG_DETAILS_TRANS_DETAILS"))
+//            oldTransDetMap.put("CHRG_DETAILS_TRANS_DETAILS", data.get("CHRG_DETAILS_TRANS_DETAILS"));
+//        if (data.containsKey("CASH_TRANS_DETAILS"))
+//            oldTransDetMap.put("CASH_TRANS_DETAILS", data.get("CASH_TRANS_DETAILS"));
+//        if (data.containsKey("TRANSFER_TRANS_DETAILS"))
+//            oldTransDetMap.put("TRANSFER_TRANS_DETAILS", data.get("TRANSFER_TRANS_DETAILS"));
+        accTo = null;
+    }
+    
+    public void resetForm(){
+        setCboProductType("");
+        setCboProductID("");
+        setCboChargesType("");
+        setTxtAccountNumberTo("");
+        setTxtAccountNumber("");
+        otherChargesMap = null;
+        
+        ttNotifyObservers();
+    }
+    
+    /** To set the status based on ActionType, either New, Edit, etc., */
+    public void setStatus(){
+        this.setLblStatus( ClientConstants.ACTION_STATUS[this.getActionType()]);
+        //        ttNotifyObservers();
+    }
+    
+    /** To update the Status based on result performed by doAction() method */
+    public void setResultStatus(){
+        this.setLblStatus(ClientConstants.RESULT_STATUS[this.getResult()]);
+        ttNotifyObservers();
+    }
+    
+    public void updateAuthorizeStatus() {
+        HashMap hash = null;
+        String status = null;
+        // System.out.println("Records'll be updated... ");
+        if(getActionType() == ClientConstants.ACTIONTYPE_AUTHORIZE) {
+            status = CommonConstants.STATUS_AUTHORIZED;
+        } else if(getActionType() == ClientConstants.ACTIONTYPE_REJECT) {
+            status = CommonConstants.STATUS_REJECTED;
+        } else if(getActionType() == ClientConstants.ACTIONTYPE_EXCEPTION) {
+            status = CommonConstants.STATUS_EXCEPTION;
+        }
+        
+        hash = new HashMap();
+        hash.put("ACCOUNTNO",txtAccountNumber);
+        hash.put("STATUS", status);
+        hash.put("USER_ID",TrueTransactMain.USER_ID);
+        hash.put("ACCOUNT_STATUS","CLOSED");
+        ClientUtil.execute("authorizeUpdateAccountCloseTO", hash);
+        ClientUtil.execute("authorizeAcctStatus", hash);
+        // System.out.println("Record Updated : " +hash);
+        
+    }
+    
+    
+    public HashMap loanInterestCalculationAsAndWhen(HashMap whereMap) {
+        HashMap mapData = new HashMap();
+        try {//dont delete this methode check select dao
+            List mapDataList = ClientUtil.executeQuery("", whereMap); //, frame);
+            mapData = (HashMap) mapDataList.get(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // System.out.println("#### MapData :"+mapData);
+        return mapData;
+    }
+    
+    
+    /**
+     * Setter for property transactionOB.
+     * @param transactionOB New value of property transactionOB.
+     */
+    public void setTransactionOB(TransactionOB transactionOB) {
+        this.transactionOB = transactionOB;
+    }
+    
+    /**
+     * Getter for property allowedTransactionDetailsTO.
+     * @return Value of property allowedTransactionDetailsTO.
+     */
+    public java.util.LinkedHashMap getAllowedTransactionDetailsTO() {
+        return allowedTransactionDetailsTO;
+    }
+    
+    /**
+     * Setter for property allowedTransactionDetailsTO.
+     * @param allowedTransactionDetailsTO New value of property allowedTransactionDetailsTO.
+     */
+    public void setAllowedTransactionDetailsTO(java.util.LinkedHashMap allowedTransactionDetailsTO) {
+        // System.out.println("In OB of RemIssue : " + allowedTransactionDetailsTO);
+        this.allowedTransactionDetailsTO = allowedTransactionDetailsTO;
+    }
+    
+    public int showAlertWindow(String amtLimit) {
+        int option = 1;
+        try{
+            String[] options = {objCommonRB.getString("cDialogOK")};
+            option = COptionPane.showOptionDialog(null,amtLimit, CommonConstants.WARNINGTITLE,
+            COptionPane.OK_OPTION, COptionPane.WARNING_MESSAGE,
+            null, options, options[0]);
+        }catch (Exception e){
+            parseException.logException(e,true);
+        }
+        return option;
+    }
+    
+    /**
+     * Getter for property lienAmount.
+     * @return Value of property lienAmount.
+     */
+    public double getLienAmount() {
+        return lienAmount;
+    }
+    
+    /**
+     * Setter for property lienAmount.
+     * @param lienAmount New value of property lienAmount.
+     */
+    public void setLienAmount(double lienAmount) {
+        this.lienAmount = lienAmount;
+    }
+    
+    
+    /**
+     * Getter for property _authorizeMap.
+     * @return Value of property _authorizeMap.
+     */
+    public java.util.HashMap getAuthorizeMap() {
+        return _authorizeMap;
+    }
+    
+    /**
+     * Setter for property _authorizeMap.
+     * @param _authorizeMap New value of property _authorizeMap.
+     */
+    public void setAuthorizeMap(java.util.HashMap authorizeMap) {
+        this._authorizeMap = authorizeMap;
+    }
+    
+    /**
+     * Getter for property loanInt.
+     * @return Value of property loanInt.
+     */
+    public java.lang.String getLoanInt() {
+        return loanInt;
+    }
+    
+    /**
+     * Setter for property loanInt.
+     * @param loanInt New value of property loanInt.
+     */
+    public void setLoanInt(java.lang.String loanInt) {
+        this.loanInt = loanInt;
+    }
+    
+    /**
+     * Getter for property loanBehaves.
+     * @return Value of property loanBehaves.
+     */
+    public java.lang.String getLoanBehaves() {
+        return loanBehaves;
+    }
+    
+    /**
+     * Setter for property loanBehaves.
+     * @param loanBehaves New value of property loanBehaves.
+     */
+    public void setLoanBehaves(java.lang.String loanBehaves) {
+        this.loanBehaves = loanBehaves;
+    }
+    
+    /**
+     * Getter for property totalLoanAmount.
+     * @return Value of property totalLoanAmount.
+     */
+    public java.util.HashMap getTotalLoanAmount() {
+        return totalLoanAmount;
+    }
+    
+    /**
+     * Setter for property totalLoanAmount.
+     * @param totalLoanAmount New value of property totalLoanAmount.
+     */
+    public void setTotalLoanAmount(java.util.HashMap totalLoanAmount) {
+        this.totalLoanAmount = totalLoanAmount;
+    }
+    
+    /**
+     * Getter for property prodType.
+     * @return Value of property prodType.
+     */
+    public java.lang.String getProdType() {
+        return prodType;
+    }
+    
+    /**
+     * Setter for property prodType.
+     * @param prodType New value of property prodType.
+     */
+    public void setProdType(java.lang.String prodType) {
+        this.prodType = prodType;
+    }
+    
+    /**
+     * Getter for property oldTransDetMap.
+     * @return Value of property oldTransDetMap.
+     */
+    public java.util.HashMap getOldTransDetMap() {
+        return oldTransDetMap;
+    }
+    
+    /**
+     * Setter for property oldTransDetMap.
+     * @param oldTransDetMap New value of property oldTransDetMap.
+     */
+    public void setOldTransDetMap(java.util.HashMap oldTransDetMap) {
+        this.oldTransDetMap = oldTransDetMap;
+    }
+    
+    /**
+     * Getter for property transProdId.
+     * @return Value of property transProdId.
+     */
+    public java.lang.String getTransProdId() {
+        return transProdId;
+    }
+    
+    /**
+     * Setter for property transProdId.
+     * @param transProdId New value of property transProdId.
+     */
+    public void setTransProdId(java.lang.String transProdId) {
+        this.transProdId = transProdId;
+    }
+    
+    
+    /**
+     * Getter for property cbmProdType.
+     * @return Value of property cbmProdType.
+     */
+    public com.see.truetransact.clientutil.ComboBoxModel getCbmProdType() {
+        return cbmProdType;
+    }
+    
+    /**
+     * Setter for property cbmProdType.
+     * @param cbmProdType New value of property cbmProdType.
+     */
+    public void setCbmProdType(com.see.truetransact.clientutil.ComboBoxModel cbmProdType) {
+        this.cbmProdType = cbmProdType;
+    }
+    
+    /**
+     * Getter for property cbmChargeType.
+     * @return Value of property cbmChargeType.
+     */
+    public com.see.truetransact.clientutil.ComboBoxModel getCbmChargeType() {
+        return cbmChargeType;
+    }
+    
+    /**
+     * Setter for property cbmChargeType.
+     * @param cbmChargeType New value of property cbmChargeType.
+     */
+    public void setCbmChargeType(com.see.truetransact.clientutil.ComboBoxModel cbmChargeType) {
+        this.cbmChargeType = cbmChargeType;
+    }
+   
+    /**
+     * Getter for property cboProductType.
+     * @return Value of property cboProductType.
+     */
+    public java.lang.String getCboProductType() {
+        return cboProductType;
+    }
+    
+    /**
+     * Setter for property cboProductType.
+     * @param cboProductType New value of property cboProductType.
+     */
+    public void setCboProductType(java.lang.String cboProductType) {
+        this.cboProductType = cboProductType;
+    }
+    
+    /**
+     * Getter for property cboChargesType.
+     * @return Value of property cboChargesType.
+     */
+    public java.lang.String getCboChargesType() {
+        return cboChargesType;
+    }
+    
+    /**
+     * Setter for property cboChargesType.
+     * @param cboChargesType New value of property cboChargesType.
+     */
+    public void setCboChargesType(java.lang.String cboChargesType) {
+        this.cboChargesType = cboChargesType;
+    }
+    
+    /**
+     * Getter for property tdtChargesDate.
+     * @return Value of property tdtChargesDate.
+     */
+    
+    
+    
+    
+    /**
+     * Getter for property cboProductID.
+     * @return Value of property cboProductID.
+     */
+    public java.lang.String getCboProductID() {
+        return cboProductID;
+    }
+    
+    /**
+     * Setter for property cboProductID.
+     * @param cboProductID New value of property cboProductID.
+     */
+    public void setCboProductID(java.lang.String cboProductID) {
+        this.cboProductID = cboProductID;
+    }
+    
+    /**
+     * Getter for property txtChargesAmount.
+     * @return Value of property txtChargesAmount.
+     */
+    
+    /**
+     * Getter for property tblChargesList.
+     * @return Value of property tblChargesList.
+     */
+    public java.util.ArrayList getTblChargesList() {
+        return tblChargesList;
+    }
+    
+    /**
+     * Setter for property tblChargesList.
+     * @param tblChargesList New value of property tblChargesList.
+     */
+    public void setTblChargesList(java.util.ArrayList tblChargesList) {
+        this.tblChargesList = tblChargesList;
+    }
+    
+    /**
+     * Getter for property operation.
+     * @return Value of property operation.
+     */
+    public int getOperation() {
+        return operation;
+    }
+    
+    /**
+     * Setter for property operation.
+     * @param operation New value of property operation.
+     */
+    public void setOperation(int operation) {
+        this.operation = operation;
+    }
+    
+    /**
+     * Getter for property advertisementCharges.
+     * @return Value of property advertisementCharges.
+     */
+    public double getAdvertisementCharges() {
+        return advertisementCharges;
+    }
+    
+    /**
+     * Setter for property advertisementCharges.
+     * @param advertisementCharges New value of property advertisementCharges.
+     */
+    public void setAdvertisementCharges(double advertisementCharges) {
+        this.advertisementCharges = advertisementCharges;
+    }
+    
+}

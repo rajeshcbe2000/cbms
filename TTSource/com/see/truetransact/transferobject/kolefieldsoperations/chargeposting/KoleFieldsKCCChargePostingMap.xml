@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="KoleFieldsKCCChargePostingMap">
+    
+    <mapped-statement name="getKoleFieldKCCChargesHead" result-class="java.util.HashMap">    
+        SELECT lp.ACCT_HEAD,
+        lpa.ARBITRARY_CHARGES,
+        lpa.INSURANCE_CHARGES,
+        lpa.EXECUTION_DECREE_CHARGES,
+        lpa.OTHRCHRGS_HD,
+        lpa.LEGAL_CHARGES,
+        lpa.MISC_SERV_CHRG,
+        lpa.ADVERTISE_ACHEAD,
+        lpa.RECOVERY_CHARGES,
+        lpa.MEASUREMENT_CHARGES,
+        lpa.KOLE_FIELD_OPERATION,
+        lpa.KOLE_FIELD_EXPENSE
+        FROM LOANS_PROD_ACHD lpa, LOANS_PRODUCT lp
+        WHERE lpa.prod_id = lp.prod_id
+        and lp.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getAccountsForKoleFieldKCC" result-class = "java.util.LinkedHashMap" >
+        
+        Select ACCT_NUM as ACT_NUM ,LOANS_BORROWER.CUST_ID, membership_no AS MEM_NO, FNAME AS NAME,
+        PROD_DESC AS "TYPE", FROM_DT, NVL(LIMIT,0) as limit , 0 as CHARGE,
+        NVL(PRINCIPAL,0) as balance , GET_KOLE_LAND_AREA(ACCT_NUM) as LAND_AREA,
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due , DUE_DT,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property="OVER_DUE_DT">
+                    CASE WHEN TO_DATE(#OVER_DUE_DT:DATE#) - rep_loan_notice_two_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(#OVER_DUE_DT:DATE#) - rep_loan_notice_two_AD.LAST_INT_CALC_DT) * 
+                    rep_loan_notice_two_AD.INTEREST * rep_loan_notice_two_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="FROM_DUE_DT">
+                    CASE WHEN DUE_DT - rep_loan_notice_two_AD.LAST_INT_CALC_DT >0 THEN
+                    ROUND((DUE_DT - rep_loan_notice_two_AD.LAST_INT_CALC_DT) * 
+                    rep_loan_notice_two_AD.INTEREST * rep_loan_notice_two_AD.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    NVL(INTEREST_DEMAND,0) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges
+            From rep_loan_notice_two_AD,LOANS_BORROWER
+            where  
+            LOANS_BORROWER.BORROW_NO = rep_loan_notice_two_AD.BORROW_NO 
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two_AD.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+           
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_TYPE">
+                    rep_loan_notice_two_AD.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two_AD.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two_AD.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent> 
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DATE">
+                    FROM_DT &gt;= #FROM_DATE:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_DT">
+                    TO_DT &gt;= #FROM_DATE:DATE# AND TO_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                </isNotNull>
+            </isParameterPresent>           
+        </dynamic>                
+    </dynamic-mapped-statement>
+    
+     <dynamic-mapped-statement name="getAccountsForKoleFieldLoans" result-class = "java.util.LinkedHashMap" >
+        Select ACCT_NUM as ACT_NUM ,LOANS_BORROWER.CUST_ID, membership_no AS MEM_NO, FNAME AS NAME,
+        PROD_DESC AS "TYPE", FROM_DT, NVL(LIMIT,0) as limit , 0 as CHARGE,
+        NVL(PRINCIPAL,0) as balance ,GET_KOLE_LAND_AREA(ACCT_NUM) as LAND_AREA, 
+        CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0 
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)
+        ELSE 0
+        END
+        as principal_due , DUE_DT,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property="OVER_DUE_DT">
+                    CASE WHEN TO_DATE(#OVER_DUE_DT:DATE#) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                    ROUND((TO_DATE(#OVER_DUE_DT:DATE#) - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="FROM_DUE_DT">
+                    CASE WHEN DUE_DT - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT >0 THEN
+                    ROUND((DUE_DT - REP_LOAN_NOTICE_TWO.LAST_INT_CALC_DT) * 
+                    REP_LOAN_NOTICE_TWO.INTEREST * REP_LOAN_NOTICE_TWO.PRINCIPAL/36500) 
+                    ELSE 0 END AS INT_DUE,
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotPropertyAvailable property="OVER_DUE_DT">
+                <isNotPropertyAvailable property="FROM_DUE_DT">
+                    NVL(INTEREST_DEMAND,0) as int_due, 
+                </isNotPropertyAvailable>
+            </isNotPropertyAvailable>
+            penal, charges
+            From rep_loan_notice_two, LOANS_BORROWER
+            where  
+            LOANS_BORROWER.BORROW_NO=rep_loan_notice_two.BORROW_NO 
+            AND LOANS_BORROWER.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_ID">
+                    rep_loan_notice_two.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+           
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="PROD_TYPE">
+                    rep_loan_notice_two.PROD_TYPE = #PROD_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &gt;=#FROM_ACCT_NUM:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_ACCT_NUM">
+                    rep_loan_notice_two.ACCT_NUM &lt;= #TO_ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent> 
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="FROM_DATE">
+                    FROM_DT &gt;= #FROM_DATE:DATE# AND FROM_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="TO_DT">
+                    TO_DT &gt;= #FROM_DATE:DATE# AND TO_DT &lt;= #TO_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="NO_OF_INSTALLMENTS">
+                    NO_MONTH_DUE &gt;= #NO_OF_INSTALLMENTS:NUMBER#
+                </isNotNull>
+            </isParameterPresent>           
+        </dynamic>                
+    </dynamic-mapped-statement>
+    
+    
+    
+    
+</sql-map>

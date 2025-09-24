@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SHGMap">
+
+	<!-- Use SHG object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSHG" inline-parameters="true">
+        INSERT INTO SHG_MEMBER_DETAILS
+        (SHG_ID, GROUP_NAME, PROD_ID, ACCOUNT_NO, MEMBER_NO, MEMBER_NAME, STREET, AREA, CITY, STATE, STATUS, STATUS_DT, 
+        STATUS_BY, AUTHORIZED_STATUS, AUTHORIZED_DT, AUTHORIZED_BY
+        ) VALUES (
+        #shgId:VARCHAR#, #groupName:VARCHAR#, #prodID:VARCHAR#, #accountNo:VARCHAR#, #memberNo:VARCHAR#, #memberName:VARCHAR#, 
+        #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #status:VARCHAR#, 
+        #statusDt:DATE#, #statusBy:VARCHAR#, #authorizedStatus:VARCHAR#, #authorizedDt:DATE#, #authorizedBy:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,GROUP_NAME,PROD_ID,ACCOUNT_NO,AUTHORIZED_STATUS FROM SHG_MEMBER_DETAILS WHERE STATUS!='DELETED' ORDER BY SHG_ID
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSHGDelete" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,GROUP_NAME,PROD_ID,ACCOUNT_NO,AUTHORIZED_STATUS FROM SHG_MEMBER_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SHG_ID">
+                    UPPER(SHG_ID) LIKE UPPER('%$SHG_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT_NO">
+                    UPPER(ACCOUNT_NO) LIKE UPPER('%$ACCOUNT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY SHG_ID
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getSHGView" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,GROUP_NAME,PROD_ID,ACCOUNT_NO,AUTHORIZED_STATUS FROM SHG_MEMBER_DETAILS WHERE STATUS!='DELETED'
+          <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHG_ID">
+                    UPPER(SHG_ID) LIKE UPPER('%$SHG_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCOUNT_NO">
+                    UPPER(ACCOUNT_NO) LIKE UPPER('%$ACCOUNT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SHG_ID
+   </dynamic-mapped-statement> 
+        
+    <mapped-statement name="getSelectSHGTO" result-map="getSHGTOResult" >
+        SELECT * FROM SHG_MEMBER_DETAILS WHERE STATUS!='DELETED' AND SHG_ID =#SHG_ID:VARCHAR# ORDER BY MEMBER_NO
+    </mapped-statement>
+        
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SHGTO object (JavaBean) properties -->
+    <result-map name="getSHGTOResult" class="com.see.truetransact.transferobject.termloan.SHG.SHGTO">
+        <property name="shgId" column="SHG_ID"/>
+        <property name="groupName" column="GROUP_NAME"/>
+        <property name="prodID" column="PROD_ID"/>
+        <property name="accountNo" column="ACCOUNT_NO"/>
+        <property name="memberNo" column="MEMBER_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+    </result-map>
+        
+    <mapped-statement name="updateSHGTO" inline-parameters="true">
+        UPDATE SHG_MEMBER_DETAILS SET 
+        MEMBER_NAME = #memberName:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE SHG_ID = #shgId:VARCHAR# AND MEMBER_NO = #memberNo:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteSHGTO" result-class="java.util.HashMap">
+        UPDATE SHG_MEMBER_DETAILS SET 
+        STATUS = #STATUS:VARCHAR#, 
+        STATUS_BY = #USER_ID:VARCHAR#, 
+        STATUS_DT = #STATUS_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND SHG_ID = #SHG_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="deleteSHGMemberDetails" inline-parameters="true">
+        UPDATE SHG_MEMBER_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE SHG_ID = #shgId:VARCHAR# AND MEMBER_NO = #memberNo:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,GROUP_NAME,PROD_ID,ACCOUNT_NO,AUTHORIZED_STATUS FROM SHG_MEMBER_DETAILS C WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS IS NULL AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# ORDER BY C.SHG_ID
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeSHGDetails" result-class="java.util.HashMap">
+        UPDATE SHG_MEMBER_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND SHG_ID = #SHG_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="findExistingMemberOrNot" result-class="java.util.HashMap">
+        SELECT MEMBERSHIP_NO,get_cust_name(CUST.CUST_ID)  
+        as "CUSTOMER", MEMBERSHIP_CLASS,CUST_ID FROM CUSTOMER CUST WHERE STATUS!= 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' AND MEMBERSHIP_NO = #MEMBERSHIP_NO:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSHGIDDetails" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID, GROUP_NAME, PROD_ID,ACCOUNT_NO, AUTHORIZED_STATUS FROM SHG_MEMBER_DETAILS WHERE                  
+        STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED'  
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "SHG_ID">
+                    SHG_ID = #SHG_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+               <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_NAME">
+                    UPPER(GROUP_NAME) LIKE UPPER('%$GROUP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY SHG_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSHGLoanDetails" result-class="java.util.LinkedHashMap">
+        SELECT MEMBERSHIP_NO AS MEMBER_NO, FNAME, ACCT_NUM AS ACT_NUM , NVL(LIMIT,0) AS LIMIT ,  
+        NVL(PRINCIPAL,0) AS BALANCE ,  CASE WHEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)>0  
+        THEN NVL(PRIN_DEMAND,0)-NVL(PRIN_PAID,0)  ELSE 0  END  AS PRINC_DUE ,  NVL(INTEREST_DEMAND,0) AS INT_DUE,  
+        PENAL, CHARGES,PROD_ID  FROM REP_LOAN_NOTICE_TWO RLN, LOANS_BORROWER LB  WHERE  LB.BORROW_NO=RLN.BORROW_NO AND  
+        LB.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND LB.CUST_ID=RLN.CUST_ID AND LB.SHG_ID IS NOT NULL AND LB.SHG_ID=#SHG_ID:VARCHAR#
+        AND RLN.SHG_ID = LB.SHG_ID  <!--AND  LB.CUST_ID IN (SELECT CUST_ID FROM CUSTOMER C,SHG_MEMBER_DETAILS SMD WHERE 
+                C.MEMBERSHIP_NO = SMD.MEMBER_NO AND SMD.SHG_ID=#SHG_ID# AND SMD.STATUS!='DELETED' AND 
+                SMD.AUTHORIZED_STATUS = 'AUTHORIZED')-->
+        ORDER BY ACCT_NUM
+    </mapped-statement>
+        
+    <mapped-statement name="insertSHGTansaction" result-class="java.util.HashMap">
+        INSERT INTO SHG_TRANSACTION_DETAILS
+        (SHG_ID, MEMBER_NO, MEMBER_NAME, ACT_NUM, LIMIT, BALANCE, PRINC_DUE, INTEREST, PENAL, CHARGE, TOTAL_DUE, PAYMENT, STATUS, STATUS_DT, STATUS_BY, SHG_TRANS_ID
+        ) VALUES (
+        #GROUP_ID:VARCHAR#, #MEMBER_NO:VARCHAR#, #FNAME:VARCHAR#, #ACT_NUM:VARCHAR#, #LIMIT:NUMERIC#, #BALANCE:NUMERIC#, 
+        #PRINC_DUE:NUMERIC#, #INT_DUE:NUMERIC#, #PENAL:NUMERIC#, #CHARGES:NUMERIC#, #TOTAL_DUE:NUMERIC#, #PAYMENT:NUMERIC#, 
+        #STATUS:VARCHAR#, #STATUS_DT:TIMESTAMP#, #STATUS_BY:VARCHAR#, #SHG_TRANS_ID:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGTransAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,SHG_TRANS_ID,STATUS,AUTHORIZED_STATUS FROM SHG_TRANSACTION_DETAILS C WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS IS NULL   AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR# ORDER BY C.SHG_TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGTransAuthorizeCheckBeforeDisplay" result-class="java.util.LinkedHashMap">
+        SELECT AUTHORIZED_STATUS FROM SHG_TRANSACTION_DETAILS C WHERE c.shg_id = #SHG_ID:VARCHAR# and STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGTableTransAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SHG_TRANSACTION_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND SHG_TRANS_ID = #SHG_TRANS_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeSHGTransactionDetails" result-class="java.util.HashMap">
+        UPDATE SHG_TRANSACTION_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND SHG_TRANS_ID = #SHG_TRANS_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGTransEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,SHG_TRANS_ID,STATUS,AUTHORIZED_STATUS FROM SHG_TRANSACTION_DETAILS  WHERE STATUS!='DELETED' 
+        AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED') ORDER BY SHG_TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSHGTransDelete" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT SHG_ID,SHG_TRANS_ID,STATUS,AUTHORIZED_STATUS FROM SHG_TRANSACTION_DETAILS WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS IS NULL ORDER BY SHG_TRANS_ID
+    </mapped-statement>
+        
+    <mapped-statement name="CheckSHGLoanDetails" result-class="java.util.LinkedHashMap">
+        SELECT LB.* FROM LOANS_BORROWER LB,LOANS_FACILITY_DETAILS LFD WHERE LB.BORROW_NO=LFD.BORROW_NO AND LFD.ACCT_STATUS!='CLOSED' 
+        AND LB.STATUS!='DELETED' AND LFD.AUTHORIZE_STATUS_1='AUTHORIZED' AND LB.CUST_ID=(SELECT CUST_ID FROM 
+        CUSTOMER WHERE MEMBERSHIP_NO=#MEMBERSHIP_NO:VARCHAR#) AND LB.SHG_ID=#SHG_ID:VARCHAR#
+    </mapped-statement>
+
+
+</sql-map>

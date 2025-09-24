@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InvestmentsTransTOMap">
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInvestmentTransTO" inline-parameters="true">
+        INSERT INTO   INVESTMENT_TRANS_DETAILS
+        (INVESTMENT_TYPE ,INVESTMENT_PROD_ID ,INVESTMENT_NAME ,BATCH_ID ,TRANS_DT ,TRANS_TYPE ,TRAN_CODE ,AMOUNT,PURCHASE_DATE ,PURCHASE_MODE ,PURCHASE_THROUGH,
+        BRKOER_NAME ,SHARE_FEES_PAID ,NO_OF_SHARES ,INVESTMENT_AMOUNT ,DISCOUNT_AMOUNT ,PREMIUM_AMOUNT ,BRKOEN_PERIOD_INTEREST ,BROKER_COMMISSION,
+        DIVIDEND_AMOUNT,STATUS ,STATUS_BY ,STATUS_DT,UPTO_INT_DATE,AUTHORIZE_BY,PURCHASE_SALE_BY,INITIATED_BRANCH,INVESTMENT_ID,INVESTMENT_REF_NO,
+        OTHER_BANK_SB_CA, OTHER_BANK_INVESTMENT_TYPE, OTHER_BANK_PROD_ID, OTHER_BANK_REF_NO, OTHER_BANK_INTERNAL_NO,CHEQUE_NO,NARRATION,PREMATURE_ROI,PREMATURE_INT,TDS_AMOUNT,
+        PRINCIPAL_WITHOUT_TRANSACTION)
+        VALUES (#investmentBehaves:VARCHAR#,#investmentID:VARCHAR#,#investmentName:VARCHAR#,#batchID:VRACHAR#,#transDT:DATE#,#transType:VARCHAR#,
+        #trnCode:VARCHAR#,#amount:NUMERIC#,#purchaseDt:DATE#,#purchaseMode:VARCHAR#,#purchaseThrough:VARCHAR#,#brokerName:VARCHAR#,#purchaseRate:NUMERIC#,
+        #noOfUnits:NUMERIC#,#investmentAmount:NUMERIC#,#discountAmount:NUMERIC#,#premiumAmount:NUMERIC#,#brokenPeriodInterest:NUMERIC#,#brokerCommession:NUMERIC#,
+        #dividendAmount:NUMERIC#,#status:VARCHAR#,#statusBy:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#lastIntPaidDate:DATE#,#authorizeBy:VARCHAR#,
+        #purchaseSaleBy:VARCHAR#,#initiatedBranch:VARCHAR#,#investment_internal_Id:VARCHAR#,#investment_Ref_No:VARCHAR#,
+        #rdoSBorCA:VARCHAR#,#cboInvestmentType:VARCHAR#,#txtInvestmentIDTransSBorCA:VARCHAR#,#txtInvestmentRefNoTrans:VARCHAR#,
+        #txtInvestmentInternalNoTrans:VARCHAR#,#txtChequeNo:VARCHAR#,#narration:VARCHAR#,#prematureROI:NUMBER#,#prematureInt:NUMBER#,#investTDS:NUMBER#,
+        #principalEntryWithoutTransaction:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInvestmentTransTO" inline-parameters="true">
+        UPDATE  INVESTMENT_TRANS_DETAILS SET
+        INVESTMENT_TYPE =#investmentBehaves:VARCHAR#,
+        INVESTMENT_PROD_ID =#investmentID:VARCHAR#,
+        INVESTMENT_ID =#investment_internal_Id:VARCHAR#,
+        OTHER_BANK_SB_CA =#rdoSBorCA:VARCHAR#,
+        OTHER_BANK_INVESTMENT_TYPE =#cboInvestmentType:VARCHAR#,
+        OTHER_BANK_PROD_ID =#txtInvestmentIDTransSBorCA:VARCHAR#,
+        OTHER_BANK_REF_NO =#txtInvestmentRefNoTrans:VARCHAR#,
+        OTHER_BANK_INTERNAL_NO =#txtInvestmentInternalNoTrans:VARCHAR#,
+        CHEQUE_NO =#txtChequeNo:VARCHAR#,
+        NARRATION =#narration:VARCHAR#,
+        PREMATURE_ROI =#prematureROI:VARCHAR#,
+        PREMATURE_INT =#prematureInt:VARCHAR#,
+        INVESTMENT_REF_NO =#investment_Ref_No:VARCHAR#,
+        INVESTMENT_NAME=#investmentName:VARCHAR# ,
+        BATCH_ID =#batchID:VRACHAR# ,
+        TRANS_DT =#transDT:DATE# ,
+        TRANS_TYPE =#transType:VARCHAR# ,
+        TRAN_CODE =#trnCode:VARCHAR# ,
+        AMOUNT=#amount:NUMERIC# ,
+        PURCHASE_DATE =#purchaseDt:DATE# ,
+        PURCHASE_MODE =#purchaseMode:VARCHAR# ,
+        PURCHASE_THROUGH=#purchaseThrough:VARCHAR# ,
+        BRKOER_NAME =#brokerName:VARCHAR# ,
+        SHARE_FEES_PAID =#purchaseRate:NUMERIC# ,
+        NO_OF_SHARES =#noOfUnits:NUMERIC# ,
+        INVESTMENT_AMOUNT =#investmentAmount:NUMERIC# ,
+        DISCOUNT_AMOUNT =#discountAmount:NUMERIC# ,
+        PREMIUM_AMOUNT=#premiumAmount:NUMERIC# ,
+        BRKOEN_PERIOD_INTEREST =#brokenPeriodInterest:NUMERIC# ,
+        BROKER_COMMISSION=#brokerCommession:NUMERIC#  ,
+        DIVIDEND_AMOUNT=#dividendAmount:NUMERIC#  ,
+        STATUS=#status:VARCHAR#  ,
+        STATUS_BY=#statusBy:VARCHAR#  ,
+        STATUS_DT=#statusDt:DATE# ,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDt:DATE# ,
+        PURCHASE_SALE_BY=#purchaseSaleBy:DATE# ,
+        UPTO_INT_DATE =#lastIntPaidDate:DATE#
+        WHERE INVESTMENT_NAME=#investmentName:VARCHAR# AND BATCH_ID =#batchID:VRACHAR# AND INVESTMENT_TYPE =#investmentBehaves:VARCHAR# AND 
+        INVESTMENT_PROD_ID =#investmentID:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL 
+        AND TRANS_DT = #transDT:DATE# AND INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+    </mapped-statement>
+
+	
+	
+     	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareProductLoanTO object (JavaBean) properties -->
+    <result-map name="getInvestmentTransTOResult" class="com.see.truetransact.transferobject.investments.InvestmentsTransTO">
+        <property name="investmentBehaves" column="INVESTMENT_TYPE"/>
+        <property name="investmentID" column="INVESTMENT_PROD_ID"/>
+        <property name="investment_internal_Id" column="INVESTMENT_ID"/>
+        <property name="rdoSBorCA" column="OTHER_BANK_SB_CA"/>
+        <property name="cboInvestmentType" column="OTHER_BANK_INVESTMENT_TYPE"/>
+        <property name="txtInvestmentIDTransSBorCA" column="OTHER_BANK_PROD_ID"/>
+        <property name="txtInvestmentRefNoTrans" column="OTHER_BANK_REF_NO"/>
+        <property name="txtInvestmentInternalNoTrans" column="OTHER_BANK_INTERNAL_NO"/>
+        <property name="txtChequeNo" column="CHEQUE_NO"/>
+        <property name="narration" column="NARRATION"/>
+        <property name="prematureROI" column="PREMATURE_ROI"/>
+        <property name="prematureInt" column="PREMATURE_INT"/>
+        <property name="investment_Ref_No" column="INVESTMENT_REF_NO"/>
+        <property name="investmentName" column="INVESTMENT_NAME"/>
+        <property name="batchID" column="BATCH_ID"/>
+        <property name="transDT" column="TRANS_DT"/>
+        <property name="transType" column="TRANS_TYPE"/>
+        <property name="trnCode" column="TRAN_CODE"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="purchaseDt" column="PURCHASE_DATE"/>
+        <property name="purchaseMode" column="PURCHASE_MODE"/>
+        <property name="purchaseThrough" column="PURCHASE_THROUGH"/>
+        <property name="brokerName" column="BRKOER_NAME"/>
+        <property name="purchaseRate" column="SHARE_FEES_PAID"/>
+        <property name="noOfUnits" column="NO_OF_SHARES"/>
+        <property name="discountAmount" column="DISCOUNT_AMOUNT"/>
+        <property name="premiumAmount" column="PREMIUM_AMOUNT"/>
+        <property name="brokenPeriodInterest" column="BRKOEN_PERIOD_INTEREST"/>
+        <property name="brokerCommession" column="BROKER_COMMISSION"/>
+        <property name="dividendAmount" column="DIVIDEND_AMOUNT"/>
+        <property name="investmentAmount" column="INVESTMENT_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="lastIntPaidDate" column="UPTO_INT_DATE"/>
+        <property name="purchaseSaleBy" column="PURCHASE_SALE_BY"/>
+        <property name="invAvailableBal" column="INVESTMENT_AVAILABLE_BALANCE"/>
+        <property name="investTDS" column="TDS_AMOUNT"/>
+    </result-map>
+
+    <dynamic-mapped-statement name="getSelectInvestmentTrans" result-class="java.util.LinkedHashMap" >
+        SELECT BATCH_ID , INVESTMENT_TYPE,INVESTMENT_PROD_ID,INVESTMENT_NAME,TRAN_CODE,INVESTMENT_ID,STATUS,TRANS_DT from INVESTMENT_TRANS_DETAILS
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IS NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INVESTMENT_ID">
+                    UPPER(INVESTMENT_ID) LIKE UPPER('%$INVESTMENT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getSelectAcHdForOthrBank" result-class="java.util.LinkedHashMap" >
+        select P.PRINCIPAL_AC_HD  as PRINCIPAL_AC_HD from
+        OTHER_BANK_ACCOUNT_PRODUCTS p
+        join OTHER_BANKS_ACT_MASTER m
+        on P.PROD_ID=M.PROD_ID
+        where M.ACT_MASTER_ID=#ACT_MASTER_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getSelectInvestmentTransTO" result-map="getInvestmentTransTOResult" >
+        SELECT * FROM INVESTMENT_TRANS_DETAILS                 
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR# AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectInvestmentTransTOwithoutShareKey" result-map="getInvestmentTransTOResult" >
+        SELECT * FROM INVESTMENT_TRANS_DETAILS                 
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR# AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL AND (PURCHASE_MODE!='SHARE_PAYMENT' OR PURCHASE_MODE IS NULL)
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectInvestmentTransDetailsTO" result-map="getInvestmentTransTOResult" >
+        SELECT * FROM INVESTMENT_TRANS_DETAILS                 
+        WHERE    STATUS NOT IN ('DELETED')  AND ( AUTHORIZE_STATUS IS NOT  NULL AND  AUTHORIZE_STATUS!='REJECTED')
+        AND INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR#  AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR#
+        AND   TRANS_DT BETWEEN #FROM_DATE:DATE# AND #TO_DATE:DATE# AND INVESTMENT_REF_NO=#INVESTMENT_REF_NO:VARCHAR#
+        ORDER BY AUTHORIZE_DT ,BATCH_ID,TRANS_TYPE DESC
+    </mapped-statement>
+         
+    <mapped-statement name="getDataForInvestmentTransTO" result-map="getInvestmentTransTOResult" >
+        SELECT * FROM INVESTMENT_TRANS_DETAILS                 
+        WHERE  INVESTMENT_ID=#INVESTMENT_ID:VARCHAR# AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getDataForRenewalInvestmentTrans" result-class="java.util.LinkedHashMap">
+        SELECT * FROM INVESTMENT_TRANS_DETAILS                 
+        WHERE  INVESTMENT_ID=#INVESTMENT_ID:VARCHAR# AND  STATUS NOT IN ('DELETED')  AND AUTHORIZE_STATUS IS  NULL
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE# ORDER BY TRAN_CODE DESC
+    </mapped-statement>
+        
+    <mapped-statement name="deleteInvestmentTransTO" inline-parameters="true">
+        UPDATE INVESTMENT_TRANS_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE BATCH_ID = #batchID:VARCHAR#  AND STATUS NOT IN ('DELETED')
+        AND TRANS_DT = #transDT:DATE# AND INITIATED_BRANCH = #initiatedBranch:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectInvestmentTransDetailsUnauthorizedTO" result-class="java.util.HashMap"> 
+       
+        SELECT count(*) as CNT  FROM INVESTMENT_TRANS_DETAILS                 
+        WHERE    STATUS !='DELETED'  AND AUTHORIZE_STATUS IS   NULL 
+        AND INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR#  AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR#                 
+    </mapped-statement>
+    <dynamic-mapped-statement name="getInvestmentTransAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT SCD.BATCH_ID , SCD.INVESTMENT_TYPE,SCD.INVESTMENT_PROD_ID,SCD.INVESTMENT_NAME,SCD.TRAN_CODE,SCD.INVESTMENT_ID,SCD.STATUS,AT.TRANS_DT,SCD.INVESTMENT_AMOUNT,AT.SINGLE_TRANS_ID
+        FROM INVESTMENT_TRANS_DETAILS SCD,ALL_TRANS AT
+        WHERE AT.link_batch_id= SCD.INVESTMENT_ID AND AT.TRANS_DT=#TRANS_DT:DATE#  AND SCD.BATCH_ID= NVL(AT.BATCH_ID,AT.TRANS_ID) 
+        and   (SCD.STATUS != 'DELETED' OR SCD.STATUS IS NULL) AND (SCD.PURCHASE_MODE IS NULL OR SCD.PURCHASE_MODE NOT IN('SHARE_PAYMENT'))
+        AND SCD.STATUS_BY != #USER_ID:VARCHAR# AND SCD.SHARE_FEES_PAID IS NOT NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        AND (at.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# OR  at.INITIATED_BRANCH = #BRANCH_ID:VARCHAR# )
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                scd.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (scd.AUTHORIZE_STATUS IS NULL OR 
+                scd.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        UNION
+             
+        SELECT SCD.BATCH_ID , SCD.INVESTMENT_TYPE,SCD.INVESTMENT_PROD_ID,
+        SCD.INVESTMENT_NAME,SCD.TRAN_CODE,SCD.INVESTMENT_ID,SCD.STATUS ,AT.TRANS_DT,SCD.INVESTMENT_AMOUNT,AT.SINGLE_TRANS_ID FROM 
+        INVESTMENT_TRANS_DETAILS SCD,ALL_TRANS AT
+        WHERE AT.link_batch_id= SCD.INVESTMENT_ID AND SCD.BATCH_ID= AT.BATCH_ID AND SCD.SHARE_FEES_PAID IS NOT NULL
+        AND AT.TRANS_TYPE = 'DEBIT' AND  
+        (SCD.STATUS != 'DELETED' OR SCD.STATUS IS NULL) AND (SCD.PURCHASE_MODE IS NULL OR SCD.PURCHASE_MODE NOT IN('SHARE_PAYMENT'))
+        AND SCD.STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+         AND AT.AUTHORIZE_STATUS IS NULL AND AT.SCREEN_NAME ='INV_BACK_DATED_TRANSACTION'    
+         AND (at.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# OR  at.INITIATED_BRANCH = #BRANCH_ID:VARCHAR# )
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                scd.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (scd.AUTHORIZE_STATUS IS NULL OR 
+                scd.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        order by BATCH_ID asc
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getInvestmentTransCashierAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT SCD.BATCH_ID , SCD.INVESTMENT_TYPE,SCD.INVESTMENT_PROD_ID,SCD.INVESTMENT_NAME,SCD.TRAN_CODE,SCD.INVESTMENT_ID,SCD.STATUS,AT.TRANS_DT,SCD.INVESTMENT_AMOUNT
+        FROM INVESTMENT_TRANS_DETAILS SCD,ALL_TRANS AT
+        WHERE AT.link_batch_id= SCD.INVESTMENT_ID AND AT.TRANS_DT=#TRANS_DT:DATE# AND CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED' ELSE AT.PAYMENT_STATUS END IS NOT NULL  AND   (SCD.STATUS != 'DELETED' OR SCD.STATUS IS NULL) AND (SCD.PURCHASE_MODE IS NULL OR SCD.PURCHASE_MODE NOT IN('SHARE_PAYMENT'))
+        AND SCD.STATUS_BY != #USER_ID:VARCHAR# AND SCD.SHARE_FEES_PAID IS NOT NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        AND (at.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# OR  at.INITIATED_BRANCH = #BRANCH_ID:VARCHAR# )
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                scd.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (scd.AUTHORIZE_STATUS IS NULL OR 
+                scd.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic> 
+        UNION
+             
+        SELECT SCD.BATCH_ID , SCD.INVESTMENT_TYPE,SCD.INVESTMENT_PROD_ID,
+        SCD.INVESTMENT_NAME,SCD.TRAN_CODE,SCD.INVESTMENT_ID,SCD.STATUS ,AT.TRANS_DT,SCD.INVESTMENT_AMOUNT FROM 
+        INVESTMENT_TRANS_DETAILS SCD,ALL_TRANS AT
+        WHERE AT.link_batch_id= SCD.INVESTMENT_ID AND AT.TRANS_DT=#TRANS_DT:DATE# AND SCD.SHARE_FEES_PAID IS NOT NULL
+        AND AT.TRANS_TYPE = 'DEBIT' AND CASE WHEN AT.TRANS_MODE = 'TRANSFER'
+        THEN NULL ELSE AT.PAYMENT_STATUS END IS  NULL  AND  
+        (SCD.STATUS != 'DELETED' OR SCD.STATUS IS NULL) AND (SCD.PURCHASE_MODE IS NULL OR SCD.PURCHASE_MODE NOT IN('SHARE_PAYMENT'))
+        AND SCD.STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+         AND (at.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# OR  at.INITIATED_BRANCH = #BRANCH_ID:VARCHAR# )
+         
+             
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                scd.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (scd.AUTHORIZE_STATUS IS NULL OR 
+                scd.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+            UNION
+             
+        SELECT SCD.BATCH_ID , SCD.INVESTMENT_TYPE,SCD.INVESTMENT_PROD_ID,
+        SCD.INVESTMENT_NAME,SCD.TRAN_CODE,SCD.INVESTMENT_ID,SCD.STATUS ,AT.TRANS_DT,SCD.INVESTMENT_AMOUNT FROM 
+        INVESTMENT_TRANS_DETAILS SCD,ALL_TRANS AT
+        WHERE AT.link_batch_id= SCD.INVESTMENT_ID  AND SCD.SHARE_FEES_PAID IS NOT NULL
+        AND AT.TRANS_TYPE = 'DEBIT' AND CASE WHEN AT.TRANS_MODE = 'TRANSFER'
+        THEN NULL ELSE AT.PAYMENT_STATUS END IS  NULL  AND  
+        (SCD.STATUS != 'DELETED' OR SCD.STATUS IS NULL) AND (SCD.PURCHASE_MODE IS NULL OR SCD.PURCHASE_MODE NOT IN('SHARE_PAYMENT'))
+        AND SCD.STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+         AND AT.AUTHORIZE_STATUS IS NULL AND AT.SCREEN_NAME ='INV_BACK_DATED_TRANSACTION'    
+         AND (at.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# OR  at.INITIATED_BRANCH = #BRANCH_ID:VARCHAR# )
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                scd.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (scd.AUTHORIZE_STATUS IS NULL OR 
+                scd.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        order by BATCH_ID asc
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeInvestmentTrans" inline-parameters="true">
+        UPDATE INVESTMENT_TRANS_DETAILS  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND STATUS != 'DELETED' 
+        AND TRANS_DT = #TRANS_DT:DATE# AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+    
+    
+    <mapped-statement name="authorizeInvestmentTransWithoutTransaction" inline-parameters="true">
+      UPDATE INVESTMENT_TRANS_DETAILS  SET
+        AUTHORIZE_STATUS =#STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE BATCH_ID IS NULL
+        AND INVESTMENT_ID = #INVESTMENT_ID:VARCHAR#
+        AND TRANS_DT = #TRANS_DT:DATE#
+        AND STATUS != 'DELETED' 
+        AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+    
+    
+    
+       <!-- <mapped-statement name="updateInvestmentMastePurchaValues" inline-parameters="true">
+                UPDATE INVESTMENT_MASTER SET AVILABLE_NO_OF_UNITS=NVL(AVILABLE_NO_OF_UNITS,0)+#NO_OF_UNITS:NUMERIC#,INVESTMENT_OUTSTANDING_AMOUNT=NVL(INVESTMENT_OUTSTANDING_AMOUNT,0)+#INVESTMENT_OUTSTANDING_AMOUNT#,
+                TOTAL_PREMIUM_PAID=NVL(TOTAL_PREMIUM_PAID,0)+#PREMIUM_PAID:NUMERIC#,TOTAL_INTEREST_PAID=NVL(TOTAL_INTEREST_PAID,0)+#INTEREST_PAID:NUMERIC#
+                WHERE INVESTMENT_TYPE=#INVESTMENT_TYPE# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID# AND INVESTMENT_NAME=#INVESTMENT_NAME#
+      	</mapped-statement> 
+        
+    <mapped-statement name="updateInvestmentMasteSaleValues" inline-parameters="true">
+            UPDATE INVESTMENT_MASTER SET AVILABLE_NO_OF_UNITS=NVL(AVILABLE_NO_OF_UNITS,0)-#NO_OF_UNITS:NUMERIC#,INVESTMENT_OUTSTANDING_AMOUNT=NVL(INVESTMENT_OUTSTANDING_AMOUNT,0)-#INVESTMENT_OUTSTANDING_AMOUNT#,
+            TOTAL_PREMIUM_COLLECTED=NVL(TOTAL_PREMIUM_COLLECTED,0)+#PREMIUM_PAID:NUMERIC#,TOTAL_INTEREST_COLLECTED=NVL(TOTAL_INTEREST_COLLECTED,0)+#INTEREST_PAID:NUMERIC#
+            WHERE INVESTMENT_TYPE=#INVESTMENT_TYPE# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID# AND INVESTMENT_NAME=#INVESTMENT_NAME#
+   	</mapped-statement> -->
+        
+        
+    <mapped-statement name="updateInvestmentMasteAmortization" inline-parameters="true">
+        UPDATE INVESTMENT_MASTER SET 
+        AMORTIZATION_AMOUNT=NVL(AMORTIZATION_AMOUNT,0)+#PREMIUM_PAID:NUMERIC#
+        WHERE INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR# AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="updateInvestmentMasterLastIntApplDt" inline-parameters="true">
+        UPDATE INVESTMENT_MASTER SET LAST_INT_COLLECTED_DATE=#LAST_INT_COLLECTED_DATE:DATE#
+        WHERE INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR# AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateInvestmentMasterCLosedStatus" inline-parameters="true">
+        UPDATE INVESTMENT_MASTER set INVESTMENT_STATUS='CLOSED', investment_closer_date=#CLOSEDDT:DATE# ,
+        CLOSER_TYPE=#CLOSER_TYPE:VARCHAR#,PRECLOSER_RATE=#PRECLOSER_RATE#
+        WHERE INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR# AND INVESTMENT_NAME=#INVESTMENT_NAME:VARCHAR#
+                
+    </mapped-statement>
+    <mapped-statement name = "getTransferDetailsInvestment" result-class = "java.util.HashMap">
+        SELECT T.TRANS_ID, T.BATCH_ID,AH.AC_HD_DESC AS AC_HD_ID,T.ACT_NUM,T.INP_AMOUNT,T.
+        INP_CURR,T.AMOUNT,T.TRANS_DT,T.TRANS_TYPE,T.INST_TYPE,T.
+        INST_DT,T.INIT_TRANS_ID,T.INIT_CHANN_TYPE,T.PARTICULARS,T.STATUS,T.
+        INSTRUMENT_NO1,T.INSTRUMENT_NO2,T.PROD_ID,T.AUTHORIZE_STATUS,T.AUTHORIZE_BY,T.
+        AUTHORIZE_DT,T.AUTHORIZE_REMARKS,T.STATUS_BY,T.BRANCH_ID,T.STATUS_DT,T.
+        PROD_TYPE,T.LINK_BATCH_ID,T.LINK_BATCH_DT,T.TRANS_MODE,T.INITIATED_BRANCH,T.
+        LOAN_HIERARCHY,T.AUTHORIZE_STATUS_2,T.NARRATION,T.SHIFT,T.
+        TRANS_ALL_ID,T.REC_MODE,T.SINGLE_TRANS_ID,T.AUTHORIZE_BY_2,T.GL_TRANS_ACT_NUM,T.TRANS_MOD_TYPE FROM TRANSFER_TRANS T
+        JOIN AC_HD AH ON AH.AC_HD_ID=T.AC_HD_ID
+        WHERE T.BATCH_ID=#BATCH_ID:VARCHAR# AND T.TRANS_DT=#TRANS_DT:DATE# AND T.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getCashDetailsInvestment" result-class = "java.util.HashMap">
+        <!-- SELECT * FROM CASH_TRANS WHERE LINK_BATCH_ID =#BATCH_ID# AND TRANS_DT=#TRANS_DT# AND INITIATED_BRANCH=#BRANCH_CODE# -->
+        SELECT C.TRANS_ID, AH.AC_HD_DESC AS AC_HD_ID, C.ACT_NUM, C.INP_AMOUNT, C.INP_CURR, C.AMOUNT, C.TRANS_DT, C.TRANS_TYPE, C.INST_TYPE, C.INST_DT, 
+        C.TOKEN_NO, C.INIT_TRANS_ID, C.INIT_CHANN_TYPE, C.PARTICULARS, C.STATUS, C.INSTRUMENT_NO1, 
+        C.INSTRUMENT_NO2, C.AVAILABLE_BALANCE, C.PROD_ID, C.PROD_TYPE, C.AUTHORIZE_STATUS, 
+        C.AUTHORIZE_BY, C.AUTHORIZE_DT, C.AUTHORIZE_REMARKS, C.STATUS_BY, C.BRANCH_ID, 
+        C.STATUS_DT, C.LINK_BATCH_ID, C.INITIATED_BRANCH, C.LINK_BATCH_DT, C.PAYMENT_STATUS, 
+        C.PAYMENT_BY, C.PAYMENT_STATUS_DT, C.PAN_NUMBER, C.AUTHORIZE_STATUS_2, C.AUTHORIZE_BY_2, 
+        C.AUTHORIZE_DT_2, C.LOAN_HIERARCHY, C.NARRATION, C.SCREEN_NAME, C.SHIFT, 
+        C.TRANS_ALL_ID, 
+        C.SINGLE_TRANS_ID,C.GL_TRANS_ACT_NUM, C.TRANS_MOD_TYPE FROM CASH_TRANS C
+        JOIN AC_HD AH ON C.AC_HD_ID=AH.AC_HD_ID 
+        WHERE C.TRANS_ID =#BATCH_ID:VARCHAR# AND C.TRANS_DT=#TRANS_DT:DATE# AND C.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getInvestmentOtherBankSBorCA" result-map="getInvestmentOtherBank-result"> 
+        SELECT LOOKUP_REF_ID AS PROD_ID,LOOKUP_DESC AS PROD_DESC FROM LOOKUP_MASTER WHERE LOOKUP_ID='INVESTMENT' AND 
+        LOOKUP_REF_ID IN('OTHER_BANK_CA','OTHER_BANK_SB','OTHER_BANK_SPD') AND  STATUS!='DELETED' AND AUTHORIZED='Y'
+    </mapped-statement>
+    <mapped-statement name="getInvestmentOtherBankSBorCARenewal" result-map="getInvestmentOtherBank-result"> 
+        SELECT PROD_ID, PROD_DESC 
+        FROM OTHER_BANK_ACCOUNT_PRODUCTS
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED'            
+        and 
+        PRINCIPAL_AC_HD in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+    </mapped-statement> 
+    <dynamic-mapped-statement name="getSelectInvestmentProductRenewal" result-class="java.util.LinkedHashMap" >
+        SELECT  INVESTMENT_TYPE,INVESTMENT_PROD_ID,IINVESTMENT_PROD_DESC,STATUS from INVESTMENT_CONF_DETAILS
+        WHERE  STATUS NOT IN ('DELETED')  AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS  NULL)
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_TYPE" >
+                    INVESTMENT_PROD_ID=#INVESTMENT_TYPE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getInvestTransOtherBankOpperativeAccNosReneal" result-class="java.util.LinkedHashMap">
+        SELECT IOP.PROD_ID,IOP.PROD_DESC AS PROD_DESC,IOP.ACT_MASTER_ID AS INVES_REF_NO,IOP.ACT_OPEN_DT AS ISSUE_DT,IOP.ACT_REF_NO FROM 
+        OTHER_BANK_ACCOUNT_PRODUCTS IM,OTHER_BANKS_ACT_MASTER IOP WHERE IM.STATUS!='DELETED' AND 
+        IM.AUTHORIZE_STATUS='AUTHORIZED' AND IM.PROD_ID=IOP.PROD_ID
+        AND IOP.PROD_ID=#PROD_ID:VARCHAR# ORDER BY IOP.PROD_ID
+    </mapped-statement>
+    <result-map name="getInvestmentOtherBank-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map> 
+        
+    <mapped-statement name = "getIntWithPrincipalFromDepMaster" result-class = "java.util.HashMap">
+        SELECT INT_WITH_PRINCIPAL FROM INVESTMENT_DEPOSIT WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+        AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR# AND INVESTMENT_TYPE =#INVESTMENT_TYPE:VARCHAR# AND INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getAvailableBalanceFromMaster" result-class = "java.util.HashMap">
+        SELECT NVL(AVAILABLE_BALANCE,0) AS AVAILABLE_BALANCE,INVESTMENT_ID  FROM INVESTMENT_MASTER WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getInterestReceivedFromDepositMaster" result-class = "java.util.HashMap">
+        SELECT NVL(INTEREST_RECEIVED,0) AS INTEREST_RECEIVED,INVESTMENT_ID  FROM INVESTMENT_DEPOSIT WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getAvailableBalanceFromRenewal" result-class = "java.util.HashMap">
+        SELECT NVL(AVAILABLE_BALANCE,0) AS AVAILABLE_BALANCE FROM INVESTMENT_DEPOSIT_RENEWAL WHERE STATUS!='CLOSED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name = "updateInvestTransDetails" result-class = "java.util.HashMap">
+        update INVESTMENT_TRANS_DETAILS set batch_id=#batch_id:VARCHAR# where INVESTMENT_ID =#INVESTMENT_ID:VARCHAR# and 
+        INVESTMENT_REF_NO = #INVESTMENT_REF_NO:VARCHAR# and TRANS_DT = #TRANS_DT:DATE# and batch_id is null
+    </mapped-statement> 
+    
+    <mapped-statement name = "updateInvestmentID" result-class = "java.util.HashMap">
+         update INVESTMENT_TRANS_DETAILS set INVESTMENT_REF_NO = #INVESTMENT_REF_NO:VARCHAR# 
+         where INVESTMENT_ID = #INVESTMENT_ID:VARCHAR# and TRANS_DT = #TRANS_DT:DATE# and trans_type = 'CREDIT'
+    </mapped-statement> 
+    
+    <mapped-statement name = "getInvestTransDetails" result-class = "java.util.HashMap">
+        select * FROM INVESTMENT_TRANS_DETAILS  where INVESTMENT_ID = #INVESTMENT_ID:VARCHAR# and 
+        INVESTMENT_REF_NO = #INVESTMENT_REF_NO:VARCHAR# and TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateInvestMasterAvailableBalance" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_MASTER SET AVAILABLE_BALANCE=cast(#AVAILABLE_BALANCE# as numeric) WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateInvestNoOfShareDetails" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_SHARE SET NO_OF_SHARES=nvl(NO_OF_SHARES,0)+ cast(#NO_OF_SHARES# as numeric),SHARE_VALUE=nvl(SHARE_VALUE,0)+cast(#SHARE_VALUE# as numeric),
+        FEES_PAID=nvl(FEES_PAID,0)+ cast(#FEES_PAID# as numeric) WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateInterestReceivedAndLastIntDate" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_DEPOSIT SET INTEREST_RECEIVED=cast(#INTEREST_RECEIVED# as numeric),INT_REC_TILL_DT=#INT_REC_TILL_DT:DATE# WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name = "updateInvestTrnasAvailableBalance" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_TRANS_DETAILS SET INVESTMENT_AVAILABLE_BALANCE=cast(#AVAILABLE_BALANCE# as numeric) WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+        AND BATCH_ID=#BATCH_ID:VARCHAR#
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AMOUNT" >
+                    INVESTMENT_AMOUNT = #AMOUNT:NUMBER#
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAN_CODE" >
+                    TRAN_CODE = #TRAN_CODE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+                
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name = "updateInvestRenewalAvailableBalance" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_DEPOSIT_RENEWAL SET AVAILABLE_BALANCE=cast(#AVAILABLE_BALANCE# as numeric) WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateInvestTrnasOtherBankAvailableBalance" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_TRANS_DETAILS SET OTHER_BANK_AVAILABLE_BALANCE=cast(#AVAILABLE_BALANCE# as numeric) WHERE STATUS!='DELETED' AND OTHER_BANK_INTERNAL_NO=#INVESTMENT_ID:VARCHAR#
+        AND BATCH_ID=#BATCH_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getChequeNoFromInvestMaster" result-class = "java.util.HashMap">
+        SELECT CHEQUE_NO FROM INVESTMENT_CHEQUE_MASTER ICM,INVESTMENT_CHEQUE_DETAILS ICD WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+        AND ICD.CHECK_STATUS='UN_USED' AND ICD.INVESTMENT_ID=ICM.INVESTMENT_ID AND CHEQUE_NO=#CHEQUE_NO:VARCHAR# AND ICD.INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name = "updateCheckNoStatusUsed" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_CHEQUE_DETAILS SET CHECK_STATUS ='USED' WHERE CHEQUE_NO=#CHEQUE_NO:VARCHAR# AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "checkInterestReceivabeAndReceived" result-class = "java.util.HashMap">
+        SELECT  * FROM INVESTMENT_DEPOSIT WHERE INTEREST_RECEIVED &lt; INTEREST_RECEIVABLE AND STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getPeriodicInterestAmt" result-class = "java.util.HashMap">
+        SELECT  PERIODIC_INTEREST,PRINCIPAL_AMOUNT,INT_REC_TILL_DT FROM INVESTMENT_DEPOSIT WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateInvestMasterStatusClosed" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_MASTER SET ACCT_STATUS='CLOSED' WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateInvestDepStatusClosed" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_DEPOSIT SET ACCT_STATUS='CLOSED' WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateInvestShareStatusClosed" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_SHARE SET ACCT_STATUS='CLOSED' WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "gerInvestmentInterestReceivable" result-class = "java.util.HashMap">
+        SELECT INTEREST_RECEIVABLE FROM INVESTMENT_DEPOSIT WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "gerInvestmentRenewalInterestReceivable" result-class = "java.util.HashMap">
+        SELECT INTEREST_RECEIVABLE FROM INVESTMENT_DEPOSIT_RENEWAL WHERE STATUS!='DELETED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "gerInvestmentRenewalIntWithPrincipal" result-class = "java.util.HashMap">
+        SELECT INT_WITH_PRINCIPAL FROM INVESTMENT_DEPOSIT_RENEWAL WHERE STATUS!='DELETED' AND STATUS!='CLOSED' AND AUTHORIZED_STATUS='AUTHORIZED'
+        AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "gerInvestmentWithOrWithoutInterest" result-class = "java.util.HashMap">
+        SELECT WITH_INTEREST FROM INVESTMENT_DEPOSIT WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updateClosedStatusInInvestRenewal" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_DEPOSIT_RENEWAL SET STATUS='CLOSED' WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED' AND INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getDepDetailsFromMaster" result-class = "java.util.HashMap">
+        SELECT ID.*,IM.AVAILABLE_BALANCE FROM INVESTMENT_DEPOSIT ID,INVESTMENT_MASTER IM WHERE ID.STATUS!='DELETED' 
+        AND ID.AUTHORIZED_STATUS='AUTHORIZED' AND ID.INVESTMENT_ID=IM.INVESTMENT_ID AND ID.INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getOperativeDetailsFromMaster" result-class = "java.util.HashMap">
+        SELECT IO.*,IM.AVAILABLE_BALANCE FROM INVESTMENT_OPERATIVE IO,INVESTMENT_MASTER IM WHERE IO.STATUS!='DELETED'
+        AND IO.AUTHORIZED_STATUS='AUTHORIZED' AND IO.INVESTMENT_ID=IM.INVESTMENT_ID AND IO.INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getReserveFundDetailsFromMaster" result-class = "java.util.HashMap">
+        SELECT IRF.*,IM.AVAILABLE_BALANCE FROM INVESTMENT_RESERVE_FUND IRF,INVESTMENT_MASTER IM WHERE IRF.STATUS!='DELETED' 
+        AND IRF.AUTHORIZED_STATUS='AUTHORIZED' AND IRF.INVESTMENT_ID=IM.INVESTMENT_ID AND IRF.INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getShareDetailsFromMaster" result-class = "java.util.HashMap">
+        SELECT INS.*,IM.AVAILABLE_BALANCE FROM INVESTMENT_SHARE INS,INVESTMENT_MASTER IM WHERE INS.STATUS!='DELETED' 
+        AND INS.AUTHORIZED_STATUS='AUTHORIZED' AND INS.INVESTMENT_ID=IM.INVESTMENT_ID AND INS.INVESTMENT_ID=#INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateBatchIdForInv" result-class = "java.util.HashMap">
+        UPDATE INVESTMENT_TRANS_DETAILS SET BATCH_ID = #BATCH_ID:VARCHAR# WHERE INVESTMENT_ID = #INVESTMENT_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getInvestIdDetails" result-class = "java.util.HashMap">
+        SELECT AT.LINK_BATCH_ID FROM ALL_TRANS AT WHERE AT.SINGLE_TRANS_ID = #SINGLE_TRANS_ID:VARCHAR#  AND AT.TRANS_DT = #TRANS_DT:DATE# AND AT.STATUS!='DELETED'
+    </mapped-statement>
+          
+    <mapped-statement name = "getSelectMultipleInvestmentAuthDetails" result-class="java.util.LinkedHashMap" >
+        SELECT ITD.BATCH_ID AS TRANS_ID, IM.INVESTMENT_ID,IM.INVESTMENT_PROD_DESC,IM.INVESTMENT_REF_NO,ID.PRINCIPAL_AMOUNT
+        FROM  INVESTMENT_MASTER IM,INVESTMENT_TRANS_DETAILS ITD,INVESTMENT_DEPOSIT ID
+        WHERE IM.INVESTMENT_ID  = ITD.INVESTMENT_ID
+        AND ID.INVESTMENT_ID  = IM.INVESTMENT_ID
+        AND ITD.TRANS_DT = #TRANS_DT:DATE#
+        AND IM.MULTIPLE_INVESTMENT = 'Y' 
+        AND IM.AUTHORIZED_STATUS IS NULL
+        AND IM.STATUS!='DELETED'
+        AND ITD.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectMultipleInvestmentCashierAuthDetails" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT ITD.BATCH_ID AS TRANS_ID, IM.INVESTMENT_ID,IM.INVESTMENT_PROD_DESC,IM.INVESTMENT_REF_NO,ID.PRINCIPAL_AMOUNT
+        FROM  INVESTMENT_MASTER IM,INVESTMENT_TRANS_DETAILS ITD,INVESTMENT_DEPOSIT ID,ALL_TRANS AT
+        WHERE IM.INVESTMENT_ID  = ITD.INVESTMENT_ID
+        AND ID.INVESTMENT_ID  = IM.INVESTMENT_ID
+        AND AT.LINK_BATCH_ID = IM.INVESTMENT_ID
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND IM.MULTIPLE_INVESTMENT = 'Y' 
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND AT.STATUS!='DELETED'
+        AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = AT.STATUS_BY)
+       AND IM.STATUS_BY !=#USER_ID:VARCHAR#
+       AND AT.AUTHORIZE_STATUS IS NULL
+       AND CASE
+          WHEN AT.trans_mode = 'TRANSFER'
+             THEN NULL
+            ELSE AT.payment_status
+       END IS  NULL
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectMultipleInvestmentAuthTableDetails" result-class="java.util.LinkedHashMap" >
+        SELECT IM.INVESTMENT_ID,IM.INVESTMENT_PROD_DESC,IM.INVESTMENT_REF_NO,ID.PRINCIPAL_AMOUNT,ID.INVESTMENT_PERIOD_YY,ID.INVESTMENT_PERIOD_MM,
+        ID.INVESTMENT_PERIOD_DD,ID.RATE_OF_INTEREST,ID.MATURITY_AMOUNT,ID.INVESTMENT_EFFECTIVE_DT
+        FROM  INVESTMENT_MASTER IM,INVESTMENT_TRANS_DETAILS ITD,INVESTMENT_DEPOSIT ID
+        WHERE IM.INVESTMENT_ID  = ITD.INVESTMENT_ID
+        AND ID.INVESTMENT_ID  = IM.INVESTMENT_ID
+        AND ITD.TRANS_DT = #TRANS_DT:DATE#
+        AND IM.MULTIPLE_INVESTMENT = 'Y' 
+        AND IM.AUTHORIZED_STATUS IS NULL
+        AND IM.STATUS!='DELETED'
+        AND ITD.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND ITD.BATCH_ID = #TRANS_ID:VARCHAR#
+   </mapped-statement>
+   
+   <dynamic-mapped-statement name = "getTransferDetailsForInvestmentRenewal" result-class = "java.util.HashMap">
+        SELECT T.TRANS_ID, T.BATCH_ID,AH.AC_HD_DESC AS AC_HD_ID,T.ACT_NUM,T.INP_AMOUNT,T.
+        INP_CURR,T.AMOUNT,T.TRANS_DT,T.TRANS_TYPE,T.INST_TYPE,T.
+        INST_DT,T.INIT_TRANS_ID,T.INIT_CHANN_TYPE,T.PARTICULARS,T.STATUS,T.
+        INSTRUMENT_NO1,T.INSTRUMENT_NO2,T.PROD_ID,T.AUTHORIZE_STATUS,T.AUTHORIZE_BY,T.
+        AUTHORIZE_DT,T.AUTHORIZE_REMARKS,T.STATUS_BY,T.BRANCH_ID,T.STATUS_DT,T.
+        PROD_TYPE,T.LINK_BATCH_ID,T.LINK_BATCH_DT,T.TRANS_MODE,T.INITIATED_BRANCH,T.
+        LOAN_HIERARCHY,T.AUTHORIZE_STATUS_2,T.NARRATION,T.SHIFT,T.
+        TRANS_ALL_ID,T.REC_MODE,T.SINGLE_TRANS_ID,T.AUTHORIZE_BY_2,T.GL_TRANS_ACT_NUM,T.TRANS_MOD_TYPE FROM TRANSFER_TRANS T
+        JOIN AC_HD AH ON AH.AC_HD_ID=T.AC_HD_ID
+        WHERE T.LINK_BATCH_ID=#BATCH_ID:VARCHAR# AND T.TRANS_DT=#TRANS_DT:DATE# AND
+        T.INITIATED_BRANCH=#BRANCH_CODE# AND T.STATUS !='DELETED' AND (T.AUTHORIZE_STATUS_2 ='ENTERED_AMOUNT' OR T.AUTHORIZE_STATUS_2 IS NULL)
+        AND T.PARTICULARS NOT LIKE '%Pending Interest%'  
+        AND T.AUTHORIZE_STATUS IS NULL
+        <dynamic>            
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "INSTRUMENT_NO2">
+                    ( T.INSTRUMENT_NO2 IS NULL OR T.INSTRUMENT_NO2 != 'NOTICE')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY T.TRANS_ID
+    </dynamic-mapped-statement>
+
+
+        
+</sql-map>

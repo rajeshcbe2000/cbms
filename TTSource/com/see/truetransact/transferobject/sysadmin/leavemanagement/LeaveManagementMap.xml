@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LeaveManagementTOMap">
+
+	<!-- Use LeaveManagementTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLeave" inline-parameters="true">
+        INSERT INTO LEAVE_MANAGEMENT
+        (LEAVE_ID,LEAVE_TYPE,DESCRIPTOR,CREDIT_TYPE,LEAVE_LAPSES,CARRY_OVER,ACCUMALTION_ALLOWED,
+        ACCUMALTION_TIME,ACCUMALTION_TYPE, LEAVE_CREDITING_PARAMETERS ,FIXED_PARAMETER1 ,
+        FIXED_PARAMETER2 ,FIXED_PARAM_TYPE,PRORATE_TYPE1, PRORATE_TYPE2, MAX_LEAVES_CREDITED,LEAVE_ENCASHMENT,
+        LEAVE_ENCASHMENT_TYPE,MAX_ENCASHMANT_ALLOWED,STATUS,AUTHORIZED_BY,AUTHORIZED_DT,AUTHORIZED_STATUS,STATUS_BY,
+        STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE,PAYMENT_TYPE,DATE_OF_CREDITING,MATERNITY_LEAVE,MATERNITY_LEAVE_COUNT 
+        ) VALUES (
+        #leaveID:VARCHAR#,#typeOfLeave:VARCHAR#,#desc:VARCHAR#,#cboToBeCredited:VARCHAR#,#introReq:VARCHAR#,
+        #carryOver:VARCHAR#, #acc:VARCHAR#, #txtAcc:NUMERIC#,#cboAcc:VARCHAR#,
+        #cboParForLeave:VARCHAR#,#txtFixedPar:NUMERIC#,#txtFixedPar1:NUMERIC#,#cboParFixed:NUMERIC#,#txtPro1:NUMERIC#,#txtPro2:NUMERIC#,
+        #txtMaxLeaves:NUMERIC#,#encash:VARCHAR#,#leaveEncashmentType:VARCHAR#,#txtMaxEncashment:NUMERIC#,#status:VARCHAR#,
+        #authorizedBy:VARCHAR#,#authorizedDt:DATE#,#authorizedStatus:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#createdBy:VARCHAR#,
+        #createdDt:DATE#,#branch:VARCHAR#,#paymentType:VARCHAR#,#dateOfCrediting:DATE#,#chkMaternityLeave:VARCHAR#,#txtMaternityCountLimit:VARCHAR#) 
+    </mapped-statement>
+
+	<!-- Use LeaveManagementTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLeave" inline-parameters="true">
+        UPDATE LEAVE_MANAGEMENT SET 
+        LEAVE_TYPE = #typeOfLeave:VARCHAR#,
+        DESCRIPTOR = #desc:VARCHAR#,
+        CREDIT_TYPE=#cboToBeCredited:VARCHAR#,
+        LEAVE_LAPSES = #introReq:VARCHAR#,
+        CARRY_OVER = #carryOver:VARCHAR#,
+        ACCUMALTION_ALLOWED = #acc:VARCHAR#,
+        ACCUMALTION_TIME =#txtAcc:NUMERIC#,
+        ACCUMALTION_TYPE =#cboAcc:VARCHAR#,
+        FIXED_PARAMETER1 =#txtFixedPar:NUMERIC#,
+        FIXED_PARAMETER2 =#txtFixedPar1:NUMERIC#,
+        FIXED_PARAM_TYPE =#cboParFixed:VARCHAR#,
+        LEAVE_CREDITING_PARAMETERS=#cboParForLeave:VARCHAR#,
+        PRORATE_TYPE1 =#txtPro1:NUMERIC#,
+        PRORATE_TYPE2 =#txtPro2:NUMERIC#,
+        MAX_LEAVES_CREDITED =#txtMaxLeaves:NUMERIC#,
+        MAX_ENCASHMANT_ALLOWED =#txtMaxEncashment:NUMERIC#,
+        LEAVE_ENCASHMENT_TYPE =#leaveEncashmentType:VARCHAR#,
+        LEAVE_ENCASHMENT =#encash:VARCHAR#,
+        STATUS =#status:VARCHAR#,
+        AUTHORIZED_BY =#authorizedBy:VARCHAR#,
+        AUTHORIZED_DT =#authorizedDt:DATE#,
+        AUTHORIZED_STATUS =#authorizedStatus:VARCHAR#,
+        STATUS_BY =#statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:DATE#,
+        PAYMENT_TYPE =#paymentType:VARCHAR#,
+        MATERNITY_LEAVE =#chkMaternityLeave:VARCHAR#,
+        MATERNITY_LEAVE_COUNT =#txtMaternityCountLimit:VARCHAR#,
+        DATE_OF_CREDITING = #dateOfCrediting:DATE#
+        WHERE LEAVE_ID = #leaveID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLeave" inline-parameters="true">
+        UPDATE LEAVE_MANAGEMENT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_ID = #leaveID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLeaveManagementTO" result-map="getLeaveManagementTOResult" >
+        SELECT * FROM LEAVE_MANAGEMENT WHERE STATUS!='DELETED' AND LEAVE_ID=#LEAVE_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getLeaveParameters" result-class="java.util.HashMap" >
+        SELECT LEAVE_TYPE,CREDIT_TYPE,LEAVE_LAPSES,CARRY_OVER,ACCUMALTION_ALLOWED,ACCUMALTION_TIME,ACCUMALTION_TYPE,
+        LEAVE_CREDITING_PARAMETERS,FIXED_PARAMETER1,FIXED_PARAMETER2,FIXED_PARAM_TYPE,PRORATE_TYPE1,PRORATE_TYPE2,
+        MAX_LEAVES_CREDITED,LEAVE_ENCASHMENT,LEAVE_ENCASHMENT_TYPE,MAX_ENCASHMANT_ALLOWED,BRANCH_CODE,DATE_OF_CREDITING,MATERNITY_LEAVE,MATERNITY_LEAVE_COUNT
+        FROM LEAVE_MANAGEMENT WHERE LEAVE_TYPE=#LEAVE_TYPE:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED'
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OtherBankTO object (JavaBean) properties -->
+    <result-map name="getLeaveManagementTOResult" class="com.see.truetransact.transferobject.sysadmin.leavemanagement.LeaveManagementTO">
+        <property name="leaveID" column="LEAVE_ID"/>
+        <property name="typeOfLeave" column="LEAVE_TYPE"/>
+        <property name="desc" column="DESCRIPTOR"/>
+        <property name="cboToBeCredited" column="CREDIT_TYPE"/>
+        <property name="introReq" column="LEAVE_LAPSES"/>
+        <property name="carryOver" column="CARRY_OVER"/>
+        <property name="acc" column="ACCUMALTION_ALLOWED"/>
+        <property name="cboAcc" column="ACCUMALTION_TYPE"/>
+        <property name="txtAcc" column="ACCUMALTION_TIME"/>
+        <property name="cboParForLeave" column="LEAVE_CREDITING_PARAMETERS"/>
+        <property name="txtFixedPar" column="FIXED_PARAMETER1"/>
+        <property name="txtFixedPar1" column="FIXED_PARAMETER2"/>
+        <property name="cboParFixed" column="FIXED_PARAM_TYPE"/>
+        <property name="txtPro1" column="PRORATE_TYPE1"/>
+        <property name="txtPro2" column="PRORATE_TYPE2"/>
+        <property name="txtMaxLeaves" column="MAX_LEAVES_CREDITED"/>
+        <property name="leaveEncashmentType" column="LEAVE_ENCASHMENT_TYPE"/>
+        <property name="txtMaxEncashment" column="MAX_ENCASHMANT_ALLOWED"/>
+        <property name="chkMaternityLeave" column="MATERNITY_LEAVE"/>
+        <property name="txtMaternityCountLimit" column="MATERNITY_LEAVE_COUNT"/>
+        <property name="encash" column="LEAVE_ENCASHMENT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="branch" column="BRANCH_CODE"/>
+        <property name="paymentType" column="PAYMENT_TYPE"/>
+        <property name="dateOfCrediting" column="DATE_OF_CREDITING"/>
+    </result-map>
+    <mapped-statement name="getSelectLeave" result-class="java.util.HashMap">
+        SELECT LEAVE_ID,LEAVE_TYPE,DESCRIPTOR FROM LEAVE_MANAGEMENT
+        WHERE STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getLeaveAuthorizeList" result-class="java.util.HashMap">
+        SELECT LEAVE_ID,LEAVE_TYPE,DESCRIPTOR FROM LEAVE_MANAGEMENT WHERE STATUS!='DELETED'
+        AND AUTHORIZED_STATUS IS NULL
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = LEAVE_MANAGEMENT.STATUS_BY)
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeLeaveManagement" result-class="java.util.HashMap">
+        UPDATE LEAVE_MANAGEMENT SET AUTHORIZED_STATUS=#STATUS:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT:DATE#,AUTHORIZED_BY=#AUTH_BY:VARCHAR# 
+        WHERE  LEAVE_ID=#LEAVE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getChkLeaveType"  result-class="java.util.HashMap">
+        SELECT * FROM LEAVE_MANAGEMENT WHERE LEAVE_TYPE = #LEAVE_TYPE:VARCHAR# AND STATUS NOT IN ('DELETED','REJECTED')
+    </mapped-statement>
+</sql-map>

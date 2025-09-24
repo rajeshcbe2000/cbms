@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<sql-map name="DeductionExemptionListGenerationMap">
+    <mapped-statement name = "getDetailsForDedExemptionList" result-class = "java.util.LinkedHashMap">
+        select F.ACCT_NUM as ACT_NUM,F.PROD_ID as PROD_ID ,CASE WHEN LP.BEHAVES_LIKE = 'SI_BEARING' OR LP.BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS'
+        THEN 'TL' ELSE 'AD' END AS prodtype,DM.EMP_REF_NO,
+        get_cust_name(c.cust_id) AS "MEM_NAME",LP.PROD_DESC,null as Amount,DM.EXEMPTION_MODE
+        from LOANS_FACILITY_DETAILS f
+        join LOANS_BORROWER B on F.BORROW_NO = B.BORROW_NO
+        join LOANS_PRODUCT lp on F.PROD_ID=LP.PROD_ID
+        join LOANS_PROD_ACPARAM LPA on LPA.PROD_ID = LP.PROD_ID
+        join SHARE_ACCT SA on B.CUST_ID=SA.CUST_ID
+        join DEDUCTION_EXEMPTION_MAPPING DM on SA.EMP_REFNO_NEW=DM.EMP_REF_NO
+        join CUSTOMER C on B.CUST_ID=C.CUST_ID
+        where F.CLEAR_BALANCE!=0 and C.CUSTOMER_STATUS='PRESENT' and F.ACCT_STATUS!='CLOSED' and LP.BEHAVES_LIKE in ('OD','SI_BEARING')
+        AND lpa.prod_id NOT IN (SELECT lap.prod_id FROM loans_prod_acparam lap WHERE NVL (lap.salary_recovery, 'Y') = 'N')
+        and dm.status != 'DELETED'
+        union all
+        select a.DEPOSIT_NO as ACT_NUM,a.PROD_ID as PROD_ID ,'TD' as PRODTYPE,DM.EMP_REF_NO,
+        get_cust_name(c.cust_id) AS "MEM_NAME",DP.PROD_DESC,null as Amount,DM.EXEMPTION_MODE
+        from DEPOSIT_ACINFO a
+        join DEPOSIT_SUB_ACINFO s on A.DEPOSIT_NO = s.DEPOSIT_NO
+        join DEPOSITS_PRODUCT DP on a.PROD_ID = DP.PROD_ID
+        join SHARE_ACCT SA on a.CUST_ID=SA.CUST_ID
+        join DEDUCTION_EXEMPTION_MAPPING DM on SA.EMP_REFNO_NEW=DM.EMP_REF_NO
+        join CUSTOMER C on a.CUST_ID=C.CUST_ID
+        where  S.CLOSE_DT is null  and DP.BEHAVES_LIKE = 'RECURRING' and C.CUSTOMER_STATUS='PRESENT'
+        and dm.status != 'DELETED'
+        union all
+        <!--select a.CHITTAL_NO||'_'||a.SUB_NO as ACT_NUM,a.SCHEME_NAME as PROD_ID ,'MDS' as PRODTYPE,DM.EMP_REF_NO,
+        C.FNAME || ' ' || C.MNAME || ' ' || C.LNAME AS "MEM_NAME",MSD.SCHEME_DESC as PROD_DESC,null as Amount,
+        DM.EXEMPTION_MODE
+        from MDS_APPLICATION a
+        JOIN MDS_SCHEME_DETAILS MSD ON A.SCHEME_NAME = MSD.SCHEME_NAME
+        JOIN mds_master_maintenance MM on mm.chittal_no=a.chittal_no
+        join SHARE_ACCT SA on a.MEMBER_NO = SA.SHARE_ACCT_NO
+        join DEDUCTION_EXEMPTION_MAPPING DM on SA.EMP_REFNO_NEW=DM.EMP_REF_NO
+        join CUSTOMER C on sa.cust_id=C.CUST_ID
+        WHERE  (SELECT SUM(MTD.NO_OF_INST) FROM MDS_TRANS_DETAILS MTD
+        WHERE MTD.CHITTAL_NO = A.CHITTAL_NO  ) &lt; MSD.NO_OF_INSTALLMENTS
+        AND A.STATUS!='DELETED' AND A.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and  MSD.STATUS!='DELETED' and MSD.STATUS!='CLOSED'
+        and dm.status != 'DELETED'
+        and C.CUSTOMER_STATUS='PRESENT'-->
+        SELECT A.CHITTAL_NO || '_' || A.SUB_NO AS ACT_NUM, A.SCHEME_NAME AS PROD_ID,
+        'MDS' AS PRODTYPE, DM.EMP_REF_NO,
+        get_cust_name(c.cust_id) AS "MEM_NAME",
+        MSD.SCHEME_DESC AS PROD_DESC, NULL AS AMOUNT, DM.EXEMPTION_MODE
+        FROM MDS_APPLICATION A JOIN MDS_SCHEME_DETAILS MSD
+        ON A.SCHEME_NAME = MSD.SCHEME_NAME
+        JOIN MDS_MASTER_MAINTENANCE MM ON MM.CHITTAL_NO = A.CHITTAL_NO
+        JOIN SHARE_ACCT SA ON A.MEMBER_NO = SA.SHARE_ACCT_NO
+        JOIN DEDUCTION_EXEMPTION_MAPPING DM ON SA.EMP_REFNO_NEW = DM.EMP_REF_NO
+        JOIN CUSTOMER C ON SA.CUST_ID = C.CUST_ID
+        WHERE GET_MDS_INSTALLMENT(A.CHITTAL_NO) &lt; MSD.NO_OF_INSTALLMENTS
+        AND A.STATUS != 'DELETED'
+        AND A.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND MSD.STATUS != 'DELETED'
+        AND MSD.STATUS != 'CLOSED'
+        AND C.CUSTOMER_STATUS = 'PRESENT'
+        and dm.status != 'DELETED'
+        union all
+        select SUSPENSE_ACCT_NUM as ACT_NUM,SUSPENSE_PROD_ID as PROD_ID,'SA' as  PRODTYPE,DM.EMP_REF_NO,
+        get_cust_name(c.cust_id) AS "MEM_NAME",SP.PROD_DESC,abs(SAM.CLEAR_BALANCE) as amount,
+        DM.EXEMPTION_MODE
+        from SUSPENSE_ACCOUNT_MASTER SAM join SHARE_ACCT SA on SAM.SUSPENSE_CUSTOMER_ID=SA.CUST_ID
+        join SUSPENSE_PRODUCT SP on SAM.SUSPENSE_PROD_ID=SP.PROD_ID
+        join DEDUCTION_EXEMPTION_MAPPING DM on SA.EMP_REFNO_NEW=DM.EMP_REF_NO
+        join CUSTOMER C on SA.CUST_ID=C.CUST_ID
+        where C.CUSTOMER_STATUS='PRESENT' and dm.status != 'DELETED' and SAM.CLEAR_BALANCE &lt; 0 
+        union all
+        select distinct a.ACT_NUM,a.PROD_ID,
+        a.PROD_TYPE,a.EMP_REFNO as EMP_REF_NO,a.MEM_NAME,a.PROD_DESC, C.AMOUNT,a.EXEMPTION_MODE 
+        from (select distinct(C.ACT_NUM),
+        CLOCK_NO AS EMP_REFNO,get_cust_name(c.cust_id) 
+        as "MEM_NAME", PROD_DESC, APA.PROD_TYPE, APA.PROD_ID,DM.EXEMPTION_MODE 
+        from SUSPENSE_INSTALLMENT SI, ALL_PRODUCTS AP, 
+        ALL_PRODUCT_ACCTS APA, ALL_CUSTOMER C,DEDUCTION_EXEMPTION_MAPPING DM,CUSTOMER CU  
+        where dm.status != 'DELETED' AND CLOCK_NO is not null and SI.ACCT_NUM = APA.ACT_NUM and SI.CLOCK_NO=DM.EMP_REF_NO and C.CUST_ID=CU.CUST_ID
+        and cu.CUSTOMER_STATUS='PRESENT' and APA.ACT_NUM = C.ACT_NUM AND APA.PROD_ID = AP.PROD_ID
+        AND APA.ACCT_STATUS!='CLOSED' AND BALANCE_AMOUNT &gt; 0) A,
+        (select SUM(INSTALLMENT_AMOUNT)-SUM(NVL(PAID_AMOUNT,0)) as AMOUNT,SUI.ACCT_NUM from  SUSPENSE_INSTALLMENT SUI, 
+        (SELECT MIN(INSTALLMENT_NO) AS INST_NO,BILL_ID,ACCT_NUM  FROM SUSPENSE_INSTALLMENT WHERE BALANCE_AMOUNT &gt; 0  
+        GROUP BY BILL_ID ,ACCT_NUM) B WHERE B.INST_NO = SUI.INSTALLMENT_NO AND B.BILL_ID = SUI.BILL_ID AND
+        B.ACCT_NUM = SUI.ACCT_NUM group by SUI.ACCT_NUM) C 
+        WHERE A.ACT_NUM = C.ACCT_NUM 
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDedExmpDetailsData" result-class="java.util.HashMap" >
+        DELETE DED_EXEMPTION_LIST_DETAIL WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDedExmpDetailsMDSData" result-class="java.util.HashMap" >
+        DELETE DED_EXEMPTION_MDS_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDedExmpDetailsRDData" result-class="java.util.HashMap" >
+        DELETE DED_EXEMPTION_RD_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDedExmpChargeDetails" result-class="java.util.HashMap" >
+        DELETE DED_EXEMPTION_CHARGE_DETAILS WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="insertDedExmpListGeneration" inline-parameters="true">
+        INSERT INTO DED_EXEMPTION_LIST_MASTER
+        (INT_CALC_UPTO_DT, CREATED_BY, CREATED_DT
+        ) VALUES (
+        #intCalcUptoDt:DATE#, #createdBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="insertDedExmpListDetailTO" inline-parameters="true">
+        INSERT INTO DED_EXEMPTION_LIST_DETAIL
+        (INT_CALC_UPTO_DT, EMP_REF_NO, MEMBER_NAME,EXEMPTION_MODE,SCHEME_NAME, ACT_NUM, TOTAL_DEMAND, PRINCIPAL, INTEREST, 
+        PENAL, CHARGES, PROD_ID, PROD_TYPE, DEPOSIT_PENAL_MONTH, STATUS,PARTICULARS
+        ) VALUES (
+        #intCalcUptoDt:DATE#, #empRefNo:VARCHAR#, #memberName:VARCHAR#, #exemptionMode:VARCHAR#,#schemeName:VARCHAR#, #actNum:VARCHAR#, #totalDemand:NUMERIC#, 
+        #principal:NUMERIC#, #interest:NUMERIC#, #penal:NUMERIC#, #charges:NUMERIC#, #prod_ID:VARCHAR#, #prod_Type:VARCHAR#, #penalMonth:NUMERIC#, #status:VARCHAR#
+        ,#particulars:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertDedExmpMDSDetails" result-class="java.util.HashMap" >
+        INSERT INTO DED_EXEMPTION_MDS_DETAILS
+        (INT_CALC_UPTO_DT, CHITTAL_NO, SUB_NO, DIVISION_NO, INSTALLMENT_NO, BONUS_AMT, PENAL_AMT, DISCOUNT_AMT, ARBITRATION_AMT, NOTICE_AMT
+        ) VALUES (
+        #INT_CALC_DT:DATE#, #CHITTAL_NO:VARCHAR#, #SUB_NO:NUMBER#, #DIVISION_NO:NUMERIC#, #INSTALLMENT_NO:NUMERIC#, #BONUS:NUMBER#, 
+        #PENAL:NUMBER#, #DISCOUNT:NUMBER#, #ARBITRATION_AMT:NUMBER#, #NOTICE_AMT:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertDedExmpRDDetails" result-class="java.util.HashMap" >
+        INSERT INTO DED_EXEMPTION_RD_DETAILS (INT_CALC_UPTO_DT, DEPOSIT_NO, SUB_NO, INSTALLMENT_NO, PENAL_AMT, INST_AMT)
+        VALUES (#INT_CALC_UPTO_DT:DATE#, #DEPOSIT_NO:VARCHAR#, #SUB_NO:NUMBER#, #INSTALLMENT_NO:NUMBER#, #PENAL_AMT:NUMBER#, #INST_AMT:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertDedExmpChargesList" result-class="java.util.HashMap" >
+        INSERT INTO DED_EXEMPTION_CHARGE_DETAILS
+        (INT_CALC_UPTO_DT, ACT_NUM, CHARGE_TYPE, AMOUNT
+        ) VALUES (
+        #INT_CALC_UPTO_DT:DATE#, #ACT_NUM:VARCHAR#, #CHARGE_TYPE:VARCHAR#, #AMOUNT:NUMBER#)
+    </mapped-statement>
+    <dynamic-mapped-statement name="checkSameDateRcdInDedMastr" result-class="java.util.HashMap">
+        SELECT * FROM DED_EXEMPTION_LIST_MASTER WHERE INT_CALC_UPTO_DT=#INT_CALC_UPTO_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="EXPORT_LIST">
+                    EXPORT_LIST='Y'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="viewDedExmpListDetails" result-class="java.util.HashMap" >
+        select EMP_REF_NO,MEMBER_NAME,EXEMPTION_MODE,SCHEME_NAME,ACT_NUM,TOTAL_DEMAND,PRINCIPAL,
+        interest,penal,charges from DED_EXEMPTION_LIST_DETAIL 
+        where int_calc_upto_dt=#INT_CALC_UPTO_DT:DATE# and STATUS='CREATED' and TALLY_VERIFIED is null
+    </mapped-statement>
+    <mapped-statement name="updateDedExmpListExportStatus" result-class="java.util.HashMap" >
+        UPDATE DED_EXEMPTION_LIST_MASTER SET EXPORT_LIST='Y' WHERE INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE#
+    </mapped-statement>
+    <dynamic-mapped-statement name="getEmployerRefNoForDedExmp" result-class="java.util.HashMap">
+        SELECT SH.EMP_REFNO_NEW, get_cust_name(C.CUST_ID) AS "NAME",DEM.EXEMPTION_MODE
+        FROM  SHARE_ACCT SH,CUSTOMER C,DEDUCTION_EXEMPTION_MAPPING DEM
+        WHERE SH.CUST_ID = C.CUST_ID AND
+        SH.STATUS != 'DELETED'
+        AND SH.EMP_REFNO_NEW IS NOT NULL AND (SH.AUTHORIZE IS NOT NULL 
+        OR (SH.AUTHORIZE='AUTHOTIZED' AND SH.AUTHORIZE!='REJECTED'))
+        and c.customer_status='PRESENT'
+        and DEM.EMP_REF_NO=SH.EMP_REFNO_NEW
+        <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EMP_REFNO_NEW">
+                    UPPER(SH.EMP_REFNO_NEW) LIKE UPPER('%$EMP_REFNO_NEW$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME">
+                    UPPER(get_cust_name(C.CUST_ID)) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="EXEMPTION_MODE">
+                    UPPER(DEM.EXEMPTION_MODE) LIKE UPPER('%$EXEMPTION_MODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+   <mapped-statement name="getDedExmpListData" result-class="java.util.HashMap" >
+        SELECT EMP_REF_NO,MEMBER_NAME, (TRIM(RTRIM(TO_CHAR(sum(TOTAL_DEMAND),'99999999999999.99')))) AS AMOUNT FROM DED_EXEMPTION_LIST_DETAIL 
+        WHERE INT_CALC_UPTO_DT = #INT_CALC_UPTO_DT:DATE# AND STATUS!='DELETED' GROUP BY EMP_REF_NO,MEMBER_NAME ORDER BY to_number(EMP_REF_NO)
+    </mapped-statement> 
+    
+</sql-map>

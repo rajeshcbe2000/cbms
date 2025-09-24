@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GroupLoan">
+
+	
+    <dynamic-mapped-statement name="getGroupLoanDetails" result-class="java.util.LinkedHashMap">
+        SELECT  C.MEMBERSHIP_NO AS MEMBER_NO, ACCT_STATUS, LF.ACCT_NUM AS ACT_NUM  ,  GET_JOINT_CUST (LF.ACCT_NUM) AS CUSTOMER
+        FROM LOANS_FACILITY_DETAILS LF,
+        LOANS_PRODUCT LP,
+        GROUP_LOAN_DETAILS GLD,
+        LOANS_BORROWER LB,
+        CUSTOMER C
+        WHERE GLD.ACT_NUM = LF.ACCT_NUM
+        AND LB.BORROW_NO = LF.BORROW_NO
+        AND C.CUST_ID = LB.CUST_ID
+        AND LP.PROD_ID = LF.PROD_ID
+        AND LP.GROUP_LOAN = 'Y'
+        AND LF.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND GLD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLD.STATUS != 'DELETED'
+        AND LF.STATUS != 'DELETED'
+        AND LF.ACCT_STATUS = 'NEW'
+        AND GLD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACCT_NUM">
+                    LF.ACCT_NUM LIKE '%$ACCT_NUM$%'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "MEMBER_NO">
+                    C.MEMBERSHIP_NO LIKE '%$MEMBER_NO$%'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "CUSTOMER">
+                    UPPER(GET_JOINT_CUST (LF.ACCT_NUM)) LIKE UPPER('%$CUSTOMER$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY LF.ACCT_NUM, C.MEMBERSHIP_NO,ACCT_STATUS
+        ORDER BY LF.ACCT_NUM
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getGroupLoanCreditDetails" result-class="java.util.LinkedHashMap">
+        SELECT   GET_CUST_LOAN_MEMBER_NO(GLD.ACT_NUM) AS MEMBER_NO, GLD.ACT_NUM AS ACT_NUM,
+         GET_JOINT_CUST (GLD.ACT_NUM) AS CUSTONER
+        FROM GROUP_LOAN_DETAILS GLD,GROUP_LOAN__TRANS_DETAILS GLTD,CUSTOMER C,LOANS_FACILITY_DETAILS lfd
+        WHERE GLTD.ACT_NUM = GLD.ACT_NUM
+        and LFD.ACCT_NUM = GLD.ACT_NUM
+        AND GLD.CUST_ID = C.CUST_ID
+        AND GLD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLTD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLD.STATUS != 'DELETED'
+        AND GLTD.STATUS != 'DELETED'
+        AND GLD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        and LFD.ACCT_STATUS not in ('CLOSED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    GLD.ACT_NUM = #ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY GLD.ACT_NUM
+        ORDER BY GLD.ACT_NUM
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getGroupLoanCustomerDetails" result-class="java.util.LinkedHashMap">    
+        SELECT  C.MEMBERSHIP_NO AS MEMBER_NO, LF.ACCT_NUM AS ACT_NUM  ,GET_JOINT_CUST (LF.ACCT_NUM) AS CUSTOMER
+        FROM LOANS_FACILITY_DETAILS LF,
+        LOANS_PRODUCT LP,
+        LOANS_BORROWER LB,
+        CUSTOMER C
+        WHERE LB.BORROW_NO = LF.BORROW_NO
+        AND C.CUST_ID = LB.CUST_ID
+        AND LP.PROD_ID = LF.PROD_ID
+        AND LP.GROUP_LOAN = 'Y'
+        AND LF.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND LF.STATUS != 'DELETED'
+        AND LF.ACCT_STATUS = 'NEW'
+        AND LF.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND LF.ACCT_NUM NOT IN (SELECT ACT_NUM FROM GROUP_LOAN_DETAILS WHERE STATUS != 'DELETED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACCT_NUM">
+                    LF.ACCT_NUM = #ACCT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMBER_NO">
+                    UPPER(C.MEMBERSHIP_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(LF.ACCT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER">
+                    UPPER(GET_JOINT_CUST (LF.ACCT_NUM)) LIKE UPPER('%$CUSTOMER$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY LF.ACCT_NUM, C.MEMBERSHIP_NO
+        ORDER BY LF.ACCT_NUM
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getGroupLoanTransAuthorizeCheck" result-class="java.util.LinkedHashMap">
+        SELECT * FROM GROUP_LOAN_DETAILS  GLD, GROUP_LOAN__TRANS_DETAILS GLTD
+        WHERE   GLTD.CUST_ID = GLD.CUST_ID
+        AND GLTD.STATUS!='DELETED' 
+        AND GLTD.AUTHORIZED_STATUS IS NULL
+        AND GLTD.ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getDailyGroupLoanTableDetails" result-class="java.util.LinkedHashMap">
+       SELECT AB.*,
+          CASE WHEN ACT_BALANCE> (PRIN_DUE+INTEREST+PENAL+CHARGES) THEN
+                (PRIN_DUE+INTEREST+PENAL+CHARGES)
+                ELSE
+                ACT_BALANCE
+                END AS TRANS_AMT FROM  (
+       SELECT GLD.CUST_ID AS CUST_ID,GET_CUST_MEMBER_NO(GLD.CUST_ID) AS MEMBER_NO,
+       GET_CUST_NAME (GLD.CUST_ID) AS CUSTOMER, 
+       (NVL (GLD.LIMIT, 0) - NVL (AB.AVIL_BAL, 0)) AS AVIL_BAL,
+       NVL (AB.AVIL_BAL, 0) AS PRIN_DUE,
+       NVL (GET_GROUP_LOAN_INTEREST (GLD.ACT_NUM, GLD.CUST_ID, #TRANS_DT:DATE#),0) AS INTEREST,
+       NVL(GET_GROUP_LOAN_PENINT(GLD.ACT_NUM,#TRANS_DT:DATE#,GLD.CUST_ID),0) AS PENAL,
+       0 AS CHARGES,GLD.CUST_ACT_NUM,GET_OA_BALAANCE(GLD.CUST_ACT_NUM,#TRANS_DT:DATE#) AS ACT_BALANCE,GLD.CUST_ACT_PROD_ID,GLD.CUST_ACT_PROD_TYPE
+       FROM GROUP_LOAN_DETAILS GLD
+       LEFT OUTER JOIN
+       (SELECT   GLTD.CUST_ID, GLTD.ACT_NUM,
+                 NVL
+                    (SUM (CASE
+                             WHEN GLTD.TRANS_TYPE = 'DEBIT'
+                                THEN 1 * GLTD.PRINCIPLE
+                             ELSE -1 * GLTD.PRINCIPLE
+                          END
+                         ),
+                     0
+                    ) AS AVIL_BAL
+            FROM GROUP_LOAN__TRANS_DETAILS GLTD
+           WHERE GLTD.STATUS != 'DELETED'
+             AND GLTD.AUTHORIZED_STATUS = 'AUTHORIZED'
+             AND GLTD.ACT_NUM = #ACT_NUM:VARCHAR# 
+        GROUP BY GLTD.CUST_ID, GLTD.ACT_NUM) AB
+        ON GLD.ACT_NUM = AB.ACT_NUM AND GLD.CUST_ID = AB.CUST_ID
+        WHERE GLD.STATUS != 'DELETED'
+        AND GLD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLD.ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND GLD.BRANCH_ID = #BRANCH_CODE:VARCHAR#)AB
+        ORDER BY CUST_ACT_NUM ASC
+   </mapped-statement>
+     <mapped-statement name="getGroupTest" result-class="java.util.HashMap">
+         select NVL (GET_GROUP_LOAN_INTEREST1 (GLD.ACT_NUM, GLD.CUST_ID, #TRANS_DT:DATE#,#BRANCH_CODE:VARCHAR#),0) as interest
+          FROM GROUP_LOAN_DETAILS GLD
+       LEFT OUTER JOIN
+       (SELECT   GLTD.CUST_ID, GLTD.ACT_NUM,
+                 NVL
+                    (SUM (CASE
+                             WHEN GLTD.TRANS_TYPE = 'DEBIT'
+                                THEN 1 * GLTD.PRINCIPLE
+                             ELSE -1 * GLTD.PRINCIPLE
+                          END
+                         ),
+                     0
+                    ) AS AVIL_BAL
+            FROM GROUP_LOAN__TRANS_DETAILS GLTD
+           WHERE GLTD.STATUS != 'DELETED'
+             AND GLTD.AUTHORIZED_STATUS = 'AUTHORIZED'
+             AND GLTD.ACT_NUM = #ACT_NUM:VARCHAR# 
+        GROUP BY GLTD.CUST_ID, GLTD.ACT_NUM) AB
+       ON GLD.ACT_NUM = AB.ACT_NUM AND GLD.CUST_ID = AB.CUST_ID
+    WHERE GLD.STATUS != 'DELETED'
+    AND GLD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    AND GLD.ACT_NUM = #ACT_NUM:VARCHAR# 
+    AND GLD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+   </mapped-statement>
+   
+   <mapped-statement name="getHolidayCheck" result-class="java.util.HashMap">
+    SELECT GET_NEXT_WORKING_DAY(#TRANS_DT#,1,'0001') FROM DUAL
+   </mapped-statement>
+          
+   <mapped-statement name="getGroupLoanTableDetails" result-class="java.util.HashMap">
+       SELECT GLD.CREDIT_CARD_NO AS CREDIT_CARD_NO, GLD.CUST_ID AS CUST_ID,
+       GET_CUST_NAME (GLD.CUST_ID) AS CUSTOMER, 
+       (NVL (GLD.LIMIT, 0) - NVL (AB.AVIL_BAL, 0)) AS AVIL_BAL,
+       NVL (AB.AVIL_BAL, 0) AS PRIN_DUE,
+       NVL (GET_GROUP_LOAN_INTEREST (GLD.ACT_NUM, GLD.CUST_ID, #TRANS_DT:DATE#),0)
+        AS INTEREST,
+       NVL(GET_GROUP_LOAN_PENINT(GLD.ACT_NUM,#TRANS_DT:DATE#,GLD.CUST_ID),0) AS PENAL,
+       0 AS CHARGES
+       FROM GROUP_LOAN_DETAILS GLD
+       LEFT OUTER JOIN
+       (SELECT   GLTD.CUST_ID, GLTD.ACT_NUM,
+                 NVL
+                    (SUM (CASE
+                             WHEN GLTD.TRANS_TYPE = 'DEBIT'
+                                THEN 1 * GLTD.PRINCIPLE
+                             ELSE -1 * GLTD.PRINCIPLE
+                          END
+                         ),
+                     0
+                    ) AS AVIL_BAL
+            FROM GROUP_LOAN__TRANS_DETAILS GLTD
+           WHERE GLTD.STATUS != 'DELETED'
+             AND GLTD.AUTHORIZED_STATUS = 'AUTHORIZED'
+             AND GLTD.ACT_NUM = #ACT_NUM:VARCHAR# 
+        GROUP BY GLTD.CUST_ID, GLTD.ACT_NUM) AB
+       ON GLD.ACT_NUM = AB.ACT_NUM AND GLD.CUST_ID = AB.CUST_ID
+    WHERE GLD.STATUS != 'DELETED'
+    AND GLD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    AND GLD.ACT_NUM = #ACT_NUM:VARCHAR# 
+    AND GLD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupLoanTableDetailsPayment" result-class="java.util.LinkedHashMap">
+       SELECT   gld.CREDIT_CARD_NO AS CREDIT_CARD_NO,GLD.CUST_ID AS CUST_ID,GET_CUST_NAME (GLD.CUST_ID) AS customer,
+         NVL (gld.LIMIT, 0) AS LIMIT,  ( NVL (gld.LIMIT, 0)-nvl(ab.avil_bal,0)) as avil_bal,
+         NVL(GET_GROUP_LOAN_INTEREST(GLD.ACT_NUM,GLD.CUST_ID,#TRANS_DT:DATE#),0)+
+         NVL(GET_GROUP_LOAN_PENINT(GLD.ACT_NUM,#TRANS_DT:DATE#,GLD.CUST_ID),0)+
+         NVL (AB.AVIL_BAL, 0) AS TOTAL_DUE
+        FROM group_loan_details gld
+        left outer join
+        (select GLTD.CUST_ID,gltd.act_num, nvl(SUM (CASE
+                         WHEN gltd.trans_type = 'DEBIT'
+                            THEN 1 * gltd.principle
+                         ELSE -1 * gltd.principle
+                      END
+                     ),0)AS avil_bal from group_loan__trans_details gltd
+        WHERE  GLTD.STATUS != 'DELETED'
+        AND GLTD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLTD.act_num = #ACT_NUM:VARCHAR# 
+        GROUP BY GLTD.cust_id,GLTD.act_num) ab on GLD.ACT_NUM = ab.act_num and GLD.CUST_ID = ab.cust_id
+        WHERE  GLD.STATUS != 'DELETED'
+        AND GLD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLD.act_num = #ACT_NUM:VARCHAR# 
+        AND GLD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertGroupLoanTansactionDetails" result-class="java.util.HashMap">
+        INSERT INTO GROUP_LOAN__TRANS_DETAILS
+        (CUST_ID,TRANS_TYPE,PRINCIPLE, INTEREST, PENAL, CHARGES, STATUS, STATUS_DT, STATUS_BY,TRANS_DT,ACT_NUM,REPAY_DT,
+        TRANS_ID,TRANS_SLNO,NARRATION,BRANCH_ID) VALUES (
+        #custId:VARCHAR#, #transType:VARCHAR#, #principle:NUMERIC#, #interest:NUMERIC#, #penal:NUMERIC#, #charges:NUMERIC#, 
+        #status:VARCHAR#, #statusDt:TIMESTAMP#, #statusBy:VARCHAR#,#transDt:DATE#,#grpLoanNo:VARCHAR#,#repayDt:DATE#,
+        #transId:VARCHAR#,#slNo:NUMERIC#,#narration:VARCHAR#,#branchId:VARCHAR#)
+    </mapped-statement> 
+    
+    <mapped-statement name="insertGroupLoanDetails" result-class="java.util.HashMap">
+        INSERT INTO GROUP_LOAN_DETAILS
+        (ACT_NUM,CUST_ID,LIMIT,STATUS, STATUS_DT, STATUS_BY,CREDIT_CARD_NO,BRANCH_ID,CUST_ACT_PROD_TYPE,CUST_ACT_PROD_ID,CUST_ACT_NUM
+        ) VALUES (
+        #actNum:VARCHAR#,#custId:VARCHAR#, #limitAmt:NUMERIC#,#status:VARCHAR#, #statusDt:TIMESTAMP#, #statusBy:VARCHAR#,
+        #creditNo:VARCHAR#,#branchId:VARCHAR#,#customerActProdType:VARCHAR#,#customerActProdId:VARCHAR#,#customerActNum:VARCHAR#)
+    </mapped-statement>  
+    
+    <mapped-statement name="deleteGroupLoanDetails" inline-parameters="true">
+        UPDATE GROUP_LOAN_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE CUST_ID = #custId:VARCHAR#
+        and ACT_NUM = #actNum:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="NullAuthorizeStatus" inline-parameters="true">
+        UPDATE GROUP_LOAN_DETAILS SET AUTHORIZED_STATUS = null WHERE ACT_NUM =#actNum:VARCHAR#
+    </mapped-statement>            
+    
+    <mapped-statement name="updateGroupLoanDetails" result-class="java.util.HashMap">
+        update  GROUP_LOAN_DETAILS set 
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        LIMIT = #limitAmt:NUMERIC#,
+        CREDIT_CARD_NO=#creditNo:NUMERIC#,
+        AND CUST_ACT_NUM = #customerActNum:VARCHAR#,
+        AND CUST_ACT_PROD_ID = #customerActProdId:VARCHAR#,
+        AND CUST_ACT_PROD_TYPE = #customerActProdType:VARCHAR#
+        where CUST_ID = #custId:VARCHAR#
+        and ACT_NUM = #actNum:VARCHAR#        
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+       
+    <result-map name="getGroupLoanCustomerTOResult" class="com.see.truetransact.transferobject.termloan.groupLoan.GroupLoanCustomerTO">
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="limitAmt" column="LIMIT"/>
+        <property name="creditNo" column="CREDIT_CARD_NO"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="customerActNum" column="CUST_ACT_NUM"/>
+        <property name="customerActProdId" column="CUST_ACT_PROD_ID"/>
+        <property name="customerActProdType" column="CUST_ACT_PROD_TYPE"/>        
+    </result-map>    
+    
+    <mapped-statement name="getProdIdForGroupLoan" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupTransAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT glt.act_num,GLT.CREDIT_CARD_NO, gltd.cust_id, GET_CUST_NAME (gltd.CUST_ID) AS customer,
+        gltd.principle AS PRIN_DUE, gltd.interest, gltd.penal, gltd.charges, 0 AS tot_due,
+        CASE
+          WHEN gltd.trans_type = 'CREDIT'
+             THEN SUM (  NVL (gltd.principle, 0)
+                       + NVL (gltd.interest, 0)
+                       + NVL (gltd.penal, 0)
+                       + NVL (gltd.charges, 0)
+                      )
+          ELSE 0
+       END AS receipt
+        FROM group_loan__trans_details gltd,group_loan_details glt
+        WHERE glt.cust_id = gltd.cust_id
+        AND GLT.ACT_NUM = gltd.ACT_NUM
+        AND gltd.status != 'DELETED'
+        AND gltd.trans_type = 'CREDIT'
+        AND gltd.authorized_status IS NULL
+        AND GLT.ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND GLTD.TRANS_ID= #TRANS_ID:VARCHAR# 
+        <!--AND GLTD.BRANCH_ID= #BRANCH_CODE:VARCHAR#-->
+        GROUP BY glt.act_num,gltd.trans_type,gltd.cust_id,glt.LIMIT,gltd.principle, 
+        gltd.interest, gltd.penal, gltd.charges,
+        GLT.CREDIT_CARD_NO
+        ORDER BY gltd.cust_id  
+    </mapped-statement>
+    
+    <mapped-statement name="getDailyGroupLoanAuthTableDetails" result-class="java.util.LinkedHashMap">
+        SELECT glt.act_num, gltd.cust_id, GET_CUST_NAME (gltd.CUST_ID) AS customer,GET_CUST_MEMBER_NO(GLTD.CUST_ID) AS MEMBER_NO,
+        gltd.principle AS PRIN_DUE, gltd.interest, gltd.penal, gltd.charges, 0 AS tot_due,GLt.CUST_ACT_NUM,GET_OA_BALAANCE(GLt.CUST_ACT_NUM,GLTD.TRANS_DT) as ACT_BALANCE,
+        CASE
+          WHEN gltd.trans_type = 'CREDIT'
+             THEN SUM (  NVL (gltd.principle, 0)
+                       + NVL (gltd.interest, 0)
+                       + NVL (gltd.penal, 0)
+                       + NVL (gltd.charges, 0)
+                      )
+          ELSE 0
+       END AS receipt
+        FROM group_loan__trans_details gltd,group_loan_details glt
+        WHERE glt.cust_id = gltd.cust_id
+        AND GLT.ACT_NUM = gltd.ACT_NUM
+        AND gltd.status != 'DELETED'
+        AND gltd.trans_type = 'CREDIT'
+        AND gltd.authorized_status IS NULL
+        AND GLT.ACT_NUM = #ACT_NUM:VARCHAR# 
+        AND GLTD.TRANS_ID= #TRANS_ID:VARCHAR# 
+        AND GLTD.BRANCH_ID= #BRANCH_CODE:VARCHAR#
+        GROUP BY glt.act_num,gltd.trans_type,gltd.cust_id,glt.LIMIT,gltd.principle, 
+        gltd.interest, gltd.penal, gltd.charges,GLTD.TRANS_DT,
+        GLt.CUST_ACT_NUM
+        ORDER BY GLT.CUST_ACT_NUM ASC
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupPaymentTableAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT * FROM (
+        SELECT GLD.ACT_NUM,gld.CREDIT_CARD_NO AS CREDIT_CARD_NO,GLD.CUST_ID AS CUST_ID,GET_CUST_NAME (GLD.CUST_ID) AS customer,
+        NVL (gld.LIMIT, 0) AS LIMIT,
+        (NVL (gld.LIMIT, 0) - NVL (ab.avil_bal, 0)) AS avail_bal, 
+        NVL(GET_GROUP_LOAN_INTEREST(GLD.ACT_NUM,GLD.CUST_ID,#TRANS_DT:DATE#),0)+
+       NVL(GET_GROUP_LOAN_PENINT(GLD.ACT_NUM,#TRANS_DT:DATE#,GLD.CUST_ID),0)+
+         NVL (AB.AVIL_BAL, 0) AS TOTAL_DUE,
+       (SELECT   SUM (gltd.principle)
+            FROM group_loan__trans_details gltd
+           WHERE gltd.status != 'DELETED'
+             AND gltd.authorized_status IS NULL
+             AND gltd.trans_type = 'DEBIT'
+             AND gld.act_num = gld.act_num
+             AND gltd.cust_id = gld.cust_id
+        GROUP BY gltd.act_num, gltd.cust_id) AS payment,
+        (SELECT NARRATION FROM GROUP_LOAN__TRANS_DETAILS GLDD 
+        WHERE GLDD.CUST_ID = GLD.CUST_ID AND GLDD.ACT_NUM = 
+        GLD.ACT_NUM AND GLDD.TRANS_DT =#TRANS_DT:DATE# AND GLDD.AUTHORIZED_STATUS IS NULL  ) AS NARRATION
+        FROM group_loan_details gld
+        LEFT OUTER JOIN
+       (SELECT   gltd.cust_id, gltd.act_num,
+                 NVL
+                    (SUM (CASE
+                             WHEN gltd.trans_type = 'DEBIT'
+                                THEN 1 * gltd.principle
+                             ELSE -1 * gltd.principle
+                          END
+                         ),
+                     0
+                    ) AS avil_bal,
+                 sum(gltd.principle)
+            FROM group_loan__trans_details gltd
+           WHERE gltd.status != 'DELETED'
+             AND GLTD.TRANS_ID= #TRANS_ID:VARCHAR# 
+             AND gltd.authorized_status = 'AUTHORIZED'
+             AND gltd.act_num = #ACT_NUM:VARCHAR# 
+             <!--AND GLTD.BRANCH_ID= #BRANCH_CODE:VARCHAR#-->
+             AND GLTD.TRANS_DT =#TRANS_DT:DATE#
+        GROUP BY gltd.cust_id, gltd.act_num) ab
+       ON gld.act_num = ab.act_num AND gld.cust_id = ab.cust_id
+        WHERE gld.status != 'DELETED'
+        AND gld.authorized_status = 'AUTHORIZED'
+        AND gld.act_num = #ACT_NUM:VARCHAR# )WHERE PAYMENT>0
+    </mapped-statement>
+   
+    <mapped-statement name="getGroupPaymentTransAuthorize" result-class="java.util.LinkedHashMap">
+       SELECT    CASE
+            WHEN AT.TRANS_MODE = 'CASH'
+               THEN MAX (AT.TRANS_ID)
+            ELSE AT.BATCH_ID
+         END AS TRANS_ID,
+         GET_JOINT_CUST (GLT.ACT_NUM) AS CUST_NAME, GLT.ACT_NUM,
+          AT.AMOUNT AS RECEIPT
+        FROM  GROUP_LOAN_DETAILS GLT, ALL_TRANS AT
+        WHERE   cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = AT.STATUS_BY)
+        AND AT.ACT_NUM = GLT.ACT_NUM
+        AND AT.TRANS_TYPE = 'DEBIT'
+        AND AT.TRANS_DT =#TRANS_DT:DATE#
+        AND AT.STATUS != 'DELETED'
+        AND AT.STATUS_BY !=#USER_ID:VARCHAR#
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND CASE
+          WHEN AT.trans_mode = 'TRANSFER'
+             THEN 'AUTHORIZED'
+          ELSE AT.payment_status
+        END IS NULL
+        GROUP BY GLT.ACT_NUM,AT.TRANS_MODE,
+        AT.BATCH_ID,AT.AMOUNT
+    </mapped-statement>
+     
+    <mapped-statement name="getGroupReceiptTransAuthorize" result-class="java.util.LinkedHashMap">
+          SELECT DISTINCT TRANS_ID,CUST_NAME,ACT_NUM,SUM(RECEIPT) FROM 
+        (SELECT   CASE
+            WHEN AT.TRANS_MODE = 'CASH'
+               THEN MAX (AT.TRANS_ID)
+            ELSE AT.BATCH_ID
+         END AS TRANS_ID,
+         GET_JOINT_CUST (GLT.ACT_NUM) AS CUST_NAME, GLT.ACT_NUM,
+         AT.AMOUNT AS RECEIPT
+        FROM GROUP_LOAN_DETAILS GLT, ALL_TRANS AT
+        WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = AT.STATUS_BY)
+        AND AT.LINK_BATCH_ID = GLT.ACT_NUM
+        AND AT.TRANS_TYPE = 'CREDIT'
+        AND AT.TRANS_DT =#TRANS_DT:DATE#
+        AND AT.STATUS != 'DELETED'
+        AND AT.STATUS_BY != #USER_ID:VARCHAR#
+        AND AT.AUTHORIZE_STATUS IS NULL
+        AND CASE
+          WHEN AT.trans_mode = 'TRANSFER'
+             THEN 'AUTHORIZED'
+          ELSE AT.payment_status
+        END IS NOT NULL
+        GROUP BY GLT.ACT_NUM, AT.BATCH_ID,AT.TRANS_MODE,AT.AMOUNT)
+        GROUP BY ACT_NUM,TRANS_ID,CUST_NAME
+    </mapped-statement>
+     
+      
+    <mapped-statement name="authorizeGroupLoanPayment" result-class="java.util.HashMap">
+        UPDATE GROUP_LOAN__TRANS_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' 
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        AND CUST_ID = #CUST_ID:VARCHAR#
+        AND TRANS_TYPE = 'DEBIT'
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeGroupLoanReceipt" result-class="java.util.HashMap">
+        UPDATE GROUP_LOAN__TRANS_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' 
+        AND CUST_ID = #CUST_ID:VARCHAR#
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        AND TRANS_TYPE = 'CREDIT'
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupAuthorizeCustomer" result-class="java.util.LinkedHashMap">
+        SELECT GLT.ACT_NUM,GET_JOINT_CUST(GLT.ACT_NUM) FROM GROUP_LOAN_DETAILS GLT WHERE GLT.STATUS !='DELETED' AND GLT.AUTHORIZED_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+          (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                   'Y', HIERARCHY_ID,
+                                   HIERARCHY_ID + 1
+                                  )
+                      FROM USER_MASTER UM, ROLE_MASTER RM
+                     WHERE RM.ROLE_ID = UM.USER_ROLE
+                       AND RM.GROUP_ID = UM.USER_GROUP
+                       AND UM.USER_ID = GLT.STATUS_BY)
+        AND GLT.STATUS_BY != #USER_ID:VARCHAR# 
+        AND SUBSTR(GLT.ACT_NUM,1,4) = #BRANCH_CODE:VARCHAR#
+        GROUP BY GLT.ACT_NUM
+        ORDER BY GLT.ACT_NUM
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectGroupCustomerTO" result-map="getGroupLoanCustomerTOResult" >
+        SELECT * FROM GROUP_LOAN_DETAILS WHERE STATUS!='DELETED' AND ACT_NUM = #ACT_NUM:VARCHAR#
+        and BRANCH_ID = #BRANCH_CODE:VARCHAR# ORDER BY CUST_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getJoinCustomer" result-class="java.util.HashMap" >
+        select GET_JOINT_CUST(#ACT_NUM:VARCHAR#) AS CUSTOMER from dual
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectCustomer" result-class="java.util.HashMap" >
+        SELECT FNAME AS CUSTOMER FROM CUSTOMER WHERE CUST_ID = #CUST_ID:VARCHAR# AND BRANCH_CODE = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeGroupLoanDetails" result-class="java.util.HashMap">
+        UPDATE GROUP_LOAN_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    
+    
+    <mapped-statement name="authorizeDeletedGroupLoanDetails" result-class="java.util.HashMap">
+        DELETE FROM GROUP_LOAN_DETAILS WHERE  ACT_NUM = #ACT_NUM:VARCHAR# AND  STATUS = 'DELETED'
+    </mapped-statement> 
+    
+    <mapped-statement name="CheckGroupLoanDetails" result-class="java.util.HashMap">
+        SELECT  NVL(GET_GROUP_LOAN_BALANCE(#ACT_NUM:VARCHAR#,#CUST_ID:VARCHAR#,#TRANS_DT:DATE#),0) AS DUE_AMT FROM DUAL
+    </mapped-statement>
+    
+     <dynamic-mapped-statement  name="getGroupLoanEdit" result-class="java.util.HashMap">
+        SELECT   gld.act_num AS ACT_NUM, get_joint_cust (gld.act_num) AS CUSTOMER
+        FROM group_loan_details gld
+        WHERE gld.authorized_status = 'AUTHORIZED' AND gld.status != 'DELETED'
+        AND SUBSTR(GLD.ACT_NUM,1,4) = #BRANCH_CODE:VARCHAR#
+           <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_NUM">
+                    UPPER(gld.act_num) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTOMER">
+                    UPPER(get_joint_cust (gld.act_num)) LIKE UPPER('%$CUSTOMER$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY gld.act_num
+   </dynamic-mapped-statement>
+   
+    <mapped-statement name="getRepayDetails" result-class="java.util.HashMap">
+        SELECT INT_DAY AS DAYS,INT_MONTH AS MONTHS,DEBIT_ALLOW_FOR_DUE FROM GROUP_LOAN_PRODUCT WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS = 'AUTHORIZED' AND PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+   
+    <mapped-statement name="getDueAmount" result-class="java.util.HashMap">
+        select (NVL(GET_GROUP_LOAN_INTEREST(#ACT_NUM:VARCHAR#,#CUST_ID:VARCHAR#,#TRANS_DT:DATE#),0)+
+               NVL(GET_GROUP_LOAN_PENINT(#ACT_NUM:VARCHAR#,#TRANS_DT:DATE#,#CUST_ID:VARCHAR#),0))
+        as DUE_AMOUNT from dual
+    </mapped-statement>
+   
+    <mapped-statement name="getPrincipleDueAmount" result-class="java.util.HashMap">
+        SELECT   GLTD.CUST_ID, GLTD.ACT_NUM,NVL (SUM (CASE WHEN GLTD.TRANS_TYPE = 'DEBIT' THEN 1 * GLTD.PRINCIPLE
+         ELSE -1 * GLTD.PRINCIPLE END),0) AS DEBIT_BAL
+        FROM GROUP_LOAN__TRANS_DETAILS GLTD
+        WHERE GLTD.STATUS != 'DELETED'
+        AND GLTD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND GLTD.ACT_NUM = #ACT_NUM:VARCHAR#
+        AND GLTD.CUST_ID = #CUST_ID:VARCHAR#
+        GROUP BY GLTD.CUST_ID, GLTD.ACT_NUM
+    </mapped-statement>
+    
+    <mapped-statement name="getOdAmount" result-class="java.util.HashMap">
+        SELECT LIMIT AS AVAILABLE_BALANCE FROM LOANS_SANCTION_DETAILS LSD,LOANS_FACILITY_DETAILS LF 
+        WHERE LF.BORROW_NO = LSD.BORROW_NO
+        AND ACCT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getClassCustomer" result-class="java.util.HashMap">
+        SELECT * FROM CUSTOMER C WHERE C.CUST_ID = #CUST_ID:VARCHAR#
+        AND C.MEMBERSHIP_CLASS in ('CA')
+    </mapped-statement>
+    
+     <mapped-statement name="getCCNoPresent" result-class="java.util.HashMap">
+        SELECT * FROM GROUP_LOAN_DETAILS WHERE CREDIT_CARD_NO  =#CC_NUM:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getSL_NO" result-class="java.util.HashMap">
+        SELECT COUNT(*) SL_NO FROM group_loan__trans_details  WHERE cust_id = #CUST_ID:VARCHAR# AND act_num =#ACT_NUM:VARCHAR# AND status != 'DELETED'
+        AND authorized_status = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="getOverDueAmount" result-class="java.util.HashMap">
+        select NVL(GET_GROUP_LOAN_ODBAL(#ACT_NUM:VARCHAR#,#CUST_ID:VARCHAR#,#TRANS_DT:DATE#),0) as DUE_AMOUNT from dual
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupLoanPaymentForAuthCashUI" result-class="java.util.LinkedHashMap">
+       SELECT   GLT.TRANS_ID, GET_JOINT_CUST (GLT.ACT_NUM) AS CUST_NAME, GLT.ACT_NUM,GLT.TRANS_DT
+        FROM GROUP_LOAN__TRANS_DETAILS GLT, ALL_TRANS AT
+        WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = GLT.STATUS_BY)
+        AND GLT.STATUS_DT = #TRANS_DT:DATE#
+        AND AT.LINK_BATCH_ID = GLT.ACT_NUM
+        AND GLT.TRANS_TYPE = AT.TRANS_TYPE
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND GLT.STATUS != 'DELETED'
+        AND GLT.STATUS_BY != #USER_ID:VARCHAR#
+        AND GLT.AUTHORIZED_STATUS IS NULL
+        AND GLT.REPAY_DT IS NOT NULL
+        AND CASE
+                WHEN AT.trans_mode = 'TRANSFER'
+                    THEN NULL
+                ELSE AT.payment_status
+             END IS NULL
+        AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        GROUP BY GLT.ACT_NUM, GLT.TRANS_ID,GLT.TRANS_DT
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupLoanPaymentForAuthUI" result-class="java.util.LinkedHashMap">
+       SELECT   GLT.TRANS_ID, GET_JOINT_CUST (GLT.ACT_NUM) AS CUST_NAME, GLT.ACT_NUM, GLT.TRANS_DT
+        FROM GROUP_LOAN__TRANS_DETAILS GLT, ALL_TRANS AT
+        WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = GLT.STATUS_BY)
+        AND GLT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.LINK_BATCH_ID = GLT.ACT_NUM
+        AND GLT.TRANS_TYPE = AT.TRANS_TYPE
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND GLT.STATUS != 'DELETED'
+        AND GLT.STATUS_BY != #USER_ID:VARCHAR#
+        AND GLT.AUTHORIZED_STATUS IS NULL
+        AND GLT.REPAY_DT IS NOT NULL
+        AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        GROUP BY GLT.ACT_NUM, GLT.TRANS_ID, GLT.TRANS_DT
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupLoanReceiptForAuthCashUI" result-class="java.util.LinkedHashMap">  
+        SELECT   GLT.TRANS_ID, GET_JOINT_CUST (GLT.ACT_NUM) AS CUST_NAME, GLT.ACT_NUM
+        FROM GROUP_LOAN__TRANS_DETAILS GLT, ALL_TRANS AT
+        WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = GLT.STATUS_BY)
+        AND GLT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.LINK_BATCH_ID = GLT.ACT_NUM
+        AND GLT.TRANS_TYPE = AT.TRANS_TYPE
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND GLT.STATUS != 'DELETED'
+        AND GLT.STATUS_BY != #USER_ID:VARCHAR#
+        AND GLT.AUTHORIZED_STATUS IS NULL
+        AND GLT.REPAY_DT IS  NULL
+        AND CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN 'AUTHORIZED'
+            ELSE AT.PAYMENT_STATUS
+         END IS  NOT NULL
+         AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+         GROUP BY GLT.ACT_NUM, GLT.TRANS_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getGroupLoanReceiptForAuthUI" result-class="java.util.LinkedHashMap">  
+        SELECT   GLT.TRANS_ID, GET_JOINT_CUST (GLT.ACT_NUM) AS CUST_NAME, GLT.ACT_NUM
+        FROM GROUP_LOAN__TRANS_DETAILS GLT, ALL_TRANS AT
+        WHERE cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = GLT.STATUS_BY)
+        AND GLT.TRANS_DT = #TRANS_DT:DATE#
+        AND AT.LINK_BATCH_ID = GLT.ACT_NUM
+        AND GLT.TRANS_TYPE = AT.TRANS_TYPE
+        AND AT.TRANS_DT = #TRANS_DT:DATE#
+        AND GLT.STATUS != 'DELETED'
+        AND GLT.STATUS_BY != #USER_ID:VARCHAR#
+        AND GLT.AUTHORIZED_STATUS IS NULL
+        AND GLT.REPAY_DT IS  NULL
+        AND AT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        GROUP BY GLT.ACT_NUM, GLT.TRANS_ID
+    </mapped-statement>
+    
+    <result-map name="GroupLoanTO" class="com.see.truetransact.transferobject.groupLoan.GroupLoanTO">        
+        <property name="narration" column="NARRATION"/>   
+        <property name="transDt" column="TRANS_DT"/> 
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="getSelectGroupLoanTO" result-class="java.util.LinkedHashMap">  
+        SELECT MAX(TRANS_DT) as TRANS_DT FROM GROUP_LOAN__TRANS_DETAILS 
+        WHERE STATUS NOT IN ('DELETED') AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND STATUS_DT=#TRANS_DT:DATE#
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name ="getselectGrpLoanLedgerCustomer" result-class = "java.util.LinkedHashMap">
+        SELECT CUST_ID,GET_CUST_NAME (CUST_ID) AS CUSTOMER,GET_CUST_MEMBER_NO(CUST_ID) AS MEMEBER FROM GROUP_LOAN_DETAILS WHERE 
+        AUTHORIZED_STATUS='AUTHORIZED'  AND STATUS !='DELETED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NUM">
+                    ACT_NUM LIKE '%$ACT_NUM$%'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    CUST_ID LIKE '%$CUST_ID$%'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER">
+                    UPPER(GET_CUST_NAME (CUST_ID)) LIKE UPPER('%$CUSTOMER$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMEBER">
+                    UPPER(GET_CUST_MEMBER_NO(CUST_ID)) LIKE UPPER('%$MEMEBER$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+    </dynamic-mapped-statement>
+    
+   <mapped-statement name="getDailyGroupLoan" result-class="java.util.LinkedHashMap">  
+        SELECT *
+        FROM GROUP_LOAN_PRODUCT GP,LOANS_PRODUCT LP,LOANS_FACILITY_DETAILS LF
+        WHERE LP.PROD_ID = GP.PROD_ID
+        AND LF.PROD_ID  = LP.PROD_ID
+        AND LF.ACCT_NUM = #ACT_NUM:VARCHAR#
+        AND GP.DAILY_COLLECTION = 'Y'
+    </mapped-statement>
+    
+    <mapped-statement name="checkCustActExist" result-class="java.util.LinkedHashMap">  
+        SELECT  GET_CUST_NAME (CUST_ID) AS CUSTOMER
+        FROM GROUP_LOAN_DETAILS WHERE CUST_ACT_NUM = #ACT_NUM:VARCHAR# AND  STATUS != 'DELETED'
+    </mapped-statement>
+    
+</sql-map>

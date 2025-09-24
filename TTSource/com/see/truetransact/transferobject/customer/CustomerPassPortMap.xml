@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerPassPortMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerPassPortTO" inline-parameters="true">
+        INSERT INTO CUSTOMER_PASSPORT
+        (CUST_ID,PASSPORT_LNAME,PASSPORT_FNAME,PASSPORT_MNAME,TITLE,PASSPORT_NUMBER,ISSUED_DATE,VALID_UPTO,ISSUEING_AUTHORITY,ISSUED_PLACE,STATUS 
+        ) VALUES (
+        #custId:VARCHAR#,#passlname:VARCHAR#, #passfname:VARCHAR#, #passmname:VARCHAR#, #passTitle:VARCHAR#, #passNumber:VARCHAR#,#issueDt:TIMESTAMP#,#validUpto:TIMESTAMP#,#issueAuth:VARCHAR#,#issuePlace:VARCHAR#, #status:VARCHAR# )
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateCustomerPassPortTO" inline-parameters="true">
+        UPDATE CUSTOMER_PASSPORT SET 
+        PASSPORT_LNAME = #passlname:VARCHAR#,
+        PASSPORT_MNAME = #passmname:VARCHAR#,
+        PASSPORT_FNAME = #passfname:VARCHAR#,
+        TITLE = #passTitle:VARCHAR#,
+        PASSPORT_NUMBER = #passNumber:VARCHAR#,
+        ISSUED_DATE = #issueDt:TIMESTAMP#,
+        VALID_UPTO = #validUpto:TIMESTAMP#,
+        ISSUEING_AUTHORITY=#issueAuth:VARCHAR#,
+        ISSUED_PLACE=#issuePlace:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="deleteCustomerPassPortTO" inline-parameters="true">
+        UPDATE CUSTOMER_PASSPORT SET 
+        STATUS = #status:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# 
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getCustomerPassPortTOResult" class="com.see.truetransact.transferobject.customer.CustomerPassPortTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="passlname" column="PASSPORT_LNAME"/>
+        <property name="passmname" column="PASSPORT_MNAME"/>
+        <property name="passfname" column="PASSPORT_FNAME"/>
+        <property name="passTitle" column="TITLE"/>
+        <property name="passNumber" column="PASSPORT_NUMBER"/>
+        <property name="issueDt" column="ISSUED_DATE" />
+        <property name="validUpto" column="VALID_UPTO"/>
+        <property name="issueAuth" column="ISSUEING_AUTHORITY"/>
+        <property name="issuePlace" column="ISSUED_PLACE"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <dynamic-mapped-statement name="getSelectCustomerPassPortTO" result-map="getCustomerPassPortTOResult" >
+        SELECT * FROM CUSTOMER_PASSPORT WHERE CUST_ID=#CUST_ID:VARCHAR#  
+        AND (STATUS is NUll OR STATUS IN ('INSERTED','MODIFIED'))
+	<!--<dynamic>
+                    <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                        (STATUS NOT IN ('DELETED')
+                    </isNotPropertyAvailable>
+                    <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                       ( STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                    <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                        STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                   )
+        </dynamic>-->
+                
+    </dynamic-mapped-statement>
+    <mapped-statement name="checkForLengthPassPort" result-class="java.util.HashMap" >
+        select cust_id from CUSTOMER_PASSPORT where cust_id = #custId:VARCHAR#
+        AND (STATUS is NUll OR STATUS IN ('INSERTED','MODIFIED'))
+    </mapped-statement>
+    <mapped-statement name="updateCustPass" result-class="java.util.HashMap" >
+        UPDATE CUSTOMER_PASSPORT SET STATUS='DELETED' WHERE CUST_ID=#custId:VARCHAR#
+    </mapped-statement>
+</sql-map>        

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GLLimitTOMap">
+
+	<!-- Use GLLimitTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertGLLimitTO" inline-parameters="true">
+        INSERT INTO GL_LIMIT
+        (BRANCH_GROUP, AC_HD_ID, LIMIT_AMT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, ANNUAL_LIMIT_AMT, OVER_DRAW_PER, INTER_BRANCH_ALLOWED,FROM_PERIOD,TO_PERIOD,SLNO
+        ) VALUES (
+        #branchGroup:VARCHAR#, #acHdId:VARCHAR#, #limitAmt:NUMERIC#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #annualLimitAmt:NUMERIC#, #overDrawPer:NUMERIC#, #interBranchAllowed:VARCHAR#,
+        #frmPeriod:DATE#,#toPeriod:DATE#,#slNo:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use GLLimitTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateGLLimitTO" inline-parameters="true">
+        UPDATE GL_LIMIT SET 
+        LIMIT_AMT = #limitAmt:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        ANNUAL_LIMIT_AMT = #annualLimitAmt:NUMERIC#,
+        OVER_DRAW_PER = #overDrawPer:NUMERIC#,
+        INTER_BRANCH_ALLOWED = #interBranchAllowed:VARCHAR#,
+        FROM_PERIOD=#frmPeriod:DATE#,
+        TO_PERIOD=#toPeriod:DATE#
+        WHERE BRANCH_GROUP = #branchGroup:VARCHAR# AND AC_HD_ID = #acHdId:VARCHAR# AND (STATUS IS NULL OR STATUS NOT IN ('DELETED')) AND SLNO=#slNo:VARCHAR# AND AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+
+	<!-- Use GLLimitTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteGLLimitTO" inline-parameters="true">
+        UPDATE GL_LIMIT SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE# 
+        WHERE BRANCH_GROUP = #branchGroup:VARCHAR# AND AC_HD_ID = #acHdId:VARCHAR# AND STATUS NOT IN ('DELETED') AND SLNO=#slNo:VARCHAR# AND AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to GLLimitTO object (JavaBean) properties -->
+    <result-map name="getGLLimitTOResult" class="com.see.truetransact.transferobject.generalledger.gllimit.GLLimitTO">
+        <property name="branchGroup" column="BRANCH_GROUP"/>
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="limitAmt" column="LIMIT_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="annualLimitAmt" column="ANNUAL_LIMIT_AMT"/>
+        <property name="overDrawPer" column="OVER_DRAW_PER"/>
+        <property name="interBranchAllowed" column="INTER_BRANCH_ALLOWED"/>
+        <property name="frmPeriod" column="FROM_PERIOD"/>
+        <property name="toPeriod" column="TO_PERIOD"/>
+        <property name="slNo" column="SLNO"/>
+                
+    </result-map>
+    <mapped-statement name="getSelectGLLimitTO" result-map="getGLLimitTOResult" >
+        SELECT * FROM GL_LIMIT 
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED')) AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS NOT  IN  ( 'REJECTED'))
+        AND AC_HD_ID=#AC_HD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getEditListForGLLimit" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT AC_HD_ID,BRANCH_GROUP  FROM GL_LIMIT 
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED')) AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS NOT  IN  ( 'REJECTED'))              
+    </mapped-statement>
+        
+    <mapped-statement name="getDeleteListForGLLimit" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT AC_HD_ID,BRANCH_GROUP  FROM GL_LIMIT 
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED')) AND AUTHORIZE_STATUS IS NULL              
+    </mapped-statement>
+        
+        
+        <!-- This is used to show...the list of Ac_Hd_Id's of particular Group of Bank in 
+        a table in the UI of GLLimitUI -->
+        
+       
+    <mapped-statement name="viewActHeadDetails" result-class="java.util.LinkedHashMap" >
+        SELECT AC_HD_ID, NULL AS "LIMIT_AMT", NULL AS "ANNUAL_LIMIT_AMT", NULL AS "OVER_DRAW_PER" FROM BRANCH_GL 
+        <!--WHERE GROUP_ID = #GROUP_ID# AND  AC_HD_ID NOT IN (SELECT AC_HD_ID FROM GL_LIMIT
+        WHERE BRANCH_GROUP = #GROUP_ID# AND STATUS NOT IN ('DELETED')) -->
+        WHERE GROUP_ID = #GROUP_ID:VARCHAR# AND   NOT EXISTS (SELECT AC_HD_ID FROM GL_LIMIT
+        WHERE BRANCH_GROUP = #GROUP_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_GL.AC_HD_ID=AC_HD_ID) 
+        AND STATUS NOT IN ('DELETED')
+        UNION
+        SELECT AC_HD_ID, LIMIT_AMT, ANNUAL_LIMIT_AMT, OVER_DRAW_PER FROM GL_LIMIT 
+        WHERE BRANCH_GROUP =#GROUP_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND FROM_PERIOD!=NULL
+        AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS NOT  IN  ( 'REJECTED'))
+    </mapped-statement>
+        
+        <!-- This is used to show list of Group_Id's in GL_LIMIT table when the user clicks the
+        edit button in the GLLimitUI -->
+    <mapped-statement name="viewGLLimit" result-class="java.util.LinkedHashMap" >
+        Select DISTINCT G.BRANCH_GROUP AS "GROUP_ID", B.GROUP_DESC  FROM BRANCH_GL_GROUP B, GL_LIMIT G
+        Where (G.STATUS IS NULL OR G.STATUS  NOT IN ('DELETED')) and (G.AUTHORIZE_STATUS IS NULL OR G.AUTHORIZE_STATUS NOT  IN  ( 'REJECTED')) AND B.GROUP_ID = G.BRANCH_GROUP
+    </mapped-statement>
+        
+        <!-- This query is used to show the list of Group_Id and Group_Desc 
+        when the user clicks the new button -->
+    <mapped-statement name="viewBranchGLGroup" result-class="java.util.LinkedHashMap" >
+        Select GROUP_ID,GROUP_DESC FROM BRANCH_GL_GROUP 
+        Where STATUS  NOT IN ('DELETED') and AUTHORIZE_STATUS IN ('AUTHORIZED')
+                <!-- AND  
+                NOT EXISTS(SELECT BRANCH_GROUP FROM GL_LIMIT WHERE STATUS NOT IN ('DELETED') 
+                AND BRANCH_GROUP=BRANCH_GL_GROUP.GROUP_ID)-->
+    </mapped-statement>
+        
+         <!-- ======================================Autorization==============================================  -->        
+
+
+    <dynamic-mapped-statement name="getGLLimitAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_GROUP AS "GROUP_ID", AC_HD_ID, LIMIT_AMT, STATUS_BY FROM GL_LIMIT GL
+        WHERE STATUS!='DELETED' 
+        AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL)
+        AND STATUS_BY != #USER_ID:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = GL.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY BRANCH_GROUP
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authorizeGLLimit" result-class="java.util.HashMap">
+        UPDATE GL_LIMIT SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE BRANCH_GROUP = #GROUP_ID:VARCHAR# 
+        AND AC_HD_ID = #AC_HD_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND SLNO=#SLNO:NUMBER# and STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+        
+    <mapped-statement name="getMaxSlNo" result-class="java.util.HashMap" >
+        SELECT MAX(SLNO) AS SLNO FROM GL_LIMIT 
+        WHERE (STATUS IS NULL OR STATUS NOT IN ('DELETED')) AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS NOT  IN  ( 'REJECTED'))
+        AND AC_HD_ID=#AC_HD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="DeleteGlLimit" result-class="java.util.HashMap" >
+        UPDATE GL_LIMIT SET 
+        STATUS = 'DELETED', 
+        STATUS_BY = #USER:VARCHAR#, 
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL) 
+        WHERE  AC_HD_ID = #AC_HD_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND SLNO=#SLNO:NUMBER# AND AUTHORIZE_STATUS IS NULL 
+    </mapped-statement>
+        
+        
+
+</sql-map>

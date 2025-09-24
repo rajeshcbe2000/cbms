@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BlockedListTOMap">
+
+	<!-- Use BlockedListTo object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBlockedListTO" inline-parameters="true">
+        INSERT INTO BLOCK_LIST
+        (BLOCK_ID, BLOCKED_NAME, BUSINESS_ADDR, CUSTOMER_TYPE, FRAUD_STATUS, FRAUD_CLASSIFICATION, REMARKS, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #blockId:VARCHAR#, #blockedName:VARCHAR#, #businessAddr:VARCHAR#, #customerType:VARCHAR#, #fraudStatus:VARCHAR#, #fraudClassification:VARCHAR#, #remarks:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use BlockedListTo object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBlockedListTO" inline-parameters="true">
+        UPDATE BLOCK_LIST SET 
+        BLOCK_ID = #blockId:VARCHAR#,
+        BLOCKED_NAME = #blockedName:VARCHAR#,
+        BUSINESS_ADDR = #businessAddr:VARCHAR#,
+        CUSTOMER_TYPE = #customerType:VARCHAR#,
+        FRAUD_STATUS = #fraudStatus:VARCHAR#,
+        FRAUD_CLASSIFICATION = #fraudClassification:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE BLOCK_ID = #blockId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use BlockedListTo object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBlockedListTO" inline-parameters="true">
+        UPDATE BLOCK_LIST SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = null
+        WHERE BLOCK_ID = #blockId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BlockedListTo object (JavaBean) properties -->
+    <result-map name="getBlockedListToResult" class="com.see.truetransact.transferobject.sysadmin.blockedlist.BlockedListTO">
+        <property name="blockId" column="BLOCK_ID"/>
+        <property name="blockedName" column="BLOCKED_NAME"/>
+        <property name="businessAddr" column="BUSINESS_ADDR"/>
+        <property name="customerType" column="CUSTOMER_TYPE"/>
+        <property name="fraudStatus" column="FRAUD_STATUS"/>
+        <property name="fraudClassification" column="FRAUD_CLASSIFICATION"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBlockedListTO" result-map="getBlockedListToResult" >
+        SELECT * FROM BLOCK_LIST 
+        WHERE <!--STATUS NOT IN ('DELETED') AND--> BLOCK_ID=#value#
+    </mapped-statement>
+    <mapped-statement name="getSelectBlockedList" result-class="java.util.LinkedHashMap" >
+        SELECT BLOCK_ID, BLOCKED_NAME, CUSTOMER_TYPE, FRAUD_STATUS FROM BLOCK_LIST 
+        WHERE STATUS NOT IN ('DELETED')
+    </mapped-statement>
+             <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getBlockListAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BLOCK_ID, BLOCKED_NAME, CUSTOMER_TYPE, FRAUD_STATUS FROM BLOCK_LIST BL
+        WHERE <!--( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND--> STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = BL.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  BLOCK_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeBlockList" result-class="java.util.HashMap">
+        UPDATE BLOCK_LIST  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  BLOCK_ID = #BLOCK_ID:VARCHAR# 
+    </mapped-statement>  
+
+</sql-map>

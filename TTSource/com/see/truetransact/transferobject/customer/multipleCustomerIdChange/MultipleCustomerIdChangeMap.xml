@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MultipleCustomerIdChangeMap">
+
+    <!-- Use CustIDChangeTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertMultipleCustTO" inline-parameters="true">
+        INSERT INTO MULTIPLE_CUST_MERGE
+        (MULTIPLE_BATCH_ID, CUSTOMER_NAME, SEARCHFIELD,MEMBER_NUM,ADDRESS,PHONE_NO, CARE_OF_NAME, CUST_ID, EMP_NO, UNIQUE_ID, PANNO,PASSPORTNO,DOB,CUST_BRANCH,CUST_BRANCH_NAME,ACCOUNTNO,NEW_CUST_ID,
+        NEW_CUST_NAME,INIT_BRANCH,STATUS,STATUS_DT,STATUS_BY) VALUES (
+        #multipleBatchId:VARCHAR#,#txtCustomerName:VARCHAR#,#cboSearchCriteria:VARCHAR#,#txtMemberNo:VARCHAR#,#txtAddress:VARCHAR#,#txtPhoneNumber:VARCHAR#,
+        #txtCareOfName:VARCHAR#,#txtCustomerID:VARCHAR#,#txtEmployeeNo:VARCHAR#,#txtUniqueIdNo:VARCHAR#,#txtPanNO:VARCHAR#,#txtPassPortNo:VARCHAR#,
+        cast(#tdtDtOfBirth# as timestamp without time zone),#txtBranchId:VARCHAR#,#lblBranchName:VARCHAR#,#txtAccountNumber:VARCHAR#,#txtNewCustomerId:VARCHAR#, #lblNewCustName:VARCHAR#,
+        #initiated_branch:VARCHAR# ,#status:VARCHAR# ,#statusDt#,#statusBy:VARCHAR#)
+    </mapped-statement>
+
+    <!-- Use CustIDChangeTO object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateMultipleCustChangeTO" inline-parameters="true">
+        UPDATE MULTIPLE_CUST_MERGE SET 
+        NEW_CUST_ID =#txtNewCustomerId:VARCHAR#,
+        NEW_CUST_NAME=#lblNewCustName:VARCHAR#, 	
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,                
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE MULTIPLE_BATCH_ID = #multipleBatchId:VARCHAR#               
+    </mapped-statement>
+
+    <!-- Use CustIDChangeTO object (JavaBean) properties as parameters for delete. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteMultipleCustChangeTO" inline-parameters="true">
+        UPDATE MULTIPLE_CUST_MERGE SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE MULTIPLE_BATCH_ID = #multipleBatchId:VARCHAR#  
+    </mapped-statement>
+        
+    <mapped-statement name="deleteCustIDTO" inline-parameters="true">
+        UPDATE CUST_ID_CHANGE SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE MULTIPLE_BATCH_ID = #multipleBatchId:VARCHAR#  
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getMergeCustIDChangeTOResult" class="com.see.truetransact.transferobject.customer.multipleCustomerIdChange.MultipleCustomerIdChangeTO">
+        <property name="multipleBatchId" column="MULTIPLE_BATCH_ID"/>
+        <property name="txtCustomerName" column="CUSTOMER_NAME"/>
+        <property name="cboSearchCriteria" column="SEARCHFIELD"/>
+        <property name="txtMemberNo" column="MEMBER_NUM"/>
+        <property name="txtAddress" column="ADDRESS"/>
+        <property name="txtPhoneNumber" column="PHONE_NO"/>
+        <property name="txtCareOfName" column="CARE_OF_NAME"/>
+        <property name="txtCustomerID" column="CUST_ID"/>
+        <property name="txtEmployeeNo" column="EMP_NO"/>
+        <property name="txtUniqueIdNo" column="UNIQUE_ID"/>
+        <property name="txtPanNO" column="PANNO"/>
+        <property name="txtPassPortNo" column="PASSPORTNO"/>
+        <property name="tdtDtOfBirth" column="DOB"/>
+        <property name="txtBranchId" column="CUST_BRANCH"/>
+        <property name="lblBranchName" column="CUST_BRANCH_NAME"/>
+        <property name="txtAccountNumber" column="ACCOUNTNO"/>
+        <property name="txtNewCustomerId" column="NEW_CUST_ID"/>
+        <property name="lblNewCustName" column="NEW_CUST_NAME"/>
+        <property name="initiated_branch" column="INIT_BRANCH"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>                
+        <property name="authstatus" column="AUTH_STATUS"/>
+        <property name="authBy" column="AUTH_BY"/>
+        <property name="authDate" column="AUTH_DATE"/>              
+    </result-map>
+    <mapped-statement name="getMultipleCustIDChangeTOResult" result-map="getMergeCustIDChangeTOResult" >
+        SELECT * FROM MULTIPLE_CUST_MERGE WHERE MULTIPLE_BATCH_ID = #BATCH_ID# AND INIT_BRANCH = #BRANCH_CODE#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectMultipleAccountsForEdit" result-class="java.util.LinkedHashMap">
+        SELECT MULTIPLE_BATCH_ID BATCH_ID,INIT_BRANCH BRANCH_CODE ,STATUS,STATUS_BY FROM MULTIPLE_CUST_MERGE MC WHERE 
+        STATUS!='DELETED' AND AUTH_STATUS IS NULL AND INIT_BRANCH=#INIT_BRANCH#
+        <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="AUTHORIZE_MODE">
+                MC.STATUS_BY != #USER_ID#
+                AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                FROM USER_MASTER UM, ROLE_MASTER RM 
+                WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = MC.STATUS_BY)
+            </isPropertyAvailable>
+        </dynamic>
+        ORDER BY BATCH_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectMultipleAccountsForEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT MULTIPLE_BATCH_ID BATCH_ID,INIT_BRANCH BRANCH_CODE ,STATUS,STATUS_BY FROM MULTIPLE_CUST_MERGE MC WHERE 
+        STATUS!='DELETED' AND (AUTH_STATUS IS NULL OR AUTH_STATUS='AUTHORIZED') AND INIT_BRANCH=#INIT_BRANCH#           
+        ORDER BY BATCH_ID
+    </mapped-statement>
+      
+    <mapped-statement name="getMultipleAccoutDetails" result-class="java.util.LinkedHashMap">
+        SELECT PROD_TYPE,PROD_ID,ACT_NUM,OLD_CUST_ID,ACT_NAME,NEW_CUST_ID,ACT_STATUS FROM CUST_ID_CHANGE WHERE MULTIPLE_BATCH_ID =#BATCH_ID# AND STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeMultipleCustIDChange" result-class="java.util.HashMap">
+        UPDATE MULTIPLE_CUST_MERGE SET AUTH_STATUS=#STATUS#,AUTH_BY=#AUTH_BY#,AUTH_DATE=#AUTH_DT#
+        WHERE MULTIPLE_BATCH_ID=#MULTIPLE_BATCH_ID# AND INIT_BRANCH=#BRANCH_CODE# AND AUTH_STATUS IS NULL AND STATUS!='DELETED'
+    </mapped-statement> 
+        
+    <mapped-statement name="authCustIDChangeDetails" result-class="java.util.HashMap">
+        UPDATE CUST_ID_CHANGE SET AUTHORIZATION_STATUS=#STATUS#, AUTHORIZED_BY=#AUTH_BY#,AUTHORIZED_DT=#AUTH_DT#
+        WHERE  MULTIPLE_BATCH_ID=#MULTIPLE_BATCH_ID# AND AUTHORIZATION_STATUS IS NULL AND STATUS!='DELETED'
+    </mapped-statement>  
+        
+    <dynamic-mapped-statement name="checkPendingAuthorizeAccts" result-class="java.util.HashMap">
+        SELECT * FROM CUST_ID_CHANGE WHERE MULTIPLE_BATCH_ID IS NOT NULL AND PROD_TYPE=#PROD_TYPE# AND PROD_ID=#PROD_ID# AND ACT_NUM=#ACT_NUM#
+        AND STATUS!='DELETED'  AND AUTHORIZATION_STATUS IS NULL             
+        <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="MULTIPLE_BATCH_ID">
+                MULTIPLE_BATCH_ID!=#MULTIPLE_BATCH_ID# 
+            </isPropertyAvailable>
+        </dynamic>                       
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="updateLockerCust" result-class="java.util.HashMap">
+        UPDATE LOCKER_MASTER SET CUST_ID=#NEW_CUST_ID# WHERE LOCKER_NUM=#ACT_NUM# AND CUST_ID=#OLD_CUST_ID# AND PROD_ID=#PROD_ID#
+    </mapped-statement>
+            
+</sql-map>

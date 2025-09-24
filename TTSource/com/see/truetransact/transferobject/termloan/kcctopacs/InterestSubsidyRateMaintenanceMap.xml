@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InterestSubsidyRateMaintenanceMap">
+            	                
+    <mapped-statement name="insertSubsidyInterestDetailsTO" inline-parameters="true">
+        INSERT INTO SUBSIDY_ROI_GROUP_TYPE_RATE
+        (ROI_GROUP_ID,INSTITUTION_NAME,REF_NO,RECEIVED_DATE,ROI_DATE,ROI_END_DATE,SUBSIDY_OR_SUBVENTION,ROI,TOTAL_ROI,CUST_ROI,REMARKS,STATUS,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,
+        CREATE_DT,MISC_INT)
+        VALUES(#roiGroupId:VARCHAR#,#instituteName:VARCHAR#,#refno:VARCHAR#,#receivedDate:VARCHAR#,#roiDate:DATE#,#roiEndDate:DATE#,#subsidyORsubvention:VARCHAR#,
+        #roi:VARCHAR#,#totalroi:VARCHAR#,#custroi:VARCHAR#,#remarks:VARCHAR#,#status:VARCHAR#,#authorizedStatus:VARCHAR#,#authorizedBy:VARCHAR#,#authorizedDt:DATE#,
+        #createDt:DATE#,#miscInt:VARCHAR#)  
+    </mapped-statement>
+                
+    <mapped-statement name="getSubsidyRateDetailsEdit" result-class="java.util.LinkedHashMap" >
+        SELECT ROI_GROUP_ID,ROI_GROUP_NAME,PRODUCT_TYPE FROM SUBSIDY_ROI_GROUP WHERE STATUS!='DELETED' AND 
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS='AUTHORIZED') ORDER BY ROI_GROUP_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getSubsidyRateDetailsDelete" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT SRG.ROI_GROUP_ID,SRG.ROI_GROUP_NAME,SRG.PRODUCT_TYPE FROM SUBSIDY_ROI_GROUP SRG,SUBSIDY_ROI_GROUP_TYPE_RATE SRGTR
+        WHERE SRG.STATUS!='DELETED' AND SRGTR.STATUS!='DELETED' AND SRG.AUTHORIZE_STATUS IS NULL AND SRGTR.AUTHORIZE_STATUS IS NULL AND SRG.ROI_GROUP_ID=SRGTR.ROI_GROUP_ID  ORDER BY ROI_GROUP_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSubsidyRoiTypeRateDetailsTO" result-map="getInterestSubsidyinterestRateTOResult" >
+        SELECT * FROM SUBSIDY_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR# AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS='AUTHORIZED') ORDER BY ROI_DATE
+    </mapped-statement>
+        
+    <mapped-statement name="getSubsidyRoiDetailsTO" result-map="getSubsidyGroupTOResult" >
+        SELECT * FROM SUBSIDY_ROI_GROUP WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR# 	
+    </mapped-statement>
+        
+    <mapped-statement name="getRoiDetailsOnly" result-class="java.util.HashMap" >
+        SELECT TOTAL_ROI,CUST_ROI,MISC_INT FROM SUBSIDY_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR#	
+    </mapped-statement>
+                        
+    <mapped-statement name="getRoiDetails" result-class="java.util.HashMap" >
+        SELECT CUST_ROI,TOTAL_ROI,MISC_INT FROM SUBSIDY_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR#
+    </mapped-statement>               
+                        
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to InterestMaintenanceRateTO object (JavaBean) properties -->
+    <result-map name="getInterestSubsidyinterestRateTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.InterestSubsidyRateMaintenanceTypeTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="instituteName" column="INSTITUTION_NAME"/>
+        <property name="refno" column="REF_NO"/>
+        <property name="receivedDate" column="RECEIVED_DATE"/>
+        <property name="roiDate" column="ROI_DATE"/>				
+        <property name="roiEndDate" column="ROI_END_DATE"/>
+        <property name="subsidyORsubvention" column="SUBSIDY_OR_SUBVENTION"/>
+        <property name="roi" column="ROI"/>
+        <property name="totalroi" column="TOTAL_ROI"/>
+        <property name="custroi" column="CUST_ROI"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZE_BY"/>
+        <property name="authorizedDt" column="AUTHORIZE_DT"/>                
+        <property name="createDt" column="CREATE_DT"/> 
+        <property name="miscInt" column="MISC_INT"/>        
+    </result-map>
+                
+    <mapped-statement name="insertSubsidyGroupDetailsTO" inline-parameters="true">
+        INSERT INTO SUBSIDY_ROI_GROUP
+        (ROI_GROUP_ID,ROI_GROUP_NAME,STATUS,CREATED_BY,CREATED_DT,STATUS_BY,STATUS_DT,PRODUCT_TYPE,INT_TYPE)
+        VALUES(#roiGroupId:VARCHAR#,#roiGroupName:VARCHAR#,#status:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#statusBy:DATE#,#statusDt:VARCHAR#,
+        #productType:VARCHAR#,#intType:VARCHAR#)
+    </mapped-statement>
+        
+    <result-map name="getSubsidyGroupTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.InterestSubsidyRateMaintenanceGroupTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="roiGroupName" column="ROI_GROUP_NAME"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>				
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="productType" column="PRODUCT_TYPE"/>  
+        <property name="intType" column="INT_TYPE"/>  
+    </result-map>
+                
+    <mapped-statement name="insertSubsidyProductIdDetailsTO" inline-parameters="true">
+        INSERT INTO SUBSIDY_ROI_GROUP_PROD
+        (ROI_GROUP_ID,PROD_ID,STATUS)
+        VALUES(#roiGroupId:VARCHAR#,#prodId:VARCHAR#,#status:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateSubsidyGroupDetailsTO" inline-parameters="true">
+        UPDATE SUBSIDY_ROI_GROUP SET          
+        ROI_GROUP_ID = #roiGroupId:VARCHAR#,                
+        ROI_GROUP_NAME = #roiGroupName:VARCHAR#,
+        STATUS = #status:VARCHAR#,                 
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,         
+        PRODUCT_TYPE = #productType:VARCHAR#,
+        INT_TYPE = #intType:VARCHAR#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+        
+        
+    <mapped-statement name="deleteSubsidyGroupDetailsTO" inline-parameters="true">
+        UPDATE SUBSIDY_ROI_GROUP SET        
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#        
+    </mapped-statement>
+                
+    <mapped-statement name="authorizeSubsidyGroupDetails" result-class="java.util.HashMap">         
+        UPDATE SUBSIDY_ROI_GROUP SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZE_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND ROI_GROUP_ID =#ROI_GROUP_ID:VARCHAR# AND AUTHORIZE_STATUS IS NULL       
+    </mapped-statement>  
+        
+    <mapped-statement name="getSubsidyGroupDetailsAuthorize" result-class="java.util.LinkedHashMap">        
+        SELECT ROI_GROUP_ID,ROI_GROUP_NAME,PRODUCT_TYPE,STATUS_BY FROM SUBSIDY_ROI_GROUP N WHERE STATUS!='DELETED' AND
+        AUTHORIZE_STATUS IS NULL AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = N.STATUS_BY)
+        AND STATUS_BY!= #USER_ID:VARCHAR#         
+        ORDER BY  N.ROI_GROUP_ID                    
+    </mapped-statement>    
+                
+    <result-map name="getSubsidyProdTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.InterestSubsidyRateMaintenanceProdTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="status" column="STATUS"/>		                
+    </result-map>
+        
+    <mapped-statement name="insertSubsidyCategoryDetailsTO" inline-parameters="true">
+        INSERT INTO SUBSIDY_ROI_GROUP_CAT
+        (ROI_GROUP_ID,CATEGORY_ID,STATUS)
+        VALUES(#roiGroupId:VARCHAR#,#categoryId:VARCHAR#,#status:VARCHAR#)
+    </mapped-statement>
+        
+    <result-map name="getSubsidyCatTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.InterestSubsidyRateMaintenanceCategotyTO">
+        <property name="roiGroupId" column="ROI_GROUP_ID"/>
+        <property name="categoryId" column="CATEGORY_ID"/>
+        <property name="status" column="STATUS"/>		                
+    </result-map>  
+        
+    <mapped-statement name="deleteSubsidyIntTableData" inline-parameters="true">
+        DELETE  SUBSIDY_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID=#roiGroupId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteIntTableData" inline-parameters="true">
+        UPDATE SUBSIDY_ROI_GROUP_TYPE_RATE SET        
+        STATUS = #status:VARCHAR#        
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#    
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeSubsidyIntTabelDetails" result-class="java.util.HashMap">         
+        UPDATE SUBSIDY_ROI_GROUP_TYPE_RATE SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED'  AND AUTHORIZE_STATUS IS NULL AND ROI_GROUP_ID =#ROI_GROUP_ID:VARCHAR#      
+    </mapped-statement>          
+        
+    <mapped-statement name="getSubsidycategoryDetailsTO" result-map="getSubsidyCatTOResult" >
+        SELECT * FROM SUBSIDY_ROI_GROUP_CAT WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR#	
+    </mapped-statement>
+                
+    <mapped-statement name="deleteCategoryTableData" inline-parameters="true">
+        UPDATE SUBSIDY_ROI_GROUP_CAT SET        
+        STATUS = #status:VARCHAR#        
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#    
+    </mapped-statement>
+        
+    <mapped-statement name="deleteCatTableData" inline-parameters="true">
+        DELETE  SUBSIDY_ROI_GROUP_CAT WHERE ROI_GROUP_ID=#roiGroupId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteProductTableData" inline-parameters="true">
+        DELETE  SUBSIDY_ROI_GROUP_PROD WHERE ROI_GROUP_ID=#roiGroupId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteProdData" inline-parameters="true">
+        UPDATE SUBSIDY_ROI_GROUP_PROD SET        
+        STATUS = #status:VARCHAR#        
+        WHERE ROI_GROUP_ID = #roiGroupId:VARCHAR#    
+    </mapped-statement>
+    
+    <mapped-statement name="getSubsidyProductDetailsTO" result-map="getSubsidyProdTOResult" >
+        SELECT * FROM SUBSIDY_ROI_GROUP_PROD WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR#	
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthListForSubsidyRate" result-class="java.util.HashMap">
+        SELECT ROI_GROUP_ID,INSTITUTION_NAME,AUTHORIZE_STATUS FROM SUBSIDY_ROI_GROUP_TYPE_RATE WHERE ROI_GROUP_ID=#ROI_GROUP_ID:VARCHAR#
+        AND AUTHORIZE_STATUS='AUTHORIZED'       
+    </mapped-statement>
+        
+</sql-map>

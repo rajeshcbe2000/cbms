@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TerminalMap">
+
+	<!-- Use TerminalTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTerminalTO" inline-parameters="true">
+        INSERT INTO TERMINAL_MASTER
+        (TERMINAL_NAME, IP_ADDR, MACHINE_NAME, BRANCH_CODE, TERMINAL_DESCRIPTION, TERMINAL_ID, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT
+        ) VALUES (
+        #terminalName:VARCHAR#, #ipAddr:VARCHAR#, #machineName:VARCHAR#, #branchCode:VARCHAR#, #terminalDescription:VARCHAR#, #terminalId:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#)
+    </mapped-statement>
+        <!-- Use TerminalTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->	
+    <mapped-statement name="updateTerminalMaster" inline-parameters="true">
+        UPDATE TERMINAL_MASTER SET 
+        TERMINAL_NAME = #terminalName:VARCHAR#,
+        IP_ADDR = #ipAddr:VARCHAR#,
+        MACHINE_NAME = #machineName:VARCHAR#,
+        TERMINAL_DESCRIPTION = #terminalDescription:VARCHAR#,
+<!--		TERMINAL_ID = #terminalId:VARCHAR#,
+		BRANCH_CODE = #branchCode:VARCHAR#, -->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+<!--		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE# -->
+        WHERE TERMINAL_ID = #terminalId:VARCHAR#
+    </mapped-statement>
+       <!-- Use TerminalTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="DeleteTerminalMaster" inline-parameters="true">
+        UPDATE TERMINAL_MASTER SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE TERMINAL_ID = #terminalId#
+    </mapped-statement>
+        
+    <result-map name="getTerminalTOResult" class="com.see.truetransact.transferobject.sysadmin.terminal.TerminalTO">
+        <property name="terminalName" column="TERMINAL_NAME"/>
+        <property name="ipAddr" column="IP_ADDR"/>
+        <property name="machineName" column="MACHINE_NAME"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="terminalDescription" column="TERMINAL_DESCRIPTION"/>
+        <property name="terminalId" column="TERMINAL_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="SelectTerminal" result-map="getTerminalTOResult" >
+        SELECT * FROM TERMINAL_MASTER 
+        WHERE TERMINAL_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+        
+         <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TerminalTO object (JavaBean) properties -->                 
+    <dynamic-mapped-statement name="SelectTerminalMaster" result-class="java.util.HashMap" >
+        SELECT TERMINAL_ID ,TERMINAL_NAME,IP_ADDR,MACHINE_NAME,BRANCH_CODE,
+        TERMINAL_DESCRIPTION FROM TERMINAL_MASTER 
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+        AND (STATUS IS NULL OR STATUS != 'DELETED')
+        AND ( (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED')) OR (AUTHORIZE_STATUS IS NULL) )
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="TERMINAL ID">
+                    TERMINAL_ID = #TERMINAL ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+    </dynamic-mapped-statement>   
+        
+        
+    <mapped-statement name="viewTerminalMaster" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT BM.BRANCH_NAME, TM.BRANCH_CODE AS "BRANCH CODE"
+        FROM BRANCH_MASTER BM, TERMINAL_MASTER TM 
+        WHERE (TM.STATUS IS NULL OR TM.STATUS != 'DELETED') 
+        AND (TM.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR TM.AUTHORIZE_STATUS IS NULL)
+        AND TM.BRANCH_CODE = BM.BRANCH_CODE
+    </mapped-statement>
+    <result-map name="getBranchDetailsResultTUI" class="java.util.HashMap">
+        <property name="branchCode" column="BRANCH CODE" />
+        <property name="branchName" column="BRANCH NAME" />
+        <property name="street" column="STREET" />
+    </result-map>
+    <mapped-statement name="getBranchDetailsTUI" result-map="getBranchDetailsResultTUI" >
+        SELECT BRANCH_CODE,BRANCH_NAME,STREET  
+        FROM BRANCH_MASTER 
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+               <!-- AND AUTHORIZE_STATUS_2 = 'AUTHORIZED'-->
+    </mapped-statement>
+        
+        
+        <!-- ======================================Autorization==============================================  -->        
+
+
+    <dynamic-mapped-statement name="getTerminalMasterAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_CODE AS "Branch Code", TERMINAL_ID AS "Terminal ID", 
+        TERMINAL_NAME AS "Terminal Name", TERMINAL_DESCRIPTION AS "Terminal Descrption", 
+        IP_ADDR AS "IP Address", MACHINE_NAME AS "Machine Name",
+        AUTHORIZE_STATUS AS "Exception Status"
+        FROM TERMINAL_MASTER TM
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND STATUS_BY != #USER_ID:VARCHAR#  AND STATUS!='DELETED'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TM.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY TERMINAL_ID
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="authorizeTerminalMasterMasterData" result-class="java.util.HashMap">
+        UPDATE TERMINAL_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE TERMINAL_ID = #TERMINAL ID:VARCHAR# 
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+      
+</sql-map>

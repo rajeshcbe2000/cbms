@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DeathMarkingTOMap">
+
+	<!-- Use DeathMarkingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAccountDeathMarkingTO" inline-parameters="true">
+        INSERT INTO ACT_DEATH_MARKING
+        (ACT_NUM, PRODUCT_ID, DEATH_DT, REPORTED_ON, REPORTED_BY, RELATIONSHIP, REFERENCE_NO, REMARKS, STATUS, CREATED_BY, CREATED_DT
+        ) VALUES (
+        #actNum:VARCHAR#, #productId:VARCHAR#, #deathDt:DATE#, #reportedOn:DATE#, #reportedBy:VARCHAR#, #relationship:VARCHAR#, #referenceNo:VARCHAR#, #remarks:VARCHAR#, #status:VARCHAR#, #createdBy:VARCHAR#, TODAY_DT)
+    </mapped-statement>
+
+	<!-- Use DeathMarkingTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAccountDeathMarkingTO" inline-parameters="true">
+        UPDATE ACT_DEATH_MARKING SET 
+        PRODUCT_ID = #productId:VARCHAR#,
+        DEATH_DT = #deathDt:DATE#,
+        REPORTED_ON = #reportedOn:DATE#,
+        REPORTED_BY = #reportedBy:VARCHAR#,
+        RELATIONSHIP = #relationship:VARCHAR#,
+        REFERENCE_NO = #referenceNo:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use DeathMarkingTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAccountDeathMarkingTO" inline-parameters="true">
+        UPDATE ACT_DEATH_MARKING SET
+        STATUS = 'DELETED',
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = TODAY_DT
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to DeathMarkingTO object (JavaBean) properties -->
+    <result-map name="getAccountDeathMarkingTOResult" class="com.see.truetransact.transferobject.operativeaccount.deathmarking.AccountDeathMarkingTO">
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="productId" column="PRODUCT_ID"/>
+        <property name="deathDt" column="DEATH_DT"/>
+        <property name="reportedOn" column="REPORTED_ON"/>
+        <property name="reportedBy" column="REPORTED_BY"/>
+        <property name="relationship" column="RELATIONSHIP"/>
+        <property name="referenceNo" column="REFERENCE_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectAccountDeathMarkingTO" result-map="getAccountDeathMarkingTOResult" >
+        SELECT * FROM ACT_DEATH_MARKING 
+        WHERE ACT_NUM = #value:VARCHAR#
+    </mapped-statement>
+
+        <!-- Statement used for execute the query after selecing a row in the viewall screen and populate the screen -->
+    <dynamic-mapped-statement name="getSelectAccountDeathMarkingMap" result-class="java.util.LinkedHashMap" >
+        SELECT  ADM.ACT_NUM, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", ADM.REPORTED_ON  FROM ACT_DEATH_MARKING ADM, CUSTOMER CUST, ACT_MASTER AM
+        WHERE ADM.STATUS != 'DELETED' AND ADM.ACT_NUM = AM.ACT_NUM AND AM.CUST_ID = CUST.CUST_ID AND ADM.AUTHORIZE_STATUS IS NULL
+        <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(ADM.ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER NAME">
+                    UPPER(get_cust_name(CUST.CUST_ID)) LIKE UPPER('%$CUSTOMER NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="REPORTED_ON">
+                    UPPER(ADM.REPORTED_ON) LIKE UPPER('%$REPORTED_ON$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+      
+        <!-- Statement used to fillup the Label Account Head based on the product id -->
+    <mapped-statement name="getAccountHead" result-class="java.util.HashMap">
+        SELECT AC_HD_ID FROM OP_AC_PRODUCT WHERE PROD_Id = #PROD_ID:VARCHAR#
+    </mapped-statement>
+        
+          <!-- This statement is used to execuste the query to fill up  labels with Act_Master details -->
+    <mapped-statement name="getAccountInfo" result-class="java.util.LinkedHashMap">
+        SELECT get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", (SELECT  COUNT(*)  FROM  ACT_NOMINEE_DETAIL WHERE ACT_NUM=#ACT_NUM:VARCHAR# ) AS COUNT, ACT.SETTMT_MODE_ID, ACT.AVAILABLE_BALANCE, ACT.CLEAR_BALANCE, ACT.SHADOW_CREDIT, ACT.SHADOW_DEBIT   FROM ACT_MASTER ACT, CUSTOMER CUST 
+        WHERE ACT.ACT_NUM = #ACT_NUM:VARCHAR# AND CUST.CUST_ID = ACT.CUST_ID
+    </mapped-statement>     
+        
+        <!-- Statement used to execute query to fill up a textfiled with accountnumber based on the product id selected -->       
+    <dynamic-mapped-statement name="selectAccountDetails" result-class="java.util.LinkedHashMap">
+        SELECT ACT.ACT_NUM, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", ACT.SETTMT_MODE_ID
+        FROM ACT_MASTER ACT, CUSTOMER CUST
+        WHERE (ACT.STATUS IS NULL OR ACT.STATUS != 'DELETED')
+        AND (ACT.AUTHORIZATION_STATUS IS NULL OR ACT.AUTHORIZATION_STATUS != 'REJECTED') AND ACT.PROD_ID = #PROD_ID:VARCHAR#
+        AND ACT.CUST_ID = CUST.CUST_ID AND  NOT EXISTS(SELECT ACT_NUM FROM ACT_DEATH_MARKING WHERE (STATUS IS NULL OR STATUS != 'DELETED') AND ACT.ACT_NUM=ACT_NUM) 
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(ACT.ACT_NUM) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER NAME">
+                    UPPER(get_cust_name(CUST.CUST_ID)) LIKE UPPER('%$CUSTOMER NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SETTMT_MODE_ID">
+                    UPPER(ACT.SETTMT_MODE_ID) LIKE UPPER('%$SETTMT_MODE_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+ </dynamic-mapped-statement>
+    
+        <!-- =================================================================================== -->        
+<!--     Authorization Queries -->
+
+    <mapped-statement name="updateActMaster" inline-parameters="true">
+        UPDATE ACT_MASTER SET
+        ACT_STATUS_ID = 'DECEASED'
+        WHERE 
+        ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountDeathMarkingAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  AD.ACT_NUM, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME", AD.REPORTED_ON  FROM ACT_DEATH_MARKING AD, CUSTOMER CUST, ACT_MASTER ACT
+        WHERE (AD.STATUS != 'DELETED' OR AD.STATUS IS NULL)
+        AND (AD.AUTHORIZE_STATUS NOT IN 
+        ('AUTHORIZED', 'REJECTED') OR AD.AUTHORIZE_STATUS IS NULL) AND AD.ACT_NUM=ACT.ACT_NUM AND ACT.CUST_ID = CUST.CUST_ID
+    </mapped-statement>
+
+    <mapped-statement name="authorizeAccountDeathMarking" result-class="java.util.HashMap">
+        UPDATE ACT_DEATH_MARKING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = TODAY_DT
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="rejectAccountDeathMarking" result-class="java.util.HashMap">
+        UPDATE ACT_DEATH_MARKING SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = TODAY_DT
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->
+    
+</sql-map>

@@ -1,0 +1,1766 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="OperativeAccountBatchMap">
+    <mapped-statement name="InsertMinorToMajorTaskCustomer" inline-parameters="true">
+        INSERT INTO CUST_MAJOR_TO_MINOR 
+        (SELECT CUST_ID, BRANCH_CODE, #USER_ID:VARCHAR#, #CURR_DT:DATE# FROM CUSTOMER
+        WHERE ((((SELECT SYS_DATE() FROM DUAL) - DOB)/365) &gt; 18) AND MINOR='Y'
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+    </mapped-statement>    
+
+    <mapped-statement name="Customer.MinorToMajorTaskBatch" inline-parameters="true">
+        UPDATE CUSTOMER
+        SET MINOR = 'N'
+        WHERE ((((SELECT SYS_DATE() FROM DUAL) - DOB)/365) > 18) AND MINOR='Y'
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>    
+
+    <!-- This Mapped Statement is not getting any parameter.-->
+    <dynamic-mapped-statement name="OperativeAccount.newToOperationalBatch" inline-parameters="true">
+        UPDATE ACT_MASTER AM
+        SET ACT_STATUS_ID = 'OPERATIONAL',
+        ACT_STATUS_DT = #TODAY_DT:DATE# 
+        WHERE ACT_NUM IN 
+        (SELECT AC.ACT_NUM FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP
+        WHERE ACT_STATUS_ID = 'NEW' AND
+        (cast(#TODAY_DT# as DATE) - AC.CREATE_DT) &gt;= OP.MIN_PD_NEW AND
+        AC.PROD_ID = OP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AC.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        )
+        AND AM.STATUS != 'DELETED'
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="OperativeAccount.newToOperationalMovementBatch" inline-parameters="true">
+        INSERT INTO OPERATIVE_ACCOUNT_MOVEMENT
+        (SELECT AC.ACT_NUM ,ACT_STATUS_ID ,'OPERATIONAL' ,'BATCH' ,#TODAY_DT:DATE# FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP
+        WHERE ACT_STATUS_ID = 'NEW' AND
+        (cast(#TODAY_DT# as DATE) - AC.CREATE_DT) &gt;= OP.MIN_PD_NEW AND
+        AC.PROD_ID = OP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AC.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                
+        AND AC.STATUS != 'DELETED'
+        AND AC.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        )
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="OperativeAccount.OperationalToDormantBatch" inline-parameters="true">
+        UPDATE ACT_MASTER AM
+        SET ACT_STATUS_ID = 'DORMANT',
+        ACT_STATUS_DT = #TODAY_DT:DATE# 
+        WHERE ACT_NUM IN 
+        (SELECT AC.ACT_NUM FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP
+        WHERE ACT_STATUS_ID IN( 'OPERATIONAL','NEW') AND  <!-- IN_OPERATIVE changed to OPERATIONAL -->
+        (cast(#TODAY_DT# as DATE) - AC.LAST_TRANS_DT) &gt;= OP.MIN_PD_DORMANT AND
+        AC.PROD_ID = OP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AC.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        )
+        AND AM.STATUS != 'DELETED'
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+    </dynamic-mapped-statement>    
+    
+    <dynamic-mapped-statement name="OperativeAccount.OperationalToDormantMovementBatch" inline-parameters="true">
+        INSERT INTO OPERATIVE_ACCOUNT_MOVEMENT
+        (SELECT AC.ACT_NUM ,ACT_STATUS_ID ,'DORMANT' ,'BATCH' ,#TODAY_DT:DATE# FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP
+        WHERE ACT_STATUS_ID  IN( 'OPERATIONAL','NEW') AND
+        (cast(#TODAY_DT# as DATE) - AC.LAST_TRANS_DT) &gt;= OP.MIN_PD_DORMANT AND
+        AC.PROD_ID = OP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AC.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                
+        AND AC.STATUS != 'DELETED'
+        AND AC.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        )
+    </dynamic-mapped-statement>    
+    
+    <mapped-statement name="OA.getAccountsToBeMadeInoperative" result-class="java.util.LinkedHashMap">
+        SELECT AC.ACT_NUM, AVAILABLE_BALANCE, AC.PROD_ID AS PROD_ID, 
+        OAP.AC_HD_ID AS DEBIT_HD, OAAP.INOPT AS CREDIT_HD
+        FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP, OP_AC_PRODUCT OAP, OP_AC_ACHEAD_PARAM OAAP
+        WHERE ACT_STATUS_ID IN( 'OPERATIONAL','NEW','DORMANT') AND  <!-- 'OPERATIONAL' changed to 'DORMANT' -->
+        (cast(#TODAY_DT# as DATE) - AC.LAST_TRANS_DT) &gt;= OP.MIN_PD_INOP AND
+        OAAP.PROD_ID  = AC.PROD_ID AND OAAP.PROD_ID  = OP.PROD_ID AND 
+        OAAP.PROD_ID  = OAP.PROD_ID AND
+        OAP.PROD_ID  = AC.PROD_ID AND OAP.PROD_ID  = OP.PROD_ID AND
+        AC.PROD_ID = OP.PROD_ID AND AC.STATUS != 'DELETED'
+        AND AC.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND AC.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="OA.makeAccountInOperative" inline-parameters="true">
+        UPDATE ACT_MASTER 
+        SET ACT_STATUS_ID = 'IN_OPERATIVE',
+        ACT_STATUS_DT = #TODAY_DT:DATE# 
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="OperativeAccount.DormantToInoperativeMovementBatch" inline-parameters="true">
+        INSERT INTO OPERATIVE_ACCOUNT_MOVEMENT
+        (SELECT AC.ACT_NUM ,ACT_STATUS_ID ,'IN_OPERATIVE' ,'BATCH' ,#TODAY_DT:DATE# FROM ACT_MASTER AC, OP_AC_ACCOUNT_PARAM OP
+        WHERE ACT_STATUS_ID IN( 'OPERATIONAL','NEW','DORMANT') AND  
+        (cast(#TODAY_DT# as DATE) - AC.LAST_TRANS_DT) &gt;= OP.MIN_PD_INOP AND
+        AC.PROD_ID = OP.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AC.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                
+        AND AC.STATUS != 'DELETED'
+        AND AC.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        )
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="OperativeAccount.InOperativeChargesBatch" result-class="java.util.HashMap">
+        SELECT  AM.ACT_NUM, OP.PROD_ID, OPROD.AC_HD_ID, OPROD.BASE_CURRENCY,
+        OP.INOPERATIVE_AC_CHARGE_PD , OP.INOPERATIVE_AC_CHARGES, OPARAM.INOP_AC_CHRG,
+        TO_NUMBER(TO_DATE(TO_CHAR(#TODAY_DT:DATE#, 'DD/MM/YYYY'), 'DD/MM/YYYY') - TO_DATE(TO_CHAR(ACT_STATUS_DT, 'DD/MM/YYYY'), 'DD/MM/YYYY')) DIFF
+        FROM ACT_MASTER AM, OP_AC_CHARGES_PARAM OP, OP_AC_PRODUCT OPROD, OP_AC_ACHEAD_PARAM OPARAM, ACT_CHARGES ACHRG
+        WHERE AM.ACT_STATUS_ID = 'IN_OPERATIVE'
+        AND  AM.PROD_ID = OP.PROD_ID
+        AND OPROD.PROD_ID = OP.PROD_ID
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND OPARAM.PROD_ID = OP.PROD_ID
+        AND (OP.INOPERATIVE_AC_CHARGE_PD &lt; TO_NUMBER(TO_DATE(TO_CHAR(#TODAY_DT:DATE#, 'DD/MM/YYYY'), 'DD/MM/YYYY') - TO_DATE(TO_CHAR(AM.ACT_STATUS_DT, 'DD/MM/YYYY'), 'DD/MM/YYYY')))
+        AND AM.STATUS != 'DELETED'
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND ACHRG.ACT_NUM (+)= AM.ACT_NUM
+        AND (OP.INOPERATIVE_AC_CHARGE_PD &lt; TO_NUMBER(NVL(TO_DATE(TO_CHAR(#TODAY_DT:DATE#, 'DD/MM/YYYY'), 'DD/MM/YYYY') -
+        TO_DATE(TO_CHAR( (SELECT  MAX(CHRG_DT) CHRG_DT FROM ACT_CHARGES WHERE ACT_NUM = AM.ACT_NUM), 'DD/MM/YYYY'), 'DD/MM/YYYY'), 0))
+        OR ACHRG.CHRG_DT IS NULL)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="OperativeAccount.MinBalanceChargesBatch" result-class="java.util.HashMap">
+        (SELECT AP.ACT_NUM, OP.PROD_ID, OPROD.AC_HD_ID, OPROD.BASE_CURRENCY, AP.MIN_ACT_BAL,
+        OC.AMT_NONMAIN_MINBAL_PD, OP.MIN_BAL_W_CHK AS "MIN_BAL",
+        AM.AVAILABLE_BALANCE, AP.CHK_BOOK, OPACPARAM.NONMNT_MIN_CHRG, AM.BRANCH_CODE
+        FROM OP_AC_ACCOUNT_PARAM OP, ACT_PARAM_DETAIL AP, ACT_MASTER AM, OP_AC_CHARGES_PARAM OC,
+        OP_AC_PRODUCT OPROD, OP_AC_ACHEAD_PARAM OPACPARAM
+        WHERE UPPER(AP.NONMAIN_CHRG) = 'Y'
+        AND OC.NONMAIN_MIN_BAL_CHG = 'Y'
+        AND AP.STATUS != 'DELETED'
+        AND OP.MIN_BAL_W_CHK &gt; AM.AVAILABLE_BALANCE
+        AND AM.ACT_NUM = AP.ACT_NUM
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND AM.PROD_ID = OP.PROD_ID
+        AND OC.PROD_ID = OP.PROD_ID
+        AND OPROD.PROD_ID = OP.PROD_ID
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND OPACPARAM.PROD_ID = OP.PROD_ID
+        AND UPPER(AP.CHK_BOOK) = 'Y'
+        AND AP.MIN_ACT_BAL &gt; 0
+        <dynamic>
+            <isParameterPresent>
+                    <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PROD_ID">
+                    OP.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AP.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AP.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    AM.BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=TO_DATE(#NEXT_DATE:DATE#)
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(CAST(#NEXT_DATE:DATE# AS DATE), 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(CAST(#NEXT_DATE:DATE# AS DATE), 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        )
+
+        UNION
+
+        (SELECT AP.ACT_NUM, OP.PROD_ID, OPROD.AC_HD_ID, OPROD.BASE_CURRENCY, AP.MIN_ACT_BAL,
+        OC.AMT_NONMAIN_MINBAL_PD, DECODE(AP.CHK_BOOK, 'Y', OP.MIN_BAL_W_CHK, OP.MIN_BAL_WT_CHK) AS "MIN_BAL",
+        AM.AVAILABLE_BALANCE, AP.CHK_BOOK, OPACPARAM.NONMNT_MIN_CHRG, AM.BRANCH_CODE
+        FROM OP_AC_ACCOUNT_PARAM OP, ACT_PARAM_DETAIL AP, ACT_MASTER AM, OP_AC_CHARGES_PARAM OC,
+        OP_AC_PRODUCT OPROD, OP_AC_ACHEAD_PARAM OPACPARAM
+        WHERE UPPER(AP.NONMAIN_CHRG) = 'Y'
+        AND OC.NONMAIN_MIN_BAL_CHG = 'Y'
+        AND AP.STATUS != 'DELETED'
+        AND DECODE(AP.CHK_BOOK, 'Y', OP.MIN_BAL_W_CHK, OP.MIN_BAL_WT_CHK) &gt; AM.AVAILABLE_BALANCE
+        AND AM.ACT_NUM = AP.ACT_NUM
+        AND AM.PROD_ID = OP.PROD_ID
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND OC.PROD_ID = OP.PROD_ID
+        AND OPROD.PROD_ID = OP.PROD_ID
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND OPACPARAM.PROD_ID = OP.PROD_ID
+        AND UPPER(AP.CHK_BOOK) = 'N'
+        AND AP.MIN_ACT_BAL &gt; 0
+            
+        <dynamic>
+            <isParameterPresent>
+                    <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PROD_ID">
+                    OP.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AP.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AP.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    AM.BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=TO_DATE(#NEXT_DATE:DATE#)
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(CAST(#NEXT_DATE:DATE# AS DATE), 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(CAST(#NEXT_DATE:DATE# AS DATE), 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>                
+        </dynamic>
+        )
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="OperativeAccount.CountActCharges" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS "COUNT"
+        FROM ACT_CHARGES
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+        AND TO_CHAR(CHRG_DT, #FORMAT:VARCHAR#) = TO_CHAR(#TODAY_DT:DATE#, #FORMAT:VARCHAR#)
+        AND CHRG_TYPE = #CHRG_TYPE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="OperativeAccount.CountInwardClearingTrans" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS "ROWS" FROM INWARD_CLEARING
+        WHERE TO_CHAR(INSTRUMENT_DT, 'MM/DD/YYYY') &gt;=  TO_CHAR(#TODAY_DT:DATE#, 'MM/DD/YYYY')
+        AND STATUS != 'DELETED'
+        AND ACCT_NO = #ACT_NUM:VARCHAR#
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>     
+      
+    <mapped-statement name="OperativeAccount.CountCashTrans" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS "ROWS" FROM CASH_TRANS
+        WHERE TO_CHAR(TRANS_DT, 'MM/DD/YYYY') &gt;=  TO_CHAR(#TODAY_DT:DATE#, 'MM/DD/YYYY')
+        AND STATUS != 'DELETED'
+        AND TRANS_TYPE = 'DEBIT'
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>       
+    
+    <mapped-statement name="OperativeAccount.CountTransferTrans" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS "ROWS" FROM TRANSFER_TRANS
+        WHERE TO_CHAR(TRANS_DT, 'MM/DD/YYYY') &gt;=  TO_CHAR(#TODAY_DT:DATE#, 'MM/DD/YYYY')
+        AND STATUS != 'DELETED'
+        AND TRANS_TYPE = 'DEBIT'
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>   
+    
+    <dynamic-mapped-statement name="OperativeAccount.ExcessTransChargesBatch" result-class="java.util.HashMap">
+        SELECT AP.ACT_NUM, AM.PROD_ID, OPROD.AC_HD_ID, OP.FREE_WITHDRAWALS, OP.FREE_WITHDRAWALS_PD,
+        OP.FREE_WITHDRAWAL_TYPE, OP.FREE_WITHDRAWAL_FROM, AM.CREATE_DT,
+        AP.EXCESS_WITHD_CHRG, OPROD.BASE_CURRENCY, EXCESS_FREE_WITHD, AM.BRANCH_CODE
+        FROM ACT_PARAM_DETAIL AP, ACT_MASTER AM, OP_AC_ACCOUNT_PARAM OP, OP_AC_PRODUCT OPROD,
+        OP_AC_ACHEAD_PARAM OAP WHERE OAP.PROD_ID = AM.PROD_ID AND AM.PROD_ID = OP.PROD_ID
+        AND OP.PROD_ID = OAP.PROD_ID AND OPROD.PROD_ID = OAP.PROD_ID AND OPROD.PROD_ID = AM.PROD_ID
+        AND OPROD.PROD_ID = OP.PROD_ID AND
+        NVL(AP.EXCESS_WITHD_CHRG, 0) &gt; 0
+        AND AM.ACT_NUM = AP.ACT_NUM
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND AP.STATUS != 'DELETED' AND AM.ACT_STATUS_ID != 'CLOSED'
+        AND OP.PROD_ID = AM.PROD_ID
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND OPROD.PROD_ID = AM.PROD_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    AM.BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=TO_DATE(#NEXT_DATE:DATE#)
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="OperativeAccount.CountInwardClearingWithdrawls" result-class="java.util.HashMap">
+        SELECT COUNT(*) "ROWS" FROM INWARD_CLEARING
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND ACCT_NO = #ACT_NUM:VARCHAR#
+        AND TO_CHAR(INSTRUMENT_DT, 'YYYY/MM') &gt;=  #S_DATE:VARCHAR#
+        AND TO_CHAR(INSTRUMENT_DT, 'YYYY/MM') &lt;=  #E_DATE:VARCHAR#
+    </mapped-statement>     
+        
+    <mapped-statement name="OperativeAccount.CountCashWithdrawls" result-class="java.util.HashMap">
+        SELECT COUNT(*) "ROWS" FROM CASH_TRANS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND TRANS_TYPE = 'DEBIT'
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        AND TO_CHAR(TRANS_DT, 'YYYY/MM') &gt;=  #S_DATE:VARCHAR#
+        AND TO_CHAR(TRANS_DT, 'YYYY/MM') &lt;=  #E_DATE:VARCHAR#
+    </mapped-statement>     
+ 
+    <mapped-statement name="OperativeAccount.CountTransferWithdrawls" result-class="java.util.HashMap">
+        SELECT COUNT(*) "ROWS" FROM TRANSFER_TRANS
+        WHERE STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND TRANS_TYPE = 'DEBIT'
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        AND STATUS_BY != #USER:VARCHAR#
+        AND TO_CHAR(TRANS_DT, 'YYYY/MM') &gt;=  #S_DATE:VARCHAR#
+        AND TO_CHAR(TRANS_DT, 'YYYY/MM') &lt;=  #E_DATE:VARCHAR#
+    </mapped-statement>    
+    
+    <dynamic-mapped-statement name="OperativeAccount.InOperativeChargesBatchDynamic" result-class="java.util.LinkedHashMap" >
+        SELECT  AM.ACT_NUM, OP.PROD_ID, OPROD.AC_HD_ID, OPROD.BASE_CURRENCY,
+        OP.INOPERATIVE_AC_CHARGE_PD , OP.INOPERATIVE_AC_CHARGES, OPARAM.INOP_AC_CHRG,
+        TO_NUMBER(TO_DATE(TO_CHAR(#TODAY_DT#, 'DD/MM/YYYY'), 'DD/MM/YYYY') - TO_DATE(TO_CHAR(ACT_STATUS_DT, 'DD/MM/YYYY'), 'DD/MM/YYYY')) DIFF
+        FROM ACT_MASTER AM, OP_AC_CHARGES_PARAM OP, OP_AC_PRODUCT OPROD, OP_AC_ACHEAD_PARAM OPARAM
+        WHERE AM.ACT_STATUS_ID = 'IN_OPERATIVE'
+        AND  AM.PROD_ID = OP.PROD_ID
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND OPROD.PROD_ID = OP.PROD_ID
+        AND OPARAM.PROD_ID = OP.PROD_ID
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PROD_ID">
+                    OP.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AM.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AM.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull  property="DATE_FROM">
+                    <isNotNull prepend="AND" property="DATE_TO">
+                        (OP.INOPERATIVE_AC_CHARGE_PD &lt; TO_NUMBER(TO_DATE(TO_CHAR(#DATE_TO#, 'MM/DD/YYYY'), 'MM/DD/YYYY') - TO_DATE(TO_CHAR(#DATE_FROM#, 'MM/DD/YYYY'), 'MM/DD/YYYY')))
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+
+            <isNotParameterPresent>
+               <!-- The test Parameter(s) should be null... -->
+                <isNull prepend="AND" property="DATE_FROM">
+                    (OP.INOPERATIVE_AC_CHARGE_PD &lt; TO_NUMBER(TO_DATE(TO_CHAR(#TODAY_DT#, 'MM/DD/YYYY'), 'MM/DD/YYYY') - TO_DATE(TO_CHAR(AM.ACT_STATUS_DT, 'MM/DD/YYYY'), 'MM/DD/YYYY')))
+                </isNull>
+            </isNotParameterPresent>
+        </dynamic>
+        AND (OP.INOPERATIVE_AC_CHARGE_PD &lt; TO_NUMBER(NVL(TO_DATE(TO_CHAR(#TODAY_DT#, 'MM/DD/YYYY'), 'MM/DD/YYYY') -
+        TO_DATE(TO_CHAR( (SELECT  MAX(CHRG_DT) CHRG_DT 
+        FROM ACT_CHARGES WHERE ACT_NUM = AM.ACT_NUM), 'MM/DD/YYYY'), 'MM/DD/YYYY'), 0)) OR 
+         <!--AM.ACT_NUM NOT IN (SELECT ACT_NUM FROM ACT_CHARGES WHERE 
+         CHRG_TYPE ='IN_OPERATIVE'))-->
+        NOT EXISTS (SELECT ACT_NUM FROM ACT_CHARGES WHERE 
+        CHRG_TYPE ='IN_OPERATIVE' AND AM.ACT_NUM=ACT_NUM))
+    </dynamic-mapped-statement>
+
+    
+    <!-- Queries  -->
+    <!--  CA CHECK  -->
+    <mapped-statement name="CAApprovalCheck" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS RESULT FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE AUTHORIZATION_STATUS IS NULL
+        AND ACT.PROD_ID = PROD.PROD_ID 
+        AND PROD.BEHAVIOR = 'CA'
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!--  SB CHECK  -->
+    <mapped-statement name="SBApprovalCheck" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS RESULT FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE AUTHORIZATION_STATUS IS NULL
+        AND AM.PROD_ID = PROD.PROD_ID 
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.BEHAVIOR = 'SB'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!--  UNCLOSED CLEARING SCHEDULE  -->
+    <mapped-statement name="UnClosedCheck" result-class="java.util.HashMap">
+        SELECT COUNT(*) FROM OUTWARD_TALLY WHERE CLOSING_DT IS NULL
+    </mapped-statement>    
+
+    <!--  CA ACCOUNT WITH 0 BALANCE -->    
+    <mapped-statement name="CAZero" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS RESULT FROM ACT_MASTER ACT, OP_AC_PRODUCT PROD
+        WHERE ACT.PROD_ID = PROD.PROD_ID 
+        AND PROD.BEHAVIOR = 'CA' 
+        AND ACT.ACT_STATUS_ID = 'NEW' AND
+        ACT.AVAILABLE_BALANCE = 0 AND 
+        ACT.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!--  SB ACCOUNT WITH 0 BALANCE -->
+    <mapped-statement name="SBZero" result-class="java.util.HashMap">
+        SELECT COUNT(*) AS RESULT FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE M.PROD_ID = PROD.PROD_ID 
+        AND PROD.BEHAVIOR = 'SB' 
+        AND AM.ACT_STATUS_ID = 'NEW' 
+        AND ACT.AVAILABLE_BALANCE = 0
+        AND AM.STATUS != 'DELETED'
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!--  SB BALANCE CHECK -->
+    <mapped-statement name="SBBalance" result-class="java.util.HashMap">
+        SELECT SUM(AVAILABLE_BALANCE) as RESULT  FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE ACT.PROD_ID = PROD.PROD_ID 
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.BEHAVIOR = 'SB'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!--  CA BALANCE CHECK -->
+    <mapped-statement name="CABalance" result-class="java.util.HashMap">
+        SELECT SUM(AVAILABLE_BALANCE)  AS RESULT FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE AM.PROD_ID = PROD.PROD_ID 
+        AND PROD.BEHAVIOR = 'CA'
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!-- CA INOPERATIVE BALANCE CHECK -->
+    <mapped-statement name="CAInoperatvieBalance" result-class="java.util.HashMap">
+        SELECT SUM(AVAILABLE_BALANCE) AS RESULT  FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE AM.PROD_ID = PROD.PROD_ID 
+        AND PROD.BEHAVIOR = 'CA' 
+        AND AM.ACT_STATUS_ID = 'IN_OPERATIVE'
+        AND AM.STATUS != 'DELETED'
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>    
+
+    <!-- SB INOPERATIVE BALANCE CHECK -->
+    <mapped-statement name="SBInoperativeBalance" result-class="java.util.HashMap">
+        SELECT SUM(AVAILABLE_BALANCE)  AS RESULT FROM ACT_MASTER AM, OP_AC_PRODUCT PROD
+        WHERE AM.PROD_ID = PROD.PROD_ID 
+        AND PROD.BEHAVIOR = 'SB' 
+        AND ACT.ACT_STATUS_ID = 'IN_OPERATIVE'
+        AND AM.STATUS != 'DELETED'
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND PROD.STATUS != 'DELETED'
+        AND PROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="OperativeAccount.InterestPayable" result-class="java.util.HashMap">
+    <!--This query needs to be checked against the screen. Working for batch job... -->   
+      
+        SELECT am.cust_id, am.act_num AS "ACT_NUM", am.prod_id AS "PROD_ID",
+        COALESCE (am.product_amt, 0) AS "AMOUNT", op.appl_cr_int_rate AS "RATE",
+        op.cr_int_calc_freq AS "FREQ", op.cr_int_appl_freq AS "FREQ_A",
+        op.cr_compound AS "COMP_TYPE", op.cr_compound_calc_freq AS "COMP_FREQ",
+        op.cr_int_roundoff AS "ROUNF_OFF", oprod.base_currency AS "CURRENCY",
+        am.category_id,
+        CASE 
+         WHEN ad.last_cr_int_appldt IS NULL THEN  CASE
+        WHEN TO_NUMBER (TO_CHAR (am.create_dt, 'DD')) &lt;= CASE COALESCE(STARTDAY_PROD_CALC,0) WHEN 0 THEN 1  ELSE STARTDAY_PROD_CALC END
+        THEN dATE_TRUNC('month',am.create_dt) - interval '1 DAY'
+        ELSE  (am.create_dt)
+        END
+        ELSE ad.last_cr_int_appldt
+        END
+         AS "START", am.branch_code
+        FROM act_master am,
+        op_ac_intpay_param op,
+        act_param_detail ad,
+        op_ac_product oprod
+        WHERE am.act_num = #ACT_NUM:VARCHAR#
+        AND am.prod_id = op.prod_id
+        AND am.prod_id = oprod.prod_id
+        AND am.act_num = ad.act_num
+        AND am.status != 'DELETED'
+        AND (am.act_status_id NOT IN ('CLOSED'))                        
+        AND am.authorization_status = 'AUTHORIZED'
+        AND op.prod_id = oprod.prod_id <!--AND AM.ACT_NUM NOT IN                       Commented to calculate Interest at the time of A/c closing
+        (SELECT AI.ACT_NUM FROM ACT_INTEREST AI 
+        WHERE AI.ACT_NUM=AM.ACT_NUM AND #TODAY_DT# &gt; (AI.INT_DT - OP.CR_INT_CALC_FREQ))-->
+        AND oprod.status != 'DELETED'
+        AND oprod.authorized_status = 'AUTHORIZED'
+            
+        <dynamic>
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PROD_ID">
+                    OP.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AM.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AM.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <!-- Following entire block commented by Rajesh -->
+            <!--isParameterPresent>
+                <isNotNull  property="DATE_FROM">
+                    <isNotNull prepend="AND" property="DATE_TO">
+                         (ADD_MONTHS(DECODE(AD.LAST_CR_INT_APPLDT,NULL,OP.LAST_INT_APPLDT_CR,AD.LAST_CR_INT_APPLDT), 
+                         (OP.CR_INT_CALC_FREQ/30) ) BETWEEN #DATE_FROM# AND #DATE_TO#)-->
+                        <!--((ADD_MONTHS(AD.LAST_CR_INT_APPLDT, (OP.CR_INT_CALC_FREQ/30)))-->
+                        <!--((OP.LAST_INT_CALCDT_CR + OP.CR_INT_CALC_FREQ) BETWEEN #DATE_FROM# AND #DATE_TO#)-->
+                    <!--/isNotNull>
+                </isNotNull>
+            </isParameterPresent-->
+        </dynamic>
+            
+    </dynamic-mapped-statement>
+    
+
+    <dynamic-mapped-statement name="OperativeAccount.InterestReceivable" result-class="java.util.HashMap">
+    <!--This query needs to be checked against the screen. Working for batch job... -->   
+        SELECT AM.CUST_ID,
+        AM.ACT_NUM AS "ACT_NUM", 
+        AM.PROD_ID AS "PROD_ID", 
+        NVL(AM.PRODUCT_AMT, 0) AS "AMOUNT", 
+        OP.APPL_DEBIT_INT_RATE AS "RATE",
+        OP.DEBIT_INT_CALC_FREQ AS "FREQ", 
+        OP.DEBIT_INT_APPL_FREQ AS "FREQ_A",
+        OP.DEBIT_COMPOUND AS "COMP_TYPE", 
+        OP.DEBIT_COMPINT_CALC_FREQ AS "COMP_FREQ", 
+        OP.DEBIT_INT_ROUNDOFF AS "ROUNF_OFF",
+        OPROD.BASE_CURRENCY AS "CURRENCY",
+        AM.CATEGORY_ID,
+        DECODE(AD.LAST_CR_INT_APPLDT, NULL, AM.CREATE_DT, AD.LAST_CR_INT_APPLDT) AS "START"
+        FROM 
+        ACT_MASTER AM, OP_AC_INTRECV_PARAM OP, ACT_PARAM_DETAIL AD, OP_AC_PRODUCT OPROD
+        WHERE AM.ACT_NUM = #ACT_NUM:VARCHAR# AND
+        AM.PROD_ID =  OP.PROD_ID AND
+        AM.PROD_ID = OPROD.PROD_ID AND
+        AM.ACT_NUM = AD.ACT_NUM AND
+        AM.STATUS != 'DELETED' AND
+        (AM.ACT_STATUS_ID NOT IN ('CLOSED', 'DORMANT')) AND
+        AM.AUTHORIZATION_STATUS = 'AUTHORIZED' AND
+        OP.PROD_ID =OPROD.PROD_ID AND AM.ACT_NUM NOT IN 
+        (SELECT AI.ACT_NUM FROM ACT_INTEREST AI 
+        WHERE AI.ACT_NUM=AM.ACT_NUM AND #TODAY_DT:DATE# &gt; (AI.INT_DT - OP.DEBIT_INT_CALC_FREQ))
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+            
+        <dynamic>
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="PROD_ID">
+                    OP.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    AM.ACT_NUM &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    AM.ACT_NUM &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull  property="DATE_FROM">
+                    <isNotNull prepend="AND" property="DATE_TO">
+                        ((OP.LAST_INT_CALCDT_DEBIT + OP.DEBIT_INT_CALC_FREQ) BETWEEN #DATE_FROM:DATE# AND #DATE_TO:DATE#)
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+            
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="updateAcctPaymentApplDt">
+        UPDATE ACT_PARAM_DETAIL SET LAST_CR_INT_APPLDT = #applDt:DATE# 
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="updateAcctPaymentApplDtAndTemp">
+        UPDATE ACT_PARAM_DETAIL SET  TEMP_LAST_CR_INT_APPLDT=LAST_CR_INT_APPLDT , LAST_CR_INT_APPLDT = #applDt:DATE# 
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updatePaymentApplDt">
+        UPDATE OP_AC_INTPAY_PARAM SET LAST_INT_APPLDT_CR = #applDt:DATE# WHERE 
+        PROD_ID = #productId:VARCHAR#
+    </mapped-statement>    
+
+    <mapped-statement name="updateRecievableApplDt">
+        UPDATE OP_AC_INTRECV_PARAM SET LAST_INT_APPLDT_DEBIT = #applDt:DATE# WHERE PROD_ID = #productId:VARCHAR#
+    </mapped-statement>    
+    
+<!-- Start of Statements to select and insert daily balance 28/02/2005-->
+    <dynamic-mapped-statement name="getDailyAvailableBalanceOA" result-class="java.util.HashMap">
+                                                        <!-- AS TOTAL_BALANCE added because for all other prod types we are taking TOTAL_BALANCE 
+                                                             For Common code in DailyBalanceUpdateTask -->
+        SELECT DISTINCT AM.ACT_NUM, AM.PROD_ID, nvl(AM.TOTAL_BALANCE,0) AS TOTAL_BALANCE, nvl(AM.AVAILABLE_BALANCE,0) AS AVAILABLE_BALANCE, nvl(AM.CLEAR_BALANCE,0) AS CLEAR_BALANCE,
+        DECODE(AMT,NULL,0,1) AS "EXISTS" FROM ACT_MASTER AM, OP_AC_PRODUCT OAP,
+        ACT_DAYEND_BALANCE ADB, ALL_TRANSACTIONS_VIEW ATV WHERE <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs-->
+        OAP.PROD_ID = AM.PROD_ID  AND <!--ACT_STATUS_ID NOT IN ('CLOSED') AND -->  <!-- 0 Balance should be inserted on closed date -->
+        (AM.STATUS &lt;&gt;'DELETED' OR AM.STATUS IS NULL) AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'  
+        AND ADB.DAY_END_DT(+) = #DAY_END_DT#  
+        <!--AM.AVAILABLE_BALANCE &lt;&gt; 0 --> AND ADB.ACT_NUM(+) = AM.ACT_NUM
+        AND AM.ACT_NUM = ATV.ACT_NUM AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    AM.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    AM.ACT_NUM BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <!--SELECT AM.ACT_NUM, AM.PROD_ID, AM.AVAILABLE_BALANCE FROM 
+        ACT_MASTER AM, OP_AC_PRODUCT OAP WHERE OAP.PROD_ID = AM.PROD_ID--> 
+         <!-- AND 
+        BEHAVIOR = 'SB'--> <!--AND ACT_STATUS_ID NOT IN ('CLOSED') AND 
+        (AM.STATUS &lt;&gt; 'DELETED' OR AM.STATUS IS NULL) AND
+        AM.AUTHORIZATION_STATUS = 'AUTHORIZED' AND AM.BRANCH_CODE=#BRANCH_ID# AND
+        AM.AVAILABLE_BALANCE &gt; 0 -->
+        
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getDailyAvailableBalanceAD" result-class="java.util.HashMap">
+        SELECT DISTINCT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, nvl(LFD.TOTAL_BALANCE,0) as TOTAL_BALANCE ,nvl(LFD.LOAN_BALANCE_PRINCIPAL,0) as LOAN_BALANCE_PRINCIPAL ,
+        DECODE(ADB.AMT,NULL,0,1) AS "EXISTS",nvl(LFD.AVAILABLE_BALANCE,0) as AVAILABLE_BALANCE,nvl(LFD.CLEAR_BALANCE,0) as CLEAR_BALANCE
+        FROM LOANS_FACILITY_DETAILS LFD,LOANS_PRODUCT LP,ADVANCES_DAYEND_BALANCE ADB, ALL_TRANSACTIONS_VIEW ATV <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs-->
+        WHERE
+        <!--LFD.ACCT_STATUS NOT IN ('CLOSED') AND-->   <!-- 0 Balance should be inserted on closed date -->
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+        ADB.DAY_END_DT(+) = #DAY_END_DT:DATE# AND
+        LFD.PROD_ID = LP.PROD_ID AND 
+        ADB.ACT_NUM(+) = LFD.ACCT_NUM  AND
+        LP.BEHAVES_LIKE ='OD'
+        AND (LFD.ACCT_NUM = ATV.ACT_NUM OR  LFD.ACCT_NUM = ATV.LINK_BATCH_ID) AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    LFD.BRANCH_ID=#BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    LFD.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+           
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    LFD.ACCT_NUM  BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+      
+    <dynamic-mapped-statement name="getDailyAvailableBalanceAAD" result-class="java.util.HashMap">
+        SELECT DISTINCT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, nvl(LFD.TOTAL_BALANCE,0) as TOTAL_BALANCE ,nvl(LFD.LOAN_BALANCE_PRINCIPAL,0) as LOAN_BALANCE_PRINCIPAL ,
+        DECODE(ADB.AMT,NULL,0,1) AS "EXISTS",nvl(LFD.AVAILABLE_BALANCE,0) as AVAILABLE_BALANCE,nvl(LFD.CLEAR_BALANCE,0) as CLEAR_BALANCE
+        FROM AGRI_LOANS_FACILITY_DETAILS LFD,AGRILOANS_PRODUCT LP,AGRI_ADV_DAYEND_BALANCE ADB, ALL_TRANSACTIONS_VIEW ATV <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs-->
+        WHERE
+        <!--LFD.ACCT_STATUS NOT IN ('CLOSED') AND-->   <!-- 0 Balance should be inserted on closed date -->
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND 
+        ADB.DAY_END_DT(+) = #DAY_END_DT:DATE# AND
+        LFD.PROD_ID = LP.PROD_ID AND 
+        ADB.ACT_NUM(+) = LFD.ACCT_NUM  AND
+        LP.BEHAVES_LIKE ='AOD'
+        AND LFD.ACCT_NUM = ATV.ACT_NUM AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    LFD.BRANCH_ID=#BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    LFD.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+           
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    LFD.ACCT_NUM  BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+
+        
+       <!-- SELECT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, LFD.TOTAL_BALANCE,LFD.LOAN_BALANCE_PRINCIPAL
+        FROM LOANS_FACILITY_DETAILS LFD,LOANS_PRODUCT WHERE
+        LFD.ACCT_STATUS NOT IN ('CLOSED') AND 
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND
+         LFD.PROD_ID= LOANS_PRODUCT.PROD_ID AND LFD.BRANCH_ID=#BRANCH_ID# AND
+        LOANS_PRODUCT.BEHAVES_LIKE ='OD'-->
+        
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getDailyAvailableBalanceTL" result-class="java.util.HashMap">
+        SELECT DISTINCT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, nvl(LFD.TOTAL_BALANCE,0) as TOTAL_BALANCE ,nvl(LFD.LOAN_BALANCE_PRINCIPAL,0) as LOAN_BALANCE_PRINCIPAL,LSD.LIMIT,
+        DECODE(LDB.AMT,NULL,0,1) AS "EXISTS",SUBSIDY_ADJUSTED_AMT AS "SUBSIDY_ADJUSTED_AMT",LFD.SUBSIDY_AMT AS "TOTAL_SUBSIDY"
+        FROM LOANS_FACILITY_DETAILS LFD,LOANS_PRODUCT,LOANS_SANCTION_DETAILS LSD ,LOANS_DAYEND_BALANCE LDB, ALL_TRANSACTIONS_VIEW ATV <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs--> 
+        WHERE
+        <!--LFD.ACCT_STATUS NOT IN ('CLOSED') AND-->   <!-- 0 Balance should be inserted on closed date -->
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND   (LSD.STATUS &lt;&gt; 'DELETED' OR LSD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND  LSD.SANCTION_NO=LFD.SANCTION_NO AND LSD.SL_NO=LFD.SL_NO 
+        AND LFD.BORROW_NO=LSD.BORROW_NO AND
+        <!--LFD.TOTAL_BALANCE &lt; 0 AND -->LFD.PROD_ID= LOANS_PRODUCT.PROD_ID AND <!-- 0 Balance should be inserted on closed date -->
+        LOANS_PRODUCT.BEHAVES_LIKE !='OD' AND  LDB.ACT_NUM(+) = LFD.ACCT_NUM
+        AND LDB.DAY_END_DT(+) = #DAY_END_DT:DATE#
+        AND LFD.BORROW_NO=LSD.BORROW_NO
+        AND (LFD.ACCT_NUM = ATV.ACT_NUM OR LFD.ACCT_NUM = ATV.LINK_BATCH_ID) AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    LFD.BRANCH_ID=#BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    LFD.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    LFD.ACCT_NUM BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+       
+    <dynamic-mapped-statement name="getDailyAvailableBalanceATL" result-class="java.util.HashMap">
+        SELECT DISTINCT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, nvl(LFD.TOTAL_BALANCE,0) as TOTAL_BALANCE ,nvl(LFD.LOAN_BALANCE_PRINCIPAL,0) as LOAN_BALANCE_PRINCIPAL,LSD.LIMIT,
+        DECODE(LDB.AMT,NULL,0,1) AS "EXISTS"
+        FROM AGRI_LOANS_FACILITY_DETAILS LFD,AGRILOANS_PRODUCT,AGRI_LOANS_SANCTION_DETAILS LSD ,AGRI_LOANS_DAYEND_BALANCE LDB, ALL_TRANSACTIONS_VIEW ATV <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs--> 
+        WHERE
+        <!--LFD.ACCT_STATUS NOT IN ('CLOSED') AND-->   <!-- 0 Balance should be inserted on closed date -->
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND   (LSD.STATUS &lt;&gt; 'DELETED' OR LSD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND  LSD.SANCTION_NO=LFD.SANCTION_NO AND LSD.SL_NO=LFD.SL_NO 
+        AND LFD.BORROW_NO=LSD.BORROW_NO AND
+        <!--LFD.TOTAL_BALANCE &lt; 0 AND -->LFD.PROD_ID= AGRILOANS_PRODUCT.PROD_ID AND <!-- 0 Balance should be inserted on closed date -->
+        AGRILOANS_PRODUCT.BEHAVES_LIKE !='AOD' AND  LDB.ACT_NUM(+) = LFD.ACCT_NUM
+        AND LDB.DAY_END_DT(+) = #DAY_END_DT:DATE#
+        AND LFD.ACCT_NUM = ATV.ACT_NUM AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    LFD.BRANCH_ID=#BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    LFD.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    LFD.ACCT_NUM BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+        <!--SELECT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, LFD.TOTAL_BALANCE,LFD.LOAN_BALANCE_PRINCIPAL,LSD.LIMIT
+        FROM LOANS_FACILITY_DETAILS LFD,LOANS_PRODUCT,LOANS_SANCTION_DETAILS LSD WHERE
+        LFD.ACCT_STATUS NOT IN ('CLOSED') AND 
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND  LSD.SANCTION_NO=LFD.SANCTION_NO AND LSD.SL_NO=LFD.SL_NO AND
+        LFD.TOTAL_BALANCE &lt; 0 AND LFD.PROD_ID= LOANS_PRODUCT.PROD_ID AND LFD.BRANCH_ID=#BRANCH_ID# AND
+        LOANS_PRODUCT.BEHAVES_LIKE !='OD'-->
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getDailyAvailableBalanceTD" result-class="java.util.HashMap">
+        SELECT DISTINCT DSA.DEPOSIT_NO AS ACT_NUM, DA.PROD_ID,NVL(DSA.TOTAL_INT_CREDIT,0) AS TOTAL_INT_CREDIT  ,NVL(DSA.TOTAL_INT_DRAWN,0) AS TOTAL_INT_DRAWN, 
+        NVL(DSA.TOTAL_BALANCE,0) AS TOTAL_BALANCE ,DECODE(AMT,NULL,0,1) AS "EXISTS" FROM 
+        DEPOSIT_SUB_ACINFO DSA,DEPOSIT_ACINFO DA ,DEPOSIT_DAYEND_BALANCE DDB, ALL_TRANSACTIONS_VIEW ATV <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs--> 
+        WHERE DSA.DEPOSIT_NO = DA.DEPOSIT_NO
+        <!--AND DEPOSIT_STATUS NOT IN ('CLOSED')-->    <!-- 0 Balance should be inserted on closed date -->
+        AND (DSA.STATUS &lt;&gt; 'DELETED' OR DSA.STATUS IS NULL)
+        AND DSA.AUTHORIZE_STATUS = 'AUTHORIZED' <!--AND DSA.TOTAL_BALANCE &gt; 0 --> <!-- 0 Balance should be inserted on closed date -->
+        AND DDB.ACT_NUM(+)=DA.DEPOSIT_NO AND DDB.DAY_END_DT(+) = #DAY_END_DT:DATE#
+        AND DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO = ATV.ACT_NUM AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    DA.BRANCH_ID=#BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    DA.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    DA.DEPOSIT_NO BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getDailyAvailableBalanceBILLS" result-class="java.util.HashMap">
+        SELECT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, nvl(LFD.TOTAL_BALANCE,0) as TOTAL_BALANCE ,nvl(LFD.LOAN_BALANCE_PRINCIPAL,0) as LOAN_BALANCE_PRINCIPAL ,
+        DECODE(ADB.AMT,NULL,0,1) AS "EXISTS",nvl(LFD.AVAILABLE_BALANCE,0) as AVAILABLE_BALANCE,nvl(LFD.CLEAR_BALANCE,0) as CLEAR_BALANCE
+        FROM BILLS_FACILITY_DETAILS LFD,LOANS_PRODUCT LP,BILLS_DAYEND_BALANCE ADB, ALL_TRANSACTIONS_VIEW ATV <!-- ALL_TRANSACTIONS_VIEW added in this query by Rajesh to insert/update only transacted a/cs--> 
+        WHERE
+        <!--LFD.ACCT_STATUS NOT IN ('CLOSED') AND-->   <!-- 0 Balance should be inserted on closed date -->
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND
+        ADB.DAY_END_DT(+) = #DAY_END_DT:DATE# AND
+        LFD.PROD_ID= LP.PROD_ID 
+        AND ADB.ACT_NUM(+) = LFD.ACCT_NUM  AND
+        LP.BEHAVES_LIKE ='BILLS'
+        AND LFD.ACCT_NUM = ATV.ACT_NUM AND ATV.AUTHORIZE_STATUS = 'AUTHORIZED' AND ATV.TRANS_DT=#DAY_END_DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_CODE">
+                    LFD.BRANCH_ID=#BRANCH_CODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND"   property="PRODUCT_ID">
+                    LFD.PROD_ID=#PRODUCT_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="ACT_FROM" >
+                    LFD.ACCT_NUM  BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+       <!-- SELECT LFD.ACCT_NUM AS ACT_NUM, LFD.PROD_ID, LFD.TOTAL_BALANCE,LFD.LOAN_BALANCE_PRINCIPAL
+        FROM LOANS_FACILITY_DETAILS LFD,LOANS_PRODUCT WHERE
+        LFD.ACCT_STATUS NOT IN ('CLOSED') AND 
+        (LFD.STATUS &lt;&gt; 'DELETED' OR LFD.STATUS IS NULL) AND
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND
+         LFD.PROD_ID= LOANS_PRODUCT.PROD_ID AND LFD.BRANCH_ID=#BRANCH_ID# AND
+        LOANS_PRODUCT.BEHAVES_LIKE ='OD'-->
+        
+    </dynamic-mapped-statement>
+    
+     <!--   SELECT DSA.DEPOSIT_NO,DA.PROD_ID, DSA.TOTAL_BALANCE FROM --><!-- This query added by sathiya -->
+        <!--DEPOSIT_SUB_ACINFO DSA,DEPOSIT_ACINFO DA WHERE DSA.DEPOSIT_NO = DA.DEPOSIT_NO
+        AND DEPOSIT_STATUS NOT IN ('CLOSED') AND (DSA.STATUS &lt;&gt; 'DELETED' OR DSA.STATUS IS NULL)
+        AND DSA.AUTHORIZE_STATUS = 'AUTHORIZED' AND DA.BRANCH_ID= #BRANCH_ID#
+        AND DSA.TOTAL_BALANCE &gt; 0  -->
+    <!--</dynamic-mapped-statement>-->
+    
+    <mapped-statement name="checkDailyAvailableBalanceExistsOA" result-class="java.lang.Integer">
+        SELECT COUNT(*) AS EXIST_COUNT  FROM ACT_DAYEND_BALANCE
+        WHERE PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND
+        DAY_END_DT = #dayeEndDt:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="checkDailyAvailableBalanceExistsAD" result-class="java.lang.Integer">
+        SELECT COUNT(*) AS EXIST_COUNT  FROM ADVANCES_DAYEND_BALANCE
+        WHERE PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND
+        DAY_END_DT = #dayeEndDt:DATE#
+    </mapped-statement>
+    <mapped-statement name="checkDailyAvailableBalanceExistsTL" result-class="java.lang.Integer">
+        SELECT COUNT(*) AS EXIST_COUNT  FROM LOANS_DAYEND_BALANCE
+        WHERE PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND
+        DAY_END_DT = #dayeEndDt:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="checkDailyAvailableBalanceExistsTD" result-class="java.lang.Integer">
+        SELECT COUNT(*) AS EXIST_COUNT  FROM DEPOSIT_DAYEND_BALANCE
+        WHERE PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND
+        DAY_END_DT = #dayeEndDt:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceOA">
+        INSERT INTO ACT_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,CLEAR_BALANCE,AVAILABLE_BALANCE,TOD_LIMIT) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#CLEAR_BALANCE:NUMBER#,#AVAILABLE_BALANCE:NUMBER#,#TOD_LIMIT:NUMBER#) 
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceAD">
+        INSERT INTO ADVANCES_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PRINCIPAL,CLEAR_BALANCE,AVAILABLE_BALANCE,DPLIMIT,TOD_LIMIT,OVERALL_LIMIT) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#principal:NUMBER#,#CLEAR_BALANCE:NUMBER#,#AVAILABLE_BALANCE:NUMBER#,#DPORLIMIT:NUMBER#,#TOD_LIMIT:NUMBER#,#OVERALL_LIMIT:NUMBER#) 
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceTL">
+        INSERT INTO LOANS_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PRINCIPAL,FLAT_RATE_PRINCIPAL,AVAILABLE_SUBSIDY) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#principal:NUMBER# ,#flatPrincipal:NUMBER#,#AVAILABLE_SUBSIDY:NUMBER#) 
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceATL">
+        INSERT INTO AGRI_LOANS_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PRINCIPAL,FLAT_RATE_PRINCIPAL) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#principal:NUMBER# ,#flatPrincipal:NUMBER#) 
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceAAD">
+        INSERT INTO ADVANCES_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PRINCIPAL,CLEAR_BALANCE,AVAILABLE_BALANCE,DPLIMIT,TOD_LIMIT,OVERALL_LIMIT) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#principal:NUMBER#,#CLEAR_BALANCE:NUMBER#,#AVAILABLE_BALANCE:NUMBER#,#DPORLIMIT:NUMBER#,#TOD_LIMIT:NUMBER#,#OVERALL_LIMIT:NUMBER#) 
+        <!--INSERT INTO AGRI_ADV_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PRINCIPAL,FLAT_RATE_PRINCIPAL) 
+        VALUES(#prodId#, #actNum#, #dayeEndDt#, #amt#,#principal# ,#flatPrincipal#) -->
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceTD">
+        INSERT INTO DEPOSIT_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PAYABLE_AMT) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:VARCHAR#,#intAmt:VARCHAR#) 
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyBalanceBILLS">
+        INSERT INTO BILLS_DAYEND_BALANCE (PROD_ID, ACT_NUM, DAY_END_DT, AMT,PRINCIPAL,CLEAR_BALANCE,AVAILABLE_BALANCE) 
+        VALUES(#prodId:VARCHAR#, #actNum:VARCHAR#, #dayeEndDt:DATE#, #amt:NUMBER#,#principal:NUMBER#,#CLEAR_BALANCE:NUMBER#,#AVAILABLE_BALANCE:NUMBER#) 
+    </mapped-statement>
+    
+    <mapped-statement name="updateDailyBalanceOA">
+        UPDATE ACT_DAYEND_BALANCE SET AMT = #amt:NUMBER#,CLEAR_BALANCE=#CLEAR_BALANCE:NUMBER#,AVAILABLE_BALANCE=#AVAILABLE_BALANCE:NUMBER#,
+        TOD_LIMIT=#TOD_LIMIT:NUMBER# WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateDailyBalanceAD">
+        UPDATE ADVANCES_DAYEND_BALANCE SET AMT = #amt:NUMBER#,PRINCIPAL=#principal:NUMBER#,CLEAR_BALANCE=#CLEAR_BALANCE:NUMBER#,AVAILABLE_BALANCE=#AVAILABLE_BALANCE:NUMBER#, 
+        DPLIMIT=#DPORLIMIT:NUMBER#,TOD_LIMIT=#TOD_LIMIT:NUMBER#,OVERALL_LIMIT=#OVERALL_LIMIT:NUMBER# WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+
+    <mapped-statement name="updateDailyBalanceTL">
+        UPDATE LOANS_DAYEND_BALANCE SET AMT = #amt:NUMBER#,PRINCIPAL=#principal:NUMBER#,FLAT_RATE_PRINCIPAL=#flatPrincipal:NUMBER# ,AVAILABLE_SUBSIDY =#AVAILABLE_SUBSIDY:NUMBER#  WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateDailyBalanceATL">
+        UPDATE AGRI_LOANS_DAYEND_BALANCE SET AMT = #amt:NUMBER#,PRINCIPAL=#principal:NUMBER#,FLAT_RATE_PRINCIPAL=#flatPrincipal:NUMBER# WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateDailyBalanceAAD">
+        UPDATE AGRI_ADV_DAYEND_BALANCE SET AMT = #amt:NUMBER#,PRINCIPAL=#principal:NUMBER#,FLAT_RATE_PRINCIPAL=#flatPrincipal:NUMBER# WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+   
+    <mapped-statement name="updateDailyBalanceTD">
+        UPDATE DEPOSIT_DAYEND_BALANCE SET AMT = #amt:NUMBER#, PAYABLE_AMT = #intAmt:NUMBER# WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+    
+    <mapped-statement name="updateDailyBalanceBILLS">
+        UPDATE BILLS_DAYEND_BALANCE SET AMT = #amt:NUMBER#,PRINCIPAL=#principal:NUMBER#,CLEAR_BALANCE=#CLEAR_BALANCE:NUMBER#,AVAILABLE_BALANCE=#AVAILABLE_BALANCE:NUMBER# WHERE 
+        PROD_ID = #prodId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR# AND DAY_END_DT = #dayeEndDt:DATE# 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getDailyBalanceOld" result-class="java.lang.Double">
+        SELECT
+        <dynamic>
+            <isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                SUM(AMT*COUNT(*))
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MAXIMUM">
+                MAX(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MINIMUM">
+                MIN(AMT)
+            </isEqual>
+        </dynamic>
+        FROM ACT_DAYEND_BALANCE WHERE
+        PROD_ID = #PROD_ID:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR#  <!--AND 
+        (TO_CHAR(DAY_END_DT,'MM'))&lt;=(SELECT TO_CHAR(ADD_MONTHS(MAX(CURR_APPL_DT),-1),'MM') FROM DAY_END )-->
+        <dynamic>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                (TO_CHAR(DAY_END_DT, 'MM') &gt; TO_CHAR(#START#, 'MM')                   <!-- Equal sign removed near by &gt; -->
+                AND TO_CHAR(DAY_END_DT, 'YYYY') &gt;= TO_CHAR(#START#, 'YYYY') 
+                AND                                                                      
+                TO_CHAR(DAY_END_DT, 'MM') &lt; TO_CHAR(#TODAY_DT#, 'MM')                 <!-- Equal sign removed near by &lt; -->
+                AND TO_CHAR(DAY_END_DT, 'YYYY') &lt;= TO_CHAR(#TODAY_DT#, 'YYYY') )
+                AND TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                <!--TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+                AND TO_CHAR(DAY_END_DT, 'MM') = TO_CHAR(#TODAY_DT#, 'MM')
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT#, 'YYYY') -->
+            </isEqual>
+            <isNotEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                <isNotEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                    TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'MM') BETWEEN #STARTMON_PROD_CALC:DATE# AND #ENDMON_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT#, 'YYYY') 
+                </isNotEqual>
+            </isNotEqual>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+            </isEqual>
+            GROUP BY TO_CHAR(DAY_END_DT, 'MM')
+            <isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                , AMT
+            </isEqual>
+        </dynamic>
+          
+    </dynamic-mapped-statement>
+    
+        
+  <!--  <dynamic-mapped-statement name="getDailyBalance" result-class="java.lang.Double">
+        SELECT
+        <dynamic>
+            <isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                 AVG(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MAXIMUM">
+                MAX(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MINIMUM">
+                MIN(AMT)
+            </isEqual>
+        </dynamic>
+        FROM ACT_DAYEND_BALANCE WHERE
+        PROD_ID = #PROD_ID:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR# AND AMT&gt;#MIN_BAL_FOR_INT_CALC:NUMBER#
+        <dynamic>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                (TO_CHAR(DAY_END_DT, 'YYYY-MM') &gt; TO_CHAR(#START#, 'YYYY-MM')
+                AND                                                                     
+                TO_CHAR(DAY_END_DT, 'YYYY-MM') &lt;= TO_CHAR(ADD_MONTHS(#TODAY_DT#,#ADD_MONTHS#), 'YYYY-MM'))
+                AND TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+            </isEqual>
+            <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                <isNotEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                    TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'MM') BETWEEN #STARTMON_PROD_CALC:DATE# AND #ENDMON_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+                </isNotEqual>
+            </isNotEqual>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+            </isEqual>
+            GROUP BY TO_CHAR(DAY_END_DT, 'YYYY-MM')
+           
+        </dynamic>
+          
+    </dynamic-mapped-statement>-->
+<!--<dynamic-mapped-statement name="getDailyBalance" result-class="java.lang.Double">
+        SELECT NVL(sum(AMT),0) as amt FROM (
+        SELECT
+        <dynamic>
+            <isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                SUM(AMT*COUNT(*))
+                AVG(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MAXIMUM">
+                MAX(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MINIMUM">
+                MIN(AMT)
+            </isEqual>
+        </dynamic>
+        AMT FROM (SELECT day_end_dt,
+        (SELECT amt
+        FROM act_dayend_balance ddb
+        WHERE prod_id = #PROD_ID#
+        AND act_num = #ACT_NUM#
+        AND
+        ACT_INT_CALC_START_DT(DDB.ACT_NUM,#ENDDAY_INT_CALC:number#)&lt;= a.day_end_dt
+        AND day_end_dt =
+        (SELECT MAX (day_end_dt)
+        FROM act_dayend_balance
+        WHERE prod_id = ddb.prod_id
+        AND act_num = ddb.act_num
+        AND day_end_dt &lt;= a.day_end_dt)) AS amt
+        FROM (SELECT     TO_DATE(TO_NUMBER(TO_CHAR(#START:DATE#,'J')) + LEVEL
+        - 1,'J') AS day_end_dt
+        FROM DUAL
+        CONNECT BY LEVEL &lt;=
+        TO_NUMBER(TO_CHAR(#TODAY_DT:DATE#,'J'))
+        - TO_NUMBER(TO_CHAR(#START:DATE#,'J'))
+        + 1) a) WHERE
+        
+        <dynamic>
+            <isEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                (TO_CHAR(DAY_END_DT, 'YYYY-MM') &gt; TO_CHAR(#START#, 'YYYY-MM')
+                AND                                                                     
+                TO_CHAR(DAY_END_DT, 'YYYY-MM') &lt;= TO_CHAR(ADD_MONTHS(#TODAY_DT#,#ADD_MONTHS#), 'YYYY-MM'))
+                AND TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+            </isEqual>
+            <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                    TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+                    AND TO_CHAR(DAY_END_DT, 'MM') BETWEEN #STARTMON_PROD_CALC# AND #ENDMON_PROD_CALC#
+                    AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT#, 'YYYY') 
+                </isNotEqual>
+            </isNotEqual>
+            <isEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT#, 'YYYY') 
+            </isEqual>
+            GROUP BY TO_CHAR(DAY_END_DT, 'YYYY-MM'))
+            WHERE AMT&gt;#MIN_BAL_FOR_INT_CALC#
+            isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                , AMT
+            </isEqual
+        </dynamic>
+          
+    </dynamic-mapped-statement>-->
+    <dynamic-mapped-statement name="getDailyBalance" result-class="java.lang.Double">
+        SELECT NVL(sum(AMT),0) as amt FROM (
+        SELECT
+        <dynamic>
+            <isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                <!--SUM(AMT*COUNT(*))-->
+                AVG(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MAXIMUM">
+                MAX(AMT)
+            </isEqual>
+            <isEqual property="CALC_CRITERIA" compareValue="MINIMUM">
+                MIN(AMT)
+            </isEqual>
+        </dynamic>
+        AMT FROM (SELECT day_end_dt,
+        (SELECT amt
+        FROM act_dayend_balance ddb
+        WHERE prod_id = #PROD_ID#
+        AND act_num = #ACT_NUM#
+       <!-- AND
+        ACT_INT_CALC_START_DT(DDB.ACT_NUM,#ENDDAY_INT_CALC:number#)&lt;= a.day_end_dt -->
+        AND day_end_dt =
+        (SELECT MAX (day_end_dt)
+        FROM act_dayend_balance
+        WHERE prod_id = ddb.prod_id
+        AND act_num = ddb.act_num
+        AND day_end_dt &lt;= a.day_end_dt)) AS amt
+        FROM 
+        <!--(SELECT     TO_DATE(TO_NUMBER(TO_CHAR(#START:DATE#,'J')) + LEVEL
+        - 1,'J') AS day_end_dt
+        FROM DUAL
+        CONNECT BY LEVEL &lt;=
+        TO_NUMBER(TO_CHAR(#TODAY_DT:DATE#,'J'))
+        - TO_NUMBER(TO_CHAR(#START:DATE#,'J'))
+        + 1)-->
+        
+        
+        (SELECT TO_DATE((TO_NUMBER(TO_CHAR(cast(#START# as timestamp),'J')) + LEVEL - 1)::TEXT,'J') AS day_end_dt FROM 
+        generate_series(1,TO_NUMBER(TO_CHAR(cast(#TODAY_DT# as timestamp),'J')) - TO_NUMBER(TO_CHAR(cast(#START# as timestamp),'J')) + 1,1) level)
+        a where ACT_INT_CALC_START_DT(#ACT_NUM#,cast(#ENDDAY_INT_CALC# as integer))&lt;= a.day_end_dt  )a WHERE
+        
+        <dynamic>
+            <isEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                (TO_CHAR(DAY_END_DT, 'YYYY-MM') &gt; TO_CHAR(cast(#START# as timestamp), 'YYYY-MM')
+                AND                                                                     
+                TO_CHAR(DAY_END_DT, 'YYYY-MM') &lt;= TO_CHAR(ADD_MONTHS(cast(#TODAY_DT# as timestamp),#ADD_MONTHS#), 'YYYY-MM'))
+                AND TO_CHAR(cast(DAY_END_DT as timestamp), 'DD')::numeric BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+            </isEqual>
+            <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                    TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+                    AND TO_CHAR(DAY_END_DT, 'MM') BETWEEN #STARTMON_PROD_CALC# AND #ENDMON_PROD_CALC#
+                    AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(cast(#TODAY_DT# as timestamp), 'YYYY') 
+                </isNotEqual>
+            </isNotEqual>
+            <isEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(cast(#TODAY_DT# as timestamp), 'YYYY') 
+            </isEqual>
+            GROUP BY TO_CHAR(DAY_END_DT, 'YYYY-MM'))b
+            WHERE AMT&gt;#MIN_BAL_FOR_INT_CALC#
+            <!--isEqual property="CALC_CRITERIA" compareValue="AVERAGE">
+                , AMT
+            </isEqual-->
+        </dynamic>
+          
+    </dynamic-mapped-statement>
+    
+   <!-- <mapped-statement name="getInterestAmountForDailyProduct" result-class="java.util.HashMap">
+        SELECT   ACT_NUM, NVL (SUM (AMT), 0) AS PRINCIPAL_AMT,
+        ROUND (NVL (SUM (AMT * #ROI:NUMBER# / 36500), 0)) AS INTEREST_AMT
+        FROM ACT_DAYEND_BALANCE
+        WHERE DAY_END_DT BETWEEN #START:DATE# AND #TODAY_DT:DATE#
+        AND PROD_ID = #PROD_ID:VARCHAR#
+        AND ACT_NUM = #ACT_NUM:VARCHAR#
+        GROUP BY ACT_NUM
+    </mapped-statement>-->
+    
+      <dynamic-mapped-statement name="getInterestAmountForDailyProduct" result-class="java.util.HashMap">
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="oracle.jdbc.driver.OracleDriver" > 
+        SELECT   NVL (SUM (AMT), 0) AS PRINCIPAL_AMT,
+        ROUND (NVL (SUM (AMT * #ROI# / 36500), 0)) AS INTEREST_AMT
+        FROM (SELECT day_end_dt,
+        (SELECT amt
+        FROM act_dayend_balance ddb
+        WHERE prod_id = #PROD_ID#
+        AND act_num = #ACT_NUM#
+        AND day_end_dt =
+        (SELECT MAX (day_end_dt)
+        FROM act_dayend_balance
+        WHERE prod_id = ddb.prod_id
+        AND act_num = ddb.act_num
+        AND day_end_dt &lt;= a.day_end_dt)) AS amt
+        FROM (SELECT     TO_DATE(TO_NUMBER(TO_CHAR(#START:DATE#,'J')) + LEVEL
+        - 1,'J') AS day_end_dt
+        FROM DUAL
+        CONNECT BY LEVEL &lt;=
+        TO_NUMBER(TO_CHAR(#TODAY_DT:DATE#,'J'))
+        - TO_NUMBER(TO_CHAR(#START:DATE#,'J'))
+        + 1) a)
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>
+      <dynamic>
+            <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="org.postgresql.Driver" >
+
+                WITH OPERATIVE_INTEREST AS (
+                SELECT   NVL (SUM (AMT), 0) AS PRINCIPAL_AMT,
+                        ROUND (CAST(NVL (SUM (AMT * #ROI# / 36500), 0) AS NUMERIC),0) AS INTEREST_AMT
+                        FROM (SELECT DAY_END_DT,
+                        (SELECT AMT
+                        FROM ACT_DAYEND_BALANCE DDB
+                        WHERE PROD_ID = #PROD_ID#
+                        AND ACT_NUM = #ACT_NUM#
+
+                        AND DAY_END_DT =
+                        (SELECT MAX (DAY_END_DT)
+                        FROM ACT_DAYEND_BALANCE
+                        WHERE PROD_ID = DDB.PROD_ID
+                        AND ACT_NUM = DDB.ACT_NUM
+                        AND DAY_END_DT &lt;= A.DAY_END_DT)) AS AMT
+                        FROM (WITH RECURSIVE T(N) AS (  
+                            SELECT 0
+                                    UNION ALL
+                                    SELECT N+1 FROM T
+                                        )
+                                SELECT CAST(#START:DATE# AS DATE)+N DAY_END_DT FROM T LIMIT CAST(#TODAY_DT:DATE# AS DATE)-CAST(#START:DATE# AS DATE)+1) A) AS  OPERATIVE_INTEREST  
+                                )
+                                SELECT * FROM OPERATIVE_INTEREST
+
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>   
+    </dynamic-mapped-statement>
+    
+    <!--mapped-statement name="getDailyBalanceForDate" result-class="java.lang.Double">
+        SELECT amt
+          FROM act_dayend_balance
+         WHERE prod_id = #PROD_ID#
+           AND act_num = #ACT_NUM#
+           AND day_end_dt IN (
+                  SELECT MAX (day_end_dt)
+                    FROM act_dayend_balance
+                   WHERE prod_id = #PROD_ID#
+                     AND act_num = #ACT_NUM#
+                     AND day_end_dt &lt; #START_DT#)
+           AND day_end_dt &lt; #TODAY_DT#
+    </mapped-statement-->    
+    
+    <dynamic-mapped-statement name="getDailyBalanceForValueDate" result-class="java.lang.Double">
+        SELECT AMT+#AMOUNT:NUMBER# AS AMT
+        FROM ACT_DAYEND_BALANCE WHERE
+        PROD_ID = #PROD_ID:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR#
+        <dynamic>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                (DAY_END_DT &gt;= #START:DATE#
+                AND                                                                     
+                DAY_END_DT &lt; #TODAY_DT:DATE#)
+                AND TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+            </isEqual>
+            <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                <isNotEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                    TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'MM') BETWEEN #STARTMON_PROD_CALC:DATE# AND #ENDMON_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+                </isNotEqual>
+            </isNotEqual>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getDailyBalanceForValueDateNew" result-class="java.util.HashMap">
+        SELECT DAY_END_DT, AMT+#AMOUNT:NUMBER# AS AMT
+        FROM ACT_DAYEND_BALANCE WHERE
+        PROD_ID = #PROD_ID:VARCHAR# AND ACT_NUM = #ACT_NUM:VARCHAR#
+        <dynamic>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                (DAY_END_DT &gt;= #START:DATE#
+                AND                                                                     
+                DAY_END_DT &lt; #TODAY_DT:DATE#)
+                <!--AND TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC# AND #ENDDAY_PROD_CALC#-->
+            </isEqual>
+            <isNotEqual prepend="" property="PRODUCT_FREQ_INT_PAY" compareValue="30">
+                <isNotEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                    TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'MM') BETWEEN #STARTMON_PROD_CALC:DATE# AND #ENDMON_PROD_CALC:DATE#
+                    AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+                </isNotEqual>
+            </isNotEqual>
+            <isEqual prepend="AND" property="PRODUCT_FREQ_INT_PAY" compareValue="365">
+                TO_CHAR(DAY_END_DT, 'DD') BETWEEN #STARTDAY_PROD_CALC:DATE# AND #ENDDAY_PROD_CALC:DATE#
+                AND TO_CHAR(DAY_END_DT, 'YYYY') = TO_CHAR(#TODAY_DT:DATE#, 'YYYY') 
+            </isEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getInterestCalcPeriod" result-class="java.util.HashMap">
+        SELECT CALC_CRITERIA, PRODUCT_FREQ_INT_PAY, STARTDAY_PROD_CALC, ENDDAY_PROD_CALC,
+        STARTMON_PROD_CALC, ENDMON_PROD_CALC,MIN_BAL_FOR_INT_CALC,STARTDAY_INT_CALC,ENDDAY_INT_CALC
+        FROM OP_AC_INTPAY_PARAM WHERE
+        PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="getHolidayListForDayEnd" result-class="java.lang.String" >
+        SELECT TO_Number(To_char(HOLIDAY_DT, 'DD')) FROM HOLIDAY_MASTER   
+        WHERE to_number(to_char(HOLIDAY_DT, 'MM')) >= #MONTH# 
+        and to_char(HOLIDAY_DT, 'YYYY') = #YEAR#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND STATUS != 'DELETED'
+        and to_char(HOLIDAY_DT, 'YYYY') >= #YEAR# and 
+        (STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED')
+    </mapped-statement>    
+    
+    <mapped-statement name="getWeeklyOffDayEnd" result-class="java.util.HashMap" >
+        SELECT WEEKLY_OFF1, WEEKLY_OFF2 FROM WEEKLY_OFF    
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateDayEnd" inline-parameters="true">
+        UPDATE DAY_END SET END_DAY_STATUS = 'COMPLETED' 
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertDailyDayendStatusFinal" inline-parameters="true">
+        INSERT INTO DAILY_DAYEND_STATUS_FINAL (BRANCH_ID, BRANCH_DAY_END_STATUS, DC_DAY_END_STATUS, DAYEND_DT) 
+        VALUES(#BRANCH_CODE:VARCHAR#, #BRANCH_DAY_END_STATUS:VARCHAR#, null, #DAYEND_DT:DATE#) 
+    </mapped-statement>
+    
+    <mapped-statement name="updateDayBegin" inline-parameters="true">
+        UPDATE DAY_END SET END_DAY_STATUS = null,
+        CURR_APPL_DT = #CURR_DT:DATE#
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateDailyDayendStatusFinal" inline-parameters="true">
+        UPDATE DAILY_DAYEND_STATUS_FINAL SET DC_DAY_END_STATUS = 'COMPLETED'
+        WHERE DAYEND_DT = #DAYEND_DT:DATE#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="DeleteDayEndStatus" inline-parameters="true">
+        DELETE DAILY_DAYEND_STATUS WHERE
+        BRANCH_ID = #BRANCH_CODE:VARCHAR# AND DAYEND_DT = #DAYEND_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="InsertDayEndStatus" inline-parameters="true">
+        INSERT INTO DAILY_DAYEND_STATUS VALUES 
+        (#BRANCH_CODE:VARCHAR#, #TASK_NAME:VARCHAR#, #TASK_STATUS:VARCHAR#, #USER_ID:VARCHAR#, #DAYEND_DT:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateTskStatus" inline-parameters="true">
+        UPDATE DAILY_DAYEND_STATUS SET TASK_STATUS = #TASK_STATUS:VARCHAR#
+        WHERE DAYEND_DT = #DAYEND_DT:DATE#
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND
+        TASK_NAME = #TASK_NAME:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="DeleteDayEndStatusDayBegin" inline-parameters="true">
+        DELETE DAILY_DAYBEGIN_STATUS WHERE
+        BRANCH_ID = #BRANCH_CODE:VARCHAR# AND DAYBEGIN_DT = #DAYEND_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="InsertDayEndStatusDayBegin" inline-parameters="true">
+        INSERT INTO DAILY_DAYBEGIN_STATUS VALUES 
+        (#BRANCH_CODE:VARCHAR#, #TASK_NAME:VARCHAR#, #TASK_STATUS:VARCHAR#, #USER_ID:VARCHAR#, #DAYEND_DT:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateTskStatusDayBegin" inline-parameters="true">
+        UPDATE DAILY_DAYBEGIN_STATUS SET TASK_STATUS = #TASK_STATUS:VARCHAR#
+        WHERE DAYBEGIN_DT = #DAYEND_DT:DATE#
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND
+        TASK_NAME = #TASK_NAME:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateDayEndStatusFinal" inline-parameters="true">
+        UPDATE DAILY_DAYEND_STATUS_FINAL SET DC_DAY_END_STATUS = 'COMPLETED'
+        WHERE DAYEND_DT = #DAYEND_DT:DATE#
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND
+        BRANCH_DAY_END_STATUS = 'COMPLETED'
+    </mapped-statement>
+    
+    <mapped-statement name="InsertPrevDayEndDate" inline-parameters="true">
+        INSERT INTO PREV_DAY_DT VALUES 
+        (#DAYEND_DT:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="DeletePrevDayEndDate" inline-parameters="true">
+        DELETE PREV_DAY_DT
+    </mapped-statement>
+    
+    <mapped-statement name="getPrevDayEndDate" result-class="java.util.HashMap">
+        SELECT PREV_DT FROM PREV_DAY_DT
+    </mapped-statement>
+    
+    <mapped-statement name="getDayEndCompList" result-class="java.util.HashMap">
+        <!--select CURR_APPL_DT,BRANCH_CODE from day_end where CURR_APPL_DT = TO_DATE(#CURR_APPL_DT#,'DD-MM-YYYY')
+    and END_DAY_STATUS is null-->
+        select CURR_APPL_DT,BRANCH_CODE from day_end where CURR_APPL_DT = TO_DATE(#CURR_APPL_DT:DATE#,'DD-MM-YYYY')  
+        and END_DAY_STATUS IS NULL
+        UNION
+        select DE.CURR_APPL_DT,DE.BRANCH_CODE from day_end DE,DAILY_DAYEND_STATUS_FINAL DSF 
+        where DE.CURR_APPL_DT =TO_DATE(#CURR_APPL_DT:DATE#,'DD-MM-YYYY') 
+        and DE.END_DAY_STATUS = 'COMPLETED' AND DSF.DAYEND_DT=TO_DATE(#CURR_APPL_DT:DATE#,'DD-MM-YYYY')
+        AND DSF.BRANCH_DAY_END_STATUS = 'COMPLETED' AND DSF.DC_DAY_END_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getDayBeginCompList" result-class="java.util.HashMap">
+        select DISTINCT de.CURR_APPL_DT,de.BRANCH_CODE from day_end de,daily_dayend_status_final dsf 
+        where de.CURR_APPL_DT = TO_DATE(#CURR_APPL_DT:DATE#,'DD-MM-YYYY')
+        and de.END_DAY_STATUS = 'COMPLETED' 
+        and dsf.DAYEND_DT = TO_DATE(#CURR_APPL_DT:DATE#,'DD-MM-YYYY')
+        and dsf.DC_DAY_END_STATUS = 'COMPLETED'
+    </mapped-statement>
+    
+    <mapped-statement name="InsertDayBeginStatusFinal" inline-parameters="true">
+        INSERT INTO DAILY_DAYBEGIN_STATUS_FINAL VALUES 
+        (#BRANCH_CODE:VARCHAR#, #DC_DAY_BEGIN_STATUS:VARCHAR#, #DAYBEGIN_DT:DATE#)
+    </mapped-statement>
+      <!--parameter-map id="paramMap" class="map" >
+        <parameter property="BRANCH_CODE"   jdbcType="VARCHAR" javaType="java.lang.String" mode="INOUT"/>
+        <parameter property="TASK_NAME"     jdbcType="VARCHAR" javaType="java.lang.String" mode="INOUT"/>
+        <parameter property="TASK_STATUS"   jdbcType="VARCHAR" javaType="java.lang.String" mode="INOUT"/>
+        <parameter property="USER_ID"       jdbcType="VARCHAR" javaType="java.lang.String" mode="INOUT"/>
+        <parameter property="DAYEND_DT"     jdbcType="VARCHAR" javaType="java.lang.String" mode="INOUT"/>
+      </parameter-map>
+
+      <procedure id="DoDayEndStatus" parameter-map="paramMap">
+         {call EXECUTE_DAYEND_STATUS ( ?, ?, ?, ?, ? )}
+      </procedure-->
+    <!--mapped-statement name="DoDayEndStatus" inline-parameters="true" is-stored-procedure="true">
+        EXEC EXECUTE_DAYEND_STATUS(#BRANCH_CODE#, #TASK_NAME#, #TASK_STATUS#, #USER_ID#, #DAYEND_DT#)
+    </mapped-statement-->
+     <!-- End of Statements to select and insert daily balance 28/02/2005-->   
+    <mapped-statement name="getTaxDetailsNRO" result-class="java.util.HashMap" >
+        SELECT OAC.TAX AS TAX_HEAD, OAP.RATE_OF_INT as RATE_OF_INT FROM OP_AC_ACHEAD_PARAM OAC , OP_AC_ACCOUNT_PARAM OAP
+        WHERE OAC.PROD_ID=#PROD_ID:VARCHAR# AND OAP.PROD_ID=#PROD_ID:VARCHAR#
+        AND OAP.TAX_INT_APPLICABLE='Y'
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectTaskLst" result-class="java.util.HashMap" >
+        SELECT BRANCH_ID,TASK_NAME,TASK_STATUS FROM DAILY_DAYEND_STATUS
+        WHERE TASK_NAME = #TASK_NAME:VARCHAR# AND DAYEND_DT = #DAYEND_DT:DATE# AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectTaskLstDayBegin" result-class="java.util.HashMap" >
+        SELECT BRANCH_ID,TASK_NAME,TASK_STATUS FROM DAILY_DAYBEGIN_STATUS
+        WHERE TASK_NAME = #TASK_NAME:VARCHAR# AND DAYBEGIN_DT = #DAYEND_DT:DATE# AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectBranchCompletedLst" result-class="java.util.HashMap" >
+        <!--SELECT BRANCH_ID,BRANCH_DAY_END_STATUS FROM DAILY_DAYEND_STATUS_FINAL
+        WHERE DAYEND_DT = #DAYEND_DT#-->
+        select DISTINCT DSF.BRANCH_ID as BRANCH_CODE,DSF.BRANCH_DAY_END_STATUS,DE.CURR_APPL_DT from day_end DE,DAILY_DAYEND_STATUS_FINAL DSF
+        where DE.END_DAY_STATUS = 'COMPLETED' AND DSF.DAYEND_DT = DE.CURR_APPL_DT
+        AND DE.CURR_APPL_DT IN (SELECT MAX(CURR_APPL_DT) FROM DAY_END WHERE END_DAY_STATUS = 'COMPLETED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_ID">
+                    BRANCH_ID=#BRANCH_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_DAY_END_STATUS">
+                    BRANCH_DAY_END_STATUS=#BRANCH_DAY_END_STATUS:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DC_DAY_END_STATUS">
+                    DC_DAY_END_STATUS is NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>    
+         
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectBranchCompletedLstPrevDay" result-class="java.util.HashMap" >
+        select DISTINCT DSF.BRANCH_ID as BRANCH_CODE,DSF.BRANCH_DAY_END_STATUS,DE.CURR_APPL_DT from day_end DE,
+        DAILY_DAYEND_STATUS_FINAL DSF         
+        where DE.END_DAY_STATUS = 'COMPLETED' AND DSF.DAYEND_DT = DE.CURR_APPL_DT and DSF.DAYEND_DT = #CURR_APPL_DT:DATE#       
+        AND DE.CURR_APPL_DT IN (SELECT MAX(CURR_APPL_DT) FROM DAY_END WHERE END_DAY_STATUS = 'COMPLETED' and 
+        CURR_APPL_DT = #CURR_APPL_DT:DATE#)  
+        AND BRANCH_DAY_END_STATUS='COMPLETED' AND DC_DAY_END_STATUS is NULL 
+    </mapped-statement>        
+
+    <dynamic-mapped-statement name="getSelectBranCompletedLst" result-class="java.util.HashMap" >
+        SELECT BRANCH_ID as BRANCH_CODE FROM DAILY_DAYEND_STATUS_FINAL
+        WHERE DAYEND_DT = #DAYEND_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_ID">
+                    BRANCH_ID=#BRANCH_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_DAY_END_STATUS">
+                    BRANCH_DAY_END_STATUS=#BRANCH_DAY_END_STATUS:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>    
+         
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectTransChkReady" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_ID,TASK_STATUS,TASK_NAME,DAYEND_DT FROM DAILY_DAYEND_STATUS
+        WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR# AND
+        DAYEND_DT = #DAYEND_DT:DATE#
+        <dynamic>
+            <isNotEmpty prepend=" AND TASK_NAME IN ( " property="TASK_NAME">
+            <!--iterate  property="CUSTOMER ID" open = "(" close=")" conjunction="," >
+                #CUSTOMER ID[]#
+            </iterate-->
+                $TASK_NAME$ )
+            </isNotEmpty>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectTransChkReadyDCDayBegin" result-class="java.util.LinkedHashMap" >
+        SELECT BRANCH_ID,TASK_STATUS,TASK_NAME,DAYBEGIN_DT FROM DAILY_DAYBEGIN_STATUS
+        WHERE BRANCH_ID = #BRANCH_CODE:VARCHAR# AND
+        DAYBEGIN_DT = #DAYBEGIN_DT:DATE#
+        <dynamic>
+            <isNotEmpty prepend=" AND TASK_NAME IN ( " property="TASK_NAME">
+            <!--iterate  property="CUSTOMER ID" open = "(" close=")" conjunction="," >
+                #CUSTOMER ID[]#
+            </iterate-->
+                $TASK_NAME$ )
+            </isNotEmpty>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="insertNROTaxAmt">
+        INSERT INTO NRO_TAX (ACT_NUM,INT_DT,APPL_DT,INT_AMT,INT_RATE,TAX_APPLICABLE,TAX_AMT,PROD_ID,CUST_ID,BRANCH_CODE ) 
+        VALUES(#ACT_NUM:VARCHAR#, #START:DATE#, #APPL_DT:DATE#, #INT_AMT:NUMBER#,#INT_RATE:NUMBER#, #TAX_APPLICABLE:NUMBER#, #TAX_AMT:NUMBER#, #PROD_ID:VARCHAR#, #CUST_ID:VARCHAR#,#BRANCH_CODE:VARCHAR#) 
+    </mapped-statement>     
+    
+    <mapped-statement name="getDebitToCreditAccounts" result-class="java.util.HashMap" >
+        SELECT A.ACT_NUM FROM 
+        (SELECT ACT_NUM, CLEAR_BALANCE AS AMT FROM ACT_MASTER WHERE
+        PROD_ID=#PROD_ID:VARCHAR# AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#) A,
+        (SELECT ACT_NUM, AMT FROM ACT_DAYEND_BALANCE ADB WHERE
+        PROD_ID=#PROD_ID:VARCHAR# AND DAY_END_DT = (SELECT MAX(DAY_END_DT) 
+        FROM ACT_DAYEND_BALANCE WHERE PROD_ID=#PROD_ID:VARCHAR# AND 
+        DAY_END_DT&lt;#CURR_DT:DATE# AND ACT_NUM=ADB.ACT_NUM)) B
+        WHERE A.ACT_NUM=B.ACT_NUM AND A.AMT&gt;0 AND B.AMT&lt;0
+        <!--AND A.ACT_NUM IN (SELECT ACT_NUM FROM TOD_ALLOWED WHERE
+        INT_CALC_DT IS NULL OR INT_CALC_DT&lt;TO_DT)-->
+        
+        <!--SELECT A.ACT_NUM FROM 
+            (SELECT ACT_NUM, AMT FROM ACT_DAYEND_BALANCE WHERE
+            PROD_ID=#PROD_ID# AND DAY_END_DT = '14-APR-2009') A,
+            (SELECT ACT_NUM, AMT FROM ACT_DAYEND_BALANCE ADB WHERE
+            PROD_ID=#PROD_ID# AND DAY_END_DT = (SELECT MAX(DAY_END_DT) 
+            FROM ACT_DAYEND_BALANCE WHERE PROD_ID=#PROD_ID# AND 
+            DAY_END_DT<'14-APR-2009' AND ACT_NUM=ADB.ACT_NUM)) B
+        WHERE A.ACT_NUM=B.ACT_NUM AND A.AMT>0 AND B.AMT<0-->
+    </mapped-statement>
+
+    <mapped-statement name="OperativeAccount.getInterestReceivable" result-class="java.util.HashMap">
+        <!--This query needs to be checked against the screen. Working for batch job... -->   
+        SELECT AM.CUST_ID, AM.ACT_NUM AS "ACT_NUM", AM.PROD_ID AS "PROD_ID", 
+        OPROD.BASE_CURRENCY AS "CURRENCY",
+        AM.CATEGORY_ID, 
+        (SELECT MIN(NVL(INT_CALC_DT+1,FROM_DT)) FROM TOD_ALLOWED WHERE 
+        ACT_NUM=AM.ACT_NUM AND 
+        (INT_CALC_DT IS NULL OR INT_CALC_DT&lt;TO_DT)
+        ) AS "START", AM.BRANCH_CODE
+        FROM ACT_MASTER AM,
+        ACT_PARAM_DETAIL AD,
+        OP_AC_PRODUCT OPROD
+        WHERE AM.ACT_NUM = #ACT_NUM:VARCHAR#
+        AND AM.PROD_ID = OPROD.PROD_ID
+        AND AM.ACT_NUM = AD.ACT_NUM
+        AND AM.STATUS != 'DELETED'
+        AND (AM.ACT_STATUS_ID NOT IN ('CLOSED'))
+        AND AM.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND OPROD.STATUS != 'DELETED'
+        AND OPROD.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND AM.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTODIntCalcDt">
+        UPDATE TOD_ALLOWED SET INT_CALC_DT = #applDt:DATE# 
+        WHERE ACT_NUM = #actNum:VARCHAR# AND INT_CALC_DT IS NULL OR INT_CALC_DT &lt;= TO_DT
+    </mapped-statement>
+    <mapped-statement name="updateAcctPaymentTEMPApplDt">
+        UPDATE ACT_PARAM_DETAIL SET  TEMP_LAST_CR_INT_APPLDT=LAST_CR_INT_APPLDT
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+     <mapped-statement name="updateAcctPaymentLASTCRINTApplDt">
+        UPDATE ACT_PARAM_DETAIL SET  LAST_CR_INT_APPLDT = TEMP_LAST_CR_INT_APPLDT
+        WHERE ACT_NUM = #ACCOUNTNO:VARCHAR# AND TEMP_LAST_CR_INT_APPLDT IS NOT NULL
+    </mapped-statement>
+    
+    <!-- Added by nithya -->
+    
+    <mapped-statement name="isTODSetForProduct" result-class="java.util.HashMap">
+        select OP.TEMP_OD_ALLOWED from OP_AC_ACCOUNT_PARAM op where OP.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getTODLimitForSBODActNo" result-class="java.util.HashMap">
+        select AM.TOD_LIMIT  from ACT_MASTER am where AM.ACT_NUM = #ACT_NUM:VARCHAR# and AM.PROD_ID = #PROD_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateAcctLastReceiptDt">
+        UPDATE ACT_PARAM_DETAIL SET LAST_DR_INT_APPLDT = #applDt:DATE#
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSBODDailyInterest" result-class="java.util.HashMap">
+        SELECT * FROM GET_SBDAILY_INTEREST(#ACT_NUM:VARCHAR#,#START_DATE:DATE#,#END_DATE:DATE#)
+    </mapped-statement>   
+    
+    <mapped-statement name="getLogoutUserList" result-class="java.util.HashMap" >
+        SELECT USER_ID FROM USER_MASTER UM  WHERE BRANCH_CODE IN (SELECT BRANCH_CODE FROM USER_MASTER  WHERE   USER_ID =#USER_ID#
+        AND STATUS !='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED') AND STATUS !='DELETED' AND AUTHORIZED_STATUS='AUTHORIZED' AND USER_ID !=#USER_ID#
+   </mapped-statement>
+
+   <mapped-statement name="daybeginOterUserLogout" inline-parameters="true">
+        SELECT SYS_DATE() FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectinsertDailyBalance" result-class="java.util.HashMap">
+        SELECT PKGDAYEND.INS_ALL_DAYEND(#DAY_END_DT:DATE#, #BRANCH_CODE:VARCHAR#) DAYEND_STATUS FROM DUAL
+    </mapped-statement>
+    
+    <mapped-statement name="getAutoRenewableProductCount" result-class="java.util.HashMap" >
+        select count(*) as RENEWAL_CNT from deposits_prod_renewal dpr where AUTO_RENEWAL_ALLOWED = 'Y' 
+    </mapped-statement>
+    
+</sql-map>

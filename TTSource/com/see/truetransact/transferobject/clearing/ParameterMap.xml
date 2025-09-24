@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ParameterMap">
+
+	<!-- Use ParameterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertParameterTO" inline-parameters="true">
+        INSERT INTO CLEARING_PARAM
+        (CLEARING_TYPE, LOTSIZE_MICR_CLEARING, HIGH_VAL_APPL, SERVICE_BRANCH_CODE, HIGH_VAL_CHEQUE, STATUS, BRANCH_ID, CLEARING_PERIOD, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #clearingType:VARCHAR#, #lotsizeMicrClearing:NUMERIC#, #highValAppl:VARCHAR#, #serviceBranchCode:VARCHAR#, #highValCheque:NUMERIC#, #status:VARCHAR#, #branchId:VARCHAR#, #clearingPeriod:NUMERIC#, #statusBy:VARCHAR#,#statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use ParameterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateParameterTO" inline-parameters="true">
+        UPDATE CLEARING_PARAM SET 
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+        LOTSIZE_MICR_CLEARING = #lotsizeMicrClearing:NUMERIC#,
+        HIGH_VAL_APPL = #highValAppl:VARCHAR#,
+        SERVICE_BRANCH_CODE = #serviceBranchCode:VARCHAR#,
+        HIGH_VAL_CHEQUE = #highValCheque:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        CLEARING_PERIOD = #clearingPeriod:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:VARCHAR#
+        WHERE CLEARING_TYPE = #clearingType:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use ParameterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteParameterTO" inline-parameters="true">
+        UPDATE CLEARING_PARAM SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE CLEARING_TYPE = #clearingType:VARCHAR#  AND BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ParameterTO object (JavaBean) properties -->
+    <result-map name="getParameterTOResult" class="com.see.truetransact.transferobject.clearing.ParameterTO">
+        <property name="clearingType" column="CLEARING_TYPE"/>
+        <property name="lotsizeMicrClearing" column="LOTSIZE_MICR_CLEARING"/>
+        <property name="highValAppl" column="HIGH_VAL_APPL"/>
+        <property name="serviceBranchCode" column="SERVICE_BRANCH_CODE"/>
+        <property name="highValCheque" column="HIGH_VAL_CHEQUE"/>
+        <property name="status" column="STATUS"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="clearingPeriod" column="CLEARING_PERIOD"/>
+    </result-map>
+    <mapped-statement name="getSelectParameterTO" result-map="getParameterTOResult" >
+        SELECT * FROM CLEARING_PARAM 
+        WHERE CLEARING_TYPE = #CLEARING_TYPE# 
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        ORDER BY CLEARING_TYPE
+    </mapped-statement>
+      
+       <!-- This statement is used to view previously inserted data when edit or delete is clicked -->
+    <mapped-statement name="viewParameter" result-class = "java.util.LinkedHashMap" >
+        SELECT  CLEARING_TYPE,LOTSIZE_MICR_CLEARING,SERVICE_BRANCH_CODE 
+        FROM CLEARING_PARAM 
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+    </mapped-statement>
+       
+    <mapped-statement name="getSelectBankParams" result-class="java.util.LinkedHashMap">
+        SELECT CLEARING_HD, CLEARING_SUSPENSE_HD, OUTWARD_RETURN_CHRG, OUTWARD_RETURN_HD, INWARD_RETURN_CHRG, INWARD_RETURN_HD
+        FROM CLEARING_BANK_PARAM
+        WHERE STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS IN ('AUTHORIZED') AND CLEARING_TYPE = #CLEARING_TYPE:VARCHAR#
+    </mapped-statement>
+        
+        <!-- This is used to check out for duplication if any for the clearinType column -->
+    <mapped-statement name="countClearingType" result-class = "java.util.LinkedHashMap" >
+        SELECT  COUNT(CLEARING_TYPE) AS COUNT FROM CLEARING_PARAM 
+        WHERE CLEARING_TYPE = #CLEARING_TYPE:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+    </mapped-statement>
+       
+<!-- ============================Authorization Queries=========================================================== -->
+
+    <dynamic-mapped-statement name="getClearingParamAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  CLEARING_TYPE,LOTSIZE_MICR_CLEARING,BRANCH_ID,STATUS_BY FROM CLEARING_PARAM CP
+        WHERE STATUS NOT IN ('DELETED')
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = CP.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeClearingParam" result-class="java.util.HashMap">
+        UPDATE CLEARING_PARAM SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT =#AUTHORIZE_DT:TIMESTAMP#
+        WHERE CLEARING_TYPE = #CLEARING_TYPE#
+        AND BRANCH_ID = #BRANCH_CODE:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>       
+
+</sql-map>

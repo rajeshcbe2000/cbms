@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeMap">
+
+    <dynamic-mapped-statement name="getBranchData" result-class="java.util.HashMap">
+        SELECT BRANCH_CODE, BRANCH_NAME,  STREET, CITY 
+        FROM BRANCH_MASTER 
+        WHERE STATUS = 'CREATED' OR STATUS = 'MODIFIED' OR STATUS = 'UPDATED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="BRANCH_CODE">
+                    UPPER(BRANCH_CODE) LIKE UPPER('%$BRANCH_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="BRANCH_NAME">
+                     UPPER(BRANCH_NAME) LIKE UPPER('%$BRANCH_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND" property="STREET">
+                     UPPER(STREET) LIKE UPPER('%$STREET$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND" property="CITY">
+                     UPPER(CITY) LIKE UPPER('%$CITY$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>         
+
+
+<!--added by anjuanand on 15-07-2014-->
+    <result-map name="getEmployeeAddrTOResult" class="com.see.truetransact.transferobject.payroll.employee.EmployeeAddrTO">
+        <property name="employeeId" column="EMPLOYEE_ID"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pinCode" column="PIN_CODE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectEmployeeAddrTO" result-map="getEmployeeAddrTOResult" >
+        SELECT * FROM CUST_ADDR where CUST_ID = #CUST_ID:VARCHAR# AND ADDR_TYPE = #ADDR_TYPE:VARCHAR#
+    </mapped-statement>        
+        
+     <dynamic-mapped-statement name="viewEmployee" result-class="java.util.LinkedHashMap">
+        SELECT E.EMPLOYEEID AS EMPLOYEE_ID, C.CUST_ID, CONCAT(CONCAT(E.TITLE, ' '), E.EMPLOYEE_NAME) AS EMPLOYEE_NAME,E.STATUS_BY FROM EMPLOYEE_MASTER E JOIN CUSTOMER C
+        ON E.EMPLOYEEID = C.STAFF_ID
+        WHERE E.STATUS != 'DELETED'
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EMPLOYEE_ID" >
+                    UPPER(E.EMPLOYEEID) LIKE UPPER('%$EMPLOYEE_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "CUST_ID" >
+                    UPPER(C.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EMPLOYEE_NAME" >
+                    UPPER(CONCAT(CONCAT(E.TITLE, ' '), E.EMPLOYEE_NAME)) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "STATUS_BY" >
+                    UPPER(E.STATUS_BY) LIKE UPPER('%$STATUS_BY$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY EMPLOYEE_ID
+    </dynamic-mapped-statement>
+      
+    <mapped-statement name="getCustAddress" result-class="java.util.HashMap">
+        SELECT STREET, ADDR_TYPE, AREA, CITY, STATE, COUNTRY_CODE, PIN_CODE FROM CUST_ADDR where CUST_ID = #CUST_ID:VARCHAR# AND ADDR_TYPE = #ADDR_TYPE:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="getCustData" result-class="java.util.HashMap">
+        SELECT CUST_ID, TITLE, FNAME, MNAME, LNAME, GENDER, MARITALSTATUS, EMAIL_ID, DOB, SSN, PAN_NUMBER, CASTE, RELIGION from CUSTOMER where CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getCustPhone" result-class="java.util.HashMap">
+        SELECT PHONE_NUMBER FROM CUST_PHONE WHERE CUST_ID = #CUST_ID:VARCHAR# AND status not in ('DELETED')
+    </mapped-statement>
+     
+    <mapped-statement name="insertEmplMasterTo" inline-parameters="true">
+        INSERT INTO EMPLOYEE_MASTER (EMPLOYEEID, SORT_ORDER, TITLE, EMPLOYEE_NAME, EMAILID, PAN_NUMBER, CONTACTNO, FATHER_TITLE, FATHER_NAME, MOTHER_TITLE, MOTHER_NAME, GENDER, MARITALSTATUS, SPOUCE_NAME, SPOUCE_RELATION, DATE_OF_BIRTH, PLACE_OF_BIRTH, RELIGION, CASTE, ID_MARK_1, ID_MARK_2, BLOOD_GROUP, PHYSICALHANDICAP, MAJOR_HEALTH_PROBLEM, COMM_ADDR_TYPE, STATUS_BY, CREATED_BY, CREATED_DATE, AUTHORIZED_BY, MANAGER_CODE, AUTHORIZED_DATE, BRANCH_CODE)
+        VALUES(#employeeCode:VARCHAR#, cast(#sortOrder# as numeric), #title:VARCHAR#, #fname:VARCHAR#, #officialEmail:VARCHAR#, #panNo:VARCHAR#, #officePhone:VARCHAR#, #fatherTitle:VARCHAR#, #fatherName:VARCHAR#, #motherTitle:VARCHAR#, #motherName:VARCHAR#, #gender:VARCHAR#, #maritalStatus:VARCHAR#, #spouseName:VARCHAR#, #spouseRelation:VARCHAR#,  #dob:DATE#, #placeofBirth:VARCHAR#, #religion:VARCHAR#, #caste:VARCHAR#, #identificationMark1:VARCHAR#, #identificationMark2:VARCHAR#, #bloodGroup:VARCHAR#, #physicallyHandicapped:VARCHAR#, #majorHealthProblem:VARCHAR#, #commAddressType:VARCHAR#, #statusBy:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #authorizeBy:VARCHAR#, #managerCode:VARCHAR#, #authorizeDt:DATE#, #branchCode:VARCHAR#)      
+    </mapped-statement>
+
+    <mapped-statement name="insertEmplOtherDetailsTo" inline-parameters="true">
+        INSERT INTO EMPLOYEE_OTHER_DETAILS (EMPLOYEEID, EMPLOYEE_TYPE, DESIG_ID, DEPT_ID, SSN, PASSPORTNO, SKILLS, EDUCATION, EXPERIENCES, RESPONSIBILITY, PERFORMANCE, COMMENTS, CREATED_BY, CREATED_DATE, AUTHORIZED_BY, AUTHORIZED_DATE, AUTHORIZE_STATUS)
+        VALUES(#employeeCode:VARCHAR#, #employeeType:VARCHAR#, #desigId:VARCHAR#, #depttId:VARCHAR#, #ssn:VARCHAR#, #passportNo:VARCHAR#, #skills:VARCHAR#, #education:VARCHAR#, #experience:VARCHAR#, #responsibility:VARCHAR#, #performance:VARCHAR#, #comments:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #authorizeStatus:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="insertEmplPresentDetailsTo" inline-parameters="true">
+        INSERT INTO EMPLOYEE_PRESENT_DETAILS(EMPLOYEEID, EFF_DATE, DESIGNATION, SCALE_ID, PRESENT_BASIC, LAST_INCREAMENT_DATE, NEXT_INCREAMENT_DATE, INCREAMENT_COUNT, STATUS_BY, STATUS, CREATED_BY, CREATED_DATE, AUTHORIZED_BY, AUTHORIZE_STATUS, AUTHORIZED_DATE, VERSION_NO, SRL_NO)
+        VALUES(#employeeCode:VARCHAR#, #effectiveDate:DATE#, #designation:VARCHAR#, #scale_id:NUMBER#, #presentBasicSalary:NUMBER#, #lastIncrementDate:DATE#, #nextIncrementDate:DATE#, #incrementCount:NUMBER#, #statusBy:VARCHAR#, #status:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#, cast(#authorizeDt# as DATE), #versionNo:NUMBER#, #srlNo:NUMBER#)
+    </mapped-statement>
+
+    <mapped-statement name="updateCustTo" inline-parameters="true">
+        UPDATE CUSTOMER SET
+        STAFF_ID = #employeeCode:VARCHAR#,
+        CUST_TYPE_ID = 'STAFF'
+        WHERE CUST_ID = #customerId:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getCustFullName" inline-parameters="true">
+        SELECT get_cust_name(CUSTOMER.CUST_ID) AS CUST_NAME FROM CUSTOMER  WHERE CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getNetSalProdId" result-class="java.util.HashMap">
+        SELECT DISTINCT PROD_ID, PROD_DESC FROM PAYROLL_PRODUCTS WHERE PROD_TYPE = #PROD_TYPE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getScaleId" result-class="java.util.HashMap">
+        SELECT SCALE_ID, VERSION_NO, EFF_DATE FROM SCALE_MASTER WHERE UPPER(DESIGNATION) = UPPER(#DESIGNATION:VARCHAR#) AND VERSION_NO = (SELECT MAX(VERSION_NO) FROM SCALE_MASTER WHERE UPPER(DESIGNATION) = UPPER(#DESIGNATION:VARCHAR#))
+    </mapped-statement>
+
+    <mapped-statement name="getNetSalAccNoDet" result-class="java.util.HashMap">
+        SELECT DISTINCT AC.CUST_ID,AC.ACT_NUM,AC.FNAME FROM ALL_CUSTOMER AC, ALL_PRODUCT_ACCTS AP WHERE AC.ACT_NUM=AP.ACT_NUM AND AP.PROD_TYPE=#PROD_TYPE:VARCHAR# and AP.PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getIncrStagCount" result-class="java.util.HashMap">
+<!--        SELECT SUM(INCREAMENT_COUNT) AS INCREAMENT_COUNT FROM SCALE_DETAILS WHERE VERSION_NO = (SELECT MAX(VERSION_NO) FROM SCALE_DETAILS WHERE SCALE_ID = #SCALE:NUMBER#) 
+        AND SCALE_ID = #SCALE:NUMBER# + (SELECT STAGNATION_COUNT FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER# AND VERSION_NO IN (SELECT MAX(VERSION_NO) 
+        FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER#))-->
+        select sum(INCREAMENT_COUNT) AS INCREAMENT_COUNT from (
+        (SELECT NVL(SUM(INCREAMENT_COUNT),0) AS INCREAMENT_COUNT FROM SCALE_DETAILS WHERE VERSION_NO = (SELECT MAX(VERSION_NO) FROM SCALE_DETAILS WHERE SCALE_ID = #SCALE:NUMBER#) 
+        AND SCALE_ID = #SCALE:NUMBER#)
+        UNION
+        (SELECT STAGNATION_COUNT AS INCREAMENT_COUNT FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER# AND VERSION_NO IN (SELECT MAX(VERSION_NO) 
+        FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER#)))a
+    </mapped-statement>
+
+    <mapped-statement name="getBasicSal" result-class="java.util.HashMap">
+        SELECT SCALE_START_AMOUNT,SCALE_END_AMOUNT,STAGNATION_REQUIRED,STAGNATION_AMOUNT,STAGNATION_COUNT,VERSION_NO FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER# AND VERSION_NO IN (SELECT MAX(VERSION_NO) FROM SCALE_MASTER WHERE SCALE_ID = #SCALE:NUMBER#)
+    </mapped-statement>
+
+    <mapped-statement name="getScaleDet" result-class="java.util.HashMap">
+        SELECT INCREAMENT_COUNT, INCREAMENT_AMOUNT FROM SCALE_DETAILS WHERE SCALE_ID = #SCALE:NUMBER# AND VERSION_NO = #VERSION:NUMBER#
+    </mapped-statement>
+
+    <mapped-statement name="getManagerCode" result-class="java.util.HashMap">
+        select E.EMPLOYEEID, E.EMPLOYEE_NAME from EMPLOYEE_MASTER E join EMPLOYEE_PRESENT_DETAILS P on E.EMPLOYEEID = P.EMPLOYEEID where P.DESIGNATION = #DESIGNATION:VARCHAR#     
+    </mapped-statement>
+    
+    <result-map name="getEmployeeMasterDetailsTOResult" class="com.see.truetransact.transferobject.payroll.employee.EmployeeDetailsTO">
+        <property name="employeeCode" column="EMPLOYEEID"/>
+        <property name="sortOrder" column="SORT_ORDER"/>
+        <property name="title" column="TITLE"/>
+        <property name="fname" column="EMPLOYEE_NAME"/>
+        <property name="officialEmail" column="EMAILID"/>
+        <property name="panNo" column="PAN_NUMBER"/>
+        <property name="officePhone" column="CONTACTNO"/>
+        <property name="fatherTitle" column="FATHER_TITLE"/>
+        <property name="fatherName" column="FATHER_NAME"/>
+        <property name="motherTitle" column="MOTHER_TITLE"/>
+        <property name="motherName" column="MOTHER_NAME"/>
+        <property name="gender" column="GENDER"/>
+        <property name="maritalStatus" column="MARITALSTATUS"/>
+        <property name="spouseName" column="SPOUCE_NAME"/>
+        <property name="spouseRelation" column="SPOUCE_RELATION"/>
+        <property name="dob" column="DATE_OF_BIRTH"/>
+        <property name="placeofBirth" column="PLACE_OF_BIRTH"/>
+        <property name="religion" column="RELIGION"/>
+        <property name="caste" column="CASTE"/>
+        <property name="identificationMark1" column="ID_MARK_1"/>
+        <property name="identificationMark2" column="ID_MARK_2"/>
+        <property name="bloodGroup" column="BLOOD_GROUP"/>
+        <property name="physicallyHandicapped" column="PHYSICALHANDICAP"/>
+        <property name="majorHealthProblem" column="MAJOR_HEALTH_PROBLEM"/>
+        <property name="managerCode" column="MANAGER_CODE"/>
+        <property name="commAddressType" column="COMM_ADDR_TYPE"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+    </result-map>
+      
+    <mapped-statement name="getSelectEmployeeMasterDetailsTO" result-map="getEmployeeMasterDetailsTOResult" >
+        SELECT BRANCH_CODE, EMPLOYEEID, SORT_ORDER, TITLE, EMPLOYEE_NAME, EMAILID, PAN_NUMBER, CONTACTNO, FATHER_TITLE, FATHER_NAME, MOTHER_TITLE, MOTHER_NAME, 
+        GENDER, MARITALSTATUS, SPOUCE_NAME, SPOUCE_RELATION, DATE_OF_BIRTH, PLACE_OF_BIRTH, RELIGION, CASTE, ID_MARK_1, ID_MARK_2, BLOOD_GROUP, 
+        PHYSICALHANDICAP, MAJOR_HEALTH_PROBLEM, MANAGER_CODE, COMM_ADDR_TYPE
+        FROM EMPLOYEE_MASTER WHERE EMPLOYEEID = #value:VARCHAR#
+    </mapped-statement>
+                
+    <result-map name="getEmployeeSalStructTOResult" class="com.see.truetransact.transferobject.payroll.employee.SalaryStructTO">
+        <property name="employeeCode" column="EMPLOYEEID"/>
+        <property name="dateOfJoin" column="DATE_OF_JOIN"/>
+        <property name="statusOfEmp" column="EMP_STATUS"/>
+        <property name="wfNo" column="WF_NUMBER"/>
+        <property name="wfOpeningBalance" column="WF_OPENING_BALANCE"/>
+        <property name="wfOpeningBalanceOn" column="WF_OPBAL_ASON"/>
+        <property name="daApplicable" column="DA_APPLICABLE"/>
+        <property name="hraApplicable" column="HRA_APPLICABLE"/>
+        <property name="stopPayt" column="STOP_PAYMENT"/>
+        <property name="netSalaryProductType" column="NET_SALARY_PROD_TYPE"/>
+        <property name="netSalaryProductId" column="NET_SALARY_PROD_ID"/>
+        <property name="netSalaryAccountNo" column="NET_SALARY_ACC_NO"/>
+        <property name="pensionCodeNo" column="PEN_CODE_NO"/>
+        <property name="pensionOpeningBalance" column="PEN_OPENING_BALANCE"/>
+        <property name="pensionOpeningBalanceOn" column="PEN_OPBAL_ASON"/>
+        <property name="probationEndDate" column="PROBATION_END_DATE"/>
+        <property name="dateOfRetirement" column="DATE_OF_RETIREMENT"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+              
+    <mapped-statement name="getSelectEmployeeSalStructTO" result-map="getEmployeeSalStructTOResult" >
+        SELECT EMPLOYEEID, DATE_OF_JOIN, EMP_STATUS, WF_NUMBER, NVL(WF_OPENING_BALANCE,0) AS WF_OPENING_BALANCE , 
+        WF_OPBAL_ASON, DA_APPLICABLE, HRA_APPLICABLE, STOP_PAYMENT, NET_SALARY_PROD_TYPE, NET_SALARY_PROD_ID, 
+        NET_SALARY_ACC_NO, PEN_CODE_NO, NVL(PEN_OPENING_BALANCE,0) AS PEN_OPENING_BALANCE , PEN_OPBAL_ASON, PROBATION_END_DATE, 
+        DATE_OF_RETIREMENT, STATUS 
+        FROM EMPLOYEE_MASTER WHERE EMPLOYEEID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getEmployeeOtherDetailsTOResult" class="com.see.truetransact.transferobject.payroll.employee.EmployeeDetailsTO">
+        <property name="employeeCode" column="EMPLOYEEID"/>
+        <property name="employeeType" column="EMPLOYEE_TYPE"/>
+        <property name="desigId" column="DESIG_ID"/>
+        <property name="depttId" column="DEPT_ID"/>
+        <property name="ssn" column="SSN"/>
+        <property name="passportNo" column="PASSPORTNO"/>
+        <property name="skills" column="SKILLS"/>
+        <property name="education" column="EDUCATION"/>
+        <property name="experience" column="EXPERIENCES"/>
+        <property name="responsibility" column="RESPONSIBILITY"/>
+        <property name="performance" column="PERFORMANCE"/>
+        <property name="comments" column="COMMENTS"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DATE"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectEmployeeOtherDetailsTO" result-map="getEmployeeOtherDetailsTOResult" >
+        SELECT * FROM EMPLOYEE_OTHER_DETAILS WHERE EMPLOYEEID = #value:VARCHAR#
+    </mapped-statement>
+    
+    <result-map name="getEmplSalStructTOResult" class="com.see.truetransact.transferobject.payroll.employee.SalaryStructTO">
+        <property name="effectiveDate" column="EFF_DATE"/>
+        <property name="designation" column="DESIGNATION"/>
+        <property name="scale_id" column="SCALE_ID"/>
+        <property name="presentBasicSalary" column="PRESENT_BASIC"/>
+        <property name="lastIncrementDate" column="LAST_INCREAMENT_DATE"/>
+        <property name="nextIncrementDate" column="NEXT_INCREAMENT_DATE"/>
+        <property name="incrementCount" column="INCREAMENT_COUNT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectEmplPresentDetailsTO" result-map="getEmplSalStructTOResult" >
+       <!-- SELECT * FROM EMPLOYEE_PRESENT_DETAILS WHERE EMPLOYEEID = #value:VARCHAR#-->
+        SELECT * FROM EMPLOYEE_PRESENT_DETAILS  e WHERE EMPLOYEEID =  #value:VARCHAR# and E.SRL_NO=(select max(E.SRL_NO) from EMPLOYEE_PRESENT_DETAILS e where E.EMPLOYEEID= #value:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="getCustIdforStaff" result-class="java.util.HashMap">
+        SELECT CUST_ID FROM CUSTOMER WHERE STAFF_ID = #EMPID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getCustWithEmplId" result-class="java.util.HashMap">
+        SELECT C.STAFF_ID  FROM CUSTOMER C  WHERE C.CUST_ID=#CUST_ID:VARCHAR# and
+        C.STAFF_ID IN(SELECT E.EMPLOYEEID FROM EMPLOYEE_MASTER E)
+    </mapped-statement>
+
+    <mapped-statement name="getNetSalAccCustName" result-class="java.util.HashMap">
+        SELECT get_cust_name(C.CUST_ID) AS NAME FROM ACT_MASTER AM JOIN CUSTOMER C ON AM.CUST_ID = C.CUST_ID 
+        WHERE AM.ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateEmployeeMastrDetailsTO" inline-parameters="true">
+        UPDATE EMPLOYEE_MASTER SET 
+        SORT_ORDER = #sortOrder:VARCHAR#, 
+        TITLE = #title:VARCHAR#,
+        EMPLOYEE_NAME = #fname:VARCHAR#,
+        EMAILID = #officialEmail:VARCHAR#, 
+        PAN_NUMBER = #panNo:VARCHAR#,
+        CONTACTNO = #officePhone:VARCHAR#, 
+        FATHER_TITLE = #fatherTitle:VARCHAR#, 
+        FATHER_NAME = #fatherName:VARCHAR#, 
+        MOTHER_TITLE = #motherTitle:VARCHAR#,
+        MOTHER_NAME = #motherName:VARCHAR#,
+        GENDER = #gender:VARCHAR#, 
+        MARITALSTATUS = #maritalStatus:VARCHAR#,
+        SPOUCE_NAME = #spouseName:VARCHAR#, 
+        SPOUCE_RELATION = #spouseRelation:VARCHAR#, 
+        DATE_OF_BIRTH = #dob:DATE#, 
+        PLACE_OF_BIRTH = #placeofBirth:VARCHAR#,
+        RELIGION = #religion:VARCHAR#, 
+        CASTE = #caste:VARCHAR#,
+        ID_MARK_1 = #identificationMark1:VARCHAR#, 
+        ID_MARK_2 = #identificationMark2:VARCHAR#, 
+        BLOOD_GROUP = #bloodGroup:VARCHAR#,
+        PHYSICALHANDICAP = #physicallyHandicapped:VARCHAR#, 
+        MAJOR_HEALTH_PROBLEM = #majorHealthProblem:VARCHAR#, 
+        COMM_ADDR_TYPE = #commAddressType:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#,
+        CREATED_BY = #createdBy:VARCHAR#, 
+        CREATED_DATE = #createdDt:DATE#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        MANAGER_CODE = #managerCode:VARCHAR#, 
+        AUTHORIZED_DATE = #authorizeDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        BRANCH_CODE = #branchCode:VARCHAR#
+        WHERE EMPLOYEEID = #employeeCode:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateEmplSalStructureTo" inline-parameters="true">
+        UPDATE EMPLOYEE_MASTER SET
+        DATE_OF_JOIN = #dateOfJoin:DATE#, 
+        PROBATION_END_DATE = #probationEndDate:DATE#,
+        DATE_OF_RETIREMENT = #dateOfRetirement:DATE#, 
+        PEN_CODE_NO = #pensionCodeNo:VARCHAR#, 
+        PEN_OPENING_BALANCE = #pensionOpeningBalance:NUMBER#, 
+        PEN_OPBAL_ASON = #pensionOpeningBalanceOn:DATE#,
+        WF_NUMBER = #wfNo:VARCHAR#, 
+        WF_OPENING_BALANCE = #wfOpeningBalance:NUMBER#, 
+        WF_OPBAL_ASON = #wfOpeningBalanceOn:DATE#, 
+        DA_APPLICABLE = #daApplicable:VARCHAR#,
+        HRA_APPLICABLE = #hraApplicable:VARCHAR#, 
+        STOP_PAYMENT = #stopPayt:VARCHAR#, 
+        NET_SALARY_PROD_TYPE = #netSalaryProductType:VARCHAR#,
+        NET_SALARY_PROD_ID = #netSalaryProductId:VARCHAR#, 
+        NET_SALARY_ACC_NO = #netSalaryAccountNo:VARCHAR#,
+        EMP_STATUS = #statusOfEmp:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE EMPLOYEEID = #employeeCode:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateEmplPresentDetailsTo" inline-parameters="true">
+        UPDATE EMPLOYEE_PRESENT_DETAILS SET
+        EFF_DATE = #effectiveDate:DATE#, 
+        DESIGNATION = #designation:VARCHAR#, 
+        SCALE_ID = #scale_id:NUMBER#, 
+        PRESENT_BASIC = #presentBasicSalary:NUMBER#, 
+        LAST_INCREAMENT_DATE = #lastIncrementDate:DATE#, 
+        NEXT_INCREAMENT_DATE = #nextIncrementDate:DATE#, 
+        INCREAMENT_COUNT = #incrementCount:NUMBER#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS = #status:VARCHAR#, 
+        CREATED_BY = #createdBy:VARCHAR#, 
+        CREATED_DATE = #createdDt:DATE#, 
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#, 
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#, 
+        AUTHORIZED_DATE = cast(#authorizeDt# as timestamp without time zone),
+        VERSION_NO = #versionNo:NUMBER#
+        WHERE EMPLOYEEID = #employeeCode:VARCHAR# AND 
+        SRL_NO=(select max(E.SRL_NO) from EMPLOYEE_PRESENT_DETAILS e where E.EMPLOYEEID=#employeeCode:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateEmplOtherDetailsTo" inline-parameters="true">
+        UPDATE EMPLOYEE_OTHER_DETAILS SET 
+        EMPLOYEE_TYPE = #employeeType:VARCHAR#,
+        DESIG_ID = #desigId:VARCHAR#, 
+        DEPT_ID = #depttId:VARCHAR#, 
+        SSN = #ssn:VARCHAR#,
+        PASSPORTNO = #passportNo:VARCHAR#,
+        SKILLS = #skills:VARCHAR#,
+        EDUCATION = #education:VARCHAR#,
+        EXPERIENCES = #experience:VARCHAR#,
+        RESPONSIBILITY = #responsibility:VARCHAR#,
+        PERFORMANCE = #performance:VARCHAR#, 
+        COMMENTS = #comments:VARCHAR#, 
+        CREATED_BY = #createdBy:VARCHAR#, 
+        CREATED_DATE = #createdDt:DATE#, 
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#, 
+        AUTHORIZED_DATE = #authorizeDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#
+        WHERE EMPLOYEEID = #employeeCode:VARCHAR#
+    </mapped-statement>
+
+<!-- ==============================AUTHORIZATION QUERIES===================================================== -->
+    <mapped-statement name="authorizeEmployee" result-class="java.util.HashMap">
+        UPDATE EMPLOYEE_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DATE = #CURR_DATE:DATE# 
+        WHERE EMPLOYEEID = #EMPLOYEE CODE:VARCHAR#
+    </mapped-statement>
+   
+    <mapped-statement name="authorizeEmployeeOtherDet" result-class="java.util.HashMap">
+        UPDATE EMPLOYEE_OTHER_DETAILS SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DATE = #CURR_DATE:DATE# 
+        WHERE EMPLOYEEID = #EMPLOYEE CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeEmployeePresentDet" result-class="java.util.HashMap">
+        UPDATE EMPLOYEE_PRESENT_DETAILS SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DATE = #CURR_DATE:DATE# 
+        WHERE EMPLOYEEID = #EMPLOYEE CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectEmployeeAuthorizationList" result-class="java.util.LinkedHashMap" >
+        SELECT EMPLOYEEID, EMPLOYEE_NAME,STATUS_BY FROM EMPLOYEE_MASTER WHERE EMP_STATUS = 'Service' 
+        AND AUTHORIZE_STATUS IS NULL AND STATUS_BY != #USER_ID:VARCHAR#  ORDER BY EMPLOYEEID
+    </mapped-statement>
+    
+<!-- ==============================END OF AUTHORIZATION QUERIES===================================================== -->
+
+    <mapped-statement name="getEmployeeDetails" result-class="java.util.LinkedHashMap">
+        SELECT EM.EMPLOYEEID, EM.EMPLOYEE_NAME,EM.GENDER, CD.STREET AS HOUSENAME , CD.AREA , CD.CITY,
+        EP.DESIGNATION,EM.DATE_OF_JOIN,EM.EMAILID, EM.CONTACTNO
+        FROM EMPLOYEE_MASTER EM, CUST_ADDR CD,CUSTOMER C, EMPLOYEE_PRESENT_DETAILS EP
+        WHERE C.STAFF_ID = EM.EMPLOYEEID
+        AND CD.CUST_ID = C.CUST_ID
+        AND EP.EMPLOYEEID = EM.EMPLOYEEID
+        AND EM.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND EM.EMPLOYEEID = #EMPLOYEEID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getEmpOtherDetailsId"  result-class = "java.util.HashMap" >
+        SELECT EM.EMPLOYEEID FROM EMPLOYEE_OTHER_DETAILS EM WHERE EM.EMPLOYEEID=#value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="chkEmployeeDetails"  result-class = "java.util.HashMap" >
+        select count(*) as count from PAYMASTER p where P.EMPLOYEEID=#value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="UpdateEmployeeDetails"  inline-parameters="true" >
+        update PAYMASTER set ACTIVE=#ACTIVE:VARCHAR# where EMPLOYEEID=#EMPID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAllPayCodeId" result-class="java.util.LinkedHashMap">
+        SELECT P.PAYCODE_ID, P.PAY_CODE, P.PAY_MODULE_TYPE
+        FROM PAYCODES_MASTER P WHERE P.INDIVIDUAL_REQ = 'N'
+    </mapped-statement>
+    
+    <mapped-statement name="getAllCalcPayCodes" result-class="java.util.LinkedHashMap">
+       <!-- SELECT  MAX(PS.SRL_NO) AS SRL_NO, PS.PAY_CODE, MAX(PS.PAY_PERCENT) AS PAY_PERCENT, MAX(PS.PAY_CALC_ON) AS PAY_CALC_ON,   
+        MAX(PS.PAY_MIN_AMT) AS PAY_MIN_AMT, MAX(PS.PAY_MAX_AMT) AS PAY_MAX_AMT, MAX(PS.FROM_DATE) AS FROM_DATE, 
+        MAX(P.INDIVIDUAL_REQ) AS INDIVIDUAL_REQ, MAX(P.ACTIVE) AS ACTIVE  
+        FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS    
+        ON P.PAYCODE_ID = PS.PAYCODE_ID WHERE P.PAY_CALC_TYPE='Calculated'
+        GROUP BY PS.PAYCODE_ID, PS.PAY_CODE    
+        ORDER BY PS.PAYCODE_ID-->
+        
+        SELECT X.*,P.PAY_PERCENT AS PAY_PERCENT,P.PAY_CALC_ON AS PAY_CALC_ON,P.PAY_MIN_AMT AS PAY_MIN_AMT,P.PAY_MAX_AMT AS PAY_MAX_AMT,P.FROM_DATE AS FROM_DATE FROM PAY_SETTINGS P
+        JOIN  (SELECT  MAX(PS.SRL_NO) AS SRL_NO, PS.PAY_CODE,
+        MAX(P.INDIVIDUAL_REQ) AS INDIVIDUAL_REQ, MAX(P.ACTIVE) AS ACTIVE  
+        FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS    
+        ON P.PAYCODE_ID = PS.PAYCODE_ID WHERE P.PAY_CALC_TYPE='Calculated'
+        GROUP BY PS.PAYCODE_ID, PS.PAY_CODE    
+        ORDER BY PS.PAYCODE_ID)X ON X.PAY_CODE=P.PAY_CODE AND X.SRL_NO=P.SRL_NO  ORDER BY TO_NUMBER(P.PAYCODE_ID)
+    </mapped-statement>
+        
+    <mapped-statement name="getAllFixedPayCodes" result-class="java.util.LinkedHashMap">
+        SELECT  MAX(PS.SRL_NO) AS SRL_NO, PS.PAY_CODE,  MAX(PS.PAY_FIX_AMT) AS PAY_FIX_AMT,
+        MAX(PS.FROM_DATE) AS FROM_DATE, MAX(P.INDIVIDUAL_REQ) AS INDIVIDUAL_REQ, MAX(P.ACTIVE) AS ACTIVE 
+        FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS    
+        ON P.PAYCODE_ID =PS.PAYCODE_ID WHERE P.PAY_CALC_TYPE='Fixed'  AND PS.PAY_FIX_AMT!=0
+        GROUP BY PS.PAYCODE_ID, PS.PAY_CODE    
+        ORDER BY PS.PAYCODE_ID
+    </mapped-statement>
+       
+</sql-map>

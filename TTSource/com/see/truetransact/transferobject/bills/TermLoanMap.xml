@@ -1,0 +1,1960 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TermLoanMap">
+
+	<!-- Use TermLoanBorrowerTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsBorrowerTO" inline-parameters="true">
+        INSERT INTO BILLS_BORROWER
+        (BORROW_NO, CUST_ID, CONSTITUTION, CATEGORY, REFERENCES, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, AUTHORIZED_BY, AUTHORIZED_DT, STATUS_BY, STATUS_DT, BRANCH_CODE, INITIATED_BRANCH
+        ) VALUES (
+        #borrowNo:VARCHAR#, #custId:VARCHAR#, #constitution:VARCHAR#, #category:VARCHAR#, #references:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #status:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:TIMESTAMP#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #branchCode:VARCHAR#, #initiatedBranch:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use TermLoanBorrowerTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsBorrowerTO" inline-parameters="true">
+        UPDATE BILLS_BORROWER SET 
+<!--		BORROW_NO = #borrowNo:VARCHAR#,-->
+        CUST_ID = #custId:VARCHAR#,
+        CONSTITUTION = #constitution:VARCHAR#,
+        CATEGORY = #category:VARCHAR#,
+        REFERENCES = #references:VARCHAR#,
+<!--		AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR# -->
+        STATUS = #status:VARCHAR#,
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanBorrowerTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsBorrowerTO" inline-parameters="true">
+<!--		DELETE FROM BILLS_BORROWER 
+		WHERE BORROW_NO = #borrowNo:VARCHAR#-->
+        UPDATE BILLS_BORROWER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+        
+    <mapped-statement name="updateStatusForAccountBills" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+        ACCT_STATUS = #ACCT_STATUS:VARCHAR#,
+          
+        ACCT_CLOSE_DT = NULL
+        WHERE ACCT_NUM = #ACCT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeAcctStatusBills"  inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+        ACCT_STATUS = #ACCOUNT_STATUS:VARCHAR#,
+        ACCT_CLOSE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE ACCT_NUM = #ACCOUNTNO:VARCHAR#	
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getStatusForAccountBills" result-class="java.util.HashMap" >
+        SELECT ACCT_NUM, ACCT_STATUS, CREATED_BY, ACCT_CLOSE_DT FROM BILLS_FACILITY_DETAILS
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "" property = "ACCT_CLOSE_DT" >
+                    AS OF TIMESTAMP #ACCT_CLOSE_DT:DATE#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </dynamic-mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanBorrowerTO object (JavaBean) properties -->
+    <result-map name="getBillsBorrowerTOResult" class="com.see.truetransact.transferobject.bills.TermLoanBorrowerTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="constitution" column="CONSTITUTION"/>
+        <property name="category" column="CATEGORY"/>
+        <property name="references" column="REFERENCES"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="initiatedBranch" column="INITIATED_BRANCH"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsBorrowerTO" result-map = "getBillsBorrowerTOResult" >
+        SELECT * FROM BILLS_BORROWER 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="viewBills" result-class = "java.util.LinkedHashMap" >
+        <!--SELECT BILLS_BORROWER.BORROW_NO AS "BORROWER NO", BILLS_BORROWER.CUST_ID AS "CUSTOMER ID", 
+        CUSTOMER.FNAME || ' ' || CUSTOMER.MNAME || ' ' || CUSTOMER.LNAME AS "CUSTOMER NAME"
+        FROM BILLS_BORROWER, CUSTOMER WHERE BILLS_BORROWER.BRANCH_CODE = #BRANCH_ID# AND 
+        (BILLS_BORROWER.STATUS = 'CREATED' OR BILLS_BORROWER.STATUS = 'MODIFIED')
+        AND (BILLS_BORROWER.CUST_ID = CUSTOMER.CUST_ID) ORDER BY "BORROWER NO" -->
+        SELECT BILLS_BORROWER.BORROW_NO AS "BORROWER NO", BILLS_BORROWER.CUST_ID AS "CUSTOMER ID",  BILLS_FACILITY_DETAILS.ACCT_NUM AS "LOAN_NO",
+        get_cust_name(CUSTOMER.CUST_ID) AS "CUSTOMER NAME"
+        FROM BILLS_BORROWER, CUSTOMER,BILLS_FACILITY_DETAILS,BILLS_SANCTION_DETAILS LSD WHERE BILLS_BORROWER.BRANCH_CODE = #BRANCH_ID# AND   BILLS_FACILITY_DETAILS.BORROW_NO=BILLS_BORROWER.BORROW_NO AND
+        (BILLS_BORROWER.STATUS = 'CREATED' OR BILLS_BORROWER.STATUS = 'MODIFIED') AND LSD.STATUS !='DELETED' AND LSD.BORROW_NO
+        =BILLS_FACILITY_DETAILS.BORROW_NO AND  LSD.SL_NO 
+        =BILLS_FACILITY_DETAILS.SL_NO 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="CLOSED_ACCT">
+                    ACCT_STATUS='CLOSED'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND LSD.SANCTION_NO=BILLS_FACILITY_DETAILS.SANCTION_NO
+        AND (BILLS_BORROWER.CUST_ID = CUSTOMER.CUST_ID) AND NOT EXISTS
+        (SELECT BORROW_NO FROM BILLS_FACILITY_DETAILS WHERE PROD_ID IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS')
+        AND BILLS_BORROWER.BORROW_NO = BILLS_FACILITY_DETAILS.BORROW_NO)
+        ORDER BY "BORROWER NO"        
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="viewBillsForDelete" result-class = "java.util.LinkedHashMap" >
+        SELECT FD.PROD_ID,  FD.BORROW_NO, FD.ACCT_NUM, FD.SANCTION_NO, 
+        get_cust_name(C.CUST_ID) AS "CUSTOMER NAME",
+        FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1
+        FROM BILLS_BORROWER LB, CUSTOMER C, BILLS_FACILITY_DETAILS FD WHERE 
+        LB.BRANCH_CODE = #BRANCH_ID:VARCHAR# AND FD.BORROW_NO=LB.BORROW_NO AND LB.CUST_ID = C.CUST_ID AND 
+        FD.ACCT_STATUS !='CLOSED' AND NOT EXISTS
+        (SELECT BORROW_NO FROM BILLS_FACILITY_DETAILS LFD WHERE PROD_ID IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS')
+        AND LB.BORROW_NO = LFD.BORROW_NO)
+        AND NOT EXISTS (SELECT ACT_NUM FROM LOAN_TRANS_DETAILS WHERE ACT_NUM = FD.ACCT_NUM)
+        AND NOT EXISTS (SELECT ACT_NUM FROM BILLS_TRANS_DETAILS WHERE ACT_NUM = FD.ACCT_NUM)
+        AND LB.STATUS NOT IN('DELETED') AND FD.STATUS NOT IN('DELETED')
+        ORDER BY FD.BORROW_NO 
+    </mapped-statement>
+        
+ <!--   <dynamic-mapped-statement name="viewTermLoanForLTD" result-class = "java.util.LinkedHashMap" >
+      
+        SELECT BILLS_BORROWER.BORROW_NO AS "BORROWER NO", BILLS_BORROWER.CUST_ID AS "CUSTOMER ID",BILLS_FACILITY_DETAILS.ACCT_NUM AS "LOAN_NO", 
+        get_cust_name(CUSTOMER.CUST_ID)  AS "CUSTOMER NAME"
+        FROM BILLS_BORROWER, CUSTOMER ,BILLS_FACILITY_DETAILS WHERE BILLS_BORROWER.BRANCH_CODE = #BRANCH_ID#  AND BILLS_FACILITY_DETAILS.BORROW_NO=BILLS_BORROWER.BORROW_NO AND
+        (BILLS_BORROWER.STATUS = 'CREATED' OR BILLS_BORROWER.STATUS = 'MODIFIED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="CLOSED_ACCT">
+                    ACCT_STATUS='CLOSED'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND (BILLS_BORROWER.CUST_ID = CUSTOMER.CUST_ID) AND EXISTS 
+        (SELECT BORROW_NO FROM BILLS_FACILITY_DETAILS WHERE EXISTS 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS' AND 
+         PROD_ID=BILLS_FACILITY_DETAILS.PROD_ID)AND BORROW_NO=BILLS_BORROWER.BORROW_NO)
+        ORDER BY "BORROWER NO"       
+    </dynamic-mapped-statement>     -->          
+
+    <!--<mapped-statement name="viewTermLoanForDeleteLTD" result-class = "java.util.LinkedHashMap" >
+        SELECT FD.PROD_ID,  FD.BORROW_NO, FD.ACCT_NUM, FD.SANCTION_NO, 
+        get_cust_name(C.CUST_ID) AS "CUSTOMER NAME",
+        FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1
+        FROM BILLS_BORROWER LB, CUSTOMER C, BILLS_FACILITY_DETAILS FD WHERE 
+        LB.BRANCH_CODE = #BRANCH_ID# AND FD.BORROW_NO=LB.BORROW_NO AND LB.CUST_ID = C.CUST_ID AND 
+        FD.STATUS !='DELETED' AND FD.ACCT_STATUS !='CLOSED' AND EXISTS
+        (SELECT BORROW_NO FROM BILLS_FACILITY_DETAILS LFD WHERE PROD_ID IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS')
+        AND LB.BORROW_NO = LFD.BORROW_NO)
+        AND NOT EXISTS (SELECT ACT_NUM FROM LOAN_TRANS_DETAILS WHERE ACT_NUM = FD.ACCT_NUM)
+        AND NOT EXISTS (SELECT ACT_NUM FROM BILLS_TRANS_DETAILS WHERE ACT_NUM = FD.ACCT_NUM)
+        ORDER BY FD.BORROW_NO 
+    </mapped-statement>-->
+                
+<!-- ===================================================== -->
+
+<!-- Use TermLoanCompanyTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsCompanyTO" inline-parameters="true">
+        INSERT INTO BILLS_COMPANY
+        (BORROW_NO, CO_REG_NO, ESTABLISH_DT, DEAL_BANK_SINCE, NET_WORTH, NET_WORTH_ON, CHIEF_EXEC_NAME, ADDR_TYPE, STREET, AREA, CITY, STATE, COUNTRY_CODE, PINCODE, PHONE, RISK_RATE, BUSINESS_NATURE, REMARKS, CR_FACILITIES_SINCE, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #coRegNo:VARCHAR#, #establishDt:DATE#, #dealBankSince:DATE#, #netWorth:NUMERIC#, #netWorthOn:DATE#, #chiefExecName:VARCHAR#, #addrType:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #countryCode:VARCHAR#, #pincode:VARCHAR#, #phone:VARCHAR#, #riskRate:NUMERIC#, #businessNature:VARCHAR#, #remarks:VARCHAR#, #crFacilitiesSince:DATE#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanCompanyTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsCompanyTO" inline-parameters="true">
+        UPDATE BILLS_COMPANY SET 
+<!--		BORROW_NO = #borrowNo:VARCHAR#,-->
+        CO_REG_NO = #coRegNo:VARCHAR#,
+        ESTABLISH_DT = #establishDt:DATE#,
+        DEAL_BANK_SINCE = #dealBankSince:DATE#,
+        NET_WORTH = #netWorth:NUMERIC#,
+        NET_WORTH_ON = #netWorthOn:DATE#,
+        CHIEF_EXEC_NAME = #chiefExecName:VARCHAR#,
+        ADDR_TYPE = #addrType:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        PINCODE = #pincode:VARCHAR#,
+        PHONE = #phone:VARCHAR#,
+        RISK_RATE = #riskRate:NUMERIC#,
+        BUSINESS_NATURE = #businessNature:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        CR_FACILITIES_SINCE = #crFacilitiesSince:DATE#,
+<!--		AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanCompanyTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsCompanyTO" inline-parameters="true">
+<!--		DELETE FROM BILLS_COMPANY 
+		WHERE BORROW_NO = #borrowNo:VARCHAR# -->
+        UPDATE BILLS_COMPANY SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+       <!-- <mapped-statement name="getIntRateforDeposit" result-class="java.util.HashMap">
+                 SELECT RATE_OF_INT FROM DEPOSIT_SUB_ACINFO WHERE DEPOSIT_NO=#ACCOUNT_NO#
+        </mapped-statement>-->
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanCompanyTO object (JavaBean) properties -->
+    <result-map name="getBillsCompanyTOResult" class="com.see.truetransact.transferobject.bills.TermLoanCompanyTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="coRegNo" column="CO_REG_NO"/>
+        <property name="establishDt" column="ESTABLISH_DT"/>
+        <property name="dealBankSince" column="DEAL_BANK_SINCE"/>
+        <property name="netWorth" column="NET_WORTH"/>
+        <property name="netWorthOn" column="NET_WORTH_ON"/>
+        <property name="chiefExecName" column="CHIEF_EXEC_NAME"/>
+        <property name="addrType" column="ADDR_TYPE"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="pincode" column="PINCODE"/>
+        <property name="phone" column="PHONE"/>
+        <property name="riskRate" column="RISK_RATE"/>
+        <property name="businessNature" column="BUSINESS_NATURE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="crFacilitiesSince" column="CR_FACILITIES_SINCE"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsCompanyTO" result-map="getBillsCompanyTOResult" >
+        SELECT * FROM BILLS_COMPANY 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+<!-- ================================================================= -->
+
+<!-- Use TermLoanAuthorizedSignatoryTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAuthorizedSignatoryTOBILLS" inline-parameters="true">
+        INSERT INTO BILLS_AUTHORIZE
+        (SLNO, BORROW_NO, AUTHRIZE_NO, CUST_ID, CUST_NAME, COMM_ADDR, STREET, AREA, CITY, STATE, COUNTRY_CODE, PINCODE, LIMITS, DESIGNATION, HOME_PHONE, HOME_FAX, PAGER, EMAIL_ID, BUSINESS_PHONE, BUSINESS_FAX, MOBILE, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #slNo:NUMERIC#, #borrowNo:VARCHAR#, #authrizeNo:NUMERIC#, #custId:VARCHAR#, #custName:VARCHAR#, #commAddr:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #countryCode:VARCHAR#, #pincode:VARCHAR#, #limits:NUMERIC#, #designation:VARCHAR#, 
+        #homePhone:VARCHAR#, #homeFax:VARCHAR#, #pager:VARCHAR#, #emailId:VARCHAR#, #businessPhone:VARCHAR#, #businessFax:VARCHAR#, #mobile:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanAuthorizedSignatoryTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAuthorizedSignatoryTOBILLS" inline-parameters="true">
+        UPDATE BILLS_AUTHORIZE SET 
+		<!-- BORROW_NO = #borrowNo:VARCHAR#, 
+                SLNO = #slNo:NUMERIC#,-->
+        AUTHRIZE_NO = #authrizeNo:NUMERIC#,
+        CUST_ID = #custId:VARCHAR#,
+        CUST_NAME = #custName:VARCHAR#,
+        COMM_ADDR = #commAddr:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        PINCODE = #pincode:VARCHAR#,
+        LIMITS = #limits:NUMERIC#,
+        DESIGNATION = #designation:VARCHAR#,
+        HOME_PHONE = #homePhone:VARCHAR#,
+        HOME_FAX = #homeFax:VARCHAR#,
+        PAGER = #pager:VARCHAR#,
+        EMAIL_ID = #emailId:VARCHAR#,
+        BUSINESS_PHONE = #businessPhone:VARCHAR#,
+        BUSINESS_FAX = #businessFax:VARCHAR#,
+        MOBILE = #mobile:VARCHAR#,
+		<!-- AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#, 
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SLNO = #slNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanAuthorizedSignatoryTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAuthorizedSignatoryTOBILLS" inline-parameters="true">
+		<!-- DELETE FROM BILLS_AUTHORIZE 
+		WHERE -->
+        UPDATE BILLS_AUTHORIZE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SLNO = #slNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanAuthorizedSignatoryTO object (JavaBean) properties -->
+    <result-map name="getAuthorizedSignatoryTOResultBILLS" class="com.see.truetransact.transferobject.common.authorizedsignatory.AuthorizedSignatoryTO">
+        <property name="slNo" column="SLNO"/>
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="authrizeNo" column="AUTHRIZE_NO"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="custName" column="CUST_NAME"/>
+        <property name="commAddr" column="COMM_ADDR"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="pincode" column="PINCODE"/>
+        <property name="limits" column="LIMITS"/>
+        <property name="designation" column="DESIGNATION"/>
+        <property name="homePhone" column="HOME_PHONE"/>
+        <property name="homeFax" column="HOME_FAX"/>
+        <property name="pager" column="PAGER"/>
+        <property name="emailId" column="EMAIL_ID"/>
+        <property name="businessPhone" column="BUSINESS_PHONE"/>
+        <property name="businessFax" column="BUSINESS_FAX"/>
+        <property name="mobile" column="MOBILE"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectAuthorizedSignatoryTOBILLS" result-map="getAuthorizedSignatoryTOResultBILLS" >
+        SELECT * FROM BILLS_AUTHORIZE 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY SLNO
+    </mapped-statement>
+        
+       <!-- <mapped-statement name="getSelectAuthorizedSignatoryMaxSLNOTL" result-class="java.util.HashMap" >
+		SELECT MAX(SLNO) AS MAX_AUTHORIZE_NO FROM BILLS_AUTHORIZE WHERE BORROW_NO = #borrowNo:VARCHAR# AND STATUS = 'DELETED'
+	</mapped-statement>-->
+        
+        <!-- Use AuthorizedSignatoryInstructionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAuthorizedSignatoryInstructionTOBILLS" inline-parameters="true">
+        INSERT INTO BILLS_AUTHORIZE_INSTRUCTION
+        (BORROW_NO, SL_NO, FROM_AMT, TO_AMT, INSTRUCTION, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #slNo:NUMERIC#, #fromAmt:NUMERIC#, #toAmt:NUMERIC#, #instruction:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use AuthorizedSignatoryInstructionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAuthorizedSignatoryInstructionTOBILLS" inline-parameters="true">
+        UPDATE BILLS_AUTHORIZE_INSTRUCTION SET 
+        FROM_AMT = #fromAmt:NUMERIC#,
+        TO_AMT = #toAmt:NUMERIC#,
+        INSTRUCTION = #instruction:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SL_NO = #slNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use AuthorizedSignatoryInstructionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAuthorizedSignatoryInstructionTOBILLS" inline-parameters="true">
+        UPDATE BILLS_AUTHORIZE_INSTRUCTION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SL_NO = #slNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to AuthorizedSignatoryInstructionTO object (JavaBean) properties -->
+    <result-map name="getAuthorizedSignatoryBillsInstructionTOResult" class="com.see.truetransact.transferobject.common.authorizedsignatory.AuthorizedSignatoryInstructionTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="fromAmt" column="FROM_AMT"/>
+        <property name="toAmt" column="TO_AMT"/>
+        <property name="instruction" column="INSTRUCTION"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectAuthorizedSignatoryInstructionTOBILLS" result-map="getAuthorizedSignatoryBillsInstructionTOResult" >
+        SELECT * FROM BILLS_AUTHORIZE_INSTRUCTION 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY SL_NO
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectAuthorizedSignatoryInstructionMaxSLNOBILLS" result-class="java.util.HashMap" >
+        SELECT MAX(SL_NO) AS MAX_AUTHORIZE_INSTRUCTION_NO FROM BILLS_AUTHORIZE_INSTRUCTION WHERE BORROW_NO = #borrowNo:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+<!-- ================================================================= -->
+        
+	<!-- Use TermLoanPowerAttorneyTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertPowerAttorneyTOBILLS" inline-parameters="true">
+        INSERT INTO BILLS_POA
+        (BORROW_NO, POA_NO, POA_HOLDER_NAME, STREET, AREA, CITY, STATE, COUNTRY_CODE, PINCODE, PHONE, PERIOD_FROM, PERIOD_TO, REMARKS, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, TO_WHOM, ADDR_TYPE, STATUS_BY, STATUS_DT, CUST_ID
+        ) VALUES (
+        #borrowNo:VARCHAR#, #poaNo:NUMERIC#, #poaHolderName:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #countryCode:VARCHAR#, #pincode:VARCHAR#, #phone:VARCHAR#, #periodFrom:DATE#, #periodTo:DATE#, #remarks:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #status:VARCHAR#, #toWhom:VARCHAR#, #addrType:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #custId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use TermLoanPowerAttorneyTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updatePowerAttorneyTOBILLS" inline-parameters="true">
+        UPDATE BILLS_POA SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,
+		POA_NO = #poaNo:NUMERIC#,-->
+        POA_HOLDER_NAME = #poaHolderName:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        PINCODE = #pincode:VARCHAR#,
+        PHONE = #phone:VARCHAR#,
+        PERIOD_FROM = #periodFrom:DATE#,
+        PERIOD_TO = #periodTo:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        TO_WHOM = #toWhom:VARCHAR#,
+        ADDR_TYPE = #addrType:VARCHAR#,
+		<!--AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        CUST_ID = #custId:VARCHAR# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND POA_NO = #poaNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanPowerAttorneyTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deletePowerAttorneyTOBILLS" inline-parameters="true">
+		<!-- DELETE FROM BILLS_POA 
+		WHERE BORROW_NO = #value# -->
+        UPDATE BILLS_POA SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND POA_NO = #poaNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanPowerAttorneyTO object (JavaBean) properties -->
+    <result-map name="getPowerAttorneyTOResultBills" class="com.see.truetransact.transferobject.common.powerofattorney.PowerAttorneyTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="poaNo" column="POA_NO"/>
+        <property name="poaHolderName" column="POA_HOLDER_NAME"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="pincode" column="PINCODE"/>
+        <property name="phone" column="PHONE"/>
+        <property name="periodFrom" column="PERIOD_FROM"/>
+        <property name="periodTo" column="PERIOD_TO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="toWhom" column="TO_WHOM"/>
+        <property name="addrType" column="ADDR_TYPE"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="custId" column="CUST_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectPowerAttorneyTOBILLS" result-map="getPowerAttorneyTOResultBills" >
+        SELECT * FROM BILLS_POA 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(POA_NO)
+    </mapped-statement>
+
+    <mapped-statement name="getSelectPowerAttorneyMaxSLNOBILLS" result-class="java.util.HashMap" >
+        SELECT MAX(POA_NO) AS MAX_POA_NO FROM BILLS_POA WHERE BORROW_NO = #borrowNo:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        <!-- Use TermLoanSanctionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsSanctionTO" inline-parameters="true">
+        INSERT INTO BILLS_SANCTION
+        (BORROW_NO, SANCTION_NO, SANCTION_AUTHORITY, SANCTION_DT, SANCTION_MODE, REMARKS, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, STATUS, SL_NO, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #sanctionNo:VARCHAR#, #sanctionAuthority:VARCHAR#, #sanctionDt:DATE#, #sanctionMode:VARCHAR#, #remarks:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#,  #status:VARCHAR#, #slNo:NUMERIC#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanSanctionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsSanctionTO" inline-parameters="true">
+        UPDATE BILLS_SANCTION SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,
+		SANCTION_NO = #sanctionNo:VARCHAR#,-->
+        SANCTION_AUTHORITY = #sanctionAuthority:VARCHAR#,
+        SANCTION_DT = #sanctionDt:DATE#,
+        SANCTION_MODE = #sanctionMode:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        SL_NO = #slNo:NUMERIC#,
+		<!--AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanSanctionTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsSanctionTO" inline-parameters="true">
+        UPDATE BILLS_SANCTION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanSanctionTO object (JavaBean) properties -->
+    <result-map name="getBillsSanctionTOResult" class="com.see.truetransact.transferobject.bills.TermLoanSanctionTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="sanctionNo" column="SANCTION_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="sanctionAuthority" column="SANCTION_AUTHORITY"/>
+        <property name="sanctionDt" column="SANCTION_DT"/>
+        <property name="sanctionMode" column="SANCTION_MODE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsSanctionTO" result-map="getBillsSanctionTOResult" >
+        SELECT * FROM BILLS_SANCTION 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SL_NO)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBillsSanctionMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SL_NO) AS MAX_SL_NO FROM BILLS_SANCTION WHERE BORROW_NO = #borrowNo:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        	<!-- Use TermLoanSanctionFacilityTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsSanctionFacilityTO" inline-parameters="true">
+        INSERT INTO BILLS_SANCTION_DETAILS
+        (BORROW_NO, SANCTION_NO, SL_NO, FACILITY_TYPE, LIMIT, FROM_DT, TO_DT, STATUS, NO_INSTALL, REPAYMENT_FREQUENCY, PRODUCT_ID, REPAYMENT_DT, MORATORIUM_GIVEN, NO_MORATORIUM, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #sanctionNo:VARCHAR#, #slNo:NUMERIC#, #facilityType:VARCHAR#, #limit:NUMERIC#, #fromDt:DATE#, #toDt:DATE#, #status:VARCHAR#, #noInstall:NUMERIC#, #repaymentFrequency:NUMERIC#, #productId:VARCHAR#, #repaymentDt:DATE#, #moratoriumGiven:VARCHAR#, #noMoratorium:NUMERIC#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanSanctionFacilityTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsSanctionFacilityTO" inline-parameters="true">
+        UPDATE BILLS_SANCTION_DETAILS SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,
+		SANCTION_NO = #sanctionNo:VARCHAR#,
+		SL_NO = #slNo:NUMERIC#,-->
+        FACILITY_TYPE = #facilityType:VARCHAR#,
+        LIMIT = #limit:NUMERIC#,
+        FROM_DT = #fromDt:DATE#,
+        TO_DT = #toDt:DATE#,
+        NO_INSTALL = #noInstall:NUMERIC#,
+        REPAYMENT_FREQUENCY = #repaymentFrequency:NUMERIC#,
+        PRODUCT_ID = #productId:VARCHAR#,
+        REPAYMENT_DT = #repaymentDt:DATE#,
+        MORATORIUM_GIVEN = #moratoriumGiven:VARCHAR#,
+        NO_MORATORIUM = #noMoratorium:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanSanctionFacilityTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsSanctionFacilityTO" inline-parameters="true">
+        UPDATE BILLS_SANCTION_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+        
+        <!--<mapped-statement name="updateProdID_TermLoanSanctionFacilityTO" inline-parameters="true">
+		UPDATE BILLS_SANCTION_DETAILS SET 
+                FACILITY_TYPE = #facilityType:VARCHAR#,
+		PRODUCT_ID = #productId:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		STATUS_DT = #statusDt:TIMESTAMP# 
+		WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+	</mapped-statement>-->
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanSanctionFacilityTO object (JavaBean) properties -->
+    <result-map name="getBillsSanctionFacilityTOResult" class="com.see.truetransact.transferobject.bills.TermLoanSanctionFacilityTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="sanctionNo" column="SANCTION_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="facilityType" column="FACILITY_TYPE"/>
+        <property name="limit" column="LIMIT"/>
+        <property name="fromDt" column="FROM_DT"/>
+        <property name="toDt" column="TO_DT"/>
+        <property name="noInstall" column="NO_INSTALL"/>
+        <property name="repaymentFrequency" column="REPAYMENT_FREQUENCY"/>
+        <property name="productId" column="PRODUCT_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="repaymentDt" column="REPAYMENT_DT"/>
+        <property name="moratoriumGiven" column="MORATORIUM_GIVEN"/>
+        <property name="noMoratorium" column="NO_MORATORIUM"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsSanctionFacilityTO" result-map="getBillsSanctionFacilityTOResult" >
+		<!--SELECT * FROM BILLS_SANCTION_DETAILS "LSD" ,BILLS_FACILITY_DETAILS "LFD"
+		WHERE LSD.BORROW_NO = #value# AND LFD.BORROW_NO=#value# AND LFD.SL_NO=LSD.SL_NO AND LFD.ACCT_STATUS !='CLOSED' AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SL_NO) -->
+        SELECT * FROM BILLS_SANCTION_DETAILS
+        WHERE BORROW_NO||'_'||SANCTION_NO IN 
+        (SELECT BORROW_NO||'_'||SANCTION_NO FROM BILLS_FACILITY_DETAILS WHERE 
+        BORROW_NO = #value:VARCHAR# <!--AND ACCT_STATUS !='CLOSED'-->)  AND 
+        (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+        ORDER BY TO_NUMBER(SL_NO)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBillsSanctionTO.AUTHORIZE" result-map="getBillsSanctionTOResult" >
+        SELECT LS.* FROM BILLS_SANCTION LS, BILLS_FACILITY_DETAILS LFD, BILLS_SANCTION_DETAILS LSD  
+        WHERE 
+        LFD.ACCT_NUM = #value:VARCHAR#  
+        AND LFD.BORROW_NO = LSD.BORROW_NO 
+        AND LFD.SANCTION_NO = LSD.SANCTION_NO 
+        AND LFD.SL_NO = LSD.SL_NO 
+        AND LFD.BORROW_NO = LS.BORROW_NO 
+        AND LFD.SANCTION_NO = LS.SANCTION_NO 
+        AND (LFD.STATUS = 'CREATED' OR LFD.STATUS = 'MODIFIED') 
+        AND (LSD.STATUS = 'CREATED' OR LSD.STATUS = 'MODIFIED') 
+        AND (LS.STATUS = 'CREATED' OR LS.STATUS = 'MODIFIED') 
+    </mapped-statement>
+                
+    <mapped-statement name="getSelectBillsSanctionFacilityTO.AUTHORIZE" result-map="getBillsSanctionFacilityTOResult" >
+        SELECT LSD.* FROM BILLS_FACILITY_DETAILS LFD, BILLS_SANCTION_DETAILS LSD  
+        WHERE 
+        LFD.ACCT_NUM = #value:VARCHAR#  
+        AND LFD.BORROW_NO = LSD.BORROW_NO 
+        AND LFD.SANCTION_NO = LSD.SANCTION_NO 
+        AND LFD.SL_NO = LSD.SL_NO 
+        AND (LFD.STATUS = 'CREATED' OR LFD.STATUS = 'MODIFIED') 
+        AND (LSD.STATUS = 'CREATED' OR LSD.STATUS = 'MODIFIED') 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBillsSanctionFacilityMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SL_NO) AS MAX_SL_NO FROM BILLS_SANCTION_DETAILS WHERE BORROW_NO = #borrowNo:VARCHAR#
+        AND SANCTION_NO = #sanctionNo:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        	<!-- Use TermLoanFacilityTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsFacilityTO" inline-parameters="true">
+        INSERT INTO BILLS_FACILITY_DETAILS
+        (BORROW_NO, SANCTION_NO, SL_NO, PROD_ID, SECURITY_TYPE, SECURITY_DETAILS, ACCOUNT_TYPE, INTEREST_NATURE, INTEREST_TYPE, ACCOUNT_LIMIT, RISK_WEIGHT, DEMAND_PROM_DT, DEMAND_PROM_EXPDT, MULTI_DISBURSE, AOD_DT, PURPOSE_DESC, GROUP_DESC, INTEREST, CONTACT_PERSON, CONTACT_PHONE, REMARKS, AUTHORIZE_STATUS_1, AUTHORIZE_REMARKS_1, STATUS, ACCT_NUM, AUTHORIZE_BY_1, AUTHORIZE_DT_1, CREATE_DT, STATUS_BY, STATUS_DT, AVAILABLE_BALANCE, CLEAR_BALANCE, UNCLEAR_BALANCE, SHADOW_DEBIT, SHADOW_CREDIT, TOTAL_BALANCE, LAST_TRANS_DT, BRANCH_ID, ACCT_STATUS, INT_GET_FROM, LOAN_BALANCE_PRINCIPAL, LOAN_PAID_INT, LOAN_PAID_PENALINT, EXCESS_AMT, LAST_REPAY_DT, AUTHORIZE_STATUS_2, AUTHORIZE_REMARKS_2, AUTHORIZE_BY_2, AUTHORIZE_DT_2, CREATED_BY, ACCT_NAME,ACCT_OPEN_DT,RECOMMANDED_BY,LAST_INT_CALC_DT<!--,ACCT_CLOSE_DT-->
+        ) VALUES (
+        #borrowNo:VARCHAR#, #sanctionNo:VARCHAR#, #slNo:NUMERIC#, #prodId:VARCHAR#, #securityType:VARCHAR#, #securityDetails:VARCHAR#, #accountType:VARCHAR#, #interestNature:VARCHAR#, #interestType:VARCHAR#, #accountLimit:VARCHAR#, #riskWeight:VARCHAR#, #demandPromDt:DATE#, #demandPromExpdt:DATE#, #multiDisburse:VARCHAR#, #aodDt:DATE#, #purposeDesc:VARCHAR#, #groupDesc:VARCHAR#, #interest:VARCHAR#, #contactPerson:VARCHAR#, #contactPhone:VARCHAR#, #remarks:VARCHAR#, #authorizeStatus1:VARCHAR#, #authorizeRemarks1:VARCHAR#, #status:VARCHAR#, #acctNum:VARCHAR#, #authorizeBy1:VARCHAR#, #authorizeDt1:TIMESTAMP#, #createDt:TIMESTAMP#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #availableBalance:NUMERIC#, #clearBalance:NUMERIC#, 
+        #unclearBalance:NUMERIC#, #shadowDebit:NUMERIC#, #shadowCredit:NUMERIC#, #totalBalance:NUMERIC#, #lastTransDt:TIMESTAMP#, #branchId:VARCHAR#, #acctStatus:VARCHAR#, #intGetFrom:VARCHAR#, #loanBalancePrincipal:NUMERIC#, #loanPaidInt:NUMERIC#, #loanPaidPenalint:NUMERIC#, #excessAmt:NUMERIC#, #lastRepayDt:TIMESTAMP#, #authorizeStatus2:VARCHAR#, #authorizeRemarks2:VARCHAR#, #authorizeBy2:VARCHAR#, #authorizeDt2:TIMESTAMP#, #createdBy:VARCHAR#, #acctName:VARCHAR#,#accOpenDt:DATE#,#recommendedBy:VARCHAR#,#accOpenDt:DATE#-1<!--,#accCloseDt:DATE#-->)
+    </mapped-statement>
+
+	<!-- Use TermLoanFacilityTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsFacilityTO" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,
+		SANCTION_NO = #sanctionNo:VARCHAR#,
+		RECARABLE = #recarable:VARCHAR#,
+		INTEREST_NATURE = #interestNature:VARCHAR#,
+		SL_NO = #slNo:NUMERIC#,-->
+        AVAILABLE_BALANCE  = #availableBalance:NUMERIC#,
+        PROD_ID = #prodId:VARCHAR#,
+        SECURITY_TYPE = #securityType:VARCHAR#,
+        SECURITY_DETAILS = #securityDetails:VARCHAR#,
+        ACCOUNT_TYPE = #accountType:VARCHAR#,
+        INTEREST_TYPE = #interestType:VARCHAR#,
+        ACCOUNT_LIMIT = #accountLimit:VARCHAR#,
+        RISK_WEIGHT = #riskWeight:VARCHAR#,
+        DEMAND_PROM_DT = #demandPromDt:DATE#,
+        DEMAND_PROM_EXPDT = #demandPromExpdt:DATE#,
+        MULTI_DISBURSE = #multiDisburse:VARCHAR#,
+        AOD_DT = #aodDt:DATE#,
+        PURPOSE_DESC = #purposeDesc:VARCHAR#,
+        GROUP_DESC = #groupDesc:VARCHAR#,
+        INTEREST = #interest:VARCHAR#,
+        CONTACT_PERSON = #contactPerson:VARCHAR#,
+        CONTACT_PHONE = #contactPhone:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        INT_GET_FROM = #intGetFrom:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        ACCT_STATUS = #acctStatus:VARCHAR#,
+        ACCT_NAME = #acctName:VARCHAR#,
+        AUTHORIZE_STATUS_1 = #authorizeStatus1:VARCHAR#,
+        AUTHORIZE_REMARKS_1 = #authorizeRemarks1:VARCHAR#,
+        AUTHORIZE_BY_1 = #authorizeBy1:VARCHAR#,
+        AUTHORIZE_DT_1 = #authorizeDt1:TIMESTAMP#,
+        AUTHORIZE_STATUS_2 = #authorizeStatus2:VARCHAR#,
+        AUTHORIZE_REMARKS_2 = #authorizeRemarks2:VARCHAR#,
+        AUTHORIZE_BY_2 = #authorizeBy2:VARCHAR#,
+        AUTHORIZE_DT_2 = #authorizeDt2:TIMESTAMP#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#, 
+        ACCT_OPEN_DT=#accOpenDt:TIMESTAMP#,
+               <!-- ACCT_CLOSE_DT=#accCloseDt:DATE#,-->
+        RECOMMANDED_BY=#recommendedBy:VARCHAR#
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:NUMERIC#  AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+    <mapped-statement name="updateBillsFacilityTOMaterializedView" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,
+		SANCTION_NO = #sanctionNo:VARCHAR#,
+		RECARABLE = #recarable:VARCHAR#,
+		INTEREST_NATURE = #interestNature:VARCHAR#,
+		SL_NO = #slNo:NUMERIC#,-->
+               
+        PROD_ID = #prodId:VARCHAR#,
+        SECURITY_TYPE = #securityType:VARCHAR#,
+        SECURITY_DETAILS = #securityDetails:VARCHAR#,
+        ACCOUNT_TYPE = #accountType:VARCHAR#,
+        INTEREST_TYPE = #interestType:VARCHAR#,
+        ACCOUNT_LIMIT = #accountLimit:VARCHAR#,
+        RISK_WEIGHT = #riskWeight:VARCHAR#,
+        DEMAND_PROM_DT = #demandPromDt:DATE#,
+        DEMAND_PROM_EXPDT = #demandPromExpdt:DATE#,
+        MULTI_DISBURSE = #multiDisburse:VARCHAR#,
+        AOD_DT = #aodDt:DATE#,
+        PURPOSE_DESC = #purposeDesc:VARCHAR#,
+        GROUP_DESC = #groupDesc:VARCHAR#,
+        INTEREST = #interest:VARCHAR#,
+        CONTACT_PERSON = #contactPerson:VARCHAR#,
+        CONTACT_PHONE = #contactPhone:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        INT_GET_FROM = #intGetFrom:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        ACCT_STATUS = #acctStatus:VARCHAR#,
+        ACCT_NAME = #acctName:VARCHAR#,
+        AUTHORIZE_STATUS_1 = #authorizeStatus1:VARCHAR#,
+        AUTHORIZE_REMARKS_1 = #authorizeRemarks1:VARCHAR#,
+        AUTHORIZE_BY_1 = #authorizeBy1:VARCHAR#,
+        AUTHORIZE_DT_1 = #authorizeDt1:TIMESTAMP#,
+        AUTHORIZE_STATUS_2 = #authorizeStatus2:VARCHAR#,
+        AUTHORIZE_REMARKS_2 = #authorizeRemarks2:VARCHAR#,
+        AUTHORIZE_BY_2 = #authorizeBy2:VARCHAR#,
+        AUTHORIZE_DT_2 = #authorizeDt2:TIMESTAMP#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#, 
+        ACCT_OPEN_DT=#accOpenDt:TIMESTAMP#,
+        RECOMMANDED_BY=#recommendedBy:VARCHAR#
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:NUMERIC#  AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanFacilityTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsFacilityTO" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+                <!--AND ACCT_NUM = #acctNum:VARCHAR#  This line added by Rajesh -->
+    </mapped-statement>
+
+    <!--    <mapped-statement name="updateProdID_TermLoanFacilityTO" inline-parameters="true">
+		UPDATE BILLS_FACILITY_DETAILS SET
+                PROD_ID = #prodId:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		STATUS_DT = #statusDt:TIMESTAMP# 
+		WHERE BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR# AND SL_NO = #slNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+	</mapped-statement>-->
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanFacilityTO object (JavaBean) properties -->
+    <result-map name="getBillsFacilityTOResult" class="com.see.truetransact.transferobject.bills.TermLoanFacilityTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="sanctionNo" column="SANCTION_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+        <property name="securityType" column="SECURITY_TYPE"/>
+        <property name="securityDetails" column="SECURITY_DETAILS"/>
+        <property name="accountType" column="ACCOUNT_TYPE"/>
+        <property name="interestType" column="INTEREST_TYPE"/>
+        <property name="accountLimit" column="ACCOUNT_LIMIT"/>
+        <property name="riskWeight" column="RISK_WEIGHT"/>
+        <property name="demandPromDt" column="DEMAND_PROM_DT"/>
+        <property name="demandPromExpdt" column="DEMAND_PROM_EXPDT"/>
+        <property name="multiDisburse" column="MULTI_DISBURSE"/>
+        <property name="aodDt" column="AOD_DT"/>
+        <property name="purposeDesc" column="PURPOSE_DESC"/>
+        <property name="groupDesc" column="GROUP_DESC"/>
+        <property name="interest" column="INTEREST"/>
+        <property name="contactPerson" column="CONTACT_PERSON"/>
+        <property name="contactPhone" column="CONTACT_PHONE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="authorizeStatus1" column="AUTHORIZE_STATUS_1"/>
+        <property name="authorizeRemarks1" column="AUTHORIZE_REMARKS_1"/>
+        <property name="authorizeBy1" column="AUTHORIZE_BY_1"/>
+        <property name="authorizeDt1" column="AUTHORIZE_DT_1"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="intGetFrom" column="INT_GET_FROM"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="acctStatus" column="ACCT_STATUS"/>
+        <property name="authorizeStatus2" column="AUTHORIZE_STATUS_2"/>
+        <property name="authorizeRemarks2" column="AUTHORIZE_REMARKS_2"/>
+        <property name="authorizeBy2" column="AUTHORIZE_BY_2"/>
+        <property name="authorizeDt2" column="AUTHORIZE_DT_2"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="acctName" column="ACCT_NAME"/>
+        <property name="accOpenDt" column="ACCT_OPEN_DT"/>
+               <!-- <property name="accCloseDt"  column="ACCT_CLOSE_DT"/>-->
+        <property name="recommendedBy" column="RECOMMANDED_BY"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectBillsFacilityTO" result-map="getBillsFacilityTOResult" >
+        SELECT * FROM BILLS_FACILITY_DETAILS 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')<!--AND ACCT_STATUS !='CLOSED'--> ORDER BY SANCTION_NO
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBillsFacilityTO.AUTHORIZE" result-map="getBillsFacilityTOResult" >
+        SELECT * FROM BILLS_FACILITY_DETAILS 
+        WHERE ACCT_NUM = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+       <!-- <mapped-statement name="getSelectTermLoanFacilityTOMaterializedView" result-map="getBillsFacilityTOResult" >
+		SELECT * FROM BILLS_FACILITY_DETAILS_TMP 
+		WHERE ACCT_NUM = #value# 
+	</mapped-statement>-->
+        
+        <!-- Use TermLoanSecurityTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsSecurityTO" inline-parameters="true">
+        INSERT INTO BILLS_SECURITY_DETAILS
+        (BORROW_NO, SLNO, ACCT_NUM, CUST_ID, SECURITY_NO, FROM_DT, TO_DT, SECURITY_AMT, STATUS, STATUS_BY, STATUS_DT, MARGIN, ELIGIBLE_LOAN_AMT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #slno:NUMERIC#, #acctNum:VARCHAR#, #custId:VARCHAR#, #securityNo:NUMERIC#, #fromDt:DATE#, #toDt:DATE#, #securityAmt:NUMERIC#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #margin:NUMERIC#, #eligibleLoanAmt:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use TermLoanSecurityTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsSecurityTO" inline-parameters="true">
+        UPDATE BILLS_SECURITY_DETAILS SET 
+        SECURITY_NO = #securityNo:NUMERIC#, 
+        CUST_ID = #custId:VARCHAR#,
+        FROM_DT = #fromDt:DATE#,
+        TO_DT = #toDt:DATE#,
+        SECURITY_AMT = #securityAmt:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        MARGIN = #margin:NUMERIC#,
+        ELIGIBLE_LOAN_AMT = #eligibleLoanAmt:NUMERIC#
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+    </mapped-statement>
+
+	<!-- Use TermLoanSecurityTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsSecurityTO" inline-parameters="true">
+        UPDATE BILLS_SECURITY_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanSecurityTO object (JavaBean) properties -->
+    <result-map name="getBillsSecurityTOResult" class="com.see.truetransact.transferobject.bills.TermLoanSecurityTO">
+        <property name="acctNum" column="ACCT_NUM"/>
+        <property name="slno" column="SLNO"/>
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="securityNo" column="SECURITY_NO"/>
+        <property name="fromDt" column="FROM_DT"/>
+        <property name="toDt" column="TO_DT"/>
+        <property name="securityAmt" column="SECURITY_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="margin" column="MARGIN"/>
+        <property name="eligibleLoanAmt" column="ELIGIBLE_LOAN_AMT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectBillsSecurityTO" result-map="getBillsSecurityTOResult" >
+        SELECT * FROM BILLS_SECURITY_DETAILS 
+        WHERE ACCT_NUM = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SLNO)
+    </mapped-statement>
+
+    <mapped-statement name="getSelectBillsSecurityMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SLNO) AS MAX_NO FROM BILLS_SECURITY_DETAILS WHERE ACCT_NUM = #acctNum:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        <!--<mapped-statement name="getLoanSecurity_Eligible_Loan_Amt" result-class="java.util.HashMap">
+		SELECT SUM(ELIGIBLE_LOAN_AMT) AS ELIGIBLE_LOAN_AMOUNT 
+                FROM BILLS_SECURITY_DETAILS 
+                WHERE ACCT_NUM = #ACCT_NUM# AND STATUS IN ('CREATED', 'MODIFIED')
+	</mapped-statement>-->
+        
+        <!--<mapped-statement name="getMinimaminstallmentTL" result-class="java.util.HashMap">
+            SELECT * FROM LOANS_INSTALLMENT WHERE INSTALLMENT_DT =(SELECT MIN(INSTALLMENT_DT) FROM LOANS_INSTALLMENT WHERE 
+            ACCT_NUM =#ACT_NUM#  AND IS_BALANCE IS NULL AND STATUS !='DELETED') AND STATUS !='DELETED' AND ACCT_NUM =#ACT_NUM# ORDER BY INSTALLMENT_SLNO
+        </mapped-statement>-->
+        
+       <!-- <mapped-statement name="updateloanInstallment" inline-parameters="true">
+            UPDATE LOANS_INSTALLMENT SET IS_BALANCE=0,INSTALLMENT_PAID='Y' WHERE ACCT_NUM=#ACCT_NUM:VARCHAR# AND INSTALLMENT_SLNO=#INSTALLMENT_NO:NUMERIC# AND STATUS !='DELETED'
+        </mapped-statement>-->
+        
+       <!-- <mapped-statement name="updateCustSecurityAvailableAmt" inline-parameters="true">
+		UPDATE CUST_SECURITY_DETAILS SET 
+                AVAILABLE_SECURITY_VALUE = NVL (AVAILABLE_SECURITY_VALUE, 0) - #AVAILABLE_SECURITY_VALUE# 
+                WHERE CUST_ID = #CUST_ID:VARCHAR# AND SECURITY_NO = #SECURITY_NO:NUMERIC#
+	</mapped-statement>-->
+        
+        <!-- Use TermLoanRepaymentTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--<mapped-statement name="insertTermLoanRepaymentTO" inline-parameters="true">
+		INSERT INTO LOANS_REPAY_SCHEDULE
+		(BORROW_NO, PROD_ID, SCHEDULE_NO, LOAN_AMOUNT, INT_TYPE, INSTALL_TYPE, REPAYMENT_TYPE, NO_INSTALLMENTS, FIRST_INSTALL_DT, LAST_INSTALL_DT, TOTAL_BASE_AMT, BALANCE_LOAN_AMT, AMT_PENULTIMATE_INSTALL, EMI, AMT_LAST_INSTALL, REPAYMENT_PR, TOTAL_INSTALL_AMT, REPAY_INTEREST, ADD_SI, POST_DATE_CHQALLOWED, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, ACCT_NUM, STATUS, STATUS_BY, STATUS_DT, REPAY_ACTIVE, DISBURSEMENT_ID, DISBURSEMENT_DT, SCHEDULE_MODE, REF_SCHEDULE_NO
+		) VALUES (
+		#borrowNo:VARCHAR#, #prodId:VARCHAR#, #scheduleNo:NUMERIC#, #loanAmount:NUMERIC#, #intType:VARCHAR#, #installType:VARCHAR#, #repaymentType:NUMERIC#, #noInstallments:NUMERIC#, #firstInstallDt:DATE#, #lastInstallDt:DATE#, #totalBaseAmt:NUMERIC#, #balanceLoanAmt:NUMERIC#, #amtPenultimateInstall:NUMERIC#, #emi:NUMERIC#, #amtLastInstall:NUMERIC#, #repaymentPr:NUMERIC#, #totalInstallAmt:NUMERIC#, #repayInterest:NUMERIC#, #addSi:VARCHAR#, #postDateChqallowed:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #acctNum:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #repayActive:VARCHAR#, #disbursementId:NUMERIC#, #disbursementDt:DATE#, #scheduleMode:VARCHAR#, #refScheduleNo:NUMERIC#)
+	</mapped-statement>-->
+
+	<!-- Use TermLoanRepaymentTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<!--<mapped-statement name="updateTermLoanRepaymentTO" inline-parameters="true">
+		UPDATE LOANS_REPAY_SCHEDULE SET 
+		
+		PROD_ID = #prodId:VARCHAR#,
+		
+		LOAN_AMOUNT = #loanAmount:NUMERIC#,
+		INT_TYPE = #intType:VARCHAR#,
+		INSTALL_TYPE = #installType:VARCHAR#,
+		REPAYMENT_TYPE = #repaymentType:NUMERIC#,
+		NO_INSTALLMENTS = #noInstallments:NUMERIC#,
+		FIRST_INSTALL_DT = #firstInstallDt:DATE#,
+		LAST_INSTALL_DT = #lastInstallDt:DATE#,
+		TOTAL_BASE_AMT = #totalBaseAmt:NUMERIC#,
+		BALANCE_LOAN_AMT = #balanceLoanAmt:NUMERIC#,
+		AMT_PENULTIMATE_INSTALL = #amtPenultimateInstall:NUMERIC#,
+		EMI = #emi:NUMERIC#,
+		AMT_LAST_INSTALL = #amtLastInstall:NUMERIC#,
+		REPAYMENT_PR = #repaymentPr:NUMERIC#,
+		TOTAL_INSTALL_AMT = #totalInstallAmt:NUMERIC#,
+		REPAY_INTEREST = #repayInterest:NUMERIC#,
+		ADD_SI = #addSi:VARCHAR#,
+		POST_DATE_CHQALLOWED = #postDateChqallowed:VARCHAR#,
+		AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		
+                STATUS = #status:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		REPAY_ACTIVE = #repayActive:VARCHAR#,
+		DISBURSEMENT_ID = #disbursementId:NUMERIC#,
+		SCHEDULE_MODE = #scheduleMode:VARCHAR#,
+		REF_SCHEDULE_NO = #refScheduleNo:NUMERIC#,
+		STATUS_DT = #statusDt:TIMESTAMP# 
+		WHERE ACCT_NUM = #acctNum:VARCHAR# AND SCHEDULE_NO = #scheduleNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+	</mapped-statement>-->
+
+	<!-- Use TermLoanRepaymentTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+	<!--<mapped-statement name="deleteTermLoanRepaymentTO" inline-parameters="true">
+		UPDATE LOANS_REPAY_SCHEDULE SET 
+		STATUS = #status:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		STATUS_DT = #statusDt:TIMESTAMP# 
+		WHERE ACCT_NUM = #acctNum:VARCHAR# AND SCHEDULE_NO = #scheduleNo:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+	</mapped-statement>-->
+
+        <!--<mapped-statement name="updateProdID_TermLoanRepaymentTO" inline-parameters="true">
+		UPDATE LOANS_REPAY_SCHEDULE SET 
+		PROD_ID = #prodId:VARCHAR#,
+		STATUS_BY = #statusBy:VARCHAR#,
+		STATUS_DT = #statusDt:TIMESTAMP# 
+		WHERE ACCT_NUM = #acctNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+	</mapped-statement>-->
+        
+        <!--<mapped-statement name="updateRepayScheduleNoInLoansDisbursement" inline-parameters="true">
+		UPDATE LOANS_DISBURSEMENT SET 
+		REPAYMENT_SCHEDULE_NO = #REPAYMENT_SCHEDULE_NO#
+		WHERE ACT_NUM = #ACCOUNTNO# AND DISBURSEMENT_ID = #DISBURSEMENT_ID# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+	</mapped-statement>-->
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanRepaymentTO object (JavaBean) properties -->
+	<!--<result-map name="getTermLoanRepaymentTOResult" class="com.see.truetransact.transferobject.termloan.TermLoanRepaymentTO">
+		<property name="borrowNo" column="BORROW_NO"/>
+		<property name="prodId" column="PROD_ID"/>
+		<property name="scheduleNo" column="SCHEDULE_NO"/>
+		<property name="loanAmount" column="LOAN_AMOUNT"/>
+		<property name="intType" column="INT_TYPE"/>
+		<property name="installType" column="INSTALL_TYPE"/>
+		<property name="repaymentType" column="REPAYMENT_TYPE"/>
+		<property name="noInstallments" column="NO_INSTALLMENTS"/>
+		<property name="firstInstallDt" column="FIRST_INSTALL_DT"/>
+		<property name="lastInstallDt" column="LAST_INSTALL_DT"/>
+		<property name="totalBaseAmt" column="TOTAL_BASE_AMT"/>
+		<property name="balanceLoanAmt" column="BALANCE_LOAN_AMT"/>
+		<property name="amtPenultimateInstall" column="AMT_PENULTIMATE_INSTALL"/>
+		<property name="emi" column="EMI"/>
+		<property name="amtLastInstall" column="AMT_LAST_INSTALL"/>
+		<property name="repaymentPr" column="REPAYMENT_PR"/>
+		<property name="totalInstallAmt" column="TOTAL_INSTALL_AMT"/>
+		<property name="repayInterest" column="REPAY_INTEREST"/>
+		<property name="addSi" column="ADD_SI"/>
+		<property name="postDateChqallowed" column="POST_DATE_CHQALLOWED"/>
+		<property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+		<property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+		<property name="acctNum" column="ACCT_NUM"/>
+                <property name="status" column="STATUS"/>
+		<property name="statusBy" column="STATUS_BY"/>
+		<property name="statusDt" column="STATUS_DT"/>
+		<property name="repayActive" column="REPAY_ACTIVE"/>
+		<property name="disbursementId" column="DISBURSEMENT_ID"/>
+		<property name="disbursementDt" column="DISBURSEMENT_DT"/>
+		<property name="scheduleMode" column="SCHEDULE_MODE"/>
+		<property name="refScheduleNo" column="REF_SCHEDULE_NO"/>
+	</result-map>-->
+        
+
+        <!-- Use TermLoanGuarantorTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsGuarantorTO" inline-parameters="true">
+        INSERT INTO BILLS_GUARANTOR_DETAILS
+        (BORROW_NO, PROD_ID, CUST_ID, GUARANTOR_AC_NO, NAME, STREET, AREA, CITY, STATE, COUNTRY_CODE, PINCODE, PHONE, CONSTITUTION, GUARANTOR_NET_WORTH, GUARANTOR_NETWORTH_ON, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, ACCT_NUM, STATUS, SLNO, STATUS_BY, STATUS_DT, GUARANTOR_PROD_TYPE, GUARANTOR_PROD_ID, DOB
+        ) VALUES (
+        #borrowNo:VARCHAR#, #prodId:VARCHAR#, #custId:VARCHAR#, #guarantorAcNo:VARCHAR#, #name:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #countryCode:VARCHAR#, #pincode:VARCHAR#, #phone:VARCHAR#, #constitution:VARCHAR#, #guarantorNetWorth:NUMERIC#, #guarantorNetworthOn:DATE#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #acctNum:VARCHAR#, #status:VARCHAR#, #slno:NUMERIC#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #guarantorProdType:VARCHAR#, #guarantorProdId:VARCHAR#, #dob:DATE#)
+    </mapped-statement>
+
+	<!-- Use TermLoanGuarantorTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsGuarantorTO" inline-parameters="true">
+        UPDATE BILLS_GUARANTOR_DETAILS SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,-->
+        PROD_ID = #prodId:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        GUARANTOR_AC_NO = #guarantorAcNo:VARCHAR#,
+        NAME = #name:VARCHAR#,
+        GUARANTOR_PROD_TYPE = #guarantorProdType:VARCHAR#,
+        GUARANTOR_PROD_ID = #guarantorProdId:VARCHAR#,
+        DOB = #dob:DATE#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        PINCODE = #pincode:VARCHAR#,
+        PHONE = #phone:VARCHAR#,
+        CONSTITUTION = #constitution:VARCHAR#,
+        GUARANTOR_NET_WORTH = #guarantorNetWorth:NUMERIC#,
+        GUARANTOR_NETWORTH_ON = #guarantorNetworthOn:DATE#,
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		<!--ACCT_NUM = #acctNum:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+		<!--SLNO = #slno:VARCHAR#-->
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanGuarantorTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsGuarantorTO" inline-parameters="true">
+        UPDATE BILLS_GUARANTOR_DETAILS SET 
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+    <mapped-statement name="updateProdID_BillsGuarantorTO" inline-parameters="true">
+        UPDATE BILLS_GUARANTOR_DETAILS SET
+        PROD_ID = #prodId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanGuarantorTO object (JavaBean) properties -->
+    <result-map name="getBillsGuarantorTOResult" class="com.see.truetransact.transferobject.bills.TermLoanGuarantorTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="guarantorAcNo" column="GUARANTOR_AC_NO"/>
+        <property name="name" column="NAME"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="pincode" column="PINCODE"/>
+        <property name="phone" column="PHONE"/>
+        <property name="constitution" column="CONSTITUTION"/>
+        <property name="guarantorNetWorth" column="GUARANTOR_NET_WORTH"/>
+        <property name="guarantorNetworthOn" column="GUARANTOR_NETWORTH_ON"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+        <property name="status" column="STATUS"/>
+        <property name="slno" column="SLNO"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="guarantorProdType" column="GUARANTOR_PROD_TYPE"/>
+        <property name="guarantorProdId" column="GUARANTOR_PROD_ID"/>
+        <property name="dob" column="DOB"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsGuarantorTO" result-map="getBillsGuarantorTOResult" >
+        SELECT * FROM BILLS_GUARANTOR_DETAILS 
+        WHERE ACCT_NUM = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SLNO)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBillsGuarantorMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SLNO) AS MAX_SL_NO FROM BILLS_GUARANTOR_DETAILS WHERE ACCT_NUM = #acctNum:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        <!-- Use TermLoanDocumentTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsDocumentTO" inline-parameters="true">
+        INSERT INTO BILLS_DOC
+        (BORROW_NO, ACCT_NO, DOC_TYPE, DOC_FORM_NO, IS_SUBMITTED, SUBMITTED_DT, REMARKS, STATUS_BY, STATUS_DT, DOC_EXP_DT, IS_MANDATORY, IS_EXECUTED, DOC_EXEC_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #acctNo:VARCHAR#, #docType:VARCHAR#, #docFormNo:VARCHAR#, #isSubmitted:VARCHAR#, #submittedDt:DATE#, #remarks:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #docExpDt:DATE#, #isMandatory:VARCHAR#, #isExecuted:VARCHAR#, #docExecDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use TermLoanDocumentTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsDocumentTO" inline-parameters="true">
+        UPDATE BILLS_DOC SET 
+        IS_SUBMITTED = #isSubmitted:VARCHAR#,
+        SUBMITTED_DT = #submittedDt:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        DOC_EXP_DT = #docExpDt:DATE#,
+        IS_MANDATORY = #isMandatory:VARCHAR#,
+        IS_EXECUTED = #isExecuted:VARCHAR#,
+        DOC_EXEC_DT = #docExecDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NO = #acctNo:VARCHAR# AND DOC_TYPE = #docType:VARCHAR# AND DOC_FORM_NO = #docFormNo:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use TermLoanDocumentTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsDocumentTO" inline-parameters="true">
+        UPDATE BILLS_DOC SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NO = #acctNo:VARCHAR# AND  DOC_TYPE = #docType:VARCHAR# AND DOC_FORM_NO = #docFormNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanDocumentTO object (JavaBean) properties -->
+    <result-map name="getBillsDocumentTOResult" class="com.see.truetransact.transferobject.bills.TermLoanDocumentTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="acctNo" column="ACCT_NO"/>
+        <property name="docType" column="DOC_TYPE"/>
+        <property name="docFormNo" column="DOC_FORM_NO"/>
+        <property name="isSubmitted" column="IS_SUBMITTED"/>
+        <property name="submittedDt" column="SUBMITTED_DT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="docExpDt" column="DOC_EXP_DT"/>
+        <property name="isMandatory" column="IS_MANDATORY"/>
+        <property name="isExecuted" column="IS_EXECUTED"/>
+        <property name="docExecDt" column="DOC_EXEC_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsDocumentTO" result-class="java.util.HashMap">
+        SELECT LPD.DOC_TYPE, LPD.DOC_NO DOC_FORM_NO, LPD.DOC_DESC, NULL IS_SUBMITTED, NULL SUBMITTED_DT, NULL BORROW_NO, NULL ACCT_NO, NULL REMARKS, 
+        NULL DOC_EXP_DT, NULL IS_MANDATORY, NULL IS_EXECUTED, NULL DOC_EXEC_DT 
+        FROM LOANS_PROD_DOC LPD 
+        WHERE ((LPD.STATUS != 'DELETED') AND LPD.PROD_ID = (SELECT PROD_ID FROM BILLS_FACILITY_DETAILS WHERE ACCT_NUM = #value:VARCHAR#) AND 
+                <!--LPD.DOC_NO || LPD.DOC_TYPE NOT IN (SELECT DOC_FORM_NO || DOC_TYPE FROM 
+                BILLS_DOC WHERE ACCT_NO = #value#)) -->
+        NOT EXISTS (SELECT DOC_FORM_NO || DOC_TYPE FROM 
+        BILLS_DOC WHERE ACCT_NO = #value:VARCHAR# AND LPD.DOC_NO || LPD.DOC_TYPE=DOC_FORM_NO || DOC_TYPE)) 
+        UNION 
+        SELECT LPD.DOC_TYPE, LPD.DOC_NO DOC_FORM_NO, LPD.DOC_DESC, LD.IS_SUBMITTED, 
+        LD.SUBMITTED_DT, LD.BORROW_NO, LD.ACCT_NO, LD.REMARKS, 
+        LD.DOC_EXP_DT, LD.IS_MANDATORY, LD.IS_EXECUTED, LD.DOC_EXEC_DT 
+        FROM LOANS_PROD_DOC LPD, BILLS_DOC LD 
+        WHERE (LPD.STATUS != 'DELETED') AND 
+        LPD.PROD_ID = (SELECT PROD_ID FROM BILLS_FACILITY_DETAILS WHERE ACCT_NUM = #value:VARCHAR#) AND 
+        LPD.DOC_NO || LPD.DOC_TYPE = LD.DOC_FORM_NO || LD.DOC_TYPE AND LD.ACCT_NO = #value:VARCHAR#
+    </mapped-statement>
+        
+        <!-- Use TermLoanInterestTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsInterestTO" inline-parameters="true">
+        INSERT INTO BILLS_INT_MAINTENANCE
+        (BORROW_NO, PROD_ID, FROM_DT, TO_DT, FROM_AMT, TO_AMT, INTEREST, PENAL_INTEREST, AGAINST_CLEARING_INT, STATEMENT_PENAL, INTEREST_EXPIRY_LIMIT, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, ACCT_NUM, STATUS, SLNO, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #prodId:VARCHAR#, #fromDt:DATE#, #toDt:DATE#, #fromAmt:NUMERIC#, #toAmt:NUMERIC#, #interest:NUMERIC#, #penalInterest:NUMERIC#, #againstClearingInt:NUMERIC#, #statementPenal:NUMERIC#, #interestExpiryLimit:NUMERIC#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #acctNum:VARCHAR#, #status:VARCHAR#, #slno:NUMERIC#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanInterestTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsInterestTO" inline-parameters="true">
+        UPDATE BILLS_INT_MAINTENANCE SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,-->
+        PROD_ID = #prodId:VARCHAR#,
+        FROM_DT = #fromDt:DATE#,
+        TO_DT = #toDt:DATE#,
+        FROM_AMT = #fromAmt:NUMERIC#,
+        TO_AMT = #toAmt:NUMERIC#,
+        INTEREST = #interest:NUMERIC#,
+        PENAL_INTEREST = #penalInterest:NUMERIC#,
+        AGAINST_CLEARING_INT = #againstClearingInt:NUMERIC#,
+        STATEMENT_PENAL = #statementPenal:NUMERIC#,
+        INTEREST_EXPIRY_LIMIT = #interestExpiryLimit:NUMERIC#,
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		<!--ACCT_NUM = #acctNum:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+		<!--SLNO = #slno:VARCHAR#-->
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanInterestTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsInterestTO" inline-parameters="true">
+        UPDATE BILLS_INT_MAINTENANCE SET
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND SLNO = #slno:NUMERIC# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+    <mapped-statement name="updateProdID_BillsInterestTO" inline-parameters="true">
+        UPDATE BILLS_INT_MAINTENANCE SET
+        PROD_ID = #prodId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanInterestTO object (JavaBean) properties -->
+    <result-map name="getBillsInterestTOResult" class="com.see.truetransact.transferobject.bills.TermLoanInterestTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="fromDt" column="FROM_DT"/>
+        <property name="toDt" column="TO_DT"/>
+        <property name="fromAmt" column="FROM_AMT"/>
+        <property name="toAmt" column="TO_AMT"/>
+        <property name="interest" column="INTEREST"/>
+        <property name="penalInterest" column="PENAL_INTEREST"/>
+        <property name="againstClearingInt" column="AGAINST_CLEARING_INT"/>
+        <property name="statementPenal" column="STATEMENT_PENAL"/>
+        <property name="interestExpiryLimit" column="INTEREST_EXPIRY_LIMIT"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+        <property name="status" column="STATUS"/>
+        <property name="slno" column="SLNO"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsInterestTO" result-map="getBillsInterestTOResult" >
+        SELECT * FROM BILLS_INT_MAINTENANCE 
+        WHERE ACCT_NUM = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') ORDER BY TO_NUMBER(SLNO) 
+    </mapped-statement>
+        
+        <!--<result-map name="getBillsProductInterestTOResult" class="com.see.truetransact.transferobject.bills.TermLoanInterestTO">
+		<property name="prodId" column="PROD_ID"/>
+                <property name="fromDt" column="ROI_DATE"/>
+		<property name="toDt" column="ROI_END_DATE"/>
+		<property name="fromAmt" column="FROM_AMOUNT"/>
+		<property name="toAmt" column="TO_AMOUNT"/>
+		<property name="interest" column="ROI"/>
+		<property name="penalInterest" column="PENAL_INT"/>
+		<property name="againstClearingInt" column="AGAINST_CLEARING_INT"/>
+		<property name="statementPenal" column="LIMIT_AMOUNT"/>
+		<property name="interestExpiryLimit" column="INT_EXPIRY_LIMIT"/>
+		<property name="status" column="STATUS"/>
+	</result-map>-->
+       <!-- <result-map name="getLoanProductInterestTOResult" class="com.see.truetransact.transferobject.bills.TermLoanInterestTO">
+		<property name="prodId" column="PROD_ID"/>
+                <property name="fromDt" column="ROI_DATE"/>
+		<property name="toDt" column="ROI_END_DATE"/>
+		<property name="fromAmt" column="FROM_AMOUNT"/>
+		<property name="toAmt" column="TO_AMOUNT"/>
+		<property name="interest" column="ROI"/>
+		<property name="penalInterest" column="PENAL_INT"/>
+		<property name="againstClearingInt" column="AGAINST_CLEARING_INT"/>
+		<property name="statementPenal" column="LIMIT_AMOUNT"/>
+		<property name="interestExpiryLimit" column="INT_EXPIRY_LIMIT"/>
+		<property name="status" column="STATUS"/>
+	</result-map>
+	<mapped-statement name="getSelectProductTermLoanInterestTO" result-map="getLoanProductInterestTOResult" >
+		SELECT DRGTR.ROI, DRGTR.ROI_DATE, DRGTR.ROI_END_DATE, DRGP.PROD_ID, DRGTR.FROM_AMOUNT, DRGTR.TO_AMOUNT, 
+                DRGTR.AGAINST_CLEARING_INT, DRGTR.LIMIT_AMOUNT, DRGTR.INT_EXPIRY_LIMIT, DRGTR.PENAL_INT, DRGTR.STATUS FROM DEPOSIT_ROI_GROUP DRG, 
+                DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+                DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+                DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+                DRG.PRODUCT_TYPE IN( 'TL','AD') AND 
+                DRGP.PROD_ID = #PROD_ID# AND 
+                DRGC.CATEGORY_ID = #CATEGORY_ID# AND
+                #AMOUNT# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+                ((#FROM_DATE# BETWEEN ROI_DATE AND ROI_END_DATE) OR 
+                (ROI_DATE&lt;#FROM_DATE# AND ROI_END_DATE IS NULL))
+                AND #TO_DATE#-#FROM_DATE# BETWEEN FROM_PERIOD AND TO_PERIOD
+                
+	</mapped-statement>-->
+        
+       <!-- <mapped-statement name="getSelectProductBillsInterestTO" result-map="getLoanProductInterestTOResult" >
+		SELECT DRGTR.ROI, DRGTR.ROI_DATE, DRGTR.ROI_END_DATE, DRGP.PROD_ID, DRGTR.FROM_AMOUNT, DRGTR.TO_AMOUNT, 
+                DRGTR.AGAINST_CLEARING_INT, DRGTR.LIMIT_AMOUNT, DRGTR.INT_EXPIRY_LIMIT, DRGTR.PENAL_INT, DRGTR.STATUS FROM DEPOSIT_ROI_GROUP DRG, 
+                DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+                DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+                DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+                DRG.PRODUCT_TYPE IN( 'BILLS') AND 
+                DRGP.PROD_ID = #PROD_ID# AND 
+                DRGC.CATEGORY_ID = #CATEGORY_ID# AND
+                #AMOUNT# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+                ((#FROM_DATE# BETWEEN ROI_DATE AND ROI_END_DATE) OR 
+                (ROI_DATE&lt;#FROM_DATE# AND ROI_END_DATE IS NULL))
+                AND #TO_DATE#-#FROM_DATE# BETWEEN FROM_PERIOD AND TO_PERIOD
+               
+	</mapped-statement>-->
+        
+    <mapped-statement name="getBillsInterestDetailsWhereConditions" result-class="java.util.HashMap">
+        SELECT LB.CATEGORY, LSD.LIMIT, LFD.INT_GET_FROM, LFD.PROD_ID, LSD.FROM_DT AS FROM_DATE, LSD.TO_DT AS TO_DATE FROM BILLS_FACILITY_DETAILS LFD, BILLS_SANCTION_DETAILS LSD, BILLS_BORROWER LB
+        WHERE LFD.ACCT_NUM = #value:VARCHAR#  
+        AND LFD.BORROW_NO = LSD.BORROW_NO 
+        AND LFD.BORROW_NO = LB.BORROW_NO 
+        AND (LFD.STATUS = 'CREATED' OR LFD.STATUS = 'MODIFIED') 
+        AND (LB.STATUS =  'CREATED' OR LB.STATUS = 'MODIFIED') 
+        AND (LSD.STATUS =  'CREATED' OR LSD.STATUS = 'MODIFIED') 
+        AND LFD.PROD_ID = LSD.PRODUCT_ID
+        AND LFD.SANCTION_NO=LSD.SANCTION_NO 
+        AND LFD.SL_NO    =LSD.SL_NO
+    </mapped-statement>
+        
+       <!-- <mapped-statement name="getIntDetailsWhereConditions" result-class="java.util.HashMap">
+		SELECT LB.CATEGORY, LSD.LIMIT, LFD.INT_GET_FROM, LFD.PROD_ID, LSD.FROM_DT AS FROM_DATE, LSD.TO_DT AS TO_DATE FROM BILLS_FACILITY_DETAILS LFD, BILLS_SANCTION_DETAILS LSD, BILLS_BORROWER LB
+                WHERE LFD.ACCT_NUM = #ACCT_NUM#   
+                AND LFD.BORROW_NO = LSD.BORROW_NO 
+                AND LFD.BORROW_NO = LB.BORROW_NO 
+                AND (LFD.STATUS = 'CREATED' OR LFD.STATUS = 'MODIFIED') 
+                AND (LB.STATUS =  'CREATED' OR LB.STATUS = 'MODIFIED') 
+                AND (LSD.STATUS =  'CREATED' OR LSD.STATUS = 'MODIFIED') 
+                AND LFD.SANCTION_NO=LSD.SANCTION_NO 
+                AND LFD.SL_NO    =LSD.SL_NO
+	</mapped-statement>-->
+        
+    <mapped-statement name="getSelectBillsInterestMaxSLNO" result-class="java.util.HashMap">
+        SELECT MAX(SLNO) AS MAX_SL_NO FROM BILLS_INT_MAINTENANCE WHERE ACCT_NUM = #acctNum:VARCHAR# AND STATUS = 'DELETED'
+    </mapped-statement>
+        
+        <!--<mapped-statement name="getSelectProductTermLoanInterestMap" result-class="java.util.LinkedHashMap" >
+		SELECT DRGTR.ROI "INTEREST", DRGTR.ROI_DATE "FROM_DT", DRGTR.ROI_END_DATE "TO_DT", 
+                DRGTR.AGAINST_CLEARING_INT, DRGTR.LIMIT_AMOUNT "LIMIT_AMT", 
+                DRGTR.INT_EXPIRY_LIMIT "INTEREST_EXPIRY_LIMIT", DRGTR.PENAL_INT "PENAL_INTEREST", DRGTR.STATUS, 
+                DRGTR.STATEMENT_PENEL "STATEMENT_PENAL" 
+                FROM DEPOSIT_ROI_GROUP DRG, 
+                DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP, 
+                DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+                DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+                DRG.PRODUCT_TYPE IN( 'TL','AD') AND 
+                DRGP.PROD_ID = #PROD_ID# AND 
+                DRGC.CATEGORY_ID = #CATEGORY_ID# AND 
+                #AMOUNT# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+                ((#FROM_DATE# BETWEEN ROI_DATE AND ROI_END_DATE) OR 
+                (ROI_DATE&lt;#FROM_DATE# AND ROI_END_DATE IS NULL))
+                AND #TO_DATE# - #FROM_DATE# BETWEEN FROM_PERIOD AND TO_PERIOD
+               
+	</mapped-statement>-->
+        
+      <!--  <mapped-statement name="getSelectAccountTermLoanInterestMap" result-class="java.util.LinkedHashMap" >
+		SELECT * FROM BILLS_INT_MAINTENANCE 
+		WHERE ACCT_NUM = #ACCT_NUM# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') AND 
+                #AMOUNT# BETWEEN FROM_AMT AND TO_AMT AND
+                ((#FROM_DATE# BETWEEN FROM_DT AND TO_DT) OR 
+                (FROM_DT&lt;=#FROM_DATE# AND TO_DT IS NULL)) 
+                ORDER BY TO_NUMBER(SLNO) 
+	</mapped-statement>-->
+        
+       
+
+	<!-- Use Repayment object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	
+        
+       
+
+        <!-- Use TermLoanClassificationTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsClassificationTO" inline-parameters="true">
+        INSERT INTO BILLS_CLASSIFY_DETAILS
+        (BORROW_NO, PROD_ID, COMMODITY_CODE, BUSINESS_SECTOR_CODE, FACILITY_TYPE, PURPOSE_CODE, INDUSTRY_CODE, TWENTY_CODE, GOVT_SCHEME_CODE, NPA_DT, ECGC, DOCUMENT_COMPLETE, GUARANTEE_COVER_CODE, HEALTH_CODE, DISTRICT_CODE, SECTOR_CODE, PAYMENT_CODE, REFINANCING_INSTITUTION, ASSET_STATUS, DIRECT_FINANCE, PRIORITY_SECTOR, QIS, AUTHORIZE_REMARKS, AUTHORIZE_STATUS, ACCT_NUM, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowNo:VARCHAR#, #prodId:VARCHAR#, #commodityCode:VARCHAR#, #businessSectorCode:VARCHAR#, #facilityType:VARCHAR#, #purposeCode:VARCHAR#, #industryCode:VARCHAR#, #twentyCode:VARCHAR#, #govtSchemeCode:VARCHAR#, #npaDt:DATE#, #ecgc:VARCHAR#, #documentComplete:VARCHAR#, #guaranteeCoverCode:VARCHAR#, #healthCode:VARCHAR#, #districtCode:VARCHAR#, #sectorCode:VARCHAR#, #paymentCode:VARCHAR#, #refinancingInstitution:VARCHAR#, #assetStatus:VARCHAR#, #directFinance:VARCHAR#, #prioritySector:VARCHAR#, #qis:VARCHAR#, #authorizeRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #acctNum:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanClassificationTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsClassificationTO" inline-parameters="true">
+        UPDATE BILLS_CLASSIFY_DETAILS SET 
+		<!--BORROW_NO = #borrowNo:VARCHAR#,-->
+        PROD_ID = #prodId:VARCHAR#,
+        COMMODITY_CODE = #commodityCode:VARCHAR#,
+        BUSINESS_SECTOR_CODE = #businessSectorCode:VARCHAR#,
+        FACILITY_TYPE = #facilityType:VARCHAR#,
+        PURPOSE_CODE = #purposeCode:VARCHAR#,
+        INDUSTRY_CODE = #industryCode:VARCHAR#,
+        TWENTY_CODE = #twentyCode:VARCHAR#,
+        GOVT_SCHEME_CODE = #govtSchemeCode:VARCHAR#,
+        NPA_DT = #npaDt:DATE#,
+        ECGC = #ecgc:VARCHAR#,
+        DOCUMENT_COMPLETE = #documentComplete:VARCHAR#,
+        GUARANTEE_COVER_CODE = #guaranteeCoverCode:VARCHAR#,
+        HEALTH_CODE = #healthCode:VARCHAR#,
+        DISTRICT_CODE = #districtCode:VARCHAR#,
+        SECTOR_CODE = #sectorCode:VARCHAR#,
+        PAYMENT_CODE = #paymentCode:VARCHAR#,
+        REFINANCING_INSTITUTION = #refinancingInstitution:VARCHAR#,
+        ASSET_STATUS = #assetStatus:VARCHAR#,
+        DIRECT_FINANCE = #directFinance:VARCHAR#,
+        PRIORITY_SECTOR = #prioritySector:VARCHAR#,
+        QIS = #qis:VARCHAR#,
+        AUTHORIZE_REMARKS = #authorizeRemarks:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		<!--ACCT_NUM = #acctNum:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanClassificationTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsClassificationTO" inline-parameters="true">
+        UPDATE BILLS_CLASSIFY_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+    <mapped-statement name="updateProdID_BillsClassificationTO" inline-parameters="true">
+        UPDATE BILLS_CLASSIFY_DETAILS SET 
+        PROD_ID = #prodId:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACCT_NUM = #acctNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanClassificationTO object (JavaBean) properties -->
+    <result-map name="getBillsClassificationTOResult" class="com.see.truetransact.transferobject.bills.TermLoanClassificationTO">
+        <property name="borrowNo" column="BORROW_NO"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="commodityCode" column="COMMODITY_CODE"/>
+        <property name="businessSectorCode" column="BUSINESS_SECTOR_CODE"/>
+        <property name="facilityType" column="FACILITY_TYPE"/>
+        <property name="purposeCode" column="PURPOSE_CODE"/>
+        <property name="industryCode" column="INDUSTRY_CODE"/>
+        <property name="twentyCode" column="TWENTY_CODE"/>
+        <property name="govtSchemeCode" column="GOVT_SCHEME_CODE"/>
+        <property name="npaDt" column="NPA_DT"/>
+        <property name="ecgc" column="ECGC"/>
+        <property name="documentComplete" column="DOCUMENT_COMPLETE"/>
+        <property name="guaranteeCoverCode" column="GUARANTEE_COVER_CODE"/>
+        <property name="healthCode" column="HEALTH_CODE"/>
+        <property name="districtCode" column="DISTRICT_CODE"/>
+        <property name="sectorCode" column="SECTOR_CODE"/>
+        <property name="paymentCode" column="PAYMENT_CODE"/>
+        <property name="refinancingInstitution" column="REFINANCING_INSTITUTION"/>
+        <property name="assetStatus" column="ASSET_STATUS"/>
+        <property name="directFinance" column="DIRECT_FINANCE"/>
+        <property name="prioritySector" column="PRIORITY_SECTOR"/>
+        <property name="qis" column="QIS"/>
+        <property name="authorizeRemarks" column="AUTHORIZE_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsClassificationTO" result-map="getBillsClassificationTOResult" >
+        SELECT * FROM BILLS_CLASSIFY_DETAILS 
+        WHERE ACCT_NUM = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+
+
+
+
+    </mapped-statement>
+        
+        <!-- Use TermLoanJointAcctTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsJointAcctTO" inline-parameters="true">
+        INSERT INTO BILLS_JOINT
+        (CUST_ID, STATUS, BORROW_NO, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #custId:VARCHAR#, #status:VARCHAR#, #borrowNo:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanJointAcctTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsJointAcctTO" inline-parameters="true">
+        UPDATE BILLS_JOINT SET 
+		<!--CUST_ID = #custId:VARCHAR#,
+		BORROW_NO = #borrowNo:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND CUST_ID = #custId:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+
+	<!-- Use TermLoanJointAcctTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsJointAcctTO" inline-parameters="true">
+        UPDATE BILLS_JOINT SET 
+		<!--CUST_ID = #custId:VARCHAR#,
+		BORROW_NO = #borrowNo:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE BORROW_NO = #borrowNo:VARCHAR# AND CUST_ID = #custId:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanJointAcctTO object (JavaBean) properties -->
+    <result-map name="getBillsJointAcctTOResult" class="com.see.truetransact.transferobject.bills.TermLoanJointAcctTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="borrowNo" column="BORROW_NO"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsJointAcctTO" result-map="getBillsJointAcctTOResult" >
+        SELECT * FROM BILLS_JOINT 
+        WHERE BORROW_NO = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+        
+        <!-- Use TermLoanOtherDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBillsOtherDetailsTO" inline-parameters="true">
+        INSERT INTO BILLS_PARAM_DETAILS
+        (ACT_NUM, INT_CR_BAL, INT_DR_BAL, CHK_BOOK, NRO_STATUS, MOBILE_BANKING, ATM_CARD, ATM_CARD_NO, ATM_CARD_EXPRDT, CR_CARD, CR_CARD_NO, CR_CARD_EXPRDT, DR_CARD, DR_CARD_NO, DR_CARD_EXPRDT, ABB, ABB_CHRG, NPA, NPA_DT, STOP_PAY_CHRG, MODE_OF_OPERATION, SETTLEMENT_MODE, ACT_OPEN_CHRG, CHK_RETURN, INOP_CHRG, STAT_CHRG, NONMAIN_CHRG, LAST_DR_INT_APPLDT, CUSTGRP_LIMIT_VALIDATION, MIN_ACT_BAL, CHK_BOOK_CHRG, REQ_FLEXI_PD, MISC_SERV_CHRG, FOLIO_CHRG, ACT_CLOSING_CHRG, STAT_FREQ, EXCESS_WITHD_CHRG, LAST_CR_INT_APPLDT, ATM_CARD_VALIDFROM, CR_CARD_VALIDFROM, DR_CARD_VALIDFROM, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #actNum:VARCHAR#, #intCrBal:VARCHAR#, #intDrBal:VARCHAR#, #chkBook:VARCHAR#, #nroStatus:VARCHAR#, #mobileBanking:VARCHAR#, #atmCard:VARCHAR#, #atmCardNo:VARCHAR#, #atmCardExprdt:DATE#, #crCard:VARCHAR#, #crCardNo:VARCHAR#, #crCardExprdt:DATE#, #drCard:VARCHAR#, #drCardNo:VARCHAR#, #drCardExprdt:DATE#, #abb:VARCHAR#, #abbChrg:NUMERIC#, #npa:VARCHAR#, #npaDt:DATE#, #stopPayChrg:VARCHAR#, #modeOfOperation:VARCHAR#, #settlementMode:VARCHAR#, #actOpenChrg:NUMERIC#, #chkReturn:VARCHAR#, #inopChrg:VARCHAR#, #statChrg:VARCHAR#, #nonmainChrg:VARCHAR#, #lastDrIntAppldt:DATE#, #custgrpLimitValidation:VARCHAR#, #minActBal:NUMERIC#, #chkBookChrg:NUMERIC#, #reqFlexiPd:NUMERIC#, #miscServChrg:NUMERIC#, #folioChrg:NUMERIC#, #actClosingChrg:NUMERIC#, #statFreq:NUMERIC#, #excessWithdChrg:NUMERIC#, #lastCrIntAppldt:DATE#, #atmCardValidfrom:DATE#, #crCardValidfrom:DATE#, #drCardValidfrom:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use TermLoanOtherDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBillsOtherDetailsTO" inline-parameters="true">
+        UPDATE BILLS_PARAM_DETAILS SET 
+        INT_CR_BAL = #intCrBal:VARCHAR#,
+        INT_DR_BAL = #intDrBal:VARCHAR#,
+        CHK_BOOK = #chkBook:VARCHAR#,
+        NRO_STATUS = #nroStatus:VARCHAR#,
+        MOBILE_BANKING = #mobileBanking:VARCHAR#,
+        ATM_CARD = #atmCard:VARCHAR#,
+        ATM_CARD_NO = #atmCardNo:VARCHAR#,
+        ATM_CARD_EXPRDT = #atmCardExprdt:DATE#,
+        CR_CARD = #crCard:VARCHAR#,
+        CR_CARD_NO = #crCardNo:VARCHAR#,
+        CR_CARD_EXPRDT = #crCardExprdt:DATE#,
+        DR_CARD = #drCard:VARCHAR#,
+        DR_CARD_NO = #drCardNo:VARCHAR#,
+        DR_CARD_EXPRDT = #drCardExprdt:DATE#,
+        ABB = #abb:VARCHAR#,
+        ABB_CHRG = #abbChrg:NUMERIC#,
+        NPA = #npa:VARCHAR#,
+        NPA_DT = #npaDt:DATE#,
+        STOP_PAY_CHRG = #stopPayChrg:VARCHAR#,
+        MODE_OF_OPERATION = #modeOfOperation:VARCHAR#,
+        SETTLEMENT_MODE = #settlementMode:VARCHAR#,
+        ACT_OPEN_CHRG = #actOpenChrg:NUMERIC#,
+        CHK_RETURN = #chkReturn:VARCHAR#,
+        INOP_CHRG = #inopChrg:VARCHAR#,
+        STAT_CHRG = #statChrg:VARCHAR#,
+        NONMAIN_CHRG = #nonmainChrg:VARCHAR#,
+        LAST_DR_INT_APPLDT = #lastDrIntAppldt:DATE#,
+        CUSTGRP_LIMIT_VALIDATION = #custgrpLimitValidation:VARCHAR#,
+        MIN_ACT_BAL = #minActBal:NUMERIC#,
+        CHK_BOOK_CHRG = #chkBookChrg:NUMERIC#,
+        REQ_FLEXI_PD = #reqFlexiPd:NUMERIC#,
+        MISC_SERV_CHRG = #miscServChrg:NUMERIC#,
+        FOLIO_CHRG = #folioChrg:NUMERIC#,
+        ACT_CLOSING_CHRG = #actClosingChrg:NUMERIC#,
+        STAT_FREQ = #statFreq:NUMERIC#,
+        EXCESS_WITHD_CHRG = #excessWithdChrg:NUMERIC#,
+        LAST_CR_INT_APPLDT = #lastCrIntAppldt:DATE#,
+        ATM_CARD_VALIDFROM = #atmCardValidfrom:DATE#,
+        CR_CARD_VALIDFROM = #crCardValidfrom:DATE#,
+        DR_CARD_VALIDFROM = #drCardValidfrom:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ACT_NUM = #actNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+    </mapped-statement>
+
+	<!-- Use TermLoanOtherDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBillsOtherDetailsTO" inline-parameters="true">
+        UPDATE BILLS_PARAM_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP# 
+        WHERE ACT_NUM = #actNum:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TermLoanOtherDetailsTO object (JavaBean) properties -->
+    <result-map name="getBillsOtherDetailsTOResult" class="com.see.truetransact.transferobject.bills.TermLoanOtherDetailsTO">
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="intCrBal" column="INT_CR_BAL"/>
+        <property name="intDrBal" column="INT_DR_BAL"/>
+        <property name="chkBook" column="CHK_BOOK"/>
+        <property name="nroStatus" column="NRO_STATUS"/>
+        <property name="mobileBanking" column="MOBILE_BANKING"/>
+        <property name="atmCard" column="ATM_CARD"/>
+        <property name="atmCardNo" column="ATM_CARD_NO"/>
+        <property name="atmCardExprdt" column="ATM_CARD_EXPRDT"/>
+        <property name="crCard" column="CR_CARD"/>
+        <property name="crCardNo" column="CR_CARD_NO"/>
+        <property name="crCardExprdt" column="CR_CARD_EXPRDT"/>
+        <property name="drCard" column="DR_CARD"/>
+        <property name="drCardNo" column="DR_CARD_NO"/>
+        <property name="drCardExprdt" column="DR_CARD_EXPRDT"/>
+        <property name="abb" column="ABB"/>
+        <property name="abbChrg" column="ABB_CHRG"/>
+        <property name="npa" column="NPA"/>
+        <property name="npaDt" column="NPA_DT"/>
+        <property name="stopPayChrg" column="STOP_PAY_CHRG"/>
+        <property name="modeOfOperation" column="MODE_OF_OPERATION"/>
+        <property name="settlementMode" column="SETTLEMENT_MODE"/>
+        <property name="actOpenChrg" column="ACT_OPEN_CHRG"/>
+        <property name="chkReturn" column="CHK_RETURN"/>
+        <property name="inopChrg" column="INOP_CHRG"/>
+        <property name="statChrg" column="STAT_CHRG"/>
+        <property name="nonmainChrg" column="NONMAIN_CHRG"/>
+        <property name="lastDrIntAppldt" column="LAST_DR_INT_APPLDT"/>
+        <property name="custgrpLimitValidation" column="CUSTGRP_LIMIT_VALIDATION"/>
+        <property name="minActBal" column="MIN_ACT_BAL"/>
+        <property name="chkBookChrg" column="CHK_BOOK_CHRG"/>
+        <property name="reqFlexiPd" column="REQ_FLEXI_PD"/>
+        <property name="miscServChrg" column="MISC_SERV_CHRG"/>
+        <property name="folioChrg" column="FOLIO_CHRG"/>
+        <property name="actClosingChrg" column="ACT_CLOSING_CHRG"/>
+        <property name="statFreq" column="STAT_FREQ"/>
+        <property name="excessWithdChrg" column="EXCESS_WITHD_CHRG"/>
+        <property name="lastCrIntAppldt" column="LAST_CR_INT_APPLDT"/>
+        <property name="atmCardValidfrom" column="ATM_CARD_VALIDFROM"/>
+        <property name="crCardValidfrom" column="CR_CARD_VALIDFROM"/>
+        <property name="drCardValidfrom" column="DR_CARD_VALIDFROM"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectBillsOtherDetailsTO" result-map="getBillsOtherDetailsTOResult" >
+        SELECT * FROM BILLS_PARAM_DETAILS 
+        WHERE ACT_NUM = #value:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED')
+    </mapped-statement>
+        
+       <!-- <mapped-statement name="getSelectCustomerAddress" result-class="java.util.HashMap" >
+              
+                SELECT CUSTOMER.CUST_ID, get_cust_name(CUSTOMER.CUST_ID)  as "Name", 
+                DOB, STREET, AREA,EMAIL_ID,CUST_ADDR.ADDR_TYPE,
+                (SELECT LOOKUP_DESC FROM LOOKUP_MASTER WHERE LOOKUP_REF_ID= CITY 
+                AND LOOKUP_ID = 'CUSTOMER.CITY') AS CITY,             
+                (SELECT lookup_desc FROM lookup_master WHERE LOOKUP_REF_ID= STATE 
+                AND LOOKUP_ID = 'CUSTOMER.STATE') AS STATE, PIN_CODE,             
+                (SELECT lookup_desc FROM lookup_master WHERE LOOKUP_REF_ID= COUNTRY_CODE 
+                AND LOOKUP_ID = 'CUSTOMER.COUNTRY') AS COUNTRY          
+                FROM CUSTOMER , CUST_ADDR WHERE (CUSTOMER.CUST_ID = #custId#)             
+                AND (CUSTOMER.STATUS IN ('MODIFIED', 'UPDATE', 'CREATED')) 
+                AND (CUST_ADDR.CUST_ID  = CUSTOMER.CUST_ID)             
+
+        </mapped-statement>-->
+        
+
+       
+        
+      
+        
+        
+        
+        
+       
+        
+    <mapped-statement name="getBillsBorrowerNumber" result-class="java.util.HashMap" >
+        SELECT BORROW_NO FROM BILLS_BORROWER WHERE (CUST_ID = #custId:VARCHAR# AND CONSTITUTION = #constitution:VARCHAR#
+        AND CATEGORY = #category:VARCHAR# AND STATUS != 'DELETED')
+    </mapped-statement>
+        
+       
+        
+    <mapped-statement name="getBillsAccountNumber" result-class="java.util.HashMap" >
+        SELECT ACCT_NUM, INT_GET_FROM FROM BILLS_FACILITY_DETAILS WHERE (BORROW_NO = #borrowNo:VARCHAR# AND SANCTION_NO = #sanctionNo:VARCHAR#
+        AND SL_NO = #slNo:NUMERIC# AND (STATUS = 'MODIFIED' OR STATUS = 'CREATED'))
+    </mapped-statement>
+        
+     
+        
+    <mapped-statement name="getBillsCountOfSanctionNo" result-class="java.util.HashMap" >
+        SELECT COUNT(SANCTION_NO) AS "SANCTION_NO" FROM BILLS_SANCTION
+        WHERE SANCTION_NO = #sanctionNo:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED' )
+    </mapped-statement>
+        
+       
+    <mapped-statement name="getBillsSanctionDetails" result-class="java.util.HashMap" >
+        SELECT SD.LIMIT, SD.TO_DT, S.SANCTION_DT FROM BILLS_SANCTION_DETAILS "SD", BILLS_SANCTION "S"
+        WHERE S.SANCTION_NO = #sanctionNo:VARCHAR# AND (SD.SANCTION_NO = #sanctionNo:VARCHAR# AND SD.SL_NO = #slNo:NUMERIC#) AND S.STATUS != 'DELETED' AND SD.STATUS != 'DELETED'
+    </mapped-statement>
+        
+      
+       
+      
+        
+    
+        
+      
+	
+        
+        
+       
+        
+    <mapped-statement name="getSelectBillsAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+           <!-- SELECT FD.PROD_ID,  FD.BORROW_NO, FD.ACCT_NUM, FD.SANCTION_NO, get_cust_name(C.CUST_ID) AS Name,
+            FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1, FD.AUTHORIZE_BY_2, FD.AUTHORIZE_STATUS_2 
+            FROM BILLS_BORROWER LB, BILLS_FACILITY_DETAILS "FD", CUSTOMER CUST 
+            WHERE LB.CUST_ID = CUST.CUST_ID AND LB.BORROW_NO = FD.BORROW_NO 
+            AND FD.STATUS NOT IN ('DELETED') AND 
+            FD.BRANCH_ID = #BRANCH_ID# AND 
+            (DECODE((SELECT BEHAVES_LIKE FROM LOANS_PRODUCT WHERE STATUS IN ('CREATED', 'MODIFIED') AND PROD_ID = FD.PROD_ID), 
+                    'OD', 1, 
+                    (DECODE((SELECT BEHAVES_LIKE FROM LOANS_PRODUCT WHERE STATUS IN ('CREATED', 'MODIFIED') AND PROD_ID = FD.PROD_ID), 
+                            'CC', 1,(SELECT COUNT(ACCT_NUM) FROM LOANS_REPAY_SCHEDULE WHERE ACCT_NUM = FD.ACCT_NUM AND STATUS IN ('CREATED', 'MODIFIED'))))) > 0) 
+            AND (FD.STATUS_BY != #STATUS_BY# AND 
+            (FD.AUTHORIZE_BY_1 IS NULL OR FD.AUTHORIZE_BY_1 != #STATUS_BY#)) AND 
+          #HIERARCHY_ID#::numeric &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                FROM USER_MASTER UM, ROLE_MASTER RM 
+                WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FD.STATUS_BY)
+                <dynamic>
+                    <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                        (FD.AUTHORIZE_STATUS_1 = 'EXCEPTION') 
+                    </isEqual>
+                    <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                        (FD.AUTHORIZE_STATUS_1 IS NULL OR 
+                         FD.AUTHORIZE_STATUS_1 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+                   
+                    </isNotEqual>
+                </dynamic>
+                 AND  NOT EXISTS 
+                (SELECT BORROW_NO FROM BILLS_FACILITY_DETAILS WHERE PROD_ID IN 
+                (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS')AND BORROW_NO=LB.BORROW_NO)-->
+        SELECT FD.PROD_ID,  FD.BORROW_NO, FD.ACCT_NUM, FD.SANCTION_NO, get_cust_name(CUST.CUST_ID) AS Name, FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1, FD.AUTHORIZE_BY_2, FD.AUTHORIZE_STATUS_2  
+        FROM BILLS_BORROWER LB, BILLS_FACILITY_DETAILS "FD", CUSTOMER CUST, LOANS_PRODUCT LP  WHERE LB.CUST_ID = CUST.CUST_ID AND 
+        LB.BORROW_NO = FD.BORROW_NO  AND FD.STATUS NOT IN ('DELETED') AND  FD.BRANCH_ID = #BRANCH_ID:VARCHAR# AND
+        (FD.STATUS_BY != #STATUS_BY:VARCHAR# AND  (FD.AUTHORIZE_BY_1 IS NULL OR FD.AUTHORIZE_BY_1 != #STATUS_BY:VARCHAR#)) AND
+        (FD.AUTHORIZE_STATUS_1 IS NULL OR FD.AUTHORIZE_STATUS_1 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+        AND LP.PROD_ID = FD.PROD_ID AND LP.BEHAVES_LIKE = 'BILLS' AND LP.STATUS IN('CREATED', 'MODIFIED')
+        AND LP.AUTHORIZE_STATUS = 'AUTHORIZED'
+                
+    </mapped-statement>
+        
+    <mapped-statement name="Bills.getBehavesLike" result-class="java.util.HashMap" >
+        SELECT LP.BEHAVES_LIKE, LFD.PROD_ID, LFD.INT_GET_FROM, LFD.SECURITY_DETAILS, 
+        LSD.LIMIT 
+        FROM LOANS_PRODUCT LP, BILLS_FACILITY_DETAILS LFD, BILLS_SANCTION_DETAILS LSD 
+        WHERE LP.PROD_ID = LFD.PROD_ID 
+        AND LFD.ACCT_NUM = #ACCT_NUM:VARCHAR# 
+        AND LSD.SL_NO = LFD.SL_NO 
+        AND LSD.SANCTION_NO = LFD.SANCTION_NO 
+        AND LSD.STATUS IN ('CREATED', 'MODIFIED') 
+        AND (LP.STATUS = 'CREATED' OR LP.STATUS = 'MODIFIED') AND LP.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND (LFD.STATUS = 'CREATED' OR LFD.STATUS = 'MODIFIED') 
+    </mapped-statement>
+        
+    <mapped-statement name="getAcctInterestDetailsBillsCount" result-class="java.util.HashMap" >
+        SELECT COUNT(ACCT_NUM) NO_RECORDS FROM BILLS_INT_MAINTENANCE 
+        WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# AND STATUS IN ('CREATED', 'MODIFIED') 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeBills" result-class="java.util.HashMap">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+        AUTHORIZE_STATUS_1 = DECODE (AUTHORIZE_STATUS_1, NULL, DECODE(AUTHORIZE_STATUS_2, NULL, #AUTHORIZESTATUS#), AUTHORIZE_STATUS_1),
+            <!--AUTHORIZE_STATUS_2 = DECODE (AUTHORIZE_STATUS_2, NULL, DECODE(AUTHORIZE_STATUS_1, NULL, NULL, #AUTHORIZESTATUS#), AUTHORIZE_STATUS_2),-->
+        AUTHORIZE_BY_1 = DECODE (AUTHORIZE_BY_1, NULL, DECODE(AUTHORIZE_BY_2, NULL, #USER_ID#), AUTHORIZE_BY_1),
+           <!-- AUTHORIZE_BY_2 = DECODE (AUTHORIZE_BY_2, NULL, DECODE(AUTHORIZE_BY_1, NULL, NULL, #USER_ID#), AUTHORIZE_BY_2),-->
+        AUTHORIZE_DT_1 = DECODE (AUTHORIZE_DT_1, NULL, DECODE(AUTHORIZE_DT_2, NULL, #AUTHORIZEDT:TIMESTAMP#), AUTHORIZE_DT_1),
+        AUTHORIZE_DT_2 = DECODE (AUTHORIZE_DT_2, NULL, DECODE(AUTHORIZE_DT_1, NULL, NULL, #AUTHORIZEDT:TIMESTAMP#), AUTHORIZE_DT_2)
+        WHERE ACCT_NUM = #ACCT_NUM:VARCHAR#            
+    </mapped-statement>
+        
+        
+    <dynamic-mapped-statement name="getSelectProductBillsInterestMap" result-class="java.util.LinkedHashMap">
+        SELECT DRGTR.ROI "INTEREST", DRGTR.ROI_DATE "FROM_DT", DRGTR.ROI_END_DATE "TO_DT", 
+        DRGTR.AGAINST_CLEARING_INT, DRGTR.LIMIT_AMOUNT "LIMIT_AMT", 
+        DRGTR.INT_EXPIRY_LIMIT "INTEREST_EXPIRY_LIMIT", DRGTR.PENAL_INT "PENAL_INTEREST", DRGTR.STATUS, 
+        DRGTR.STATEMENT_PENEL "STATEMENT_PENAL" 
+        FROM DEPOSIT_ROI_GROUP DRG, 
+        DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP, 
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+        DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+        DRG.PRODUCT_TYPE IN( 'TL','AD') AND 
+        DRGP.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DRGC.CATEGORY_ID = #CATEGORY_ID:VARCHAR# AND 
+        #AMOUNT:NUMBER# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+        ((#FROM_DATE:DATE# BETWEEN ROI_DATE AND ROI_END_DATE) OR 
+        (ROI_DATE&lt;#FROM_DATE# AND ROI_END_DATE IS NULL))
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PERIOD" >
+                    (#PERIOD:NUMBER# BETWEEN FROM_PERIOD AND TO_PERIOD)
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectAccountBillsInterestMap" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM BILLS_INT_MAINTENANCE 
+        WHERE ACCT_NUM = #ACCT_NUM:VARCHAR# AND (STATUS = 'CREATED' OR STATUS = 'MODIFIED') AND 
+        #AMOUNT:NUMBER# BETWEEN FROM_AMT AND TO_AMT AND
+        ((#FROM_DATE:DATE# BETWEEN FROM_DT AND TO_DT) OR 
+        (FROM_DT&lt;=#FROM_DATE:DATE# AND TO_DT IS NULL)) <!--((#FROM_DATE# &gt;= FROM_DT) OR (#TO_DATE# &lt;= TO_DT))--> 
+        ORDER BY TO_NUMBER(SLNO) 
+    </mapped-statement>
+        
+         <!--<mapped-statement name="getSelectProductBillsInterestTO" result-map="getBillsProductInterestTOResult" >
+		SELECT DRGTR.ROI, DRGTR.ROI_DATE, DRGTR.ROI_END_DATE, DRGP.PROD_ID, DRGTR.FROM_AMOUNT, DRGTR.TO_AMOUNT, 
+                DRGTR.AGAINST_CLEARING_INT, DRGTR.LIMIT_AMOUNT, DRGTR.INT_EXPIRY_LIMIT, DRGTR.PENAL_INT, DRGTR.STATUS FROM DEPOSIT_ROI_GROUP DRG, 
+                DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+                DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+                DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+                DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+                DRG.PRODUCT_TYPE IN('BILLS') AND 
+                DRGP.PROD_ID = #PROD_ID# AND 
+                DRGC.CATEGORY_ID = #CATEGORY_ID# AND
+                ((#FROM_DATE# BETWEEN ROI_DATE AND ROI_END_DATE) OR 
+                (ROI_DATE&lt;#FROM_DATE# AND ROI_END_DATE IS NULL))
+                
+	</mapped-statement>-->
+    <result-map name="getLoanProductBillsInterestTOResult" class="com.see.truetransact.transferobject.bills.TermLoanInterestTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="fromDt" column="ROI_DATE"/>
+        <property name="toDt" column="ROI_END_DATE"/>
+        <property name="fromAmt" column="FROM_AMOUNT"/>
+        <property name="toAmt" column="TO_AMOUNT"/>
+        <property name="interest" column="ROI"/>
+        <property name="penalInterest" column="PENAL_INT"/>
+        <property name="againstClearingInt" column="AGAINST_CLEARING_INT"/>
+        <property name="statementPenal" column="LIMIT_AMOUNT"/>
+        <property name="interestExpiryLimit" column="INT_EXPIRY_LIMIT"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectProductBillsInterestTO" result-map="getLoanProductBillsInterestTOResult" >
+        SELECT DRGTR.ROI, DRGTR.ROI_DATE, DRGTR.ROI_END_DATE, DRGP.PROD_ID, DRGTR.FROM_AMOUNT, DRGTR.TO_AMOUNT,
+        DRGTR.AGAINST_CLEARING_INT, DRGTR.LIMIT_AMOUNT, DRGTR.INT_EXPIRY_LIMIT, DRGTR.PENAL_INT, DRGTR.STATUS FROM DEPOSIT_ROI_GROUP DRG, 
+        DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+        DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+        DRG.PRODUCT_TYPE IN( 'BILLS') AND 
+        DRGP.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DRGC.CATEGORY_ID = #CATEGORY_ID:VARCHAR# AND
+        #AMOUNT:NUMBER# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+        ((#FROM_DATE:DATE# BETWEEN ROI_DATE AND ROI_END_DATE) OR 
+        (ROI_DATE&lt;#FROM_DATE:DATE# AND ROI_END_DATE IS NULL))
+        AND TO_NUMBER(TO_CHAR(#TO_DATE:DATE#,'J'))- TO_NUMBER(TO_CHAR(#FROM_DATE:DATE#,'J')) BETWEEN FROM_PERIOD AND TO_PERIOD
+    </mapped-statement>
+        
+       
+        
+    <mapped-statement name="getIntRateBills" result-class="java.util.HashMap">
+        SELECT DECODE(INT_GET_FROM ,'PROD',(SELECT DRGTR.ROI FROM DEPOSIT_ROI_GROUP DRG, 
+        DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+        DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+        DRG.PRODUCT_TYPE IN('BILLS') AND 
+        DRGP.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DRGC.CATEGORY_ID = #CATEGORY:VARCHAR# AND
+        #LIMIT:NUMBER# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+        ((TO_CHAR(#DEPOSIT_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(ROI_DATE,'YYYY-MM-DD') AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(ROI_DATE,'YYYY-MM-DD') &lt; TO_CHAR(#DEPOSIT_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD') IS NULL))),(SELECT INTEREST FROM BILLS_INT_MAINTENANCE WHERE ACCT_NUM=#ACT_NUM# AND #LIMIT# BETWEEN FROM_AMT AND TO_AMT)) AS INTEREST,
+        DECODE(INT_GET_FROM ,'PROD',(SELECT DRGTR.PENAL_INT FROM DEPOSIT_ROI_GROUP DRG, 
+        DEPOSIT_ROI_GROUP_CAT DRGC, DEPOSIT_ROI_GROUP_PROD DRGP,
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR WHERE
+        DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID AND
+        DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID AND
+        DRG.PRODUCT_TYPE IN('AD') AND 
+        DRGP.PROD_ID = #PROD_ID:VARCHAR# AND 
+        DRGC.CATEGORY_ID = #CATEGORY:VARCHAR# AND
+        #LIMIT:NUMBER# BETWEEN FROM_AMOUNT AND TO_AMOUNT AND
+        ((TO_CHAR(#DEPOSIT_DT:DATE#,'YYYY-MM-DD') BETWEEN TO_CHAR(ROI_DATE,'YYYY-MM-DD') AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(ROI_DATE,'YYYY-MM-DD') &lt; TO_CHAR(#DEPOSIT_DT:DATE#,'YYYY-MM-DD') AND TO_CHAR(ROI_END_DATE,'YYYY-MM-DD') IS NULL))),(SELECT PENAL_INTEREST FROM BILLS_INT_MAINTENANCE WHERE ACCT_NUM=#ACT_NUM# AND #LIMIT# BETWEEN FROM_AMT AND TO_AMT)) AS PENAL_INTEREST FROM 
+        BILLS_FACILITY_DETAILS WHERE ACCT_NUM=#ACT_NUM#
+    </mapped-statement> 
+        
+    <dynamic-mapped-statement name="getSelectBillAccInfoList" result-class="java.util.LinkedHashMap" >
+        SELECT CUSTOMER.CUST_ID AS "CUSTOMER ID", get_cust_name(CUSTOMER.CUST_ID) AS "Name", CUSTOMER.CUST_TYPE_ID, AM.ACT_NUM, DA.DEPOSIT_NO, SA.SHARE_ACCT_NO, (SELECT 
+        LOOKUP_DESC FROM LOOKUP_MASTER WHERE (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND 
+        LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) AS CUST_TYPE, CUSTOMER.BRANCH_CODE FROM CUSTOMER, CUST_ADDR, ACT_MASTER AM, 
+        DEPOSIT_ACINFO DA, SHARE_ACCT SA WHERE CUSTOMER.CUST_ID = AM.CUST_ID(+) AND CUSTOMER.CUST_ID = DA.CUST_ID(+) AND 
+        CUSTOMER.CUST_ID = SA.CUST_ID(+) AND (CUSTOMER.STATUS = 'CREATED' OR CUSTOMER.STATUS = 'MODIFIED') AND 
+        CUSTOMER.AUTHORIZE_STATUS='AUTHORIZED' AND (CUSTOMER.CUSTOMER_STATUS NOT IN ('DECEASED') OR 
+        CUSTOMER.CUSTOMER_STATUS IS NULL) AND (CUST_ADDR.CUST_ID = CUSTOMER.CUST_ID) AND CUSTOMER.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND 
+        (CUSTOMER.COMM_ADDR_TYPE = CUST_ADDR.ADDR_TYPE) AND (CUST_ADDR.STATUS = 'CREATED' OR CUST_ADDR.STATUS = 'MODIFIED') 
+        AND NOT EXISTS (SELECT CUST_ID FROM BILLS_BORROWER LB, BILLS_FACILITY_DETAILS LFD WHERE 
+        LB.STATUS IN ('CREATED', 'MODIFIED') AND LB.BORROW_NO=LFD.BORROW_NO AND LFD.STATUS IN ('CREATED', 'MODIFIED')
+        AND (LFD.AUTHORIZE_STATUS_1 IS NULL OR LFD.AUTHORIZE_STATUS_1='AUTHORIZED') AND CUSTOMER.CUST_ID=LB.CUST_ID AND PROD_ID NOT IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS'))
+        AND  NOT EXISTS (SELECT CUST_ID FROM CUSTOMER_SUSPENDED  WHERE   STATUS='SUSPENDED'
+        AND CUSTOMER.CUST_ID=CUST_ID)             
+             
+        <dynamic>
+            <isNotEmpty prepend=" AND CUSTOMER.CUST_ID NOT IN ( " property="CUSTOMER_ID">
+                $CUSTOMER_ID$ )
+            </isNotEmpty>
+        </dynamic>
+          
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    CUSTOMER.CUST_ID=#CUST_ID:VARCHAR#
+                </isNotNull>
+                  
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+</sql-map>
+        

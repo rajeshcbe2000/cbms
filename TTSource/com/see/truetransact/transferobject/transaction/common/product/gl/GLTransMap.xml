@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="GLTransMap">
+
+    <mapped-statement name="getBranchGL" result-class="java.lang.String">
+        SELECT DECODE(NVL(HO_ACCT, 'N'), 'Y', (SELECT HEAD_OFFICE FROM PARAMETERS), '') FROM AC_HD_PARAM  
+        WHERE AC_HD_ID = #value#
+    </mapped-statement>
+        
+    <mapped-statement name="getActDataGL" result-class="java.util.HashMap">
+        SELECT AHP.TRANSPOST AS "OPT_MODE_ID", AHP.POSTMODE AS "CATEGORY", 
+        AHP.BALANCETYPE AS "CONSTITUTION", 
+        AC_OPEN_DT AS "CREATE_DT", 
+        'INR' AS "PRODCURRENCY",'' as REMARKS 
+        FROM AC_HD_PARAM AHP 
+        WHERE AC_HD_ID = #ACT_NUM:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getBalanceGL" result-class="java.util.HashMap">
+<!--		SELECT nvl(CUR_BAL,0) as "AVAILABLE_BALANCE", 
+                nvl(CLEAR_BALANCE,0) as "CLEAR_BALANCE",
+                nvl(TOTAL_BALANCE,0) as "TOTAL_BALANCE", 
+                nvl(SHADOW_CREDIT,0) as "SHADOW_CREDIT", 
+                nvl(SHADOW_DEBIT,0) as "SHADOW_DEBIT" 
+                FROM GL
+                WHERE AC_HD_ID = #ACT_NUM# AND 
+                BRANCH_CODE = #BRANCH_CODE# -->
+        SELECT nvl(CUR_BAL,0) as "AVAILABLE_BALANCE", 
+        nvl(CUR_BAL,0) as "CLEAR_BALANCE",
+        nvl(CUR_BAL,0) as "TOTAL_BALANCE", 
+        nvl(SHADOW_CREDIT,0) as "SHADOW_CREDIT", 
+        nvl(SHADOW_DEBIT,0) as "SHADOW_DEBIT" 
+        FROM GL
+        WHERE AC_HD_ID = #ACT_NUM:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+                <!--AND  
+                (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))-->
+    </mapped-statement> 
+        
+    <mapped-statement name="getAccountNumberNameGL" result-class="java.util.HashMap">
+        SELECT AC_HD_DESC AS CUSTOMER_NAME,'' AS MEMBERSHIP_NO
+        FROM AC_HD
+        WHERE AC_HD_ID = #ACC_NUM:VARCHAR#
+    </mapped-statement>
+
+<!-- ==============================Common Transactions operation on Account===================================================== -->        
+
+    <mapped-statement name="updateShadowDebitGL" inline-parameters="true">
+        UPDATE GL SET 
+        SHADOW_DEBIT = NVL(SHADOW_DEBIT,0) + #AMOUNT:NUMBER# , 
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE AC_HD_ID = #ACCOUNTNO:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+
+        <!--To Update the Data in Business Rule ...-->
+    <mapped-statement name="updateShadowCreditGL" inline-parameters="true">
+        UPDATE GL SET 
+        SHADOW_CREDIT = nvl(SHADOW_CREDIT,0) + #AMOUNT:NUMBER#, 
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE AC_HD_ID = #ACCOUNTNO:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="updateOtherBalancesGL" inline-parameters="true">
+        UPDATE GL SET 
+        CLEAR_BALANCE = NVL (CLEAR_BALANCE, 0) + #AMOUNT:NUMBER# - #UNCLEAR_AMT:NUMBER#, 
+        TOTAL_BALANCE = NVL (TOTAL_BALANCE, 0) + #AMOUNT:NUMBER# , 
+        UNCLEAR_BALANCE = NVL (UNCLEAR_BALANCE, 0) + #UNCLEAR_AMT:NUMBER#,
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE AC_HD_ID = #ACCOUNTNO:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="updateAvailBalanceGL" result-class="java.util.HashMap">
+        UPDATE GL SET
+        CUR_BAL = nvl(CUR_BAL,0) + #AMOUNT:NUMBER#,
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT:NUMBER#,
+        CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT:NUMBER#,
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE AC_HD_ID = #ACCOUNTNO:VARCHAR# AND 
+        BRANCH_CODE = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="insertTransRefGL" inline-parameters="true">
+        INSERT INTO TRANS_REF_GL
+        (TRANS_ID, TRANS_MODE, AC_HD_ID, ACT_NUM, INP_AMOUNT, INP_CURR, AMOUNT, TRANS_DT, TRANS_TYPE, INST_TYPE, INST_DT, INIT_TRANS_ID, INIT_CHANN_TYPE, PARTICULARS, STATUS, INSTRUMENT_NO1, INSTRUMENT_NO2, PROD_ID, BRANCH_ID, STATUS_DT, PROD_TYPE,INITIATED_BRANCH,BATCH_ID,IBR_HIERARCHY
+        ) VALUES (
+        #transId:VARCHAR#, #transMode:VARCHAR#, #acHdId:VARCHAR#, #actNum:VARCHAR#, #inpAmount:NUMERIC#, #inpCurr:VARCHAR#, #amount:NUMERIC#, #transDt:DATE#, #transType:VARCHAR#, #instType:VARCHAR#, #instDt:DATE#, #initTransId:VARCHAR#, #initChannType:VARCHAR#, #particulars:VARCHAR#, #status:VARCHAR#, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#, #prodId:VARCHAR#, #branchId:VARCHAR#, SYS_DATE()<!--#statusDt:DATE#-->, #prodType:VARCHAR#,#initiatedBranch:VARCHAR#,#batchId:VARCHAR#,#ibrHierarchy:VARCHAR#)
+    </mapped-statement>      
+</sql-map>

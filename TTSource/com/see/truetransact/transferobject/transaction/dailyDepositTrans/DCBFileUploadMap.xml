@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DCBFileUploadMap">
+        
+    <mapped-statement name="getParameterSettings" result-class="java.util.HashMap"> 
+        SELECT * FROM DCB_CONSOL_SETTINGS WHERE BRANCHID=#BRANCH_CODE#
+    </mapped-statement>
+        
+    <mapped-statement name="insertDCBFileDetails" inline-parameters="true">
+        INSERT INTO DCB_CONSOLIDATION
+        (FILE_ID, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13,
+        COL14, COL15, COL16, COL17, USERNAME, LOGDATE, INITIATEDBR
+        ) VALUES (
+        #FILE_ID:VARCHAR#, #COL1:VARCHAR#, #COL2:VARCHAR#, #COL3:VARCHAR#, #COL4:VARCHAR#, #COL5:VARCHAR#, 
+        #COL6:VARCHAR#, #COL7:VARCHAR#, #COL8:VARCHAR#, #COL9:VARCHAR#, #COL10:VARCHAR#, #COL11:VARCHAR#,
+        #COL12:VARCHAR#, #COL13:VARCHAR#, #COL14:VARCHAR#, #COL15:VARCHAR#, #COL16:VARCHAR#, #COL17:VARCHAR#,
+        #USERNAME:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #INITIATEDBR:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getCrDrAccountDetails" result-class = "java.util.HashMap">
+        SELECT ACA.*, AP.AC_HD_ID FROM ALL_PRODUCT_ACCTS ACA, ALL_PRODUCTS AP WHERE ACT_NUM=#ACT_NUM# AND AP.PROD_ID=ACA.PROD_ID AND ACCT_STATUS!='CLOSED'
+    </mapped-statement>
+    
+    <mapped-statement name="getDCBFileDetails" result-class = "java.util.LinkedHashMap">
+        SELECT * FROM DCB_CONSOL_DET WHERE INITIATEDBR =#BRANCH_ID# AND FILE_ID=#FILE_ID#
+    </mapped-statement>
+    
+    <mapped-statement name ="getDCBFileAuthorize" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT FILE_ID, SUM(COL7) AS TOTAL_AMOUNT, USERNAME,INITIATEDBR FROM DCB_CONSOLIDATION DC WHERE 
+        USERNAME!=#USER_ID# AND INITIATEDBR = #BRANCH_ID# AND FILE_ID IS NOT NULL 
+        AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND  
+        RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = DC.USERNAME) GROUP BY FILE_ID,USERNAME,INITIATEDBR ORDER BY FILE_ID
+    </mapped-statement>
+    
+    <mapped-statement name ="getDCBFileDataDetails" result-class = "java.util.LinkedHashMap">
+        SELECT COL1,COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13, COL14, COL15, COL16 
+        FROM DCB_CONSOLIDATION WHERE FILE_ID=#FILE_ID# AND INITIATEDBR=#INITIATEDBR#
+    </mapped-statement>
+    
+    <mapped-statement name ="deleteDCBFileDetails" result-class = "java.util.LinkedHashMap">
+        DELETE DCB_CONSOLIDATION WHERE FILE_ID=#FILE_ID#
+    </mapped-statement>
+    
+    <mapped-statement name ="getDCBFileEdit" result-class = "java.util.LinkedHashMap">
+        SELECT DISTINCT FILE_ID, SUM(COL7) AS TOTAL_AMOUNT, USERNAME, INITIATEDBR FROM DCB_CONSOLIDATION DC WHERE 
+        INITIATEDBR = #BRANCH_ID# AND FILE_ID IS NOT NULL GROUP BY FILE_ID,USERNAME,INITIATEDBR ORDER BY FILE_ID
+    </mapped-statement>
+    
+    <mapped-statement name="insertDCBFileName" inline-parameters="true">
+        INSERT INTO DCB_COMPLETED_FILES (FILE_ID, FILE_NAME ) VALUES (#FILE_ID:VARCHAR#, #FILE_NAME:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name ="getToCheckDCBFileAlreadyDone" result-class = "java.util.HashMap">
+        SELECT * FROM DCB_COMPLETED_FILES WHERE FILE_NAME = #FILE_NAME#
+    </mapped-statement>
+    
+    <mapped-statement name ="deleteDCBFileName" result-class = "java.util.LinkedHashMap">
+        DELETE DCB_COMPLETED_FILES WHERE FILE_ID=#FILE_ID#
+    </mapped-statement>
+    
+    <mapped-statement name ="getToCheckDCBFileAlreadyDoneAuth" result-class = "java.util.LinkedHashMap">
+        SELECT * FROM DCB_COMPLETED_FILES WHERE FILE_NAME IN(SELECT FILE_NAME FROM DCB_COMPLETED_FILES WHERE FILE_ID=#FILE_ID#)
+    </mapped-statement>
+    
+</sql-map>

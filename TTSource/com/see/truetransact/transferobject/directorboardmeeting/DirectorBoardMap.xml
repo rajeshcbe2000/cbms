@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DirectorBoardMap">
+
+	
+    <mapped-statement name="insertDirectorBoardTO" inline-parameters="true">
+        INSERT INTO DIRECTOR_BOARD_MEETING
+        (BOARD_MEMBER,DATE_OF_MEETING,ATTENDED_STATUS,SITTING_FEE_AMT,PAID_STATUS,PAID_DATE,
+        STATUS,STATUS_DT,STATUS_BY,CREATED_BY,CREATED_DT,AUTHORIZED_STATUS,AUTHORIZED_DT,AUTHORIZED_BY,BOARD_MT_ID) VALUES (
+        #cboBoMember:VARCHAR#, #meetngDate:DATE#, #applType:VARCHAR#, #sittingFeeAmount:NUMBER#, #applType1:VARCHAR#, #paidDate:DATE#, 
+        #status:VARCHAR#,#statusDt:DATE#,#statusBy:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#authorizedStatus:VARCHAR#,
+        #authorizeDt:DATE#,#authorizeBy:VARCHAR#,#directorBoardNo:VARCHAR#) 
+    </mapped-statement>
+    <result-map name="getDirectorBoardTOResult" class="com.see.truetransact.transferobject.directorboardmeeting.DirectorBoardTO">
+        <property name="cboBoMember" column="BOARD_MEMBER"/>
+        <property name="meetngDate" column="DATE_OF_MEETING"/>
+        <property name="applType" column="ATTENDED_STATUS"/>
+        <property name="sittingFeeAmount" column="SITTING_FEE_AMT"/>
+        <property name="applType1" column="PAID_STATUS"/>
+        <property name="paidDate" column="PAID_DATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="directorBoardNo" column="BOARD_MT_ID"/>
+    </result-map>
+   <dynamic-mapped-statement name="getDirectorBoardEdit" result-class="java.util.LinkedHashMap">
+        SELECT BOARD_MT_ID,BOARD_MEMBER,DATE_OF_MEETING,
+        ATTENDED_STATUS FROM DIRECTOR_BOARD_MEETING
+        WHERE STATUS!='DELETED'
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMPLOYEEID">
+                    UPPER(EM.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="BOARD_MEMBER">
+                    UPPER(BOARD_MEMBER) LIKE UPPER('%$BOARD_MEMBER$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="DATE_OF_MEETING">
+                    UPPER(DATE_OF_MEETING) LIKE UPPER('%$DATE_OF_MEETING$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="ATTENDED_STATUS">
+                    UPPER(ATTENDED_STATUS) LIKE UPPER('%$ATTENDED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getSelectDirectorBoardTO" result-map="getDirectorBoardTOResult" >
+        SELECT * FROM DIRECTOR_BOARD_MEETING  
+        WHERE BOARD_MT_ID =#BOARD_MT_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+    <mapped-statement name="updateDirectorBoardTO" inline-parameters="true">
+        UPDATE DIRECTOR_BOARD_MEETING SET 
+        BOARD_MEMBER =  #cboBoMember:VARCHAR#,
+        DATE_OF_MEETING = #meetngDate:DATE#,
+        ATTENDED_STATUS= #applType:VARCHAR#, 
+        SITTING_FEE_AMT=  #sittingFeeAmount:NUMBER#,
+        PAID_STATUS= #applType1:VARCHAR#,
+        PAID_DATE = #paidDate:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#, 
+        STATUS_BY = #statusBy:VARCHAR#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:DATE#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#
+        WHERE BOARD_MT_ID =#directorBoardNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteDirectorBoardTO" inline-parameters="true">
+        UPDATE DIRECTOR_BOARD_MEETING SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#, 
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE BOARD_MT_ID =#directorBoardNo:VARCHAR#
+    </mapped-statement>
+        
+        
+    <result-map name="get-getRoleEmp-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+            <!--property name="lookUpRefID" column="CUST_ID" /-->
+        <property name="lookUpRefID" column="FNAME" />
+        <property name="lookUpDesc" column="MEMBERSHIP_NO" />
+    </result-map> 
+    <mapped-statement name="getAllBoardMem" result-map="get-getRoleEmp-result"> 
+        select cust_id,fname,MEMBERSHIP_NO from customer where cust_id in(select b.cust_id from director_board a join share_acct b
+        on a.member_no=b.share_acct_no)
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getDirectorBoardAuthorizeList" result-class="java.util.LinkedHashMap">
+        <!--SELECT  BOARD_MEMBER,DATE_OF_MEETING,C.FNAME, ATTENDED_STATUS,BOARD_MT_ID FROM director_board_meeting TC  ,CUSTOMER C   
+        WHERE C.MEMBERSHIP_NO=BOARD_MEMBER AND ( tc.STATUS = 'CREATED' OR tc.STATUS = 'UPDATED' OR tc.STATUS = 'MODIFIED' ) and TC.STATUS_BY !=#USER_ID:VARCHAR#  -->
+         <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+            
+            
+        SELECT distinct BOARD_MT_ID,BOARD_MEMBER,
+        DATE_OF_MEETING,
+        C.FNAME,
+        ATTENDED_STATUS,
+        sitting_fee_amt
+        FROM director_board_meeting TC, CUSTOMER C,
+        all_trans atr
+        WHERE C.MEMBERSHIP_NO = BOARD_MEMBER
+        and atr.gl_trans_act_num = tc.BOARD_MT_ID
+        and atr.initiated_branch = #INITIATED_BRANCH:VARCHAR#
+        and atr.trans_dt = #TRANS_DT:DATE#
+        AND (   tc.STATUS = 'CREATED'
+        OR tc.STATUS = 'UPDATED'
+        OR tc.STATUS = 'MODIFIED')
+        AND TC.STATUS_BY != #USER_ID:VARCHAR#
+            
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZEDSTATUS" compareValue="EXCEPTION" >
+                tc.AUTHORIZED_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZEDSTATUS" compareValue="EXCEPTION" >
+                (tc.AUTHORIZED_STATUS IS NULL OR 
+                tc.AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  BOARD_MT_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeDirectorBoard" result-class="java.util.HashMap">
+        UPDATE director_board_meeting  SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  BOARD_MT_ID = #BOARD_MT_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getAllBoardMemDet" result-class="java.util.LinkedHashMap"> 
+        select cust_id,fname,MEMBERSHIP_NO from customer where cust_id in(select b.cust_id from director_board a join share_acct b
+        on a.member_no=b.share_acct_no) order by MEMBERSHIP_NO
+    </mapped-statement>
+	
+    <mapped-statement name="getDirectorBoardAccountHead" result-class="java.util.LinkedHashMap"> 
+        SELECT ACCT_HD FROM DIRECTOR_BOARD  WHERE MEMBER_NO =#MEMBER_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getTransDetailsForDirectorBoardSittingFee" result-class="java.util.HashMap">
+       SELECT D.TRANS_PROD_ID,D.TRANS_PROD_TYPE,D.TRANS_ACC_NO FROM DIRECTOR_BOARD D WHERE D.MEMBER_NO = #MEMBER_NO:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

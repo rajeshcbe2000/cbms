@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingMap">
+
+	<!-- Use TradingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	<mapped-statement name="insertCashTradingTO" inline-parameters="true">
+		INSERT INTO CASH_TRANS
+		(TRANS_ID, AC_HD_ID, AMOUNT, TRANS_DT,
+                 TRANS_TYPE,PARTICULARS,STATUS,AUTHORIZE_STATUS,
+                  STATUS_BY,BRANCH_ID, STATUS_DT,INITIATED_BRANCH) VALUES (
+		#transID:VARCHAR#, #achdID:VARCHAR#,                
+                 #aMOUNT:NUMBER#, #trans_DT:DATE#, #transTYPE:VARCHAR#,
+                  #pARTICULARS:VARCHAR#, #sTATUS:VARCHAR#,
+                   #authorizeSTATUS:VARCHAR#, #statusBY:VARCHAR#, 
+                   #branchID:VARCHAR#, #statusDT:DATE#,
+                     #initiatedBRANCH:VARCHAR#)
+	</mapped-statement>
+
+	<mapped-statement name="insertTransTradingTO" inline-parameters="true">
+		INSERT INTO TRANSFER_TRANS
+		(TRANS_ID, BATCH_ID,AC_HD_ID, ACT_NUM,
+                INP_AMOUNT,INP_CURR,AMOUNT, TRANS_DT,
+                 TRANS_TYPE,INST_TYPE, INST_DT,INIT_TRANS_ID,
+                 INIT_CHANN_TYPE,PARTICULARS,STATUS,INSTRUMENT_NO1,
+                 INSTRUMENT_NO2,PROD_ID,AUTHORIZE_STATUS,AUTHORIZE_BY,
+                 AUTHORIZE_DT,AUTHORIZE_REMARKS,STATUS_BY,BRANCH_ID,
+                 STATUS_DT,PROD_TYPE,LINK_BATCH_ID,LINK_BATCH_DT,
+                 TRANS_MODE,INITIATED_BRANCH,LOAN_HIERARCHY) VALUES (
+		#transID:VARCHAR#,#batch_id:VARCHAR#,#achdID:VARCHAR#,#actNUM:VARCHAR#,              
+                 #inpAMOUNT:NUMBER#,#inpCURR:VARCHAR#,#aMOUNT:NUMBER#,#trans_DT:DATE#,
+                 #transTYPE:VARCHAR#,#instTYPE:VARCHAR#,#instDT:DATE#,#initTRANSID:VARCHAR#,
+                 #initCHANNTYPE:VARCHAR#,#pARTICULARS:VARCHAR#, #sTATUS:VARCHAR#,#instrumentNO1:VARCHAR#,
+                 #instrumentNO2:VARCHAR#,#prodID:VARCHAR#,#authorizeSTATUS:VARCHAR#,#authorizeBY2:VARCHAR#,
+                 #authorizeDT:DATE#,#authorizeREMARKS:VARCHAR#,#statusBY:VARCHAR#,#branchID:VARCHAR#,
+                  #statusDT:DATE#,#prodTYPE:VARCHAR#,#linkBATCHID:VARCHAR#, #linkBATCHDT:DATE#,
+                  #transMode:VARCHAR#,#initiatedBRANCH:VARCHAR#,#loanHIERARCHY:VARCHAR#)
+	</mapped-statement>
+
+	
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TradingTO object (JavaBean) properties -->
+	<result-map name="getTradingTOResult" class="com.see.truetransact.transferobject.trading.TradingTO">
+		<property name="TRANS_ID" column="TRANS_ID"/>
+		<property name="AC_HD_ID" column="AC_HD_ID"/>
+		<property name="ACT_NUM" column="ACT_NUM"/>
+		<property name="INP_AMOUNT" column="INP_AMOUNT"/>
+		<property name="INP_CURR" column="INP_CURR"/>
+		<property name="AMOUNT" column="AMOUNT"/>
+		<property name="TRANS_DT" column="TRANS_DT"/>
+		<property name="TRANS_TYPE" column="TRANS_TYPE"/>
+		<property name="INST_TYPE" column="INST_TYPE"/>
+		<property name="INST_DT" column="INST_DT"/>
+		<property name="TOKEN_NO" column="TOKEN_NO"/>
+		<property name="INIT_TRANS_ID" column="INIT_TRANS_ID"/>
+		<property name="INIT_CHANN_TYPE" column="INIT_CHANN_TYPE"/>
+		<property name="PARTICULARS" column="PARTICULARS"/>
+		<property name="STATUS" column="STATUS"/>
+		<property name="INSTRUMENT_NO1" column="INSTRUMENT_NO1"/>
+		<property name="INSTRUMENT_NO2" column="INSTRUMENT_NO2"/>
+		<property name="AVAILABLE_BALANCE" column="AVAILABLE_BALANCE"/>
+		<property name="PROD_ID" column="PROD_ID"/>
+		<property name="PROD_TYPE" column="PROD_TYPE"/>
+		<property name="AUTHORIZE_STATUS" column="AUTHORIZE_STATUS"/>
+		<property name="AUTHORIZE_BY" column="AUTHORIZE_BY"/>
+		<property name="AUTHORIZE_DT" column="AUTHORIZE_DT"/>
+		<property name="AUTHORIZE_REMARKS" column="AUTHORIZE_REMARKS"/>
+		<property name="STATUS_BY" column="STATUS_BY"/>
+		<property name="BRANCH_ID" column="BRANCH_ID"/>
+		<property name="STATUS_DT" column="STATUS_DT"/>
+		<property name="LINK_BATCH_ID" column="LINK_BATCH_ID"/>
+		<property name="INITIATED_BRANCH" column="INITIATED_BRANCH"/>
+                <property name="LINK_BATCH_DT" column="LINK_BATCH_DT"/>
+                <property name="PAYMENT_STATUS" column="PAYMENT_STATUS"/>
+                <property name="PAYMENT_BY" column="PAYMENT_BY"/>
+		<property name="PAYMENT_STATUS_DT" column="PAYMENT_STATUS_DT"/>
+		<property name="PAN_NUMBER" column="PAN_NUMBER"/>
+                <property name="AUTHORIZE_STATUS_2" column="AUTHORIZE_STATUS_2"/>
+                <property name="AUTHORIZE_BY_2" column="AUTHORIZE_BY_2"/>
+                <property name="AUTHORIZE_DT_2" column="AUTHORIZE_DT_2"/>
+                <property name="LOAN_HIERARCHY" column="LOAN_HIERARCHY"/>
+	</result-map>
+	
+    <mapped-statement name="getTradingIdDetails" result-class="java.util.HashMap" >
+             SELECT * from CASH_TRANS
+            WHERE TRANS_ID = #TRANS_ID# 
+   </mapped-statement>
+   <mapped-statement name="getAccNoExitsImportHashMap" result-class="java.util.HashMap" > 
+     SELECT COUNT(*) AS COUNT  FROM ALL_PRODUCT_ACCTS WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+   </mapped-statement> 
+    <mapped-statement name="getAcHdIdExitsImportHashMap" result-class="java.util.HashMap" > 
+    select count(*)AS COUNT from ac_hd where ac_hd_id=#AC_HD_ID:VARCHAR#
+  
+   </mapped-statement> 
+   
+     <mapped-statement name="getAccHeadHashMap" result-class="java.util.HashMap" > 
+     SELECT AC_HD_ID  FROM ALL_PRODUCTS WHERE PROD_ID=#PROD_ID:VARCHAR# 
+   </mapped-statement> 
+   
+   
+     <mapped-statement name="getAccProdHashMap" result-class="java.util.HashMap" > 
+     SELECT PROD_TYPE,PROD_ID FROM ALL_PRODUCT_ACCTS WHERE ACT_NUM=#ACT_NUM:VARCHAR# 
+   </mapped-statement> 
+   
+ </sql-map>

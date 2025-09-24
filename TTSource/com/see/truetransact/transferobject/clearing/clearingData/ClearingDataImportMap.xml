@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ClearingDataImportMap">
+
+	<!-- Use ClearingDataImportTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertClearingDataTO" inline-parameters="true">
+        INSERT INTO TEMP_ECS_RECORD
+        (TRANS_CODE, USER_NUMBER, USER_NAME, USER_CREDIT_REF, TAPE_INPUT_NO, SPONSOR, USERS_AC_NO, LEDGER_NO, 
+        USER_LIMIT, TOTAL_AMT, SETLLEMENT_DT,SEQUENCE_NO,CHECK_SUM,FILTER
+        ) VALUES (
+        #transCode:NUMERIC#, #userNumber:NUMERIC#, #userName:VARCHAR#, #userCreditRef:VARCHAR#, #tapeInputNo:NUMERIC#, 
+        #sponsor:NUMERIC#, #usersAcNo:VARCHAR#, #ledgerNo:VARCHAR#, #userLimit:NUMERIC#, #totalAmt:VARCHAR#, #setellementDt:DATE#,
+        #sequenceNo:NUMERIC#, #checkSum:NEMERIC#,#filter:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertClearingDataDebitTO" inline-parameters="true">
+        INSERT INTO TEMP_ECS_RECORD_DEBIT(
+        TRANS_CODE,DESTINATION_SORT_CODE,DESTINATION_AC_TYPE,LEDGER_NO,DESTINATION_AC_NO,
+        DESTINATION_AC_HOLDERS_NAME,SPONSOR,USER_NUMBER,USER_NAME,USER_CREDIT_REF,
+        TOTAL_AMT,SEQUENCE_NO,CHECK_SUM,FILTER)
+        VALUES(
+        #transCode:NUMERIC#,#destinationSortCode:NUMERIC#,#destinationACType:VARCHAR#,#ledgerNo:VARCHAR#,
+        #destinationACNo:NUMERIC#,#destinationACName:VARCHAR#,#sponsor:NUMBER#,#userNumber:NUMERIC#,
+        #userName:VARCHAR#,#userCreditRef:VARCHAR#,#totalAmt:VARCHAR#,#sequenceNo:NUMERIC#,
+        #checkSum:NEMERIC#,#filter:VARCHAR#)                
+    </mapped-statement>    
+                    
+    <mapped-statement name="selectExistingRecords" result-class="java.util.HashMap">
+        SELECT * FROM TEMP_ECS_RECORD WHERE SETLLEMENT_DT = #SETLLEMENT_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteClearingData" result-class="java.util.HashMap">
+        DELETE FROM TEMP_ECS_RECORD WHERE SETLLEMENT_DT = #SETLLEMENT_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteClearingDataDebit" result-class="java.util.HashMap">
+        DELETE FROM TEMP_ECS_RECORD_DEBIT
+    </mapped-statement>
+        
+    <mapped-statement name="deleteClearingDataCredit" result-class="java.util.HashMap">
+        DELETE FROM TEMP_ECS_RECORD_CREDIT
+    </mapped-statement>
+        
+    <mapped-statement name="insertClearingDataCreditTO" inline-parameters="true">
+        INSERT INTO TEMP_ECS_RECORD_CREDIT(
+        TRANS_CODE,DESTINATION_SORT_CODE,DESTINATION_AC_TYPE,LEDGER_NO,DESTINATION_AC_NO,
+        DESTINATION_AC_HOLDERS_NAME,SPONSOR,USER_NUMBER,USER_NAME,USER_CREDIT_REF,
+        TOTAL_AMT,SEQUENCE_NO,CHECK_SUM,FILTER)
+        VALUES(
+        #transCode:NUMERIC#,#destinationSortCode:NUMERIC#,#destinationACType:VARCHAR#,#ledgerNo:VARCHAR#,
+        #destinationACNo:NUMERIC#,#destinationACName:VARCHAR#,#sponsor:NUMBER#,#userNumber:NUMERIC#,
+        #userName:VARCHAR#,#userCreditRef:VARCHAR#,#totalAmt:VARCHAR#,#sequenceNo:NUMERIC#,
+        #checkSum:NEMERIC#,#filter:VARCHAR#)                
+    </mapped-statement>            
+            
+	<!-- Use ClearingDataImportTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateClearingDataDebitTO" inline-parameters="true">
+        UPDATE TEMP_ECS_RECORD_DEBIT SET 
+        CLEARING_TYPE = #clearingType:VARCHAR#,
+        LOTSIZE_MICR_CLEARING = #lotsizeMicrClearing:NUMERIC#,
+        HIGH_VAL_APPL = #highValAppl:VARCHAR#,
+        SERVICE_BRANCH_CODE = #serviceBranchCode:VARCHAR#,
+        HIGH_VAL_CHEQUE = #highValCheque:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        CLEARING_PERIOD = #clearingPeriod:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:VARCHAR#
+        WHERE CLEARING_TYPE = #clearingType:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ClearingDataImportTO object (JavaBean) properties -->
+               
+    <result-map name="getClearingDataImportTOResult" class="com.see.truetransact.transferobject.clearing.clearingData.ClearingDataImportTO">
+        <property name="transCode" column="TRANS_CODE"/>
+        <property name="userNumber" column="USER_NUMBER"/>
+        <property name="userName" column="USER_NAME"/>
+        <property name="userCreditRef" column="USER_CREDIT_REF"/>
+        <property name="tapeInputNo" column="TAPE_INPUT_NO"/>
+        <property name="sponsor" column="SPONSOR"/>
+        <property name="usersAcNo" column="USERS_AC_NO"/>
+        <property name="ledgerNo" column="LEDGER_NO"/>
+        <property name="userLimit" column="USER_LIMIT"/>
+        <property name="totalAmt" column="TOTAL_AMT"/>
+        <property name="setellementDt" column="SETLLEMENT_DT"/>                
+        <property name="sequenceNo" column="SEQUENCE_NO"/>
+        <property name="checkSum" column="CHECK_SUM"/>
+        <property name="filter" column="FILTER"/>
+    </result-map>
+                
+    <mapped-statement name="getSelectClearingImportDataTO" result-map="getClearingDataImportTOResult" >
+        SELECT * FROM TEMP_ECS_RECORD WHERE SETLLEMENT_DT = #SETLLEMENT_DT:DATE# 
+<!--                AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+            AND BRANCH_ID = #BRANCH_CODE:VARCHAR# ORDER BY CLEARING_TYPE-->
+    </mapped-statement>
+      
+    <mapped-statement name = "getSelectInsertedRecords" result-class = "java.util.HashMap">
+        SELECT TRANS_CODE,SETLLEMENT_DT FROM TEMP_ECS_RECORD
+    </mapped-statement>
+
+    <result-map name="getClearingDataImportDebitTOResult" class="com.see.truetransact.transferobject.clearing.clearingData.ClearingDataImportDebitTO">
+        <property name="transCode" column="TRANS_CODE"/>
+        <property name="destinationSortCode" column="DESTINATION_SORT_CODE"/>
+        <property name="destinationACType" column="DESTINATION_AC_TYPE"/>
+        <property name="ledgerNo" column="LEDGER_NO"/>
+        <property name="destinationACNo" column="DESTINATION_AC_NO"/>
+        <property name="destinationACName" column="DESTINATION_AC_HOLDERS_NAME"/>
+        <property name="sponsor" column="SPONSOR"/>
+        <property name="userNumber" column="USER_NUMBER"/>
+        <property name="userName" column="USER_NAME"/>
+        <property name="userCreditRef" column="USER_CREDIT_REF"/>
+        <property name="totalAmt" column="TOTAL_AMT"/>
+        <property name="sequenceNo" column="SEQUENCE_NO"/>
+        <property name="checkSum" column="CHECK_SUM"/>
+        <property name="filter" column="FILTER"/>
+    </result-map>
+        
+    <mapped-statement name="getClearingImportDataDebitTO" result-map="getClearingDataImportDebitTOResult" >
+        SELECT * FROM TEMP_ECS_RECORD_DEBIT <!--WHERE SETLLEMENT_DT = #SETLLEMENT_DT# 
+            AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+            AND BRANCH_ID = #BRANCH_CODE:VARCHAR# ORDER BY CLEARING_TYPE-->
+    </mapped-statement>
+        
+    <result-map name="getClearingDataImportCreditTOResult" class="com.see.truetransact.transferobject.clearing.clearingData.ClearingDataImportCreditTO">
+        <property name="transCode" column="TRANS_CODE"/>
+        <property name="destinationSortCode" column="DESTINATION_SORT_CODE"/>
+        <property name="destinationACType" column="DESTINATION_AC_TYPE"/>
+        <property name="ledgerNo" column="LEDGER_NO"/>
+        <property name="destinationACNo" column="DESTINATION_AC_NO"/>
+        <property name="destinationACName" column="DESTINATION_AC_HOLDERS_NAME"/>
+        <property name="sponsor" column="SPONSOR"/>
+        <property name="userNumber" column="USER_NUMBER"/>
+        <property name="userName" column="USER_NAME"/>
+        <property name="userCreditRef" column="USER_CREDIT_REF"/>
+        <property name="totalAmt" column="TOTAL_AMT"/>
+        <property name="sequenceNo" column="SEQUENCE_NO"/>
+        <property name="checkSum" column="CHECK_SUM"/>
+        <property name="filter" column="FILTER"/>
+    </result-map>
+        
+    <mapped-statement name="getClearingImportDataCreditTO" result-map="getClearingDataImportCreditTOResult" >
+        SELECT * FROM TEMP_ECS_RECORD_CREDIT <!--WHERE SETLLEMENT_DT = #SETLLEMENT_DT# 
+            AND ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+            AND BRANCH_ID = #BRANCH_CODE:VARCHAR# ORDER BY CLEARING_TYPE-->
+    </mapped-statement>
+        
+</sql-map>

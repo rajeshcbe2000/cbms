@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TokenConfigTOMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTokenConfigTO" inline-parameters="true">
+        INSERT INTO TOKEN_CONFIG
+        (CONFIG_ID, TOKEN_TYPE, SERIES_NO, TOKEN_START_NO, TOKEN_END_NO, BRANCH_ID, CREATED_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #configId:VARCHAR#, #tokenType:VARCHAR#, #seriesNo:VARCHAR#, #tokenStartNo:NUMERIC#, #tokenEndNo:NUMERIC#, #branchId:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTokenConfigTO" inline-parameters="true">
+        UPDATE TOKEN_CONFIG SET 
+        CONFIG_ID = #configId:VARCHAR#,
+        TOKEN_TYPE = #tokenType:VARCHAR#,
+        SERIES_NO = #seriesNo:VARCHAR#,
+        TOKEN_START_NO = #tokenStartNo:NUMERIC#,
+        TOKEN_END_NO = #tokenEndNo:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE CONFIG_ID = #configId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTokenConfigTO" inline-parameters="true">
+        UPDATE TOKEN_CONFIG SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE CONFIG_ID = #configId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getTokenConfigTOResult" class="com.see.truetransact.transferobject.transaction.token.tokenconfig.TokenConfigTO">
+        <property name="configId" column="CONFIG_ID"/>
+        <property name="tokenType" column="TOKEN_TYPE"/>
+        <property name="seriesNo" column="SERIES_NO"/>
+        <property name="tokenStartNo" column="TOKEN_START_NO"/>
+        <property name="tokenEndNo" column="TOKEN_END_NO"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectTokenConfigTO" result-map="getTokenConfigTOResult" >
+        SELECT * FROM TOKEN_CONFIG 
+        WHERE CONFIG_ID = #CONFIG_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+         
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="getSelectTokenConfig" result-class="java.util.LinkedHashMap" >
+        SELECT CONFIG_ID, TOKEN_TYPE, SERIES_NO, TOKEN_START_NO, TOKEN_END_NO FROM TOKEN_CONFIG 
+        WHERE STATUS NOT IN ('DELETED')  and AUTHORIZE_STATUS IS NULL AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+         
+        <!-- This statement is used to check for the duplication of series numer after the user enter the series number in the UI --> 
+    <mapped-statement name="getSelectTokenSeries" result-class="java.util.LinkedHashMap" >
+        SELECT SERIES_NO FROM TOKEN_CONFIG 
+        WHERE TOKEN_TYPE = #TOKEN_TYPE# AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+         <!-- This statement is used to check the duplication of tokentype when user selects a tokentype in the UI -->
+    <mapped-statement name="getSelectTokenType" result-class="java.util.LinkedHashMap" >
+        SELECT TOKEN_TYPE FROM TOKEN_CONFIG 
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+         
+        <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getTokenConfigAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  CONFIG_ID, TOKEN_TYPE, BRANCH_ID, SERIES_NO,TOKEN_START_NO, TOKEN_END_NO FROM TOKEN_CONFIG TC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  CONFIG_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeTokenConfig" result-class="java.util.HashMap">
+        UPDATE TOKEN_CONFIG  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  CONFIG_ID = #CONFIG_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>  
+        
+</sql-map>

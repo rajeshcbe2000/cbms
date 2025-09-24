@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerGaurdianTOMap">
+
+	<!-- Use CustomerGaurdianTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerGaurdianTO" inline-parameters="true">
+        INSERT INTO CUST_GUARDIAN
+        (CUST_ID, GUARDIAN_NAME, STREET, AREA, CITY, STATE, PIN_CODE, AREA_CODE, PH_NO, RELATIONSHIP, COUNTRY_CODE,DOB,AGE
+        ) VALUES (
+        #custId:VARCHAR#, #guardianName:VARCHAR#, #street:VARCHAR#, #area:VARCHAR#, #city:VARCHAR#, #state:VARCHAR#, #pinCode:VARCHAR#, #areaCode:VARCHAR#, #phNo:VARCHAR#, #relationship:VARCHAR#, #countryCode:VARCHAR#,#guardianDob:DATE#,cast(#guardianAge# as numeric))
+    </mapped-statement>
+
+	<!-- Use CustomerGaurdianTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateCustomerGaurdianTO" inline-parameters="true">
+        UPDATE CUST_GUARDIAN SET 
+        GUARDIAN_NAME = #guardianName:VARCHAR#,
+        STREET = #street:VARCHAR#,
+        AREA = #area:VARCHAR#,
+        CITY = #city:VARCHAR#,
+        STATE = #state:VARCHAR#,
+        PIN_CODE = #pinCode:VARCHAR#,
+        AREA_CODE = #areaCode:VARCHAR#,
+        PH_NO = #phNo:VARCHAR#,
+        RELATIONSHIP = #relationship:VARCHAR#,
+        COUNTRY_CODE = #countryCode:VARCHAR#,
+        DOB=#guardianDob:DATE#,
+        AGE=#guardianAge#
+        WHERE CUST_ID = #custId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerGaurdianTO object (JavaBean) properties -->
+    <result-map name="getCustomerGaurdianTOResult" class="com.see.truetransact.transferobject.customer.CustomerGaurdianTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="guardianName" column="GUARDIAN_NAME"/>
+        <property name="street" column="STREET"/>
+        <property name="area" column="AREA"/>
+        <property name="city" column="CITY"/>
+        <property name="state" column="STATE"/>
+        <property name="pinCode" column="PIN_CODE"/>
+        <property name="areaCode" column="AREA_CODE"/>
+        <property name="phNo" column="PH_NO"/>
+        <property name="relationship" column="RELATIONSHIP"/>
+        <property name="countryCode" column="COUNTRY_CODE"/>
+        <property name="guardianDob" column="DOB"/>
+        <property name="guardianAge" column="AGE"/>
+    </result-map>
+    <mapped-statement name="getSelectCustomerGaurdianTO" result-map="getCustomerGaurdianTOResult" >
+        SELECT * FROM CUST_GUARDIAN 
+        WHERE CUST_ID = #CUST_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="checkForLength" result-class="java.util.HashMap" >
+        select cust_id from cust_guardian where cust_id = #custId:VARCHAR#
+    </mapped-statement>
+
+</sql-map>

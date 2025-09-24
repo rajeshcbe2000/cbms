@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="MDSPrizedMoneyPaymetMap">
+
+	<!-- Use ExternalWireTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertMDSPrizedMoneyPaymentTO" inline-parameters="true">
+        INSERT INTO MDS_MONEY_PAYMENT_DETAILS
+        (SCHEME_NAME, CHITTAL_NO,TRANS_ID, DIVISION_NO, DRAW_AUCTION_DATE, TOTAL_INSTALLMENTS, NO_OF_INST_PAID, NO_OF_OVERDUE_INST, 
+        MEMBER_NO, MEMBER_NAME, OVERDUE_AMOUNT, PRIZED_INST_NO, BONUS_AMOUNT, COMMISION_AMOUNT, DISCOUNT_AMOUNT, NOTICE_AMOUNT, CHARGE_AMOUNT, 
+        ARIBITRATION_AMOUNT, PRIZED_AMOUNT, NET_AMOUNT, BRANCH_CODE, STATUS, STATUS_DT, STATUS_BY,CASH_ID,PAID_STATUS,REFUND_AMOUNT,SUB_NO,
+        DEFAULTERS, PENAL_AMOUNT, BONUS_RECOVERED,DEFAULTER_BONUS_RECOVERD,DEFAULTER_COMM,DEFAULTER_INTEREST,DEFAULTER_BONUS,PAYMENT_TAX_AMT,DEFAULTER_RECEIPT_TAX_AMT
+        ) VALUES (
+        #schemeName#, #chittalNo#, #transId#, #divisionNo:NUMERIC#, #drawAuctionDate:DATE#, #totalInstallments:NUMERIC#, 
+        #noOfInstPaid:NUMERIC#, #noOfOverdueInst:NUMERIC#, #memberNo#, #memberName#, #overdueAmount:NUMERIC#, 
+        #prizedInstNo:NUMERIC#, #bonusAmount:NUMERIC#, #commisionAmount:NUMERIC#, #discountAmount:NUMERIC#, #noticeAmount:NUMERIC#, #chargeAmount:NUMERIC#, 
+        #aribitrationAmount:NUMERIC#, #prizedAmount:NUMERIC#, #netAmount:NUMERIC#, #branchCode#, #status#, #statusDt:DATE#, 
+        #statusBy#,#cashId#,#paidStatus#, #refundAmount:NUMERIC#,#subNo:NUMERIC#,#defaulters#, #penalAmount:NUMERIC#,
+        #bonusRecovered:NUMERIC#,#defaulter_bonus_recoverd:NUMERIC#,#defaulter_comm:NUMERIC#,#defaulter_interst:NUMERIC#,#chitalBonusAmt:NUMERIC#,#paymentTaxAmt:NUMERIC#,#defaulterReceiptTaxAmt:NUMERIC#)
+    </mapped-statement> 
+        
+    <dynamic-mapped-statement name="getPrizedMoneyPaymentEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT SCHEME_NAME,CHITTAL_NO,SUB_NO,TRANS_ID,STATUS_BY FROM MDS_MONEY_PAYMENT_DETAILS
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE#  
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHITTAL_NO">
+                    UPPER(CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUB_NO">
+                    UPPER(SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANS_ID">
+                    UPPER(TRANS_ID) LIKE UPPER('%$TRANS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS_BY">
+                    UPPER(STATUS_BY) LIKE UPPER('%$STATUS_BY$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY CHITTAL_NO  
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getPrizedMoneyPaymentView" result-class="java.util.LinkedHashMap">
+        SELECT SCHEME_NAME,CHITTAL_NO,SUB_NO,TRANS_ID,AUTHORIZED_STATUS FROM MDS_MONEY_PAYMENT_DETAILS
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE#
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHITTAL_NO">
+                    UPPER(CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUB_NO">
+                    UPPER(SUB_NO) LIKE UPPER('%$SUB_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="TRANS_ID">
+                    UPPER(TRANS_ID) LIKE UPPER('%$TRANS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY CHITTAL_NO  
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getPrizedMoneyPaymentAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT MM.CASH_ID,NVL(MM.TRANS_ID,MM.CASH_ID) AS TRANS_ID, mm.scheme_name,msd.scheme_desc, mm.chittal_no, mm.sub_no,AT.AMOUNT,MM.STATUS_BY FROM MDS_MONEY_PAYMENT_DETAILS MM,MDS_SCHEME_DETAILS MSD,ALL_TRANS AT  WHERE 
+        MM.SCHEME_NAME = MSD.SCHEME_NAME AND 
+        AT.TRANS_DT=#TRANS_DT:DATE# 
+        AND AT.TRANS_TYPE='DEBIT' 
+        AND (CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END  ) = <!--NVL(mm.cash_id,MM.TRANS_ID)-->decode(mm.cash_id,'',mm.trans_id,mm.cash_id)
+            AND MM.STATUS!='DELETED' AND
+        MM.AUTHORIZED_STATUS IS NULL AND MM.BRANCH_CODE=#BRANCH_CODE# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = AT.STATUS_BY)
+                       AND AT.STATUS_BY != #USER_ID#
+                       AND MSD.GROUP_NO is null
+        ORDER BY Mm.CHITTAL_NO  
+    </mapped-statement> 
+    <mapped-statement name="getCountForReceiptCashierAuthorizeMDS" result-class="java.util.LinkedHashMap"> 
+        SELECT COUNT(link_batch_id) AS COUNT FROM CASH_TRANS WHERE TRANS_ID = #IRID# AND trans_type = 'CREDIT' AND payment_status IS NULL
+    </mapped-statement>
+    <mapped-statement name="getPrizedMoneyPaymentCashierAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT MM.CASH_ID,NVL(MM.TRANS_ID,MM.CASH_ID) AS TRANS_ID,mm.scheme_name, mm.chittal_no, mm.sub_no,AT.AMOUNT,MM.STATUS_BY FROM MDS_MONEY_PAYMENT_DETAILS MM,ALL_TRANS AT  WHERE 
+        AT.TRANS_DT=#TRANS_DT:DATE# 
+        AND CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN NULL ELSE AT.PAYMENT_STATUS END IS  NULL 
+        AND AT.TRANS_TYPE='DEBIT' 
+        AND (CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END  ) = NVL(mm.cash_id,MM.TRANS_ID)
+            AND MM.STATUS!='DELETED' AND
+        MM.AUTHORIZED_STATUS IS NULL AND MM.BRANCH_CODE=#BRANCH_CODE# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+                   (SELECT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = AT.STATUS_BY)
+                       AND AT.STATUS_BY != #USER_ID#
+        ORDER BY Mm.CHITTAL_NO 
+              
+        <!--UNION
+              
+        SELECT MM.SCHEME_NAME,MM.CHITTAL_NO,MM.SUB_NO,MM.TRANS_ID,MM.CASH_ID,MM.STATUS_BY FROM MDS_MONEY_PAYMENT_DETAILS MM,ALL_TRANS AT  WHERE 
+        CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED' ELSE AT.PAYMENT_STATUS END IS NOT NULL AND AT.TRANS_DT=#TRANS_DT:DATE# AND AT.TRANS_TYPE='CREDIT' and AT.TRANS_ID=MM.TRANS_ID AND MM.STATUS!='DELETED' AND
+        MM.AUTHORIZED_STATUS IS NULL AND MM.BRANCH_CODE=#BRANCH_CODE# 
+            
+        UNION
+        SELECT SCHEME_NAME,CHITTAL_NO,SUB_NO,TRANS_ID,CASH_ID,STATUS_BY FROM MDS_MONEY_PAYMENT_DETAILS 
+        WHERE STATUS!='DELETED' AND   CASH_ID IS NULL AND     AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE# -->
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectMDSPrizedMoneyPaymentTO" result-map="getMDSPrizedMoneyPaymentTOResult" >
+        SELECT * FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED' AND SCHEME_NAME = #SCHEME_NAME# AND CHITTAL_NO = #CHITTAL_NO# 
+        AND NVL(TRANS_ID,CASH_ID) = #TRANS_ID#
+    </mapped-statement> 
+        
+    <mapped-statement name="deleteMDSPrizedMoneyPaymentTO" inline-parameters="true">
+        UPDATE MDS_MONEY_PAYMENT_DETAILS SET 
+        STATUS = #status#,
+        STATUS_BY = #statusBy#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE CHITTAL_NO = #chittalNo# AND 
+        SCHEME_NAME = #schemeName# AND
+        TRANS_ID = #transId#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeMDSPrizedMoneyPayment" result-class="java.util.HashMap">
+        UPDATE MDS_MONEY_PAYMENT_DETAILS SET 
+        AUTHORIZED_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#,
+        PAID_STATUS = #PAID_STATUS#
+        WHERE STATUS != 'DELETED' AND SCHEME_NAME = #SCHEME_NAME# AND CHITTAL_NO = #CHITTAL_NO# AND SUB_NO = #SUB_NO:NUMBER# 
+        AND PAID_STATUS = 'N' AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+        
+        
+    <result-map name="getMDSPrizedMoneyPaymentTOResult" class="com.see.truetransact.transferobject.mdsapplication.mdsprizedmoneypayment.MDSPrizedMoneyPaymentTO">
+        <property name="schemeName" column="SCHEME_NAME"/>
+        <property name="chittalNo" column="CHITTAL_NO"/>
+        <property name="divisionNo" column="DIVISION_NO"/>
+        <property name="subNo" column="SUB_NO"/>
+        <property name="drawAuctionDate" column="DRAW_AUCTION_DATE"/>
+        <property name="totalInstallments" column="TOTAL_INSTALLMENTS"/>
+        <property name="noOfInstPaid" column="NO_OF_INST_PAID"/>
+        <property name="noOfOverdueInst" column="NO_OF_OVERDUE_INST"/>
+        <property name="memberNo" column="MEMBER_NO"/>
+        <property name="memberName" column="MEMBER_NAME"/>
+        <property name="overdueAmount" column="OVERDUE_AMOUNT"/>
+        <property name="prizedInstNo" column="PRIZED_INST_NO"/>
+        <property name="bonusAmount" column="BONUS_AMOUNT"/>
+        <property name="penalAmount" column="PENAL_AMOUNT"/>
+        <property name="bonusRecovered" column="BONUS_RECOVERED"/>
+        <property name="commisionAmount" column="COMMISION_AMOUNT"/>
+        <property name="refundAmount" column="REFUND_AMOUNT"/>
+        <property name="discountAmount" column="DISCOUNT_AMOUNT"/>
+        <property name="noticeAmount" column="NOTICE_AMOUNT"/>
+        <property name="chargeAmount" column="CHARGE_AMOUNT"/>
+        <property name="aribitrationAmount" column="ARIBITRATION_AMOUNT"/>
+        <property name="prizedAmount" column="PRIZED_AMOUNT"/>
+        <property name="netAmount" column="NET_AMOUNT"/>
+        <property name="transId" column="TRANS_ID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="cashId" column="CASH_ID"/>
+        <property name="paidStatus" column="PAID_STATUS"/>
+        <property name="defaulters" column="DEFAULTERS"/>
+        <property name="chitalBonusAmt" column="DEFAULTER_BONUS"/>        
+        <property name="paymentTaxAmt" column="PAYMENT_TAX_AMT"/>
+        <property name="defaulterReceiptTaxAmt" column="DEFAULTER_RECEIPT_TAX_AMT"/>
+    </result-map>     
+                
+    <mapped-statement name = "getSelectPaidStatus" result-class = "java.util.HashMap">
+        SELECT PAID_STATUS,AUTHORIZED_STATUS FROM MDS_MONEY_PAYMENT_DETAILS WHERE SCHEME_NAME = #SCHEME_NAME# AND 
+        CHITTAL_NO = #CHITTAL_NO# AND SUB_NO=#SUB_NO:NUMBER# AND STATUS!= 'DELETED'  AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>    
+    <mapped-statement name = "getDepositAmount" result-class = "java.util.HashMap">
+        SELECT DEPOSIT_AMT,DP.BEHAVES_LIKE FROM DEPOSIT_SUB_ACINFO dsa,DEPOSIT_ACINFO da,DEPOSITS_PRODUCT dp
+        WHERE dsa.DEPOSIT_NO||'_'||DEPOSIT_SUB_NO=#DEPOSIT_NO# AND DP.PROD_ID=DA.PROD_ID
+        AND DA.DEPOSIT_NO=DSA.DEPOSIT_NO and dp.STATUS!='DELETED' AND dp.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>   
+             
+    <mapped-statement name = "getSelectApplnPaymentAmt" result-class = "java.util.HashMap">
+        SELECT BONUS_AMOUNT,COMMISION_AMOUNT,DISCOUNT_AMOUNT,NOTICE_AMOUNT,ARIBITRATION_AMOUNT,CASH_ID,TRANS_ID
+        FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED' AND (AUTHORIZED_STATUS = 'AUTHORIZED' OR AUTHORIZED_STATUS IS NULL) AND TRANS_ID = #TRANS_ID#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectMDSPaymentDetails" result-class = "java.util.HashMap">
+        SELECT * FROM MDS_MONEY_PAYMENT_DETAILS WHERE SCHEME_NAME = #SCHEME_NAME# AND 
+        CHITTAL_NO = #CHITTAL_NO# AND SUB_NO=cast(#SUB_NO# as numeric) AND STATUS!= 'DELETED'  AND AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    <mapped-statement name = "getSelectMDSPrizedDetailsForBonus" result-class = "java.util.HashMap">
+        SELECT * FROM MDS_PRIZED_MONEY_DETAILS WHERE SCHEME_NAME = #SCHEME_NAME# AND 
+        CHITTAL_NO = #CHITTAL_NO# AND SUB_NO=cast(#SUB_NO# as numeric) AND STATUS!= 'DELETED'  AND AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+             
+    <dynamic-mapped-statement name="getMemberDetailsFromMDSApplication" result-class="java.util.LinkedHashMap">
+        SELECT MA.MEMBER_NO,MA.CHITTAL_NO,CHIT_START_DT,MA.SCHEME_NAME,MA.MEMBER_NAME,
+        get_cust_name(CUST.CUST_ID)  as "Customer"
+        FROM MDS_APPLICATION MA,MDS_PRIZED_MONEY_DETAILS MP,CUSTOMER CUST WHERE MEMBER_NO IS NOT NULL  AND MA.SCHEME_NAME = MP.SCHEME_NAME AND          
+        MA.CHITTAL_NO = MP.CHITTAL_NO AND MA.MEMBER_NO = CUST.MEMBERSHIP_NO AND MA.MEMBER_TYPE=CUST.MEMBERSHIP_CLASS AND MP.STATUS != 'DELETED' AND MP.AUTHORIZED_STATUS = 'AUTHORIZED' AND 
+        MA.STATUS != 'DELETED' AND MA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHITTAL_NO">
+                    UPPER(MA.CHITTAL_NO) LIKE UPPER('%$CHITTAL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMBER_NO">
+                    UPPER(MA.MEMBER_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SCHEME_NAME">
+                    UPPER(MA.SCHEME_NAME) LIKE UPPER('%$SCHEME_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CHIT_START_DT">
+                    UPPER(CHIT_START_DT) LIKE UPPER('%$CHIT_START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="MEMBER_NAME">
+                    UPPER(MA.MEMBER_NAME) LIKE UPPER('%$MEMBER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Customer">
+                    UPPER(get_cust_name(CUST.CUST_ID)) LIKE UPPER('%$Customer$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getMemberDetailsFromPaymet" result-class="java.util.LinkedHashMap">
+        SELECT INSTAL_OVERDUE_AMT,INSTALLMENT_DUE,INSTALLMENT_PAID,DRAW_AUCTION_DATE,DIVISION_NO FROM MDS_PRIZED_MONEY_DETAILS
+        WHERE CHITTAL_NO = #CHITTAL_NO#
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectChangedMemberDetails" result-class = "java.util.HashMap">
+        SELECT OLD_MEMBER_NO,OLD_MEMBER_NAME,INSTALLMENT_NO,CHANGE_EFFECTIVE_DATE FROM MDS_CHANGE_MEMBER WHERE STATUS != 'DELETED' AND 
+        AUTHORIZED_STATUS = 'AUTHORIZED' AND CHITTAL_NO=#CHITTAL_NO#
+    </mapped-statement>
+        
+    <mapped-statement name = "getMDSPrizedPaymentStatusDate" result-class = "java.util.HashMap">
+        SELECT STATUS_DT FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED' AND (AUTHORIZED_STATUS = 'AUTHORIZED' OR AUTHORIZED_STATUS IS NULL) AND
+        SCHEME_NAME = #SCHEME_NAME# AND CHITTAL_NO = #CHITTAL_NO#
+    </mapped-statement>
+        
+        
+    <mapped-statement name = "checkLienOrNot" result-class = "java.util.HashMap">
+        select LIEN_AC_NO from deposit_lien where deposit_no=#DEPOSIT_NO# and deposit_sub_no=#SUB_NO# and unlien_dt is null and unlien_remarks is null
+    </mapped-statement>
+         
+    <mapped-statement name = "getBonusRecoverd" result-class = "java.util.HashMap">
+        select sum(nvl(BONUS_AMT_PAYABLE,0)) as BONUS_SUM from mds_receipt_entry where scheme_name=#SCHEME_NAME#  and chittal_no=#CHITTAL_NO# and sub_no=#SUB_NO#
+    </mapped-statement>
+         
+    <mapped-statement name = "getAccounthead" result-class = "java.util.HashMap">
+        select BONUS_RECEIVABLE_HEAD,COMMISION_HEAD,PENAL_INTEREST_HEAD,RECEIPT_HEAD,SUSPENSE_HEAD,MISCELLANEOUS_HEAD,CHARGE_PAYMENT_HEAD,NOTICE_CHARGES_HEAD  from mds_acct_head where  SCHEME_NAME=
+        (select SCHEME_NAME from mds_application where CHITTAL_NO=#CHITTAL_NO#)
+    </mapped-statement>
+     
+         
+    <mapped-statement name = "getMdsPaidAmount" result-class = "java.util.HashMap">
+        SELECT SUM(NVL(T.NET_AMT,0) + NVL(T.BONUS_AMT,0) -  NVL(T.PENAL_AMT,0)) AS TOTAL
+        FROM MDS_TRANS_DETAILS T
+        WHERE T.CHITTAL_NO=#CHITTAL_NO# AND T.SUB_NO =#SUB_NO:NUMBER# AND
+        T.AUTHORIZE_STATUS = 'AUTHORIZED' AND T.STATUS != 'DELETED'     
+    </mapped-statement>
+             
+    <mapped-statement name = "getPayableBonus" result-class = "java.util.HashMap">   
+                 
+        SELECT nvl(SUM(P.NEXT_BONUS_AMOUNT),0) AS BONUS_PAYABLE
+        FROM MDS_PRIZED_MONEY_DETAILS P
+        WHERE P.SCHEME_NAME =#SCHME_NAME#  and
+        P.INSTALLMENT_NO >= (
+        SELECT SUM(T.NO_OF_INST)
+        FROM MDS_TRANS_DETAILS T
+        WHERE T.CHITTAL_NO = #CHITTAL_NO# AND T.SUB_NO = #SUB_NO:NUMBER# AND T.AUTHORIZE_STATUS = 'AUTHORIZED' AND T.STATUS != 'DELETED'
+        )           
+    </mapped-statement>        
+                          
+      <mapped-statement name = "getIsBankSettlementForMDSChangeMember" result-class = "java.util.HashMap">
+          select CHANGE_MEMBER_SETTLEMENT from MDS_SCHEME_DETAILS m where M.PROD_ID = #PROD_ID#
+          AND M.SCHEME_NAME = #SCHEME_NAME#
+      </mapped-statement>                     
+                                  
+       <mapped-statement name = "getIsDefaulterTransactionRequiredForMoneyPayment" result-class = "java.util.HashMap">
+          select M.IS_PAYMENT_DEFAULTER_TRANS from MDS_SCHEME_DETAILS m where  M.SCHEME_NAME = #SCHEME_NAME#
+       </mapped-statement>                                      
+                         
+</sql-map>

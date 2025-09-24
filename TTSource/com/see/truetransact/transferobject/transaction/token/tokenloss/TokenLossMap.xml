@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TokenLossTOMap">
+
+	<!-- Use TokenLossTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTokenLossTO" inline-parameters="true">
+        INSERT INTO TOKEN_LOST
+        (TOKEN_TYPE, LOST_DT, SERIES_NO, TOKEN_NO, REMARKS, STATUS, TOKEN_LOST_ID,BRANCH_ID, STATUS_BY, STATUS_DT, TOKEN_STATUS
+        ) VALUES (
+        #tokenType:VARCHAR#, #lostDt:DATE#, #seriesNo:VARCHAR#, #tokenNo:VARCHAR#, #remarks:VARCHAR#, #status:VARCHAR#, #tokenLostId:VARCHAR#, #branchId:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#,#tokenStatus:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use TokenLossTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTokenLossTO" inline-parameters="true">
+        UPDATE TOKEN_LOST SET 
+        TOKEN_TYPE = #tokenType:VARCHAR#,
+        LOST_DT = #lostDt:DATE#,
+        SERIES_NO = #seriesNo:VARCHAR#,
+        TOKEN_NO = #tokenNo:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        TOKEN_LOST_ID = #tokenLostId:VARCHAR#,
+        TOKEN_STATUS = #tokenStatus:VARCHAR#
+        WHERE TOKEN_LOST_ID = #tokenLostId:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use TokenLossTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTokenLossTO" inline-parameters="true">
+        UPDATE TOKEN_LOST SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE TOKEN_LOST_ID = #tokenLostId:VARCHAR# AND BRANCH_ID = #branchId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenLossTO object (JavaBean) properties -->
+    <result-map name="getTokenLossTOResult" class="com.see.truetransact.transferobject.transaction.token.tokenloss.TokenLossTO">
+        <property name="tokenType" column="TOKEN_TYPE"/>
+        <property name="lostDt" column="LOST_DT"/>
+        <property name="seriesNo" column="SERIES_NO"/>
+        <property name="tokenNo" column="TOKEN_NO"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="tokenStatus" column="TOKEN_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="recoverDt" column="RECOVER_DT"/>
+        <property name="tokenLostId" column="TOKEN_LOST_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectTokenLossTO" result-map="getTokenLossTOResult" >
+        SELECT * FROM TOKEN_LOST 
+        WHERE TOKEN_LOST_ID = #TOKEN_LOST_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTokenNumber" result-class="java.util.LinkedHashMap" >
+        SELECT TOKEN_NO FROM TOKEN_LOST 
+        WHERE BRANCH_ID = #BRANCH_ID:VARCHAR# AND STATUS NOT IN ('DELETED') AND SERIES_NO = #SERIES_NO:VARCHAR#
+        AND TOKEN_STATUS NOT IN 'REVOKED'
+    </mapped-statement>
+    <mapped-statement name="getSelectIssuedTokens" result-class="java.util.LinkedHashMap" >
+        SELECT TOKEN_START_NO, TOKEN_END_NO  FROM TOKEN_ISSUE WHERE 
+        TOKEN_STATUS IN 'ISSUED'AND AUTHORIZE_STATUS = 'AUTHORIZED' AND SERIES_NO = #SERIES_NO:VARCHAR# AND STATUS NOT IN ('DELETED')
+        AND ISSUE_DT=#CURRENT_DT:DATE#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTokenLoss" result-class="java.util.LinkedHashMap" >
+		<!--SELECT TOKEN_LOST_ID,TOKEN_TYPE,LOST_DT, SERIES_NO, TOKEN_NO FROM TOKEN_LOST 
+		WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_ID# AND (TOKEN_STATUS IS NULL OR TOKEN_STATUS NOT IN 'REVOKED')-->
+        SELECT TOKEN_LOST_ID,TOKEN_TYPE,SERIES_NO, TOKEN_NO,TOKEN_STATUS,LOST_DT,RECOVER_DT FROM TOKEN_LOST    
+        WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID=#BRANCH_ID:VARCHAR#
+                 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectTokenLossForEdit" result-class="java.util.LinkedHashMap" >
+        SELECT TOKEN_LOST_ID,TOKEN_TYPE,LOST_DT, SERIES_NO, TOKEN_NO FROM TOKEN_LOST 
+        WHERE STATUS NOT IN ('DELETED') AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND AUTHORIZE_STATUS is NULL AND RECOVER_DT IS NULL                
+    </mapped-statement>
+
+    <mapped-statement name="updateTokenStatus"  result-class="java.util.HashMap">
+        UPDATE TOKEN_LOST SET
+        TOKEN_STATUS =#TOKEN_STATUS:VARCHAR#,
+        RECOVER_DT = #RECOVER_DT:DATE#,
+        AUTHORIZE_STATUS = null,
+        AUTHORIZE_BY = null,
+        AUTHORIZE_DT = null
+        WHERE TOKEN_LOST_ID = #TOKEN_LOST_ID# AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+         <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getTokenLossAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT TOKEN_TYPE,TOKEN_LOST_ID,LOST_DT, TOKEN_STATUS, RECOVER_DT FROM TOKEN_LOST TL
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+       <!-- AND (TOKEN_STATUS NOT IN ('REVOKED') OR TOKEN_STATUS IS NULL)-->
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        AND #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TL.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  TOKEN_LOST_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeTokenLoss" result-class="java.util.HashMap">
+        UPDATE TOKEN_LOST SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        <!--TOKEN_STATUS = #TOKEN_STATUS#-->
+        WHERE TOKEN_LOST_ID = #TOKEN_LOST_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR# 
+    </mapped-statement>  
+        
+    <mapped-statement name="chechForTokenNo" result-class="java.util.HashMap">
+        SELECT NVL(COUNT(*),0) "CNT" FROM CASH_TRANS WHERE TOKEN_NO = #TOK_NO:VARCHAR#
+        AND TRANS_DT= #CURRENT_DT:DATE#  AND 
+        INITIATED_BRANCH= #BRANCH_ID:VARCHAR# AND CASH_TRANS.INIT_TRANS_ID =  #RECEIVED_BY:VARCHAR#
+
+    </mapped-statement>  
+        
+       
+</sql-map>

@@ -1,0 +1,153 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.
+ * 
+ *
+ * MDSTypeRB.java
+ *
+ * Created on Thu Jun 02 12:27:24 IST 2011
+ */
+
+package com.see.truetransact.ui.product.mds;
+
+import java.util.ListResourceBundle;
+
+public class MDSTypeRB extends ListResourceBundle {
+    public MDSTypeRB(){
+    }
+    
+    public Object[][] getContents() {
+        return contents;
+    }
+    
+    static final String[][] contents = {
+        {"lblInstAmt", "Installment amount"},
+        {"lblNoofInst", "No. of installments"},
+        {"rdoMunnalAllowed_no", "No"},
+        {"btnClose", ""},
+        {"btnAuthorize", ""},
+        {"lblMsg", ""},
+        {"lblPredefinitonInst", "Predefinition of  Installment"},
+        {"btnSuspenseHead", ""},
+        {"btnCaseExpensesHead", ""},
+        {"rdoThalayalAllowed_no", "No"},
+        {"rdoPredefinitonInst_yes", "Yes"},
+        {"btnReceiptHead", ""},
+        {"lblSchemeStDt", "Scheme Start Date"},
+        {"btnReject", ""},
+        {"rdoThalayalAllowed_yes", "Yes"},
+        {"lblInstallmentNo", "Installment No"},
+        {"btnPrint", ""},
+        {"lblNoofAuctions", "No. of Auctions"},
+        {"lblThalayalBonusHead", "Thalayal Bonus A/c Head"},
+        {"lblProductDesc", "Product Description"},
+        {"lblNoofDraws", "No. of Draws"},
+        {"btnException", ""},
+        {"lblProductId", "Product Id"},
+        {"btnCopy", ""},
+        {"btnSave", ""},
+        {"btnMunnalReceiptsHead", ""},
+        {"lblSchemeName", "MDS Scheme Name"},
+        {"lblMultipleMembers", "Allow  Multiple Members to Own a Chit Number"},
+        {"rdoMultipleMembers_no", "No"},
+        {"rdoMultipleMembers_yes", "Yes"},
+        {"lblNoofCoChittals", "No of Co-Chittals Allowed for Each Chit No"},
+        {"lblNoofCoInstallments", "Number Of Installments"},
+        {"lblMaxNoofMemberCoChittals", "Max No of Members Including Co-Chittals"},
+        {"lblCoChittalInstAmount", "Installment Amount"},
+        {"btnMiscellaneousHead", ""},
+        {"rdoApplicableDivision_no", "No"},
+        {"lblSpace", " Status :"},
+        {"btnNew", ""},
+        {"btnThalayalBonusHead", ""},
+        {"btnNoticeChargesHead", ""},
+         {"btnChargeHead", ""},
+        {"lblNoofDivision", "No.of Divisions"},
+        {"btnCommisionHead", ""},
+        {"btnPaymentHead", ""},
+        {"rdoApplicableDivision_yes", "Yes"},
+        {"btnBonusPayableHead", ""},
+        {"rdoPaymentDone_no", "Day"},
+        {"btnBankingHead", ""},
+        {"lbllResolutionDate", "Resolution Date"},
+        {"lblMunnalAllowed", "Munnal Allowed"},
+        {"lblSpace4", "     "},
+        {"lblSpace3", "     "},
+        {"lblAuctionDay", "Draw / Auction Day"},
+        {"lblApplicableDivision", "If Yes, Whether applicable to all Divisions"},
+        {"lblApplicable1", "If Not, Applicable to Division1"},
+        {"rdoMunnalAllowed_Yes", "Yes"},
+        {"lblSchemeEndDt", "Scheme End Date"},
+        {"lblNoofMemberScheme", "Total no. of members in the scheme"},
+        {"lblThalayalAllowed", "Thalayal Allowed"},
+        {"btnEdit", ""},
+        {"lblApplicable4", "Applicable to Division4"},
+        {"lblPaymentAmount", "Payment Amount"},
+        {"lblChittalNumberPattern", "Chittal Number Pattern to be Followed"},
+        {"lblNextChittalNumber", "Next Chittal Number"},
+        {"btnThalayalReceiptsHead", ""},
+        {"btnBonusReceivableHead", ""},
+        {"rdoPredefinitonInst_no", "No"},
+        {"btnPenalHead", ""},
+        {"lblInstallmentDay", "Installment Day"},
+        {"lblBonus", "Bonus"},
+        {"lblNoofMemberPer", "No. of members per division"},
+        {"lblTotAmtPerDivision", "Total amount per Division"},
+        {"lblStatus", "                      "},
+        {"btnView", ""},
+        {"lblAmount", "Amount"},
+        {"lblNoticeType", "Notiice Type"},
+        {"lblNoticeChargeAmt", "Notice Charge Amt"},
+        {"lblPostageAmt", "Postage Amt"},
+        {"lblSpace5", "     "},
+        {"btnDelete", ""},
+        {"lblResolutionNo", "Resolution No"},
+        {"lblInstFreq", "Installment frequency"},
+        {"btnCancel", ""},
+        {"lblThalayalReceiptsHead", "Thalayal Receipts /Payment A/c Head"},
+        {"lblApplicable2", "Applicable to Division2"},
+        {"lblSpace6", "     "},
+        {"lblBankingHead", "Banking Advancing Receipts/Payments A/c Head"},
+        {"lblInstallmentDt", "Installment Date"},
+        {"lblInstallmentNumber", "               "},
+        {"lblPaymentDone", "Payment will be done after"},
+        {"lblApplicable3", "Applicable to Division3"},
+        {"lblTotAmtUnderScheme", "Total amount under the Scheme"},
+        
+        {"lblPenalHead", "Penal Interest A/c Head"},
+        {"lblBonusPayableHead", "Bonus Payable A/c Head"},
+        {"lblThalayalBonusHead", "Thalayal VP Suspense A/c Head"},
+        {"lblMunnalReceiptsHead", "Munnal Receipts/Payments A/c Head"},
+//        {"lblCaseExpensesHead", "Case Expenses A/c Head"},
+        {"lblCaseExpensesHead", "ARC,EA,EP SuspenseA/c Head"},
+        {"lblDiscountHead", "Discount A/c Head"},
+        {"lblStampAdvanceHead", "Stamp Advance A/c Head"},
+        {"lblARCCostHead", "ARC Cost A/c Head"},
+        {"lblARCExpenseHead", "ARC Expense A/c Head"},
+        {"lblEACostHead", "EA Cost A/c Head"},
+        {"lblEAExpenseHead", "EA Expense A/c Head"},
+        {"lblEPCostHead", "EP Cost A/c Head"},
+        {"lblEPExpenseHead", "EP Expense A/c Head"},
+        {"lblPostageHead", "Postage A/c Head"},
+        {"lblMDSPayableHead", "MDS Payable A/c Head"},
+        {"lblMDSReceivableHead", "MDS Receivable A/c Head"},
+        {"lblSundryReceiptHead", "Sundry Receipt A/c Head"},
+        {"lblSundryPaymentHead", "Sundry Payment A/c Head"},
+        {"lblForFeitedHead", "ForFeited  A/c Head"},
+        {"lblBonusReceivableHead", "Bonus Receivable A/c Head"},
+        {"lblCommisionHead", "Commission A/c Head"},
+        {"lblPaymentHead", "Payment A/c Head"},
+        {"lblMiscellaneousHead", "Miscellaneous A/c Head"},
+        {"lblNoticeChargesHead", "Notice Charges A/c Head"},
+        {"lblChargeHead", "Charges A/c Head"},
+        {"lblMunnalBonusHead", "Munnal MDS A/c Head"},
+        {"lblSuspenseHead", "Suspense A/c Head"},
+        {"lblSuspenseProdID", "Suspense Product ID  "},
+        {"lblSuspenseAccNo", "Suspense A/c Number  "},
+        {"lblReceiptHead", "Receipt A/c Head"},
+        {"lblThalayalReceiptsHead", "Thalayal MDS A/c Head"},
+        {"lblBankingHead", "Bank Advance A/c Head"}
+    };
+    
+}

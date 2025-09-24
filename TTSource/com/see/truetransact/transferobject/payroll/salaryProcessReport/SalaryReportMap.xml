@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SalaryReportMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+ 
+    <mapped-statement name="getEarningsData" result-class="java.util.LinkedHashMap">
+        SELECT P.PAY_CODE, P.PAY_DESCRI FROM PAYCODES_MASTER P WHERE P.ACTIVE='Y' AND P.PAY_EARNDEDU='EARNINGS' ORDER BY P.PAYCODE_ID, P.PAY_CODE
+    </mapped-statement>
+ 
+    <mapped-statement name="getDeductionsData" result-class="java.util.LinkedHashMap">
+        SELECT P.PAY_CODE, P.PAY_DESCRI FROM PAYCODES_MASTER P WHERE P.ACTIVE='Y' AND P.PAY_EARNDEDU='DEDUCTIONS' ORDER BY P.PAYCODE_ID, P.PAY_CODE
+    </mapped-statement>
+   
+    <mapped-statement name="getEmployeeReportDetails" result-class="java.util.LinkedHashMap">
+        <!--SELECT distinct BANK.BANK_NAME AS BANK_NAME,em.sort_order,
+        em.EMPLOYEEID,em.EMPLOYEE_NAME,em.net_salary_acc_no,
+        epd.designation,ea.PLACE,em.PAN_NUMBER,em.DATE_OF_JOIN
+        FROM BANK,EMPLOYEE_MASTER em  inner join employee_present_details epd on epd.employeeid=em.employeeid 
+        inner join PAYMASTER pay ON pay.employeeid=em.employeeid
+        LEFT OUTER JOIN EMPLOYEE_ADDR ea on ea.employeeid=em.employeeid order by em.sort_order-->
+        SELECT DISTINCT bank.bank_name AS bank_name, em.sort_order, em.employeeid,
+                em.employee_name, em.net_salary_acc_no, x.designation,
+                ea.place, em.pan_number, em.date_of_join
+           FROM bank, employee_master em INNER JOIN
+             (
+       SELECT EP.EMPLOYEEID,EP.DESIGNATION,EP.SRL_NO FROM EMPLOYEE_PRESENT_DETAILS EP
+       JOIN
+       (SELECT EMP.EMPLOYEEID,MAX(EMP.SRL_NO) AS SRL_NO FROM EMPLOYEE_PRESENT_DETAILS EMP  GROUP BY EMP.EMPLOYEEID) EPD ON 
+       EP.EMPLOYEEID=EPD.EMPLOYEEID AND EP.SRL_NO=EPD.SRL_NO) X ON EM.EMPLOYEEID=X.EMPLOYEEID
+                INNER JOIN paymaster pay ON pay.employeeid = em.employeeid
+                LEFT OUTER JOIN employee_addr ea ON ea.employeeid =  em.employeeid
+       ORDER BY em.sort_order
+    </mapped-statement>
+     
+    <dynamic-mapped-statement name="getEmployeeReportAmounts" result-class="java.util.LinkedHashMap">
+        SELECT   employeeid, SUM (amount) amount FROM payroll  WHERE pay_code IN (SELECT pay_code
+        FROM paycodes WHERE active = 'Y' AND pay_earndedu = 'EARNINGS') 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAYROLLID">
+                    PAYROLLID=#PAYROLLID:VARCHAR#  and status='temp'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SalaryMonth">
+                    MONTH_YEAR=#SalaryMonth:Date#  and status='posted'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+        GROUP BY employeeid ORDER BY employeeid
+    </dynamic-mapped-statement>     
+          
+    <dynamic-mapped-statement name="getEmpPayrollAmounts" result-class="java.util.LinkedHashMap">
+        select AMOUNT from payroll 
+        where employeeid=#EMPID:VARCHAR#
+        and pay_code=#PAYCODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAYROLLID">
+                    PAYROLLID=#PAYROLLID:VARCHAR#  and status='temp'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SalaryMonth">
+                    MONTH_YEAR=#SalaryMonth:Date#  and status='posted'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+    </dynamic-mapped-statement>  
+     
+    <dynamic-mapped-statement name="getPayrollEarnData" result-class="java.util.LinkedHashMap">
+        SELECT   employeeid, SUM (amount) amount FROM payroll  WHERE pay_code IN (SELECT pay_code 
+        FROM  PAYCODES_MASTER WHERE active = 'Y' AND pay_earndedu = 'EARNINGS') 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PAYROLLID">
+                    PAYROLLID=#PAYROLLID:VARCHAR#  and status='temp'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SalaryMonth">
+                    MONTH_YEAR=#SalaryMonth:Date#  and status='posted'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+        GROUP BY employeeid ORDER BY employeeid
+    </dynamic-mapped-statement>  
+     
+    <mapped-statement name="getContraAmount" result-class="java.util.LinkedHashMap">
+        select sum(nvl(AMOUNT,0)) as AMOUNT from paymaster where employeeid=#EMPID:VARCHAR#
+        and pay_code in (select p.pay_code from paycodes_master p where P.PAY_EARNDEDU='CONTRA' AND p.active='Y')
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getPayrollEarningsData" result-class="java.util.LinkedHashMap">
+        select ab.pay_code,nvl(cb.amount,0) amount from ((select payc.pay_code pay_code from paycodes_master payc where
+        payc.active='Y' and payc.pay_earndedu='EARNINGS' order by pay_code)ab left outer join
+        (select paym.pay_code pay_code,sum(PAYM.AMOUNT) amount from payroll paym where
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="" property="PAYROLLID">
+                    PAYROLLID=#PAYROLLID:VARCHAR#  and status='temp'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="" property="SalaryMonth">
+                    MONTH_YEAR=#SalaryMonth:Date#  and status='posted'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+        and  paym.pay_code in
+        (select pay_code from paycodes_master where active='Y' and pay_earndedu='EARNINGS')
+        group by paym.pay_code order by pay_code)cb on(ab.pay_code=cb.pay_code))
+    </dynamic-mapped-statement>  
+    
+    <dynamic-mapped-statement name="getPayrollDeductionsData" result-class="java.util.LinkedHashMap">
+        <!--select ab.pay_code,nvl(cb.amount,0) amount from ((select payc.pay_code pay_code from paycodes_master payc where
+        payc.active='Y' and payc.pay_earndedu='DEDUCTIONS' order by pay_code)ab left outer join 
+        (select paym.pay_code pay_code,sum(PAYM.AMOUNT) amount from payroll paym where0-->
+SELECT ab.PAYCODE_ID,ab.pay_code, NVL (cb.amount, 0) amount
+  FROM ((SELECT   PAYC.PAYCODE_ID,payc.pay_code pay_code
+             FROM paycodes_master payc
+            WHERE payc.active = 'Y' AND payc.pay_earndedu = 'DEDUCTIONS'
+         ORDER BY pay_code) ab
+       LEFT OUTER JOIN
+       (SELECT   paym.pay_code pay_code, SUM (paym.amount) amount
+            FROM payroll paym WHERE
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="" property="PAYROLLID">
+                    PAYROLLID=#PAYROLLID:VARCHAR#  and status='temp'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="" property="SalaryMonth">
+                    MONTH_YEAR=#SalaryMonth:Date#  and status='posted'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>  
+        
+         AND paym.pay_code IN (
+                            SELECT pay_code
+                              FROM paycodes_master
+                             WHERE active = 'Y'
+                                   AND pay_earndedu = 'DEDUCTIONS')
+        GROUP BY paym.pay_code
+        ORDER BY pay_code) cb ON (ab.pay_code = cb.pay_code)) order by ab.PAYCODE_ID,ab.pay_code
+        <!--and paym.pay_code in
+        (select pay_code from paycodes_master where active='Y' and pay_earndedu='DEDUCTIONS')
+        group by paym.pay_code order by pay_code)cb on(ab.pay_code=cb.pay_code))-->
+    </dynamic-mapped-statement>  
+
+</sql-map>

@@ -1,0 +1,1380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InterestBatchMap">
+    
+
+<!-- Use DepositInterestTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDepositInterestTO" inline-parameters="true">
+ 
+        INSERT INTO DEPOSIT_INTEREST
+        (ACT_NUM, INT_DT, INT_TYPE, AC_HD_ID, APPL_DT, INT_AMT, INT_RATE, PRINCIPLE_AMT, PRODUCT_ID, PRODUCT_TYPE,
+        TRANS_LOG_ID, CUST_ID, IS_TDS_APPLIED,TDS_AMT,PAID_INT,INT_PAID_DATE,TOTAL_INT_BALANCE
+        ,TOTAL_TDS_DEDUCTED_FROM_ALL,TOTAL_TDS_AMOUNT,LAST_TDS_DEDUCTED_DT,LAST_TDS_RECIVED_FROM,RESERVE_FUND_PERCENT,RESERVE_FUND_AMT,SL_NO
+        ) VALUES (
+        #actNum:VARCHAR#, #intDt:DATE#, #intType:VARCHAR#, #acHdId:VARCHAR#, #applDt:DATE#, #intAmt:NUMERIC#, #intRate:NUMERIC#, 
+        #principleAmt:NUMERIC#, #productId:VARCHAR#, #productType:VARCHAR#, 
+        #transLogId:VARCHAR#, #custId:VARCHAR#, #isTdsApplied:VARCHAR#, #tdsAmt:NUMERIC#,#drCr:VARCHAR#,#trnDt:DATE#,#tot_int_amt:VARCHAR# ,
+        #tdsDeductedFromAll:NUMERIC#,#totalTdsAmt:NUMERIC#,#lastTdsApplDt:DATE#,#lastTdsRecivedFrom:VARCHAR#,#reserveFundPercent:NUMERIC#,
+        #reserveFundAmt:NUMERIC#,#slNo:NUMERIC#
+        )
+    </mapped-statement>
+
+    <mapped-statement name="updateDepositInterestTO" inline-parameters="true">
+        UPDATE DEPOSIT_INTEREST SET
+        INT_DT = #intDt:DATE#,
+        APPL_DT = #applDt:DATE#,
+        INT_AMT = INT_AMT + #intAmt:NUMERIC#,
+        IS_TDS_APPLIED = #isTdsApplied:VARCHAR#, 
+        CUST_ID = #custId:VARCHAR#,
+        PRODUCT_ID = #productId:VARCHAR#
+        WHERE ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateDepositInterest" inline-parameters="true">
+       UPDATE DEPOSIT_INTEREST  SET 
+       LAST_TDS_RECIVED_FROM =#trans_id:VARCHAR#
+       WHERE LAST_TDS_RECIVED_FROM=#vanishKey:VARCHAR# 
+       AND  INT_PAID_DATE=#trnDt:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="insertDepositProvisionApplDT" inline-parameters="true">
+        INSERT INTO DEPOSIT_PROVISION
+        (PROD_TYPE,PROD_ID,LAST_PROV_DT,BRANCH_CODE,STATUS_BY,REMARKS,LAST_APPL_DT
+        ) VALUES (
+        #PROD_TYPE:VARCHAR#,#PROD_ID:VARCHAR#,#LAST_PROV_DT:DATE#,#BRANCH_CODE:VARCHAR#,#STATUS_BY:VARCHAR#,#REMARKS:VARCHAR#,#LAST_APPL_DT:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateDepositProvisionApplDT" inline-parameters="true">
+        UPDATE DEPOSIT_PROVISION SET LAST_PROV_DT = #LAST_PROV_DT:DATE#
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+<!--                AND REMARKS = #REMARKS#-->
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateDepositApplicationApplDT" inline-parameters="true">
+        UPDATE DEPOSIT_PROVISION SET LAST_APPL_DT = #LAST_APPL_DT:date#
+        WHERE PROD_ID = #PROD_ID:VARCHAR#
+<!--                AND REMARKS = #REMARKS#-->
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSelectDepositNoForDepInt" result-class="java.util.HashMap">
+        SELECT ACT_NUM 
+        FROM DEPOSIT_INTEREST WHERE ACT_NUM = #ACT_NUM:VARCHAR#
+    </mapped-statement> 
+        
+    <dynamic-mapped-statement name="getProvisionForDeposit" result-class="java.util.HashMap">
+<!--            SELECT DP.PROD_ID,LAST_CALC_DT,PROD_TYPE,BRANCH_CODE,
+            DPI.INT_PROV_FREQ, DPI.INT_APPL_FREQ,REMARKS 
+            FROM DEPOSIT_PROVISION DP,
+            DEPOSITS_PROD_INTPAY DPI WHERE 
+            DP.PROD_ID = DPI.PROD_ID 
+            AND DP.PROD_ID = #PROD_ID#
+            AND DP.BRANCH_CODE = #BRANCH_CODE#
+            AND DP.PROD_TYPE = #PROD_TYPE#-->
+        SELECT DISTINCT DP.PROD_ID AS "PROD_ID",LAST_PROV_DT AS "LAST_PROV_DT",LAST_APPL_DT AS "LAST_APPL_DT",PROD_TYPE AS "PROD_TYPE",
+        DP.BRANCH_CODE AS "BRANCH_CODE",INTPAY_FREQ AS "INTPAY_FREQ",DPI.INT_PROV_FREQ AS "INT_PROV_FREQ",
+<!--            DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) AS "DEPOSIT_DT", -->
+        DPI.INT_APPL_FREQ AS "INT_APPL_FREQ",DP.REMARKS AS"REMARKS"
+        FROM DEPOSIT_PROVISION DP,DEPOSIT_SUB_ACINFO DSA,DEPOSIT_ACINFO DA,
+        DEPOSITS_PROD_INTPAY DPI WHERE 
+        DP.PROD_ID = DPI.PROD_ID 
+        AND DP.PROD_ID = DA.PROD_ID
+        AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        AND DP.PROD_ID = #PROD_ID:VARCHAR#
+        AND DP.BRANCH_CODE =#BRANCH_CODE:VARCHAR#
+        AND DP.PROD_TYPE = #PROD_TYPE:VARCHAR#
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "ACT_NUM" >
+                    dsa.deposit_no || '_' || deposit_sub_no = #ACT_NUM:VARCHAR# AND dp.REMARKS='APPLICATION'
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement> 
+
+    <mapped-statement name="insertInterestBatchTO" inline-parameters="true">
+        INSERT INTO ACT_INTEREST
+        (ACT_NUM, INT_DT, INT_TYPE, AC_HD_ID, APPL_DT, INT_AMT, INT_RATE, PRINCIPLE_AMT, 
+        PRODUCT_ID, PRODUCT_TYPE, TRANS_LOG_ID, CUST_ID, IS_TDS_APPLIED, TDS_AMT
+        ) VALUES (
+        #actNum:VARCHAR#, #intDt:DATE#, #intType:VARCHAR#, #acHdId:VARCHAR#, #applDt:DATE#, 
+        #intAmt:NUMERIC#, #intRate:NUMERIC#, #principleAmt:NUMERIC#, #productId:VARCHAR#, 
+        #productType:VARCHAR#, #transLogId:VARCHAR#, #custId:VARCHAR#, #isTdsApplied:VARCHAR#, 
+        #tdsAmt:NUMERIC#)
+    </mapped-statement> 
+    <mapped-statement name="insertInterestTrialBatchTO" inline-parameters="true">
+		INSERT INTO ACT_INTEREST_TRIAL
+		(ACT_NUM, INT_DT, INT_TYPE, AC_HD_ID, APPL_DT, INT_AMT, INT_RATE, PRINCIPLE_AMT, 
+                PRODUCT_ID, PRODUCT_TYPE, TRANS_LOG_ID, CUST_ID, IS_TDS_APPLIED, TDS_AMT,USER_ID,BRANCH_CODE,INT_POSTING_POSSIBLE
+		) VALUES (
+		#actNum:VARCHAR#, #intDt:DATE#, #intType:VARCHAR#, #acHdId:VARCHAR#, #applDt:DATE#, 
+                #intAmt:NUMERIC#, #intRate:NUMERIC#, #principleAmt:NUMERIC#, #productId:VARCHAR#, 
+                #productType:VARCHAR#, #transLogId:VARCHAR#, #custId:VARCHAR#, #isTdsApplied:VARCHAR#, 
+                #tdsAmt:NUMERIC#,#user_id:VARCHAR#,#branch_code:VARCHAR#,#intPostingPossible:VARCHAR#)
+    </mapped-statement>
+
+       <mapped-statement name="insertInterestTrialBatchTO_OD" inline-parameters="true">
+		INSERT INTO ACT_INTEREST_TRIAL
+		(ACT_NUM, INT_DT, INT_TYPE, AC_HD_ID, APPL_DT, INT_AMT, INT_RATE, PRINCIPLE_AMT, 
+                PRODUCT_ID, PRODUCT_TYPE, TRANS_LOG_ID, CUST_ID, IS_TDS_APPLIED, TDS_AMT,USER_ID,BRANCH_CODE,PARTICULARS,OD_CR_TOT_AMT,INT_POSTING_POSSIBLE
+		) VALUES (
+		#actNum:VARCHAR#, #intDt:DATE#, #intType:VARCHAR#, #acHdId:VARCHAR#, #applDt:DATE#, 
+                #intAmt:NUMERIC#, #intRate:NUMERIC#, #principleAmt:NUMERIC#, #productId:VARCHAR#, 
+                #productType:VARCHAR#, #transLogId:VARCHAR#, #custId:VARCHAR#, #isTdsApplied:VARCHAR#, 
+                #tdsAmt:NUMERIC#,#user_id:VARCHAR#,#branch_code:VARCHAR#,#particulars:VARCHAR#,#crAmount:NUMBER#,#intPostingPossible:VARCHAR#)
+    </mapped-statement>
+           
+        
+    <dynamic-mapped-statement name="Deposit.getProducts" result-class="java.util.HashMap">
+<!--            SELECT DP.PROD_ID,  DP.ACCT_HEAD, DPA.INT_PROV_ACHD, DPA.INT_PAY, DPA.INT_DEBIT, 
+            DPI.LAST_INT_APPLDT
+            FROM DEPOSITS_PRODUCT DP ,  DEPOSITS_PROD_ACHD DPA, DEPOSITS_PROD_INTPAY DPI
+            WHERE DPA.PROD_ID =  DP.PROD_ID 
+            AND DPI.PROD_ID  =  DP.PROD_ID 
+            AND DP.STATUS != 'DELETED'
+            AND DP.AUTHORIZE_STATUS = 'AUTHORIZED'-->
+         <!--   SELECT DISTINCT DP.PROD_ID, DP.ACCT_HEAD, DPA.INT_PROV_ACHD, DPA.INT_PAY, DPA.INT_DEBIT, 
+            DSA.LAST_INT_APPL_DT FROM DEPOSITS_PRODUCT DP ,  DEPOSITS_PROD_ACHD DPA, 
+            DEPOSITS_PROD_INTPAY DPI, DEPOSIT_SUB_ACINFO DSA, DEPOSIT_ACINFO DA
+            WHERE DP.STATUS != 'DELETED'
+            AND DP.AUTHORIZE_STATUS = 'AUTHORIZED'  
+            AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO
+            AND DPA.PROD_ID =  DP.PROD_ID 
+            AND DPI.PROD_ID  =  DP.PROD_ID 
+            AND DA.PROD_ID = DPI.PROD_ID     
+            AND DA.PROD_ID = DP.PROD_ID -->
+        select  dp.prod_id, dp.acct_head, dpa.int_prov_achd, dpa.int_pay,dpa.POSTAGE_ACHD,
+        dpa.int_debit ,DPI.LAST_INT_APPLDT ,dpi.INT_ROUNDOFF_TERMS,dpi.INT_TYPE,
+        dp.BEHAVES_LIKE,dpi.INT_PROV_FREQ ,DPS.DISCOUNTED_RATE,INT_APPL_FREQ,INT_COMP_FREQ
+        from deposits_product dp,
+        deposits_prod_achd dpa,
+        deposits_prod_intpay dpi,
+        deposits_prod_scheme dps                 
+        where dp.status != 'DELETED'
+        AND dp.authorize_status = 'AUTHORIZED' and 
+        dpa.prod_id=dp.PROD_ID and dpa.PROD_ID=dpi.PROD_ID 
+        and dpi.PROD_ID=dp.PROD_ID 
+        and dps.prod_ID=dp.PROD_ID
+        AND dps.prod_ID=dpa.PROD_ID
+        AND dps.prod_ID=dpI.PROD_ID
+              <!--  and dpi.PROD_ID='MN'  -->
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PROD_ID" >
+                    DP.PROD_ID= #PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BEHAVES_LIKE" >
+                    DP.BEHAVES_LIKE= #BEHAVES_LIKE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "CUMINTAPP" >
+                    DP.BEHAVES_LIKE !='FIXED'
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="Deposit.getApplication" result-class="java.util.LinkedHashMap">
+       <!-- SELECT DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO AS "ACT_NUM" ,DA.CUST_ID as CUST_ID, BRANCH_ID
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA WHERE 
+        decode(DSA.LAST_INT_APPL_DT,null,DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) &lt; DSA.MATURITY_DT AND 
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND
+        DSA.ACCT_STATUS !='CLOSED' AND 
+        case when (dsa.INTPAY_FREQ!=0) then 
+        decode(DSA.NEXT_INT_APPL_DT,null,ADD_MONTHS(DSA.DEPOSIT_DT,DSA.INTPAY_FREQ/30), DSA.NEXT_INT_APPL_DT) else
+        case when (nvl(dsa.DEPOSIT_PERIOD_YY ,0)&gt;0 )
+        then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_YY*12)
+        when (nvl(dsa.DEPOSIT_PERIOD_MM,0) &gt;0 )  
+        then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_MM)  else
+        dsa.DEPOSIT_DT+dsa.DEPOSIT_PERIOD_DD end 
+        end  &lt;= #CURR_DATE:DATE#          
+        AND 
+        DA.PROD_ID = #PROD_ID:VARCHAR# 
+        AND DSA.STATUS!='MATURED' and dsa.AUTHORIZE_STATUS ='AUTHORIZED' and dsa.status!='DELETED'
+        AND DECODE(NEXT_INT_APPL_DT,NULL,ADD_MONTHS(DEPOSIT_DT,INTPAY_FREQ/30),NEXT_INT_APPL_DT) &lt;= DSA.MATURITY_DT
+        AND ((DSA.CALENDER_FREQ ='Y' AND  DSA.LAST_INT_APPL_DT IS NOT NULL) OR (DSA.CALENDER_FREQ ='N' OR DSA.CALENDER_FREQ IS NULL))-->
+        SELECT DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO AS "ACT_NUM" ,DA.CUST_ID as CUST_ID, BRANCH_ID,
+        (CASE WHEN  (DSA.MATURITY_DT &lt;= #CURR_DATE:DATE# AND DSA.STATUS='LIEN') THEN 'ML' WHEN  (DSA.MATURITY_DT &lt;= #CURR_DATE:DATE# ) THEN 'M' 
+        WHEN DSA.STATUS='LIEN' THEN 'L' ELSE 'N' END) AS COLOUR_STATUS   FROM 
+        DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA WHERE 
+        decode(DSA.LAST_INT_APPL_DT,null,DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) &lt; DSA.MATURITY_DT AND  
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DSA.ACCT_STATUS !='CLOSED' AND 
+        case when (dsa.INTPAY_FREQ!=0) then 
+        decode(DSA.NEXT_INT_APPL_DT,null,ADD_MONTHS(DSA.DEPOSIT_DT,DSA.INTPAY_FREQ/30), 
+        DSA.NEXT_INT_APPL_DT) else case when (nvl(dsa.DEPOSIT_PERIOD_YY ,0)&gt;0 ) 
+        then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_YY*12) when (nvl(dsa.DEPOSIT_PERIOD_MM,0) &gt;0 )  
+        then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_MM)  else 
+        dsa.DEPOSIT_DT+dsa.DEPOSIT_PERIOD_DD end  end  &lt;= #CURR_DATE:DATE#
+        AND  DA.PROD_ID = #PROD_ID:VARCHAR#  AND DSA.STATUS!='MATURED' and dsa.AUTHORIZE_STATUS ='AUTHORIZED' and dsa.status!='DELETED'
+        AND DECODE(NEXT_INT_APPL_DT,NULL,ADD_MONTHS(DEPOSIT_DT,INTPAY_FREQ/30),NEXT_INT_APPL_DT) &lt;= DSA.MATURITY_DT AND
+        ((DSA.CALENDER_FREQ ='Y' AND  DSA.LAST_INT_APPL_DT IS NOT NULL) OR (DSA.CALENDER_FREQ ='N' OR DSA.CALENDER_FREQ IS NULL)) 
+        <dynamic>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EXC_MATURED" >
+                   DSA.MATURITY_DT &gt;#CURR_DATE:DATE#
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EXC_LIEN" >
+                   DSA.STATUS!='LIEN'
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BRANCH_CODE" >
+                    DA.BRANCH_ID= #BRANCH_CODE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    DA.DEPOSIT_NO &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NO_LIST">
+                    DA.DEPOSIT_NO  IN($ACT_NO_LIST$)
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    DA.DEPOSIT_NO &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    DA.CUST_ID = #CUST_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INTPAY_MODE">
+                    DSA.INTPAY_MODE= #INTPAY_MODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_ACC_NO">
+                    DSA.INT_PAY_ACC_NO= #INT_PAY_ACC_NO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_PROD_ID">
+                    DSA.INT_PAY_PROD_ID= #INT_PAY_PROD_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Deposit.getApplicationDCCB" result-class="java.util.LinkedHashMap">
+        SELECT DECODE (DSA.LAST_INT_APPL_DT,NULL, DSA.DEPOSIT_DT,DSA.LAST_INT_APPL_DT) AS FROM_DATE,
+        <!--CALC_FREQUENCY(DECODE (DSA.LAST_INT_APPL_DT,NULL, ADD_MONTHS (DSA.DEPOSIT_DT,DSA.INTPAY_FREQ / 30),
+        ADD_MONTHS (DSA.LAST_INT_APPL_DT,DSA.INTPAY_FREQ / 30)),DSA.INTPAY_FREQ) AS TO_DT,-->
+        <!--CASE WHEN CALC_FREQUENCY ( NVL(DSA.LAST_INT_APPL_DT, DSA.DEPOSIT_DT),
+                         DSA.INTPAY_FREQ
+                        ) = NVL(DSA.LAST_INT_APPL_DT, DSA.DEPOSIT_DT) THEN 
+                        ADD_MONTHS(NVL(DSA.LAST_INT_APPL_DT, DSA.DEPOSIT_DT),INTPAY_FREQ/30)
+         ELSE CALC_FREQUENCY ( NVL(DSA.LAST_INT_APPL_DT, DSA.DEPOSIT_DT),
+                         DSA.INTPAY_FREQ
+                        )
+        END AS TO_DT,-->
+   addmonths (DEPOSIT_DT,DECODE (last_int_appl_dt,
+                             NULL, deposit_dt,
+                             get_febdate (last_int_appl_dt)
+                            ),
+                     intpay_freq / 30
+                    )
+   AS TO_DT,
+        DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO AS "ACT_NUM" ,DA.CUST_ID as CUST_ID, BRANCH_ID,
+        (CASE WHEN  (DSA.MATURITY_DT &lt;= #CURR_DATE:DATE# AND DSA.STATUS='LIEN') THEN 'ML' WHEN  (DSA.MATURITY_DT &lt;= #CURR_DATE:DATE# ) THEN 'M' 
+        WHEN DSA.STATUS='LIEN' THEN 'L' ELSE 'N' END) AS COLOUR_STATUS
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA WHERE 
+        <!--decode(DSA.LAST_INT_APPL_DT,null,DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) &lt; DSA.MATURITY_DT AND--> 
+        <dynamic>
+         <isParameterPresent>
+                <isNotNull prepend="" property="NORMAL_DEP_INT_APPL">
+        decode(DSA.LAST_INT_APPL_DT,null,DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) &lt; DSA.MATURITY_DT AND 
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND
+        DSA.ACCT_STATUS !='CLOSED'    
+        AND DA.PROD_ID = #PROD_ID# AND dsa.AUTHORIZE_STATUS ='AUTHORIZED' and dsa.status!='DELETED'
+        <!--AND addmonths (DEPOSIT_DT,DECODE (LAST_INT_APPL_DT, NULL, DEPOSIT_DT, GET_FEBDATE(LAST_INT_APPL_DT)),INTPAY_FREQ / 30) &lt;= DSA.MATURITY_DT -->
+        <dynamic>
+        <isParameterPresent>
+                <isNotNull prepend="" property="NORMAL_DEP_INT_APPL">
+        AND addmonths (DEPOSIT_DT,DECODE (LAST_INT_APPL_DT, NULL, DEPOSIT_DT, GET_FEBDATE(LAST_INT_APPL_DT)),INTPAY_FREQ / 30) &lt;= DSA.MATURITY_DT
+                </isNotNull>
+            </isParameterPresent> 
+        </dynamic>    
+        AND DSA.ACCT_STATUS= 'NEW' AND DSA.INTPAY_FREQ != 0
+        AND addmonths (DEPOSIT_DT,DECODE (last_int_appl_dt,
+                             NULL, deposit_dt,
+                             get_febdate (last_int_appl_dt)
+                            ),
+                     intpay_freq / 30
+                    ) &lt;= #CURR_DATE#
+        <dynamic>
+                 <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EXC_MATURED" >
+                   DSA.MATURITY_DT &gt; #CURR_DATE:DATE#
+                </isNotEmpty>
+            </isParameterPresent>
+            
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EXC_LIEN" >
+                   DSA.STATUS!='LIEN'
+                </isNotEmpty>
+            </isParameterPresent>
+            
+          <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BRANCH_CODE" >
+                    DA.BRANCH_ID= #BRANCH_CODE#
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    DA.DEPOSIT_NO &gt;= #ACT_FROM#
+                </isNotNull>
+            </isParameterPresent>
+                
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NO_LIST">
+                    DA.DEPOSIT_NO  IN($ACT_NO_LIST$)
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    DA.DEPOSIT_NO &lt;= #ACT_TO# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    DA.CUST_ID = #CUST_ID# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INTPAY_MODE">
+                    DSA.INTPAY_MODE= #INTPAY_MODE# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_ACC_NO">
+                    DSA.INT_PAY_ACC_NO= #INT_PAY_ACC_NO# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_PROD_ID">
+                    DSA.INT_PAY_PROD_ID= #INT_PAY_PROD_ID# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_FREQ">
+                    INTPAY_FREQ= #INT_PAY_FREQ# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="LIEN_ACCOUNT">
+                    DSA.STATUS= 'LIEN'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND DSA.CLEAR_BALANCE &gt; 0
+       and (case
+		<!--when (dsa.INTPAY_FREQ != 0) then decode(DSA.NEXT_INT_APPL_DT, null, ADD_MONTHS(DSA.DEPOSIT_DT, DSA.INTPAY_FREQ / 30), DSA.NEXT_INT_APPL_DT)-->
+                when (dsa.INTPAY_FREQ != 0) then decode(DSA.NEXT_INT_APPL_DT, null, addmonths(DSA.DEPOSIT_DT,DSA.DEPOSIT_DT,DSA.INTPAY_FREQ / 30), DSA.NEXT_INT_APPL_DT)
+		else case
+			when (nvl(dsa.DEPOSIT_PERIOD_YY ,
+			0)>0 ) then add_months( dsa.DEPOSIT_DT,
+			dsa.DEPOSIT_PERIOD_YY * 12)
+			when (nvl(dsa.DEPOSIT_PERIOD_MM ,
+			0)>0 ) then add_months( dsa.DEPOSIT_DT,
+			dsa.DEPOSIT_PERIOD_MM)
+			else dsa.DEPOSIT_DT + dsa.DEPOSIT_PERIOD_DD
+		end
+	end ) &lt;= #CURR_DATE:DATE#
+        ORDER BY  DA.DEPOSIT_NO
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="" property="INT_APPLN_PROCESS_CNT">
+                    <!--ROWNUM &lt;= #INT_APPLN_PROCESS_CNT:NUMBER#-->
+                    limit #INT_APPLN_PROCESS_CNT:NUMBER#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <dynamic-mapped-statement name="Deposit.getAccounts" result-class="java.util.HashMap">
+        SELECT DA.CUST_ID, DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO AS "ACT_NUM", BRANCH_ID,c.CUST_TYPE as CUST_TYPE
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, CUSTOMER C,DEPOSITS_PROD_INTPAY DPI 
+        WHERE DSA.DEPOSIT_NO = DA.DEPOSIT_NO
+        AND DA.STATUS != 'DELETED' 
+        AND DA.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND DSA.STATUS != 'DELETED' 
+        AND DSA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND C.CUST_ID = DA.CUST_ID 
+        AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO 
+        AND DA.PROD_ID = DPI.PROD_ID
+        AND DA.PROD_ID = #PROD_ID:VARCHAR# 
+        AND DSA.ACCT_STATUS!='CLOSED' AND DSA.STATUS!='MATURED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BRANCH_CODE" >
+                    DA.BRANCH_ID= #BRANCH_CODE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    DA.DEPOSIT_NO &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NO_LIST">
+                    DA.DEPOSIT_NO  IN($ACT_NO_LIST$)
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    DA.DEPOSIT_NO &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    DA.CUST_ID = #CUST_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NXT_DT">
+                    dsa.TOtal_balance>0 AND (DSA.LST_PROV_DT is null OR  DSA.LST_PROV_DT &lt; #NXT_DT:DATE#)
+                    AND( dsa.MATURITY_DT>dsa.LAST_INT_APPL_DT  OR dsa.LAST_INT_APPL_DT IS NULL)
+                    AND( dsa.MATURITY_DT>dsa.LST_PROV_DT OR dsa.LST_PROV_DT IS NULL)
+                    and (dsa.last_int_appl_dt &lt;=#NXT_DT:DATE# or dsa.last_int_appl_dt is null)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MATURITY_DT">
+                    DSA.MATURITY_DT&lt;=#MATURITY_DT:DATE# AND
+                    decode(DSA.LST_PROV_DT,null,dsa.deposit_dt) &lt; DSA.MATURITY_DT
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+                
+    <dynamic-mapped-statement name="Deposit.InterestData" result-class="java.util.HashMap">
+    <!--This query needs to be checked against the screen. Working for batch job... -->   
+        SELECT DA.CUST_ID, DA.DEPOSIT_NO  || '_' ||  DSA.DEPOSIT_SUB_NO AS "ACT_NUM", 
+        DA.PROD_ID AS "PROD_ID",
+        NVL(DSA.CLEAR_BALANCE,0) AS "AMOUNT", 
+        DSA.INTPAY_FREQ AS "FREQ",
+        DSA.INTPAY_FREQ AS "FREQ_A",
+<!--            DPI.LAST_INT_PROVDT "LASTPROVDT",
+            DPI.NEXT_INT_PROVDT "NEXTPROVDT",             
+            DSA.DEPOSIT_AMT AS "AMOUNT",
+            DECODE( DPI.INT_PROV_FREQ, 0 , DPI.INT_APPL_FREQ, DPI.INT_PROV_FREQ)  AS "FREQ", 
+            DPI.INT_APPL_FREQ AS "FREQ_A", -->
+            
+        DECODE(DPI.INT_TYPE, 'COMPOUND', 'Y', 'N') AS "COMP_TYPE", 
+        DPI.INT_COMP_FREQ AS "COMP_FREQ", 
+        DPI.INT_ROUNDOFF_TERMS AS "ROUNF_OFF",
+        DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) AS "START",
+        DPI.NO_DAYS_YEAR AS "DAYS_YEARS",
+        DA.CATEGORY AS "CATEGORY_ID",
+        DSA.DEPOSIT_DT AS "DEPOSIT_DT", 
+        DSA.MATURITY_DT AS "MATURITY_DT",
+        DP.BEHAVES_LIKE AS "BEHAVES_LIKE"
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PROD_INTPAY DPI,
+        DEPOSITS_PRODUCT DP
+        WHERE (DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) = #ACT_NUM:VARCHAR#
+        AND DP.PROD_ID = DA.PROD_ID 
+        AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO 
+        AND DPI.PROD_ID = DA.PROD_ID
+        AND DA.STATUS != 'DELETED'
+        AND DA.BRANCH_ID = #BRANCH_ID:VARCHAR#
+<!--            AND DSA.DEPOSIT_DT BETWEEN DSA.LAST_INT_APPL_DT AND DPI.NEXT_INT_PROVDT -->
+            <!--check for a customer closed or not condition -->
+        AND DA.DEPOSIT_STATUS != 'CLOSED'                        
+        AND DA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="BATCH_PROCESS">
+                    (DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) NOT IN 
+                    (SELECT DI.ACT_NUM FROM DEPOSIT_INTEREST DI 
+                    WHERE DI.ACT_NUM=(DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) AND 
+                    #TODAY_DT:DATE# &gt; (DI.INT_DT - DPI.INT_PROV_FREQ))
+                </isNotNull>
+            </isParameterPresent>
+        <!-- This Paramerter -->
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property ="BRANCH_ID">
+                    DA.BRANCH_ID = #BRANCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend ="AND" property ="PROD_ID">
+                    DA.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull property="ACT_FROM">
+                    <isNotNull prepend="AND" property="ACT_TO">
+                        ((DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) BETWEEN #ACT_FROM:VARCHAR# AND #ACT_TO:VARCHAR#)
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull  property="DATE_FROM">
+                    <isNotNull prepend="AND" property="DATE_TO">
+                        <!--((add_days(DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT)
+                         , DPI.INT_PROV_FREQ)) BETWEEN #DATE_FROM# AND #DATE_TO#)-->
+                        ((DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT)
+                        + DPI.INT_PROV_FREQ) BETWEEN #DATE_FROM:DATE# AND #DATE_TO:DATE#)
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+
+    </dynamic-mapped-statement>        
+        
+<!--    <mapped-statement name="updateDepositIntProvDt">
+        UPDATE DEPOSITS_PROD_INTPAY SET 
+        LAST_INT_PROVDT =  #applDt#,
+        NEXT_INT_PROVDT = (#applDt# + INT_PROV_FREQ)
+        WHERE PROD_ID = #productId#
+    </mapped-statement>        -->
+   
+    <mapped-statement name="updateDepositIntLastApplDT">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        LAST_INT_APPL_DT = #applDt:DATE#
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #actNum:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+     <mapped-statement name="getDepositLien" result-class="java.util.HashMap">
+       SELECT D.REMARKS  FROM DEPOSIT_LIEN D WHERE
+        D.DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+        AND D.STATUS != 'DELETED'
+        AND D.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateDepositNextIntApplDT">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        NEXT_INT_APPL_DT = #nextIntappldt:DATE#
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #actNum:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateDepositIntLastProlDT">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        LST_PROV_DT = #applDt:DATE#
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #actNum:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateLastInterestAmount">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        TOTAL_INT_CREDIT = nvl(TOTAL_INT_CREDIT,0)+#intAmt:NUMBER# 
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #actNum:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+
+    <mapped-statement name="updateLastInterestAmountDebit">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        TOTAL_INT_CREDIT = nvl(TOTAL_INT_CREDIT,0)-#intAmt:NUMBER# 
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #actNum:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateTotIndDrawnAmount">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        TOTAL_INT_DRAWN = nvl(TOTAL_INT_DRAWN,0)+#intAmt:NUMBER# 
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #actNum:VARCHAR#
+        AND STATUS != 'DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateBalIntCreditAmount">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        TOTAL_INT_CREDIT = nvl(TOTAL_INT_CREDIT,0)+ #INT_AMT:NUMBER# 
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #ACT_NUM:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateBalIntDrawnAmount">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        TOTAL_INT_DRAWN = nvl(TOTAL_INT_DRAWN,0)+#INT_AMT:NUMBER# 
+        WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO) = #ACT_NUM:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateSbInterestAmount" inline-parameters="true">
+        <!--UPDATE DEPOSIT_SUB_ACINFO SET SB_INT_AMT = #SB_INT_AMT#,
+        INTEREST_AMT = #BAL_INT_AMT# WHERE DEPOSIT_NO = #ACT_NUM#
+        AND STATUS != 'DELETED'-->
+        UPDATE DEPOSIT_SUB_ACINFO SET PENAL_RATE = #INT:VARCHAR#,ACCT_STATUS = #ACCT_STATUS:VARCHAR#,
+        SB_INT_AMT = cast(#SB_INT_AMT# as numeric),SB_PERIOD_RUN = cast(#SB_PERIOD_RUN# as numeric),INTEREST_AMT = CAST(#BAL_INT_AMT# AS NUMERIC),
+        CLOSE_DT = cast(#CLOSE_DT# as date), AUTHORIZE_STATUS = NULL,CLOSE_BY = #USER_ID:VARCHAR# WHERE DEPOSIT_NO = #ACT_NUM:VARCHAR#
+        AND (AUTHORIZE_STATUS !='REJECTED' OR AUTHORIZE_STATUS IS NULL)         
+    </mapped-statement>
+        
+    <mapped-statement name="updateSbInterestAmountSameNo" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO_SAMENO SET ACCT_STATUS = #ACCT_STATUS:VARCHAR#,CURR_RATE_OF_INT = CAST(#CURR_RATE_OF_INT# AS NUMERIC),
+        SB_INT_AMT = cast(#SB_INT_AMT# as numeric),SB_PERIOD_RUN = #SB_PERIOD_RUN#, INTEREST_AMT = #BAL_INT_AMT#,
+        PENAL_RATE = #INT:VARCHAR# WHERE DEPOSIT_NO = #ACT_NUM:VARCHAR#
+        AND (AUTHORIZE_STATUS !='REJECTED' OR AUTHORIZE_STATUS IS NULL)         
+    </mapped-statement>
+    
+    <mapped-statement name="updateInterestAmount">
+        UPDATE DEPOSIT_SUB_ACINFO SET 
+        INTEREST_AMT = #BAL_INT_AMT:NUMBER#
+        WHERE DEPOSIT_NO = #ACT_NUM:VARCHAR#
+        AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getCustNoforTDS" result-class="java.util.HashMap">
+        SELECT CUST_ID FROM DEPOSIT_ACINFO WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getBehavesLikeForDeposit" result-class="java.util.HashMap">
+        <!--SELECT BEHAVES_LIKE,ACCT_HEAD FROM DEPOSITS_PRODUCT WHERE PROD_ID = #PROD_ID# -->
+        SELECT BEHAVES_LIKE,ACCT_HEAD, NVL(DPR.PARTIAL_WITHDRAWAL_ALLOWED,'N') AS PARTIAL_WITHDRAWAL_ALLOWED 
+        FROM DEPOSITS_PRODUCT DP,DEPOSITS_PROD_RENEWAL DPR WHERE DP.PROD_ID = #PROD_ID:VARCHAR#
+        AND DPR.PROD_ID = DP.PROD_ID
+    </mapped-statement>
+    <mapped-statement name="getSelPremClos" result-class="java.util.LinkedHashMap">
+        select nvl(PREMATURE_CLOSURE_WITH_SI,'N') as PREMATURE_CLOSURE_WITH_SI  from DEPOSITS_PROD_INTPAY where PROD_ID=#PROD_ID#
+    </mapped-statement>   
+
+    <mapped-statement name="getBehavesLikeForDepositNo" result-class="java.util.HashMap">
+        SELECT BEHAVES_LIKE, PROD_ID FROM DEPOSITS_PRODUCT WHERE PROD_ID = 
+        (SELECT PROD_ID FROM DEPOSIT_ACINFO WHERE DEPOSIT_NO = #ACT_NUM:VARCHAR#)
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getLastIntApplDtForDeposit" result-class="java.util.HashMap">
+        SELECT DSA.DEPOSIT_NO,LAST_INT_APPL_DT, TOTAL_INT_CREDIT,TOTAL_INT_DRAWN,TOTAL_BALANCE,TOT_INT_AMT,
+        TOTAL_INT_DEBIT,DSA.STATUS,ACCT_STATUS,PAYMENT_TYPE,CUST_ID FROM DEPOSIT_SUB_ACINFO DSA,DEPOSIT_ACINFO DA 
+        WHERE DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DA.DEPOSIT_NO = #DEPOSITNO:VARCHAR#<!-- AND TOTAL_BALANCE >0   -->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCT_STATUS">
+                    DSA.ACCT_STATUS = #ACCT_STATUS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getDepositDate" result-class="java.util.HashMap">
+        SELECT DEPOSIT_DT,MATURITY_DT,DEPOSIT_SUB_NO FROM DEPOSIT_SUB_ACINFO WHERE DEPOSIT_NO =#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+<!--    <mapped-statement name="getDepositDateForProd" result-class="java.util.HashMap">
+        SELECT DA.PROD_ID, DSA.DEPOSIT_DT, DPI.LAST_INT_PROVDT, DPI.NEXT_INT_PROVDT
+        FROM DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PROD_INTPAY DPI, DEPOSIT_ACINFO DA, DEPOSITS_PRODUCT DP
+        WHERE DEPOSIT_DT BETWEEN LAST_INT_PROVDT AND NEXT_INT_PROVDT
+        AND DPI.PROD_ID = DA.PROD_ID 
+        AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO
+        AND DP.PROD_ID = DPI.PROD_ID
+        AND DP.BEHAVES_LIKE = #BEHAVES_LIKE#
+    </mapped-statement> -->
+    
+    <dynamic-mapped-statement name="InterestDataForDeposits" result-class="java.util.HashMap">
+    <!--This query needs to be checked against the screen. Working for batch job... Created by sat-->   
+        SELECT DA.CUST_ID, DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO AS "ACT_NUM",
+        DA.PROD_ID AS "PROD_ID",DSA.INTPAY_FREQ AS "ACC_FREQ",
+        NVL(DSA.CLEAR_BALANCE ,0) AS "AMOUNT",
+        DSA.DEPOSIT_AMT AS "DEPOSIT_AMT",
+        DPI.INT_COMP_FREQ AS "COMP_FREQ",
+        DPI.INT_APPL_FREQ AS "APPL_FREQ",
+        DPI.INT_ROUNDOFF_TERMS AS "ROUND_OFF",
+        DPI.INT_PROV_FREQ AS "FREQ",
+        DECODE(DPI.INT_TYPE, 'COMPOUND','Y','N')AS "COMP_TYPE",
+        DSA.DEPOSIT_DT AS "DEP_DATE",
+        DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT)AS "DEPOSIT_DT", 
+        DSA.MATURITY_DT AS "MATURITY_DT",            
+        DPI.NO_DAYS_YEAR AS "DAYS_YEARS",
+        DA.CATEGORY AS "CATEGORY_ID",
+        DP.BEHAVES_LIKE AS "BEHAVES_LIKE"
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PROD_INTPAY DPI,
+        CUSTOMER, DEPOSITS_PRODUCT DP
+        WHERE (DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) = #ACT_NUM:VARCHAR#
+        AND DA.CUST_ID = CUSTOMER.CUST_ID
+        AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO
+        AND DA.PROD_ID = #PROD_ID:VARCHAR# 
+        AND DA.BRANCH_ID = #BRANCH_ID:VARCHAR#
+        AND DA.BRANCH_ID = CUSTOMER.BRANCH_CODE
+        AND DA.PROD_ID = DP.PROD_ID
+        AND DA.PROD_ID = DPI.PROD_ID
+        AND DA.DEPOSIT_STATUS != 'CLOSED'
+        AND DA.DEPOSIT_STATUS != 'DELETED'
+        AND DSA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+<!--            <isParameterPresent>
+                The test Parameter(s) should not be null... 
+                <isNotNull prepend="AND" property="BATCH_PROCESS">
+                   (DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) NOT IN 
+                    (SELECT DI.ACT_NUM FROM DEPOSIT_INTEREST DI 
+                    WHERE DI.ACT_NUM=(DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) AND 
+                    #TODAY_DT# &gt; (DI.INT_DT - DPI.INT_PROV_FREQ))
+                </isNotNull>
+            </isParameterPresent>-->
+        <!-- This Paramerter -->
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property ="BRANCH_ID">
+                    DA.BRANCH_ID = #BRANCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend ="AND" property ="PROD_ID">
+                    DA.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+<!--            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO &gt;= #ACT_FROM#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO &lt;= #ACT_TO# 
+                </isNotNull>
+            </isParameterPresent> -->
+            
+            <isParameterPresent>
+                <isNotNull  property="DATE_FROM">
+                    <isNotNull prepend="AND" property="DATE_TO">
+                        ((DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT)
+                        + DPI.INT_PROV_FREQ) BETWEEN #DATE_FROM:DATE# AND #DATE_TO:DATE#)
+                        <!--((add_days(DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT)
+                         , DPI.INT_PROV_FREQ)) BETWEEN #DATE_FROM# AND #DATE_TO#)-->
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="Deposit.InterestDataForDeposits" result-class="java.util.HashMap">
+        SELECT DA.CUST_ID, DA.DEPOSIT_NO  || '_' ||  DSA.DEPOSIT_SUB_NO AS "ACT_NUM", 
+        DA.PROD_ID AS "PROD_ID",
+        NVL(DSA.CLEAR_BALANCE,0) AS "AMOUNT",
+        DPI.INT_COMP_FREQ AS "COMP_FREQ", 
+        DECODE(DPI.INT_TYPE, 'COMPOUND', 'Y', 'N') AS "COMP_TYPE", 
+        DPI.INT_ROUNDOFF_TERMS AS "ROUNF_OFF",
+        DECODE(DSA.LAST_INT_APPL_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_INT_APPL_DT) AS "DEPOSIT_DT", 
+        DSA.MATURITY_DT AS "MATURITY_DT",          
+<!--        DPI.NEXT_INT_PROVDT AS "END",           -->
+        DPI.NO_DAYS_YEAR AS "DAYS_YEARS",
+        DA.CATEGORY AS "CATEGORY_ID",
+        DP.BEHAVES_LIKE AS "BEHAVES_LIKE"
+        FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA, DEPOSITS_PROD_INTPAY DPI,
+        DEPOSITS_PRODUCT DP
+        WHERE (DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO) = #ACT_NUM:VARCHAR#
+        AND DP.PROD_ID = DA.PROD_ID 
+        AND DSA.DEPOSIT_NO = DA.DEPOSIT_NO 
+        AND DPI.PROD_ID = DA.PROD_ID
+        AND DA.STATUS != 'DELETED'
+        AND DA.DEPOSIT_STATUS != 'CLOSED'
+        AND DA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_ID">
+                    DA.BRANCH_ID = #BRANCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+<!--    <mapped-statement name="getLastIntApplDate" result-class="java.util.HashMap">
+        SELECT LAST_INT_APPL_DT, CLEAR_BALANCE, AVAILABLE_BALANCE FROM DEPOSIT_SUB_ACINFO WHERE DEPOSIT_NO = #ACT_NUM#
+    </mapped-statement> -->
+    
+    <mapped-statement name="getLastTransDate" result-class="java.util.HashMap">
+        SELECT DECODE(DSA.LAST_TRANS_DT, NULL, DSA.DEPOSIT_DT, DSA.LAST_TRANS_DT) AS "LAST_TRANS_DT" 
+        FROM DEPOSIT_SUB_ACINFO DSA WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getRemainAmtForDeposit" result-class="java.util.HashMap">
+        SELECT MATURITY_AMT,AVAILABLE_BALANCE FROM DEPOSIT_SUB_ACINFO WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="lastProvisionDt" result-class="java.util.HashMap">
+        select add_months(LAST_PROV_DT,(select (INT_PROV_FREQ/30)  from deposits_prod_intpay where prod_id=#PROD_ID:VARCHAR#)) AS LAST_PROV_DT ,LAST_PROV_DT AS LSTPROVDT FROM deposit_provision
+        WHERE PROD_ID=#PROD_ID:VARCHAR#  AND REMARKS='PROVISIONING' 
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND PROD_TYPE = #PROD_TYPE:VARCHAR#
+        <!--select LAST_PROV_DT from deposit_provision where REMARKS='PROVISIONING'  AND prod_id=#PROD_ID#-->
+    </mapped-statement> 
+    <mapped-statement name="lastIntApplnDt" result-class="java.util.HashMap">
+        select  LAST_APPL_DT  from  deposit_provision 
+        WHERE PROD_ID=#PROD_ID:VARCHAR#  AND REMARKS!='PROVISIONING'  and branch_code=#BRANCH_CODE:VARCHAR#
+        and PROD_TYPE = #PROD_TYPE:VARCHAR#
+        <!--select LAST_PROV_DT from deposit_provision where REMARKS='PROVISIONING'  AND prod_id=#PROD_ID#-->
+    </mapped-statement> 
+    
+    <mapped-statement name="lastDebitIntApplDt" result-class="java.util.HashMap">
+        select  LAST_APPL_DT  from  deposit_provision 
+        WHERE PROD_ID=#PROD_ID:VARCHAR#  AND REMARKS='DEBIT_INT'  and branch_code=#BRANCH_CODE:VARCHAR#
+        <!--select LAST_PROV_DT from deposit_provision where REMARKS='PROVISIONING'  AND prod_id=#PROD_ID#-->
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="lastIntApplnToCum" result-class="java.util.HashMap">
+        select DA.PROD_ID,DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO AS DEPOSIT_NO ,da.PROD_ID,
+        dsa.RATE_OF_INT,dsa.DEPOSIT_DT,dsa.MATURITY_DT,dsa.DEPOSIT_AMT,
+        (nvl(DSA.TOTAL_INT_CREDIT,0)-nvl(DSA.TOTAL_INT_DRAWN,0)) AS "INTCRAMT" ,DA.CUST_ID from deposit_sub_acinfo DSA 
+        ,deposit_acinfo DA,deposits_product DP WHERE DSA.DEPOSIT_NO =DA.DEPOSIT_NO AND DP.PROD_ID=DA.PROD_ID 
+        AND DP.BEHAVES_LIKE ='CUMMULATIVE' AND (nvl(DSA.TOTAL_INT_CREDIT,0)-nvl(DSA.TOTAL_INT_DRAWN,0))>0 AND 
+        DSA.ACCT_STATUS='NEW' AND 
+        DA.BRANCH_ID=#BRANCH_CODE:VARCHAR#
+        AND DA.PROD_ID=#PROD_ID:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property ="ACT_NUM">
+                    dsa.DEPOSIT_NO||'_'||dsa.DEPOSIT_SUB_NO=#ACT_NUM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+
+    </dynamic-mapped-statement> 
+    <mapped-statement name="getDepoitDetailForIntApp" result-class="java.util.HashMap">
+   <!--SELECT dsa.deposit_no || '_' || dsa.deposit_sub_no AS deposit_no,
+       dsa.deposit_dt as DEPOSIT_DT ,dsa.deposit_amt AS DEPOSIT_AMT , dsa.intpay_freq AS FREQ , dsa.maturity_dt AS MATURITY_DT,
+       CASE
+          WHEN (   dsa.last_int_appl_dt IS NULL
+                OR dsa.last_int_appl_dt &lt; dsa.deposit_dt
+               )
+             THEN dsa.deposit_dt
+          ELSE dsa.last_int_appl_dt
+       END AS LAST_INT_APPL_DT,
+       dp.last_prov_dt AS LAST_PROV_DT , dp.remarks AS REMARKS,da.CATEGORY as CATEGORY,
+       nvl(dsa.TOTAL_INT_CREDIT ,0) as  TOTAL_INT_CREDIT,   nvl(dsa.TOTAL_INT_DRAWN ,0) as TOTAL_INT_DRAWN,dsa.RATE_OF_INT
+      ,dsa.INT_PAY_PROD_TYPE,dsa.INT_PAY_PROD_ID,dsa.INT_PAY_ACC_NO,dsa.INTPAY_MODE
+  FROM deposit_sub_acinfo dsa, deposit_provision dp, deposit_acinfo da
+ WHERE dp.prod_id = da.prod_id
+   AND da.deposit_no = dsa.deposit_no
+   AND dp.remarks != 'APPLICATION'
+   AND da.prod_id = #PROD_ID#
+   AND dsa.deposit_no || '_' || dsa.deposit_sub_no = #ACT_NUM# -->
+    <!--AND DSA.MATURITY_DT &gt;= LAST_INT_APPL_DT-->
+        SELECT dsa.deposit_no || '_' || dsa.deposit_sub_no AS deposit_no, CASE WHEN C.COMP_NAME IS NULL THEN
+       TRIM (get_cust_name(c.cust_id))
+       ELSE C.COMP_NAME END as cname,
+        dsa.deposit_dt as DEPOSIT_DT ,dsa.deposit_amt AS DEPOSIT_AMT , dsa.intpay_freq AS FREQ , dsa.maturity_dt AS MATURITY_DT,
+        CASE
+        WHEN (   dsa.next_int_appl_dt IS NULL
+        OR dsa.next_int_appl_dt &lt; dsa.deposit_dt
+        )
+        THEN dsa.deposit_dt
+        ELSE ADD_MONTHS(dsa.next_int_appl_dt,(dsa.intpay_freq/30)*-1)
+        END AS LAST_INT_APPL_DT,
+      <!--  CASE WHEN (DSA.LAST_INT_APPL_DT IS NULL)
+             THEN dsa.deposit_dt
+          ELSE DSA.LAST_INT_APPL_DT
+        END AS last_prov_dt,-->
+       dsa.DEPOSIT_DT AS LAST_PROV_DT ,
+        da.CATEGORY as CATEGORY,
+        nvl(dsa.TOTAL_INT_CREDIT ,0) as  TOTAL_INT_CREDIT,   nvl(dsa.TOTAL_INT_DRAWN ,0) as TOTAL_INT_DRAWN,dsa.RATE_OF_INT
+        ,dsa.INT_PAY_PROD_TYPE,dsa.INT_PAY_PROD_ID,dsa.INT_PAY_ACC_NO,dsa.INTPAY_MODE,
+      <!--decode(dsa.next_int_appl_dt ,null ,ADD_MONTHS(dsa.deposit_dt,(dsa.intpay_freq/30)), DSA.NEXT_INT_APPl_DT ) as NEXT_INT_APPl_DT-->
+        case when (dsa.INTPAY_FREQ!=0) then 
+        decode(DSA.NEXT_INT_APPL_DT,null,ADD_MONTHS(DSA.DEPOSIT_DT,DSA.INTPAY_FREQ/30), DSA.NEXT_INT_APPL_DT) else
+        case when (nvl(dsa.DEPOSIT_PERIOD_YY ,0)&gt;0 )
+        then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_YY*12)
+        when (nvl(dsa.DEPOSIT_PERIOD_MM ,0)&gt;0 )  
+        then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_MM)  else
+                <!--add_days(dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_DD) end -->
+        dsa.DEPOSIT_DT+dsa.DEPOSIT_PERIOD_DD end 
+        end 
+        as NEXT_INT_APPl_DT,NVL(dsa.TOT_INT_AMT,0) AS TOT_INT_AMT , dsa.MATURITY_AMT,
+        nvl((SELECT SUM(TDS_AMT) FROM TDS_COLLECTED WHERE  dsa.DEPOSIT_NO||'_'||dsa.DEPOSIT_SUB_NO=ACCT_NUM and TDS_DT=#CUR_DT# ) ,0) as TDS_AMT ,
+        DSA.TOTAL_INSTALL_PAID,DSA.TOTAL_INSTALLMENTS,DSA.CALENDER_FREQ,DSA.INT_DIFFERENCE,da.CUST_ID
+        FROM deposit_sub_acinfo dsa,  deposit_acinfo da, customer c
+        WHERE 
+        da.deposit_no = dsa.deposit_no
+        AND da.prod_id = #PROD_ID#
+        <!--AND dsa.deposit_no || '_' || dsa.deposit_sub_no = #ACT_NUM:VARCHAR# -->
+        AND  dsa.deposit_no = substr (#ACT_NUM:VARCHAR#,1,13)
+        AND da.cust_id=c.cust_id
+   <!-- AND
+   DSA.ACCT_STATUS !='CLOSED' AND -->
+                <!--DSA.MATURITY_DT &lt;= #CURR_DATE# AND -->
+                <!-- decode(DSA.NEXT_INT_APPL_DT,null,ADD_MONTHS(DSA.DEPOSIT_DT,DSA.INTPAY_FREQ/30), DSA.NEXT_INT_APPL_DT) -->
+             <!--   case when (dsa.INTPAY_FREQ!=0) then 
+                decode(DSA.NEXT_INT_APPL_DT,null,ADD_MONTHS(DSA.DEPOSIT_DT,DSA.INTPAY_FREQ/30), DSA.NEXT_INT_APPL_DT) else
+                case when (nvl(dsa.DEPOSIT_PERIOD_YY ,0)&gt;0 )
+                then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_YY*12)
+                when (nvl(dsa.DEPOSIT_PERIOD_MM,0) &gt;0 )  
+                then  add_months( dsa.DEPOSIT_DT,dsa.DEPOSIT_PERIOD_MM)  else
+                dsa.DEPOSIT_DT+dsa.DEPOSIT_PERIOD_DD end 
+                end  &lt;= #CURR_DATE#          
+                AND 
+                DA.PROD_ID = #PROD_ID#-->
+                 <!-- AND INTPAY_FREQ IN(90,30,180,360)-->
+                <!-- AND DSA.STATUS!='MATURED' and dsa.AUTHORIZE_STATUS ='AUTHORIZED' and dsa.status!='DELETED'
+                 AND DECODE(NEXT_INT_APPL_DT,NULL,ADD_MONTHS(DEPOSIT_DT,INTPAY_FREQ/30),NEXT_INT_APPL_DT) &lt;= DSA.MATURITY_DT
+                 AND ((DSA.CALENDER_FREQ ='Y' AND  DSA.LAST_INT_APPL_DT IS NOT NULL) OR (DSA.CALENDER_FREQ ='N' OR DSA.CALENDER_FREQ IS NULL))-->
+   
+   
+       
+    </mapped-statement> 
+    
+    <mapped-statement name="updateDepositprovision">
+        UPDATE DEPOSIT_PROVISION SET LAST_PROV_DT=#lstproDt:DATE# 
+        WHERE  REMARKS='PROVISIONING' 
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# 
+        AND PROD_ID=#PROD_ID:VARCHAR#
+
+    </mapped-statement>
+    <mapped-statement name="lastintApplDTforCumDeposits">
+        update deposit_provision set LAST_APPL_DT=#LAST_APPL_DT:DATE# 
+        where BRANCH_CODE=#BRANCH_CODE:VARCHAR# and PROD_ID=#PROD_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getAccountPROvTDS" result-class="java.util.HashMap">
+        select sum(tds_amt) from tds_collected 
+        where acct_num=#CLOSEDACC:VARCHAR# and tds_dt=#CUR_DT:DATE#
+    </mapped-statement> 
+    
+    <mapped-statement name="getSelROIForSlab" result-class="java.util.HashMap">
+        select ROI from DEPOSIT_ROI_GROUP_TYPE_RATE
+        where #DIFF_MONTH:NUMBER# &gt;= FROM_PERIOD and #DIFF_MONTH:NUMBER# &lt;= TO_PERIOD and 
+        ROI_GROUP_ID=(select ROI_GROUP_ID from DEPOSIT_ROI_GROUP_PROD where PROD_ID=#PROD_ID:VARCHAR#)
+        order by ROI_DATE DESC
+    </mapped-statement> 
+    
+    <mapped-statement name="getIntAppSlab" result-class="java.util.HashMap">
+        select nvl(INT_APP_SLAB,'N') as INT_APP_SLAB  from DEPOSITS_PROD_RD where prod_id=#PROD_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <!--<dynamic-mapped-statement name="getAllBranchesFromDayEnd" result-class="java.util.HashMap">
+        SELECT BRANCH_CODE FROM DAY_END 
+        <dynamic>
+            <isParameterPresent>
+                The test Parameter(s) should not be null... 
+                <isNotNull prepend="WHERE" property="NEXT_DATE">
+                    BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT=TO_DATE(#NEXT_DATE#)
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(#NEXT_DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE#, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>-->
+    
+    <dynamic-mapped-statement name="getAllBranchesFromDayEndChk" result-class="java.util.HashMap">
+        SELECT BRANCH_CODE,CURR_APPL_DT FROM DAY_END WHERE 
+        CURR_APPL_DT IN (SELECT MAX(CURR_APPL_DT) FROM DAY_END)
+        <dynamic>
+            <isParameterPresent>
+                <!--The test Parameter(s) should not be null...-->
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    BRANCH_CODE NOT IN 
+                    (SELECT BRANCH_ID FROM HOLIDAY_MASTER
+                    WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+                    AND HOLIDAY_DT = CURR_APPL_DT
+                    UNION
+                    SELECT BRANCH_ID FROM WEEKLY_OFF
+                    WHERE STATUS!='DELETED' AND WEEKLY_OFF='Y' 
+                    AND (TO_CHAR(CURR_APPL_DT, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(CURR_APPL_DT, 'D') = WEEKLY_OFF2))
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getAllBranchesFromDayEnd" result-class="java.util.HashMap">
+        SELECT BRANCH_ID as BRANCH_CODE FROM DAILY_DAYEND_STATUS_FINAL WHERE 
+        DAYEND_DT = #NEXT_DATE:DATE# AND BRANCH_DAY_END_STATUS = 'COMPLETED' AND DC_DAY_END_STATUS IS NULL
+    </mapped-statement>    
+    
+    <mapped-statement name="getAllBranchesFromDayEndComp" result-class="java.util.HashMap">
+        <!--SELECT BRANCH_ID as BRANCH_CODE FROM DAILY_DAYEND_STATUS_FINAL WHERE 
+        DAYEND_DT = #NEXT_DATE# AND BRANCH_DAY_END_STATUS = 'COMPLETED' AND DC_DAY_END_STATUS = 'COMPLETED'-->
+        SELECT BRANCH_ID as BRANCH_CODE, DAYEND_DT FROM DAILY_DAYEND_STATUS_FINAL WHERE 
+        BRANCH_DAY_END_STATUS = 'COMPLETED' AND DC_DAY_END_STATUS = 'COMPLETED'
+        and DAYEND_DT in (select max(DAYEND_DT) from DAILY_DAYEND_STATUS_FINAL where BRANCH_DAY_END_STATUS = 'COMPLETED' 
+        AND DC_DAY_END_STATUS = 'COMPLETED')
+    </mapped-statement>         
+    
+    <mapped-statement name="getAllBranchesFromDayEndCompPrevDay" result-class="java.util.HashMap">
+        SELECT BRANCH_ID as BRANCH_CODE, DAYEND_DT FROM DAILY_DAYEND_STATUS_FINAL WHERE 
+        BRANCH_DAY_END_STATUS = 'COMPLETED' AND DC_DAY_END_STATUS = 'COMPLETED'
+        and DAYEND_DT = TO_DATE(#DAYEND_DT:DATE#,'DD-MM-YYYY') and branch_id not in (select branch_id from daily_daybegin_status_final
+        where DAYBEGIN_DT = #DAYEND_DT_CUR:DATE#)
+    </mapped-statement>            
+
+    <dynamic-mapped-statement name="getAllBranchesHolidayList" result-class="java.util.HashMap">
+        SELECT BRANCH_ID, HOLIDAY_DT, BRANCH_ID||TO_CHAR(HOLIDAY_DT,'DD-MM-YYYY') AS HOLIDAY_KEY FROM HOLIDAY_MASTER
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NOT NULL AND AUTHORIZED_STATUS='AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    HOLIDAY_DT=TO_DATE(#NEXT_DATE:DATE#)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>     
+
+    <dynamic-mapped-statement name="getAllBranchesWeeklyOffList" result-class="java.util.HashMap">
+        SELECT BRANCH_ID, WEEKLY_OFF1, WEEKLY_OFF2 FROM WEEKLY_OFF
+        WHERE STATUS!='DELETED' WEEKLY_OFF='Y' 
+        <dynamic>
+            <isParameterPresent>
+                <!-- The test Parameter(s) should not be null... -->
+                <isNotNull prepend="AND" property="NEXT_DATE">
+                    (TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF1 OR
+                    TO_CHAR(#NEXT_DATE:DATE#, 'D') = WEEKLY_OFF2)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>     
+        
+    <mapped-statement name="getCumDepositsForProvisionBeforeLive" result-class="java.util.HashMap">
+        select d.DEPOSIT_NO,d.DEPOSIT_DT,d.RATE_OF_INT,d.DEPOSIT_AMT,d.MATURITY_DT,
+        d.MATURITY_AMT, to_date('31-03-2008','dd-mm-yyyy') as UPTO_DT    
+        from deposit_sub_acinfo d where d.status='NEW'
+    </mapped-statement> 
+
+    <mapped-statement name = "getSelectRecalculateDetails" result-class ="java.util.HashMap">    
+        SELECT DP.PROD_ID,BEHAVES_LIKE,DISCOUNTED_RATE,INTPAY_FREQ,DSA.DEPOSIT_PERIOD_DD,DSA.DEPOSIT_PERIOD_MM,
+        DSA.DEPOSIT_PERIOD_YY,DSA.TOT_INT_AMT,DSA.MATURITY_AMT,DA.CUST_ID,DSA.DEPOSIT_DT FROM DEPOSITS_PRODUCT DP,
+        DEPOSITS_PROD_SCHEME DPS,DEPOSIT_SUB_ACINFO DSA,DEPOSIT_ACINFO DA WHERE DP.PROD_ID = DPS.PROD_ID 
+        AND DP.PROD_ID = (SELECT PROD_ID FROM DEPOSIT_ACINFO WHERE DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#)
+        AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DSA.DEPOSIT_NO = #DEPOSIT_NO:VARCHAR#        
+    </mapped-statement>
+    
+    <mapped-statement name="insertRecalculationOfInterest" result-class = "java.util.HashMap">
+        INSERT INTO RECALCULATION_OF_INTEREST
+        (CUST_ID, DEPOSIT_NO, CATEGORY_ID, OLD_ROI, NEW_ROI, OLD_TOT_INT_AMT, NEW_TOT_INT_AMT, OLD_MATURITY_AMT, 
+        NEW_MATURITY_AMT,CREATED_BY,RECALCULATED_DATE,PROD_ID,DEPOSIT_DT,BRANCH_CODE
+        ) VALUES (
+        #CUST_ID:VARCHAR#, #DEPOSIT_NO:VARCHAR#, #CATEGORY_ID:VARCHAR#, #OLD_ROI:NUMERIC#, #NEW_ROI:NUMERIC#, 
+        #OLD_TOT_INT_AMT:NUMERIC#, #NEW_TOT_INT_AMT:NUMERIC#, #OLD_MATURITY_AMT:NUMERIC#,#NEW_MATURITY_AMT:NUMERIC#, 
+        #CREATED_BY:VARCHAR#,#RECALCULATED_DATE:DATE#,#PROD_ID:VARCHAR#,#DEPOSIT_DT:DATE#,#BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+
+    <dynamic-mapped-statement name = "SelectRecalculatedDetails" result-class ="java.util.HashMap">    
+        SELECT * FROM RECALCULATION_OF_INTEREST WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "PROD_ID">
+                    PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull property = "FROM_DT">
+                    <isNotNull prepend = "AND" property = "TO_DT">
+                        RECALCULATED_DATE BETWEEN #FROM_DT:DATE# AND #TO_DT:DATE#
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull property = "FROM_NO">
+                    <isNotNull prepend = "AND" property = "TO_NO">
+                        DEPOSIT_NO BETWEEN #FROM_NO:VARCHAR# AND #TO_NO:VARCHAR#
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="Deposit.getApplicationforcalenderfreq" result-class="java.util.LinkedHashMap">
+        select DA.DEPOSIT_NO || '_' || DSA.DEPOSIT_SUB_NO AS "ACT_NUM" ,DA.CUST_ID as CUST_ID,  get_cust_name(c.CUST_ID) as cname, BRANCH_ID ,
+        case when (to_number(to_char(deposit_dt,'dd')) &gt;= CALENDER_day)
+        then add_months(to_date(CALENDER_day||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'mm')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'yyyy'),'dd-mm-yyyy'),0)
+        when (to_number(to_char(last_day(add_months(deposit_dt,intpay_freq/30)),'dd')) &gt; CALENDER_day)
+        then add_months(to_date(CALENDER_day||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'mm')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'yyyy'),'dd-mm-yyyy'),-1)
+        else
+        add_months(to_date(to_char(last_day(add_months(deposit_dt,intpay_freq/30)),'dd')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'mm')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'yyyy'),'dd-mm-yyyy'),-1)
+        end as  INT_UPTO_DATE ,deposit_dt,maturity_dt,intpay_freq,rate_of_int,deposit_amt,decode(dsa.LST_PROV_DT,null,deposit_dt,LST_PROV_DT) as LST_PROV_DT,decode(dsa.LAST_INT_APPL_DT,null,deposit_dt,LAST_INT_APPL_DT) as LAST_INT_APPL_DT,nvl(dsa.TOTAL_INT_CREDIT,0) as TOTAL_INT_CREDIT,nvl(dsa.TOTAL_INT_DEBIT,0) as TOTAL_INT_DEBIT
+        ,dsa.INT_PAY_PROD_TYPE,dsa.INT_PAY_PROD_ID,dsa.INT_PAY_ACC_NO,dsa.INTPAY_MODE
+        from deposit_sub_acinfo dsa ,deposit_acinfo da, customer c
+        where         
+        case when (to_number(to_char(deposit_dt,'dd')) &gt;= CALENDER_day)
+        then add_months(to_date(CALENDER_day||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'mm')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'yyyy'),'dd-mm-yyyy'),0)
+        when (to_number(to_char(last_day(add_months(deposit_dt,intpay_freq/30)),'dd')) &gt;  CALENDER_day)
+        then add_months(to_date(CALENDER_day||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'mm')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'yyyy'),'dd-mm-yyyy'),-1)
+        else
+        add_months(to_date(to_char(last_day(add_months(deposit_dt,intpay_freq/30)),'dd')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'mm')||'-'||to_char(add_months(deposit_dt,intpay_freq/30),'yyyy'),'dd-mm-yyyy'),-1)
+        end   &lt;= #CURR_DATE:DATE#    
+       <!-- and CALENDER_FREQ='Y' AND LAST_INT_APPL_DT IS NULL --> and da.deposit_no=dsa.deposit_no and da.cust_id=c.cust_id and dsa.INTPAY_FREQ!=0 
+        <dynamic>
+            
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NOT_RD_INT_APPLN">
+                    CALENDER_FREQ='Y' AND LAST_INT_APPL_DT IS NULL
+                </isNotNull>
+            </isParameterPresent>            
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "BRANCH_CODE" >
+                    DA.BRANCH_ID= #BRANCH_CODE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_FROM">
+                    DA.DEPOSIT_NO &gt;= #ACT_FROM:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_TO">
+                    DA.DEPOSIT_NO &lt;= #ACT_TO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NO_LIST">
+                    DA.DEPOSIT_NO  IN($ACT_NO_LIST$)
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    DA.CUST_ID = #CUST_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INTPAY_MODE">
+                    DSA.INTPAY_MODE= #INTPAY_MODE:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_ACC_NO">
+                    DSA.INT_PAY_ACC_NO= #INT_PAY_ACC_NO:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="INT_PAY_PROD_ID">
+                    DSA.INT_PAY_PROD_ID= #INT_PAY_PROD_ID:VARCHAR# 
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+ 
+    <mapped-statement name="getBranchLevelDayendStatus" result-class="java.util.HashMap">
+        select branch_id from daily_dayend_status_final where branch_id = #BRANCH_CODE:VARCHAR#
+        and DAYEND_DT = #DAYEND_DT:DATE#
+    </mapped-statement> 
+    
+    <mapped-statement name="getBranchLevelDayendSta" result-class="java.util.HashMap">
+        select BRANCH_ID from daily_daybegin_status_final
+        where DAYBEGIN_DT = #DAYEND_DT:DATE# and branch_id = #BRANCH_CODE:VARCHAR#
+        and branch_id not in (select branch_id from daily_dayend_status_final where       
+        DAYEND_DT = #DAYEND_DT:DATE#)
+    </mapped-statement>     
+        
+    <mapped-statement name="getBranchLevelDayBeginStatus" result-class="java.util.HashMap">
+        select branch_id from daily_daybegin_status_final
+        where DAYBEGIN_DT = #DAYBEGIN_DT:DATE# and branch_id = #BRANCH_CODE:VARCHAR# 
+        and branch_id not in (select BRANCH_ID from daily_dayend_status_final where DAYEND_DT = #DAYBEGIN_DT:DATE#)
+    </mapped-statement>  
+       
+    <mapped-statement name="getDCLevelDayBeginStatus" result-class="java.util.HashMap">
+        select branch_id from daily_daybegin_status_final where branch_id = #BRANCH_CODE:VARCHAR#
+        and DAYBEGIN_DT = #DAYBEGIN_DT:DATE#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getDepositIntPayAccountNo" result-class="java.util.HashMap">
+        SELECT  DISTINCT PROD_ID,INT_PAY_ACC_NO AS SI_NUMBER,ACCT_STATUS FROM DEPOSIT_ACINFO DA,
+        DEPOSIT_SUB_ACINFO DSA WHERE  DA.STATUS!='DELETED' AND DA.AUTHORIZE_STATUS='AUTHORIZED'
+        AND DA.DEPOSIT_NO=DSA.DEPOSIT_NO AND  DSA.ACCT_STATUS!='CLOSED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INT_PAY_ACC_NO" >
+                    INT_PAY_ACC_NO = #INT_PAY_ACC_NO:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+           <!-- <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PROD_ID" >
+                    PROD_ID = #PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>-->
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INT_PAY_PROD_ID" >
+                    INT_PAY_PROD_ID = #INT_PAY_PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+              
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="SI_NUMBER">
+                    UPPER(INT_PAY_ACC_NO) LIKE UPPER('%$SI_NUMBER$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY INT_PAY_ACC_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateDepositTempDate" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO SET TEMP_NEXT_INT_APPL_DT=#TEMP_NEXT_INT_APPL_DT:DATE#  ,TEMP_LAST_INT_APPL_DT=#TEMP_LAST_INT_APPL_DT:DATE# ,
+        TEMP_INT_CREDIT=#INT_CREDIT:NUMERIC# ,TEMP_INT_DRAWN=#INT_DRAWN:NUMERIC#  WHERE DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateRollBackDepositTempDate" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO SET LAST_INT_APPL_DT=#LAST_INT_APPL_DT:DATE#  ,TOTAL_INT_CREDIT=#INT_CREDIT:NUMERIC# ,
+        TOTAL_INT_DRAWN=#INT_DRAWN:NUMERIC# ,NEXT_INT_APPL_DT=#NEXT_INT_APPL_DT:DATE#  WHERE DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateDepositlastAppDt" inline-parameters="true">
+        UPDATE DEPOSIT_SUB_ACINFO SET NEXT_INT_APPL_DT=TEMP_NEXT_INT_APPL_DT  ,LAST_INT_APPL_DT=TEMP_LAST_INT_APPL_DT ,
+        TOTAL_INT_CREDIT=TEMP_INT_CREDIT ,TOTAL_INT_DRAWN=TEMP_INT_DRAWN  WHERE DEPOSIT_NO=#DEPOSIT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getDepositAccountDetails" result-class="java.util.HashMap">
+        SELECT *  FROM DEPOSIT_SUB_ACINFO WHERE (DEPOSIT_NO || '_' || DEPOSIT_SUB_NO)=#DEPOSIT_NO:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement name="insertDepositInterestTrialTO" inline-parameters="true"> 
+        INSERT INTO DEPOSIT_INT_TRIAL
+        (ACT_NUM, INT_DT, INT_TYPE, AC_HD_ID, APPL_DT, INT_AMT, INT_RATE, PRINCIPLE_AMT, PRODUCT_ID, PRODUCT_TYPE,
+        TRANS_LOG_ID, CUST_ID, IS_TDS_APPLIED,TDS_AMT,PAID_INT,INT_PAID_DATE,TOTAL_INT_BALANCE
+        ,TOTAL_TDS_DEDUCTED_FROM_ALL,TOTAL_TDS_AMOUNT,LAST_TDS_DEDUCTED_DT,LAST_TDS_RECIVED_FROM,USER_ID,BRANCH_CODE
+        ) VALUES (
+        #actNum:VARCHAR#, #intDt:DATE#, #intType:VARCHAR#, #acHdId:VARCHAR#, #applDt:DATE#, #intAmt:NUMERIC#, #intRate:NUMERIC#, 
+        #principleAmt:NUMERIC#, #productId:VARCHAR#, #productType:VARCHAR#, 
+        #transLogId:VARCHAR#, #custId:VARCHAR#, #isTdsApplied:VARCHAR#, #tdsAmt:NUMERIC#,#drCr:VARCHAR#,#trnDt:DATE#,#tot_int_amt:VARCHAR# ,
+        #tdsDeductedFromAll:NUMERIC#,#totalTdsAmt:NUMERIC#,#lastTdsApplDt:DATE#,#lastTdsRecivedFrom:VARCHAR#,
+        #user_id:VARCHAR#,#branch_code:VARCHAR#)
+    </mapped-statement>
+  
+    <mapped-statement name="deleteDepositIntTrialTO" result-class="java.util.HashMap">     
+        select deleteDepositinterestTrail(#DEPOSIT_NO#) from dual
+    </mapped-statement>
+   
+    <mapped-statement name="deleteAccountIntTrialTO" result-class="java.util.HashMap">     
+        select deleteAccountIntTrail(#ACCOUNT_NO#,#TO_DATE#) from dual
+    </mapped-statement>
+    <mapped-statement name="deleteAccountIntTrialAllTO" result-class="java.util.HashMap">     
+        select deleteAccountIntTrailAll(#TO_DATE#,#BRANCH_ID#,#PRODID:VARCHAR#) from dual
+    </mapped-statement>
+    <mapped-statement name="getOdsProducts" result-class="java.util.HashMap">     
+        SELECT * FROM ODS_PRODUCT WHERE PROD_ID=#PROD_ID#
+    </mapped-statement>
+  
+    <mapped-statement name="getLastProvisionDt" result-class="java.util.HashMap">
+        SELECT  LAST_PROV_DT,LAST_APPL_DT  FROM  DEPOSIT_PROVISION WHERE PROD_ID=#PROD_ID# AND PROD_TYPE=#PROD_TYPE# AND BRANCH_CODE=#BRANCH_CODE#
+    </mapped-statement>
+    
+    <mapped-statement name="getLastInterestDate" result-class="java.util.HashMap">
+       SELECT MAX(D.SL_NO) AS SL_NO,max(D.LAST_INT_APPL_DT) AS LAST_INT_APPL_DT FROM DEPOSIT_SUB_ACINFO_SAMENO
+       D WHERE D.DEPOSIT_NO=#DEPOSIT_NO:VARCHAR# AND (AUTHORIZE_STATUS !='REJECTED' OR AUTHORIZE_STATUS ='AUTHORIZED') 
+   </mapped-statement>
+   
+   <mapped-statement name="getRdInterest" result-class="java.util.HashMap">
+        SELECT nvl(GET_RD_INTEREST(#DEPOSIT_NO:VARCHAR#,#CURR_DT:DATE#),0) AS RD_INTEREST FROM DUAL
+    </mapped-statement> 
+
+   <mapped-statement name="insertMultipletoSingleMSGDeliver" result-class = "java.util.HashMap">
+        INSERT INTO MULTIPLE_MSG_TO_SINGLE_MSG (CUST_ID, ACT_NUM, TRANS_DT, STATUS, STATUS_BY,SATUS_DT, INT_AMT,SCREEN_NAME
+        ) VALUES (#CUST_ID:VARCHAR#, #ACT_NUM:VARCHAR#, #TRANS_DT:DATE#, #STATUS:VARCHAR#, #STATUS_BY:VARCHAR#, 
+        (SELECT SYS_DATE() FROM DUAL), #INT_AMT:NUMERIC#,#SCREEN_NAME:VARCHAR#)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSMSTodaysNotProcessedRecords" result-class="java.util.HashMap">
+        SELECT MM.CUST_ID,get_cust_name(C.CUST_ID) AS CNAME,TRANS_DT,COUNT(MM.CUST_ID) AS RECORD_COUNT FROM 
+        MULTIPLE_MSG_TO_SINGLE_MSG MM,CUSTOMER C WHERE C.CUST_ID = MM.CUST_ID AND TRANS_DT = #TRANS_DT:DATE# AND NVL(PROCESSED_FLAG,'N') = 'N' 
+        <dynamic>
+        <isParameterPresent>
+            <isNotNull prepend="AND" property="INT_AMOUNT_CHECK">
+                 INT_AMT IS NOT NULL
+            </isNotNull>           
+        </isParameterPresent>    
+        <isParameterPresent>
+            <isNotNull prepend="AND" property="SCREEN_NAME">
+                 SCREEN_NAME = #SCREEN_NAME#
+            </isNotNull>           
+        </isParameterPresent>
+        </dynamic> 
+        GROUP BY MM.CUST_ID, get_cust_name(C.CUST_ID), TRANS_DT 
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSingleCustomerIntAmt" result-class="java.util.HashMap">
+        SELECT INT_AMT,DA.DEPOSIT_NO||'_1',MM.ACT_NUM FROM MULTIPLE_MSG_TO_SINGLE_MSG MM,DEPOSIT_ACINFO DA 
+        WHERE MM.CUST_ID = DA.CUST_ID AND DA.CUST_ID = #CUST_ID:VARCHAR# AND MM.TRANS_DT = #TRANS_DT:DATE# AND NVL(PROCESSED_FLAG,'N') = 'N' AND INT_AMT IS NOT NULL
+        <dynamic>
+        <isParameterPresent>
+            <isNotNull prepend="AND" property="DEPOSIT_INTEREST_SCREEN">
+                 DA.DEPOSIT_NO||'_1' = MM.ACT_NUM
+            </isNotNull>  
+            <isNotNull prepend="AND" property="DEPOSIT_MULTIPLE_RENEWAL">
+                 DA.DEPOSIT_NO = MM.ACT_NUM
+            </isNotNull>          
+        </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getMultipleCustomerIntAmt" result-class="java.util.HashMap">
+        SELECT SUM(INT_AMT) INT_AMT FROM MULTIPLE_MSG_TO_SINGLE_MSG MM,DEPOSIT_ACINFO DA 
+        WHERE MM.CUST_ID = DA.CUST_ID AND DA.CUST_ID = #CUST_ID:VARCHAR# AND MM.TRANS_DT = #TRANS_DT:DATE# AND NVL(PROCESSED_FLAG,'N') = 'N' AND INT_AMT IS NOT NULL
+        <dynamic>
+        <isParameterPresent>
+            <isNotNull prepend="AND" property="DEPOSIT_INTEREST_SCREEN">
+                 DA.DEPOSIT_NO||'_1' = MM.ACT_NUM
+            </isNotNull>  
+            <isNotNull prepend="AND" property="DEPOSIT_MULTIPLE_RENEWAL">
+                 DA.DEPOSIT_NO = MM.ACT_NUM
+            </isNotNull>          
+        </isParameterPresent>
+        </dynamic>
+        GROUP BY MM.CUST_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateMultipletoSingleMSGDeliver" result-class = "java.util.HashMap">
+        UPDATE MULTIPLE_MSG_TO_SINGLE_MSG SET PROCESSED_FLAG = 'Y' WHERE CUST_ID = #CUST_ID:VARCHAR# AND TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="updateTotalIntAmountForSpecialRD" result-class = "java.util.HashMap">      
+        DEPOSIT_SUB_ACINFO 
+        SET TOT_INT_AMT =
+        NVL (TOT_INT_AMT, 0)
+        + (NVL (TOTAL_INT_CREDIT, 0) - NVL (TOT_INT_AMT, 0))
+        WHERE     DEPOSIT_NO = #DEPOSIT_NO:VARCHAR# 
+        AND (NVL (TOTAL_INT_CREDIT, 0) > NVL (TOT_INT_AMT, 0))
+    </mapped-statement>
+    
+    <mapped-statement name="getSpecialRdInterest" result-class="java.util.HashMap">
+        SELECT nvl(GET_SPECIAL_RD_INTEREST(#DEPOSIT_NO:VARCHAR#,#CURR_DT:DATE#),0) AS RD_INTEREST FROM DUAL
+    </mapped-statement> 
+    
+</sql-map>        

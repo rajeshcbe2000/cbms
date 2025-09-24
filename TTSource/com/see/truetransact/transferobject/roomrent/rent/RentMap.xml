@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="RentMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+  
+    <dynamic-mapped-statement name="Rent.getSelectRentList" result-class="java.util.LinkedHashMap">
+        SELECT RMNUMBER as ROOM_NUMBER,BUILDING_NUM as BUILDING_NUMBER,RSTATUS as ROOM_STATUS FROM RENT_PROFILE  
+        WHERE (STATUS != 'DELETED' OR STATUS IS NULL )  
+    </dynamic-mapped-statement>
+     
+    <mapped-statement name="insertRentTO" inline-parameters="true">
+        INSERT INTO RENT_PROFILE
+        (RMNUMBER,BUILDING_NUM,BUILDING_DES,
+        RENT_AC_HD_ID,PENEL_AC_HD_ID,NOTICE_AC_HD_ID,
+        LEGAL_AC_HD_ID,ARB_AC_HD_ID,COURT_AC_HD_ID,
+        EXE_AC_HD_ID,RSTATUS,AUTHORIZE_STATUS,
+        AUTHORIZED_BY,AUTHORIZED_DT,STATUS,STATUS_BY,
+        ADV_RENT_ACT_HD_ID,BRANCH_CODE) VALUES 
+        (#rmNumber:VARCHAR#,#buildingNo:VARCHAR#,#buildingDes:VARCHAR#,
+        #rentAccHead:VARCHAR#,#penelAccHead:VARCHAR#,#noticeAccHead:VARCHAR#,
+        #legalAccHead:VARCHAR#,#arbAccHead:VARCHAR#,#courtGrpHead:VARCHAR#,
+        #exeGrpHead:VARCHAR#,#rStatus:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#status_by:VARCHAR#,#advHead:VARCHAR#,
+        #branchId:VARCHAR#)
+    </mapped-statement> 
+    <mapped-statement name="insertRentDetailsTO" inline-parameters="true">
+        INSERT INTO RENT_DETAILS
+        (RDID,RMNUMBER,ROOMNUM,VERSION_NUM,EFF_DATE,RENT_AMT,
+        RENT_FRQ,PENEL_RATE,AUTHORIZE_STATUS,
+        AUTHORIZED_BY,AUTHORIZED_DT,STATUS
+        ) VALUES 
+        (#rentDetailsId:VARCHAR#,#rmNumber:VARCHAR#,#roomNo:VARCHAR#,
+        #versNo:VARCHAR#,#effDate:DATE#,#rentAmt:NUMBER#,
+        #rentFeq:VARCHAR#,#penelRate:NUMBER#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#)
+    </mapped-statement> 
+        
+    <mapped-statement name="updateRentTO" inline-parameters="true">
+        UPDATE RENT_PROFILE SET 
+        BUILDING_NUM=#buildingNo:VARCHAR#,
+        BUILDING_DES=#buildingDes:VARCHAR#,
+        RENT_AC_HD_ID=#rentAccHead:VARCHAR#,
+        PENEL_AC_HD_ID=#penelAccHead:VARCHAR#,
+        NOTICE_AC_HD_ID=#noticeAccHead:VARCHAR#,
+        LEGAL_AC_HD_ID=#legalAccHead:VARCHAR#,
+        ARB_AC_HD_ID=#arbAccHead:VARCHAR#,
+        COURT_AC_HD_ID=#courtGrpHead:VARCHAR#,
+        EXE_AC_HD_ID=#exeGrpHead:VARCHAR#,
+        RSTATUS=#rStatus:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #status_by:VARCHAR#,
+        ADV_RENT_ACT_HD_ID = #advHead:VARCHAR#
+        WHERE RMNUMBER = #rmNumber:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="updateRentDetailsTO" inline-parameters="true">
+        UPDATE RENT_DETAILS SET 
+        ROOMNUM=#roomNo:VARCHAR#,
+        EFF_DATE=#effDate:DATE#,
+        RENT_AMT=#rentAmt:NUMBER#,
+        RENT_FRQ=#rentFeq:VARCHAR#,
+        PENEL_RATE=#penelRate:NUMBER#
+        WHERE RMNUMBER = #rmNumber:VARCHAR# AND RDID=#rentDetailsId:VARCHAR#  AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+	
+    <mapped-statement name="deleteRentTO" inline-parameters="true">
+        UPDATE RENT_PROFILE SET 
+        STATUS = #status:VARCHAR# 
+        WHERE RMNUMBER = #rmNumber:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+    <mapped-statement name="deleteRentdetails" inline-parameters="true">
+        UPDATE RENT_DETAILS SET 
+        STATUS = #STATUS:VARCHAR# 
+        WHERE RDID = #RDID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+       
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getRentAuthorizeList" result-class="java.util.LinkedHashMap">
+        Select RMNUMBER as ROOM_NUMBER,BUILDING_NUM as BUILDING_NUMBER,RSTATUS as ROOM_STATUS From RENT_PROFILE RP 
+        Where STATUS!='DELETED' And AUTHORIZE_STATUS Is Null
+        and (STATUS_BY!=#STATUS_BY:VARCHAR# or STATUS_BY is null)
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND
+                <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        #HIERARCHY_ID# &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = RP.STATUS_BY)  
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION">
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION">
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  RMNUMBER
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeRent" result-class="java.util.HashMap">
+        UPDATE RENT_PROFILE  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  RMNUMBER = #RMNUMBER:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeRentDetails" result-class="java.util.HashMap">
+        UPDATE RENT_DETAILS  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  RMNUMBER = #RMNUMBER:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getRentTOResult" class="com.see.truetransact.transferobject.roomrent.rent.RentTO">
+        <property name="rmNumber" column="RMNUMBER"/>
+        <property name="buildingNo" column="BUILDING_NUM"/>
+        <property name="buildingDes" column="BUILDING_DES"/>
+        <property name="rentAccHead" column="RENT_AC_HD_ID"/>
+        <property name="penelAccHead" column="PENEL_AC_HD_ID"/>
+        <property name="noticeAccHead" column="NOTICE_AC_HD_ID"/>
+        <property name="legalAccHead" column="LEGAL_AC_HD_ID"/>
+        <property name="arbAccHead" column="ARB_AC_HD_ID"/>
+        <property name="courtGrpHead" column="COURT_AC_HD_ID"/>
+        <property name="exeGrpHead" column="EXE_AC_HD_ID"/>
+        <property name="rStatus" column="RSTATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="status_by" column="STATUS_BY"/>
+        <property name="advHead" column="ADV_RENT_ACT_HD_ID"/>
+               
+    </result-map>
+    <result-map name="getRentDetailsTOResult" class="com.see.truetransact.transferobject.roomrent.rent.RentTO">
+        <property name="rentDetailsId" column="RDID"/>
+        <property name="rmNumber" column="RMNUMBER"/>
+        <property name="roomNo" column="ROOMNUM"/>
+        <property name="versNo" column="VERSION_NUM"/>
+        <property name="effDate" column="EFF_DATE"/>
+        <property name="rentAmt" column="RENT_AMT"/>
+        <property name="rentFeq" column="RENT_FRQ"/>
+        <property name="penelRate" column="PENEL_RATE"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+               
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="Rent.getSelectRent" result-map="getRentTOResult">
+        <!--    SELECT * FROM VW_RENT_DETAILS 
+		WHERE RPSTATUS NOT IN ('DELETED') and AUTH_STATUS IS NULL AND RMNUMBER =#RMNUMBER:VARCHAR# -->
+        SELECT * FROM RENT_PROFILE WHERE STATUS NOT IN ('DELETED') AND RMNUMBER =#RMNUMBER:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="Rent.getSelectRentDetails" result-map="getRentDetailsTOResult">
+        <!--    SELECT * FROM VW_RENT_DETAILS 
+		WHERE RPSTATUS NOT IN ('DELETED') and AUTH_STATUS IS NULL AND RMNUMBER =#RMNUMBER:VARCHAR# -->
+        SELECT * FROM VW_RENT_DETAILS 
+        WHERE  RMNUMBER =#RMNUMBER:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getRentTableData" result-class="java.util.HashMap">
+        SELECT ROOMNUM,VERSION_NUM,EFF_DATE,RENT_AMT,RENT_FRQ,PENEL_RATE,RDID FROM RENT_DETAILS
+        WHERE RMNUMBER=#RMNUMBER:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL ) 
+    </mapped-statement>
+    <mapped-statement name="getBuildingNoCount" result-class="java.util.HashMap"> 
+        SELECT COUNT(RMNUMBER) AS COUNT FROM rent_profile where BUILDING_NUM=#BUILDING_NUM:VARCHAR# AND (STATUS != 'DELETED' OR STATUS IS NULL ) 
+    </mapped-statement> 
+</sql-map>

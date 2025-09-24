@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SettlementTOMap">
+
+    <mapped-statement name="insertSettlementTOcommon" inline-parameters="true">
+        INSERT INTO settlement
+        (SL_NO, BANK_NAME, BRANCH_NAME, FROM_CHQ, TO_CHQ, QTY, CHQ_DATE, CHQ_AMT, CLR_DATE, BOUNC_REASON , REMARK, CHQ_BOUNC, STATUS, RETURN_CHQ, CHQ_STATUS,ACCT_NUM
+        ) VALUES (
+        #slNo:NUMERIC#, #bankNameSet:VARCHAR#, #branchNameSet:VARCHAR#, #fromChqNo:NUMERIC#, #toChqNo:NUMERIC#, #qty:NUMERIC#, #chqDate:DATE#, #chqAmt:NUMERIC#, #clearingDt:DATE#, #bounReason:VARCHAR#, #remark:VARCHAR#, #chqBoun:VARCHAR#, #status:VARCHAR#, #returnChq:VARCHAR#, #chqStatus:VARCHAR#,#acctNum:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="updateSettlementTOcommon" inline-parameters="true">
+        UPDATE settlement SET
+        BANK_NAME = #bankNameSet:VARCHAR#,
+        BRANCH_NAME = #branchNameSet:VARCHAR#,
+        FROM_CHQ = #fromChqNo:NUMERIC#,
+        TO_CHQ = #toChqNo:NUMERIC#,
+        QTY = #qty:NUMERIC#,
+        CHQ_DATE = #chqDate:DATE#,
+        CHQ_AMT = #chqAmt:NUMERIC#,
+        CLR_DATE = #clearingDt:DATE#,
+        BOUNC_REASON = #bounReason:VARCHAR#,
+        REMARK = #remark:VARCHAR#,
+        CHQ_BOUNC = #chqBoun:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        RETURN_CHQ = #returnChq:VARCHAR#,
+        CHQ_STATUS = #chqStatus:VARCHAR#
+        where FROM_CHQ = #fromChqNo:NUMERIC#
+    </mapped-statement>
+        
+    <result-map name="getSettlementTOResult" class="com.see.truetransact.transferobject.termloan.settlement.SettlementTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="bankNameSet" column="BANK_NAME"/>
+        <property name="branchNameSet" column="BRANCH_NAME"/>
+        <property name="fromChqNo" column="FROM_CHQ"/>
+        <property name="toChqNo" column="TO_CHQ"/>
+        <property name="qty" column="QTY"/>
+        <property name="chqDate" column="CHQ_DATE"/>
+        <property name="chqAmt" column="CHQ_AMT"/>
+        <property name="clearingDt" column="CLR_DATE"/>
+        <property name="bounReason" column="BOUNC_REASON"/>
+        <property name="remark" column="REMARK"/>
+        <property name="chqBoun" column="CHQ_BOUNC"/>
+        <property name="status" column="STATUS"/>
+        <property name="returnChq" column="RETURN_CHQ"/>
+        <property name="chqStatus" column="CHQ_STATUS"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+    </result-map>
+    <mapped-statement name="getSettlementDetails" result-class="java.util.LinkedHashMap">
+        SELECT FROM_CHQ,CHQ_DATE,CHQ_AMT,CHQ_DATE,STATUS FROM settlement where
+        CHQ_STATUS = "UNUSED" WHERE ACCT_NUM=#acctNum:VARCHAR# ORDER BY FROM_CHQ
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSettlementTOcommon" result-map="getSettlementTOResult" >
+        SELECT * FROM settlement WHERE ACCT_NUM=#ACCT_NUM:VARCHAR#  ORDER BY FROM_CHQ
+    </mapped-statement>
+        
+    <mapped-statement name="deleteSettlementTOcommon" inline-parameters="true">
+        UPDATE settlement SET 
+        STATUS = #status:VARCHAR#
+    </mapped-statement>
+        
+        <!--<mapped-statement name="updateChqRetStatus" inline-parameters="true">
+                UPDATE settlement SET 
+                RETURN_CHQ = #RETURN_CHQ# and CHQ_STATUS = #CHQ_STATUS#
+                where FROM_CHQ = #FROM_CHQ#
+	</mapped-statement>-->
+        
+    <dynamic-mapped-statement name="updateChqRetStatus" result-class="java.util.HashMap">
+        UPDATE settlement SET 
+        RETURN_CHQ = #RETURN_CHQ:VARCHAR#, CHQ_STATUS = #CHQ_STATUS:VARCHAR#
+        <dynamic>
+            <isNotEmpty prepend=" WHERE FROM_CHQ IN ( " property="FROM_CHQ">
+                $FROM_CHQ$ )
+            </isNotEmpty>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="insertSettlementBankTOcommon" inline-parameters="true">
+        INSERT INTO settlement_bank
+        (BANK_NAME, BRANCH_NAME, acct_type, ACT_NUM, SET_MODE,LOAN_ACCT_NUM
+        ) VALUES (
+        #bankName:VARCHAR#, #branchName:VARCHAR#, #actType:VARCHAR#, #actNo:VARCHAR#, #setMode:VARCHAR#,#loanAcctNum:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateSettlementBankTOcommon" inline-parameters="true">
+        UPDATE settlement_bank SET 
+        BANK_NAME = #bankName:VARCHAR#,
+        BRANCH_NAME = #branchName:VARCHAR#,
+        acct_type = #actType:VARCHAR#,
+        ACT_NUM = #actNo:VARCHAR#,
+        SET_MODE = #setMode:VARCHAR#
+        WHERE LOAN_ACCT_NUM=#loanAcctNum#
+    </mapped-statement>
+        
+    <result-map name="getSettlementBankTOResult" class="com.see.truetransact.transferobject.termloan.settlement.SettlementBankTO">
+        <property name="bankName" column="BANK_NAME"/>
+        <property name="branchName" column="BRANCH_NAME"/>
+        <property name="actType" column="ACCT_TYPE"/>
+        <property name="actNo" column="ACT_NUM"/>
+        <property name="setMode" column="SET_MODE"/>
+        <property name="loanAcctNum" column="LOAN_ACCT_NUM"/>
+                
+    </result-map>
+        
+    <mapped-statement name="getSelectSettlementBankTOcommon" result-map="getSettlementBankTOResult" >
+        SELECT * FROM settlement_bank WHERE LOAN_ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateActTransTOcommon" inline-parameters="true">
+        UPDATE acct_transfer SET
+        BANK_NAME=#bankName:VARCHAR#,
+        BRANCH_NAME=#branchName:VARCHAR#
+        WHERE ACCT_NUM=#acctNum:VARCHAR#
+    </mapped-statement>
+         
+         
+    <mapped-statement name="insertActTransTOcommon" inline-parameters="true">
+        INSERT INTO acct_transfer
+        (BANK_NAME, BRANCH_NAME, TO_REF_NO, TO_AMOUNT, SEC_DOC_REC, PO_DD_NO, PO_DD_DT,PO_DD_AMT,REMARKS,STATUS,ACCT_NUM
+        ) VALUES (
+        #bankName:VARCHAR#, #branchName:VARCHAR#, #toRefNo:VARCHAR#, #toAmt:NUMERIC#, #secDocRec:VARCHAR#, #poddNo:VARCHAR#, #poddDt:DATE#, #poddAmt:NUMERIC#, #remarks:VARCHAR#, #status:VARCHAR#,#acctNum:VARCHAR#)
+    </mapped-statement>
+	
+        
+    <result-map name="getActTransTOResult" class="com.see.truetransact.transferobject.termloan.accounttransfer.ActTransTO">
+        <property name="bankName" column="BANK_NAME"/>
+        <property name="branchName" column="BRANCH_NAME"/>
+        <property name="toRefNo" column="TO_REF_NO"/>
+        <property name="toAmt" column="TO_AMOUNT"/>
+        <property name="secDocRec" column="SEC_DOC_REC"/>
+        <property name="poddNo" column="PO_DD_NO"/>
+        <property name="poddDt" column="PO_DD_DT"/>
+        <property name="poddAmt" column="PO_DD_AMT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="acctNum" column="ACCT_NUM"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectActTransTOcommon" result-map="getActTransTOResult" >
+        SELECT * FROM acct_transfer where ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteActTransTOcommon" inline-parameters="true">
+        UPDATE acct_transfer SET 
+        STATUS = #status:VARCHAR#  where ACCT_NUM=#ACCT_NUM:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

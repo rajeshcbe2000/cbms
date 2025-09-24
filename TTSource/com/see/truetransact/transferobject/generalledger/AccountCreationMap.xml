@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.  
+ * 
+ *
+    Document   : AccountCreationMap.xml
+    Created on : August 18, 2003, 3:20 PM
+    Author     : annamalai
+    Description:
+        Purpose of the document follows.
+            To provide a XML file that gives the reference ID and Description if the ID is given.
+-->
+
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AccountCreationMap">
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to
+	be auto-mapped results to AccountCreationTO object (JavaBean) properties -->
+    
+    <mapped-statement name="insertAccountCreation" inline-parameters="true">
+        INSERT INTO AC_HD
+        (MJR_AC_HD_ID, SUB_AC_HD_ID, AC_HD_CODE, AC_HD_ID, AC_HD_DESC, STATUS, CREATED_DT, DELETED_DT, AUTHORIZE_STATUS, AUTHORIZE_BY, 
+        AUTHORIZE_DT, STATUS_BY, STATUS_DT, REC_DETAILED_IN_DAYBOOK, PAY_DETAILED_IN_DAYBOOK, AC_HD_ORDER
+        ) VALUES (
+        #mjrAcHdId:VARCHAR#,#subAcHdId:VARCHAR#,#acHdCode:VARCHAR#, TRIM(#acHdId:VARCHAR#), TRIM(#acHdDesc:VARCHAR#), #status:VARCHAR#, 
+        #createdDt:TIMESTAMP#, #deletedDt:DATE#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #statusBy:VARCHAR#, 
+        #statusDt:TIMESTAMP#, #recDayBook:VARCHAR#, #payDayBook:VARCHAR#, #acHeadOrder#)
+    </mapped-statement>	
+        
+    <mapped-statement name="updateAccountCreation" inline-parameters="true">
+        UPDATE AC_HD SET 
+        MJR_AC_HD_ID = #mjrAcHdId:VARCHAR#,
+        SUB_AC_HD_ID = #subAcHdId:VARCHAR#,
+        AC_HD_CODE = #acHdCode:VARCHAR#,
+<!--		AC_HD_ID = #acHdId:VARCHAR#, -->
+        AC_HD_DESC = #acHdDesc:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+<!--		CREATED_DT = #createdDt:DATE#, -->
+        DELETED_DT = #deletedDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        REC_DETAILED_IN_DAYBOOK = #recDayBook:VARCHAR#,
+        PAY_DETAILED_IN_DAYBOOK = #payDayBook:VARCHAR#,
+        AC_HD_ORDER = #acHeadOrder:VARCHAR#
+        WHERE AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>        
+        
+    <mapped-statement name="deleteAccountCreation" inline-parameters="true">
+        UPDATE AC_HD SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        DELETED_DT = #deletedDt:DATE#
+        WHERE AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAllActiveAccountHead" result-class="java.util.LinkedHashMap">
+        SELECT MJR_AC_HD_ID as "Major Head Code",
+        SUB_AC_HD_ID as "Sub Head Code", AC_HD_CODE as "A/C HEAD Code",
+        AC_HD_DESC as "Account HEAD DESCRIPTION", AC_HD_ID as "Account Head",
+        AUTHORIZE_STATUS as "Authorize Status" 
+        FROM AC_HD 
+        WHERE UPPER(STATUS) NOT IN ('DELETED') AND 
+        (AUTHORIZE_STATUS NOT IN ('REJECTED') 
+        OR AUTHORIZE_STATUS IS NULL) 
+        <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Major Head Code">
+                    UPPER(MJR_AC_HD_ID) LIKE UPPER('%$Major Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="Sub Head Code">
+                    UPPER(SUB_AC_HD_ID) LIKE UPPER('%$Sub Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD Code">
+                    UPPER(AC_HD_CODE) LIKE UPPER('%$A/C Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account HEAD DESCRIPTION">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$Account Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Account Head">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$Account Head$%')
+                </isNotNull>
+            </isParameterPresent>
+</dynamic>
+            ORDER BY AC_HD_CODE
+   </dynamic-mapped-statement>
+      
+    <mapped-statement name="getAccountCreationDetails" result-class= "java.util.HashMap" >
+        SELECT MJR_AC_HD.MJR_AC_HD_TYPE,MJR_AC_HD.MJR_AC_HD_ID,AC_HD.SUB_AC_HD_ID,AC_HD.AC_HD_ID,
+        AC_HD.AC_HD_CODE, AC_HD.AC_HD_DESC, REC_DETAILED_IN_DAYBOOK, PAY_DETAILED_IN_DAYBOOK, AC_HD_ORDER 
+        FROM AC_HD,MJR_AC_HD WHERE AC_HD.AC_HD_ID = #ACCOUNT_HEAD:VARCHAR# AND MJR_AC_HD.MJR_AC_HD_ID = AC_HD.MJR_AC_HD_ID
+    </mapped-statement>
+      
+    <mapped-statement name="getMaxAcHdCode" result-class= "java.util.HashMap" >
+        <!--SELECT MAX(AC_HD_CODE)  FROM AC_HD WHERE AC_HD_CODE LIKE #AC_HD_CODE:VARCHAR# || '%'-->
+        SELECT MAX(to_number(AC_HD_CODE)) as AC_HD_CODE FROM AC_HD WHERE AC_HD_CODE LIKE #AC_HD_CODE:VARCHAR# || '%'
+    </mapped-statement>           
+        
+<!-- ==============================AUTHORIZATION===================================================== -->
+    <dynamic-mapped-statement name="getSelectAccCreationAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT MJR_AC_HD_ID as "Major Head Code",SUB_AC_HD_ID as "Sub Head Code",
+        AC_HD_ID as "Account Head",AC_HD_CODE as "A/C HEAD Code",
+        AC_HD_DESC as "Account HEAD DESCRIPTION"
+        FROM AC_HD AC
+        WHERE UPPER(STATUS) NOT IN ('DELETED') 
+        AND AC.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = AC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AC.AUTHORIZE_STATUS IS NULL OR 
+                AC.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY AC_HD_CODE
+    </dynamic-mapped-statement>
+
+	<!-- Use authorizeAccMaintain object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="authorizeAccCreation" result-class="java.util.HashMap">
+        UPDATE AC_HD SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE AC_HD_ID = #ACCOUNT HEAD:VARCHAR# 
+    </mapped-statement>
+<!-- =================================================================================== -->   
+    
+    <mapped-statement name="acHdCreation.acHdTree" result-class="java.util.LinkedHashMap" >
+        SELECT MJR_AC_HD.MJR_AC_HD_TYPE, MJR_AC_HD.MJR_AC_HD_DESC || '(' || MJR_AC_HD.MJR_AC_HD_ID || ')' AS "MJR_AC_HD", SUB_AC_HD.SUB_AC_HD_DESC || '(' || SUB_AC_HD.SUB_AC_HD_ID || ')' AS "SUB_AC_HD", AC_HD.AC_HD_DESC || '(' ||  AC_HD.AC_HD_ID || ')' AS "AC_HD_ID" FROM AC_HD,MJR_AC_HD,SUB_AC_HD WHERE AC_HD.MJR_AC_HD_ID = MJR_AC_HD.MJR_AC_HD_ID AND MJR_AC_HD.MJR_AC_HD_ID = SUB_AC_HD.MJR_AC_HD_ID AND  AC_HD.SUB_AC_HD_ID = SUB_AC_HD.SUB_AC_HD_ID ORDER BY AC_HD_CODE
+    </mapped-statement>   
+         
+    <mapped-statement name="acHdCreation.acHdExistance" result-class= "java.lang.Integer" >
+        SELECT COUNT(*) FROM AC_HD_PARAM WHERE AC_HD_ID = #ACC_HD:VARCHAR# AND STATUS != 'DELETED' AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    
+</sql-map>

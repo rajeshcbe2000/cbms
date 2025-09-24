@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DamageMap">
+    <mapped-statement name="getTradingProductID" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,PRODUCT_NAME,CREATED_DT,AUTHORIZE_STATUS FROM TRADING_PRODUCT  WHERE STATUS !='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+    
+     <mapped-statement name="getTradingStockID" result-class="java.util.LinkedHashMap">
+        SELECT STOCK_ID,STOCK_TYPE,STOCK_SALES_PRICE,STOCK_PURCHASE_PRICE,STOCK_QUANT,PRO_NAME FROM TRADING_STOCK WHERE PRODUCT_ID = #PROD_ID# 
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="insertTradingDamageTO" inline-parameters="true">
+        INSERT INTO TRADING_DAMAGE (DAMAGE_ID, SL_NO, PROD_ID, STOCK_ID,
+        PROD_NAME,UNIT_TYPE,PURCHASE_PRICE,SALES_PRICE,DAMAGE_QTY,
+        DAMAGE_DT,AVAIL_QTY,TOTAL_AMT,STATUS,STATUS_BY ,STATUS_DT)
+        VALUES(
+        #damageID:VARCHAR#, #slNo:VARCHAR#,#prodID:VARCHAR#,#stockID:VARCHAR#,#prodName:VARCHAR#,
+        #unitType:VARCHAR#,#purchasePrice:NUMERIC#,#salesPrice:NUMERIC#,#damageQty:NUMERIC#,#damageDt:DATE#,#availQty:NUMERIC#,
+        #totAmt:NUMERIC#,#status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingDamageTO" inline-parameters="true">
+        UPDATE TRADING_DAMAGE SET 
+        PROD_ID = #prodID:VARCHAR#,
+        STOCK_ID = #stockID:VARCHAR#,
+        PROD_NAME = #prodName:VARCHAR#,
+        UNIT_TYPE = #unitType:VARCHAR#,
+        PURCHASE_PRICE = #purchasePrice:NUMERIC#,
+        SALES_PRICE = #salesPrice:NUMERIC#,
+        DAMAGE_QTY = #damageQty:NUMERIC#,
+        DAMAGE_DT =#damageDt:DATE#,
+        AVAIL_QTY = #availQty:NUMERIC#,
+        TOTAL_AMT = #totAmt:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE DAMAGE_ID = #damageID:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingDamageDetailsTO" inline-parameters="true">
+        UPDATE TRADING_DAMAGE SET STATUS = #status:VARCHAR# WHERE 
+        DAMAGE_ID = #damageID:VARCHAR# AND SL_NO = #slNo:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <result-map name="getTradingDamageTOResult" class="com.see.truetransact.transferobject.trading.damage.DamageTO">
+        <property name="damageID" column="DAMAGE_ID"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="prodID" column="PROD_ID"/>
+        <property name="stockID" column="STOCK_ID"/>
+        <property name="prodName" column="PROD_NAME"/>
+        <property name="unitType" column="UNIT_TYPE"/>
+        <property name="purchasePrice" column="PURCHASE_PRICE"/>
+        <property name="salesPrice" column="SALES_PRICE"/>
+        <property name="damageQty" column="DAMAGE_QTY"/>
+        <property name="damageDt" column="DAMAGE_DT"/>
+        <property name="availQty" column="AVAIL_QTY"/>
+        <property name="totAmt" column="TOTAL_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <mapped-statement name="getTradingDamageIDForEdit" result-class="java.util.LinkedHashMap">
+        SELECT DAMAGE_ID,SUM(DAMAGE_QTY)AS DAMAGE_QTY,SUM(TOTAL_AMT)AS TOTAL_AMT,DAMAGE_DT,AUTHORIZE_STATUS FROM TRADING_DAMAGE WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS IS NULL 
+        GROUP BY DAMAGE_ID,DAMAGE_DT,AUTHORIZE_STATUS ORDER BY DAMAGE_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingDamageIDForEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT DAMAGE_ID,SUM(DAMAGE_QTY)AS DAMAGE_QTY,SUM(TOTAL_AMT)AS TOTAL_AMT,DAMAGE_DT,AUTHORIZE_STATUS FROM TRADING_DAMAGE WHERE STATUS!='DELETED'
+        GROUP BY DAMAGE_ID,DAMAGE_DT,AUTHORIZE_STATUS ORDER BY DAMAGE_ID
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingDamageDetailsTO" result-map="getTradingDamageTOResult" >
+        SELECT * FROM TRADING_DAMAGE WHERE DAMAGE_ID = #DAMAGE_ID# AND STATUS != 'DELETED' ORDER BY SL_NO
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingDamageGrandTotal" result-class="java.util.HashMap">
+       SELECT SUM(TOTAL_AMT) AS GRAND_TOTAL FROM TRADING_DAMAGE WHERE DAMAGE_ID = #DAMAGE_ID# AND STATUS !='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingDamage" result-class="java.util.HashMap">
+        UPDATE TRADING_DAMAGE SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND DAMAGE_ID = #DAMAGE_ID# 
+    </mapped-statement>
+</sql-map>

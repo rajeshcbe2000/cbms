@@ -1,0 +1,2810 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition. 
+ * 
+ * GDSReceiptEntryOB.java
+ *
+ * Created on January 7, 2004, 5:14 PM
+ *
+ */
+package com.see.truetransact.ui.gdsapplication.gdsreceiptentry;
+
+/**
+ *
+ * @author Nithya
+ *
+ */
+//import java.util.Observable;=
+import java.util.List;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import com.see.truetransact.ui.TrueTransactMain;
+import com.see.truetransact.commonutil.DateUtil;
+import com.see.truetransact.clientutil.ClientUtil;
+import com.see.truetransact.commonutil.CommonUtil;
+import com.see.truetransact.uicomponent.CObservable;
+import com.see.truetransact.clientproxy.ProxyFactory;
+import com.see.truetransact.commonutil.CommonConstants;
+import com.see.truetransact.clientutil.ClientConstants;
+import com.see.truetransact.clientproxy.ProxyParameters;
+import com.see.truetransact.clientutil.EnhancedTableModel;
+import com.see.truetransact.ui.common.transaction.TransactionOB;
+import com.see.truetransact.clientexception.ClientParseException;
+import com.see.truetransact.clientutil.ComboBoxModel;
+import com.see.truetransact.commonutil.interestcalc.Rounding;
+import com.see.truetransact.transferobject.gdsapplication.gdsreceiptentry.GDSReceiptEntryTO;
+import com.see.truetransact.transferobject.common.transaction.TransactionTO;
+import java.util.*;
+import com.see.truetransact.transferobject.servicetax.servicetaxdetails.ServiceTaxDetailsTO;
+import com.see.truetransact.ui.common.servicetax.ServiceTaxCalculation;
+
+public class GDSReceiptEntryOB extends CObservable {
+
+    private String lblStatus = ClientConstants.ACTION_STATUS[ClientConstants.ACTIONTYPE_CANCEL];
+    private final static ClientParseException parseException = ClientParseException.getInstance();
+   // java.util.ResourceBundle objMDSReceiptEntryRB = java.util.ResourceBundle.getBundle("com.see.truetransact.ui.gdsapplication.gdsreceiptentry.MDSReceiptEntryRB", ProxyParameters.LANGUAGE);
+    private HashMap hash;
+    private HashMap operationMap;
+    private ProxyFactory proxy;
+    private HashMap lookUpHash;
+    private HashMap keyValue;
+    private ArrayList key;
+    private ArrayList value;
+    private int actionType;
+    private int result;
+    private boolean closureFlag = false;
+    private GDSReceiptEntryTO mdsReceiptEntryTO = null;
+    private GDSReceiptEntryTO splitMDSReceiptEntryTO = null;
+    private HashMap oldTransDetMap = new HashMap();
+    private HashMap MDSTransListMap = new HashMap();
+    private HashMap wholeSplitMapp = new HashMap();
+    private TransactionOB transactionOB;
+    private LinkedHashMap allowedTransactionDetailsTO = null;
+    private LinkedHashMap transactionDetailsTO = null;
+    private LinkedHashMap deletedTransactionDetailsTO = null;
+    private final String DELETED_TRANS_TOs = "DELETED_TRANS_TOs";
+    private final String NOT_DELETED_TRANS_TOs = "NOT_DELETED_TRANS_TOs";
+     private HashMap installGraceDate = null;
+    private String txtGDSName = "";
+    private String txtChittalNo = "";
+    private String lblMemberNameVal = "";
+    private double bonusListNew=0.0;
+    double instAmount = 0.0, penalAmount = 0.0, bonusAmount = 0.0, noticeAmount = 0.0,arbitrationAmount = 0.0,serviceTaxAmount = 0.0;
+    private String lblMemberNo = "";
+    private String txtSchemeName = "";
+    private String txtDivisionNo = "";
+    private String tdtChitStartDt = "";
+    private String tdtChitEndDt = "";
+    private String tdtInsUptoPaid = "";
+    private String txtNoOfInst = "";
+    private String txtSubNo = "";
+    private String txtCurrentInstNo = "";
+    private String txtInstAmt = "";
+    private String txtPendingInst = "";
+    private String txtPaidInst = "";
+    private String txtTotalInstAmt = "";
+    private String txtBonusAmtAvail = "";
+    private boolean rdoPrizedMember_Yes = false;
+    private boolean rdoPrizedMember_No = false;
+    private boolean rdoBankPay_Yes = false;
+    private boolean rdoBankPay_No = false;
+    private String txtNoticeAmt = "";
+    private String txtAribitrationAmt = "";
+    private String txtNoOfInstToPaay = "";
+    private String txtInstPayable = "";
+    private String txtPenalAmtPayable = "";
+    private String txtBonusAmt = "";
+    private String txtDiscountAmt = "";
+    private String txtInterest = "";
+    private String txtNetAmtPaid = "";
+    private String lblHouseStNo = "";
+    private String lblArea = "";
+    private String lblCity = "";
+    private String lblState = "";
+    private String lblpin = "";
+    private int schemeCount = 0;
+    private String cbobranch;
+    private String tdtPaidDate = "";
+    private String txtPaidNoOfInst = "";
+    private String txtPaidAmt = "";
+    private boolean chkThalayal = false;
+    private boolean chkMunnal = false;
+    private boolean chkMemberChanged = false;
+    private String txtEarlierMember = "";
+    private String txtEarlierMemberName = "";
+    private String txtChangedInst = "";
+    private String tdtChangedDate = "";
+    private String transId = "";
+    private Date currDate = null;
+    private String instalmntFreq="";
+    private String lastInstDate=null;
+    private ComboBoxModel cbmbranch;
+    private String isSplitMDSTransaction = "";
+    List splitTransInstList = new ArrayList();
+    List bonusAmountList = new ArrayList();
+    List penalList = new ArrayList();
+    List narrationList = new ArrayList();
+    ArrayList splitMDSReceiptEntryLst = new ArrayList();       
+    private HashMap serviceTax_Map=null;
+    private String lblServiceTaxval="";
+    private String group_no="";
+    private String gds_no="";
+    private String chittal_no="";
+    private String scheme_name="";
+    private String isWeeklyOrMonthlyScheme = "";
+    private String predefinedInstallment = "";
+    private String thalayalChittal = "";
+    private String munnalChittal = "";
+    private String isStandingInstructionSet = ""; // Added by nithya for 0003756 on 18.02.2016
+    private String mdsCode = "";
+    private String txtForfietbonus = "";
+    private String bankAdvAmt = "";
+    
+    public String getThalayalChittal() {
+        return thalayalChittal;
+    }
+
+    public void setThalayalChittal(String thalayalChittal) {
+        this.thalayalChittal = thalayalChittal;
+    }
+
+    public String getPredefinedInstallment() {
+        return predefinedInstallment;
+    }
+
+    public void setPredefinedInstallment(String predefinedInstallment) {
+        this.predefinedInstallment = predefinedInstallment;
+    }
+
+    public String getLblServiceTaxval() {
+        return lblServiceTaxval;
+    }
+
+    public void setLblServiceTaxval(String lblServiceTaxval) {
+        this.lblServiceTaxval = lblServiceTaxval;
+    }
+
+    public HashMap getServiceTax_Map() {
+        return serviceTax_Map;
+    }
+
+    public void setServiceTax_Map(HashMap serviceTax_Map) {
+        this.serviceTax_Map = serviceTax_Map;
+    }
+    public String getCbobranch() {
+        return cbobranch;
+    }
+
+    public ComboBoxModel getCbmbranch() {
+        return cbmbranch;
+    }
+
+    public void setCbmbranch(ComboBoxModel cbmbranch) {
+        this.cbmbranch = cbmbranch;
+    }
+
+    public void setCbobranch(String cbobranch) {
+        this.cbobranch = cbobranch;
+    }
+
+    public String getLastInstDate() {
+        return lastInstDate;
+    }
+
+    public void setLastInstDate(String lastInstDate) {
+        this.lastInstDate = lastInstDate;
+    }
+    public HashMap getInstallGraceDate() {
+        return installGraceDate;
+    }
+    public void setInstallGraceDate(HashMap installGraceDate) {
+        this.installGraceDate = installGraceDate;
+    }
+
+    public String getInstalmntFreq() {
+        return instalmntFreq;
+    }
+
+    public void setInstalmntFreq(String instalmntFreq) {
+        this.instalmntFreq = instalmntFreq;
+    }
+    // Added by nithya for 0003756 on 18.02.2016
+    public String getIsStandingInstructionSet() {
+        return isStandingInstructionSet;
+    }
+
+    public void setIsStandingInstructionSet(String isStandingInstructionSet) {
+        this.isStandingInstructionSet = isStandingInstructionSet;
+    }
+    // End
+    
+    private EnhancedTableModel tblOtherDetails, tblLoanDetails, tblTransactionDetails;
+    private ArrayList tblOtherDetailsList, tblLoanDetailsList, tblTransactionDetailsList;
+    private HashMap productMap = new HashMap();
+    private HashMap authorizeMap = new HashMap();
+    private HashMap instMap = new HashMap();
+    private HashMap chittalMap = new HashMap();
+    private String narration = "";
+    private String multipleMember = "";
+    private HashMap installmentMap = null;
+    private static GDSReceiptEntryOB GDSReceiptEntryOB;
+    private ArrayList bonusList = null;
+
+    static {
+        try {
+            GDSReceiptEntryOB = new GDSReceiptEntryOB();
+        } catch (Exception e) {
+            parseException.logException(e, true);
+        }
+    }
+
+    /* Sets the HashMap required to set JNDI,Home and Remote*/
+    public GDSReceiptEntryOB() throws Exception {
+        operationMap = new HashMap();
+        operationMap.put(CommonConstants.JNDI, "GDSReceiptEntryJNDI");
+        operationMap.put(CommonConstants.HOME, "gdsapplication.gdsreceiptentry.GDSReceiptEntryHome");
+        operationMap.put(CommonConstants.REMOTE, "gdsapplication.gdsreceiptentry.GDSReceiptEntry");
+        try {
+            proxy = ProxyFactory.createProxy();
+        } catch (Exception e) {
+            parseException.logException(e, true);
+        }
+        settblOtherDetailsList();
+        settblLoanDetailsList();
+        settblTransactionDetailsList();
+        tblOtherDetails = new EnhancedTableModel(null, tblOtherDetailsList);
+        tblLoanDetails = new EnhancedTableModel(null, tblLoanDetailsList);
+        tblTransactionDetails = new EnhancedTableModel(null, tblTransactionDetailsList);
+        notifyObservers();
+        fillDropdown();
+        currDate = ClientUtil.getCurrentDate();
+        isSplitMDSTransaction = "";
+    }
+
+    private void settblOtherDetailsList() throws Exception {
+        tblOtherDetailsList = new ArrayList();
+        tblOtherDetailsList.add("lblChargeType");
+        tblOtherDetailsList.add("lblCategory");
+        tblOtherDetailsList.add("lblAmtRangeFrom");
+        tblOtherDetailsList.add("lblAmtRangeTo");
+        tblOtherDetailsList.add("lblCharges");
+    }
+
+    private void settblLoanDetailsList() throws Exception {
+        tblLoanDetailsList = new ArrayList();
+        tblLoanDetailsList.add("lblChargeType");
+        tblLoanDetailsList.add("lblCategory");
+        tblLoanDetailsList.add("lblAmtRangeFrom");
+        tblLoanDetailsList.add("lblAmtRangeTo");
+        tblLoanDetailsList.add("lblCharges");
+    }
+
+    private void settblTransactionDetailsList() throws Exception {
+        tblTransactionDetailsList = new ArrayList();
+        tblTransactionDetailsList.add("lblChargeType");
+        tblTransactionDetailsList.add("lblCategory");
+        tblTransactionDetailsList.add("lblAmtRangeFrom");
+        tblTransactionDetailsList.add("lblAmtRangeTo");
+        tblTransactionDetailsList.add("lblCharges");
+    }
+
+    public static GDSReceiptEntryOB getInstance() {
+        return GDSReceiptEntryOB;
+    }
+    public ArrayList getBonusList() {
+        return bonusList;
+    }
+    public void setBonusList(ArrayList bonusMap) {
+        this.bonusList = bonusMap;
+    }
+
+    /**
+     * Setter for property lblStatus.
+     *
+     * @param lblStatus New value of property lblStatus.
+     *
+     */
+    public void setLblStatus(String lblStatus) {
+        this.lblStatus = lblStatus;
+        setChanged();
+    }
+
+    public String getLblStatus() {
+        return lblStatus;
+    }
+
+    public void resetStatus() {
+        this.setLblStatus(ClientConstants.ACTION_STATUS[0]);
+    }
+
+    public void setStatus() {
+        this.setLblStatus(ClientConstants.ACTION_STATUS[this.getActionType()]);
+        notifyObservers();
+    }
+
+    public void setResultStatus() {
+        this.setLblStatus(ClientConstants.RESULT_STATUS[this.getResult()]);
+        notifyObservers();
+    }
+
+    public int getResult() {
+        return result;
+    }
+
+    public void setResult(int result) {
+        this.result = result;
+        setChanged();
+    }
+
+    public void setActionType(int action) {
+        System.out.println("setActionType");
+        actionType = action;
+        setChanged();
+    }
+
+    public int getActionType() {
+        return actionType;
+    }
+
+    /**
+     * A method to set the combo box values
+     */
+    public void fillDropdown() throws Exception {
+
+        ArrayList key = new ArrayList();
+        ArrayList value = new ArrayList();
+        HashMap mapShare = new HashMap();
+        List keyValue = null;
+        keyValue = ClientUtil.executeQuery("getbranches", mapShare);
+        key.add("");
+        value.add("");
+        if (keyValue != null && keyValue.size() > 0) {
+            for (int i = 0; i < keyValue.size(); i++) {
+                mapShare = (HashMap) keyValue.get(i);
+                key.add(mapShare.get("BRANCH_CODE"));
+                value.add(mapShare.get("BRANCH_CODE"));
+            }
+        }
+        cbmbranch = new ComboBoxModel(key, value);
+        key = null;
+        value = null;
+        keyValue.clear();
+        keyValue = null;
+        mapShare.clear();
+        mapShare = null;
+    }
+
+    private void getKeyValue(HashMap keyValue) throws Exception {
+        key = (ArrayList) keyValue.get(CommonConstants.KEY);
+        value = (ArrayList) keyValue.get(CommonConstants.VALUE);
+    }
+
+    public void doSave() {
+        //        initialise();
+        if (getActionType() != ClientConstants.ACTIONTYPE_DELETE) {
+            //            updateRemitProdBrchData();
+            //            updateRemitProdChrgData();
+            //            deleteRemitProdBrchData();
+            //            deleteRemitProdChrgData();
+            //            insertRemitProdBrchData();
+            //            insertRemitProdChrgData();
+        }
+        doAction();
+        //        deinitialise();
+    }
+
+    /**
+     * To perform the appropriate operation
+     */
+    public void doAction() {
+        try {
+            doActionPerform();
+        } catch (Exception e) {
+            setResult(ClientConstants.ACTIONTYPE_FAILED);
+            e.printStackTrace();
+        }
+    }
+
+    public Date getProperDateFormat(Object obj) {
+        Date currDt = null;
+        if (obj!=null && obj.toString().length()>0) {
+            Date tempDt= DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(obj));
+            currDt=(Date)currDate.clone();
+            currDt.setDate(tempDt.getDate());
+            currDt.setMonth(tempDt.getMonth());
+            currDt.setYear(tempDt.getYear());
+        }
+        return currDt;
+    }
+    
+    private GDSReceiptEntryTO setMDSReceiptEntryTO() {
+        GDSReceiptEntryTO gdsReceiptEntryTO = new GDSReceiptEntryTO();
+        gdsReceiptEntryTO.setGdsName(CommonUtil.convertObjToStr(getTxtGDSName()));
+        gdsReceiptEntryTO.setGroup_no(CommonUtil.convertObjToStr(getGroup_no()));
+        gdsReceiptEntryTO.setGds_no(CommonUtil.convertObjToStr(getGds_no()));
+        gdsReceiptEntryTO.setDivisionNo(CommonUtil.convertObjToDouble(getTxtDivisionNo()));
+        gdsReceiptEntryTO.setChittalNo(CommonUtil.convertObjToStr(getTxtChittalNo()));
+        gdsReceiptEntryTO.setChitStartDt(getProperDateFormat(getTdtChitStartDt()));
+        gdsReceiptEntryTO.setChitEndDt(getProperDateFormat(getTdtChitEndDt()));
+        gdsReceiptEntryTO.setNoOfInst(CommonUtil.convertObjToInt(getTxtNoOfInst()));
+        gdsReceiptEntryTO.setSubNo(CommonUtil.convertObjToDouble(getTxtSubNo()));
+        gdsReceiptEntryTO.setCurrInst(CommonUtil.convertObjToDouble(getTxtCurrentInstNo()));
+        gdsReceiptEntryTO.setInstAmt(CommonUtil.convertObjToDouble(getTxtInstAmt()));
+        gdsReceiptEntryTO.setPendingInst(CommonUtil.convertObjToDouble(getTxtPendingInst()));
+        gdsReceiptEntryTO.setTotalInstDue(CommonUtil.convertObjToDouble(getTxtTotalInstAmt()));
+        gdsReceiptEntryTO.setBonusAmtAvail(CommonUtil.convertObjToDouble(getTxtBonusAmtAvail()));
+        gdsReceiptEntryTO.setMemberName(CommonUtil.convertObjToStr(getLblMemberNameVal()));
+        if (getRdoPrizedMember_Yes() == true) {
+            gdsReceiptEntryTO.setPrizedMember("Y");
+        } else {
+            gdsReceiptEntryTO.setPrizedMember("N");
+        }
+        gdsReceiptEntryTO.setNoticeAmt(CommonUtil.convertObjToDouble(getTxtNoticeAmt()));
+        gdsReceiptEntryTO.setArbitrationAmt(CommonUtil.convertObjToDouble(getTxtAribitrationAmt()));
+        gdsReceiptEntryTO.setNoOfInstPay(CommonUtil.convertObjToInt(getTxtNoOfInstToPaay()));
+        gdsReceiptEntryTO.setInstAmtPayable(CommonUtil.convertObjToDouble(getTxtInstPayable()));
+        gdsReceiptEntryTO.setPenalAmtPayable(CommonUtil.convertObjToDouble(getTxtPenalAmtPayable()));
+        gdsReceiptEntryTO.setBonusAmtPayable(CommonUtil.convertObjToDouble(getTxtBonusAmt()));
+        gdsReceiptEntryTO.setDiscountAmt(CommonUtil.convertObjToDouble(getTxtDiscountAmt()));
+        gdsReceiptEntryTO.setMdsInterset(CommonUtil.convertObjToDouble(getTxtInterest()));
+        gdsReceiptEntryTO.setNetAmt(CommonUtil.convertObjToDouble(getTxtNetAmtPaid()));
+        gdsReceiptEntryTO.setPaidDate(getProperDateFormat(getTdtPaidDate()));
+        gdsReceiptEntryTO.setPaidInst(CommonUtil.convertObjToDouble(getTxtPaidInst()));
+        gdsReceiptEntryTO.setPaidAmt(CommonUtil.convertObjToDouble(getTxtPaidAmt()));
+        if (getChkThalayal() == true) {
+            gdsReceiptEntryTO.setThalayal("Y");
+        } else {
+            gdsReceiptEntryTO.setThalayal("N");
+        }
+        if (getChkMunnal() == true) {
+            gdsReceiptEntryTO.setMunnal("Y");
+        } else {
+            gdsReceiptEntryTO.setMunnal("N");
+        }
+        if (getChkMemberChanged() == true) {
+            gdsReceiptEntryTO.setMemberChanged("Y");
+        } else {
+            gdsReceiptEntryTO.setMemberChanged("N");
+        }
+        if (getRdoBankPay_No() == true) {
+            gdsReceiptEntryTO.setBankPay("N");
+        } else {
+            gdsReceiptEntryTO.setBankPay("Y");
+        }
+        gdsReceiptEntryTO.setEarlierMemberNo(CommonUtil.convertObjToStr(getTxtEarlierMember()));
+        gdsReceiptEntryTO.setEarlierMemberName(CommonUtil.convertObjToStr(getTxtEarlierMemberName()));
+        gdsReceiptEntryTO.setChangedInstNo(CommonUtil.convertObjToDouble(getTxtChangedInst()));
+        gdsReceiptEntryTO.setChangedDt(getProperDateFormat(getTdtChangedDate()));
+        //        mdsReceiptEntryTO.setStatus(ClientConstants.)
+        gdsReceiptEntryTO.setStatusBy(TrueTransactMain.USER_ID);
+        //        mdsReceiptEntryTO.setStatusDt
+        System.out.println("getSelectedBranchID()^$^#^"+getSelectedBranchID());
+        
+        gdsReceiptEntryTO.setBranchCode(getSelectedBranchID());//TrueTransactMain.BRANCH_ID
+        gdsReceiptEntryTO.setNarration(getNarration());
+        gdsReceiptEntryTO.setInitiatedBranch(ProxyParameters.BRANCH_ID);
+        //        if(getTran)
+        //        mdsReceiptEntryTO.setTransId
+        gdsReceiptEntryTO.setServiceTaxAmt(CommonUtil.convertObjToDouble(getLblServiceTaxval()));
+        gdsReceiptEntryTO.setForfeitBonusAmtPayable(CommonUtil.convertObjToDouble(getTxtForfietbonus()));
+        gdsReceiptEntryTO.setBankAdvanceAmt(CommonUtil.convertObjToDouble(getBankAdvAmt()));
+        System.out.println("ODDDDDDDDDDDDDDDDDDDDDDD  "+gdsReceiptEntryTO);
+        return gdsReceiptEntryTO;
+    }
+
+    protected void getCustomerAddressDetails(String value) {
+    }
+
+//    public void schemeDetails(HashMap chittalParamMap){
+//        java.util.List lst = ClientUtil.executeQuery("getSelectChitDetails", chittalParamMap);
+//        if(lst!=null && lst.size()>0){
+//            chittalParamMap = (HashMap)lst.get(0);
+//            //            setTxtSchemeName(mdsReceiptEntryTO.getSchemeName());
+//            setTxtDivisionNo(CommonUtil.convertObjToStr(chittalParamMap.get("DIVISION_NO")));
+//            setTdtChitStartDt(CommonUtil.convertObjToStr(chittalParamMap.get("CHIT_START_DT")));
+//            //            setTdtChitEndDt(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getChitEndDt()));
+//            setTxtNoOfInst(CommonUtil.convertObjToStr(chittalParamMap.get("")));
+//            setTxtCurrentInstNo(CommonUtil.convertObjToStr(chittalParamMap.get("")));
+//            setTxtInstAmt(CommonUtil.convertObjToStr(chittalParamMap.get("INST_AMT")));
+//            setTxtPendingInst(CommonUtil.convertObjToStr(chittalParamMap.get("")));
+//            setTxtTotalInstAmt(CommonUtil.convertObjToStr(chittalParamMap.get("")));
+//            
+//        }
+//    }
+    protected void getCustomerAddressDetails() {
+        HashMap custAddressMap = new HashMap();
+        custAddressMap.put("GROUP_NO", getGroup_no());
+        custAddressMap.put("GDS_NO", getGds_no());
+        custAddressMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo()));
+        List lst = ClientUtil.executeQuery("getGDSCustomerAddressDetailsinAppln", custAddressMap);
+        if (lst != null && lst.size() > 0) {
+            custAddressMap = (HashMap) lst.get(0);
+            setLblHouseStNo(CommonUtil.convertObjToStr(custAddressMap.get("HOUSE_ST")));
+            setLblArea(CommonUtil.convertObjToStr(custAddressMap.get("AREA")));
+            setLblCity(CommonUtil.convertObjToStr(custAddressMap.get("CITY")));
+            setLblState(CommonUtil.convertObjToStr(custAddressMap.get("STATE")));
+            setLblpin(CommonUtil.convertObjToStr(custAddressMap.get("PIN")));
+        }
+    }
+
+    public void setClosureDetails(boolean flag) {
+        closureFlag = flag;
+    }
+private void doSplitMDSTransaction(){
+    splitMDSReceiptEntryLst.clear();
+    isSplitMDSTransaction = "";
+    if (getMDSTransListMap() != null && getMDSTransListMap().size() > 0) {
+        HashMap MDSsplitTrans = (HashMap) getMDSTransListMap();
+        if (MDSsplitTrans != null && MDSsplitTrans.containsKey("IS_SPLIT_MDS_TRANSACTION") && MDSsplitTrans.get("IS_SPLIT_MDS_TRANSACTION") != null) {
+            isSplitMDSTransaction = CommonUtil.convertObjToStr(MDSsplitTrans.get("IS_SPLIT_MDS_TRANSACTION"));
+        }
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+            if(MDSsplitTrans.containsKey("INST_AMT_LIST") && MDSsplitTrans.get("INST_AMT_LIST") != null){
+            splitTransInstList = (List) MDSsplitTrans.get("INST_AMT_LIST");
+            }
+            if(MDSsplitTrans.containsKey("BONUS_AMT_LIST") && MDSsplitTrans.get("BONUS_AMT_LIST") != null){
+            bonusAmountList = (List) MDSsplitTrans.get("BONUS_AMT_LIST");
+            }
+            if(MDSsplitTrans.containsKey("NARRATION_LIST") && MDSsplitTrans.get("NARRATION_LIST") != null){
+            narrationList = (List) MDSsplitTrans.get("NARRATION_LIST");
+            }
+            if(MDSsplitTrans.containsKey("PENAL_AMT_LIST") && MDSsplitTrans.get("PENAL_AMT_LIST") != null){
+            penalList = (List) MDSsplitTrans.get("PENAL_AMT_LIST");
+            }
+        }
+        double noticeAmounts = CommonUtil.convertObjToDouble(getTxtNoticeAmt());
+        double arbitrationAmounts = CommonUtil.convertObjToDouble(getTxtAribitrationAmt());
+	double serviceTaxAmt = CommonUtil.convertObjToDouble(getLblServiceTaxval());
+        if (splitTransInstList.size() > 0 && splitTransInstList != null
+                && bonusAmountList.size() > 0 && bonusAmountList != null
+                && penalList.size() > 0 && penalList != null && narrationList.size() > 0 && narrationList != null) {
+            double curInst = CommonUtil.convertObjToDouble(getTxtPaidNoOfInst());
+            for (int i = 0; i < splitTransInstList.size(); i++) {
+                splitMDSReceiptEntryTO = setMDSReceiptEntryTO();
+                double instAmt = 0, bonusAmt = 0, penalAmt = 0;
+                String splitNarration = "";
+                instAmt = CommonUtil.convertObjToDouble(splitTransInstList.get(i));
+                bonusAmt = CommonUtil.convertObjToDouble(bonusAmountList.get(i));
+                penalAmt = CommonUtil.convertObjToDouble(penalList.get(i));
+                splitNarration = CommonUtil.convertObjToStr(narrationList.get(i));
+                splitMDSReceiptEntryTO.setBonusAmtPayable(bonusAmt);
+                splitMDSReceiptEntryTO.setCurrInst(++curInst);
+                splitMDSReceiptEntryTO.setNarration(splitNarration);
+                splitMDSReceiptEntryTO.setPenalAmtPayable(penalAmt);
+                splitMDSReceiptEntryTO.setInstAmtPayable(instAmt);
+                splitMDSReceiptEntryTO.setNetAmt(instAmt + penalAmt);
+                splitMDSReceiptEntryLst.add(splitMDSReceiptEntryTO);
+                if (noticeAmounts > 0) {
+                    splitMDSReceiptEntryTO.setNoticeAmt(noticeAmounts);
+                } else {
+                    splitMDSReceiptEntryTO.setNoticeAmt(0.0);
+                }
+                noticeAmounts = 0.0;
+                if (arbitrationAmounts > 0) {
+                    splitMDSReceiptEntryTO.setArbitrationAmt(arbitrationAmounts);
+                } else {
+                    splitMDSReceiptEntryTO.setArbitrationAmt(0.0);
+                }
+                arbitrationAmounts = 0.0;
+				
+		if (serviceTaxAmt > 0) {
+                    splitMDSReceiptEntryTO.setServiceTaxAmt(serviceTaxAmt);
+                } else {
+                    splitMDSReceiptEntryTO.setServiceTaxAmt(0.0);
+                }
+                serviceTaxAmt = 0.0;
+            }
+        }
+    }
+}
+    /**
+     * To perform the necessary action
+     */
+    private void doActionPerform() throws Exception {
+        final HashMap data = new HashMap();
+        if (getActionType() == ClientConstants.ACTIONTYPE_AUTHORIZE || getActionType() == ClientConstants.ACTIONTYPE_REJECT) {
+            data.put(CommonConstants.AUTHORIZEMAP, getAuthorizeMap());
+//            data.put("NO_OF_INST",getInstMap());
+            if (TrueTransactMain.SERVICE_TAX_REQ.equals("Y")) {
+                data.put("SERVICE_TAX_AUTH", "SERVICE_TAX_AUTH");
+            }
+            data.put(CommonConstants.USER_ID, TrueTransactMain.USER_ID);
+            if (checkForInterBranchTransExistance()) {
+                data.put("INTER_BRANCH_TRANS", new Boolean(true));
+            }
+        }
+        if(getActionType() == ClientConstants.ACTIONTYPE_AUTHORIZE){
+            int currntInstNo = CommonUtil.convertObjToInt(getTxtNoOfInst());
+            int paidInstNo = CommonUtil.convertObjToInt(getTxtPaidNoOfInst());
+            int noOfInstToPay = CommonUtil.convertObjToInt(getTxtNoOfInstToPaay());
+            paidInstNo+=noOfInstToPay;
+            if(paidInstNo == currntInstNo){
+	            data.put("CURRENT_INST_NO", currntInstNo);
+	            data.put("PAID_INST_NO", paidInstNo);
+            }
+            data.put("WHOLE_SPLIT_MAP", wholeSplitMapp);
+        }
+
+        data.put(CommonConstants.MODULE, getModule());
+        data.put(CommonConstants.SCREEN, getScreen());
+        data.put("COMMAND", getCommand());
+        //        if(getActionType() != ClientConstants.ACTIONTYPE_DELETE ){
+        mdsReceiptEntryTO = setMDSReceiptEntryTO();
+        mdsReceiptEntryTO.setCommand(CommonUtil.convertObjToStr(data.get("COMMAND")));
+        if(productMap.containsKey("IS_SPLIT_MDS_TRANSACTION") && productMap.get("IS_SPLIT_MDS_TRANSACTION") != null){
+        isSplitMDSTransaction = CommonUtil.convertObjToStr(productMap.get("IS_SPLIT_MDS_TRANSACTION"));
+    }
+        data.put("gdsReceiptEntryTO", mdsReceiptEntryTO);
+        if(isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")){
+        data.put("mdsReceiptEntryTOList", splitMDSReceiptEntryLst);
+        data.put("IS_SPLIT_MDS_TRANSACTION",isSplitMDSTransaction);
+        }
+        if (transactionDetailsTO == null) {
+            transactionDetailsTO = new LinkedHashMap();
+        }
+        if (deletedTransactionDetailsTO != null) {
+            transactionDetailsTO.put(DELETED_TRANS_TOs, deletedTransactionDetailsTO);
+            deletedTransactionDetailsTO = null;
+        }
+        transactionDetailsTO.put(NOT_DELETED_TRANS_TOs, allowedTransactionDetailsTO);
+        allowedTransactionDetailsTO = null;
+
+        if (oldTransDetMap != null && oldTransDetMap.size() > 0) {
+            if (oldTransDetMap.containsKey("NET_TRANSACTION_TRANSFER")) {
+                data.put("NET_TRANSACTION_TRANSFER", oldTransDetMap.get("NET_TRANSACTION_TRANSFER"));
+            }
+            if (oldTransDetMap.containsKey("NET_TRANSACTION_CASH")) {
+                data.put("NET_TRANSACTION_CASH", oldTransDetMap.get("NET_TRANSACTION_CASH"));
+            }
+            if (oldTransDetMap.containsKey("PENAL_TRANSACTION_CASH")) {
+                data.put("PENAL_TRANSACTION_CASH", oldTransDetMap.get("PENAL_TRANSACTION_CASH"));
+            }
+            if (oldTransDetMap.containsKey("ARBITRATION_TRANSACTION_CASH")) {
+                data.put("ARBITRATION_TRANSACTION_CASH", oldTransDetMap.get("ARBITRATION_TRANSACTION_CASH"));
+            }
+            if (oldTransDetMap.containsKey("NOTICE_TRANSACTION_CASH")) {
+                data.put("NOTICE_TRANSACTION_CASH", oldTransDetMap.get("NOTICE_TRANSACTION_CASH"));
+            }
+            if (oldTransDetMap.containsKey("BONUS_TRANSACTION_TRANSFER")) {
+                data.put("BONUS_TRANSACTION_TRANSFER", oldTransDetMap.get("BONUS_TRANSACTION_TRANSFER"));
+            }
+            if (oldTransDetMap.containsKey("DISCOUNT_TRANSACTION_TRANSFER")) {
+                data.put("DISCOUNT_TRANSACTION_TRANSFER", oldTransDetMap.get("DISCOUNT_TRANSACTION_TRANSFER"));
+            }
+            data.put("NET_TRANS_ID", getTransId());
+        }
+        data.put("GROUP_NAME", getTxtGDSName());
+        data.put("GROUP_NO", getGroup_no());
+        data.put("GDS_NO", getGds_no());
+       // data.put("CHITTAL_NO", getTxtChittalNo());
+        data.put("TransactionTO", transactionDetailsTO);
+        if (getInstallmentMap() != null && getInstallmentMap().size() > 0) {
+            data.put("INSTALLMENT_MAP", getInstallmentMap());
+        }
+        System.out.println("#### closureFlag : " + closureFlag);
+        if (closureFlag) {
+            data.put("MDS_CLOSURE", "MDS_CLOSURE");
+        }
+        System.out.println("#### INSTALLMENT_MAP : " + getInstallmentMap());
+        //System.out.println("#### data : " + data);
+        if(getInstallGraceDate() != null && !getInstallGraceDate().isEmpty()){
+        data.put("GRACE_MAP", getInstallGraceDate());
+        data.put("PRODUCT_MAP", getProductMap());
+        }
+        data.put("BONUS_LIST",getBonusList());
+        data.put("BONUS_LIST_NEW", getBonusListNew());
+        if(getActionType() == ClientConstants.ACTIONTYPE_NEW && getLblServiceTaxval()!=null && CommonUtil.convertObjToDouble(getLblServiceTaxval())>0){
+            data.put("serviceTaxDetails", getServiceTax_Map());
+            data.put("serviceTaxDetailsTO", setServiceTaxDetails());
+        }
+        if(getActionType() == ClientConstants.ACTIONTYPE_NEW && getThalayalChittal()!=null && getThalayalChittal().equals("Y")){
+            data.put("THALAYAL_CHITTAL",getThalayalChittal());
+        }
+        if(getActionType() == ClientConstants.ACTIONTYPE_NEW && getMunnalChittal()!=null && getMunnalChittal().equals("Y")){
+            data.put("MUNNAL_CHITTAL",getMunnalChittal());
+        }
+        data.put("MP_MDS_CODE",getMdsCode());
+        HashMap proxyResultMap = proxy.execute(data, operationMap);
+        setProxyReturnMap(proxyResultMap);
+        setResult(getActionType());
+        displayTransDetail(proxyResultMap);
+    }
+
+    // The following method added by Rajesh.
+    // To check any interbranch transactions happened or not.
+    public boolean checkForInterBranchTransExistance() {
+        boolean isInterBranchTrans = false;
+        if (allowedTransactionDetailsTO != null && allowedTransactionDetailsTO.size() > 0) {
+            for (int i = 1; i <= allowedTransactionDetailsTO.size(); i++) {
+                TransactionTO objTxTransferTO = (TransactionTO) allowedTransactionDetailsTO.get(String.valueOf(i));
+                if (objTxTransferTO != null && objTxTransferTO.getTransType().equals("TRANSFER")) {
+                    if (objTxTransferTO != null && (!objTxTransferTO.getProductType().equals("GL"))) {
+                        if (checkAcNoWithoutProdType(objTxTransferTO.getDebitAcctNo()).equals(objTxTransferTO.getBranchId())) {
+                            isInterBranchTrans = true;
+                        }
+                    }
+                    return true;
+//                    if (!objTxTransferTO.getBranchId().equals(TrueTransactMain.BRANCH_ID))
+//                        isInterBranchTrans = true;
+                }/*else if(getTxtChittalNo()!=null && getTxtChittalNo().length()>0){
+                 if(checkAcNoWithoutProdType(objTxTransferTO.getDebitAcctNo()).equals(ProxyParameters.BRANCH_ID)){
+                 isInterBranchTrans = true;
+                 return true;
+                 }
+                 }*/
+                objTxTransferTO = null;
+            }
+        }
+        return isInterBranchTrans;
+    }
+
+    // Checks a/c no. existence without prod_type & prod_id
+    public String checkAcNoWithoutProdType(String actNum) {
+
+        HashMap mapData = new HashMap();
+        boolean isExists = false;
+        try {//dont delete chck selectalldao
+            if (actNum.indexOf("_") > 0) {
+                actNum = actNum.substring(0, actNum.indexOf("_"));
+            }
+
+            System.out.println("actNum" + actNum);
+            mapData.put("ACT_NUM", actNum);
+            List mapDataList = ClientUtil.executeQuery("getActNumFromAllProducts", mapData);
+            System.out.println("#### mapDataList :" + mapDataList);
+            if (mapDataList != null && mapDataList.size() > 0) {
+                mapData = (HashMap) mapDataList.get(0);
+                setSelectedBranchID(CommonUtil.convertObjToStr(mapData.get("BRANCH_ID")));
+                return CommonUtil.convertObjToStr(mapData.get("BRANCH_ID"));
+
+
+
+            }
+            mapDataList = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    private void displayTransDetail(HashMap proxyResultMap) {
+        System.out.println("@#$@@$@@@$ proxyResultMap : " + proxyResultMap);
+        if(getActionType() == ClientConstants.ACTIONTYPE_EDIT && proxyResultMap.size() > 0){
+            System.out.println("In edit case");
+            setProxyReturnMap(proxyResultMap);
+        }
+        if (getResult() != ClientConstants.ACTIONTYPE_FAILED && proxyResultMap.size() > 0) {
+            String cashDisplayStr = "Cash Transaction Details...\n";
+            String transferDisplayStr = "Transfer Transaction Details...\n";
+            String displayStr = "";
+            String oldBatchId = "";
+            String newBatchId = "";
+            String transType = "";
+            Object keys[] = proxyResultMap.keySet().toArray();
+            int cashCount = 0;
+            int transferCount = 0;
+            List tempList = null;
+            HashMap transMap = null;
+            String actNum = "";
+            for (int i = 0; i < keys.length; i++) {
+                tempList = (List) proxyResultMap.get(keys[i]);
+                if (CommonUtil.convertObjToStr(keys[i]).indexOf("CASH") != -1) {
+                    for (int j = 0; j < tempList.size(); j++) {
+                        transMap = (HashMap) tempList.get(j);
+                        
+                        cashDisplayStr += "Trans Id : " + transMap.get("TRANS_ID")
+                                + "   Trans Type : " + transMap.get("TRANS_TYPE");
+                        actNum = CommonUtil.convertObjToStr(transMap.get("ACT_NUM"));
+                        if (actNum != null && !actNum.equals("")) {
+                            cashDisplayStr += "   Account No : " + transMap.get("ACT_NUM")
+                                    + "   Amount : " + transMap.get("AMOUNT") + "\n";
+                        } else {
+                            cashDisplayStr += "   Ac Hd Desc : " + transMap.get("AC_HD_ID")
+                                    + "   Amount : " + transMap.get("AMOUNT") + "\n";
+                        }
+                    }
+                    cashCount++;
+                } else if (CommonUtil.convertObjToStr(keys[i]).indexOf("TRANSFER") != -1) {
+                    for (int j = 0; j < tempList.size(); j++) {
+                        transMap = (HashMap) tempList.get(j);
+                        transferDisplayStr += "Trans Id : " + transMap.get("TRANS_ID")
+                                + "   Batch Id : " + transMap.get("BATCH_ID")
+                                + "   Trans Type : " + transMap.get("TRANS_TYPE");
+                        actNum = CommonUtil.convertObjToStr(transMap.get("ACT_NUM"));
+                        if (actNum != null && !actNum.equals("")) {
+                            transferDisplayStr += "   Account No : " + transMap.get("ACT_NUM")
+                                    + "   Amount : " + transMap.get("AMOUNT") + "\n";
+                        } else {
+                            transferDisplayStr += "   Ac Hd Desc : " + transMap.get("AC_HD_ID")
+                                    + "   Amount : " + transMap.get("AMOUNT") + "\n";
+                        }
+                    }
+                    transferCount++;
+                }
+            }
+            if (cashCount > 0) {
+                displayStr += cashDisplayStr;
+            }
+            if (transferCount > 0) {
+                displayStr += transferDisplayStr;
+            }
+            ClientUtil.showMessageWindow("" + displayStr);
+
+//            String actNum = CommonUtil.convertObjToStr(observable.getStrACNumber());
+//            HashMap transMap = new HashMap();
+//            transMap.put("LOAN_NO",observable.getStrACNumber());
+//            transMap.put("CURR_DT", curr_dt);
+//            List lst = ClientUtil.executeQuery("getTransferTransLoanAuthDetails", transMap);
+//            if(lst !=null && lst.size()>0){
+//                displayStr += "Transfer Transaction Details...\n";
+//                for(int i = 0;i<lst.size();i++){
+//                    transMap = (HashMap)lst.get(i);
+//                    displayStr += "Trans Id : "+transMap.get("TRANS_ID")+
+//                    "   Batch Id : "+transMap.get("BATCH_ID")+
+//                    "   Trans Type : "+transMap.get("TRANS_TYPE");
+//                    actNum = CommonUtil.convertObjToStr(transMap.get("ACT_NUM"));
+//                    if(actNum != null && !actNum.equals("")){
+//                        displayStr +="   Account No : "+transMap.get("ACT_NUM")+
+//                        "   Deposit Amount : "+transMap.get("AMOUNT")+"\n";
+//                    }else{
+//                        displayStr += "   Account Head : "+transMap.get("AC_HD_ID")+
+//                        "   Interest Amount : "+transMap.get("AMOUNT")+"\n";
+//                    }
+//                    System.out.println("#### :" +transMap);
+//                    oldBatchId = newBatchId;
+//                }
+//            }
+//            actNum = CommonUtil.convertObjToStr(observable.getStrACNumber());
+//            transMap = new HashMap();
+//            transMap.put("LOAN_NO",actNum);
+//            transMap.put("CURR_DT", curr_dt);
+//            lst = ClientUtil.executeQuery("getCashTransLoanAuthDetails", transMap);
+//            if(lst !=null && lst.size()>0){
+//                displayStr += "Cash Transaction Details...\n";
+//                for(int i = 0;i<lst.size();i++){
+//                    transMap = (HashMap)lst.get(i);
+//                    displayStr +="Trans Id : "+transMap.get("TRANS_ID")+
+//                    "   Trans Type : "+transMap.get("TRANS_TYPE");
+//                    actNum = CommonUtil.convertObjToStr(transMap.get("ACT_NUM"));
+//                    if(actNum != null && !actNum.equals("")){
+//                        displayStr +="   Account No :  "+transMap.get("ACT_NUM")+
+//                        "   Deposit Amount :  "+transMap.get("AMOUNT")+"\n";
+//                    }else{
+//                        displayStr +="   Account Head :  "+transMap.get("AC_HD_ID")+
+//                        "   Interest Amount :  "+transMap.get("AMOUNT")+"\n";
+//                    }
+//                }
+//            }
+//            if(!displayStr.equals("")){
+//                ClientUtil.showMessageWindow(""+displayStr);
+//            }
+        }
+    }
+
+    public void setProductMapDetails() {
+        HashMap schemeMap = new HashMap();
+        schemeMap.put("GROUP_NO", getGroup_no());
+        List lst = ClientUtil.executeQuery("getGDSRecSelectSchemeAcctHead", schemeMap);
+        if (lst != null && lst.size() > 0) {
+            productMap = (HashMap) lst.get(0);
+        }
+    }
+
+    public void setReceiptDetails(HashMap map) {
+//        HashMap chittalMap = new HashMap();
+        int count = 0;
+        chittalMap.put("CHITTAL_NO", getTxtChittalNo());
+        //chittalMap.put("SUB_NO", CommonUtil.convertObjToStr(getTxtSubNo()));
+        chittalMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo())); // Added by nithya on 16-01-2020 for KD-1279
+        chittalMap.put("GDS_NO", getGds_no()); 
+        chittalMap.put("GROUP_NO", getGroup_no()); 
+        List lst = ClientUtil.executeQuery("getGDSSelctApplnReceiptDetails", chittalMap);
+        double instAmnt=0;
+       for (int i=0; i<lst.size(); i++)
+       {
+        if (lst != null && lst.size() > 0) {
+            chittalMap = (HashMap) lst.get(i);
+            System.out.println("chittalMap:: : ::"+chittalMap);
+            instAmnt=instAmnt+(CommonUtil.convertObjToDouble(chittalMap.get("INST_AMT")));
+            
+            System.out.println("instAmnt "+i+" "+instAmnt);
+            setTxtDivisionNo(CommonUtil.convertObjToStr(chittalMap.get("DIVISION_NO")));
+            //setGds_no(CommonUtil.convertObjToStr(chittalMap.get("GDS_NO")));
+            setTdtChitEndDt(CommonUtil.convertObjToStr(chittalMap.get("CHIT_END_DT")));
+            setTxtChittalNo(CommonUtil.convertObjToStr(chittalMap.get("CHITTAL_NO")));
+            setChittal_no(CommonUtil.convertObjToStr(chittalMap.get("CHITTAL_NO")));
+            setTdtChitStartDt(CommonUtil.convertObjToStr(chittalMap.get("CHIT_START_DT")));
+            setTxtNoOfInst(CommonUtil.convertObjToStr(chittalMap.get("NO_OF_INSTALLMENTS")));
+            setTxtCurrentInstNo(CommonUtil.convertObjToStr(chittalMap.get("")));
+            setTxtInstAmt(CommonUtil.convertObjToStr(instAmnt));
+            setLblMemberNameVal(CommonUtil.convertObjToStr(chittalMap.get("MEMBER_NAME")));
+            setLblMemberNo(CommonUtil.convertObjToStr(chittalMap.get("MEMBER_NO")));
+            setTxtPendingInst(CommonUtil.convertObjToStr(chittalMap.get("")));
+            setTxtTotalInstAmt(CommonUtil.convertObjToStr(chittalMap.get("")));
+            setInstalmntFreq(CommonUtil.convertObjToStr(chittalMap.get("INSTALLMENT_FREQUENCY")));
+            
+        }
+       }
+       
+       
+       
+   //    if (lst != null && lst.size() > 0) {
+            // Added by nithya for 0003756 on 18.02.2016
+            if(chittalMap.containsKey("STANDING_INSTN")){
+                setIsStandingInstructionSet(CommonUtil.convertObjToStr(chittalMap.get("STANDING_INSTN")));
+            }   
+            // End
+            Date endDate = DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(chittalMap.get("CHIT_END_DT")));
+            if (chittalMap.get("MUNNAL") != null && CommonUtil.convertObjToStr(chittalMap.get("MUNNAL")).equals("Y")) {
+                setChkMunnal(true);
+            } else if (chittalMap.get("THALAYAL") != null && CommonUtil.convertObjToStr(chittalMap.get("THALAYAL")).equals("Y")) {
+                setChkThalayal(true);
+            }
+
+//            int instDay = 0; //Added by Rajesh
+            System.out.println("Execute outside nithya :: ");
+            HashMap instMap = new HashMap();
+            instMap.put("CHITTAL_NO", getTxtChittalNo());
+            instMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo()));
+            instMap.put("GDS_NO", getGds_no());
+            List instLst = ClientUtil.executeQuery("getGDSNoOfInstalmentsPaid", instMap);
+            System.out.println("instLst nithya :: " + instLst);
+            if (instLst != null && instLst.size() > 0) {
+                instMap = (HashMap) instLst.get(0);
+                System.out.println("instMap here :: " + instMap);
+                count = Math.round(CommonUtil.convertObjToInt(instMap.get("INST")));
+                System.out.println("count :: " + count);
+                setTxtPaidNoOfInst(String.valueOf(count));
+                // Added by Rajesh
+//                setTdtInsUptoPaid(CommonUtil.convertObjToStr(instMap.get("TRANS_DT")));
+                lastInstDate=CommonUtil.convertObjToStr(instMap.get("TRANS_DT"));
+                setLastInstDate(lastInstDate);
+            } else {
+                setTxtPaidNoOfInst(String.valueOf("0"));
+                // Following block added by Rajesh
+//                Date startDate = DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(chittalMap.get("SCHEME_START_DT")));
+//                instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+//                startDate.setDate(instDay);
+//                int stMonth = startDate.getMonth();
+//                startDate.setMonth(stMonth+(int)count-1);
+//                setTdtInsUptoPaid(CommonUtil.convertObjToStr(startDate));
+            }
+            HashMap prizedMap = new HashMap();
+            prizedMap.put("GROUP_NO", getGroup_no());
+            prizedMap.put("DIVISION_NO", CommonUtil.convertObjToInt(chittalMap.get("DIVISION_NO")));
+            prizedMap.put("GDS_NO", getGds_no());
+            prizedMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo()));
+            lst = ClientUtil.executeQuery("getGDSSelectPrizedDetailsEntryRecords", prizedMap);
+            if (lst != null && lst.size() > 0) {
+                prizedMap = (HashMap) lst.get(0);
+                
+                setTxtBonusAmtAvail(CommonUtil.convertObjToStr((CommonUtil.convertObjToDouble(prizedMap.get("PRIZED_AMOUNT")))*schemeCount));
+                setTdtChitEndDt(CommonUtil.convertObjToStr(prizedMap.get("NEXT_INSTALLMENT_DATE")));
+            }
+            prizedMap = new HashMap();
+            prizedMap.put("GROUP_NO", getGroup_no());//FROM_AUCTION_ENTRY=N, AFTER_CASH_PAYMENT=Y
+            prizedMap.put("DIVISION_NO", CommonUtil.convertObjToInt(chittalMap.get("DIVISION_NO")));
+            prizedMap.put("CHITTAL_NO", getTxtChittalNo());
+            prizedMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo()));
+            prizedMap.put("GDS_NO", getGds_no());
+            
+            
+           
+//          from the time of auction entry{
+            setProductMapDetails();
+            System.out.println("productMap**"+productMap);
+            System.out.println("prizedMap**"+prizedMap);
+            if(productMap.containsKey("FROM_AUCTION_ENTRY") && productMap.get("FROM_AUCTION_ENTRY") != null && productMap.get("FROM_AUCTION_ENTRY").equals("Y"))
+            {
+            lst = ClientUtil.executeQuery("getGDSSelectPrizedDetailsEntryRecords", prizedMap);
+            System.out.println("lst in FROM_AUCTION_ENTRY"+lst);
+                if (lst != null && lst.size() > 0) {
+                    setRdoPrizedMember_Yes(true);
+                } else {
+                    setRdoPrizedMember_No(true);
+                }
+            } else if (productMap.containsKey("AFTER_CASH_PAYMENT") && productMap.get("AFTER_CASH_PAYMENT") != null && productMap.get("AFTER_CASH_PAYMENT").equals("Y")) {
+                lst = ClientUtil.executeQuery("getGDSSelectPrizedDetailsAfterCashPayment", prizedMap);
+                System.out.println("lst in AFTER_CASH_PAYMENT"+lst);
+                if (lst != null && lst.size() > 0) {
+                    prizedMap = (HashMap) lst.get(0);
+                    System.out.println("SIIIIII"+prizedMap.size());
+                    if (prizedMap.size() >= 1) {
+                        setRdoPrizedMember_Yes(true);
+                    } else {
+                        setRdoPrizedMember_No(true);
+                    }
+                }else {
+                        setRdoPrizedMember_No(true);
+                    }
+            }else{
+                lst = ClientUtil.executeQuery("getGDSSelectPrizedDetailsEntryRecords", prizedMap);
+                System.out.println("lst in ELSE"+lst);
+                if (lst != null && lst.size() > 0) {
+                    prizedMap = (HashMap) lst.get(0);
+                    if (prizedMap.get("DRAW") != null && !prizedMap.get("DRAW").equals("") && prizedMap.get("DRAW").equals("Y")) {
+                        setRdoPrizedMember_Yes(true);
+                    }
+                    if (prizedMap.get("AUCTION") != null && !prizedMap.get("AUCTION").equals("") && prizedMap.get("AUCTION").equals("Y")) {
+                        setRdoPrizedMember_Yes(true);
+                    }
+                } else {
+                    setRdoPrizedMember_No(true);
+                }   
+            }
+//        }else if(aferwe cash paymrny){
+//        }
+            //starting weekly..
+            if(productMap.containsKey("INSTALLMENT_FREQUENCY") && productMap.get("INSTALLMENT_FREQUENCY") != null){
+                if(CommonUtil.convertObjToInt(productMap.get("INSTALLMENT_FREQUENCY")) == 7){
+                   isWeeklyOrMonthlyScheme = "W";   
+                }else{
+                   isWeeklyOrMonthlyScheme = "M";  
+                }
+            }
+            int instDay = 0;
+            HashMap whereMap = new HashMap();
+            whereMap.put("GDS_NO", getGds_no());
+            whereMap.put("GROUP_NO", getGroup_no());
+            whereMap.put("DIVISION_NO", CommonUtil.convertObjToInt(chittalMap.get("DIVISION_NO")));
+            whereMap.put("INSTALLMENT_NO", CommonUtil.convertObjToInt(String.valueOf(count)));
+            if(isWeeklyOrMonthlyScheme != null && !isWeeklyOrMonthlyScheme.equals("")  && isWeeklyOrMonthlyScheme.equals("W")){
+            	lst = ClientUtil.executeQuery("getSelectWeeklyInstUptoPaid", whereMap);    
+            }else{
+                System.out.println("executing here....nithyaa....8888"+ whereMap);
+            	lst = ClientUtil.executeQuery("getGDSSelectInstUptoPaid", whereMap);
+            }
+            if (lst != null && lst.size() > 0) {
+                whereMap = (HashMap) lst.get(0);
+                setTdtInsUptoPaid(CommonUtil.convertObjToStr(whereMap.get("NEXT_INSTALLMENT_DATE")));
+            } else {
+                Date startDate = DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(chittalMap.get("SCHEME_START_DT")));
+                instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+                startDate.setDate(instDay);
+                int stMonth = startDate.getMonth();
+                startDate.setMonth(stMonth + (int) count - 1);
+                setTdtInsUptoPaid(CommonUtil.convertObjToStr(startDate));
+                }
+
+            Date InstalDt = null;
+            HashMap insDateMap = new HashMap();
+            insDateMap.put("DIVISION_NO", CommonUtil.convertObjToInt(getTxtDivisionNo()));
+            insDateMap.put("GDS_NO", getGds_no());
+            insDateMap.put("CURR_DATE", currDate.clone());
+            List insDateLst = ClientUtil.executeQuery("getGDSNextInsDate", insDateMap);
+            if (insDateLst != null && insDateLst.size() > 0) {
+                insDateMap = (HashMap) insDateLst.get(0);
+                // The following block changed by Rajesh
+//                InstalDt = (Date) insDateMap.get("INST_DT");
+//                int instalDay = InstalDt.getDate();
+//                instDay = instalDay;
+                if (insDateMap.get("INST_DT") != null) {
+                    InstalDt = (Date) insDateMap.get("INST_DT");
+                    int instalDay = InstalDt.getDate();
+                    instDay = instalDay;
+                } else {
+                    instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+                }
+                //End
+            } else {
+                instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+            }
+
+            Date startDate = DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(chittalMap.get("SCHEME_START_DT")));
+            int stYear = startDate.getYear() + 1900;
+            int currYear = currDate.getYear() + 1900;
+            int stMonth = startDate.getMonth();
+            int currMonth = currDate.getMonth();
+            int value = 0;
+            int pending = 0;
+
+
+//            long count = CommonUtil.convertObjToLong(chittalMap.get("INST_COUNT"))+1;
+            int totInst = CommonUtil.convertObjToInt(chittalMap.get("NO_OF_INSTALLMENTS"));
+            if (stYear == currYear && stMonth == currMonth) {
+                pending = 0;
+                setTxtPendingInst(String.valueOf("0"));
+                setTxtNoOfInstToPaay(String.valueOf("1"));
+                value = currMonth - stMonth + 1;
+                if (totInst == value) {
+                    setTxtCurrentInstNo(String.valueOf(value));
+                } else if (instDay < currDate.getDate()) {
+                    setTxtCurrentInstNo(String.valueOf(value + 1));
+                } else {
+                    setTxtCurrentInstNo(String.valueOf(value));
+                }
+            } else if (stYear == currYear && stMonth != currMonth) {
+                pending = 0;
+                value = currMonth - stMonth + 1;
+                int diffMonth = currMonth - stMonth;
+                int pendingVal = diffMonth - (int) count;
+                int noOfInsPay = 0;
+                if (instDay < currDate.getDate()) {
+                    pending = pendingVal + 1;
+                } else {
+                    pending = pendingVal;
+                }
+                if (pending > 0) {
+                    setTxtPendingInst(String.valueOf(pending));
+                } else {
+                    setTxtPendingInst(String.valueOf(0));
+                }
+                noOfInsPay = diffMonth - (int) count + 1;
+                if (noOfInsPay > 0) {
+                    setTxtNoOfInstToPaay(String.valueOf(noOfInsPay));
+                } else {
+                    setTxtNoOfInstToPaay("0");
+                }
+                System.out.println("noOfInsPay 111-------"+getTxtNoOfInstToPaay());
+                if (totInst == value) {
+                    setTxtCurrentInstNo(String.valueOf(value));
+                } else if (instDay < currDate.getDate()) {
+                    // Changed by Rajesh
+                    setTxtCurrentInstNo(String.valueOf(value));
+//                    setTxtCurrentInstNo(String.valueOf(value+1));
+                } else {
+                    setTxtCurrentInstNo(String.valueOf(value));
+                }
+                int curInsNo = CommonUtil.convertObjToInt(getTxtCurrentInstNo());
+                //                int countChk = curInsNo-(int)count;
+                //                if(countChk>=2){
+                Date installDate = (Date) currDate.clone();
+                instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+                installDate.setMonth(stMonth + curInsNo - 1);
+                installDate.setDate(instDay);
+                setTdtChitEndDt(CommonUtil.convertObjToStr(installDate));
+                //                }
+            } else {
+                System.out.println("currYear="+currYear+"stYear="+stYear);
+                int year = currYear - stYear;
+                System.out.println("year="+year+"currMonth="+currMonth+"stMonth="+stMonth);
+                value = (year * 12) + currMonth - stMonth;
+                int pendingVal = value - (int) count;
+                int noOfInsPay = 0;
+                if (instDay < currDate.getDate()) {
+                    pending = pendingVal + 1;
+                } else {
+                    pending = pendingVal;
+                }
+                if (pending > 0) {
+                    setTxtPendingInst(String.valueOf(pending));
+                } else {
+                    setTxtPendingInst(String.valueOf(0));
+                }
+                noOfInsPay = value - (int) count + 1;
+                System.out.println("value 333-------"+value +"count --"+count);
+                if (getActionType() != ClientConstants.ACTIONTYPE_AUTHORIZE && getActionType() != ClientConstants.ACTIONTYPE_REJECT) {
+                  if (noOfInsPay > 0) {
+                     setTxtNoOfInstToPaay(String.valueOf(noOfInsPay));
+                    } else {
+                        setTxtNoOfInstToPaay("0");
+                    }
+                }
+                System.out.println("noOfInsPay 333-------"+getTxtNoOfInstToPaay());
+                if (totInst == value) {
+                    setTxtCurrentInstNo(String.valueOf(value));
+                } else if (instDay < currDate.getDate()) {
+                    setTxtCurrentInstNo(String.valueOf(value + 1));
+                } else {
+                    setTxtCurrentInstNo(String.valueOf(value));
+                }
+                int curInsNo = CommonUtil.convertObjToInt(getTxtCurrentInstNo());
+                int countChk = curInsNo - (int) count;
+                Date installDate = (Date) startDate.clone();
+                instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+                installDate = DateUtil.addDays(installDate, curInsNo * 30);
+                installDate.setDate(instDay);
+                setTdtChitEndDt(CommonUtil.convertObjToStr(installDate));
+            }
+            //double instAmt = CommonUtil.convertObjToDouble(chittalMap.get("INST_AMT")).doubleValue();
+            double instAmt = CommonUtil.convertObjToDouble(instAmnt).doubleValue();
+            setTxtTotalInstAmt(String.valueOf(instAmt * CommonUtil.convertObjToDouble(getTxtPendingInst()).doubleValue()));
+            HashMap MdsDetailsMap = new HashMap();
+//            MdsDetailsMap.put("CHITTAL_NO", getTxtChittalNo());
+//            MdsDetailsMap.put("GROUP_NAME", getTxtGDSName());
+             MdsDetailsMap.put("GDS_NO", getGds_no());
+            MdsDetailsMap.put("GROUP_NO", getGroup_no());
+            MdsDetailsMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo()));
+            lst = ClientUtil.executeQuery("getGDSSelectRecordDetails", MdsDetailsMap);
+            if (lst != null && lst.size() > 0) {
+                MdsDetailsMap = (HashMap) lst.get(0);
+                setTdtPaidDate(CommonUtil.convertObjToStr(MdsDetailsMap.get("PAYMENT_DATE")));
+                setTxtPaidInst(CommonUtil.convertObjToStr(MdsDetailsMap.get("INSTALLMENT_NO")));
+                setTxtPaidAmt(CommonUtil.convertObjToStr(MdsDetailsMap.get("PRIZED_AMOUNT")));
+            }
+            MdsDetailsMap = new HashMap();
+            MdsDetailsMap.put("GDS_NO", getGds_no());
+            MdsDetailsMap.put("GROUP_NO", getGroup_no());
+            lst = ClientUtil.executeQuery("getGDSSelectChangedRecordDetails", MdsDetailsMap);
+            if (lst != null && lst.size() > 0) {
+                MdsDetailsMap = (HashMap) lst.get(0);
+                if (MdsDetailsMap.get("THALAYAL") != null && MdsDetailsMap.get("THALAYAL").equals("Y")) {
+                    setChkThalayal(true);
+                } else {
+                    setChkThalayal(false);
+                }
+                if (MdsDetailsMap.get("MUNNAL") != null && MdsDetailsMap.get("MUNNAL").equals("Y")) {
+                    setChkMunnal(true);
+                } else {
+                    setChkMunnal(false);
+                }
+                setChkMemberChanged(true);
+                setTxtEarlierMember(CommonUtil.convertObjToStr(MdsDetailsMap.get("OLD_MEMBER_NO")));
+                setTxtEarlierMemberName(CommonUtil.convertObjToStr(MdsDetailsMap.get("OLD_MEMBER_NAME")));
+                setTxtChangedInst(CommonUtil.convertObjToStr(MdsDetailsMap.get("INSTALLMENT_NO")));
+                setTdtChangedDate(CommonUtil.convertObjToStr(MdsDetailsMap.get("CHANGE_EFFECTIVE_DATE")));
+            } else {
+                setChkMunnal(false);
+                setChkThalayal(false);
+                setChkMemberChanged(false);
+                setTxtEarlierMember("");
+                setTxtEarlierMemberName("");
+                setTxtChangedInst("");
+                setTdtChangedDate("");
+            }
+            insDateMap = new HashMap();
+            insDateMap.put("DIVISION_NO", CommonUtil.convertObjToInt(getTxtDivisionNo()));
+            insDateMap.put("GROUP_NO", getGroup_no());
+            insDateMap.put("CURR_DATE", currDate.clone());
+            insDateMap.put("ADD_MONTHS", CommonUtil.convertObjToInt("-1"));
+            if(isWeeklyOrMonthlyScheme != null && !isWeeklyOrMonthlyScheme.equals("")  && isWeeklyOrMonthlyScheme.equals("W")){
+            	insDateLst = ClientUtil.executeQuery("getWeeklyMDSCurrentInsDate", insDateMap);    
+            }else{
+            	insDateLst = ClientUtil.executeQuery("getGDSCurrentInsDate", insDateMap);
+            }
+            if (insDateLst != null && insDateLst.size() > 0) {
+                insDateMap = (HashMap) insDateLst.get(0);
+                InstalDt = (Date) insDateMap.get("INSTALLMENT_DT");
+                setTdtChitEndDt(CommonUtil.convertObjToStr(InstalDt));
+                //Commented by Rajesh
+                System.out.println("111$#%%$#%%$#%$#"+getTxtCurrentInstNo());
+                setTxtCurrentInstNo(CommonUtil.convertObjToStr(insDateMap.get("INSTALLMENT_NO")));
+                System.out.println("222$#%%$#%%$#%$#"+getTxtCurrentInstNo());
+                //Changed By Suresh 31-jan-2013
+                int pendingInst = 0;
+                String advance_Collection = "";
+                HashMap prodMap = new HashMap();
+                prodMap.put("GROUP_NAME", getTxtGDSName());
+                prodMap.put("GROUP_NO", getGroup_no());
+               // List prodLst = ClientUtil.executeQuery("getSelectSchemeAcctHead", prodMap);//Commented by shany
+                List prodLst = ClientUtil.executeQuery("getGDSRecSelectSchemeAcctHead", prodMap);
+                        if (prodLst != null && prodLst.size() > 0) {
+                    prodMap = (HashMap) prodLst.get(0);
+                    advance_Collection = CommonUtil.convertObjToStr(prodMap.get("ADVANCE_COLLECTION"));
+                    setMdsCode(CommonUtil.convertObjToStr(prodMap.get("MP_MDS_CODE")));
+                }
+                if (advance_Collection.equals("Y") /*|| CommonUtil.convertObjToStr(prodMap.get("PREDEFINITION_INSTALLMENT")).equals("Y")*/) {
+                    pendingInst = CommonUtil.convertObjToInt(insDateMap.get("INSTALLMENT_NO")) - (int) count-1;
+                    System.out.println("pendingInst-0----"+pendingInst);
+                } else {
+                    pendingInst = CommonUtil.convertObjToInt(insDateMap.get("INSTALLMENT_NO")) - (int) count;
+                }               
+                System.out.println("count-----"+count);
+                System.out.println("pendingInst-----"+pendingInst);
+                //MDS Grace period for intrest calculation_Kuttilanji SCB Requirement -- Reported by Abin
+                if (pendingInst > 0) {
+                    setTxtPendingInst(String.valueOf(pendingInst));
+                } else {
+                    setTxtPendingInst("0");
+                }
+                if (DateUtil.dateDiff(endDate, currDate) > 0) {
+                    System.out.println("noOfInsPay endDate, currDate------"+getTxtNoOfInstToPaay());
+                    setTxtNoOfInstToPaay(getTxtPendingInst());
+                }
+                System.out.println("noOfInsPay 4444-------"+getTxtNoOfInstToPaay());
+                //added by babu 08-04-2014
+                if (getActionType() != ClientConstants.ACTIONTYPE_AUTHORIZE && getActionType() != ClientConstants.ACTIONTYPE_REJECT) {
+                    int currInst=CommonUtil.convertObjToInt(getTxtCurrentInstNo());
+                    int paidInst=CommonUtil.convertObjToInt(getTxtPaidNoOfInst()) ;
+                    int noOfInst=0;
+                    System.out.println("currInst--"+currInst+"paidInst ---"+paidInst);
+                    if ((advance_Collection!=null && advance_Collection.equals("Y"))|| CommonUtil.convertObjToStr(prodMap.get("PREDEFINITION_INSTALLMENT")).equals("Y")) {
+                        noOfInst=currInst-paidInst;
+                    }else{
+                            noOfInst=currInst-paidInst+1;  
+                    }
+                    if(noOfInst>=0){
+                        setTxtNoOfInstToPaay(CommonUtil.convertObjToStr(noOfInst));
+                    }
+                }
+                //end
+            }
+            insDateMap.clear();
+            insDateMap = null;
+            insDateLst = null;
+       // }
+       
+    }
+
+    /**
+     * Gets the command issued Insert , Upadate or Delete *
+     */
+    private String getCommand() throws Exception {
+        String command = null;
+        switch (actionType) {
+            case ClientConstants.ACTIONTYPE_NEW:
+                command = CommonConstants.TOSTATUS_INSERT;
+                break;
+            case ClientConstants.ACTIONTYPE_COPY:
+                command = CommonConstants.TOSTATUS_INSERT;
+                break;
+            case ClientConstants.ACTIONTYPE_EDIT:
+                command = CommonConstants.TOSTATUS_UPDATE;
+                break;
+            case ClientConstants.ACTIONTYPE_DELETE:
+                command = CommonConstants.TOSTATUS_DELETE;
+                break;
+            default:
+        }
+        return command;
+    }
+
+    public boolean populateData(HashMap whereMap) {
+        isSplitMDSTransaction = "";
+        String gdsNo = CommonUtil.convertObjToStr(getGds_no());
+        //whereMap.put("CHITTAL_NO", chitlNo);
+        whereMap.put("GDS_NO", gdsNo);
+        System.out.println("gdsNo"+gdsNo);
+        whereMap.put("GROUP_NO", CommonUtil.convertObjToStr(whereMap.get("GROUP_NO")));
+        boolean aliasBranchTableFlag = false;
+        if (whereMap != null && whereMap.containsKey("isSplitMDSTransaction") && whereMap.get("isSplitMDSTransaction") != null) {
+            isSplitMDSTransaction = CommonUtil.convertObjToStr(whereMap.get("isSplitMDSTransaction"));
+        }
+        HashMap mapData = new HashMap();
+        try {
+            mapData = proxy.executeQuery(whereMap, operationMap);
+            aliasBranchTableFlag = populateOB(mapData);
+        } catch (Exception e) {
+            parseException.logException(e, true);
+        }
+        return aliasBranchTableFlag;
+    }
+    private boolean populateOB(HashMap mapData) {
+        System.out.println("mapData"+mapData);
+        boolean aliasBranchTableFlag = false;
+        try {
+            System.out.println("inside populateOB");
+            mdsReceiptEntryTO = new GDSReceiptEntryTO();
+            if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+                if (mapData.containsKey("gdsReceiptEntryTO") && mapData.get("gdsReceiptEntryTO") != null) {
+                    bonusAmount = 0.0;
+                    penalAmount = 0.0;
+                    instAmount = 0.0;
+                    noticeAmount = 0.0;
+                    arbitrationAmount = 0.0;
+                    serviceTaxAmount = 0.0;
+                    List lst = (List) mapData.get("gdsReceiptEntryTO");
+                    schemeCount=lst.size(); 
+                   // mdsReceiptEntryTO.setSchemeCount(schemeCount);
+                   if (lst != null && lst.size() > 0) {
+							wholeSplitMapp.put("gdsReceiptEntryTO", lst);
+//                        mdsReceiptEntryTO = new MDSReceiptEntryTO();
+                        for (int i = 0; i < lst.size(); i++) {
+                            mdsReceiptEntryTO = (GDSReceiptEntryTO) lst.get(i);
+                            instAmount += mdsReceiptEntryTO.getInstAmtPayable();
+                            penalAmount += mdsReceiptEntryTO.getPenalAmtPayable();
+                            bonusAmount += mdsReceiptEntryTO.getBonusAmtPayable();
+                            noticeAmount += mdsReceiptEntryTO.getNoticeAmt();
+                            arbitrationAmount += mdsReceiptEntryTO.getArbitrationAmt();
+                            serviceTaxAmount += mdsReceiptEntryTO.getServiceTaxAmt();
+                            System.out.println("inside populateOB "+mdsReceiptEntryTO);
+                        }
+                        getMDSReceiptEntryTO(mdsReceiptEntryTO);                        
+                    }
+                }
+            } else {
+            mdsReceiptEntryTO = (GDSReceiptEntryTO) ((List) mapData.get("gdsReceiptEntryTO")).get(0);
+            List lst = (List) mapData.get("gdsReceiptEntryTO");
+            schemeCount=lst.size(); 
+            getMDSReceiptEntryTO(mdsReceiptEntryTO);    
+            }
+            List lst = (List) mapData.get("TransactionTO");
+            transactionOB.setDetails(lst);
+            oldTransDetMap = new HashMap();
+            if (mapData.containsKey("NET_TRANSACTION_TRANSFER")) {
+                oldTransDetMap.put("NET_TRANSACTION_TRANSFER", mapData.get("NET_TRANSACTION_TRANSFER"));
+            }
+            if (mapData.containsKey("NET_TRANSACTION_CASH")) {
+                oldTransDetMap.put("NET_TRANSACTION_CASH", mapData.get("NET_TRANSACTION_CASH"));
+            }
+            if (mapData.containsKey("PENAL_TRANSACTION_CASH")) {
+                oldTransDetMap.put("PENAL_TRANSACTION_CASH", mapData.get("PENAL_TRANSACTION_CASH"));
+            }
+            if (mapData.containsKey("ARBITRATION_TRANSACTION_CASH")) {
+                oldTransDetMap.put("ARBITRATION_TRANSACTION_CASH", mapData.get("ARBITRATION_TRANSACTION_CASH"));
+            }
+            if (mapData.containsKey("NOTICE_TRANSACTION_CASH")) {
+                oldTransDetMap.put("NOTICE_TRANSACTION_CASH", mapData.get("NOTICE_TRANSACTION_CASH"));
+            }
+            if (mapData.containsKey("BONUS_TRANSACTION_TRANSFER")) {
+                oldTransDetMap.put("BONUS_TRANSACTION_TRANSFER", mapData.get("BONUS_TRANSACTION_TRANSFER"));
+            }
+            if (mapData.containsKey("DISCOUNT_TRANSACTION_TRANSFER")) {
+                oldTransDetMap.put("DISCOUNT_TRANSACTION_TRANSFER", mapData.get("DISCOUNT_TRANSACTION_TRANSFER"));
+            }
+            if (mapData.containsKey("VOUCHER_DATA")) {
+                HashMap whereMap = new HashMap();
+                whereMap = (HashMap) mapData.get("VOUCHER_DATA");
+                displayTransDetail(whereMap);
+            }
+            notifyObservers();
+        } catch (Exception e) {
+            System.out.println("PrintStackTrace :" + e);
+        }
+        return aliasBranchTableFlag;
+    }
+
+    private GDSReceiptEntryTO getMDSReceiptEntryTO(GDSReceiptEntryTO mdsReceiptEntryTO) {
+         System.out.println("getMDSReceiptEntryTO "+mdsReceiptEntryTO);
+        //        MDSReceiptEntryTO mdsReceiptEntryTO = new MDSReceiptEntryTO();
+        //setTxtGDSName(mdsReceiptEntryTO.getGroup_no());
+        //setGroup_no(mdsReceiptEntryTO.getGroup_no());
+        setGds_no(mdsReceiptEntryTO.getGds_no());
+        //setTxtChittalNo(mdsReceiptEntryTO.getGds_no());
+        setTxtDivisionNo(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getDivisionNo()));
+        setTdtChitStartDt(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getChitStartDt()));
+        setTdtChitEndDt(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getChitEndDt()));
+        setTxtNoOfInst(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getNoOfInst()));
+        setTxtSubNo(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getSubNo()));
+        setTxtCurrentInstNo(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getCurrInst()));
+        setTxtInstAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getInstAmt())*schemeCount));
+        setTxtPendingInst(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getPendingInst())));
+        setTxtTotalInstAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getTotalInstDue())*schemeCount));
+        setTxtBonusAmtAvail(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getBonusAmtAvail())*schemeCount));
+        setLblMemberNameVal(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getMemberName()));
+        if (mdsReceiptEntryTO.getPrizedMember().equals("Y")) {
+            
+            setRdoPrizedMember_Yes(true);
+            setRdoPrizedMember_No(false);
+        } else {
+            
+            setRdoPrizedMember_Yes(false);
+            setRdoPrizedMember_No(true);
+        }
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+        setTxtNoticeAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(noticeAmount)*schemeCount));    
+        }else{
+        setTxtNoticeAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getNoticeAmt())*schemeCount));
+        }
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+        setTxtAribitrationAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(arbitrationAmount)*schemeCount));
+        setLblServiceTaxval(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(serviceTaxAmount)*schemeCount)); 
+        }else{
+        setTxtAribitrationAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getArbitrationAmt())*schemeCount));
+        }
+        setTxtNoOfInstToPaay(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getNoOfInstPay()));
+        
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+        setTxtInstPayable(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(instAmount)*schemeCount));    
+        }else{
+        setTxtInstPayable(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getInstAmtPayable())*schemeCount));
+        }
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+        setTxtPenalAmtPayable(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(penalAmount)*schemeCount));    
+        }else{
+        setTxtPenalAmtPayable(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getPenalAmtPayable())*schemeCount));
+        }
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+        setTxtBonusAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(bonusAmount)*schemeCount));    
+        }else{
+        setTxtBonusAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getBonusAmtPayable())*schemeCount));
+        }
+        
+        setTxtForfietbonus(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getForfeitBonusAmtPayable()*schemeCount)); //2093
+        setBankAdvAmt(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getBankAdvanceAmt()*schemeCount));
+        
+        setTxtDiscountAmt(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getDiscountAmt())*schemeCount));
+        setTxtInterest(CommonUtil.convertObjToStr(CommonUtil.convertObjToDouble(mdsReceiptEntryTO.getMdsInterset())*schemeCount));
+        if (isSplitMDSTransaction != null && isSplitMDSTransaction.equals("Y")) {
+        setTxtNetAmtPaid(CommonUtil.convertObjToDouble((instAmount+penalAmount+noticeAmount+arbitrationAmount+serviceTaxAmount)*schemeCount).toString());    
+        }else{
+        setTxtNetAmtPaid(CommonUtil.convertObjToStr((mdsReceiptEntryTO.getNetAmt()+mdsReceiptEntryTO.getNoticeAmt())*schemeCount));//9535
+        }
+        setTdtPaidDate(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getPaidDate()));
+        setTxtPaidInst(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getPaidInst()));
+        setTxtPaidAmt(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getPaidAmt()*schemeCount));
+        if (mdsReceiptEntryTO.getThalayal().equals("Y")) {
+            setChkThalayal(true);
+        } else {
+            setChkThalayal(true);
+        }
+        if (mdsReceiptEntryTO.getMunnal().equals("Y")) {
+            setChkMunnal(true);
+        } else {
+            setChkMunnal(false);
+        }
+        if (mdsReceiptEntryTO.getMemberChanged().equals("Y")) {
+            setChkMemberChanged(true);
+        } else {
+            setChkMemberChanged(false);
+        }
+        if (mdsReceiptEntryTO.getBankPay().equals("N")) {
+            setRdoBankPay_No(true);
+        } else if (mdsReceiptEntryTO.getBankPay().equals("Y")) {
+            setRdoBankPay_Yes(true);
+        }
+        setNarration(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getNarration()));
+        setTxtEarlierMember(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getEarlierMemberNo()));
+        setTxtEarlierMemberName(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getEarlierMemberName()));
+        setTxtChangedInst(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getChangedInstNo()));
+        setTdtChangedDate(CommonUtil.convertObjToStr(mdsReceiptEntryTO.getChangedDt()));
+        setTransId(mdsReceiptEntryTO.getNetTransId());
+        setEditDetails();
+        return mdsReceiptEntryTO;
+    }
+
+    public void setEditDetails() {
+        int count = 0;
+        HashMap instMap = new HashMap();
+        instMap.put("GDS_NO", getGds_no());
+        instMap.put("SUB_NO", CommonUtil.convertObjToInt(getTxtSubNo()));
+        List lst = ClientUtil.executeQuery("getGDSNoOfInstalmentsPaid", instMap);
+        if (lst != null && lst.size() > 0) {
+            instMap = (HashMap) lst.get(0);
+            count = CommonUtil.convertObjToInt(instMap.get("INST"));
+            setTxtPaidNoOfInst(String.valueOf(count));
+        } else {
+            setTxtPaidNoOfInst(String.valueOf("0"));
+        }
+        int instDay = 0;
+        HashMap whereMap = new HashMap();
+        whereMap.put("GROUP_NO", getGroup_no());
+        whereMap.put("SCHEME_NAME", getScheme_name());
+        whereMap.put("DIVISION_NO", CommonUtil.convertObjToInt(getTxtDivisionNo()));
+        whereMap.put("INSTALLMENT_NO", CommonUtil.convertObjToInt(String.valueOf(count)));
+        lst = ClientUtil.executeQuery("getGDSSelectInstUptoPaid", whereMap);
+        if (lst != null && lst.size() > 0) {
+            whereMap = (HashMap) lst.get(0);
+            setTdtInsUptoPaid(CommonUtil.convertObjToStr(whereMap.get("NEXT_INSTALLMENT_DATE")));
+        } else {
+            if (getActionType() == ClientConstants.ACTIONTYPE_AUTHORIZE || getActionType() == ClientConstants.ACTIONTYPE_REJECT) {
+                setReceiptDetails(hash);
+            }
+            Date startDate = DateUtil.getDateMMDDYYYY(CommonUtil.convertObjToStr(chittalMap.get("SCHEME_START_DT")));
+            instDay = CommonUtil.convertObjToInt(chittalMap.get("INSTALLMENT_DAY"));
+            startDate.setDate(instDay);
+            int stMonth = startDate.getMonth();
+            startDate.setMonth(stMonth + (int) count - 1);
+            setTdtInsUptoPaid(CommonUtil.convertObjToStr(startDate));
+        }
+        lst.clear();
+        instMap.clear();
+        whereMap.clear();
+        lst = null;
+        instMap = null;
+        whereMap = null;
+    }
+
+    /**
+     * Resets the General Remittance Fields to Null
+     */
+    public void resetOBFields() {
+       // setTxtGDSName("");
+        setTxtChittalNo("");
+        setLblMemberNameVal("");
+        setLblMemberNo("");
+        setTxtDivisionNo("");
+        setTdtChitStartDt("");
+        setTxtNoOfInst("");
+        setTxtSubNo("");
+        setTxtCurrentInstNo("");
+        setTdtInsUptoPaid("");
+        setTxtInstAmt("");
+        setTxtPendingInst("");
+        setTxtTotalInstAmt("");
+        setTxtBonusAmtAvail("");
+        setRdoPrizedMember_Yes(false);
+        setRdoPrizedMember_No(false);
+        setTxtNoticeAmt("");
+        setTxtAribitrationAmt("");
+        setTxtNoOfInstToPaay("");
+        setTxtInstPayable("");
+        setTxtInstPayable("");
+        setTxtBonusAmt("");
+        setTxtDiscountAmt("");
+        setTxtInterest("");
+        setTxtNetAmtPaid("");
+        setTdtChitEndDt("");
+        setTdtPaidDate("");
+        setTxtPaidInst("");
+        setTxtPaidNoOfInst("");
+        setTxtPaidAmt("");
+        setTxtPenalAmtPayable("");
+        setChkThalayal(false);
+        setChkMunnal(false);
+        setChkMemberChanged(false);
+        setTxtEarlierMember("");
+        setTxtEarlierMemberName("");
+        setTxtChangedInst("");
+        setTdtChangedDate("");
+        setLblServiceTaxval("");
+        setServiceTax_Map(null);
+        setPredefinedInstallment("");
+        setThalayalChittal("");  
+        setTxtForfietbonus("");//2093
+        setBankAdvAmt("");
+        setMdsCode("");
+    }
+
+    public String getTxtGDSName() {
+        return txtGDSName;
+    }
+
+    public void setTxtGDSName(String txtGDSName) {
+        this.txtGDSName = txtGDSName;
+    }
+
+    /**
+     * Getter for property txtSchemeName.
+     *
+     * @return Value of property txtSchemeName.
+     */
+    
+    //commented by shany
+    public java.lang.String getTxtSchemeName() {
+        return txtSchemeName;
+    }
+
+    /**
+     * Setter for property txtSchemeName.
+     *
+     * @param txtSchemeName New value of property txtSchemeName.
+     */
+    public void setTxtSchemeName(java.lang.String txtSchemeName) {
+        this.txtSchemeName = txtSchemeName;
+    }
+
+    /**
+     * Getter for property txtChittalNo.
+     *
+     * @return Value of property txtChittalNo.
+     */
+    public java.lang.String getTxtChittalNo() {
+        return txtChittalNo;
+    }
+
+    /**
+     * Setter for property txtChittalNo.
+     *
+     * @param txtChittalNo New value of property txtChittalNo.
+     */
+    public void setTxtChittalNo(java.lang.String txtChittalNo) {
+        this.txtChittalNo = txtChittalNo;
+    }
+
+    /**
+     * Getter for property lblMemberNameVal.
+     *
+     * @return Value of property lblMemberNameVal.
+     */
+    public java.lang.String getLblMemberNameVal() {
+        return lblMemberNameVal;
+    }
+
+    /**
+     * Setter for property lblMemberNameVal.
+     *
+     * @param lblMemberNameVal New value of property lblMemberNameVal.
+     */
+    public void setLblMemberNameVal(java.lang.String lblMemberNameVal) {
+        this.lblMemberNameVal = lblMemberNameVal;
+    }
+
+    /**
+     * Getter for property txtDivisionNo.
+     *
+     * @return Value of property txtDivisionNo.
+     */
+    public java.lang.String getTxtDivisionNo() {
+        return txtDivisionNo;
+    }
+
+    /**
+     * Setter for property txtDivisionNo.
+     *
+     * @param txtDivisionNo New value of property txtDivisionNo.
+     */
+    public void setTxtDivisionNo(java.lang.String txtDivisionNo) {
+        this.txtDivisionNo = txtDivisionNo;
+    }
+
+    /**
+     * Getter for property tdtChitStartDt.
+     *
+     * @return Value of property tdtChitStartDt.
+     */
+    public java.lang.String getTdtChitStartDt() {
+        return tdtChitStartDt;
+    }
+
+    /**
+     * Setter for property tdtChitStartDt.
+     *
+     * @param tdtChitStartDt New value of property tdtChitStartDt.
+     */
+    public void setTdtChitStartDt(java.lang.String tdtChitStartDt) {
+        this.tdtChitStartDt = tdtChitStartDt;
+    }
+
+    /**
+     * Getter for property txtNoOfInst.
+     *
+     * @return Value of property txtNoOfInst.
+     */
+    public java.lang.String getTxtNoOfInst() {
+        return txtNoOfInst;
+    }
+
+    /**
+     * Setter for property txtNoOfInst.
+     *
+     * @param txtNoOfInst New value of property txtNoOfInst.
+     */
+    public void setTxtNoOfInst(java.lang.String txtNoOfInst) {
+        this.txtNoOfInst = txtNoOfInst;
+    }
+
+    /**
+     * Getter for property txtCurrentInstNo.
+     *
+     * @return Value of property txtCurrentInstNo.
+     */
+    public java.lang.String getTxtCurrentInstNo() {
+        return txtCurrentInstNo;
+    }
+
+    /**
+     * Setter for property txtCurrentInstNo.
+     *
+     * @param txtCurrentInstNo New value of property txtCurrentInstNo.
+     */
+    public void setTxtCurrentInstNo(java.lang.String txtCurrentInstNo) {
+        this.txtCurrentInstNo = txtCurrentInstNo;
+    }
+
+    /**
+     * Getter for property txtInstAmt.
+     *
+     * @return Value of property txtInstAmt.
+     */
+    public java.lang.String getTxtInstAmt() {
+        return txtInstAmt;
+    }
+
+    /**
+     * Setter for property txtInstAmt.
+     *
+     * @param txtInstAmt New value of property txtInstAmt.
+     */
+    public void setTxtInstAmt(java.lang.String txtInstAmt) {
+        this.txtInstAmt = txtInstAmt;
+    }
+
+    /**
+     * Getter for property txtPendingInst.
+     *
+     * @return Value of property txtPendingInst.
+     */
+    public java.lang.String getTxtPendingInst() {
+        return txtPendingInst;
+    }
+
+    /**
+     * Setter for property txtPendingInst.
+     *
+     * @param txtPendingInst New value of property txtPendingInst.
+     */
+    public void setTxtPendingInst(java.lang.String txtPendingInst) {
+        this.txtPendingInst = txtPendingInst;
+    }
+
+    /**
+     * Getter for property txtTotalInstAmt.
+     *
+     * @return Value of property txtTotalInstAmt.
+     */
+    public java.lang.String getTxtTotalInstAmt() {
+        return txtTotalInstAmt;
+    }
+
+    /**
+     * Setter for property txtTotalInstAmt.
+     *
+     * @param txtTotalInstAmt New value of property txtTotalInstAmt.
+     */
+    public void setTxtTotalInstAmt(java.lang.String txtTotalInstAmt) {
+        this.txtTotalInstAmt = txtTotalInstAmt;
+    }
+
+    /**
+     * Getter for property txtBonusAmtAvail.
+     *
+     * @return Value of property txtBonusAmtAvail.
+     */
+    public java.lang.String getTxtBonusAmtAvail() {
+        return txtBonusAmtAvail;
+    }
+
+    /**
+     * Setter for property txtBonusAmtAvail.
+     *
+     * @param txtBonusAmtAvail New value of property txtBonusAmtAvail.
+     */
+    public void setTxtBonusAmtAvail(java.lang.String txtBonusAmtAvail) {
+        this.txtBonusAmtAvail = txtBonusAmtAvail;
+    }
+
+    /**
+     * Getter for property rdoPrizedMember_Yes.
+     *
+     * @return Value of property rdoPrizedMember_Yes.
+     */
+    public boolean getRdoPrizedMember_Yes() {
+        return rdoPrizedMember_Yes;
+    }
+
+    /**
+     * Setter for property rdoPrizedMember_Yes.
+     *
+     * @param rdoPrizedMember_Yes New value of property rdoPrizedMember_Yes.
+     */
+    public void setRdoPrizedMember_Yes(boolean rdoPrizedMember_Yes) {
+        this.rdoPrizedMember_Yes = rdoPrizedMember_Yes;
+    }
+
+    /**
+     * Getter for property rdoPrizedMember_No.
+     *
+     * @return Value of property rdoPrizedMember_No.
+     */
+    public boolean getRdoPrizedMember_No() {
+        return rdoPrizedMember_No;
+    }
+
+    /**
+     * Setter for property rdoPrizedMember_No.
+     *
+     * @param rdoPrizedMember_No New value of property rdoPrizedMember_No.
+     */
+    public void setRdoPrizedMember_No(boolean rdoPrizedMember_No) {
+        this.rdoPrizedMember_No = rdoPrizedMember_No;
+    }
+
+    /**
+     * Getter for property txtNoticeAmt.
+     *
+     * @return Value of property txtNoticeAmt.
+     */
+    public java.lang.String getTxtNoticeAmt() {
+        return txtNoticeAmt;
+    }
+
+    /**
+     * Setter for property txtNoticeAmt.
+     *
+     * @param txtNoticeAmt New value of property txtNoticeAmt.
+     */
+    public void setTxtNoticeAmt(java.lang.String txtNoticeAmt) {
+        this.txtNoticeAmt = txtNoticeAmt;
+    }
+
+    /**
+     * Getter for property txtAribitrationAmt.
+     *
+     * @return Value of property txtAribitrationAmt.
+     */
+    public java.lang.String getTxtAribitrationAmt() {
+        return txtAribitrationAmt;
+    }
+
+    /**
+     * Setter for property txtAribitrationAmt.
+     *
+     * @param txtAribitrationAmt New value of property txtAribitrationAmt.
+     */
+    public void setTxtAribitrationAmt(java.lang.String txtAribitrationAmt) {
+        this.txtAribitrationAmt = txtAribitrationAmt;
+    }
+
+    /**
+     * Getter for property txtNoOfInstToPaay.
+     *
+     * @return Value of property txtNoOfInstToPaay.
+     */
+    public java.lang.String getTxtNoOfInstToPaay() {
+        return txtNoOfInstToPaay;
+    }
+
+    /**
+     * Setter for property txtNoOfInstToPaay.
+     *
+     * @param txtNoOfInstToPaay New value of property txtNoOfInstToPaay.
+     */
+    public void setTxtNoOfInstToPaay(java.lang.String txtNoOfInstToPaay) {
+        this.txtNoOfInstToPaay = txtNoOfInstToPaay;
+    }
+
+    /**
+     * Getter for property txtInstPayable.
+     *
+     * @return Value of property txtInstPayable.
+     */
+    public java.lang.String getTxtInstPayable() {
+        return txtInstPayable;
+    }
+
+    /**
+     * Setter for property txtInstPayable.
+     *
+     * @param txtInstPayable New value of property txtInstPayable.
+     */
+    public void setTxtInstPayable(java.lang.String txtInstPayable) {
+        this.txtInstPayable = txtInstPayable;
+    }
+
+    /**
+     * Getter for property txtPenalAmtPayable.
+     *
+     * @return Value of property txtPenalAmtPayable.
+     */
+    public java.lang.String getTxtPenalAmtPayable() {
+        return txtPenalAmtPayable;
+    }
+
+    /**
+     * Setter for property txtPenalAmtPayable.
+     *
+     * @param txtPenalAmtPayable New value of property txtPenalAmtPayable.
+     */
+    public void setTxtPenalAmtPayable(java.lang.String txtPenalAmtPayable) {
+        this.txtPenalAmtPayable = txtPenalAmtPayable;
+    }
+
+    /**
+     * Getter for property txtBonusAmt.
+     *
+     * @return Value of property txtBonusAmt.
+     */
+    public java.lang.String getTxtBonusAmt() {
+        return txtBonusAmt;
+    }
+
+    /**
+     * Setter for property txtBonusAmt.
+     *
+     * @param txtBonusAmt New value of property txtBonusAmt.
+     */
+    public void setTxtBonusAmt(java.lang.String txtBonusAmt) {
+        this.txtBonusAmt = txtBonusAmt;
+    }
+
+    /**
+     * Getter for property txtDiscountAmt.
+     *
+     * @return Value of property txtDiscountAmt.
+     */
+    public java.lang.String getTxtDiscountAmt() {
+        return txtDiscountAmt;
+    }
+
+    /**
+     * Setter for property txtDiscountAmt.
+     *
+     * @param txtDiscountAmt New value of property txtDiscountAmt.
+     */
+    public void setTxtDiscountAmt(java.lang.String txtDiscountAmt) {
+        this.txtDiscountAmt = txtDiscountAmt;
+    }
+
+    /**
+     * Getter for property txtInterest.
+     *
+     * @return Value of property txtInterest.
+     */
+    public java.lang.String getTxtInterest() {
+        return txtInterest;
+    }
+
+    /**
+     * Setter for property txtInterest.
+     *
+     * @param txtInterest New value of property txtInterest.
+     */
+    public void setTxtInterest(java.lang.String txtInterest) {
+        this.txtInterest = txtInterest;
+    }
+
+    /**
+     * Getter for property txtNetAmtPaid.
+     *
+     * @return Value of property txtNetAmtPaid.
+     */
+    public java.lang.String getTxtNetAmtPaid() {
+        return txtNetAmtPaid;
+    }
+
+    /**
+     * Setter for property txtNetAmtPaid.
+     *
+     * @param txtNetAmtPaid New value of property txtNetAmtPaid.
+     */
+    public void setTxtNetAmtPaid(java.lang.String txtNetAmtPaid) {
+        this.txtNetAmtPaid = txtNetAmtPaid;
+    }
+
+    /**
+     * Getter for property tdtPaidDate.
+     *
+     * @return Value of property tdtPaidDate.
+     */
+    public java.lang.String getTdtPaidDate() {
+        return tdtPaidDate;
+    }
+
+    /**
+     * Setter for property tdtPaidDate.
+     *
+     * @param tdtPaidDate New value of property tdtPaidDate.
+     */
+    public void setTdtPaidDate(java.lang.String tdtPaidDate) {
+        this.tdtPaidDate = tdtPaidDate;
+    }
+
+    /**
+     * Getter for property txtPaidInst.
+     *
+     * @return Value of property txtPaidInst.
+     */
+    public java.lang.String getTxtPaidInst() {
+        return txtPaidInst;
+    }
+
+    /**
+     * Setter for property txtPaidInst.
+     *
+     * @param txtPaidInst New value of property txtPaidInst.
+     */
+    public void setTxtPaidInst(java.lang.String txtPaidInst) {
+        this.txtPaidInst = txtPaidInst;
+    }
+
+    /**
+     * Getter for property txtPaidAmt.
+     *
+     * @return Value of property txtPaidAmt.
+     */
+    public java.lang.String getTxtPaidAmt() {
+        return txtPaidAmt;
+    }
+
+    /**
+     * Setter for property txtPaidAmt.
+     *
+     * @param txtPaidAmt New value of property txtPaidAmt.
+     */
+    public void setTxtPaidAmt(java.lang.String txtPaidAmt) {
+        this.txtPaidAmt = txtPaidAmt;
+    }
+
+    /**
+     * Getter for property txtEarlierMember.
+     *
+     * @return Value of property txtEarlierMember.
+     */
+    public java.lang.String getTxtEarlierMember() {
+        return txtEarlierMember;
+    }
+
+    /**
+     * Setter for property txtEarlierMember.
+     *
+     * @param txtEarlierMember New value of property txtEarlierMember.
+     */
+    public void setTxtEarlierMember(java.lang.String txtEarlierMember) {
+        this.txtEarlierMember = txtEarlierMember;
+    }
+
+    /**
+     * Getter for property txtEarlierMemberName.
+     *
+     * @return Value of property txtEarlierMemberName.
+     */
+    public java.lang.String getTxtEarlierMemberName() {
+        return txtEarlierMemberName;
+    }
+
+    /**
+     * Setter for property txtEarlierMemberName.
+     *
+     * @param txtEarlierMemberName New value of property txtEarlierMemberName.
+     */
+    public void setTxtEarlierMemberName(java.lang.String txtEarlierMemberName) {
+        this.txtEarlierMemberName = txtEarlierMemberName;
+    }
+
+    /**
+     * Getter for property txtChangedInst.
+     *
+     * @return Value of property txtChangedInst.
+     */
+    public java.lang.String getTxtChangedInst() {
+        return txtChangedInst;
+    }
+
+    /**
+     * Setter for property txtChangedInst.
+     *
+     * @param txtChangedInst New value of property txtChangedInst.
+     */
+    public void setTxtChangedInst(java.lang.String txtChangedInst) {
+        this.txtChangedInst = txtChangedInst;
+    }
+
+    /**
+     * Getter for property tdtChangedDate.
+     *
+     * @return Value of property tdtChangedDate.
+     */
+    public java.lang.String getTdtChangedDate() {
+        return tdtChangedDate;
+    }
+
+    /**
+     * Setter for property tdtChangedDate.
+     *
+     * @param tdtChangedDate New value of property tdtChangedDate.
+     */
+    public void setTdtChangedDate(java.lang.String tdtChangedDate) {
+        this.tdtChangedDate = tdtChangedDate;
+    }
+
+    /**
+     * Getter for property chkThalayal.
+     *
+     * @return Value of property chkThalayal.
+     */
+    public boolean getChkThalayal() {
+        return chkThalayal;
+    }
+
+    /**
+     * Setter for property chkThalayal.
+     *
+     * @param chkThalayal New value of property chkThalayal.
+     */
+    public void setChkThalayal(boolean chkThalayal) {
+        this.chkThalayal = chkThalayal;
+    }
+
+    /**
+     * Getter for property chkMunnal.
+     *
+     * @return Value of property chkMunnal.
+     */
+    public boolean getChkMunnal() {
+        return chkMunnal;
+    }
+
+    /**
+     * Setter for property chkMunnal.
+     *
+     * @param chkMunnal New value of property chkMunnal.
+     */
+    public void setChkMunnal(boolean chkMunnal) {
+        this.chkMunnal = chkMunnal;
+    }
+
+    /**
+     * Getter for property chkMemberChanged.
+     *
+     * @return Value of property chkMemberChanged.
+     */
+    public boolean getChkMemberChanged() {
+        return chkMemberChanged;
+    }
+
+    /**
+     * Setter for property chkMemberChanged.
+     *
+     * @param chkMemberChanged New value of property chkMemberChanged.
+     */
+    public void setChkMemberChanged(boolean chkMemberChanged) {
+        this.chkMemberChanged = chkMemberChanged;
+    }
+
+    /**
+     * Getter for property tdtChitEndDt.
+     *
+     * @return Value of property tdtChitEndDt.
+     */
+    public java.lang.String getTdtChitEndDt() {
+        return tdtChitEndDt;
+    }
+
+    /**
+     * Setter for property tdtChitEndDt.
+     *
+     * @param tdtChitEndDt New value of property tdtChitEndDt.
+     */
+    public void setTdtChitEndDt(java.lang.String tdtChitEndDt) {
+        this.tdtChitEndDt = tdtChitEndDt;
+    }
+
+    /**
+     * Getter for property oldTransDetMap.
+     *
+     * @return Value of property oldTransDetMap.
+     */
+    public java.util.HashMap getOldTransDetMap() {
+        return oldTransDetMap;
+    }
+
+    /**
+     * Setter for property oldTransDetMap.
+     *
+     * @param oldTransDetMap New value of property oldTransDetMap.
+     */
+    public void setOldTransDetMap(java.util.HashMap oldTransDetMap) {
+        this.oldTransDetMap = oldTransDetMap;
+    }
+
+    /**
+     * Getter for property transactionOB.
+     *
+     * @return Value of property transactionOB.
+     */
+    public com.see.truetransact.ui.common.transaction.TransactionOB getTransactionOB() {
+        return transactionOB;
+    }
+
+    /**
+     * Setter for property transactionOB.
+     *
+     * @param transactionOB New value of property transactionOB.
+     */
+    public void setTransactionOB(com.see.truetransact.ui.common.transaction.TransactionOB transactionOB) {
+        this.transactionOB = transactionOB;
+    }
+
+    /**
+     * Getter for property allowedTransactionDetailsTO.
+     *
+     * @return Value of property allowedTransactionDetailsTO.
+     */
+    public java.util.LinkedHashMap getAllowedTransactionDetailsTO() {
+        return allowedTransactionDetailsTO;
+    }
+
+    /**
+     * Setter for property allowedTransactionDetailsTO.
+     *
+     * @param allowedTransactionDetailsTO New value of property
+     * allowedTransactionDetailsTO.
+     */
+    public void setAllowedTransactionDetailsTO(java.util.LinkedHashMap allowedTransactionDetailsTO) {
+        this.allowedTransactionDetailsTO = allowedTransactionDetailsTO;
+    }
+
+    /**
+     * Getter for property transactionDetailsTO.
+     *
+     * @return Value of property transactionDetailsTO.
+     */
+    public java.util.LinkedHashMap getTransactionDetailsTO() {
+        return transactionDetailsTO;
+    }
+
+    /**
+     * Setter for property transactionDetailsTO.
+     *
+     * @param transactionDetailsTO New value of property transactionDetailsTO.
+     */
+    public void setTransactionDetailsTO(java.util.LinkedHashMap transactionDetailsTO) {
+        this.transactionDetailsTO = transactionDetailsTO;
+    }
+
+    /**
+     * Getter for property deletedTransactionDetailsTO.
+     *
+     * @return Value of property deletedTransactionDetailsTO.
+     */
+    public java.util.LinkedHashMap getDeletedTransactionDetailsTO() {
+        return deletedTransactionDetailsTO;
+    }
+
+    /**
+     * Setter for property deletedTransactionDetailsTO.
+     *
+     * @param deletedTransactionDetailsTO New value of property
+     * deletedTransactionDetailsTO.
+     */
+    public void setDeletedTransactionDetailsTO(java.util.LinkedHashMap deletedTransactionDetailsTO) {
+        this.deletedTransactionDetailsTO = deletedTransactionDetailsTO;
+    }
+
+    /**
+     * Getter for property productMap.
+     *
+     * @return Value of property productMap.
+     */
+    public java.util.HashMap getProductMap() {
+        return productMap;
+    }
+
+    /**
+     * Setter for property productMap.
+     *
+     * @param productMap New value of property productMap.
+     */
+    public void setProductMap(java.util.HashMap productMap) {
+        this.productMap = productMap;
+    }
+
+    /**
+     * Getter for property transId.
+     *
+     * @return Value of property transId.
+     */
+    public java.lang.String getTransId() {
+        return transId;
+    }
+
+    /**
+     * Setter for property transId.
+     *
+     * @param transId New value of property transId.
+     */
+    public void setTransId(java.lang.String transId) {
+        this.transId = transId;
+    }
+
+    /**
+     * Getter for property authorizeMap.
+     *
+     * @return Value of property authorizeMap.
+     */
+    public java.util.HashMap getAuthorizeMap() {
+        return authorizeMap;
+    }
+
+    /**
+     * Setter for property authorizeMap.
+     *
+     * @param authorizeMap New value of property authorizeMap.
+     */
+    public void setAuthorizeMap(java.util.HashMap authorizeMap) {
+        this.authorizeMap = authorizeMap;
+    }
+
+    /**
+     * Getter for property rdoBankPay_Yes.
+     *
+     * @return Value of property rdoBankPay_Yes.
+     */
+    public boolean getRdoBankPay_Yes() {
+        return rdoBankPay_Yes;
+    }
+
+    /**
+     * Setter for property rdoBankPay_Yes.
+     *
+     * @param rdoBankPay_Yes New value of property rdoBankPay_Yes.
+     */
+    public void setRdoBankPay_Yes(boolean rdoBankPay_Yes) {
+        this.rdoBankPay_Yes = rdoBankPay_Yes;
+    }
+
+    /**
+     * Getter for property rdoBankPay_No.
+     *
+     * @return Value of property rdoBankPay_No.
+     */
+    public boolean getRdoBankPay_No() {
+        return rdoBankPay_No;
+    }
+
+    /**
+     * Setter for property rdoBankPay_No.
+     *
+     * @param rdoBankPay_No New value of property rdoBankPay_No.
+     */
+    public void setRdoBankPay_No(boolean rdoBankPay_No) {
+        this.rdoBankPay_No = rdoBankPay_No;
+    }
+
+    /**
+     * Getter for property lblHouseStNo.
+     *
+     * @return Value of property lblHouseStNo.
+     */
+    public java.lang.String getLblHouseStNo() {
+        return lblHouseStNo;
+    }
+
+    /**
+     * Setter for property lblHouseStNo.
+     *
+     * @param lblHouseStNo New value of property lblHouseStNo.
+     */
+    public void setLblHouseStNo(java.lang.String lblHouseStNo) {
+        this.lblHouseStNo = lblHouseStNo;
+    }
+
+    /**
+     * Getter for property lblArea.
+     *
+     * @return Value of property lblArea.
+     */
+    public java.lang.String getLblArea() {
+        return lblArea;
+    }
+
+    /**
+     * Setter for property lblArea.
+     *
+     * @param lblArea New value of property lblArea.
+     */
+    public void setLblArea(java.lang.String lblArea) {
+        this.lblArea = lblArea;
+    }
+
+    /**
+     * Getter for property lblCity.
+     *
+     * @return Value of property lblCity.
+     */
+    public java.lang.String getLblCity() {
+        return lblCity;
+    }
+
+    /**
+     * Setter for property lblCity.
+     *
+     * @param lblCity New value of property lblCity.
+     */
+    public void setLblCity(java.lang.String lblCity) {
+        this.lblCity = lblCity;
+    }
+
+    /**
+     * Getter for property lblState.
+     *
+     * @return Value of property lblState.
+     */
+    public java.lang.String getLblState() {
+        return lblState;
+    }
+
+    /**
+     * Setter for property lblState.
+     *
+     * @param lblState New value of property lblState.
+     */
+    public void setLblState(java.lang.String lblState) {
+        this.lblState = lblState;
+    }
+
+    /**
+     * Getter for property lblpin.
+     *
+     * @return Value of property lblpin.
+     */
+    public java.lang.String getLblpin() {
+        return lblpin;
+    }
+
+    /**
+     * Setter for property lblpin.
+     *
+     * @param lblpin New value of property lblpin.
+     */
+    public void setLblpin(java.lang.String lblpin) {
+        this.lblpin = lblpin;
+    }
+
+    /**
+     * Getter for property instMap.
+     *
+     * @return Value of property instMap.
+     */
+    public java.util.HashMap getInstMap() {
+        return instMap;
+    }
+
+    /**
+     * Setter for property instMap.
+     *
+     * @param instMap New value of property instMap.
+     */
+    public void setInstMap(java.util.HashMap instMap) {
+        this.instMap = instMap;
+    }
+
+    /**
+     * Getter for property chittalMap.
+     *
+     * @return Value of property chittalMap.
+     */
+    public java.util.HashMap getChittalMap() {
+        return chittalMap;
+    }
+
+    /**
+     * Setter for property chittalMap.
+     *
+     * @param chittalMap New value of property chittalMap.
+     */
+    public void setChittalMap(java.util.HashMap chittalMap) {
+        this.chittalMap = chittalMap;
+    }
+
+    /**
+     * Getter for property txtPaidNoOfInst.
+     *
+     * @return Value of property txtPaidNoOfInst.
+     */
+    public java.lang.String getTxtPaidNoOfInst() {
+        return txtPaidNoOfInst;
+    }
+
+    /**
+     * Setter for property txtPaidNoOfInst.
+     *
+     * @param txtPaidNoOfInst New value of property txtPaidNoOfInst.
+     */
+    public void setTxtPaidNoOfInst(java.lang.String txtPaidNoOfInst) {
+        this.txtPaidNoOfInst = txtPaidNoOfInst;
+    }
+
+    /**
+     * Getter for property lblMemberNo.
+     *
+     * @return Value of property lblMemberNo.
+     */
+    public java.lang.String getLblMemberNo() {
+        return lblMemberNo;
+    }
+
+    /**
+     * Setter for property lblMemberNo.
+     *
+     * @param lblMemberNo New value of property lblMemberNo.
+     */
+    public void setLblMemberNo(java.lang.String lblMemberNo) {
+        this.lblMemberNo = lblMemberNo;
+    }
+
+    /**
+     * Getter for property tdtInsUptoPaid.
+     *
+     * @return Value of property tdtInsUptoPaid.
+     */
+    public java.lang.String getTdtInsUptoPaid() {
+        return tdtInsUptoPaid;
+    }
+
+    /**
+     * Setter for property tdtInsUptoPaid.
+     *
+     * @param tdtInsUptoPaid New value of property tdtInsUptoPaid.
+     */
+    public void setTdtInsUptoPaid(java.lang.String tdtInsUptoPaid) {
+        this.tdtInsUptoPaid = tdtInsUptoPaid;
+    }
+
+    /**
+     * Getter for property narration.
+     *
+     * @return Value of property narration.
+     */
+    public java.lang.String getNarration() {
+        return narration;
+    }
+
+    public int getSchemeCount() {
+        return schemeCount;
+    }
+
+    public void setSchemeCount(int schemeCount) {
+        this.schemeCount = schemeCount;
+    }
+    
+    
+
+    /**
+     * Setter for property narration.
+     *
+     * @param narration New value of property narration.
+     */
+    public void setNarration(java.lang.String narration) {
+        this.narration = narration;
+    }
+
+    /**
+     * Getter for property installmentMap.
+     *
+     * @return Value of property installmentMap.
+     */
+    public java.util.HashMap getInstallmentMap() {
+        return installmentMap;
+    }
+
+    /**
+     * Setter for property installmentMap.
+     *
+     * @param installmentMap New value of property installmentMap.
+     */
+    public void setInstallmentMap(java.util.HashMap installmentMap) {
+        this.installmentMap = installmentMap;
+    }
+    public void setBonusListNew(double aList)
+    {
+        this.bonusListNew=aList;
+    }
+    public double getBonusListNew()
+    {
+        return bonusListNew;
+    }
+    /**
+     * Getter for property txtSubNo.
+     *
+     * @return Value of property txtSubNo.
+     */
+    public java.lang.String getTxtSubNo() {
+        return txtSubNo;
+    }
+
+    /**
+     * Setter for property txtSubNo.
+     *
+     * @param txtSubNo New value of property txtSubNo.
+     */
+    public void setTxtSubNo(java.lang.String txtSubNo) {
+        this.txtSubNo = txtSubNo;
+    }
+
+    /**
+     * Getter for property multipleMember.
+     *
+     * @return Value of property multipleMember.
+     */
+    public java.lang.String getMultipleMember() {
+        return multipleMember;
+    }
+
+    /**
+     * Setter for property multipleMember.
+     *
+     * @param multipleMember New value of property multipleMember.
+     */
+    public void setMultipleMember(java.lang.String multipleMember) {
+        this.multipleMember = multipleMember;
+    }
+
+    public HashMap getMDSTransListMap() {
+        return MDSTransListMap;
+    }
+
+    public void issplitTransaction() {
+        if (MDSTransListMap.containsKey("IS_SPLIT_MDS_TRANSACTION") && MDSTransListMap.get("IS_SPLIT_MDS_TRANSACTION") != null) {
+            if (MDSTransListMap.get("IS_SPLIT_MDS_TRANSACTION").equals("Y")) {
+                splitMDSReceiptEntryTO = setMDSReceiptEntryTO();
+                doSplitMDSTransaction();
+            }
+        }
+    }
+
+    public String getGds_no() {
+        return gds_no;
+    }
+
+    public void setGds_no(String gds_no) {
+        this.gds_no = gds_no;
+    }
+
+    public String getGroup_no() {
+        return group_no;
+    }
+
+    public void setGroup_no(String group_no) {
+        this.group_no = group_no;
+    }
+
+    public String getChittal_no() {
+        return chittal_no;
+    }
+
+    public void setChittal_no(String chittal_no) {
+        this.chittal_no = chittal_no;
+    }
+
+    public String getScheme_name() {
+        return scheme_name;
+    }
+
+    public void setScheme_name(String scheme_name) {
+        this.scheme_name = scheme_name;
+    }
+
+    
+    
+    public void setMDSTransListMap(HashMap MDSTransListMap) {
+        this.MDSTransListMap = MDSTransListMap;
+        issplitTransaction();
+    }
+	public ServiceTaxDetailsTO setServiceTaxDetails() {
+        final ServiceTaxDetailsTO objservicetaxDetTo = new ServiceTaxDetailsTO();
+        try {
+            objservicetaxDetTo.setCommand(getCommand());
+            objservicetaxDetTo.setStatus(CommonConstants.STATUS_CREATED);
+            objservicetaxDetTo.setStatusBy(TrueTransactMain.USER_ID);
+            objservicetaxDetTo.setAcct_Num(getTxtChittalNo());
+            objservicetaxDetTo.setParticulars("Cash");
+            objservicetaxDetTo.setBranchID(ProxyParameters.BRANCH_ID);
+            objservicetaxDetTo.setTrans_type("C");
+            if (serviceTax_Map != null && serviceTax_Map.containsKey("SERVICE_TAX")) {
+                objservicetaxDetTo.setServiceTaxAmt(CommonUtil.convertObjToDouble(serviceTax_Map.get("SERVICE_TAX")));
+            }
+            if (serviceTax_Map != null && serviceTax_Map.containsKey("EDUCATION_CESS")) {
+                objservicetaxDetTo.setEducationCess(CommonUtil.convertObjToDouble(serviceTax_Map.get("EDUCATION_CESS")));
+            }
+            if (serviceTax_Map != null && serviceTax_Map.containsKey("HIGHER_EDU_CESS")) {
+                objservicetaxDetTo.setHigherCess(CommonUtil.convertObjToDouble(serviceTax_Map.get("HIGHER_EDU_CESS")));
+            }
+            if (serviceTax_Map != null && serviceTax_Map.containsKey("TOT_TAX_AMT")) {
+                objservicetaxDetTo.setTotalTaxAmt(CommonUtil.convertObjToDouble(serviceTax_Map.get("TOT_TAX_AMT")));
+            }
+            double roudVal = objservicetaxDetTo.getTotalTaxAmt() - (objservicetaxDetTo.getServiceTaxAmt() + objservicetaxDetTo.getEducationCess() + objservicetaxDetTo.getHigherCess());
+            ServiceTaxCalculation serviceTaxObj= new ServiceTaxCalculation();
+            objservicetaxDetTo.setRoundVal(CommonUtil.convertObjToStr(serviceTaxObj.roundOffAmtForRoundVal(roudVal)));
+            objservicetaxDetTo.setStatusDt(currDate);
+
+            if (getCommand().equalsIgnoreCase("INSERT")) {
+                objservicetaxDetTo.setCreatedBy(TrueTransactMain.USER_ID);
+                objservicetaxDetTo.setCreatedDt(currDate);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return objservicetaxDetTo;
+
+    }
+
+    public String getMdsCode() {
+        return mdsCode;
+    }
+
+    public void setMdsCode(String mdsCode) {
+        this.mdsCode = mdsCode;
+    }
+
+    public String getMunnalChittal() {
+        return munnalChittal;
+    }
+
+    public void setMunnalChittal(String munnalChittal) {
+        this.munnalChittal = munnalChittal;
+    }
+
+    public String getTxtForfietbonus() {
+        return txtForfietbonus;
+    }
+
+    public void setTxtForfietbonus(String txtForfietbonus) {
+        this.txtForfietbonus = txtForfietbonus;
+    }
+
+    public String getBankAdvAmt() {
+        return bankAdvAmt;
+    }
+
+    public void setBankAdvAmt(String bankAdvAmt) {
+        this.bankAdvAmt = bankAdvAmt;
+    }
+    
+}

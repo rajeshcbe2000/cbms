@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LienMarkingTOMap">
+
+	<!-- Use LienMarkingTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLienMarkingTO" inline-parameters="true">
+        INSERT INTO ACT_LIEN
+        (ACT_NUM, LIEN_ID, LIEN_AMT, LIEN_DT, LIEN_ACT_NUM, LIEN_STATUS, UNLIEN_DT, REMARKS, LIEN_AC_HD, UNLIEN_REMARKS, AUTHORIZE_STATUS, AUTHORIZE_USER, AUTHORIZE_DT, PROD_ID, STATUS, STATUS_DT, STATUS_BY, CREATED_DT, CREATED_BY
+        ) VALUES (
+        #actNum:VARCHAR#, #lienId:VARCHAR#, #lienAmt:NUMERIC#, #lienDt:DATE#, #lienActNum:VARCHAR#, #lienStatus:VARCHAR#, #unlienDt:DATE#, #remarks:VARCHAR#, #lienAcHd:VARCHAR#, #unlienRemarks:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeUser:VARCHAR#, #authorizeDt:DATE#, #prodId:VARCHAR#, #status:VARCHAR#, #statusDt:TIMESTAMP#, #statusBy:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LienMarkingTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. 
+             -->
+    <dynamic-mapped-statement name="updateLienMarkingTO" inline-parameters="true">
+        UPDATE ACT_LIEN SET 
+        ACT_NUM = #actNum:VARCHAR#,
+        LIEN_ID = #lienId:VARCHAR#,
+        LIEN_AMT = #lienAmt:NUMERIC#,
+        LIEN_DT = #lienDt:DATE#,
+        LIEN_ACT_NUM = #lienActNum:VARCHAR#,
+        LIEN_STATUS = #lienStatus:VARCHAR#,
+        UNLIEN_DT = #unlienDt:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        LIEN_AC_HD = #lienAcHd:VARCHAR#,
+        UNLIEN_REMARKS = #unlienRemarks:VARCHAR#,
+        <dynamic>
+            <isEqual property="lienStatus" compareValue="UNLIENED">
+                AUTHORIZE_STATUS = null,
+                AUTHORIZE_USER = #authorizeUser:VARCHAR#,
+                AUTHORIZE_DT = #authorizeDt:DATE#, 
+            </isEqual>
+        </dynamic>                
+<!--		PROD_ID = #prodId:VARCHAR#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        STATUS_BY = #statusBy:VARCHAR#
+<!--		CREATED_DT = #createdDt:DATE#,
+		CREATED_BY = #createdBy:VARCHAR#-->
+        WHERE ACT_NUM = #actNum:VARCHAR# AND LIEN_ID = #lienId:VARCHAR#
+    </dynamic-mapped-statement>
+
+	<!-- Use LienMarkingTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLienMarkingTO" inline-parameters="true">
+<!--		DELETE FROM ACT_LIEN 
+		WHERE ACT_NUM = #actNum# AND LIEN_ID = #lienId#-->
+        UPDATE ACT_LIEN SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE ACT_NUM = #actNum# AND LIEN_ID = #lienId#
+    </mapped-statement>
+        
+       	<!--mapped-statement name="deleteLienMarking" inline-parameters="true">
+            DELETE FROM ACT_LIEN 
+            WHERE ACT_NUM = #actNum# AND LIEN_ID = #lienId#
+	</mapped-statement -->
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LienMarkingTO object (JavaBean) properties -->
+    <result-map name="getLienMarkingTOResult" class="com.see.truetransact.transferobject.operativeaccount.LienMarkingTO">
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="lienId" column="LIEN_ID"/>
+        <property name="lienAmt" column="LIEN_AMT"/>
+        <property name="lienDt" column="LIEN_DT"/>
+        <property name="lienActNum" column="LIEN_ACT_NUM"/>
+        <property name="lienStatus" column="LIEN_STATUS"/>
+        <property name="unlienDt" column="UNLIEN_DT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="lienAcHd" column="LIEN_AC_HD"/>
+        <property name="unlienRemarks" column="UNLIEN_REMARKS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeUser" column="AUTHORIZE_USER"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+    </result-map>
+    <mapped-statement name="getLienAccountDetails" result-map="getLienMarkingTOResult" >
+<!--		SELECT * FROM ACT_LIEN WHERE (STATUS='CREATED' OR STATUS='MODIFIED' OR STATUS='AUTHORIZED') AND ACT_NUM= #ACCTNUMBER# ORDER BY LIEN_ID-->
+        SELECT * FROM ACT_LIEN l
+        WHERE STATUS != 'DELETED' and
+        (( l.lien_status ='LIENED' and  (l.authorize_status in ('AUTHORIZED') or l.authorize_status is null ) 
+        OR (l.lien_status ='UNLIENED' and (l.authorize_status in ('REJECTED') or l.authorize_status is null))))
+        AND ACT_NUM =  #ACCTNUMBER:VARCHAR# ORDER BY LIEN_ID
+    </mapped-statement>
+    <mapped-statement name="getLienAccountDetailsForAuth" result-map="getLienMarkingTOResult" >
+<!--		SELECT * FROM ACT_LIEN WHERE (STATUS='CREATED' OR STATUS='MODIFIED' OR STATUS='AUTHORIZED') AND ACT_NUM= #ACCTNUMBER# ORDER BY LIEN_ID-->
+        SELECT * FROM ACT_LIEN
+        WHERE STATUS != 'DELETED'
+        AND (LIEN_STATUS = 'UNLIENED' OR LIEN_STATUS='LIENED')
+        AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS != 'AUTHORIZED')
+        AND ACT_NUM = #ACCTNUMBER:VARCHAR# AND LIEN_ID= #LIEN_ID:VARCHAR#
+    </mapped-statement>
+        
+        <!-- For generating the customer details -->
+    <mapped-statement name="getLienCustomerDetails" result-class="java.util.HashMap" >
+        select 
+        (select nvl(sum(al.lien_amt), 0) from act_lien al, act_master am_in 
+        where al.act_num = am_in.act_num and (al.status='CREATED' or al.status='MODIFIED')
+        and al.AUTHORIZE_STATUS  = 'AUTHORIZED' and al.LIEN_STATUS = 'LIENED' and al.act_num = #ACCTNUMBER:VARCHAR# )
+        as lien_sum,
+        (select nvl(sum(af.freeze_amt), 0) from act_freeze af, act_master am_in  where af.act_num=am_in.act_num and af.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND AF.STATUS NOT IN ('DELETED') AND AF.FREEZE_STATUS = 'FREEZED' and af.act_num=#ACCTNUMBER:VARCHAR#) as freeze_sum, 
+        am.available_balance, am.clear_balance,  get_cust_name(CUST.CUST_ID) as "Customer Name" from act_master am, customer cust 
+        where cust.cust_id=am.cust_id 
+        and am.act_num=#ACCTNUMBER:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLienProductDetails" result-class="java.util.HashMap" >
+<!--        select (select sum(al.lien_amt) from act_lien al, act_master am_in where al.act_num=am_in.act_num and al.lien_status='AUTHORIZED' and al.act_num=#ACCTNUMBER#) as lien_sum,  am.available_balance, cust.fname || ' ' || cust.mname || ' ' || cust.lname as "Customer Name", am.prod_id, prod.ac_hd_id, ah.ac_hd_desc from act_master am, customer cust, op_ac_product prod, ac_hd ah where cust.cust_id=am.cust_id and am.prod_id=prod.prod_id and prod.ac_hd_id=ah.ac_hd_id and am.act_num=#ACCTNUMBER#-->
+        select              (select nvl(sum(al.lien_amt),0) from act_lien al, act_master am_in     
+        where al.act_num = am_in.act_num and (al.status='CREATED' or al.status='MODIFIED')          
+        and ((al.AUTHORIZE_STATUS  = 'AUTHORIZED'  and al.LIEN_STATUS = 'LIENED') or (al.AUTHORIZE_STATUS  = 'REJECTED'  and al.LIEN_STATUS = 'UNLIENED'))  and al.act_num = #ACCTNUMBER:VARCHAR#)    
+        as lien_sum,  (select nvl(sum(af.freeze_amt), 0) from act_freeze af, act_master am_in  where af.act_num=am_in.act_num and af.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND AF.STATUS NOT IN ('DELETED') AND AF.FREEZE_STATUS = 'FREEZED' and af.act_num=#ACCTNUMBER:VARCHAR#) as freeze_sum, am.available_balance,am.clear_balance, get_cust_name(cust.cust_id) as "Customer Name",
+        am.prod_id, prod.ac_hd_id, ah.ac_hd_desc         from act_master am, customer cust,
+        op_ac_product prod, ac_hd ah         where cust.cust_id=am.cust_id      
+        and am.prod_id=prod.prod_id         and prod.ac_hd_id=ah.ac_hd_id   
+        and am.act_num= #ACCTNUMBER:VARCHAR#
+    </mapped-statement>
+    
+    <!--
+    <mapped-statement name="getSelectLienAccountList" result-class="java.util.HashMap" >
+		select cust.fname || ' ' || cust.mname || ' ' || cust.lname as "Customer Name",act.act_num as "Account Number" from act_master act, customer cust where act.cust_id=cust.cust_id and act.ACT_STATUS_ID='LIENMARKED' and cust.status='CREATED'
+                
+                select cust.fname || ' ' || cust.mname || ' ' || cust.lname as "Customer Name",act.act_num as "Account Number"
+                from act_master act, customer cust
+                where act.cust_id=cust.cust_id 
+                          and act.ACT_STATUS_ID IN ('NEW','OPERATIONAL','LIENMARKED','PART_FREEZE','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE') 
+                          and cust.status != 'DELETED'
+    </mapped-statement>
+    -->
+    <mapped-statement name="getSelectLienAccountList" result-class="java.util.HashMap" >
+        SELECT DISTINCT DECODE(C.CUST_TYPE, 'INDIVIDUAL', 
+        (FNAME || ' ' || MNAME || ' ' || LNAME), C.COMP_NAME) AS NAME, 
+        L.ACT_NUM AS "ACCOUNT NUMBER"    
+        FROM  CUSTOMER C, ACT_LIEN L, ACT_MASTER A    WHERE L.ACT_NUM = A.ACT_NUM   AND A.CUST_ID = C.CUST_ID  
+        AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#  AND L.STATUS != 'DELETED'  AND
+        (( l.lien_status ='LIENED' and ( l.authorize_status in ('AUTHORIZED') or l.authorize_status is NULL))  
+        OR (l.lien_status ='UNLIENED' and l.authorize_status in ('REJECTED') or l.authorize_status is NULL))
+         
+           <!-- AND (L.AUTHORIZE_STATUS NOT IN('AUTHORIZED') OR L.AUTHORIZE_STATUS IS NULL)-->
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectLienAccountDeleteList" result-class="java.util.HashMap" >
+        SELECT DISTINCT get_cust_name(c.cust_id) AS NAME, L.ACT_NUM AS "ACCOUNT NUMBER"
+        FROM  CUSTOMER C, ACT_LIEN L, ACT_MASTER A
+        WHERE L.ACT_NUM = A.ACT_NUM
+        AND A.CUST_ID = C.CUST_ID
+        AND A.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND L.STATUS != 'DELETED'
+        AND L.LIEN_STATUS != 'UNLIENED'
+        AND (L.AUTHORIZE_STATUS != 'AUTHORIZED' OR  L.AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="getActiveLienAccountList" result-class="java.util.HashMap" >
+        select count(act_num) as count from act_lien 
+        where act_num=#ACCTNUMBER:VARCHAR# and 
+        (STATUS='CREATED' OR STATUS='MODIFIED' OR STATUS='AUTHORIZED') 
+    </mapped-statement>
+    
+    <mapped-statement name="lienValidateRule" result-class="java.util.HashMap" >
+        SELECT ACT_STATUS_ID from act_master where act_num=#ACCOUNTNO# 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getLienMarkingAuthorizeTOList" result-class="java.util.HashMap" >
+        SELECT get_cust_name(c.cust_id) AS NAME, AL.ACT_NUM, AL.LIEN_ID, AL.LIEN_AMT, AL.LIEN_STATUS 
+        FROM ACT_LIEN AL, ACT_MASTER AM, CUSTOMER C
+        WHERE AM.ACT_NUM = AL.ACT_NUM
+        AND AM.CUST_ID = C.CUST_ID
+        AND AM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND AL.STATUS != 'DELETED'
+        AND AL.STATUS_BY != #USER_ID:VARCHAR#
+<!--        AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'))-->
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = AL.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AL.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AL.AUTHORIZE_STATUS IS NULL OR 
+                AL.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY LIEN_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeUpdateLienMarkingTO" inline-parameters="true">
+        UPDATE ACT_LIEN SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_USER = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#,
+        LIEN_STATUS=  #LIEN_STATUS:VARCHAR#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND LIEN_ID = #LIEN_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Lien.updateAvailBalance" result-class="java.util.HashMap">
+        UPDATE ACT_MASTER SET
+        AVAILABLE_BALANCE = AVAILABLE_BALANCE - #AMOUNT#,
+        LIEN_AMT = NVL(LIEN_AMT,0) + #AMOUNT#
+        WHERE ACT_NUM = #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+
+    
+    <mapped-statement name="Lein.getAccountHead" result-class="java.util.HashMap">
+        SELECT ACCT_HEAD FROM LOANS_PRODUCT
+        WHERE  PROD_ID = #PRODID:VARCHAR#
+        AND (STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+      
+    <mapped-statement name="Lein.getAccountNo" result-class="java.util.HashMap">
+        SELECT ACCT_NUM, get_cust_name(c.cust_id) as  CUSTOMER_NAME, FACILITY_TYPE
+        FROM CUSTOMER C, LOANS_BORROWER LB, LOANS_FACILITY_DETAILS LFD,LOANS_SANCTION_DETAILS LSD
+        WHERE C.CUST_ID=LB.CUST_ID AND
+        LB.BORROW_NO = LFD.BORROW_NO AND
+        LB.BORROW_NO = LSD.BORROW_NO AND
+        LFD.BORROW_NO = LSD.BORROW_NO AND
+        LFD.SANCTION_NO = LSD.SANCTION_NO AND
+        LFD.SL_NO = LSD.SL_NO AND
+        LFD.STATUS NOT IN ('DELETED') AND
+        LSD.STATUS NOT IN ('DELETED') AND
+        PROD_ID = #PRODID:VARCHAR# 
+        AND LFD.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="Lein.getCustName" result-class="java.util.HashMap">
+        SELECT decode (CUST_TYPE, 'INDIVIDUAL',CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME),COMP_NAME) CUSTOMER_NAME
+        FROM CUSTOMER
+        WHERE CUSTOMER.CUST_ID = (SELECT LOANS_BORROWER.CUST_ID FROM LOANS_BORROWER
+        WHERE LOANS_BORROWER.BORROW_NO = (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS
+        WHERE ACCT_NUM = #ACCTNO:VARCHAR#))
+    </mapped-statement>
+       
+    <mapped-statement name="Lein.getAvailableBalance" result-class="java.util.HashMap">
+        SELECT (NVL(AVAILABLE_BALANCE, 0)  +  (NVL(LIEN_AMT,0)  + NVL(FREEZE_AMT, 0))) AS AVAILABLE_BALANCE
+        FROM  ACT_MASTER
+        WHERE ACT_NUM  = #value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="Lein.getAvailableBalanceAD" result-class="java.util.HashMap">
+        SELECT (NVL(CLEAR_BALANCE, 0)  + NVL(ADV_FREEZE_AMT, 0)) AS AVAILABLE_BALANCE
+        FROM  LOANS_FACILITY_DETAILS
+        WHERE ACCT_NUM  = #ACCOUNTNO:VARCHAR#
+        AND BRANCH_ID=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="clearBalanceToPutCompFreezeOrPartialFreeze" result-class= "java.util.HashMap" >
+        SELECT NVL(AVAILABLE_BALANCE, 0) AS AVAILABLE_BALANCE FROM ACT_MASTER WHERE ACT_NUM= #ACT_NUM:VARCHAR# 
+    </mapped-statement>
+</sql-map>

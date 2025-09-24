@@ -1,0 +1,160 @@
+/*
+ * Copyright 2003-2020 FINCuro Solutions Pvt Ltd. All rights reserved.
+ *
+ * This software and its components are the property of FINCuro Solutions Pvt Limited and its affiliates, through authorship and acquisition.
+ * 
+ *
+ * FTInternalDAO.java
+ *
+ * Created on Tue Jun 22 12:22:13 GMT+05:30 2004
+ */
+package com.see.truetransact.serverside.privatebanking.actionitem.ftinternal;
+
+/**
+ *
+ * @author Ashok
+ */
+import java.util.List;
+import java.util.ArrayList;
+
+import java.util.HashMap;
+
+import com.ibatis.db.sqlmap.SqlMap;
+import com.see.truetransact.serverutil.ServerUtil;
+import com.see.truetransact.commonutil.CommonConstants;
+import com.see.truetransact.commonutil.NoCommandException;
+import com.see.truetransact.serverside.TTDAO;
+import com.see.truetransact.serverutil.ServerConstants;
+import com.see.truetransact.servicelocator.ServiceLocator;
+import com.see.truetransact.serverexception.TransRollbackException;
+import com.see.truetransact.serverexception.ServiceLocatorException;
+import com.see.truetransact.serverside.common.idgenerate.IDGenerateDAO;
+import com.see.truetransact.transferobject.privatebanking.actionitem.ftinternal.FTInternalTO;
+import com.see.truetransact.serverside.common.log.LogDAO;
+import com.see.truetransact.transferobject.common.log.LogTO;
+import com.see.truetransact.commonutil.CommonUtil;
+
+public class FTInternalDAO extends TTDAO {
+
+    private static SqlMap sqlMap = null;
+    private FTInternalTO objTO;
+    private LogDAO logDAO;
+    private LogTO logTO;
+
+    /**
+     * Creates a new instance of FTInternalDAO
+     */
+    public FTInternalDAO() throws ServiceLocatorException {
+        ServiceLocator locate = ServiceLocator.getInstance();
+        sqlMap = (SqlMap) locate.getDAOSqlMap();
+    }
+
+    private HashMap getData(HashMap map) throws Exception {
+        HashMap returnMap = new HashMap();
+        String where = (String) map.get(CommonConstants.MAP_WHERE);
+        List list = (List) sqlMap.executeQueryForList("getSelectFTInternalTO", where);
+        returnMap.put("FTInternalTO", list);
+        list = null;
+        where = null;
+        return returnMap;
+    }
+
+    private String getReferenceId() throws Exception {
+        final IDGenerateDAO dao = new IDGenerateDAO();
+        final HashMap where = new HashMap();
+        where.put(CommonConstants.MAP_WHERE, "PVT_FTINTERNAL");
+        return (String) (dao.executeQuery(where)).get(CommonConstants.DATA);
+    }
+
+    private void insertData() throws Exception {
+        try {
+            sqlMap.startTransaction();
+            String referenceId = getReferenceId();
+            objTO.setRefNo(referenceId);
+            referenceId = null;
+            logTO.setData(objTO.toString());
+            logTO.setPrimaryKey(objTO.getKeyData());
+            logTO.setStatus(objTO.getCommand());
+            sqlMap.executeUpdate("insertFTInternalTO", objTO);
+            logDAO.addToLog(logTO);
+            sqlMap.commitTransaction();
+        } catch (Exception e) {
+            sqlMap.rollbackTransaction();
+            throw e;
+        }
+    }
+
+    private void updateData() throws Exception {
+        try {
+            sqlMap.startTransaction();
+            logTO.setData(objTO.toString());
+            logTO.setPrimaryKey(objTO.getKeyData());
+            logTO.setStatus(objTO.getCommand());
+            sqlMap.executeUpdate("updateFTInternalTO", objTO);
+            sqlMap.commitTransaction();
+            logDAO.addToLog(logTO);
+        } catch (Exception e) {
+            sqlMap.rollbackTransaction();
+            throw e;
+        }
+    }
+
+    private void deleteData() throws Exception {
+        try {
+            sqlMap.startTransaction();
+            logTO.setData(objTO.toString());
+            logTO.setPrimaryKey(objTO.getKeyData());
+            logTO.setStatus(objTO.getCommand());
+            sqlMap.executeUpdate("deleteFTInternalTO", objTO);
+            logDAO.addToLog(logTO);
+            sqlMap.commitTransaction();
+        } catch (Exception e) {
+            sqlMap.rollbackTransaction();
+            throw e;
+        }
+    }
+
+    public static void main(String str[]) {
+        try {
+            FTInternalDAO dao = new FTInternalDAO();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public HashMap execute(HashMap map) throws Exception {
+        _branchCode = (String) map.get(CommonConstants.BRANCH_ID);
+        objTO = (FTInternalTO) map.get("FTInternalTO");
+        final String command = objTO.getCommand();
+
+        logDAO = new LogDAO();
+        logTO = new LogTO();
+
+        logTO.setUserId(CommonUtil.convertObjToStr(map.get(CommonConstants.USER_ID)));
+        logTO.setBranchId(CommonUtil.convertObjToStr(map.get(CommonConstants.BRANCH_ID)));
+        logTO.setIpAddr(CommonUtil.convertObjToStr(map.get(CommonConstants.IP_ADDR)));
+        logTO.setModule(CommonUtil.convertObjToStr(map.get(CommonConstants.MODULE)));
+        logTO.setScreen(CommonUtil.convertObjToStr(map.get(CommonConstants.SCREEN)));
+        if (command.equals(CommonConstants.TOSTATUS_INSERT)) {
+            insertData();
+        } else if (command.equals(CommonConstants.TOSTATUS_UPDATE)) {
+            updateData();
+        } else if (command.equals(CommonConstants.TOSTATUS_DELETE)) {
+            deleteData();
+        } else {
+            throw new NoCommandException();
+        }
+
+        destroyObjects();
+        return null;
+    }
+
+    public HashMap executeQuery(HashMap obj) throws Exception {
+        _branchCode = (String) obj.get(CommonConstants.BRANCH_ID);
+        return getData(obj);
+    }
+
+    private void destroyObjects() {
+        objTO = null;
+    }
+}

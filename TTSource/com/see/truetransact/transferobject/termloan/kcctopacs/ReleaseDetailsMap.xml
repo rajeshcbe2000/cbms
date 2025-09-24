@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ReleaseDetailsTOMap">
+
+	<!-- Use ReleaseDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertReleaseDetailsTO" inline-parameters="true">
+        INSERT INTO NCL_RELEASE_DETAILS
+        (RELEASE_NO, NCL_SANCTION_NO, AMOUNT_REQUESTED, REQUESTED_DATE, AMOUNT_RELEASED, RELEASE_DATE, 
+        REPAYMENT_PERIOD, REPAYMENT_PERIOD_TYPE, DUE_DATE, NO_OF_INST, PRINCIPAL_FREQ_TYPE, INT_FREQ_TYPE, 
+        ROI, PENAL_INT, LOAN_CATEGORY, SUB_CATEGORY, CROP, TOTAL_INT_PAYABLE, TOTAL_AMT_PAYABLE, REMARKS, 
+        STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #releaseNo:VARCHAR#, #nclSanctionNo:VARCHAR#, #amountRequested:NUMERIC#, 
+        #requestedDate:DATE#, #amountReleased:NUMERIC#, #releaseDate:DATE#, #repaymentPeriod:NUMERIC#, 
+        #repaymentPeriodType:VARCHAR#, #dueDate:DATE#, #noOfInst:NUMERIC#,
+        #principalFreqType:VARCHAR#, #intFreqType:VARCHAR#, #roi:NUMERIC#, #penalInt:NUMERIC#, 
+        #loanCategory:VARCHAR#, #subCategory:VARCHAR#, #crop:VARCHAR#, #totalIntPayable:NUMERIC#, 
+        #totalAmtPayable:NUMERIC#, #remarks:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use ReleaseDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateReleaseDetailsTO" inline-parameters="true">
+        UPDATE NCL_RELEASE_DETAILS SET 		
+        AMOUNT_REQUESTED = #amountRequested:NUMERIC#,
+        REQUESTED_DATE = #requestedDate:DATE#,
+        AMOUNT_RELEASED = #amountReleased:NUMERIC#,
+        RELEASE_DATE = #releaseDate:DATE#,
+        REPAYMENT_PERIOD = #repaymentPeriod:NUMERIC#,
+        REPAYMENT_PERIOD_TYPE = #repaymentPeriodType:VARCHAR#,
+        DUE_DATE = #dueDate:DATE#,
+        NO_OF_INST = #noOfInst:NUMERIC#,
+        PRINCIPAL_FREQ_TYPE = #principalFreqType:VARCHAR#,
+        INT_FREQ_TYPE = #intFreqType:VARCHAR#,
+        ROI = #roi:NUMERIC#,
+        PENAL_INT = #penalInt:NUMERIC#,
+        LOAN_CATEGORY = #loanCategory:VARCHAR#,
+        SUB_CATEGORY = #subCategory:VARCHAR#,
+        CROP = #crop:VARCHAR#,
+        TOTAL_INT_PAYABLE = #totalIntPayable:NUMERIC#,
+        TOTAL_AMT_PAYABLE = #totalAmtPayable:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE RELEASE_NO = #releaseNo:VARCHAR# AND NCL_SANCTION_NO = #nclSanctionNo:VARCHAR#
+    </mapped-statement>
+          
+        
+    <dynamic-mapped-statement name="getNCLSanctionEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT RELEASE_NO,NRD.NCL_SANCTION_NO AS SANCTION_NO,NSD.CUST_ID,AMOUNT_RELEASED FROM NCL_RELEASE_DETAILS NRD,NCL_SANCTION_DETAILS NSD 
+        WHERE NRD.STATUS!='DELETED' AND NRD.AUTHORIZE_STATUS IS NULL AND NRD.NCL_SANCTION_NO=NSD.NCL_SANCTION_NO AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "NCL_SANCTION_NO">
+                    NRD.NCL_SANCTION_NO = #NCL_SANCTION_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="RELEASE_NO">
+                    UPPER(NRD.RELEASE_NO) LIKE UPPER('%$RELEASE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SANCTION_NO">
+                    UPPER(NRD.NCL_SANCTION_NO) LIKE UPPER('%$SANCTION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(NSD.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT_RELEASED">
+                    UPPER(AMOUNT_RELEASED) LIKE UPPER('%$AMOUNT_RELEASED$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY RELEASE_NO
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getNCLSanctionView" result-class="java.util.LinkedHashMap">
+        SELECT RELEASE_NO,NRD.NCL_SANCTION_NO AS SANCTION_NO,NSD.CUST_ID,AMOUNT_RELEASED FROM NCL_RELEASE_DETAILS NRD,NCL_SANCTION_DETAILS NSD 
+        WHERE NRD.STATUS!='DELETED' AND (NRD.AUTHORIZE_STATUS IS NULL OR NRD.AUTHORIZE_STATUS='AUTHORIZED') AND 
+        NRD.NCL_SANCTION_NO=NSD.NCL_SANCTION_NO AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# 
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="RELEASE_NO">
+                    UPPER(NRD.RELEASE_NO) LIKE UPPER('%$RELEASE_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SANCTION_NO">
+                    UPPER(NRD.NCL_SANCTION_NO) LIKE UPPER('%$SANCTION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(NSD.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AMOUNT_RELEASED">
+                    UPPER(AMOUNT_RELEASED) LIKE UPPER('%$AMOUNT_RELEASED$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY RELEASE_NO  
+    </dynamic-mapped-statement>
+
+	<!-- Use ReleaseDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteReleaseDetailsTO" inline-parameters="true">
+        UPDATE NCL_RELEASE_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE RELEASE_NO = #releaseNo:VARCHAR# AND NCL_SANCTION_NO = #nclSanctionNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ReleaseDetailsTO object (JavaBean) properties -->
+    <result-map name="getReleaseDetailsTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.ReleaseDetailsTO">
+        <property name="releaseNo" column="RELEASE_NO"/>
+        <property name="nclSanctionNo" column="NCL_SANCTION_NO"/>
+        <property name="amountRequested" column="AMOUNT_REQUESTED"/>
+        <property name="requestedDate" column="REQUESTED_DATE"/>
+        <property name="amountReleased" column="AMOUNT_RELEASED"/>
+        <property name="releaseDate" column="RELEASE_DATE"/>
+        <property name="repaymentPeriod" column="REPAYMENT_PERIOD"/>
+        <property name="repaymentPeriodType" column="REPAYMENT_PERIOD_TYPE"/>
+        <property name="dueDate" column="DUE_DATE"/>
+        <property name="noOfInst" column="NO_OF_INST"/>
+        <property name="principalFreqType" column="PRINCIPAL_FREQ_TYPE"/>
+        <property name="intFreqType" column="INT_FREQ_TYPE"/>
+        <property name="roi" column="ROI"/>
+        <property name="penalInt" column="PENAL_INT"/>
+        <property name="loanCategory" column="LOAN_CATEGORY"/>
+        <property name="subCategory" column="SUB_CATEGORY"/>
+        <property name="crop" column="CROP"/>
+        <property name="totalIntPayable" column="TOTAL_INT_PAYABLE"/>
+        <property name="totalAmtPayable" column="TOTAL_AMT_PAYABLE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectReleaseDetailsTO" result-map="getReleaseDetailsTOResult" >
+        SELECT * FROM NCL_RELEASE_DETAILS WHERE RELEASE_NO=#RELEASE_NO:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getNCLMasterCustID" result-class="java.util.LinkedHashMap">
+        SELECT NCL_SANCTION_NO,NSD.CUST_ID,FNAME AS CUST_NAME,SANCTION_DT,SANCTION_AMT FROM NCL_SANCTION_DETAILS NSD, CUSTOMER C WHERE NSD.STATUS!='DELETED' 
+        AND NSD.AUTHORIZE_STATUS='AUTHORIZED' AND NSD.BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND NSD.CUST_ID=C.CUST_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    NSD.CUST_ID = #CUST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NCL_SANCTION_NO">
+                    NCL_SANCTION_NO = #NCL_SANCTION_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <!--<isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(NSD.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>-->
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_NAME">
+                    UPPER(FNAME) LIKE UPPER('%$CUST_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SANCTION_DT">
+                    UPPER(SANCTION_DT) LIKE UPPER('%$SANCTION_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SANCTION_AMT">
+                    UPPER(SANCTION_AMT) LIKE UPPER('%$SANCTION_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY NCL_SANCTION_NO
+    </dynamic-mapped-statement> 
+
+    <mapped-statement name="getNCLSanctionDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM NCL_SANCTION_DETAILS WHERE STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' AND NCL_SANCTION_NO=#NCL_SANCTION_NO:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getAllCustomerName" result-class="java.util.HashMap" > 
+        SELECT FNAME||' '||NVL(MNAME,'')||' '||NVL(LNAME,'') AS CUST_NAME FROM ALL_CUSTOMER WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+        
+    <mapped-statement name="getNCLreleaseAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT RELEASE_NO,NRD.NCL_SANCTION_NO AS SANCTION_NO,NSD.CUST_ID,AMOUNT_RELEASED FROM NCL_RELEASE_DETAILS NRD, NCL_SANCTION_DETAILS NSD WHERE NRD.STATUS!='DELETED' 
+        AND NRD.AUTHORIZE_STATUS IS NULL AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = NRD.STATUS_BY)
+        AND NRD.STATUS_BY!= #USER_ID:VARCHAR# AND NRD.NCL_SANCTION_NO=NSD.NCL_SANCTION_NO AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY RELEASE_NO
+    </mapped-statement>
+
+    <mapped-statement name="authorizeNCLReleaseDetails" result-class="java.util.HashMap">
+        UPDATE NCL_RELEASE_DETAILS SET 
+        CLEAR_BALANCE = #CLEAR_BALANCE:NUMBER#,
+        LAST_INT_CALC_DT = #LAST_INT_CALC_DT:DATE#,
+        LAST_TRANS_DT = #LAST_TRANS_DT:DATE#,
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND RELEASE_NO = #RELEASE_NO:VARCHAR# AND NCL_SANCTION_NO = #NCL_SANCTION_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteReleaseMemberData" inline-parameters="true">
+        DELETE  NCL_CLASSIFICATION WHERE NCL_SANCTION_NO=#releaseNo:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteReleaseLoanData" inline-parameters="true">
+        DELETE  NCL_AMT_SLABWISE_DET WHERE NCL_SANCTION_NO=#releaseNo:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="NCLAmountReleaseDetails" result-class="java.util.HashMap">
+        SELECT * FROM NCL_RELEASE_DETAILS WHERE RELEASE_NO=#RELEASE_NO:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>	
+
+    <mapped-statement name="getTotalReleasedAmount" result-class="java.util.HashMap">
+        SELECT SUM(AMOUNT_RELEASED) AS AMOUNT_RELEASED FROM NCL_RELEASE_DETAILS NRD, NCL_SANCTION_DETAILS NSD WHERE 
+        NRD.NCL_SANCTION_NO=NSD.NCL_SANCTION_NO  AND NSD.AUTHORIZE_STATUS='AUTHORIZED' AND NSD.STATUS!='DELETED'
+        AND NRD.AUTHORIZE_STATUS='AUTHORIZED' AND NRD.STATUS!='DELETED' AND
+        RELEASE_DATE BETWEEN '01-APR-'||#START_FIN_YEAR# AND '31-MAR-'||#END_FIN_YEAR#
+        AND NSD.NCL_SANCTION_NO=#NCL_SANCTION_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="insertNCLReleaseInstallments" result-class="java.util.LinkedHashMap">
+        INSERT INTO NCL_REL_INSTALLMENT
+        (RELEASE_NO, INSTALLMENT_SLNO, INSTALLMENT_DT, PRINCIPAL_AMT
+        ) VALUES (
+        #RELEASE_NO:VARCHAR#, #INSTALLMENT_SLNO:VARCHAR#, #INSTALLMENT_DT:DATE#, #PRINCIPAL_AMT:VARCHAR#)
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getPACSCustID" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT NSD.CUST_ID, FNAME AS CUSTOMER_NAME, CUST_CATEGORY FROM NCL_SANCTION_DETAILS NSD, CUSTOMER C 
+        WHERE C.CUST_ID=NSD.CUST_ID AND NSD.STATUS!='DELETED' AND NSD.AUTHORIZE_STATUS='AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    NSD.CUST_ID = #CUST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(FNAME) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY CUST_ID
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="getSubventionIntCreditLoanAccHead" result-class="java.util.LinkedHashMap">
+        SELECT AC_CREDIT_INT FROM LOANS_PROD_ACHD WHERE PROD_ID IN(SELECT KCC_PROD_ID FROM NCL_SANCTION_DETAILS WHERE CUST_ID=#CUST_ID:VARCHAR# 
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED')
+    </mapped-statement>
+    
+    <mapped-statement name="insertInterestSubventionAdjustmentTO" inline-parameters="true">
+        INSERT INTO SUBVENTION_INT_ADJUSTED
+        (ADJUSTMENT_NO, AGENCY_NAME, CUST_ID, RELEASE_REF_NO, RELEASE_DATE, START_FIN_YEAR, END_FIN_YEAR, CLAIMED_AMOUNT, RECEIVED_AMOUNT, 
+        STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #adjustmentNo:VARCHAR#, #agencyName:VARCHAR#, #custId:VARCHAR#, #releaseRefNo:VARCHAR#, #releaseDate:DATE#, #startFinYear:NUMERIC#, 
+        #endFinYear:NUMERIC#, #claimedAmount:NUMERIC#, #receivedAmount:NUMERIC#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="getSubventionTransAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT ADJUSTMENT_NO,CUST_ID,AGENCY_NAME,RELEASE_REF_NO,RECEIVED_AMOUNT FROM SUBVENTION_INT_ADJUSTED SIA WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS IS NULL AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', 
+        HIERARCHY_ID, HIERARCHY_ID + 1)FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = SIA.STATUS_BY)
+        AND SIA.STATUS_BY!= #USER_ID:VARCHAR# ORDER BY ADJUSTMENT_NO
+    </mapped-statement>
+    
+    <mapped-statement name="getSubventionTransEditDelete" result-class="java.util.LinkedHashMap">
+        SELECT ADJUSTMENT_NO,CUST_ID,AGENCY_NAME,RELEASE_REF_NO,RECEIVED_AMOUNT FROM SUBVENTION_INT_ADJUSTED SIA WHERE STATUS!='DELETED' 
+        AND AUTHORIZED_STATUS IS NULL  ORDER BY ADJUSTMENT_NO
+    </mapped-statement>
+    
+    <mapped-statement name="getSubventionTransEnquiry" result-class="java.util.LinkedHashMap">
+        SELECT ADJUSTMENT_NO,CUST_ID,AGENCY_NAME,RELEASE_REF_NO,RECEIVED_AMOUNT FROM SUBVENTION_INT_ADJUSTED SIA WHERE STATUS!='DELETED' 
+        AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS='AUTHORIZED')  ORDER BY ADJUSTMENT_NO
+    </mapped-statement>
+    
+    <result-map name="getInterestSubventionAdjustmentTOResult" class="com.see.truetransact.transferobject.termloan.kcctopacs.InterestSubventionAdjustmentTO">
+        <property name="adjustmentNo" column="ADJUSTMENT_NO"/>
+        <property name="agencyName" column="AGENCY_NAME"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="releaseRefNo" column="RELEASE_REF_NO"/>
+        <property name="releaseDate" column="RELEASE_DATE"/>
+        <property name="startFinYear" column="START_FIN_YEAR"/>
+        <property name="endFinYear" column="END_FIN_YEAR"/>
+        <property name="claimedAmount" column="CLAIMED_AMOUNT"/>
+        <property name="receivedAmount" column="RECEIVED_AMOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectInterestSubventionAdjustmentTO" result-map="getInterestSubventionAdjustmentTOResult" >
+        SELECT * FROM SUBVENTION_INT_ADJUSTED WHERE ADJUSTMENT_NO=#ADJUSTMENT_NO:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="authorizeInterestSubvention" result-class="java.util.HashMap">
+        UPDATE SUBVENTION_INT_ADJUSTED SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND ADJUSTMENT_NO=#ADJUSTMENT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateInterestSubventionAdjustmentTO" inline-parameters="true">
+        UPDATE SUBVENTION_INT_ADJUSTED SET 
+        AGENCY_NAME = #agencyName:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        RELEASE_REF_NO = #releaseRefNo:VARCHAR#,
+        RELEASE_DATE = #releaseDate:DATE#,
+        START_FIN_YEAR = #startFinYear:NUMERIC#,
+        END_FIN_YEAR = #endFinYear:NUMERIC#,
+        CLAIMED_AMOUNT = #claimedAmount:NUMERIC#,
+        RECEIVED_AMOUNT = #receivedAmount:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE STATUS!='DELETED' AND ADJUSTMENT_NO = #adjustmentNo:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteIntSubventionTO" inline-parameters="true">
+        UPDATE SUBVENTION_INT_ADJUSTED SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE STATUS!='DELETED' AND ADJUSTMENT_NO = #adjustmentNo:VARCHAR#
+    </mapped-statement>
+                                               
+</sql-map>

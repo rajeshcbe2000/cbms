@@ -1,0 +1,1030 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TxTransfer">
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow
+    results to be auto-mapped results to TxTransferTO object (JavaBean) properties -->
+    <!--
+    <mapped-statement name="getTxTransferTO" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+	SELECT
+            TRANSFER_TRANS.TRANS_ID AS transId,
+            TRANSFER_TRANS.BATCH_ID AS batchId,
+            PROD_ID AS prodId,
+            TRANSFER_TRANS.AC_HD_ID AS acHdId,
+            TRANSFER_TRANS.ACT_NUM AS actNum,
+            TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+            TRANSFER_TRANS.INP_CURR AS inpCurr,
+            TRANSFER_TRANS.AMOUNT AS amount,
+            TRANSFER_TRANS.TRANS_DT AS transDt,
+            TRANSFER_TRANS.TRANS_TYPE AS transType,
+            TRANSFER_TRANS.INST_TYPE AS instType,
+            TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+            TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+            TRANSFER_TRANS.INST_DT AS instDt,
+            TRANSFER_TRANS.TOKEN_NO AS tokenNo,
+            TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+            TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+            TRANSFER_TRANS.PARTICULARS AS particulars,
+            
+            TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+            TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+            TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+            TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+            
+            TRANSFER_TRANS.BRANCH_ID AS branchId,
+            TRANSFER_TRANS.STATUS_BY AS statusBy,
+            TRANSFER_TRANS.STATUS_DT AS statusDt,
+            
+            TRANSFER_TRANS.STATUS AS status
+	FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.TRANS_ID = #value# 
+    </mapped-statement>
+    -->    
+    <mapped-statement name="getTransferTransBatchTOForAuthorzationLinkBatch" result-class="java.util.LinkedHashMap" >
+        SELECT BATCH_ID, CASE WHEN  ACT_NUM IS NULL THEN LINK_BATCH_ID ELSE ACT_NUM END  AS ACT_NUM, AC_HD_ID, AMOUNT, 
+        PROD_TYPE, AUTHORIZE_REMARKS FROM TRANSFER_TRANS WHERE LINK_BATCH_ID = #ACCT_NUM:VARCHAR# AND 
+        BATCH_ID = #BATCH_ID:VARCHAR# AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'EXCEPTION') 
+        AND STATUS !='DELETED' AND TRANS_TYPE!='DEBIT' AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getTransferTransdistinctBatchID" result-class="java.util.HashMap">
+        SELECT DISTINCT (BATCH_ID) as "BATCHID", TRANS_DT AS "TRANS_DT",AMOUNT,INITIATED_BRANCH AS "INITIATED_BRANCH",SINGLE_TRANS_ID
+        FROM TRANSFER_TRANS
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+        and TRANS_DT = #TODAY_DT:DATE#  and STATUS!='DELETED' and
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+    </mapped-statement>
+    
+    <mapped-statement name="getCashTransTypeCount" result-class="java.util.HashMap">
+        select count(distinct trans_type) as count
+        from cash_trans ct 
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+        and TRANS_DT = #TODAY_DT:DATE# <!--and AMOUNT = #AMOUNT:NUMERIC#--> and STATUS!='DELETED' and
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+    </mapped-statement>  
+    
+     <mapped-statement name="getCashTransTransID" result-class="java.util.HashMap">
+        select ct.trans_id
+        from cash_trans ct 
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+        and CT.TRANS_TYPE='DEBIT'
+        and TRANS_DT = #TODAY_DT:DATE# <!--and AMOUNT = #AMOUNT:NUMERIC#--> and STATUS!='DELETED' and
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+    </mapped-statement>  
+    
+    <dynamic-mapped-statement name="getTransferTransBatchID" result-class="java.util.HashMap">
+        SELECT BATCH_ID, AMOUNT, TRANS_ID
+        FROM TRANSFER_TRANS
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+        and TRANS_DT = #TODAY_DT:DATE# <!--and AMOUNT = #AMOUNT:NUMERIC#--> and STATUS!='DELETED' and
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="and" property="AMOUNT">
+                    AMOUNT = #AMOUNT:NUMERIC#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="and" property="AUTHORIZE_REMARKS">
+                    AUTHORIZE_REMARKS = #AUTHORIZE_REMARKS:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>            
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="and" property="AC_HD_ID">
+                    AC_HD_ID = #AC_HD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="and" property="BATCH_ID">
+                    BATCH_ID NOT IN (#BATCH_ID:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="and" property="TRANS_ID">
+                    TRANS_ID NOT IN (#TRANS_ID:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getTransferTransBatchIDForEnquiry" result-class = "java.util.HashMap">
+        SELECT BATCH_ID, AMOUNT, TRANS_ID FROM TRANSFER_TRANS
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+        AND TRANS_DT = #TODAY_DT:DATE# AND STATUS!='DELETED' AND
+        INITIATED_BRANCH = #INITIATED_BRANCH#
+    </mapped-statement>
+    
+    <mapped-statement name = "getSingleTransIdForEdit" result-class = "java.util.HashMap">
+        SELECT  distinct TRANSFER_TRANS.SINGLE_TRANS_ID
+        FROM transfer_trans
+        WHERE transfer_trans.batch_id = #TRANS_ID:VARCHAR#
+        AND status != 'DELETED'
+        AND transfer_trans.trans_dt = #TRANS_DT:DATE#
+        AND transfer_trans.initiated_branch =  #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "getCashTransBatchIDForEnquiry" result-class = "java.util.HashMap">
+        SELECT TRANS_ID, AMOUNT FROM CASH_TRANS 
+        WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# 
+        AND TRANS_DT = #TODAY_DT:DATE# AND STATUS!='DELETED'
+    </mapped-statement>  
+    
+    <!--<mapped-statement name="getBatchTxTransferTOs" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+	SELECT
+            TRANSFER_TRANS.TRANS_ID AS transId,
+            TRANSFER_TRANS.BATCH_ID AS batchId,
+            PROD_ID AS prodId,
+            TRANSFER_TRANS.AC_HD_ID AS acHdId,
+            TRANSFER_TRANS.ACT_NUM AS actNum,
+            TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+            TRANSFER_TRANS.INP_CURR AS inpCurr,
+            TRANSFER_TRANS.AMOUNT AS amount,
+            TRANSFER_TRANS.TRANS_DT AS transDt,
+            TRANSFER_TRANS.TRANS_TYPE AS transType,
+            TRANSFER_TRANS.INST_TYPE AS instType,
+            TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+            TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+            TRANSFER_TRANS.INST_DT AS instDt,            
+            TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+            TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+            TRANSFER_TRANS.PARTICULARS AS particulars,
+            
+            TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+            TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+            TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+            TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+            
+            TRANSFER_TRANS.BRANCH_ID AS branchId,
+            TRANSFER_TRANS.STATUS_BY AS statusBy,
+            TRANSFER_TRANS.STATUS_DT AS statusDt,
+            
+            TRANSFER_TRANS.STATUS AS status,           
+            TRANSFER_TRANS.PROD_TYPE AS prodType,
+            TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch    
+                    
+	FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.BATCH_ID = #BATCHID:VARCHAR# and STATUS!='DELETED' and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+    </mapped-statement>-->
+    
+    <dynamic-mapped-statement name="getBatchTxTransferTOs" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        TRANSFER_TRANS.BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        TRANSFER_TRANS.AC_HD_ID AS acHdId,
+        CASE WHEN TRANSFER_TRANS.ACT_NUM IS  NULL THEN  LINK_BATCH_ID ELSE TRANSFER_TRANS.ACT_NUM END AS actNum,
+        TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+        TRANSFER_TRANS.INP_CURR AS inpCurr,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.TRANS_DT AS transDt,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.INST_TYPE AS instType,
+        TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+        TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+        TRANSFER_TRANS.INST_DT AS instDt,            
+        TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+        TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+        TRANSFER_TRANS.PARTICULARS AS particulars,
+        TRANSFER_TRANS.NARRATION AS narration,
+        TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+        TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+        TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+        TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TRANSFER_TRANS.BRANCH_ID AS branchId,
+        TRANSFER_TRANS.STATUS_BY AS statusBy,
+        TRANSFER_TRANS.STATUS_DT AS statusDt,
+        TRANSFER_TRANS.LINK_BATCH_ID AS linkBatchId,
+        TRANSFER_TRANS.STATUS AS status,           
+        TRANSFER_TRANS.PROD_TYPE AS prodType,
+        TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch    
+        FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.BATCH_ID = #BATCHID:VARCHAR# and STATUS!='DELETED'
+        AND TRANSFER_TRANS.TRANS_DT=#TRANS_DT:DATE# AND TRANSFER_TRANS.INITIATED_BRANCH=#INITIATED_BRANCH:VARCHAR#<!-- and
+        (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null) done by swaroop for viewalltransction screen prupose(double click info)--> 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="and" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+			<isParameterPresent>
+                <isNotNull prepend = "AND" property = "BACK_DATED_TRANSACTION">        
+                    TRANSFER_TRANS.AUTHORIZE_REMARKS = 'BACK_DATED_TRANSACTION'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY  TRANS_ID DESC
+    </dynamic-mapped-statement>
+    
+    
+    <dynamic-mapped-statement name="getAuthBatchTxTransferTOsForDiv" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        TRANSFER_TRANS.BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        TRANSFER_TRANS.AC_HD_ID AS acHdId,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+        TRANSFER_TRANS.INP_CURR AS inpCurr,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.TRANS_DT AS transDt,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.INST_TYPE AS instType,
+        TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+        TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+        TRANSFER_TRANS.INST_DT AS instDt,            
+        TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+        TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+        TRANSFER_TRANS.PARTICULARS AS particulars,
+        TRANSFER_TRANS.NARRATION AS narration,
+        TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+        TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+        TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+        TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TRANSFER_TRANS.BRANCH_ID AS branchId,
+        TRANSFER_TRANS.STATUS_BY AS statusBy,
+        TRANSFER_TRANS.STATUS_DT AS statusDt,
+        TRANSFER_TRANS.STATUS AS status,           
+        TRANSFER_TRANS.PROD_TYPE AS prodType,
+        TRANSFER_TRANS.LINK_BATCH_ID AS linkBatchId,
+        TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch    
+        FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.SINGLE_TRANS_ID = #SINGLE_TRANS_ID:VARCHAR# and STATUS!='DELETED' 
+        AND (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                    INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_DT">        
+                    TRANSFER_TRANS.TRANS_DT= #TRANS_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getAuthBatchTxTransferTOs" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        TRANSFER_TRANS.BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        TRANSFER_TRANS.AC_HD_ID AS acHdId,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+        TRANSFER_TRANS.INP_CURR AS inpCurr,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.TRANS_DT AS transDt,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.INST_TYPE AS instType,
+        TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+        TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+        TRANSFER_TRANS.INST_DT AS instDt,            
+        TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+        TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+        TRANSFER_TRANS.PARTICULARS AS particulars,
+        TRANSFER_TRANS.NARRATION AS narration,
+        TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+        TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+        TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+        TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TRANSFER_TRANS.BRANCH_ID AS branchId,
+        TRANSFER_TRANS.STATUS_BY AS statusBy,
+        TRANSFER_TRANS.STATUS_DT AS statusDt,
+        TRANSFER_TRANS.STATUS AS status,           
+        TRANSFER_TRANS.PROD_TYPE AS prodType,
+        TRANSFER_TRANS.LINK_BATCH_ID AS linkBatchId,
+        TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch, 
+        TRANSFER_TRANS.SCREEN_NAME AS screenName
+        FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR# and STATUS!='DELETED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                    INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "AND" property = "AUTHORIZE">
+                    AUTHORIZE_STATUS = #AUTHORIZE:VARCHAR#
+            </isPropertyAvailable>
+            <isNotPropertyAvailable prepend = "AND" property = "AUTHORIZE">
+                   (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+            </isNotPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BATCH_ID">        
+                    TRANSFER_TRANS.BATCH_ID = #BATCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "SCREEN_NAME">        
+                    TRANSFER_TRANS.SCREEN_NAME = #SCREEN_NAME:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_DT">        
+                    TRANSFER_TRANS.TRANS_DT= #TRANS_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        order by TRANSFER_TRANS.TRANS_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getBatchTxTransferTOsAuthorize" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        TRANSFER_TRANS.BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        TRANSFER_TRANS.AC_HD_ID AS acHdId,
+        CASE WHEN TRANSFER_TRANS.ACT_NUM IS NULL THEN LINK_BATCH_ID ELSE TRANSFER_TRANS.ACT_NUM END AS actNum,
+        TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+        TRANSFER_TRANS.INP_CURR AS inpCurr,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.TRANS_DT AS transDt,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.INST_TYPE AS instType,
+        TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+        TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+        TRANSFER_TRANS.INST_DT AS instDt,            
+        TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+        TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+        TRANSFER_TRANS.PARTICULARS AS particulars,
+        TRANSFER_TRANS.NARRATION AS narration,
+        TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+        TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+        TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+        TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TRANSFER_TRANS.BRANCH_ID AS branchId,
+        TRANSFER_TRANS.STATUS_BY AS statusBy,
+        TRANSFER_TRANS.STATUS_DT AS statusDt,
+        TRANSFER_TRANS.PROD_TYPE AS prodType,
+        TRANSFER_TRANS.LINK_BATCH_ID AS linkBatchId,           
+        TRANSFER_TRANS.STATUS AS status,           
+        TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch
+        FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.BATCH_ID = #BATCHID:VARCHAR# and
+        TRANSFER_TRANS.STATUS!='DELETED' AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isEqual prepend="AND" property="AUTHORIZE_STATUS" compareValue="EXCEPTION" >
+                    (AUTHORIZE_STATUS not in ('REJECTED','EXCEPTION') or AUTHORIZE_STATUS is null)
+                </isEqual>
+            
+                <isNotEqual prepend="AND" property="AUTHORIZE_STATUS" compareValue="EXCEPTION" >
+                    (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED','EXCEPTION') or AUTHORIZE_STATUS is null)
+                </isNotEqual>
+            </isParameterPresent>
+
+			<isParameterPresent>
+				<isNotNull prepend = "AND" property = "BACK_DATED_TRANSACTION">        
+					TRANSFER_TRANS.AUTHORIZE_REMARKS = 'BACK_DATED_TRANSACTION'
+				</isNotNull>
+			</isParameterPresent>
+
+        </dynamic>
+        ORDER BY  TRANS_ID DESC
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getBatchTxTransferTOsForRollBack" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        TRANSFER_TRANS.BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        TRANSFER_TRANS.AC_HD_ID AS acHdId,
+        CASE WHEN TRANSFER_TRANS.ACT_NUM IS NULL THEN LINK_BATCH_ID ELSE TRANSFER_TRANS.ACT_NUM END  AS actNum,
+        TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+        TRANSFER_TRANS.INP_CURR AS inpCurr,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.TRANS_DT AS transDt,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.INST_TYPE AS instType,
+        TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+        TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+        TRANSFER_TRANS.INST_DT AS instDt,            
+        TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+        TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+        TRANSFER_TRANS.PARTICULARS AS particulars,
+        TRANSFER_TRANS.NARRATION AS narration,
+        TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+        TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+        TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+        TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TRANSFER_TRANS.BRANCH_ID AS branchId,
+        TRANSFER_TRANS.STATUS_BY AS statusBy,
+        TRANSFER_TRANS.STATUS_DT AS statusDt,
+        TRANSFER_TRANS.PROD_TYPE AS prodType,
+        TRANSFER_TRANS.LINK_BATCH_ID AS linkBatchId,           
+        TRANSFER_TRANS.STATUS AS status,           
+        TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch,
+        TRANSFER_TRANS.SCREEN_NAME AS screenName,
+        TRANSFER_TRANS.TRANS_ALL_ID AS transAllId,
+        TRANSFER_TRANS.GL_TRANS_ACT_NUM As glTransActNum
+        FROM TRANSFER_TRANS
+        WHERE  TRANSFER_TRANS.STATUS!='DELETED'
+        <dynamic>
+            <isNotEqual prepend="AND" property ="LINK_BATCH" compareValue="LINK_BATCH">
+               ( TRANSFER_TRANS.BATCH_ID = #BATCHID:VARCHAR# 
+            </isNotEqual>
+            <isEqual prepend="AND" property ="LINK_BATCH" compareValue="LINK_BATCH">
+               ( TRANSFER_TRANS.LINK_BATCH_ID=#LINK_BATCH_ID:VARCHAR# 
+            </isEqual>
+            <isParameterPresent>
+                <isNotNull prepend="OR" property ="SINGLE_TRANS_ID">
+                    TRANSFER_TRANS.SINGLE_TRANS_ID = #SINGLE_TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            )
+            <isParameterPresent>
+                <isNotNull prepend="AND" property ="ENTERED_AMOUNT">
+                    TRANSFER_TRANS.AUTHORIZE_STATUS_2 = 'ENTERED_AMOUNT'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property ="REVERSE_CLOSING_INT">
+                    TRANSFER_TRANS.SCREEN_NAME = 'Account Closing'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+        AND AUTHORIZE_STATUS  ='AUTHORIZED'
+    </dynamic-mapped-statement>
+        
+        
+    <!-- Use TxTransferTO object (JavaBean) properties as parameters for insert.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTxTransferTO" inline-parameters="true">
+        INSERT INTO TRANSFER_TRANS
+        (TRANS_ID, BATCH_ID, AC_HD_ID, ACT_NUM, 
+        INP_AMOUNT, INP_CURR, AMOUNT, TRANS_DT, 
+        TRANS_TYPE, INST_TYPE, INST_DT, PROD_TYPE, INIT_TRANS_ID, 
+        INIT_CHANN_TYPE, PARTICULARS, NARRATION, STATUS, INSTRUMENT_NO1, 
+        INSTRUMENT_NO2, PROD_ID, AUTHORIZE_STATUS, AUTHORIZE_BY, 
+        AUTHORIZE_DT, AUTHORIZE_REMARKS, STATUS_BY, BRANCH_ID, 
+        STATUS_DT, LINK_BATCH_ID, INITIATED_BRANCH, TRANS_MODE,AUTHORIZE_STATUS_2,LOAN_HIERARCHY,SHIFT,TRANS_ALL_ID,REC_MODE,SINGLE_TRANS_ID,GL_TRANS_ACT_NUM,TRANS_MOD_TYPE,SCREEN_NAME
+        ) VALUES (
+        #transId:VARCHAR#, #batchId:VARCHAR#, #acHdId:VARCHAR#, #actNum:VARCHAR#,
+        #inpAmount:NUMERIC#, #inpCurr:VARCHAR#, #amount:NUMERIC#, #transDt:DATE#,
+        #transType:VARCHAR#, #instType:VARCHAR#, #instDt:DATE#, #prodType:VARCHAR#,
+        #initTransId:VARCHAR#, #initChannType:VARCHAR#, #particulars:VARCHAR#, #narration:VARCHAR#,
+        #status:VARCHAR#, #instrumentNo1:VARCHAR#, #instrumentNo2:VARCHAR#,
+        #prodId:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, 
+        #authorizeDt:DATE#, #authorizeRemarks:VARCHAR#, #statusBy:VARCHAR#, 
+        #branchId:VARCHAR#, SYS_DATE()<!--#statusDt:DATE#-->, #linkBatchId:VARCHAR#, 
+        #initiatedBranch:VARCHAR#, #transMode:VARCHAR#,#authorizeStatus_2:VARCHAR#,
+        #hierarchyLevel:VARCHAR#,#shift:VARCHAR#,#transAllId:VARCHAR#,#rec_mode:VARCHAR#,#singleTransId:VARCHAR#,#glTransActNum:VARCHAR#,#transModType:VARCHAR#,#screenName:VARCHAR#)
+    </mapped-statement>
+
+    <!-- Use TxTransferTO object (JavaBean) properties as parameters for update.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTxTransferTO" inline-parameters="true">
+        UPDATE TRANSFER_TRANS 
+        SET 		
+        BATCH_ID = #batchId:VARCHAR#,
+        AC_HD_ID = #acHdId:VARCHAR#,
+        ACT_NUM = #actNum:VARCHAR#,
+        INP_AMOUNT = #inpAmount:NUMERIC#,
+        INP_CURR = #inpCurr:VARCHAR#,
+        AMOUNT = #amount:NUMERIC#,
+        TRANS_DT = #transDt:DATE#,
+        TRANS_TYPE = #transType:VARCHAR#,
+        INST_TYPE = #instType:VARCHAR#,
+        INST_DT = #instDt:DATE#,
+        PROD_TYPE = #prodType:VARCHAR#,
+        INIT_TRANS_ID = #initTransId:VARCHAR#,
+        INIT_CHANN_TYPE = #initChannType:VARCHAR#,
+        PARTICULARS = #particulars:VARCHAR#,
+        NARRATION = #narration:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        INSTRUMENT_NO1 = #instrumentNo1:VARCHAR#,
+        INSTRUMENT_NO2 = #instrumentNo2:VARCHAR#,
+        PROD_ID = #prodId:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#statusDt:DATE#-->,
+        STATUS_BY = #statusBy:VARCHAR#,
+        BRANCH_ID = #branchId:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#,
+        TRANS_MODE = #transMode:VARCHAR#,
+        SCREEN_NAME = #screenName:VARCHAR#
+        WHERE TRANS_ID = #transId# and
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR# and
+        TRANS_DT = #transDt:DATE#
+    </mapped-statement>
+
+    <!-- for Value Date -->
+        <!-- Use TxTransferTO object (JavaBean) properties as parameters for insert.
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertValueDateTO" inline-parameters="true">
+        INSERT INTO TRANS_VALUE_DATE
+        (TRANS_ID, BATCH_ID, ACT_NUM, AMOUNT, TRANS_DT, 
+        TRANS_TYPE, PROD_ID, STATUS, BRANCH_ID, VALUE_DT, 
+        PROD_TYPE, TRANS_MODE, INITIATED_BRANCH
+        ) VALUES (
+        #TRANS_ID:VARCHAR#, #BATCH_ID:VARCHAR#, #ACT_NUM:VARCHAR#, #AMOUNT:NUMERIC#,
+        #TRANS_DT:DATE#, #TRANS_TYPE:VARCHAR#, #PROD_ID:VARCHAR#, #STATUS:VARCHAR#,
+        #BRANCH_ID:VARCHAR#, #VALUE_DT:DATE#, #PROD_TYPE:VARCHAR#,
+        #TRANS_MODE:VARCHAR#, #INITIATED_BRANCH:VARCHAR#)
+    </mapped-statement>
+   
+    <mapped-statement name="deleteValueDateTO" inline-parameters="true">
+        DELETE FROM TRANS_VALUE_DATE WHERE BATCH_ID = #batchId:VARCHAR# 
+        AND TRANS_ID = #transId:DATE# AND TRANS_DT = #transDt:DATE# and
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#  
+    </mapped-statement>   
+   
+    <mapped-statement name="getValueDateTO" result-class="java.util.HashMap" >
+        <!--SELECT ROWNUM-1 AS "ROWNUM", TT.TRANS_DT, NVL((SELECT VALUE_DT FROM TRANS_VALUE_DATE
+        WHERE BATCH_ID = TT.BATCH_ID AND TRANS_ID=TT.TRANS_ID AND TRANS_DT=TT.TRANS_DT), 
+        TT.TRANS_DT) AS VALUE_DT FROM TRANSFER_TRANS TT WHERE TT.BATCH_ID = #BATCH_ID:VARCHAR# 
+        AND TT.TRANS_DT=#TRANS_DT:DATE# AND TT.STATUS!='DELETED' AND
+        TT.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#-->
+        
+        SELECT row_number() OVER (ORDER BY TT.TRANS_DT) -1 AS "ROWNUM", TT.TRANS_DT, 
+        NVL((SELECT VALUE_DT FROM TRANS_VALUE_DATE WHERE BATCH_ID = TT.BATCH_ID 
+        AND TRANS_ID=TT.TRANS_ID AND TRANS_DT=TT.TRANS_DT), TT.TRANS_DT) AS VALUE_DT FROM TRANSFER_TRANS TT WHERE 
+        TT.BATCH_ID = #BATCH_ID:VARCHAR#  AND TT.TRANS_DT=#TRANS_DT:DATE# AND TT.STATUS!='DELETED' AND TT.INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement> 
+        
+    <!-- this mapped statement will be used to check the batch status, if its
+    tallied or not -->
+    <!--
+    <result-map name="getBatchStatusList" class="java.util.HashMap">
+	<property name="BATCH_STATUS" column="BATCH_STATUS"/>
+    </result-map>
+    <mapped-statement name="getBatchStatus" result-map="getBatchStatusList">
+        SELECT DISTINCT
+            (
+                SELECT SUM(AMOUNT) FROM TRANSFER_TRANS
+                WHERE BATCH_ID = #value# AND TRANS_TYPE = 'DEBIT'
+                GROUP BY BATCH_ID
+            )
+            
+            (
+                SELECT SUM(AMOUNT) FROM TRANSFER_TRANS
+                WHERE BATCH_ID = #value# AND TRANS_TYPE = 'CREDIT'
+                GROUP BY BATCH_ID
+            ) AS BATCH_STATUS
+        FROM
+                TRANSFER_TRANS
+
+    </mapped-statement>
+    
+    <mapped-statement name="getBatchDetails" result-class="java.util.HashMap">
+        SELECT
+            A.INST_CR AS INST_CR,
+            A.AMOUNT_CR AS AMOUNT_CR,
+            B.INST_DR AS INST_DR,
+            B.AMOUNT_DR AS AMOUNT_DR
+        FROM
+            (
+		SELECT BATCH_ID
+		FROM TRANSFER_TRANS
+		GROUP BY BATCH_ID
+            ) P,
+            (
+		SELECT BATCH_ID, COUNT(*) INST_CR, SUM(AMOUNT) AMOUNT_CR
+		FROM TRANSFER_TRANS
+		WHERE TRANS_TYPE = 'CREDIT'
+		GROUP BY BATCH_ID
+            ) A,
+            (
+		SELECT BATCH_ID, COUNT(*) INST_DR, SUM(AMOUNT) AMOUNT_DR
+		FROM TRANSFER_TRANS
+		WHERE TRANS_TYPE = 'DEBIT'
+		GROUP BY BATCH_ID
+            ) B
+
+        WHERE P.BATCH_ID = A.BATCH_ID(+) and P.BATCH_ID = B.BATCH_ID(+)
+        AND P.BATCH_ID = #value#
+    </mapped-statement>
+    
+    
+    <mapped-statement name="Transfer.updateAccountTO" inline-parameters="true">
+		UPDATE ACT_MASTER SET 		
+		SHADOW_CREDIT = #shadowCredit:NUMERIC#,
+		SHADOW_DEBIT = #shadowDebit:NUMERIC#		
+		WHERE ACT_NUM=#actNum#                
+    </mapped-statement>
+    -->
+    
+    
+    
+   
+   <!--
+  <mapped-statement name="getTransferNoRule" result-class="java.util.HashMap">
+       SELECT PROD_ID FROM TRANSFER_TRANS 
+       WHERE ACT_NUM = #ACCOUNTNO# AND
+       INSTRUMENT_NO1 = #INSTRUMENT1# AND INSTRUMENT_NO2 = #INSTRUMENT2# 
+       AND (STATUS!='DELETED') 
+       AND TRANS_ID not in 
+       (select trans_id from transfer_trans where trans_id=#TRANSID#)
+  </mapped-statement>
+  -->
+  
+  <!--
+  <mapped-statement name="getTransferDraftRule" result-class="java.util.HashMap">
+    SELECT PROD_ID FROM TRANSFER_TRANS WHERE INSTRUMENT_NO1 = #INSTRUMENT1# AND INSTRUMENT_NO2 = #INSTRUMENT2#
+    AND (STATUS!='DELETED') AND TRANS_ID!=#TRANSID#
+  </mapped-statement> 
+ -->
+
+   
+   <!-- when status is changed in  op_act_product use below queries instead of above
+     
+   <mapped-statement name="Transfer.getCreditProduct" result-class="java.util.HashMap">
+          SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM OP_AC_PRODUCT 
+          WHERE (STATUS!='DELETED'and AUTHORIZE_STATUS='AUTHORIZED') and 
+          AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_trans='Y')
+    </mapped-statement>
+    
+    <mapped-statement name="Transfer.getDebitProduct" result-class="java.util.HashMap">
+          SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM OP_AC_PRODUCT 
+          WHERE STATUS!='DELETED'and AUTHORIZE_STATUS='AUTHORIZED') and
+          AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_trans='Y')
+   </mapped-statement>        -->   
+   
+   <!-- ============   changes made after product type === -->
+   
+   <!--
+    <mapped-statement name="Transfer.getCreditProduct" result-class="java.util.HashMap">
+          SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM OP_AC_PRODUCT 
+          WHERE STATUS='AUTHORIZED' and 
+          AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_trans='Y')
+    </mapped-statement>
+    
+    <mapped-statement name="Transfer.getDebitProduct" result-class="java.util.HashMap">
+          SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM OP_AC_PRODUCT 
+          WHERE STATUS='AUTHORIZED' and 
+          AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_trans='Y')
+   </mapped-statement>     -->
+   
+    <mapped-statement name="Transfer.getReconsileAcctHead" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_ID, TRANS_DT, PARTICULARS, AMOUNT 
+        FROM CASH_TRANS 
+        WHERE LINK_BATCH_ID IS NULL AND 
+        AC_HD_ID = #AC_HD_ID:VARCHAR#
+    </mapped-statement>
+    <dynamic-mapped-statement name="Transfer.getSelectAcctHeadCR" result-class="java.util.LinkedHashMap">
+        SELECT  AC_HD_DESC AS "A/C HEAD DESCRIPTION", AH.AC_HD_ID AS "A/C HEAD",
+        AHP.RECONS AS "RECONCILLIATION", AHP.BALANCETYPE AS "BALANCETYPE"
+        FROM AC_HD_PARAM AHP, AC_HD AH
+        WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN ('DELETED')) and 
+        AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_trans='Y') AND 
+        AHP.TRANSPOST IN ('MANUAL', 'BOTH')
+        AND AH.AC_HD_ID IN (SELECT BG.AC_HD_ID FROM BRANCH_GL BG, BRANCH_MASTER BM 
+        WHERE BG.GROUP_ID = BM.GL_GROUP_ID AND BM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+         <dynamic> <!-- This dynamic statement given by Rajesh. This statement passes the branchcode if we passed -->
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD DESCRIPTION">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$A/C Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD">
+                    UPPER(AH.AC_HD_ID) LIKE UPPER('%$A/C Head$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="RECONCILLIATION">
+                    UPPER(AHP.RECONS) LIKE UPPER('%$Reconcilliation$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="BALANCETYPE">
+                    UPPER(AHP.BALANCETYPE) LIKE UPPER('%$BalanceType$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Transfer.getSelectAcctHeadDB"  result-class="java.util.LinkedHashMap">
+        SELECT AC_HD_DESC AS "A/C HEAD DESCRIPTION",AH.AC_HD_ID AS "A/C HEAD",  
+        AHP.RECONS AS "RECONCILLIATION", AHP.BALANCETYPE AS "BALANCETYPE"
+        FROM AC_HD_PARAM AHP, AC_HD AH
+        WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN ('DELETED')) and 
+        AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_trans='Y') AND 
+        AHP.TRANSPOST IN ('MANUAL', 'BOTH')
+        AND AH.AC_HD_ID IN (SELECT BG.AC_HD_ID FROM BRANCH_GL BG, BRANCH_MASTER BM 
+        WHERE BG.GROUP_ID = BM.GL_GROUP_ID AND BM.BRANCH_CODE = #BRANCH_CODE:VARCHAR#)
+       <dynamic> <!-- This dynamic statement given by Rajesh. This statement passes the branchcode if we passed -->
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD DESCRIPTION">
+                   UPPER(AC_HD_DESC) LIKE UPPER('%$A/C Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD">
+                   UPPER(AH.AC_HD_ID) LIKE UPPER('%$A/C Head$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="RECONCILLIATION">
+                   UPPER(AHP.RECONS) LIKE UPPER('%$Reconcilliation$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="BALANCETYPE">
+                   UPPER(AHP.BALANCETYPE) LIKE UPPER('%$BalanceType$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="Transfer.getSelectAcctHeadDBBulk" result-class="java.util.LinkedHashMap">
+        SELECT AH.AC_HD_ID AS "A/C HEAD", AC_HD_DESC AS "A/C HEAD DESCRIPTION", 
+        AHP.RECONS AS "RECONCILLIATION", AHP.BALANCETYPE AS "BALANCETYPE"
+        FROM AC_HD_PARAM AHP, AC_HD AH
+        WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN ('DELETED')) and 
+        AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where dr_trans='Y') AND 
+        AHP.TRANSPOST IN ('MANUAL', 'BOTH')
+        <!--AND AH.AC_HD_ID IN (SELECT BG.AC_HD_ID FROM BRANCH_GL BG, BRANCH_MASTER BM 
+        WHERE BG.GROUP_ID = BM.GL_GROUP_ID AND BM.BRANCH_CODE = #BRANCH_CODE#)-->
+        AND    AH.AC_HD_ID IN  ($value$)
+               
+    </mapped-statement>
+    
+    <mapped-statement name="insertPassBook" inline-parameters="true">
+        INSERT INTO PASS_BOOK
+        (ACT_NUM, TRANS_DT,  PARTICULARS, INSTRUMENT_NO1, 
+        INSTRUMENT_NO2, DEBIT, CREDIT, BALANCE, PBOOK_FLAG, SLNO ,TRANS_ID,BATCH_ID, INST_TYPE,INST_DT,STATUS,AUTHORIZE_STATUS,  AUTHORIZE_DT, PAGENO, CREATED_DT
+        ,NARRATION) VALUES (
+        #ACT_NUM#::VARCHAR, #TRANS_DT#::DATE, #PARTICULARS#::VARCHAR, #INSTRUMENT_NO1#::VARCHAR, #INSTRUMENT_NO2#::VARCHAR, #DEBIT#::NUMERIC, #CREDIT#::NUMERIC,#BALANCE#::NUMERIC,#PBOOKFLAG#::NUMERIC,CASE WHEN (SELECT NVL(MAX(SLNO)+1,1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+        AND PAGENO = (SELECT NVL(MAX(PAGENO),1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#))=
+        31 THEN 1 ELSE (SELECT NVL(MAX(SLNO)+1,1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+        AND PAGENO = (SELECT NVL(MAX(PAGENO),1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#)) END ,#TRANS_ID:VARCHAR#,#BATCH_ID:VARCHAR#,#INST_TYPE:VARCHAR#,#INST_DT:DATE#,#STATUS:VARCHAR#, #AUTHORIZE_STATUS:VARCHAR#, #AUTHORIZE_DT:DATE#,CASE WHEN (SELECT NVL(MAX(SLNO),1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+        AND PAGENO = (SELECT NVL(MAX(PAGENO),1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#)) =
+        30 THEN (SELECT NVL(MAX(PAGENO)+1,1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#) ELSE
+        (SELECT NVL(MAX(PAGENO),1) FROM PASS_BOOK WHERE ACT_NUM =#ACT_NUM:VARCHAR#) END ,(SELECT SYS_DATE() FROM DUAL),#NARRATION:VARCHAR#)  
+    </mapped-statement>
+  
+    <mapped-statement name="chkForPassBook" result-class="java.util.LinkedHashMap">
+        SELECT PASS_BOOK FROM ACT_PARAM_DETAIL WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement>
+   
+    <mapped-statement name="getClearBalanceOA" result-class="java.util.LinkedHashMap">
+        SELECT TOTAL_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT FROM ACT_MASTER WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getClearBalanceAD" result-class="java.util.LinkedHashMap">
+        SELECT TOTAL_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getClearBalanceAAD" result-class="java.util.LinkedHashMap">
+        SELECT TOTAL_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT FROM AGRI_LOANS_FACILITY_DETAILS WHERE ACCT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getClearBalanceBILLS" result-class="java.util.LinkedHashMap">
+        SELECT TOTAL_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT FROM BILLS_FACILITY_DETAILS WHERE ACCT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getClearBalanceForChgOA" result-class="java.util.LinkedHashMap">
+        SELECT AVAILABLE_BALANCE as TOTAL_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT FROM ACT_MASTER WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getClearBalanceForChgAD" result-class="java.util.LinkedHashMap">
+        SELECT AVAILABLE_BALANCE as TOTAL_BALANCE, SHADOW_CREDIT, SHADOW_DEBIT FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM =#ACT_NUM:VARCHAR#
+    </mapped-statement>
+    
+    <!--mapped-statement name="updatePassBook" inline-parameters="true">
+	UPDATE PASS_BOOK
+        SET 
+        ACT_NUM = #ACT_NUM:VARCHAR#,
+        TRANS_DT = #TRANS_DT:DATE#, 
+        PARTICULARS = #PARTICULARS:VARCHAR#, 
+        INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR#,
+        INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR#,  
+        DEBIT = #DEBIT:NUMERIC#, 
+        CREDIT = #CREDIT:NUMERIC#,
+        BALANCE = #BALANCE:NUMERIC#,        
+        BATCH_ID = #BATCH_ID:VARCHAR#,
+        INST_TYPE = #INST_TYPE:VARCHAR#,
+	INST_DT = #INST_DT:DATE#,
+        STATUS = #STATUS:VARCHAR#,
+        CREATED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE
+        TRANS_ID=#TRANS_ID:VARCHAR#	
+    </mapped-statement-->
+    
+    <mapped-statement name="authorizePassBook" result-class="java.util.HashMap">
+        UPDATE PASS_BOOK SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR# 
+    </mapped-statement>
+       
+    <mapped-statement name="authorizePassBookTT" result-class="java.util.HashMap">
+        UPDATE PASS_BOOK SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#
+        WHERE BATCH_ID =  #BATCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deletePassBook" inline-parameters="true">
+        UPDATE PASS_BOOK
+        SET 
+        STATUS = #STATUS:VARCHAR#
+        WHERE
+        TRANS_ID=#TRANS_ID:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="rejectPassBook" result-class="java.util.HashMap">
+        UPDATE PASS_BOOK SET 
+        STATUS = #STATUS:VARCHAR#
+        WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updatePassBookOC" inline-parameters="true">
+        UPDATE PASS_BOOK
+        SET 
+        ACT_NUM = #ACT_NUM:VARCHAR#,
+        TRANS_DT = (SELECT SYS_DATE() FROM DUAL)<!--#TRANS_DT:DATE#-->, 
+        PARTICULARS = #PARTICULARS:VARCHAR#, 
+        INSTRUMENT_NO1 = #INSTRUMENT_NO1:VARCHAR#,
+        INSTRUMENT_NO2 = #INSTRUMENT_NO2:VARCHAR#,  
+        DEBIT = #DEBIT:NUMERIC#, 
+        CREDIT = #CREDIT:NUMERIC#,
+        BALANCE = #BALANCE:NUMERIC#,        
+        BATCH_ID = #BATCH_ID:VARCHAR#,
+        INST_TYPE = #INST_TYPE:VARCHAR#,
+        INST_DT = #INST_DT:DATE#,
+        STATUS = #STATUS:VARCHAR#
+        WHERE
+        BATCH_ID = #BATCH_ID:VARCHAR#
+    </mapped-statement>
+         
+    <mapped-statement name="deletePassBookOC" inline-parameters="true">
+        UPDATE PASS_BOOK
+        SET 
+        STATUS = #STATUS:VARCHAR#
+        WHERE
+        BATCH_ID = #BATCH_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updatingPassBookFlag" inline-parameters="true">
+        UPDATE PASS_BOOK 
+        SET 
+        PBOOK_FLAG ='1' WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="INSERTINTODAILYDEPOSIT" inline-parameters="true">
+        insert into DAILY_DEPOSIT_TRANS(trans_id,batch_id,trn_dt,coll_dt,agent_no,ACC_NUM,trans_mode,trans_type,amount,total_bal,particulars
+        ,created_by,created_dt, authorize_by,authorize_dt,STATUS,AUTHORIZE_STATUS,INITIATED_BRANCH,PROD_TYPE,SCREEN_NAME)
+        values((SELECT NVL(MAX(TRANS_ID)+1,1) FROM DAILY_DEPOSIT_TRANS WHERE ACC_NUM =#acct_num:VARCHAR#),#batch_id:VARCHAR#,#trn_dt:DATE#,#coll_dt:DATE#,#agent_no:VARCHAR#,#acct_num:VARCHAR#,#trans_mode:VARCHAR#
+        ,#trans_type:VARCHAR#,#amount:NUMERIC#,#total_bal:NUMERIC#,#particulars:VARCHAR#,#created_by:VARCHAR#,#created_dt:DATE#
+        ,#authorize_by:VARCHAR#,#authorize_dt:DATE#,#status:VARCHAR#,#authorize_status:VARCHAR#, #initiatedBranch:VARCHAR#,#prod_Type:VARCHAR#,#screenName:VARCHAR#)
+    </mapped-statement> 
+    
+    <mapped-statement name="authorizeDailyDeposit" inline-parameters="true">
+        UPDATE  DAILY_DEPOSIT_TRANS SET AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,AUTHORIZE_DT=#AUTHORIZE_DT:DATE# ,AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR# ,TOTAL_BAL=#CLEAR_BALANCE:NUMERIC#
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR#
+        AND AGENT_NO=#AGENT_NO:VARCHAR# and ACC_NUM=#ACC_NUM:VARCHAR# AND
+        TRN_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="DailyDepositClearAdd" inline-parameters="true">
+        update  deposit_sub_acinfo dsa  set dsa.CLEAR_BALANCE=dsa.CLEAR_BALANCE+#CLEAR_BALANCE:NUMERIC# 
+        where  dsa.DEPOSIT_NO||'_'||dsa.DEPOSIT_SUB_NO=#ACC_NUM:VARCHAR# and 
+        dsa.DEPOSIT_NO in( select DEPOSIT_NO from deposit_acinfo where dsa.DEPOSIT_NO=DEPOSIT_NO 
+        and AGENT_ID=#AGENT_NO:VARCHAR# and PROD_ID='KD' )
+
+    </mapped-statement> 
+    <mapped-statement name="deleteDAilyDepsot" inline-parameters="true">
+        delete from daily_deposit_trans where ACC_NUM=#ACCOUNTNO:VARCHAR# 
+        AND BATCH_ID=#BATCH_ID:VARCHAR#  
+        AND AGENT_NO=#AGENT_NO:VARCHAR# AND
+        TRN_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# 
+    </mapped-statement> 
+    <mapped-statement name="selectDistinctCollectionDateForDaily" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT COLL_DT FROM DAILY_DEPOSIT_TRANS WHERE  COLL_DT=#COLL_DT:DATE# AND  AGENT_NO=#AGENT_NO:VARCHAR#
+       
+    </mapped-statement>
+    
+    <mapped-statement name = "updateDepTransPenalMakingNull" result-class = "java.util.HashMap">
+        UPDATE TRANSFER_TRANS SET INSTRUMENT_NO2 = NULL WHERE INSTRUMENT_NO2 = 'DEPOSIT_PENAL'
+        AND BATCH_ID = #BATCH_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSBLienTransferAccountNo" result-class="java.util.HashMap" >
+<!--      SELECT AUTHORIZE_REMARKS,AMOUNT FROM TRANSFER_TRANS,DEPOSIT_LIEN WHERE TRANS_ID = #TRANS_ID:VARCHAR# AND STATUS!='DELETED'
+      AND AUTHORIZE_REMARKS = LIEN_NO 
+      SELECT TT.AUTHORIZE_REMARKS,TT.AMOUNT FROM TRANSFER_TRANS TT,DEPOSIT_LIEN DL WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+      AND TT.STATUS!='DELETED' AND TT.AUTHORIZE_REMARKS = LIEN_NO      -->
+        SELECT DL.DEPOSIT_NO,LIEN_AC_NO,LIEN_NO,NVL(LIEN_AMOUNT,0) AS LIEN_AMOUNT,DEPOSIT_AMT,TOTAL_BALANCE,
+        NVL(SHADOW_LIEN,0)SHADOW_LIEN, NVL(AVAILABLE_BALANCE,0) AS AVAILABLE_BALANCE
+        FROM DEPOSIT_LIEN DL, DEPOSIT_SUB_ACINFO DSA WHERE DSA.DEPOSIT_NO = DL.DEPOSIT_NO 
+        AND UNLIEN_REMARKS = 'FLEXI_DEPOSITS' AND DL.STATUS!='DELETED' AND DL.STATUS!='UNLIENED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "REMARKS">
+                    REMARKS = #BATCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "LIEN_AC_NO">
+                    LIEN_AC_NO = #LIEN_AC_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY LIEN_NO
+    </dynamic-mapped-statement> 
+        
+    <mapped-statement name="updateSBLienTransferAccountNo" result-class="java.util.HashMap" >
+        UPDATE TRANSFER_TRANS SET AUTHORIZE_REMARKS = #AUTHORIZE_REMARKS:VARCHAR# WHERE TRANS_ID = #TRANS_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getProdIdDetails" result-class="java.util.HashMap" >
+        SELECT ACT_MASTER.PROD_ID, S_REMARKS FROM ACT_MASTER,OP_AC_PRODUCT WHERE ACT_NUM =#ACT_NUM:VARCHAR#
+        AND OP_AC_PRODUCT.PROD_ID=ACT_MASTER.PROD_ID
+    </mapped-statement> 
+    
+    <mapped-statement name="getCustStatus" result-class="java.util.HashMap" >     
+        SELECT CUSTOMER_STATUS AS C_STATUS FROM CUSTOMER C,ACT_MASTER AM WHERE C.CUST_ID=AM.CUST_ID
+        AND AM.ACT_NUM=#ACCOUNTNO:VARCHAR# 
+    </mapped-statement> 
+    <mapped-statement name="getGuarNameRelationshp" result-class="java.util.HashMap" >     
+        SELECT GUARDIAN_NAME,RELATIONSHIP FROM CUST_GUARDIAN
+        where CUST_ID=#CUST_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="insertInterBranchTxTransferTO" inline-parameters="true">
+       	INSERT INTO INTERBRANCH_TRANS
+	    (TRANS_ID,  AC_HD_ID, ACT_NUM, 
+	      TRANS_DT,AMOUNT,TRANS_TYPE,PROD_ID, PROD_TYPE,BRANCH_ID,INITIATED_BRANCH,OTHER_BRANCH_DT
+	    ) VALUES (
+	    #transId:VARCHAR#,  #acHdId:VARCHAR#, #actNum:VARCHAR#,
+	    #transDt:DATE#, #amount:NUMERIC#, 
+	    #transType:VARCHAR#, #prodId:VARCHAR#, #prodType:VARCHAR#,
+	    #branchId:VARCHAR#, #initiatedBranch:VARCHAR#,(SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#branchId:VARCHAR#))
+   </mapped-statement>
+   
+   <mapped-statement name="insertDiffBranchTxTransferTO" result-class="java.util.HashMap">
+       	INSERT INTO DIFF_BRANCH_TRANS
+        (TRANS_ID,  AC_HD_ID, ACT_NUM, TRANS_DT, AMOUNT, TRANS_TYPE, PROD_ID, PROD_TYPE, BRANCH_ID, INITIATED_BRANCH, OTHER_BRANCH_DT, LOGGED_IN_BRANCH
+        ) VALUES (
+        #TRANS_ID:VARCHAR#, #AC_HD_ID:VARCHAR#, #ACT_NUM:VARCHAR#, #TRANS_DT:DATE#, #AMOUNT:NUMERIC#, #TRANS_TYPE:VARCHAR#, 
+        #PROD_ID:VARCHAR#, #PROD_TYPE:VARCHAR#, #BRANCH_ID:VARCHAR#, #INITIATED_BRANCH:VARCHAR#, 
+        (SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE=#BRANCH_ID:VARCHAR#),#LOGGED_IN_BRANCH:VARCHAR#)       
+   </mapped-statement>
+   
+   <mapped-statement name="getSelectMaxBatchIdDiffBranch" result-class="java.util.HashMap">
+        SELECT MAX(TO_NUMBER(REPLACE(TRANS_ID,'TT','')))+1 TRANS_ID, MAX(TO_NUMBER(REPLACE(BATCH_ID,'TBT','')))+1 BATCH_ID FROM 
+        TRANSFER_TRANS WHERE REPLACE(TRANS_ID,'TT','') IN (SELECT MAX(TO_NUMBER(REPLACE (TRANS_ID, 'TT', ''))) FROM 
+        TRANSFER_TRANS WHERE TRANS_DT = #TRANS_DT:DATE# AND INITIATED_BRANCH = #BRANCH_ID:VARCHAR# ) AND 
+        TRANS_DT = #TRANS_DT:DATE# AND INITIATED_BRANCH = #BRANCH_ID:VARCHAR# AND ROWNUM = 1
+    </mapped-statement>
+    
+    <mapped-statement name="getVerifiedAllActNumber" result-class="java.util.HashMap" >     
+        <!--SELECT DISTINCT A.ACT_NUM,A.PROD_TYPE,A.PROD_ID,A.BRANCH_ID,AC_HD_ID,C.AVAILABLE_BALANCE FROM ALL_PRODUCT_ACCTS A,ALL_PRODUCTS B,ALL_CUSTOMER_ACCOUNTS C WHERE 
+        A.ACT_NUM IN ($value$) AND A.ACCT_STATUS!='CLOSED' AND A.PROD_ID = B.PROD_ID AND A.PROD_ID = C.PROD_ID  AND A.ACT_NUM = C.ACT_NUM-->
+        SELECT DISTINCT AL.ACT_NUM,AL.NAME,AL.PROD_ID,AL.BRANCH_ID AS BRANCH_CODE,AL.AVAILABLE_BALANCE,AL.PROD_TYPE,AP.AC_HD_ID
+        FROM ALL_CUSTOMER_ACCOUNTS al,ALL_PRODUCTS AP WHERE (AL.ACT_NUM IN  ($ACT_NUM$) or  AL.ACT_NUM IN  ($ACT_NUM1$))
+        AND AL.ACCT_STATUS!='CLOSED' AND AL.PROD_ID = AP.PROD_ID
+        UNION ALL  
+        SELECT AM.ACT_MASTER_ID AS ACT_NUM,
+        AM.AGENCY_NAME AS NAME, AM.PROD_ID,AM.BRANCH_ID AS BRANCH_CODE,
+        AM.AVAILABLE_BALANCE,'AB' AS PROD_TYPE,OP.PRINCIPAL_AC_HD AS AC_HD_ID
+        FROM OTHER_BANKS_ACT_MASTER AM,OTHER_BANK_ACCOUNT_PRODUCTS OP WHERE 
+        AM.PROD_ID = OP.PROD_ID
+        AND AM.ACT_MASTER_ID IN ($ACT_NUM$)
+    </mapped-statement>
+    
+    <mapped-statement name="getPassBookProductId" result-class="java.util.HashMap" >             
+        SELECT * FROM GN_PASS_BK_AC WHERE PROD_TYPE =#PROD_TYPE#
+    </mapped-statement>
+    
+        <mapped-statement name="RollBackDailyDeposit" inline-parameters="true">
+        UPDATE  DAILY_DEPOSIT_TRANS SET AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,AUTHORIZE_STATUS=#AUTHORIZE_STATUS:VARCHAR# ,STATUS='DELETED'
+        WHERE  BATCH_ID=#BATCH_ID:VARCHAR#
+        AND ACC_NUM=#ACC_NUM:VARCHAR# AND
+        TRN_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+   
+</sql-map>

@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EarningsDeductionMap">
+<!-- Use DepositLienTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+ 
+    <mapped-statement name="getPayType" result-class="java.util.HashMap">  
+        SELECT DISTINCT LOOKUP_REF_ID AS "KEY" , UPPER(LOOKUP_DESC) AS "VALUE" FROM LOOKUP_MASTER 
+        WHERE LOOKUP_ID=#LOOKUP_ID:VARCHAR#  ORDER BY UPPER(LOOKUP_DESC) ASC
+    </mapped-statement>
+ 
+    <mapped-statement name="getCalcModType" result-class="java.util.HashMap">  
+        SELECT DISTINCT(P.PAY_CODE) AS "KEY", P.PAY_MODULE_TYPE AS "VALUE" FROM PAYCODES_MASTER P, PAYMASTER PM WHERE P.PAY_CODE=PM.PAY_CODE
+    </mapped-statement>
+    
+    <mapped-statement name="insertPayRollTo" inline-parameters="true">  
+        INSERT INTO PAYROLL(PAYROLLID, EMPLOYEEID, MONTH_YEAR,  PAY_TYPE, SCALE_ID, VERSION_NO, SRL_NO, TRANS_DATE, TRANS_ID, BATCH_ID, 
+        PAY_CODE, PAY_SRL_NO, PAY_DESCRI, AMOUNT, PROD_ID,PROD_TYPE, ACC_NO, PRINCIPAL, INTEREST, PENALINTEREST, CALC_UPTO, 
+        FROM_DATE, TO_DATE, REMARK, STATUS_BY, CREATED_BY, CREATED_DATE, AUTHORIZED_BY, AUTHORIZE_STATUS, STATUS,TRANS_TYPE )  
+        VALUES (#payrollId:VARCHAR#,#employeeId:VARCHAR#, #month:DATE#,  #payType:VARCHAR# , cast(#scaleId# as numeric), cast(#versionNO# as numeric), cast(#srlNo# as numeric), #transDt:DATE#,
+        #transId:VARCHAR#, #batchId:VARCHAR#, #payCode:VARCHAR#, cast(#paySlNo# as numeric), #payDesc:VARCHAR#,cast(#amount# as numeric), #prodId:VARCHAR#, #prodType:VARCHAR#, 
+        #acct_num:VARCHAR#, cast(#pricipal# as numeric), cast(#interest# as numeric), cast(#penal# as numeric) , #calUpto:DATE#, #fromDt:DATE#, #toDt:DATE#, 
+        #remarks:VARCHAR#,  #statusBy:VARCHAR#, #createdBy:VARCHAR#, #createdDt:DATE#,  #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#,#status:VARCHAR#,#transType:VARCHAR#) 
+    </mapped-statement>
+    
+    <mapped-statement name="insertArrearTO" inline-parameters="true">  
+        INSERT INTO ARREAR_CALCULATION_MASTER(EMPLOYEEID,PAY_CODE,PAY_DESCRI,OLD_AMT,NEW_AMT,
+        DIFFERENCE,FROM_DT,TO_DT,BASED_ON,NEW_DA_PERCENTAGE,OLD_DA_PERCENTAGE,STATUS,TRANS_DT)
+        VALUES(#employeeId:VARCHAR#,#payCode:VARCHAR#,#payDesc:VARCHAR#,#oldAmount:NUMERIC#,#newAmount:NUMERIC#,#difference:NUMERIC#
+        ,#fromDt:DATE#,#toDt:DATE#,UPPER(#baseOn:VARCHAR#),#newDaPer:NUMERIC#,#oldDaPer:NUMERIC#,#status:VARCHAR#,#transDt:DATE#)
+    </mapped-statement>
+ 
+    <mapped-statement name="insertOpeningArrearTO" inline-parameters="true"> 
+        INSERT INTO ARREAR_CALCULATION_MASTER(EMPLOYEEID,PAY_CODE,PAY_DESCRI,OLD_AMT,NEW_AMT,
+        DIFFERENCE,FROM_DT,TO_DT,BASED_ON,NEW_DA_PERCENTAGE,OLD_DA_PERCENTAGE,STATUS,TRANS_DT)
+        VALUES(#EMPLOYEEID:VARCHAR#,#PAY_CODE:VARCHAR#,#PAY_DESC:VARCHAR#,#OLD_AMOUNT:NUMERIC#,#NEW_AMOUNT:NUMERIC#,#DIFFERENCE:NUMERIC#
+        ,#FROM_DT:DATE#,#TO_DT:DATE#,UPPER(#BASEON:VARCHAR#),#NEWDAPER:NUMERIC#,#OLDDAPER:NUMERIC#,#STATUS:VARCHAR#,#TRANSDT:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertPaycodes_Master" inline-parameters="true">  
+        INSERT INTO PAYCODES_MASTER (PAYCODE_ID, PAY_CODE, PAY_DESCRI, PAY_EARNDEDU, PAY_MODULE_TYPE, PAY_CALC_TYPE, PAY_PROD_TYPE, 
+        TAXABLE, PERSONAL_PAY, ACTIVE, INDIVIDUAL_REQ, CONTRA_ONLY, PAYMENT_VOUCHER, STATUS, STATUS_BY, STATUS_DATE, CREATED_BY, CREATED_DATE) 
+        VALUES (#paycode_Id:VARCHAR#, #pay_Code:VARCHAR#, #pay_Descri:VARCHAR#, #pay_EarnDedu:VARCHAR#, #pay_Mod_Type:VARCHAR#, 
+        #pay_Calc_Type:VARCHAR#, #pay_Prod_Type:VARCHAR#, #taxable:VARCHAR#, #personal_Pay:VARCHAR#, #active:VARCHAR#, #individual_reqd:VARCHAR#,
+        #contra_Only:VARCHAR#, #payment_Voucher:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDate:DATE#, #createdBy:VARCHAR#, 
+        #createdDate:DATE#)
+    </mapped-statement>
+   
+    <mapped-statement name="insertPay_Account" inline-parameters="true">  
+        INSERT INTO PAY_ACCOUNT (PAYCODE_ID, ACC_HD, ACC_TYPE)
+        VALUES (#payCode_Id:VARCHAR#, #accHd:VARCHAR#, #accType:VARCHAR#)
+    </mapped-statement>
+ 
+    <mapped-statement name="getPayModType" result-class="java.util.HashMap">  
+        SELECT P.PAY_MODULE_TYPE, P.PAY_EARNDEDU FROM PAYCODES_MASTER P WHERE P.PAY_MODULE_TYPE = #MODTYPE:VARCHAR# 
+        AND P.PAY_EARNDEDU = #EARNDEDU:VARCHAR# AND P.PAY_MODULE_TYPE IN ('DEARNESS ALLOWANCE','HOUSERENT ALLOWANCE','BASIC PAY','PF')
+    </mapped-statement>
+ 
+    <dynamic-mapped-statement name="viewEarnDedu" result-class="java.util.LinkedHashMap">
+        SELECT P.PAYCODE_ID, P.PAY_CODE, P.PAY_EARNDEDU, P.PAY_MODULE_TYPE, P.PAY_DESCRI, P.PAY_CALC_TYPE, P.PAY_PROD_TYPE FROM PAYCODES_MASTER P
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAYCODE_ID" >
+                    UPPER(P.PAYCODE_ID) LIKE UPPER('%$PAYCODE_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAY_CODE" >
+                    UPPER(P.PAY_CODE) LIKE UPPER('%$PAY_CODE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAY_EARNDEDU" >
+                    UPPER(P.PAY_EARNDEDU) LIKE UPPER('%$PAY_EARNDEDU$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAY_MODULE_TYPE" >
+                    UPPER(P.PAY_MODULE_TYPE) LIKE UPPER('%$PAY_MODULE_TYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAY_DESCRI" >
+                    UPPER(P.PAY_DESCRI) LIKE UPPER('%$PAY_DESCRI$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAY_CALC_TYPE" >
+                    UPPER(P.PAY_CALC_TYPE) LIKE UPPER('%$PAY_CALC_TYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PAY_PROD_TYPE" >
+                    UPPER(P.PAY_PROD_TYPE) LIKE UPPER('%$PAY_PROD_TYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+           </dynamic>
+        ORDER BY P.PAYCODE_ID
+    </dynamic-mapped-statement>
+   
+    <result-map name="getEarningsDeductionTOResult" class="com.see.truetransact.transferobject.payroll.earningsDeductions.EarningsDeductionTO">
+        <property name="pay_Code" column="PAY_CODE"/>
+        <property name="pay_Descri" column="PAY_DESCRI"/>
+        <property name="pay_EarnDedu" column="PAY_EARNDEDU"/>
+        <property name="pay_Mod_Type" column="PAY_MODULE_TYPE"/>
+        <property name="pay_Calc_On" column="PAY_CALC_ON"/>
+        <property name="pay_Calc_Type" column="PAY_CALC_TYPE"/>
+        <property name="pay_Prod_Type" column="PAY_PROD_TYPE"/>
+        <property name="pay_Fix_Amt" column="PAY_FIX_AMT"/>
+        <property name="pay_Min_Amt" column="PAY_MIN_AMT"/>
+        <property name="pay_Max_Amt" column="PAY_MAX_AMT"/>
+        <property name="pay_Percent" column="PAY_PERCENT"/>
+        <property name="taxable" column="TAXABLE"/>
+        <property name="personal_Pay" column="PERSONAL_PAY"/>
+        <property name="active" column="ACTIVE"/>
+        <property name="individual_reqd" column="INDIVIDUAL_REQ"/>
+        <property name="contra_Only" column="CONTRA_ONLY"/>
+        <property name="payment_Voucher" column="PAYMENT_VOUCHER"/>
+    </result-map>
+    
+    <result-map name="getEarningsDeductionNonGLTOResult" class="com.see.truetransact.transferobject.payroll.earningsDeductions.EarningsDeductionTO">
+        <property name="pay_Code" column="PAY_CODE"/>
+        <property name="pay_Descri" column="PAY_DESCRI"/>
+        <property name="pay_EarnDedu" column="PAY_EARNDEDU"/>
+        <property name="pay_Mod_Type" column="PAY_MODULE_TYPE"/>
+        <property name="pay_Calc_Type" column="PAY_CALC_TYPE"/>
+        <property name="pay_Prod_Type" column="PAY_PROD_TYPE"/>
+        <property name="taxable" column="TAXABLE"/>
+        <property name="personal_Pay" column="PERSONAL_PAY"/>
+        <property name="active" column="ACTIVE"/>
+        <property name="individual_reqd" column="INDIVIDUAL_REQ"/>
+        <property name="contra_Only" column="CONTRA_ONLY"/>
+        <property name="payment_Voucher" column="PAYMENT_VOUCHER"/>
+    </result-map>
+      
+    <mapped-statement name="getSelectEarnDedu" result-map="getEarningsDeductionTOResult" >  
+        SELECT P.PAY_CODE, P.PAY_DESCRI, P.PAY_EARNDEDU, UPPER(P.PAY_MODULE_TYPE) AS PAY_MODULE_TYPE, P.PAY_CALC_TYPE,PS.PAY_CALC_ON,PS.PAY_FIX_AMT,PS.PAY_MAX_AMT,
+        PS.PAY_MIN_AMT, PS.PAY_PERCENT, P.PAY_PROD_TYPE, P.TAXABLE, P.PERSONAL_PAY, P.ACTIVE, P.INDIVIDUAL_REQ, 
+        P.CONTRA_ONLY, P.PAYMENT_VOUCHER FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS ON P.PAY_CODE = PS.PAY_CODE 
+        WHERE P.PAYCODE_ID = #value:VARCHAR# AND PS.SRL_NO = (SELECT max(PS.SRL_NO) AS SRL_NO FROM PAY_SETTINGS PS JOIN PAYCODES_MASTER P 
+        ON PS.PAY_CODE = P.PAY_CODE where P.PAYCODE_ID = #value:VARCHAR#)
+    </mapped-statement>  
+    
+    <mapped-statement name="getSelectEarnDeduNonGL" result-map="getEarningsDeductionNonGLTOResult" >  
+        SELECT P.PAY_CODE, P.PAY_DESCRI, P.PAY_EARNDEDU, P.PAY_MODULE_TYPE, P.PAY_CALC_TYPE, P.PAY_PROD_TYPE, P.TAXABLE, P.PERSONAL_PAY, P.ACTIVE,
+        P.INDIVIDUAL_REQ, P.CONTRA_ONLY, P.PAYMENT_VOUCHER FROM PAYCODES_MASTER P 
+        WHERE P.PAYCODE_ID = #value:VARCHAR#
+    </mapped-statement>  
+      
+    <result-map name="getEarningsDeductionAccountTOResult" class="com.see.truetransact.transferobject.payroll.earningsDeductions.EarnDeduAccTO">
+        <property name="accHd" column="ACC_HD"/>
+        <property name="accType" column="ACC_TYPE"/>
+    </result-map>
+   
+    <mapped-statement name="getSelectEarnDeduAcc" result-map="getEarningsDeductionAccountTOResult">
+        SELECT PA.ACC_HD, PA.ACC_TYPE FROM PAY_ACCOUNT PA WHERE PA.PAYCODE_ID = #value:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getPayCodeId" result-class="java.util.HashMap">
+        SELECT P.PAYCODE_ID FROM PAYCODES_MASTER P WHERE P.PAY_MODULE_TYPE = #value:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getAllAccDetails" result-class="java.util.LinkedHashMap">
+        SELECT P.PAY_CODE, P.PAY_PROD_TYPE, PA.ACC_HD, PA.ACC_TYPE FROM PAYCODES_MASTER P JOIN PAY_ACCOUNT PA ON P.PAYCODE_ID = PA.PAYCODE_ID 
+        AND P.PAYCODE_ID = #PAYCODE_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getAllCalcDetails" result-class="java.util.LinkedHashMap">
+        SELECT P.PAY_CODE, PS.PAY_CALC_ON, PS.PAY_MIN_AMT, PS.PAY_MAX_AMT, PS.PAY_PERCENT, P.PERSONAL_PAY, FROM_DATE,PS.SRL_NO
+        FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS ON P.PAY_CODE = PS.PAY_CODE   WHERE P.PAYCODE_ID =#PAYCODE_ID:VARCHAR#
+        AND PS.SRL_NO =(SELECT MAX(PS.SRL_NO) FROM PAY_SETTINGS PS JOIN PAYCODES_MASTER PM ON PS.PAY_CODE=PM.PAY_CODE 
+        AND PM.PAYCODE_ID = #PAYCODE_ID:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="deleteEarnDeduTO" result-class="java.util.HashMap">
+        DELETE FROM PAYCODES_MASTER WHERE PAYCODE_ID = #PAYCODEID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="deleteEarnDeduAccTO" result-class="java.util.HashMap">
+        DELETE FROM PAY_ACCOUNT WHERE PAYCODE_ID = #PAYCODEID:VARCHAR#   
+    </mapped-statement>
+    
+    <mapped-statement name="deletePaySettings" result-class="java.util.HashMap">
+        DELETE FROM PAY_SETTINGS WHERE PAY_CODE = #payCode:VARCHAR#   
+    </mapped-statement>
+
+    <mapped-statement name="updatePayCodesMasterTO" inline-parameters="true">
+        UPDATE PAYCODES_MASTER SET 
+        PAY_DESCRI = #pay_Descri:VARCHAR#,
+        PAY_EARNDEDU = #pay_EarnDedu:VARCHAR#, 
+        PAY_MODULE_TYPE = #pay_Mod_Type:VARCHAR#, 
+        PAY_CALC_TYPE = #pay_Calc_Type:VARCHAR#,
+        PAY_PROD_TYPE = #pay_Prod_Type:VARCHAR#,
+        PERSONAL_PAY = #personal_Pay:VARCHAR#, 
+        TAXABLE = #taxable:VARCHAR#, 
+        ACTIVE = #active:VARCHAR#, 
+        INDIVIDUAL_REQ = #individual_reqd:VARCHAR#, 
+        CONTRA_ONLY = #contra_Only:DATE#,
+        PAYMENT_VOUCHER = #payment_Voucher:VARCHAR#
+        WHERE PAYCODE_ID = #paycode_Id:VARCHAR#   
+    </mapped-statement>
+
+    <mapped-statement name="updatePayCodesAccountTO" inline-parameters="true">
+        UPDATE PAY_ACCOUNT SET 
+        ACC_HD = #accHd:VARCHAR#
+        WHERE PAYCODE_ID = #payCode_Id:VARCHAR# and ACC_TYPE = #accType:VARCHAR#  
+    </mapped-statement>
+
+    <mapped-statement name="updatePayCodesCalcTO" inline-parameters="true">
+        UPDATE PAYCODES_MASTER SET 
+        PAY_MIN_AMT = #pay_Min_Amt:NUMBER#,
+        PAY_MAX_AMT = #pay_Max_Amt:NUMBER#,
+        PAY_PERCENT = #pay_Percent:NUMBER#, 
+        WHERE PAYCODE_ID = #paycode_Id:VARCHAR#   
+    </mapped-statement>
+
+    <mapped-statement name="getPayModuleType" result-class="java.util.HashMap">
+        SELECT P.PAY_MODULE_TYPE FROM PAYCODES_MASTER P WHERE P.PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getAllPresentBasic" result-class="java.util.LinkedHashMap">
+        SELECT PRESENT_BASIC FROM EMPLOYEE_PRESENT_DETAILS WHERE STATUS!= 'Deleted' AND SRL_NO = (SELECT MAX(SRL_NO) 
+        FROM EMPLOYEE_PRESENT_DETAILS)
+    </mapped-statement>
+
+    <mapped-statement name="selectMaxSrlNo" result-class="java.util.LinkedHashMap">
+        SELECT MAX(SRL_NO) AS SRL_NO FROM PAY_SETTINGS WHERE PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getAllEmpId" result-class="java.util.LinkedHashMap">
+        SELECT E.EMPLOYEEID, Y.PRESENT_BASIC,Y.SRL_NO FROM  EMPLOYEE_MASTER E
+        JOIN
+        (SELECT EM.EMPLOYEEID,EM.PRESENT_BASIC,EM.STATUS,EM.SRL_NO FROM EMPLOYEE_PRESENT_DETAILS EM JOIN
+        (SELECT EMP.EMPLOYEEID,MAX(EMP.SRL_NO) AS SRL_NO FROM EMPLOYEE_PRESENT_DETAILS EMP GROUP BY EMP.EMPLOYEEID)X ON EM.EMPLOYEEID=X.EMPLOYEEID AND
+        EM.SRL_NO=X.SRL_NO)Y ON E.EMPLOYEEID=Y.EMPLOYEEID AND E.EMP_STATUS = 'Service' AND E.AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND Y.STATUS!= 'Deleted' AND Y.STATUS != 'DELETED' AND E.STOP_PAYMENT='NO'
+    </mapped-statement>
+
+    <mapped-statement name="insertPayMaster" inline-parameters="true">
+        INSERT INTO PAYMASTER (EMPLOYEEID, PAY_CODE, AMOUNT, PROD_TYPE, PROD_ID, ACC_NO, PRINCIPAL, INTEREST, PENALINTEREST, CALC_UPTO, 
+        FROM_DATE, TO_DATE, REMARK, STATUS_BY, CREATED_BY, CREATED_DATE, ACTIVE, STATUS, STATUS_DATE, SRL_NO, RECOVERY_MONTHS, PAYMENT_TRANS)
+        VALUES (#employeeId:VARCHAR#, #payCode:VARCHAR#, #amount:NUMBER#, #prodType:VARCHAR#, #prodId:VARCHAR#, #accNo:VARCHAR#, 
+        #principal:NUMBER#, #interest:NUMBER#, #penalInterest:NUMBER#, #calcUpto:DATE#, #fromDate:DATE#, #toDate:DATE#, #remark:VARCHAR#, 
+        #statusBy:VARCHAR#, #createdBy:VARCHAR#, #createdDate:DATE#, #active:VARCHAR#, #status:VARCHAR#, #statusDate:DATE#, cast(#srlNo# as numeric),#recovryMnth:NUMBER#,#payTrans:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="insertPaySettings" inline-parameters="true">
+        INSERT INTO PAY_SETTINGS (PAYCODE_ID, SRL_NO, PAY_CODE, PAY_CALC_ON, PAY_MIN_AMT, PAY_MAX_AMT, PAY_FIX_AMT, PAY_PERCENT, 
+        FROM_DATE, TO_DATE)
+        VALUES (#paycode_Id:VARCHAR#, #srlNo:NUMBER#, #payCode:VARCHAR#, #payCalcOn:VARCHAR#, #payMinAmt:NUMBER#, #payMaxAmt:NUMBER#, 
+        #payFixAmt:NUMBER#, #payPercent:NUMBER#, #fromDate:DATE#, #toDate:DATE#)
+    </mapped-statement>
+
+    <mapped-statement name="getPresentBasic" result-class="java.util.LinkedHashMap">
+        SELECT PRESENT_BASIC FROM EMPLOYEE_PRESENT_DETAILS WHERE EMPLOYEEID = #EMPID:VARCHAR# 
+        AND SRL_NO = (SELECT MAX(SRL_NO) FROM EMPLOYEE_PRESENT_DETAILS WHERE EMPLOYEEID = #EMPID:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getPayCalcDet" result-class="java.util.LinkedHashMap">
+        SELECT P.PAY_CALC_TYPE, PS.PAY_CALC_ON FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS ON P.PAY_CODE = PS.PAY_CODE 
+        WHERE P.PAY_CODE = #PAYCODE:VARCHAR# AND PS.SRL_NO = (SELECT MAX(PS.SRL_NO) FROM PAY_SETTINGS PS WHERE PS.PAY_CODE = #PAYCODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getBasicPayCode" result-class="java.util.HashMap">
+        SELECT PAY_CODE FROM PAYCODES_MASTER WHERE PAY_MODULE_TYPE = 'BASICPAY'
+    </mapped-statement>
+
+    <mapped-statement name="getSelAmount" result-class="java.util.HashMap">
+        SELECT AMOUNT FROM PAYMASTER P WHERE P.PAY_CODE IN
+        (SELECT M.PAY_CODE FROM  PAYCODES_MASTER M WHERE M.PAY_MODULE_TYPE  ='BASICPAY') AND P.EMPLOYEEID = #EMPID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSalAmount" result-class="java.util.HashMap">
+        SELECT AMOUNT FROM PAYMASTER WHERE EMPLOYEEID = #EMPID:VARCHAR# AND PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getPaySalAmount" result-class="java.util.HashMap">
+        SELECT AMOUNT FROM PAYMASTER WHERE EMPLOYEEID = #EMPID:VARCHAR# AND PAY_CODE = #PAYCODE:VARCHAR#
+        AND SRL_NO = (SELECT MAX(SRL_NO) FROM PAYMASTER WHERE PAY_CODE = #PAYCODE:VARCHAR#) 
+    </mapped-statement>
+
+    <mapped-statement name="getPresentAmount" result-class="java.util.HashMap">
+        SELECT AMOUNT FROM PAYMASTER WHERE EMPLOYEEID = #EMPID:VARCHAR# AND STATUS_DATE = (SELECT MAX(STATUS_DATE) FROM PAYMASTER) 
+        AND PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getPayPercent" result-class="java.util.HashMap">
+        SELECT PS.PAY_PERCENT FROM PAY_SETTINGS PS WHERE PS.PAY_CODE = #PAYCODE:VARCHAR# AND 
+        PS.SRL_NO =(SELECT MAX(PS.SRL_NO) FROM PAY_SETTINGS PS WHERE PS.PAY_CODE = #PAYCODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getPayFixAmt" result-class="java.util.HashMap">
+        SELECT PAY_FIX_AMT FROM PAY_SETTINGS WHERE PAY_CODE = #PAYCODE:VARCHAR# AND SRL_NO =(SELECT MAX(SRL_NO) FROM PAY_SETTINGS 
+        WHERE PAY_CODE = #PAYCODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getPaymasterCalcAmt" result-class="java.util.HashMap">
+        SELECT SUM(AMOUNT) AS AMOUNT
+        FROM PAYMASTER P 
+        JOIN
+        (
+        SELECT PM.PAY_CODE,MAX(PM.SRL_NO) AS SRL_NO
+        FROM PAYMASTER PM 
+        WHERE PM.EMPLOYEEID = #EMPID:VARCHAR#
+        GROUP BY PM.PAY_CODE
+        ) PM ON PM.PAY_CODE = P.PAY_CODE AND PM.SRL_NO = P.SRL_NO 
+        WHERE P.PAY_CODE IN ($PAYCODE$) AND P.EMPLOYEEID=#EMPID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateGlobalPayMaster" inline-parameters="true">
+        UPDATE PAYMASTER SET 
+        AMOUNT = #amount:NUMBER#,
+        ACTIVE=#active:varchar#,
+        STATUS_DATE = #statusDate:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        FROM_DATE = #fromDate:DATE#,
+        TO_DATE = #toDate:DATE#
+        WHERE PAY_CODE = #payCode:VARCHAR# AND EMPLOYEEID = #employeeId:VARCHAR# AND SRL_NO = #srlNo:NUMBER#
+    </mapped-statement>
+
+    <mapped-statement name="selectPayCode" result-class="java.util.HashMap">
+        <!--SELECT  MAX(PS.SRL_NO) AS SRL_NO, PS.PAY_CODE,MAX(PS.PAY_PERCENT) AS PAY_PERCENT, MAX(PS.PAY_CALC_ON) AS PAY_CALC_ON,   
+        MAX(PS.PAY_MIN_AMT) AS PAY_MIN_AMT, MAX(PS.PAY_MAX_AMT) AS PAY_MAX_AMT FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS    
+        ON P.PAYCODE_ID =PS.PAYCODE_ID WHERE P.PAY_CALC_TYPE='Calculated' 
+        GROUP BY PS.PAYCODE_ID, PS.PAY_CODE    
+        ORDER BY PS.PAYCODE_ID-->
+        <!--SELECT   MAX (ps.srl_no) AS srl_no, ps.pay_code,
+        MAX (ps.pay_percent) AS pay_percent,
+        MAX (ps.pay_calc_on) AS pay_calc_on,
+        MAX (ps.pay_min_amt) AS pay_min_amt,
+        MAX (ps.pay_max_amt) AS pay_max_amt,
+        MAX (P.ACTIVE) as ACTIVE
+        FROM paycodes_master p JOIN pay_settings ps ON p.paycode_id =
+        ps.paycode_id
+        WHERE p.pay_calc_type = 'Calculated' and  ps.paycode_id between (select DISTINCT t.paycode_id from PAY_SETTINGS t 
+        where T.PAY_CODE = #PAYCODE:VARCHAR#) and
+        (select max(paycode_id) from PAY_SETTINGS ) and p.PAY_CODE! = #PAYCODE:VARCHAR#
+        GROUP BY ps.paycode_id, ps.pay_code
+        ORDER BY ps.paycode_id-->
+       SELECT  MAX(PS.SRL_NO) AS SRL_NO, PS.PAY_CODE,MAX(PS.PAY_PERCENT) AS PAY_PERCENT, MAX(PS.PAY_CALC_ON) AS PAY_CALC_ON,   
+        MAX(PS.PAY_MIN_AMT) AS PAY_MIN_AMT, MAX(PS.PAY_MAX_AMT) AS PAY_MAX_AMT, MAX (P.ACTIVE) as ACTIVE FROM PAYCODES_MASTER P JOIN PAY_SETTINGS PS    
+        ON P.PAYCODE_ID =PS.PAYCODE_ID WHERE P.PAY_CALC_TYPE='Calculated'  AND PS.PAY_CALC_ON LIKE '%' || #PAYCODE:VARCHAR# || '%'
+        GROUP BY PS.PAYCODE_ID, PS.PAY_CODE   
+        ORDER BY PS.PAYCODE_ID
+       <!-- SELECT   MAX (pr.srl_no) AS srl_no, ps.pay_code,
+         MAX (ps.pay_percent) AS pay_percent,
+         MAX (ps.pay_calc_on) AS pay_calc_on,
+         MAX (ps.pay_min_amt) AS pay_min_amt,
+         MAX (ps.pay_max_amt) AS pay_max_amt, MAX (p.active) AS active
+    FROM paycodes_master p JOIN pay_settings ps ON p.paycode_id =
+                                                                 ps.paycode_id
+    join PAYMASTER pr on P.PAY_CODE=PR.PAY_CODE                                                         
+   WHERE p.pay_calc_type = 'Calculated'
+         AND ps.pay_calc_on LIKE '%' || #PAYCODE:VARCHAR# || '%'
+GROUP BY ps.paycode_id, ps.pay_code
+ORDER BY ps.paycode_id-->
+    </mapped-statement>
+
+    <mapped-statement name="getMinMaxAmt" result-class="java.util.HashMap">
+        SELECT PS.PAY_MIN_AMT, PS.PAY_MAX_AMT FROM PAY_SETTINGS PS WHERE PS.PAY_CODE = #PAYCODE:VARCHAR# 
+        AND PS.SRL_NO = (SELECT MAX(PS.SRL_NO) FROM PAY_SETTINGS PS WHERE PS.PAY_CODE = #PAYCODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getPayCalcSetting" result-class="java.util.HashMap">
+        SELECT PAY_CALC_ON FROM PAY_SETTINGS WHERE PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getPaySetDetails" result-class="java.util.HashMap">
+        SELECT FROM_DATE, SRL_NO FROM PAY_SETTINGS WHERE PAY_CODE = #PAYCODE:VARCHAR# AND SRL_NO = (SELECT MAX(SRL_NO) FROM PAY_SETTINGS 
+        WHERE PAY_CODE = #PAYCODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="getMaxSrlNo" result-class="java.util.HashMap">
+        SELECT PM.SRL_NO FROM PAYMASTER PM WHERE PM.SRL_NO = (SELECT MAX(P.SRL_NO) FROM PAYMASTER P WHERE P.PAY_CODE = #PAYCODE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getStatusDate" result-class="java.util.HashMap">
+        SELECT DISTINCT(max(P.STATUS_DATE)) as STATUS_DATE FROM PAYMASTER P WHERE P.PAY_CODE = #PAYCODE:VARCHAR# and P.EMPLOYEEID = #EMPID:VARCHAR# 
+        and P.SRL_NO=(select max(P.SRL_NO) as SRL_NO from PAYMASTER p where P.PAY_CODE = #PAYCODE:VARCHAR# and P.EMPLOYEEID = #EMPID:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updatePaySetToDate" inline-parameters="true">
+        UPDATE PAY_SETTINGS SET 
+        TO_DATE = #TODATE:DATE#
+        WHERE PAY_CODE = #PAYCODE:VARCHAR# AND SRL_NO = #SRLNO:NUMBER#
+    </mapped-statement>
+
+    <mapped-statement name="updatePayMasterSrlNo" inline-parameters="true">
+        UPDATE PAYMASTER SET 
+        SRL_NO = #SRLNO:NUMBER#
+        WHERE PAY_CODE = #PAYCODE:VARCHAR# AND STATUS_DATE = #STATUSDATE:DATE#
+    </mapped-statement> 
+    
+    <mapped-statement name="updatePaySettings" inline-parameters="true">
+        UPDATE PAY_SETTINGS SET 
+        PAY_PERCENT = #payPercent:NUMBER#,
+        PAY_CALC_ON = #payCalcOn:VARCHAR#,
+        PAY_MIN_AMT = #payMinAmt:NUMBER#,
+        PAY_MAX_AMT = #payMaxAmt:NUMBER#,
+        PAY_FIX_AMT = #payFixAmt:NUMBER#,
+        FROM_DATE = #fromDate:DATE#,
+        TO_DATE = #toDate:DATE#
+        WHERE PAY_CODE = #payCode:VARCHAR# AND FROM_DATE = #fromDate:DATE# AND SRL_NO = #srlNo:NUMBER#
+    </mapped-statement> 
+    
+    <mapped-statement name="getProductTypes" result-class="java.util.HashMap"> 
+        SELECT  LOOKUP_REF_ID AS "KEY" , LOOKUP_DESC AS "VALUE" FROM LOOKUP_MASTER
+        WHERE (LOOKUP_ID='PRODUCTTYPE' OR LOOKUP_ID='PAYROLLPROD') ORDER BY UPPER(LOOKUP_DESC) ASC
+    </mapped-statement>
+        
+    <mapped-statement name="getPayMasterPayCode" result-class="java.util.HashMap">
+        SELECT DISTINCT(PAY_CODE) FROM PAYMASTER WHERE PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getPaySettingsFromDate" result-class="java.util.HashMap">
+        SELECT DISTINCT(max(P.FROM_DATE)) as FROM_DATE FROM PAYMASTER P WHERE P.PAY_CODE = #PAYCODE:VARCHAR# and P.EMPLOYEEID = #EMPID:VARCHAR#
+        and P.SRL_NO=(select max(P.SRL_NO) as SRL_NO from PAYMASTER p where P.PAY_CODE = #PAYCODE:VARCHAR# and P.EMPLOYEEID = #EMPID:VARCHAR#)
+    </mapped-statement>
+  
+    <mapped-statement name="updatePaySettingsSrlNo" inline-parameters="true">
+        UPDATE PAY_SETTINGS SET 
+        SRL_NO = #srlNo:NUMBER#
+        WHERE PAY_CODE = #payCode:VARCHAR# AND TO_DATE IS NULL
+    </mapped-statement>   
+    
+    <mapped-statement name="getMaxPaySrlNo" result-class="java.util.HashMap">
+        SELECT MAX(P.SRL_NO) AS SRL_NO FROM PAYMASTER P WHERE P.PAY_CODE = #PAYCODE:VARCHAR#
+    </mapped-statement>   
+    
+    <mapped-statement name="getPayCodeForArrear" result-class="java.util.HashMap">
+        SELECT PAY_CODE FROM PAYCODES_MASTER WHERE UPPER(PAY_MODULE_TYPE) = UPPER(#ARREAR_TYPE:VARCHAR#) AND PAY_EARNDEDU IN ('DEDUCTIONS','EARNINGS') 
+    </mapped-statement> 
+     <mapped-statement name="getMaxSrl_No" result-class="java.util.HashMap">
+     SELECT NVL(MAX(SRL_NO),0) AS SRL_NO FROM PAYMASTER p WHERE P.EMPLOYEEID= #EMP_ID:VARCHAR# and P.PAY_CODE=#PAY_CODE:VARCHAR#
+    </mapped-statement>
+</sql-map>

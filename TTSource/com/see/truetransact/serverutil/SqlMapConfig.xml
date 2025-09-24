@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map-config
+PUBLIC "-//iBATIS.com//DTD SQL Map Config 1.0//EN"
+"http://www.ibatis.com/dtd/sql-map-config.dtd">
+
+	<!-- Always ensure to use the correct XML header as above! -->
+<sql-map-config>
+
+	<!-- The properties (name=value) in the file specified here can be used placeholders in this config
+	file (e.g. "${driver}". The file is relative to the classpath and is completely optional. -->
+	<properties resource="com/see/truetransact/serverutil/SqlMapConfig.properties"/>
+
+	<!-- These settings control SqlMap configuration details, primarily to do with transaction
+	management. They are all optional (more detail later in this document). -->
+	<settings maxExecute="0" maxExecutePerConnection="0" maxTransactions="5" statementCacheSize="0"/>
+ 
+	<!-- Configure a datasource to use with this SQL Map using Jakarta DBCP
+	notice the use of the properties from the above resource 
+
+        jdbc:oracle:thin:@172.27.101.114:1521:maindb
+        jdbc:oracle:thin:@net-server:1521:TTDBr
+        
+		<property name="JDBC.Driver" value="${driver}"/>
+		<property name="JDBC.ConnectionURL" value="${url}"/>
+<property name="JDBC.Username" value="${username}"/>
+		<property name="JDBC.Password" value="${password}"/>
+                
+		<property name="JDBC.Driver" value="oracle.jdbc.driver.OracleDriver"/>
+		<property name="JDBC.ConnectionURL" value="jdbc:oracle:thin:@net-server:1521:TTDB"/>
+		<property name="JDBC.Username" value="TTUSER"/>
+<property name="JDBC.Password" value="TT"/>
+	-->
+	<!--datasource name="basic" default = "true" factory-class="com.ibatis.db.sqlmap.datasource.DbcpDataSourceFactory">
+		<property name="JDBC.Driver" value="oracle.jdbc.driver.OracleDriver"/>
+		<property name="JDBC.ConnectionURL" value="jdbc:oracle:thin:@net-server:1521:TTDB"/>
+		<property name="JDBC.Username" value="TTUSER"/>
+		<property name="JDBC.Password" value="TT"/>
+		<property name="Pool.MaximumActiveConnections" value="3000"/>
+		<property name="Pool.MaximumIdleConnections" value="5"/>
+		<property name="Pool.MaximumWait" value="60000"/>
+	</datasource-->
+
+	<!--
+        The Settings element configures SqlMap settings such as (in order):
+         * The number of concurrent statement executions (0 = unlimited)
+         * The number of concurrent statement executions per connection (0 = unlimited)
+         * The number of concurrent transactions (0 = unlimited)
+         * The number of cached PreparedStatements (0 = unlimited; WARNING - Some databases are faster with this DISABLED.)
+         * Global Transactions support within an application server (true|false)
+      <settings
+maxExecute="0"
+maxExecutePerConnection="0"
+         maxTransactions="5"
+         statementCacheSize="0"
+useGlobalTransactions="false"
+useBeansMetaClasses="true"
+         cacheModelsEnabled="true"
+       />
+	-->
+
+      <!-- Configure a datasource to use with this SQL Map using Jakarta DBCP
+           notice the use of the properties from the above resource -->
+	<datasource name="basic" default="true" factory-class="com.ibatis.db.sqlmap.datasource.DbcpDataSourceFactory">
+		<property name="JDBC.Driver" value="${driver}"/>
+		<property name="JDBC.ConnectionURL" value="${url}"/>
+		<property name="JDBC.Username" value="${username}"/>
+		<property name="JDBC.Password" value="${password}"/>
+        	<property name="JDBC.DefaultAutoCommit" value="false"/>
+		<property name="Pool.MaximumActiveConnections" value="10"/>
+		<property name="Pool.MaximumIdleConnections" value="5"/>
+		<property name="Pool.MaximumCheckoutTime" value="120000"/>
+		<property name="Pool.TimeToWait" value="500"/>
+		<property name="Pool.PingQuery" value="select 1 from Bank"/>
+		<property name="Pool.PingEnabled" value="false"/>
+		<property name="Pool.PingConnectionsOlderThan" value="1"/>
+		<property name="Pool.PingConnectionsNotUsedFor" value="1"/>
+		<property name="Pool.QuietMode" value="true"/>
+	</datasource>
+
+	<!-- Identify all SQL Map XML files to be loaded by this SQL map. Notice the paths
+	are relative to the classpath. For now, we only have one� -->
+	<sql-map resource="com/see/truetransact/transferobject/common/lookup/LookUpMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/viewphotosign/ViewPhotoSignMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/idgenerate/IDGenerateMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/log/LogMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/interestcalculation/InterestCalculationMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/generalledger/HeadMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/generalledger/AccountCreationMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/generalledger/AccountMaintenanceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/generalledger/gllimit/GLLimitMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerAddressMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerPhoneMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerIntroMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerHistoryMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerGaurdianMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/deathmarking/DeathMarkingMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/security/SecurityInsuranceMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/customer/gahan/GahanCustomerMap.xml"/>
+        <!--<sql-map resource="com/see/truetransact/transferobject/purchaseentry/PurchaseEntryMap.xml" />-->
+        <!--<sql-map resource="com/see/truetransact/transferobject/product/loan/colenders/ColendersMap.xml"/>-->
+	<sql-map resource="com/see/truetransact/transferobject/customer/customeridchange/CustomerIdChangeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/agent/AgentMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/operativeaccount/AccountTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/operativeaccount/AccountMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/operativeaccount/FreezeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/operativeaccount/LienMarkingMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/introducer/IntroducerMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/nominee/NomineeTOMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/settlement/SettlementTOMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/AccInfoMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/DepositSubModules.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/tds/TdsDeductionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/interestmaintenance/InterestMaintenanceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/closing/DepositClosingMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/lien/DepositLienMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/deposit/freeze/DepositFreezeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/agritermloan/AgriTermLoanMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/TermLoanMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/drawingpower/DrawingPowerMaintenanceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/notices/LoanNoticeMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/termloan/arbitration/LoanArbitrationMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/termloan/loanrebate/LoanRebateMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/IncrementPromotionMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/DeductionExemptionMappingMap.xml" />
+	<sql-map resource="com/see/truetransact/transferobject/product/operativeacct/OperativeAcctProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/loan/LoanProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/deposits/DepositsProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/remittance/RemittanceProductBranchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/remittance/RemittanceProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/remittance/RemittanceProductChargeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/bills/BillsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/share/ShareProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/share/ShareProductLoanMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/investments/InvestmentsProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/loan/AgriLoanTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/advance/AgriAdvanceTransMap.xml"/>
+        <!--<sql-map resource="com/see/truetransact/transferobject/product/investments/InvestmentsProductMap.xml"/>-->
+	<sql-map resource="com/see/truetransact/transferobject/investments/InvestmentsMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/investments/CallMoneyMap.xml"/>
+        
+	<sql-map resource="com/see/truetransact/transferobject/investments/InvestmentsTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/investments/InvestmentsAmortizationMap.xml"/>
+       <sql-map resource="com/see/truetransact/transferobject/product/accountswithotherbank/AccountswithOtherBankProductMap.xml"/>
+       <sql-map resource="com/see/truetransact/transferobject/accountswithotherbank/AccountswithOtherBanksMap.xml"/>
+        
+	<sql-map resource="com/see/truetransact/transferobject/forex/CurrencyExchangeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/forex/CashDenominationMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/forex/ExchangeRateMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/forex/ForexExchangeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/balance/BalanceMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/activememberlist/ActiveMemberListMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/cash/CashTransactionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/cash/CashierApprovalMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/transfer/TxTransferMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/transfer/DetailTransferMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/transfer/MasterTransferMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/clearing/outward/OutwardClearingMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/clearing/outward/OutwardClearingPISMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/clearing/InwardClearingMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/TransactionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/MultiAuthorizeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/operativeacct/OperativeTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/deposit/DepositTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/gl/GLMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/gl/GLTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/loan/LoanTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/advance/AdvanceTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/remittance/RemittanceTransMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/chargesServiceTax/ChargesServiceTaxMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/share/DrfRecoveryMap.xml"/>
+        
+	<sql-map resource="com/see/truetransact/transferobject/transaction/token/tokenconfig/TokenConfigMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/token/tokenissue/TokenIssueMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/token/tokenloss/TokenLossMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/transaction/cashmanagement/CashMovementMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/cashmanagement/CashMovementDetailsMap.xml"/>     
+	<sql-map resource="com/see/truetransact/transferobject/remittance/RemittancePaymentMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/remittance/RemittanceIssueMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/remittance/RemittanceIssueTransactionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/remittance/InstrumentAllotmentMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/remittance/remitstoppayment/RemitStopPaymentMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/remittance/rtgs/RtgsRemittanceMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/view/ViewLogMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/user/UserMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/branch/BranchMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/branch/BranchPhoneMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/bank/BankMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/calender/CalenderHolidaysMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/branchacnomaintenance/AcNoMaintenanceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/terminal/TerminalMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/levelcontrol/LevelControlMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/levelcontrol/multilevel/MultiLevelMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/branchgroupscr/BranchGroupScreen.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/group/GroupScreen.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/createscreens/CreateScreensMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/role/GroupRole.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/lookup/LookupMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/audit/InspectionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/otherbank/OtherBankMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/viewlogimportance/ViewLogImportanceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/suspiciousconfig/SuspiciousConfigMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/denomination/ForexDenominationMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/blockedlist/BlockedListMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/config/ConfigPasswordMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/branchgroup/BranchGroupMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/stateTalukMaster/StateTalukMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/servicetax/ServiceTaxMaintenanceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/chequebook/ChequeBookMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/standinginstruction/StandingInstructionCreditMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/standinginstruction/StandingInstructionDebitMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/standinginstruction/StandingInstructionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/inventory/InventoryMasterMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/supporting/balanceupdate/BalanceUpdateMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/inventory/InventoryDetailsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/generateseries/GenerateSeriesMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/supporting/InventoryMovement/InventoryMovementMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/noticereportparameters/NoticePeriodMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/emptransfer/EmpTransferMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/fixedassets/FixedAssetsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/fixedassets/FixedAssetsDescriptionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/fixedassets/FixedAssetsIndividualMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/sysadmin/fixedassets/FixedAssetMovementMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/bills/LodgementBillsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/bills/CarrierMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/clearing/ParameterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/banklevel/BankClearingParameterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/tally/InwardClearingTallyMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/tally/InwardTallyDetailsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/outwardtally/OutwardClearingTallyMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/outwardtally/OutwardTallyDetailsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/bouncing/BouncingInstrumentwiseMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/returns/ReturnOfInstrumentsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/clearing/clearingData/ClearingDataImportMap.xml"/>
+        <!--sql-map resource="com/see/truetransact/transferobject/privatebanking/orders/DepositRolloverMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/orders/details/DepositRolloverDetailsMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/actionitem/ftinternal/FTInternalMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/actionitem/externalwire/ExternalWireMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/actionitem/purchaseequities/PurchaseEquitiesMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/comlogs/relationships/RelationshipsMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/tammaintenance/TAMMaintenanceCreateMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/privatebanking/actionitem/newtimedeposit/NewTimeDepositMap.xml" /-->
+        
+        <sql-map resource="com/see/truetransact/transferobject/product/loan/loaneligibilitymaintenance/LoanEligibilityMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/charges/ChargesMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/transaction/TxTransferLogMap.xml"/>
+        
+	<sql-map resource="com/see/truetransact/transferobject/generalledger/branchgl/BranchGLMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/share/DeathReliefMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/share/shareMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/share/shareDividendMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/share/ShareSubModuleMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/share/sharetransfer/ShareTransferMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/share/shareresolution/ShareResolutionMap.xml"/>
+
+	<sql-map resource="com/see/truetransact/transferobject/tds/tdscalc/TdsCalcMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/tds/tdsconfig/TDSConfigMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/tds/tdsexemption/TDSExemptionMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/passbookDataEntry/PassbookDataEntryMap.xml"/>
+        
+	<!-- bills lodgement -->
+	<sql-map resource="com/see/truetransact/transferobject/bills/lodgement/LodgementChequeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/bills/lodgement/LodgementHundiMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/bills/lodgement/LodgementInstructionsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/bills/lodgement/LodgementMasterMap.xml"/>
+
+	<!-- TT Lite (ie. Customer Interface screen uses this SQLMap)  -->
+	<sql-map resource="com/see/truetransact/transferobject/ttlite/TTLiteMap.xml"/>
+
+	<!-- This SQLMap used for Batch Process -->
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/OperativeAccountBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/interest/InterestBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/supporting/standinginstruction/StandingInstructionBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/authorizechk/AuthorizationBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/glpackage/GlAbstractMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/deposit/DepositMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/charges/ChargesBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/share/DividendBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/loan/LoanBatchMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/batchprocess/datacenter/DataCenterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/operativeaccount/TodAllowedMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/bills/TermLoanMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerPassPortMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerIncomeParticularsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerLandDetailsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/loan/agriculturecard/agriculturecardMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/transaction/reconciliation/ReconciliationMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/customer/CustomerSuspensionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/guarantee/GuaranteeMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeMasterAddressMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeMasterPassPortMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeMasterPhoneMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeRelativeWorkingMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeRelativeDirectorMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeePresentDetailsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeOprativeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/employee/EmployeeTermLoanMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/SalaryStructureMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/MisecllaniousDeductionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/common/DeductionMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/locker/LockerProdMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/locker/lockerconfig/LockerConfigMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/locker/lockerSI/LockerRentSIApplicationMap.xml"/>
+        <!--<sql-map resource="com/see/truetransact/transferobject/customer/CustomerSuspensionMap.xml" />-->       
+        <!--<sql-map resource="com/see/truetransact/transferobject/common/settlement/SettlementTOMap.xml" />-->
+	<sql-map resource="com/see/truetransact/transferobject/locker/lockerissue/LockerIssueMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/locker/lockeroperation/LockerOperationMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/locker/lockersurrender/LockerSurrenderMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/termloan/goldLoanConfiguration/GoldConfigurationMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/inventory/SupplierMasterMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/paddyprocurement/PaddyProcurementMap.xml"/>
+	<!-- Corporate Loan Maps -->
+        <!--<sql-map resource="com/see/truetransact/transferobject/transaction/common/product/loan/CorporateLoanTransMap.xml" />-->    
+         
+        
+	<!--MDS MODULE STARTS-->
+	<sql-map resource="com/see/truetransact/transferobject/product/mds/MDSProductMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/product/mds/MDSTypeMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/MDSApplicationMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsreceiptentry/MDSReceiptEntryMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdschangeofmember/MDSChangeofMemberMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsconmmencement/MDSCommencemetMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsmastermaintenance/MDSMasterMaintenaceMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsmemberreceiptentry/MDSMemberReceiptEntryMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsprizedmoneydetailsentry/MDSPrizedMoneyDetailsEntryMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsprizedmoneypayment/MDSPrizedMoneyPaymetMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/mdsapplication/mdsbankadvance/MDSBankAdvanceMap.xml"/>
+	<!--MDS MODULE END-->
+	
+        
+        <!--SALARY RECOVERY MODULE STARTS-->
+	<sql-map resource="com/see/truetransact/transferobject/salaryrecovery/RecoveryListGenerationMap.xml"/>
+	<!--SALARY RECOVERY MODULE END-->
+        
+	<sql-map resource="com/see/truetransact/transferobject/termloan/appraiserRateMaintenance/AppraiserRateMaintenanceMap.xml"/>
+        
+	<!--SHG MODULE STARTS-->
+	<sql-map resource="com/see/truetransact/transferobject/termloan/SHG/SHGMap.xml"/>
+	<!--SHG MODULE END-->
+        <sql-map resource="com/see/truetransact/transferobject/termloan/groupLoan/GroupLoan.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/borrowings/disbursal/BorrowingDisbursalMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/borrowings/master/BorrowingsMap.xml"/>
+	<sql-map resource="com/see/truetransact/transferobject/borrowings/repayment/BorrowingRepIntClsMap.xml"/>
+        
+	<sql-map resource="com/see/truetransact/transferobject/suspenseaccount/SuspenseAccountMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/trading/TradingMap.xml" />
+
+        <sql-map resource="com/see/truetransact/transferobject/common/viewall/AuthorizeListMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/batchprocess/yearendprocess/YearEndProcessMap.xml" />
+        
+        <!-- INDEND MAPS -->
+   	<sql-map resource="com/see/truetransact/transferobject/indend/IndendMap.xml" />
+   	<sql-map resource="com/see/truetransact/transferobject/indend/sale/SaleMap.xml" />
+     	<sql-map resource="com/see/truetransact/transferobject/indend/store/StoreMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/indend/depo/DepoMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/indend/closing/IndendClosingMap.xml" />
+        
+        <!-- Rood Rent Maps -->
+        <sql-map resource="com/see/truetransact/transferobject/roomrent/rent/RentMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/roomrent/rentregister/RentRegisterMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/roomrent/renttrans/RentTransMap.xml" />
+        
+        <!-- SMS Releated Maps -->
+        <sql-map resource="com/see/truetransact/transferobject/sms/SMSParameterMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/common/mobile/SMSSubscriptionMap.xml" />
+         <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/SalaryDeductionMappingMap.xml" />
+         <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/LockMap.xml" />
+         <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/RecoveryParametersMap.xml" />
+         <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/cashierAuthMapForCredit.xml" />
+         <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/cashierAuthMapForDebitTransfer.xml" />
+         <!-- Data Rejection / Rollback related Maps -->
+        <sql-map resource="com/see/truetransact/transferobject/transaction/rollback/RollBackMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/transaction/editMigratedData/EditMigratedDataMap.xml"/>
+        
+        <sql-map resource="com/see/truetransact/transferobject/generalbodydetails/GeneralBodyDetailsMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/boardresolutiondetails/BoardResolutionDetailsMap.xml"/>
+
+        <sql-map resource="com/see/truetransact/transferobject/staffworkdiary/StaffWorkDiaryMap.xml"/>
+        
+        <!-- ARC charges maps-->
+        <sql-map resource="com/see/truetransact/transferobject/supporting/arccharges/ArcChargeMap.xml"/>
+        
+        <sql-map resource="com/see/truetransact/transferobject/transall/TransAllMap.xml"/>  
+        <sql-map resource="com/see/truetransact/transferobject/transexception/TransExceptionMap.xml"/>
+        <!-- <sql-map resource="com/see/truetransact/transferobject/termloan/loanapplicationregister/LoanApplicationMap.xml"/> -->
+        
+        <sql-map resource="com/see/truetransact/transferobject/visitorsdiary/VisitorsDiaryMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/complaintregister/ComplaintsMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/inwardregister/InwardRegisterMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/indend/suppliermaster/SupplierMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/directorboardmeeting/DirectorBoardMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/outwardregister/OutwardRegisterMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/courtexpensesetting/CourtExpenseSettingMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/supporting/depositperiodwisesetting/DepositPeriodwiseSettingMap.xml"/> 
+        <sql-map resource="com/see/truetransact/transferobject/directoryboardsetting/DirectoryBoardMap.xml"/> 
+        <sql-map resource="com/see/truetransact/transferobject/sysadmin/branch/ShiftMap.xml" /> 
+        <sql-map resource="com/see/truetransact/transferobject/termloan/loanapplicationregister/LoanApplicationMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/share/NmfMaintenanceMap.xml"/>
+        
+        <sql-map resource="com/see/truetransact/transferobject/transaction/dailyDepositTrans/DCBFileUploadMap.xml"/>
+	<!--sql-map resource="com/see/truetransact/transferobject/operativeaccount/deathmarking/AccountDeathMarkingMap.xml" /-->
+        
+        <!--sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductAccHeadMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductAccParameterMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductChargesMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductChqChargesMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductIPMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductIRMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductSIMap.xml" />
+        <sql-map resource="com/see/truetransact/transferobject/product/advances/AdvancesProductSplAssetsMap.xml" /-->
+        
+        
+
+
+        <sql-map resource="com/see/truetransact/transferobject/salaryrecovery/DeductionExemptionListGenerationMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/termloan/personalSuretyConfiguration/servicewise/ServiceWiseLoanAmountMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/termloan/personalSuretyConfiguration/serviceWiseLoanIssue/ServiceWiseLoanIssueConfigurationMap.xml"/>
+        <sql-map resource="com/see/truetransact/transferobject/termloan/personalSuretyConfiguration/PersonalSuretyConfigurationMap.xml"/>
+        <!--KCC MODULE STARTS-->
+    <sql-map resource="com/see/truetransact/transferobject/termloan/kcctopacs/SanctionMasterMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/termloan/kcctopacs/ReleaseDetailsMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/termloan/kcctopacs/LoanRepaymentMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/termloan/kcctopacs/InterestSubsidyAdjustmentMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/termloan/kcctopacs/InterestSubsidyRateMaintenanceMap.xml"/>
+<!--KCC MODULE END-->
+    <sql-map resource="com/see/truetransact/transferobject/termloan/riskfund/RiskFundMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/transaction/ATMTrans/ATMTransMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/servicetax/servicetaxsettings/ServiceTaxSettingsMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/servicetax/servicetaxdetails/ServiceTaxDetailsMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/deposit/interestprocessing/interestProcessingMap.xml"/>
+<!--PAYROLL-->
+    <sql-map resource="com/see/truetransact/transferobject/payroll/employee/EmployeeMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/earningsDeductions/payRoll.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/earningsDeductions/EarningsDeductionMap.xml"/>  
+    <sql-map resource="com/see/truetransact/transferobject/payroll/salaryStructure/PayrollSalaryStructureMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/increment/IncrementMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/pfMaster/PFMasterMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/sysadmin/leavemanagement/LeaveManagementMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/sysadmin/leavemanagement/LeaveSanctionMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/salaryProcessReport/SalaryReportMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/leaveDetails/LeaveDetailsMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/employeeTraining/EmployeeTrainingMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/voucherprocessing/PaymentVoucher.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/payroll/leavesurrender/LeaveSurrenderMap.xml"/>
+    
+    <sql-map resource="com/see/truetransact/transferobject/trading/shopmaster/ShopMasterMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingsales/TradingSalesMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingachead/TradingacheadMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingsuppliermaster/TradingSuplierMasterMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradinggroup/TradingGroupMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingproduct/TradingProductMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/purchaseentry/PurchaseEntryMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingpurchase/TradingPurchaseMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingstock/TradingStockMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/damage/DamageMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/trading/tradingtransfer/TradingTransferMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/transaction/multipleStanding/MultipleStandingMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/agent/agentcommisionslabrate/AgentCommisionSlabRateMap.xml"/>
+ <!--RTGS MODULE STARTS-->
+    <sql-map resource="com/see/truetransact/transferobject/rtgsneftfiletrans/NeftRtgsMap.xml"/>
+    <!--RTGS MODULE END-->  
+    <sql-map resource="com/see/truetransact/transferobject/product/groupmdsdeposit/GroupMDSDepositMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/customer/multipleCustomerIdChange/MultipleCustomerIdChangeMap.xml"/>
+    
+    <!--GDS MODULE STARTS-->
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/GDSApplicationMap.xml"/>  
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdsreceiptentry/GDSReceiptEntryMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdscommencement/GDSCommencemetMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdsprizedmoneypayment/GDSPrizedMoneyPaymetMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdsprizedmoneydetailsentry/GDSPrizedMoneyDetailsEntryMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdsmastermaintenance/GDSMasterMaintenaceMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdsbankadvance/GDSBankAdvanceMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/gdsapplication/gdschangeofmember/GDSChangeofMemberMap.xml"/>
+    <!--GDS MODULE ENDS-->
+    <!-- Loan Transaction-->
+     <sql-map resource="com/see/truetransact/transferobject/termloan/loanTransaction/LoanTransactionMap.xml"/>
+    <!-- Loan Transaction -->
+     <sql-map resource="com/see/truetransact/transferobject/termloan/loanrecovery/LoanRecoveryListGenerationMap.xml"/>
+
+	<!--NETBANKINGREQUEST MODULE STARTS-->
+		<sql-map resource="com/see/truetransact/transferobject/netbankingrequest/nbchequebookmaintenance/NbChequeBookMaintenanceMap.xml"/>        
+    <!--NETBANKINGREQUEST MODULE END-->   
+    <sql-map resource="com/see/truetransact/transferobject/customer/goldsecurity/CustomerGoldSecurityMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/deposit/depositfrommobileapp/DepositAutoCreationMap.xml"/>
+    
+    <sql-map resource="com/see/truetransact/transferobject/kolefieldsoperations/KoleFieldsExpensesMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/kolefieldsoperations/chargeposting/KoleFieldsKCCChargePostingMap.xml"/>
+    <sql-map resource="com/see/truetransact/transferobject/correctiontool/DataCorrectionMap.xml"/>
+    
+    
+</sql-map-config>

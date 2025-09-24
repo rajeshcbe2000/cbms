@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="VisitorsDiaryMap">
+
+	<!-- Use VisitorsDiaryTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertVisitorsTO" inline-parameters="true">
+        INSERT INTO VISITORS_DIARY
+        (VISIT_ID, DATE_OF_VISIT, INSTITUTION_NAME_AND_ADDRESS,
+        NAME_AND_ADDRESS,PURPOSEOF_VISIT,COMMENTS_LEFT,STATUS,
+        STATUS_BY, STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE) VALUES (
+        #visitorsid:VARCHAR#, #dateofVisit:DATE#,                
+        #instNameAddress:VARCHAR#, #nameAddress:VARCHAR#, #purposeofVisit:VARCHAR#,
+        #commentsLeft:VARCHAR#, #status:VARCHAR#,
+        #statusBy:VARCHAR#, #statusDt:DATE#, 
+        #createdBy:VARCHAR#, #createdDt:DATE#,
+        #branCode:VARCHAR#)
+    </mapped-statement>
+
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to VisitorsDiaryTO object (JavaBean) properties -->
+    <result-map name="getVisitorsTOResult" class="com.see.truetransact.transferobject.visitorsdiary.VisitorsDiaryTO">
+        <property name="visitorsid" column="VISIT_ID"/>
+        <property name="dateofVisit" column="DATE_OF_VISIT"/>
+        <property name="instNameAddress" column="INSTITUTION_NAME_AND_ADDRESS"/>
+        <property name="nameAddress" column="NAME_AND_ADDRESS"/>
+        <property name="purposeofVisit" column="PURPOSEOF_VISIT"/>
+        <property name="commentsLeft" column="COMMENTS_LEFT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="branCode" column="BRANCH_CODE"/>
+    </result-map>
+    <dynamic-mapped-statement name="getVisitorsDiaryEdit" result-class="java.util.LinkedHashMap" >
+        SELECT VISIT_ID,INSTITUTION_NAME_AND_ADDRESS,
+        NAME_AND_ADDRESS FROM VISITORS_DIARY
+        WHERE STATUS!='DELETED' 
+         <dynamic>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="VISIT_ID">
+                    UPPER(VISIT_ID) LIKE UPPER('%$VISIT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"   property="INSTITUTION_NAME_AND_ADDRESS">
+                    UPPER(INSTITUTION_NAME_AND_ADDRESS) LIKE UPPER('%$INSTITUTION_NAME_AND_ADDRESS$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"   property="NAME_AND_ADDRESS">
+                    UPPER(NAME_AND_ADDRESS) LIKE UPPER('%$NAME_AND_ADDRESS$%')
+                </isNotNull>
+                 </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSelectVisitorsTO" result-map="getVisitorsTOResult" >
+        SELECT * FROM VISITORS_DIARY 
+        WHERE VISIT_ID = #VISIT_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+    <mapped-statement name="updateVisitorsTO" inline-parameters="true">
+        UPDATE VISITORS_DIARY SET 
+        DATE_OF_VISIT = #dateofVisit:DATE#,
+        INSTITUTION_NAME_AND_ADDRESS =#instNameAddress:VARCHAR#,
+        NAME_AND_ADDRESS= #nameAddress:VARCHAR#,
+        PURPOSEOF_VISIT= #purposeofVisit:VARCHAR#,
+        COMMENTS_LEFT= #commentsLeft:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =#statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:DATE#,
+        CREATED_BY =#createdBy:VARCHAR#,
+        CREATED_DT =#createdDt:DATE#,
+        BRANCH_CODE = #branCode:VARCHAR#
+        WHERE VISIT_ID = #visitorsid:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteVisitorsTO" inline-parameters="true">
+        UPDATE VISITORS_DIARY SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE VISIT_ID = #visitorsid:VARCHAR#
+    </mapped-statement>
+
+   
+</sql-map>

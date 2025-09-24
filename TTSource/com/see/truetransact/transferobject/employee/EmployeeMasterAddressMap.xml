@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeMasterAddressMap">
+
+
+    <mapped-statement name="insertEmployeeAddressTO" inline-parameters="true">
+        INSERT INTO emp_ADDR
+        (  EMP_SYS_ID, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE, ADDR_TYPE, PHONECOUNTRY_CODE,PHONEAREA_CODE,PHONE_NO
+        , MOBILECOUNTRY_CODE,MOBILEAREA_CODE ,MOBILE_NO, STATUS,STATUS_BY,  STATUS_DT )
+        VALUES (
+        #txtEmpId:VARCHAR#, #txtEmpStreet:VARCHAR#, #txtEmpArea:VARCHAR#, #cboEmpCity:VARCHAR#, #cboEmpState:VARCHAR#,
+        #txtEmpPinNo:VARCHAR#, #cboEmpCountry:VARCHAR#, #cboEmpAddressType:VARCHAR#,
+        #txtEmpPhoneNoCountryCode:VARCHAR#,#txtEmpPhoneNoAreaCode:VARCHAR#,#txtEmpPhoneNo:VARCHAR#,
+        #txtEmpMobileNoCountryCode:VARCHAR#,#txtEmpMobileNoAreaCode:VARCHAR#,#txtEmpMobileNo:VARCHAR#,
+        #status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#)
+    </mapped-statement>
+
+    <mapped-statement name="updateEmployeeMasterAddressTO" inline-parameters="true">
+        UPDATE emp_ADDR SET 
+        STREET=#txtEmpStreet:VARCHAR#,
+        AREA=#txtEmpArea:VARCHAR#,
+        CITY=#cboEmpCity:VARCHAR#,
+        STATE=#cboEmpState:VARCHAR#, 
+        PIN_CODE=#txtEmpPinNo:VARCHAR#, 
+        COUNTRY_CODE=#cboEmpCountry:VARCHAR#,
+        PHONECOUNTRY_CODE=#txtEmpPhoneNoCountryCode:VARCHAR#,
+        PHONEAREA_CODE=#txtEmpPhoneNoAreaCode:VARCHAR#,
+        PHONE_NO  =#txtEmpPhoneNo:VARCHAR#  , 
+        MOBILECOUNTRY_CODE=#txtEmpMobileNoCountryCode:VARCHAR#,
+        MOBILEAREA_CODE=#txtEmpMobileNoAreaCode:VARCHAR#,
+        MOBILE_NO =#txtEmpMobileNo:VARCHAR#, 
+        STATUS= #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#,  
+        STATUS_DT=#statusDt:DATE#
+        WHERE EMP_SYS_ID=#txtEmpId:VARCHAR#
+        AND ADDR_TYPE=#cboEmpAddressType:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+	
+	
+    <result-map name="getEmployeeMasterAddressTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterAddressTO">
+        <property name="txtEmpId" column="EMP_SYS_ID"/>
+        <property name="txtEmpStreet" column="STREET"/>
+        <property name="txtEmpArea" column="AREA"/>
+        <property name="cboEmpCity" column="CITY"/>
+        <property name="cboEmpState" column="STATE"/>
+        <property name="txtEmpPinNo" column="PIN_CODE"/>
+        <property name="cboEmpCountry" column="COUNTRY_CODE"/>
+        <property name="cboEmpAddressType" column="ADDR_TYPE"/>
+        <property name="txtEmpPhoneNoCountryCode" column="PHONECOUNTRY_CODE"/>
+        <property name="txtEmpPhoneNoAreaCode" column="PHONEAREA_CODE"/>
+        <property name="txtEmpPhoneNo" column="PHONE_NO"/>
+        <property name="txtEmpMobileNoCountryCode" column="MOBILECOUNTRY_CODE"/>
+        <property name="txtEmpMobileNoAreaCode" column="MOBILEAREA_CODE"/>
+        <property name="txtEmpMobileNo" column="MOBILE_NO"/>
+        <property name="statusBy" column="STATUS_BY"/>          
+        <property name="status" column="STATUS"/>  
+        <property name="statusDt" column="STATUS_DT"/>
+                    
+    </result-map>
+            
+            
+    <mapped-statement name="insertEmployeeAcademicTO" inline-parameters="true">
+        INSERT INTO EMPLOYEE_ACADEMIC_DETAILS
+        (SYS_EMPID ,EDUCATION_LEVEL ,COLLEGE ,YEAR_OF_PASSING ,SPECILIZATION ,UNIVERSITY ,MARKES_SCORED ,TOTAL_MARKS,PERCENTAGE ,GRADE ,STATUS_BY  ,STATUS   ,STATUS_DT ,ACADEMIC_ID)
+        VALUES( #txtEmpId:VARCHAR#,#cboEmpAcademicLevel:VARCHAR#,#txtEmpAcademicSchool:VARCHAR#,#tdtAcademicYearOfPassing:TIMESTAMP#,#cboAcademicSpecialization:VARCHAR#     
+        ,#txtAcademicUniverSity:VARCHAR#,#txtAcademicMarksScored:NUMERIC#,#txtAcademicTotalMarks:NUMERIC#,#txtAcademicPer:NUMERIC#, #cboAcademicGrade:VARCHAR#, #statusBy:VARCHAR#,#status:VARCHAR#,SYS_DATE(),#academicID:VARCHAR#  )
+    </mapped-statement>
+            
+    <mapped-statement name="insertEmployeeTechnicalTO" inline-parameters="true">
+        INSERT INTO EMPLOYEE_TECHNICAL_DETAILS
+        (SYS_EMPID ,EDUCATION_LEVEL ,COLLEGE ,YEAR_OF_PASSING ,SPECILIZATION 
+        ,UNIVERSITY ,MARKES_SCORED ,TOTAL_MARKS,PERCENTAGE ,GRADE ,STATUS_BY  ,STATUS   ,STATUS_DT,TECHNICAL_ID )
+        VALUES( #txtEmpId:VARCHAR#,#cboTechnicalLevel:VARCHAR#,#txtTechnicalSchool:VARCHAR#,#tdtTechnicalYearOfPassing:DATE#,#cboTechnicalSpecialization:VARCHAR#          
+        ,#txtTechnicalUniverSity:VARCHAR#,#txtTechnicalMarksScored:NUMERIC#,#txtTechnicalTotalMarks:NUMERIC#,#txtTechnicalPer:NUMERIC#, #cboTechnicalGrade:VARCHAR#,#statusBy:VARCHAR#, #status:VARCHAR#,SYS_DATE(), #technicalID:VARCHAR#  )
+    </mapped-statement>
+       
+    <mapped-statement name="insertEmployeeLanguageTO" inline-parameters="true">
+        INSERT INTO EMPLOYEE_LANGUAGE_DETAILS
+        (SYS_EMPID ,LANGUAGE_TYPE  ,LANGUAGE_SPEAK , LANGUAGE_READ , LANGUAGE_WRITE,STATUS_BY  ,STATUS   ,STATUS_DT )
+        VALUES( #txtEmpId:VARCHAR#,#cboLanguageType:VARCHAR#,#rdoSpeak:VARCHAR#,#rdoRead:VARCHAR#,#rdoWrite:VARCHAR#
+        ,#statusBy:VARCHAR#, #status:VARCHAR#,SYS_DATE()  )
+    </mapped-statement>
+    <mapped-statement name="insertEmployeeDependentTO" inline-parameters="true">
+        INSERT INTO EMPLOYEE_DEPENDENT_DETAILS(SYS_EMPID ,RELEATIONSHIP, TITLE ,FIRST_NAME  ,MIDDLE_NAME ,LAST_NAME ,dob  
+        ,  EDUCATION_LEVEL ,  PROFESSION ,  DEPENDENT ,  STATUS_BY ,  STATUS  ,  STATUS_DT ,DEPENDENT_ID,INCOME,EMPLOYED_WITH,LIABLE_TRANSFER  )  
+        VALUES(#txtEmpId:VARCHAR#,#cboDepReleationShip:VARCHAR#,#cboEmpDepTitle:VARCHAR#,#txtEmpDepFirstName:VARCHAR#,#txtEmpDepMIddleName:VARCHAR#,#txtEmpDepLasteName:VARCHAR#,#tdtDepDateOfBirth:DATE#,
+        #cboDepEducation:VARCHAR#,#cboDepProfession:VARCHAR#,#rdoDepYesNo:VARCHAR#,#statusBy:VARCHAR# , #status:VARCHAR#,SYS_DATE() ,#dependentId:VARCHAR#,#txtDepIncomePerannum:VARCHAR#,#txtEmpWith:VARCHAR#,#rdoLiableYesNo:VARCHAR#)
+    </mapped-statement>
+            
+    <mapped-statement name="deleteEmployeeAddressTO" inline-parameters="true">
+        UPDATE emp_ADDR SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE EMP_SYS_ID = #txtEmpId:VARCHAR# AND ADDR_TYPE = #cboEmpAddressType:VARCHAR# AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+    <mapped-statement name="deleteEmployeeAcademicTO" inline-parameters="true">
+        UPDATE EMPLOYEE_ACADEMIC_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE SYS_EMPID = #txtEmpId:VARCHAR# 
+        AND ACADEMIC_ID = #academicID:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+    <mapped-statement name="deleteEmployeeTechnicalTO" inline-parameters="true">
+        UPDATE EMPLOYEE_TECHNICAL_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE SYS_EMPID = #txtEmpId:VARCHAR# AND TECHNICAL_ID = #technicalID:VARCHAR# AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+    <mapped-statement name="deleteEmployeeLanguageTO" inline-parameters="true">
+        UPDATE EMPLOYEE_LANGUAGE_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE SYS_EMPID = #txtEmpId:VARCHAR# AND LANGUAGE_TYPE = #cboLanguageType:VARCHAR# AND STATUS NOT IN 'DELTED'
+    </mapped-statement>
+        
+    <mapped-statement name="deleteEmployeeDependentTO" inline-parameters="true">
+        UPDATE EMPLOYEE_DEPENDENT_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = SYS_DATE()
+        WHERE SYS_EMPID =  #txtEmpId:VARCHAR# AND DEPENDENT_ID = #dependentId:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+        <!-- AND RELEATIONSHIP =  #cboDepReleationShip:VARCHAR# and   FIRST_NAME =  #txtEmpDepFirstName:VARCHAR# -->
+    <result-map name="getEmployeeMasterEducationTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterEducationTO">
+        <property name="txtEmpId" column="SYS_EMPID"/>
+        <property name="cboEmpAcademicLevel" column="EDUCATION_LEVEL"/>
+        <property name="txtEmpAcademicSchool" column="COLLEGE"/>
+        <property name="tdtAcademicYearOfPassing" column="YEAR_OF_PASSING"/>
+        <property name="cboAcademicSpecialization" column="SPECILIZATION"/>
+        <property name="txtAcademicUniverSity" column="UNIVERSITY"/>
+        <property name="txtAcademicMarksScored" column="MARKES_SCORED"/>
+        <property name="txtAcademicTotalMarks" column="TOTAL_MARKS"/>
+        <property name="txtAcademicPer" column="PERCENTAGE"/>
+        <property name="cboAcademicGrade" column="GRADE"/>
+        <property name="statusBy" column="STATUS_BY"/>          
+        <property name="status" column="STATUS"/>  
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="academicID" column="ACADEMIC_ID"/>
+    </result-map>
+          
+            
+    <result-map name="getEmployeeMasterTechnicalTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterTechnicalTO">
+        <property name="txtEmpId" column="SYS_EMPID"/>
+        <property name="cboTechnicalLevel" column="EDUCATION_LEVEL"/>
+        <property name="txtTechnicalSchool" column="COLLEGE"/>
+        <property name="tdtTechnicalYearOfPassing" column="YEAR_OF_PASSING"/>
+        <property name="cboTechnicalSpecialization" column="SPECILIZATION"/>
+        <property name="txtTechnicalUniverSity" column="UNIVERSITY"/>
+        <property name="txtTechnicalMarksScored" column="MARKES_SCORED"/>
+        <property name="txtTechnicalTotalMarks" column="TOTAL_MARKS"/>
+        <property name="txtTechnicalPer" column="PERCENTAGE"/>
+        <property name="cboTechnicalGrade" column="GRADE"/>
+        <property name="statusBy" column="STATUS_BY"/>          
+        <property name="status" column="STATUS"/>  
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="technicalID" column="TECHNICAL_ID"/>
+    </result-map>
+            
+            
+    <mapped-statement name="updateEmployeeMasterTechnicalTO" inline-parameters="true">
+        UPDATE EMPLOYEE_TECHNICAL_DETAILS SET 
+        EDUCATION_LEVEL =  #cboTechnicalLevel:VARCHAR# ,
+        COLLEGE =  #txtTechnicalSchool:VARCHAR#,
+        YEAR_OF_PASSING =  #tdtTechnicalYearOfPassing:DATE#,
+        SPECILIZATION =  #cboTechnicalSpecialization:VARCHAR#,
+        UNIVERSITY =  #txtTechnicalUniverSity:VARCHAR#, 
+        MARKES_SCORED =  #txtTechnicalMarksScored:NUMERIC#, 
+        TOTAL_MARKS =  #txtTechnicalTotalMarks:NUMERIC#,
+        PERCENTAGE =  #txtTechnicalPer:NUMERIC#,
+        GRADE =  #cboTechnicalGrade:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =  #statusBy:VARCHAR#,  
+        STATUS_DT =  #statusDt:DATE#
+        WHERE SYS_EMPID =  #txtEmpId:VARCHAR#
+        AND TECHNICAL_ID = #technicalID:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+           
+    <result-map name="getEmployeeMasterLanguageTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterLanguageTO">
+        <property name="txtEmpId" column="SYS_EMPID"/>
+        <property name="cboLanguageType" column="LANGUAGE_TYPE"/>
+        <property name="rdoWrite" column="LANGUAGE_WRITE"/>
+        <property name="rdoRead" column="LANGUAGE_READ"/>
+        <property name="rdoSpeak" column="LANGUAGE_SPEAK"/>
+        <property name="statusBy" column="STATUS_BY"/>          
+        <property name="status" column="STATUS"/>  
+        <property name="statusDt" column="STATUS_DT"/>
+    </result-map>
+            
+           
+    <result-map name="getEmployeeMasterDependentTOResult" class="com.see.truetransact.transferobject.employee.EmployeeMasterDependendTO">
+        <property name="txtEmpId" column="SYS_EMPID"/>
+        <property name="cboDepReleationShip" column="RELEATIONSHIP"/>
+        <property name="cboEmpDepTitle" column="TITLE"/>
+        <property name="txtEmpDepFirstName" column="FIRST_NAME"/>
+        <property name="txtEmpDepMIddleName" column="MIDDLE_NAME"/>
+        <property name="txtEmpDepLasteName" column="LAST_NAME"/>
+        <property name="tdtDepDateOfBirth" column="DOB"/>
+        <property name="cboDepEducation" column="EDUCATION_LEVEL"/>
+        <property name="cboDepProfession" column="PROFESSION"/>
+        <property name="rdoDepYesNo" column="DEPENDENT"/>
+        <property name="statusBy" column="STATUS_BY"/>          
+        <property name="status" column="STATUS"/>  
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="dependentId" column="DEPENDENT_ID"/>
+        <property name="txtDepIncomePerannum" column="INCOME"/>
+        <property name="txtEmpWith" column="EMPLOYED_WITH"/>
+        <property name="rdoLiableYesNo" column="LIABLE_TRANSFER"/>
+    </result-map>
+            
+            
+    <mapped-statement name="updateEmployeeMasterEducationTO" inline-parameters="true">
+        UPDATE  EMPLOYEE_ACADEMIC_DETAILS SET 
+        EDUCATION_LEVEL =  #cboEmpAcademicLevel:VARCHAR#,
+        COLLEGE =  #txtEmpAcademicSchool:VARCHAR#,
+        YEAR_OF_PASSING =  #tdtAcademicYearOfPassing:DATE#,
+        SPECILIZATION =  #cboAcademicSpecialization:VARCHAR#,
+        UNIVERSITY =  #txtAcademicUniverSity:VARCHAR#, 
+        MARKES_SCORED =  #txtAcademicMarksScored:NUMERIC#, 
+        TOTAL_MARKS =  #txtAcademicTotalMarks:NUMERIC#,
+        PERCENTAGE =  #txtAcademicPer:NUMERIC#,
+        GRADE =  #cboAcademicGrade:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =  #statusBy:VARCHAR#,  
+        STATUS_DT =  #statusDt:DATE#
+        WHERE SYS_EMPID =  #txtEmpId:VARCHAR#
+        AND ACADEMIC_ID = #academicID:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+            
+             
+    <mapped-statement name="updateEmployeeMasterLanguageTO" inline-parameters="true">
+        UPDATE EMPLOYEE_LANGUAGE_DETAILS SET 
+        LANGUAGE_READ=  #rdoRead:VARCHAR#,
+        LANGUAGE_WRITE =  #rdoWrite:VARCHAR#,
+        LANGUAGE_SPEAK =  #rdoSpeak:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =  #statusBy:VARCHAR#,  
+        STATUS_DT =  #statusDt:DATE#
+        WHERE SYS_EMPID =  #txtEmpId:VARCHAR#
+        AND LANGUAGE_TYPE =  #cboLanguageType:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+            
+             
+    <mapped-statement name="updateEmployeeMasterDependentTO" inline-parameters="true">
+        UPDATE EMPLOYEE_DEPENDENT_DETAILS SET 
+        RELEATIONSHIP =  #cboDepReleationShip:VARCHAR#,
+        TITLE=  #cboEmpDepTitle:VARCHAR#,
+        FIRST_NAME =  #txtEmpDepFirstName:VARCHAR#,
+        MIDDLE_NAME=  #txtEmpDepMIddleName:VARCHAR#,
+        LAST_NAME=  #txtEmpDepLasteName:VARCHAR#,
+        DOB=  #tdtDepDateOfBirth:DATE#,
+        EDUCATION_LEVEL=  #cboDepEducation:VARCHAR#,
+        PROFESSION=  #cboDepProfession:VARCHAR#,
+        DEPENDENT  =  #rdoDepYesNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY =  #statusBy:VARCHAR#,  
+        STATUS_DT =  #statusDt:DATE#,
+        INCOME = #txtDepIncomePerannum:VARCHAR#,
+        EMPLOYED_WITH = #txtEmpWith:VARCHAR#,
+        LIABLE_TRANSFER = #rdoLiableYesNo:VARCHAR#
+        WHERE SYS_EMPID =  #txtEmpId:VARCHAR#
+        AND DEPENDENT_ID = #dependentId:VARCHAR#
+        AND STATUS!='DELETED'
+    </mapped-statement>
+           <!--  AND FIRST_NAME =  #txtEmpDepFirstName:VARCHAR#
+            <mapped-statement name="getSelectEmployeeMasterAddressTO" result-map="getEmployeeMasterAddressTOResult" >
+		SELECT * FROM emp_ADDR 
+                WHERE EMP_SYS_ID = #SYS_EMPID# 
+	</mapped-statement>  added from here by nikhil
+        
+        -->
+    <dynamic-mapped-statement name="getSelectEmployeeMasterAddressTO" result-map="getEmployeeMasterAddressTOResult">
+        SELECT * FROM emp_ADDR WHERE EMP_SYS_ID = #SYS_EMPID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+        </dynamic>
+        )
+    </dynamic-mapped-statement>
+       <!--
+         <mapped-statement name="getSelectEmployeeMasterAcademicTO" result-map="getEmployeeMasterEducationTOResult" >
+		SELECT * FROM EMPLOYEE_ACADEMIC_DETAILS
+                WHERE SYS_EMPID = #SYS_EMPID# 
+	</mapped-statement>
+        -->
+    <dynamic-mapped-statement name="getSelectEmployeeMasterAcademicTO" result-map="getEmployeeMasterEducationTOResult">
+        SELECT * FROM EMPLOYEE_ACADEMIC_DETAILS WHERE SYS_EMPID = #SYS_EMPID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY ACADEMIC_ID
+    </dynamic-mapped-statement>
+         
+    <!--    <mapped-statement name="getSelectEmployeeMasterTechnicalTO" result-map="getEmployeeMasterTechnicalTOResult" >
+		SELECT * FROM EMPLOYEE_TECHNICAL_DETAILS
+                WHERE SYS_EMPID = #SYS_EMPID# 
+	</mapped-statement>
+        
+        -->
+    <dynamic-mapped-statement name="getSelectEmployeeMasterTechnicalTO" result-map="getEmployeeMasterTechnicalTOResult">
+        SELECT * FROM EMPLOYEE_TECHNICAL_DETAILS WHERE SYS_EMPID = #SYS_EMPID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY TECHNICAL_ID
+    </dynamic-mapped-statement>
+        <!--
+        <mapped-statement name="getSelectEmployeeMasterLanguageTO" result-map="getEmployeeMasterLanguageTOResult" >
+		SELECT * FROM EMPLOYEE_LANGUAGE_DETAILS
+                WHERE SYS_EMPID = #SYS_EMPID# 
+	</mapped-statement>
+        -->
+    <dynamic-mapped-statement name="getSelectEmployeeMasterLanguageTO" result-map="getEmployeeMasterLanguageTOResult">
+        SELECT * FROM EMPLOYEE_LANGUAGE_DETAILS WHERE SYS_EMPID = #SYS_EMPID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+        </dynamic>
+        )
+    </dynamic-mapped-statement>
+    <!--
+            <mapped-statement name="getSelectEmployeeMasterDependentTO" result-map="getEmployeeMasterDependentTOResult" >
+		SELECT * FROM EMPLOYEE_DEPENDENT_DETAILS
+                WHERE SYS_EMPID = #SYS_EMPID# 
+	</mapped-statement>  
+      -->  
+    <dynamic-mapped-statement name="getSelectEmployeeMasterDependentTO" result-map="getEmployeeMasterDependentTOResult">
+        SELECT * FROM EMPLOYEE_DEPENDENT_DETAILS WHERE SYS_EMPID = #SYS_EMPID:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY DEPENDENT_ID
+    </dynamic-mapped-statement>
+       
+</sql-map>

@@ -1,0 +1,1436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LoanTransMap">
+<!-- Used in LoanTransMap -->    
+    <result-map name="getAccProductresultTL" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="PROD_ID" />
+        <property name="lookUpDesc" column="PROD_DESC" />
+    </result-map>                 
+    <mapped-statement name="Cash.getAccProductTL" result-map="getAccProductresultTL">
+        SELECT LOANS_PRODUCT.PROD_ID AS PROD_ID, LOANS_PRODUCT.PROD_DESC AS PROD_DESC 
+        FROM LOANS_PRODUCT
+        WHERE BEHAVES_LIKE NOT IN ('OD', 'CC') AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        AND
+        ACCT_HEAD IN (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y')
+        order by PROD_DESC
+    </mapped-statement>
+    <mapped-statement name="getProd" result-class="java.util.HashMap">
+        SELECT CT.TRANS_ID,DA.DEPOSIT_NO,CT.LINK_BATCH_ID,DA.PROD_ID,trim(substr(CT.PARTICULARS,33,11))as FRM,
+        trim(substr(CT.PARTICULARS,48,11))as TOD,CT.AMOUNT
+        FROM CASH_TRANS CT,
+        DEPOSIT_ACINFO DA
+        WHERE DA.DEPOSIT_NO||'_1'= CT.LINK_BATCH_ID 
+        <!--AND CT.LINK_BATCH_ID=#DEPOSIT_NO#-->
+        AND CT.TRANS_ID=#TRANS_ID#
+        AND CT.TRANS_DT=#TRANS_DT:DATE#
+    </mapped-statement> 
+    <mapped-statement name="fromDateExists" result-class="java.util.HashMap">
+      SELECT COUNT(ACT_NUM) AS COUNT FROM   ADVANCES_DAYEND_BALANCE WHERE PROD_ID=#PROD_ID# AND ACT_NUM=#ACT_NUM# AND 
+      DAY_END_DT=#FROM_DT:DATE#
+    </mapped-statement> 
+    <result-map name="get-LookUp-resultTL" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+    <mapped-statement name="getOpAccProductLookUpTL" result-map="get-LookUp-resultTL">
+        SELECT PROD_ID AS LOOKUP_REF_ID,PROD_DESC AS LOOKUP_DESC FROM LOANS_PRODUCT
+        WHERE BEHAVES_LIKE NOT IN ('OD', 'CC') AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED'  
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where CR_CLR='Y')
+    </mapped-statement>
+      
+        <!--!==================================-->
+    <mapped-statement name="getActDataTL" result-class="java.util.HashMap">
+<!--        SELECT LFD.ACCT_STATUS as  STATUS,  CATEGORY, CONSTITUTION,
+        LSD.FROM_DT as CREATE_DT, LP.BASE_CURRENCY AS "PRODCURRENCY" , 
+        LFD.REMARKS as REMARKS, LFD.BRANCH_ID AS BRANCH_CODE, AC.AUTHORIZE_STATUS,AC.AUTHORIZE_DT AS CLOSED_DT,
+        LSD.TO_DT AS EXPIRY_DT,LFD.LOAN_BALANCE_PRINCIPAL AS AMOUNT,
+        CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,MEMBERSHIP_NO
+        FROM LOANS_BORROWER  AM, LOANS_FACILITY_DETAILS LFD,ACT_CLOSING AC,
+        LOANS_COMPANY LC, LOANS_PRODUCT LP , 
+        LOANS_SANCTION_DETAILS LSD,CUSTOMER C
+        WHERE LFD.SANCTION_NO = LSD.SANCTION_NO AND
+        LFD.SL_NO = LSD.SL_NO AND 
+        LFD.BORROW_NO = LSD.BORROW_NO AND 
+        AM.BORROW_NO = LFD.BORROW_NO AND
+        LC.BORROW_NO(+) = LFD.BORROW_NO AND
+        AC.ACT_NUM(+)=LFD.ACCT_NUM AND
+        LFD.ACCT_NUM = #ACT_NUM# NVL(SUBSTR(#ACT_NUM#, 1, (INSTR(#ACT_NUM#, '_')-1)),#ACT_NUM#)
+                SUBSTR(#ACT_NUM#, 0, (INSTR(#ACT_NUM#, '_')-1)) AND
+        LP.PROD_ID = LFD.PROD_ID AND 
+        LP.BEHAVES_LIKE NOT IN ('OD', 'CC')
+        AND C.CUST_ID=AM.CUST_ID-->
+        
+<!--        SELECT LFD.ACCT_STATUS as  STATUS,  CATEGORY, CONSTITUTION,
+        LSD.FROM_DT as CREATE_DT, LP.BASE_CURRENCY AS PRODCURRENCY , 
+        LFD.REMARKS as REMARKS, LFD.BRANCH_ID AS BRANCH_CODE, AC.AUTHORIZE_STATUS,AC.AUTHORIZE_DT AS CLOSED_DT,
+        LSD.TO_DT AS EXPIRY_DT,LFD.LOAN_BALANCE_PRINCIPAL AS AMOUNT,
+        CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,MEMBERSHIP_NO
+        FROM  LOANS_FACILITY_DETAILS LFD LEFT OUTER JOIN LOANS_COMPANY LC ON LC.BORROW_NO = LFD.BORROW_NO LEFT OUTER JOIN ACT_CLOSING AC ON AC.ACT_NUM = LFD.ACCT_NUM, 
+        LOANS_BORROWER  AM,  LOANS_PRODUCT LP, LOANS_SANCTION_DETAILS LSD, CUSTOMER C
+        WHERE LFD.SANCTION_NO = LSD.SANCTION_NO AND LFD.SL_NO = LSD.SL_NO AND LFD.BORROW_NO = LSD.BORROW_NO AND 
+        AM.BORROW_NO = LFD.BORROW_NO AND LFD.ACCT_NUM = #ACT_NUM# AND LP.PROD_ID = LFD.PROD_ID AND 
+        LP.BEHAVES_LIKE NOT IN('OD','CC') AND C.CUST_ID = AM.CUST_ID-->
+        SELECT LFD.ACCT_STATUS as  STATUS,  CATEGORY, CONSTITUTION,
+        LSD.FROM_DT as CREATE_DT, LP.BASE_CURRENCY AS PRODCURRENCY , 
+        <!--LFD.REMARKS as REMARKS--> NVL(LFD.REMARKS,LS.REMARKS) AS REMARKS, LFD.BRANCH_ID AS BRANCH_CODE, AC.AUTHORIZE_STATUS,AC.AUTHORIZE_DT AS CLOSED_DT,
+        LSD.TO_DT AS EXPIRY_DT,LFD.LOAN_BALANCE_PRINCIPAL AS AMOUNT,
+        CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID,MEMBERSHIP_NO FROM  LOANS_FACILITY_DETAILS LFD left outer join LOANS_COMPANY LC on
+	LC.BORROW_NO = LFD.BORROW_NO left outer join ACT_CLOSING AC on AC.ACT_NUM = LFD.ACCT_NUM join LOANS_SANCTION LS on
+	LS.BORROW_NO = LFD.BORROW_NO join
+	LOANS_BORROWER AM on AM.BORROW_NO = LFD.BORROW_NO join
+	LOANS_PRODUCT LP on LP.PROD_ID = LFD.PROD_ID join 
+	LOANS_SANCTION_DETAILS LSD on LFD.BORROW_NO = LSD.BORROW_NO 
+	and LFD.SL_NO = LSD.SL_NO and LFD.SANCTION_NO = LSD.SANCTION_NO join 
+	CUSTOMER C on C.CUST_ID = AM.CUST_ID
+        WHERE  LFD.ACCT_NUM = #ACT_NUM# AND 
+        LP.BEHAVES_LIKE NOT IN('OD','CC') 
+    </mapped-statement>
+
+    <result-map name="getAccountResultListTL" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="Category" column="CATEGORY"/>
+        
+    </result-map>
+     <result-map name="getAccountResultTL" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="Category" column="CATEGORY"/>
+        <property name="MemberNo" column="memno"/>
+        <property name="EmpNo" column="empno"/>
+    </result-map>
+    
+     <result-map name="getAccountResultSITL" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="Category" column="CATEGORY"/>
+        <property name="MemberNo" column="memno"/>
+        <property name="EmpNo" column="empno"/>
+        <property name="BRANCH_ID" column="branch_id"/>
+    </result-map>
+        
+    <dynamic-mapped-statement name="getActNotCLOSEDTL" result-class="java.util.HashMap">
+        SELECT ACCT_NUM FROM LOANS_FACILITY_DETAILS WHERE ACCT_STATUS != 'CLOSED' AND PROD_ID  =#PROD_ID# 
+        <!--AND BRANCH_ID=#SELECTED_BRANCH#--> <!-- Commented by Rajesh because to allow Interbranch Trans -->
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend ="AND"   property="FROM_ACCT_NO">
+                    ACCT_NUM BETWEEN #FROM_ACCT_NO# AND #TO_ACCT_NO#
+                </isNotNull>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotNull prepend ="AND"   property="ACT_NUM">
+                    ACCT_NUM =#ACT_NUM#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Report.getAccountListTL" result-map="getAccountResultListTL" >
+        SELECT
+        DISTINCT(LFD.ACCT_NUM) <!--|| '_' || LRS.SCHEDULE_NO --> as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY as CATEGORY 
+        FROM LOANS_BORROWER LB left join
+	CUSTOMER CU on LB.CUST_ID = CU.CUST_ID 
+	join CUST_ADDR CA on CA.CUST_ID = CU.CUST_ID
+	and CA.ADDR_TYPE = CU.COMM_ADDR_TYPE join 
+	LOANS_FACILITY_DETAILS LFD on LB.BORROW_NO = LFD.BORROW_NO
+	join 
+	LOANS_REPAY_SCHEDULE LRS on LRS.ACCT_NUM = LFD.ACCT_NUM
+	<!--join 
+	LOANS_ACCT_CHARGE_DETAILS LACD on LFD.ACCT_NUM = LACD.ACT_NUM-->
+        WHERE 
+        LFD.PROD_ID = #PROD_ID# <!-- AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null)--> AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+           <!-- AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->  AND 
+        LFD.BRANCH_ID = #SELECTED_BRANCH# 
+         <!--AND (ACCT_STATUS !='CLOSED') --> AND
+        (LRS.STATUS NOT IN ('DELETED') OR LRS.STATUS IS NULL)AND 
+        LRS.REPAY_ACTIVE = 'Y'
+           
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="PAYMENT">
+                       <!--(LFD.LOAN_BALANCE_PRINCIPAL&lt;0 OR 
+                        LFD.AVAILABLE_BALANCE&gt;0)-->
+                    LFD.AVAILABLE_BALANCE&gt;0
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="RECEIPT">
+                        <!--LFD.CLEAR_BALANCE&lt;0-->
+                    ( LFD.CLEAR_BALANCE &lt; 0  OR 0 &lt; (SELECT SUM (NVL(AMOUNT,0)-NVL(PAID_AMT,0)) AS CHARGE_AMT FROM LOANS_ACCT_CHARGE_DETAILS WHERE   ACT_NUM=LFD.ACCT_NUM
+                    AND STATUS !='DELETED'))
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    LFD.ACCT_NUM=#ACCOUNTNO#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACT_NUM">
+                    UPPER(DISTINCT(LFD.ACCT_NUM) <!--|| '_' || LRS.SCHEDULE_NO -->) LIKE UPPER('%$ACT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_NAME">
+                    UPPER(get_cust_name(cu.cust_id)) LIKE UPPER('%$CUSTOMER_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="HOUSE_NAME">
+                    UPPER(CA.STREET) LIKE UPPER('%$HOUSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CATEGORY">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CATEGORY$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY 1
+    </dynamic-mapped-statement>
+    
+           <dynamic-mapped-statement name="SI.getAccountListTL" result-map="getAccountResultSITL" >
+        SELECT
+        DISTINCT(LFD.ACCT_NUM)  <!--|| '_' || LRS.SCHEDULE_NO --> as ACT_NUM, 
+        get_cust_name(cu.cust_id)
+        AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY as CATEGORY,SA.SHARE_ACCT_NO as MemNo, SA.EMP_REFNO_NEW as EmpNo ,LFD.BRANCH_ID
+        FROM LOANS_BORROWER LB
+                Join customer cu on lb.cust_id = cu.cust_id
+                Join cust_addr ca on ca.addr_type = cu.comm_addr_type  
+                Join loans_facility_details lfd on lb.borrow_no = lfd.borrow_no 
+                Join loans_repay_schedule lrs on  lrs.acct_num = lfd.acct_num
+                left Join share_acct sa on  sa.cust_id = cu.cust_id
+                Left Join loans_acct_charge_details lacd on lfd.acct_num = lacd.act_num
+        WHERE LB.CUST_ID = CU.CUST_ID   AND CA.CUST_ID = CU.CUST_ID AND
+        CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+           <!-- AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->  
+<!--        AND  LFD.BRANCH_ID = #SELECTED_BRANCH#-->
+       AND (LFD.ACCT_STATUS !='CLOSED') AND
+        (LRS.STATUS NOT IN ('DELETED') OR LRS.STATUS IS NULL)AND 
+        LRS.REPAY_ACTIVE = 'Y'
+                  
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="PAYMENT">
+                       <!--(LFD.LOAN_BALANCE_PRINCIPAL&lt;0 OR 
+                        LFD.AVAILABLE_BALANCE&gt;0)-->
+                    LFD.AVAILABLE_BALANCE&gt;0
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="RECEIPT">
+                        <!--LFD.CLEAR_BALANCE&lt;0-->
+                    ( LFD.CLEAR_BALANCE &lt; 0  OR 0 &lt; (SELECT SUM (NVL(AMOUNT,0)-NVL(PAID_AMT,0)) 
+                    AS CHARGE_AMT FROM LOANS_ACCT_CHARGE_DETAILS WHERE   ACT_NUM=LFD.ACCT_NUM
+                    AND STATUS !='DELETED'))
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    LFD.ACCT_NUM=#ACCOUNTNO#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+
+            
+        ORDER BY 1
+    </dynamic-mapped-statement>
+        
+        
+    <dynamic-mapped-statement name="Cash.getAccountListTL" result-map="getAccountResultTL" >
+        SELECT
+        DISTINCT(LFD.ACCT_NUM)  <!--|| '_' || LRS.SCHEDULE_NO --> as ACT_NUM, 
+        get_cust_name(cu.cust_id)
+        AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY as CATEGORY,SA.SHARE_ACCT_NO as MemNo, SA.EMP_REFNO_NEW as EmpNo 
+        FROM LOANS_BORROWER LB
+                Join customer cu on lb.cust_id = cu.cust_id
+                Join cust_addr ca on ca.addr_type = cu.comm_addr_type  
+                Join loans_facility_details lfd on lb.borrow_no = lfd.borrow_no 
+                Join loans_repay_schedule lrs on  lrs.acct_num = lfd.acct_num
+                left Join share_acct sa on  sa.cust_id = cu.cust_id
+                Left Join loans_acct_charge_details lacd on lfd.acct_num = lacd.act_num
+        WHERE LB.CUST_ID = CU.CUST_ID   AND CA.CUST_ID = CU.CUST_ID AND
+        CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID# AND
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') or LFD.ACCT_STATUS is null) AND 
+        LB.STATUS NOT IN ('DELETED') AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+           <!-- AND LFD.AUTHORIZE_STATUS_2 = 'AUTHORIZED' -->  
+       AND (LFD.ACCT_STATUS !='CLOSED') AND
+        (LRS.STATUS NOT IN ('DELETED') OR LRS.STATUS IS NULL)AND 
+        LRS.REPAY_ACTIVE = 'Y'
+        <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="SELECTED_BRANCH">
+                LFD.BRANCH_ID = #SELECTED_BRANCH#
+            </isPropertyAvailable>
+        </dynamic>  
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="PAYMENT">
+                       <!--(LFD.LOAN_BALANCE_PRINCIPAL&lt;0 OR 
+                        LFD.AVAILABLE_BALANCE&gt;0)-->
+                    LFD.AVAILABLE_BALANCE&gt;0
+                </isNotEmpty>
+            </isParameterPresent>
+
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="RECEIPT">
+                        <!--LFD.CLEAR_BALANCE&lt;0-->
+                    ( LFD.CLEAR_BALANCE &lt; 0  OR 0 &lt; (SELECT SUM (NVL(AMOUNT,0)-NVL(PAID_AMT,0)) 
+                    AS CHARGE_AMT FROM LOANS_ACCT_CHARGE_DETAILS WHERE   ACT_NUM=LFD.ACCT_NUM
+                    AND STATUS !='DELETED'))
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACCOUNTNO">
+                    LFD.ACCT_NUM=#ACCOUNTNO#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="ACT_NUM">
+                    LFD.ACCT_NUM=#ACT_NUM#
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="Category">
+                    UPPER(SA.EMP_REFNO_NEW) LIKE UPPER('%$Category$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="EmpNo">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$EmpNo$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY 1
+           <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>    
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getAccountHeadProdTL" result-class="java.util.HashMap">
+<!--        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC FROM AC_HD, OP_AC_PRODUCT WHERE AC_HD.AC_HD_ID = OP_AC_PRODUCT.AC_HD_ID AND OP_AC_PRODUCT.PROD_ID = #PROD_ID# -->
+        SELECT AC_HD.AC_HD_ID AS AC_HEAD, AC_HD.AC_HD_DESC AS AC_HEAD_DESC,CR_CASH,DR_CASH
+        FROM AC_HD, LOANS_PRODUCT,AC_HD_PARAM
+        WHERE AC_HD.AC_HD_ID = LOANS_PRODUCT.ACCT_HEAD
+        and AC_HD.AC_HD_ID=AC_HD_PARAM.AC_HD_ID     
+        AND LOANS_PRODUCT.PROD_ID = #PROD_ID#
+        AND LOANS_PRODUCT.BEHAVES_LIKE NOT IN ('OD', 'CC')
+    </mapped-statement>
+        
+    <mapped-statement name="getBalanceTL" result-class="java.util.HashMap">
+        SELECT NVL(LOAN_BALANCE_PRINCIPAL,0) AS "AVAILABLE_BALANCE", 
+        NVL(CLEAR_BALANCE,0) AS "CLEAR_BALANCE",
+        NVL(TOTAL_BALANCE,0) AS "TOTAL_BALANCE", 
+        NVL(SHADOW_CREDIT,0) AS "SHADOW_CREDIT", 
+        NVL(SUBSIDY_AMT,0)- NVL(SUBSIDY_ADJUSTED_AMT,0) AS "SUBSIDY_AVAILABLE_AMT",
+        NVL(LSD.LIMIT,0)+(SELECT NVL(SUM(NVL(SANCTION_LIMIT,0)),0)  FROM LOANS_ADDITIONAL_SANCTION 
+        WHERE ACCT_NUM=#ACT_NUM# AND STATUS !='DELETED' AND AUTHORIZE_STATUS ='AUTHORIZED') AS "LIMIT", 
+        NVL(MULTI_DISBURSE,'N') AS "MULTI_DISBURSE",
+        NVL(SHADOW_DEBIT,0) AS "SHADOW_DEBIT" ,
+        NVL(AVAILABLE_BALANCE,0) AS "AV_BALANCE",
+        NVL(PENAL_WAIVE_AMT,0) AS "PENAL_WAIVE_AMT",
+        NVL(INTEREST_WAIVE_AMT,0) AS "INTEREST_WAIVE_AMT",
+        PENAL_WAIVE_DT AS "PENAL_WAIVE_DT",
+        REBATE_DT AS "REBATE_DT",
+        NVL(REBATE_AMT,0) AS "REBATE_AMT"
+        FROM LOANS_FACILITY_DETAILS LFD,
+        LOANS_SANCTION_DETAILS LSD
+        WHERE LFD.SANCTION_NO = LSD.SANCTION_NO AND
+        LFD.SL_NO = LSD.SL_NO AND 
+        LFD.BORROW_NO = LSD.BORROW_NO AND 
+        LFD.ACCT_NUM = #ACT_NUM#<!--NVL(SUBSTR(#ACT_NUM#, 1, (INSTR(#ACT_NUM#, '_')-1)),#ACT_NUM#)-->
+                
+                <!--ACCT_NUM = SUBSTR(#ACT_NUM#, 0, (INSTR(#ACT_NUM#, '_')-1))-->
+                <!--AND  
+                (ACT_STATUS_ID IN ('NEW','PART_FREEZE','OPERATIONAL','CREDIT_FREEZE','DEBIT_FREEZE','TOTAL_FREEZE','COMP_FREEZE'))-->
+    </mapped-statement>         
+        
+    <dynamic-mapped-statement name="getAccountNumberNameTL" result-class="java.util.HashMap">
+        SELECT decode(c.cust_type,'INDIVIDUAL',CONCAT(CONCAT(CONCAT(CONCAT(C.FNAME, ' '), C.MNAME), ' '), C.LNAME),c.comp_name ) as CUSTOMER_NAME,MEMBERSHIP_NO,
+        C.CUST_ID AS CUST_ID,C.CUST_TYPE,BRANCH_ID as BRANCH_CODE ,STREET || ', ' || AREA || ', ' || CITY AS ADDRESS
+        FROM CUSTOMER C, LOANS_BORROWER LB, LOANS_FACILITY_DETAILS LFD ,CUST_ADDR CA
+        WHERE LB.CUST_ID = C.CUST_ID 
+        AND CA.CUST_ID = C.CUST_ID AND
+        LB.BORROW_NO = LFD.BORROW_NO  AND (LFD.STATUS !='DELETED' OR LFD.STATUS IS NULL)
+        AND AUTHORIZE_STATUS_1 ='AUTHORIZED'
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="CLOSECHECK">
+                LFD.ACCT_STATUS != 'CLOSED'
+            </isNotPropertyAvailable>
+        </dynamic>
+        AND LFD.ACCT_NUM = #ACC_NUM# <!--NVL(SUBSTR(#ACC_NUM#, 1, (INSTR(#ACC_NUM#, '_')-1)),#ACC_NUM#)--> <!--SUBSTR(#ACC_NUM#, 0, (INSTR(#ACC_NUM#, '_')-1))-->
+    </dynamic-mapped-statement>  
+        
+         
+        
+    <mapped-statement name="getProdIdForActNoTL" result-class="java.util.HashMap">
+        SELECT PROD_ID FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM = #ACC_NUM# 
+            <!--AND BRANCH_ID = #BRANCH_ID#--> <!-- Commented by Rajesh because to allow Interbranch Trans -->
+    </mapped-statement>            
+        
+        <!-- ==============================Common Transactions operation on Account===================================================== -->        
+
+    <mapped-statement name="updateShadowDebitTL" inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        SHADOW_DEBIT = NVL(SHADOW_DEBIT,0) + #AMOUNT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT:DATE#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updateShadowDebitBills" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+        SHADOW_DEBIT = NVL(SHADOW_DEBIT,0) + #AMOUNT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT:DATE#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+
+        <!--To Update the Data in Business Rule ...-->
+    <mapped-statement name="updateShadowCreditTL" inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        SHADOW_CREDIT = nvl(SHADOW_CREDIT,0) + #AMOUNT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT:DATE#                
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updateShadowCreditBills" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+        SHADOW_CREDIT = nvl(SHADOW_CREDIT,0) + #AMOUNT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT#::DATE                
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+
+    <mapped-statement name="updateOtherBalancesTL" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        CLEAR_BALANCE = NVL (CLEAR_BALANCE, 0)::NUMERIC + #AMOUNT#::NUMERIC - #UNCLEAR_AMT#::NUMERIC,
+        TOTAL_BALANCE = NVL (TOTAL_BALANCE, 0)::NUMERIC + #AMOUNT#::NUMERIC ,  
+        UNCLEAR_BALANCE = NVL (UNCLEAR_BALANCE, 0)::NUMERIC + #UNCLEAR_AMT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT#::DATE 
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updateOtherBalancesBills" inline-parameters="true">
+        UPDATE BILLS_FACILITY_DETAILS SET 
+        CLEAR_BALANCE = NVL (CLEAR_BALANCE, 0) + #AMOUNT#::NUMERIC - #UNCLEAR_AMT#::NUMERIC, 
+        TOTAL_BALANCE = NVL (TOTAL_BALANCE, 0) + #AMOUNT#::NUMERIC , 
+        UNCLEAR_BALANCE = NVL (UNCLEAR_BALANCE, 0) + #UNCLEAR_AMT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+        
+        
+    <mapped-statement name="updateAvailBalanceTLinAD" inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS SET    
+                                         
+ <!-- AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) - #TOT#::NUMERIC,   
+  CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) - #TOT#::NUMERIC,         
+    TOTAL_BALANCE=nvl(TOTAL_BALANCE,0) + #TOT#::NUMERIC,-->   
+        LOAN_BALANCE_PRINCIPAL=nvl(LOAN_BALANCE_PRINCIPAL,0) - #TOT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT:DATE#
+             
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>    
+      <mapped-statement name="updateAvailBalanceTLinODCREDIT" inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS SET    
+        AVAILABLE_BALANCE =nvl(AVAILABLE_BALANCE,0) + #TOT#::NUMERIC,
+        LAST_INT_CALC_DT = #TODAY_DT:DATE#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>   
+        
+        
+    <dynamic-mapped-statement name="updateAvailBalanceTL" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT#::NUMERIC
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="," property="LAST_INT_CALC_DT">
+                    LAST_INT_CALC_DT=#LAST_INT_CALC_DT:DATE#,
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="GREATERAMTCREDIT">
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC,
+                AVAILABLE_BALANCE =(nvl(LOAN_PAID_INT,0)+#AMOUNT#::NUMERIC)+ nvl(AVAILABLE_BALANCE,0),
+                         <!--LOAN_PAID_INT=nvl(LOAN_PAID_INT,0)+ #AMOUNT#-->
+                LOAN_PAID_INT=#LIMIT#::NUMERIC+nvl(CLEAR_BALANCE,0)
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="LESSERAMTCREDIT">
+                AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC,
+                LOAN_PAID_INT=#LIMIT#::NUMERIC+nvl(CLEAR_BALANCE,0)
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="NORMAL">
+                         <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                AVAILABLE_BALANCE = (CASE
+                WHEN( ((NVL(LOAN_PAID_INT,0) &lt;0) AND ABS(LOAN_PAID_INT)&lt;#AMOUNT#::NUMERIC )
+                )
+                THEN  (nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC) + NVL(LOAN_PAID_INT,0)
+                WHEN( ((NVL(LOAN_PAID_INT,0) &lt;0) AND ABS(LOAN_PAID_INT)&gt;=#AMOUNT#::NUMERIC )
+                )
+                THEN   nvl(AVAILABLE_BALANCE,0)
+                ELSE nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC
+                END),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="NORMALWOTOD">
+                 AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC,
+                <!--AVAILABLE_BALANCE =( CASE
+                WHEN( ABS(CLEAR_BALANCE) &gt;=#LIMIT#::NUMERIC)
+                THEN
+                CASE
+                WHEN(#AMOUNT#::NUMERIC &gt;(ABS(CLEAR_BALANCE)-#LIMIT#::NUMERIC))
+                THEN (#AMOUNT#::NUMERIC - (ABS(CLEAR_BALANCE)-#LIMIT#::NUMERIC))
+                else nvl(AVAILABLE_BALANCE,0)
+                END
+                else nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC
+                end),-->
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="NORMALDEBIT">
+                         <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC,
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="NORMALDEBITAD">
+                         <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC,
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC,
+                LOAN_PAID_INT=#LIMIT#::NUMERIC+nvl(CLEAR_BALANCE,0) + #AMOUNT#::NUMERIC
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="NORMALAD">
+                         <!--AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#,-->
+                        <!-- AVAILABLE_BALANCE = (CASE
+                                        WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&lt;#AMOUNT# )
+                                             )
+                                        THEN  (nvl(AVAILABLE_BALANCE,0) + #AMOUNT#) + NVL(CLEAR_BALANCE,0)
+                                        WHEN( ((NVL(CLEAR_BALANCE,0) &lt;0) AND ABS(CLEAR_BALANCE)&gt;=#AMOUNT# )
+                                             )
+                                        THEN   nvl(AVAILABLE_BALANCE,0)
+                                        ELSE nvl(AVAILABLE_BALANCE,0) + #AMOUNT#
+                                        END),-->
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC,
+                AVAILABLE_BALANCE =#LIMIT#::NUMERIC+(nvl(CLEAR_BALANCE,0)+#AMOUNT#::NUMERIC)+#TOD_LEFT#::NUMERIC,
+                LOAN_PAID_INT=#LIMIT#::NUMERIC+nvl(CLEAR_BALANCE,0)
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic>
+            <isPropertyAvailable prepend = "," property="GREATERAMTCREDITRUNNING">
+                          <!--AVAILABLE_BALANCE=#AMOUNT#+nvl(CLEAR_BALANCE,0)+#TOD_AMOUNT#,-->
+                AVAILABLE_BALANCE = (CASE
+                WHEN(  #TOD_UTILIZED#::NUMERIC &gt; 0
+                )
+                THEN #AMOUNT#::NUMERIC+nvl(LOAN_PAID_INT,0)+#TOD_AMOUNT#::NUMERIC
+                WHEN(#TOD_UTILIZED#::NUMERIC &lt;= 0 AND ABS(nvl(LOAN_PAID_INT,0))&lt;#AMOUNT#::NUMERIC
+                )
+                THEN   (nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC) + nvl(LOAN_PAID_INT,0)
+                WHEN(#TOD_UTILIZED#::NUMERIC &lt;= 0 AND ABS(CLEAR_BALANCE)&gt;=#AMOUNT#::NUMERIC
+                )
+                THEN   nvl(AVAILABLE_BALANCE,0)
+                END),
+                CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC,
+                LOAN_PAID_INT=#LIMIT#::NUMERIC+nvl(CLEAR_BALANCE,0)
+            </isPropertyAvailable>
+        </dynamic>
+        ,LAST_TRANS_DT = #TODAY_DT:DATE#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </dynamic-mapped-statement> 
+        
+    <dynamic-mapped-statement name="updateAvailBalanceBills" result-class="java.util.HashMap">
+        UPDATE BILLS_FACILITY_DETAILS SET
+        AVAILABLE_BALANCE = nvl(AVAILABLE_BALANCE,0) + #AMOUNT#::NUMERIC,
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT#::NUMERIC,
+        CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="," property="LAST_INT_CALC_DT">
+                    LAST_INT_CALC_DT=#LAST_INT_CALC_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ,LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="updateAvailableBalanceTL" result-class="java.util.HashMap">
+        UPDATE LOANS_FACILITY_DETAILS SET
+        UNCLEAR_BALANCE = nvl(UNCLEAR_BALANCE,0) - #UNCLEAR_AMT#::NUMERIC,
+        CLEAR_BALANCE = nvl(CLEAR_BALANCE,0) + #UNCLEAR_AMT#::NUMERIC,
+        LAST_TRANS_DT = #TODAY_DT:DATE# 
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updateExcessAmountTL" result-class="java.util.HashMap" >        
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        EXCESS_AMT = nvl(EXCESS_AMT, 0) + #AMOUNT#::NUMERIC
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updatePaidPrincipalInterestTL" result-class="java.util.HashMap" >        
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        LOAN_BALANCE_PRINCIPAL = nvl(LOAN_BALANCE_PRINCIPAL, 0) - #PRINCIPAL_AMOUNT#::NUMERIC,
+        LOAN_PAID_INT = nvl(LOAN_PAID_INT, 0) + #INTEREST_AMOUNT#::NUMERIC,
+        LOAN_PAID_PENALINT = nvl(LOAN_PAID_PENALINT, 0) + #PENUL_INTEREST_AMOUNT#::NUMERIC,
+        LAST_REPAY_DT = #LAST_REPAY_DT#::TIMESTAMP 
+        WHERE ACCT_NUM = #ACCOUNTNO#::VARCHAR
+    </mapped-statement>
+        
+        <!-- ============================Transfer Transaction======================================== -->
+        
+    <mapped-statement name="Transfer.getCreditProductTL" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID,PROD_DESC as PRODDESC FROM LOANS_PRODUCT 
+        WHERE BEHAVES_LIKE NOT IN ('OD', 'CC') AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where cr_trans='Y')
+        order by PROD_DESC
+    </mapped-statement>
+        
+    <mapped-statement name="Transfer.getDebitProductTL" result-class="java.util.HashMap">
+        SELECT PROD_ID as PRODID, PROD_DESC as PRODDESC FROM LOANS_PRODUCT 
+        WHERE BEHAVES_LIKE NOT IN ('OD', 'CC') AND STATUS NOT IN ('DELETED') AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+        and 
+        ACCT_HEAD in (select ac_hd_id from ac_hd_param where dr_trans='Y')
+        order by PROD_DESC
+    </mapped-statement> 
+        
+    <result-map name="getTransferAccountResultList" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerType" column="CUST_TYPE_ID"/>
+        <property name="MemberNo" column="MemNo"/>
+        <property name="EmployNo" column="EmpNo"/>
+    </result-map>        
+    <dynamic-mapped-statement name="Transfer.getAccountListTL" result-map="getTransferAccountResultList">
+                <!--SELECT CUSTOMER.CUST_ID as "Customer Id", DOB, get_cust_name(CUSTOMER.CUST_ID) "Name", GENDER , CUSTOMERGROUP, STREET, AREA, CITY, STATE, PIN_CODE, COUNTRY_CODE from CUSTOMER , CUST_ADDR  WHERE ((CUSTOMER.STATUS = 'MODIFIED') or (CUSTOMER.STATUS = 'UPDATED') or (CUSTOMER.STATUS = 'CREATED')) and (CUST_ADDR.CUST_ID = CUSTOMER.CUST_ID) and (CUSTOMER.COMM_ADDR_TYPE = CUST_ADDR.ADDR_TYPE)-->
+        SELECT
+        DISTINCT (LFD.ACCT_NUM) <!--|| '_' || LRS.SCHEDULE_NO -->  as ACT_NUM, 
+        get_cust_name(cu.cust_id) AS CUSTOMER_NAME,CA.STREET AS HOUSE_NAME,
+        LB.CATEGORY AS CUST_TYPE_ID,SA.SHARE_ACCT_NO as MemNo, SA.EMP_REFNO_NEW as EmpNo  
+        FROM loans_borrower lb JOIN customer cu ON lb.cust_id = cu.cust_id
+                JOIN cust_addr ca ON ca.addr_type = cu.comm_addr_type
+                JOIN loans_facility_details lfd ON lb.borrow_no =
+                                                                 lfd.borrow_no
+                JOIN loans_repay_schedule lrs ON lrs.acct_num = lfd.acct_num
+                LEFT JOIN share_acct sa ON sa.cust_id = cu.cust_id
+                LEFT JOIN loans_acct_charge_details lacd
+                ON lfd.acct_num = lacd.act_num
+       WHERE lb.cust_id = cu.cust_id
+            AND ca.cust_id = cu.cust_id
+            AND ca.addr_type = cu.comm_addr_type
+            AND lb.borrow_no = lfd.borrow_no
+            AND lfd.prod_id = #PROD_ID#
+            AND (   lfd.acct_status IN
+                            ('NEW', 'TRANSFER_IN', 'DECEASED', 'OPERATIONAL')
+                 OR lfd.acct_status IS NULL
+                )
+            AND lb.status NOT IN ('DELETED')
+            AND lfd.status NOT IN ('DELETED')
+            AND lfd.authorize_status_1 = 'AUTHORIZED'
+            AND (lfd.acct_status != 'CLOSED')
+            AND (lrs.status NOT IN ('DELETED') OR lrs.status IS NULL)
+            AND lrs.repay_active = 'Y'
+            <!--<dynamic>
+                <isParameterPresent>
+                    <isNull prepend="AND" property="DEBIT">
+                        LRS.LOAN_AMOUNT &gt;= LFD.AVAILABLE_BALANCE + LFD.SHADOW_CREDIT
+                    </isNull>
+                </isParameterPresent> -->
+               <!-- <iterate prepend="AND LFD.ACCT_NUM || '_' || LRS.SCHEDULE_NO NOT IN" property="ACT NUM" open = "(" close=")" conjunction="," >
+                    #ACT NUM[]#
+                </iterate>  -->
+           <!-- </dynamic>   -->
+        <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend="AND" property="CREDIT">
+                       <!--LFD.CLEAR_BALANCE &lt; 0-->
+                ( LFD.CLEAR_BALANCE &lt; 0  OR 0 &lt;(SELECT 
+                SUM (NVL(AMOUNT,0)-NVL(PAID_AMT,0)) AS CHARGE_AMT FROM LOANS_ACCT_CHARGE_DETAILS WHERE ACT_NUM=LFD.ACCT_NUM AND STATUS 
+                !='DELETED')) 
+            </isPropertyAvailable>
+        </dynamic>
+        <dynamic> <!-- This dynamic statement given by Rajesh. This statement passes the branchcode if we passed -->
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SELECTED_BRANCH"> 
+                    LB.BRANCH_CODE = #SELECTED_BRANCH#  
+                </isNotNull> 
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerType">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CustomerType$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY 1
+          <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                 <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>  
+    </dynamic-mapped-statement>     
+    <mapped-statement name="getDepIntFrq" result-class="java.util.HashMap">
+        SELECT DEPOSIT_DT,INTPAY_FREQ,LAST_INT_APPL_DT,NEXT_INT_APPL_DT
+        FROM DEPOSIT_SUB_ACINFO WHERE DEPOSIT_NO=substr(#DEPOSIT_NO#,1,13)
+	</mapped-statement>
+	<mapped-statement name="getDepDay" result-class="java.util.HashMap">
+        select DSA.DEPOSIT_PERIOD_DD from DEPOSIT_SUB_ACINFO dsa 
+        where DSA.DEPOSIT_NO=substr(#DEPOSIT_NO#,1,13)
+      </mapped-statement>  
+    <mapped-statement name="getBehavesLikeTLAD" result-class="java.util.HashMap">
+        SELECT BEHAVES_LIKE ,LFD.PROD_ID,AUTHORIZE_REMARK
+        FROM LOANS_PRODUCT LP, LOANS_FACILITY_DETAILS LFD
+        WHERE LP.AUTHORIZE_STATUS = 'AUTHORIZED' AND LFD.ACCT_NUM=#ACT_NUM# AND LFD.PROD_ID=LP.PROD_ID
+        AND  (LP.STATUS != 'DELETED' OR LP.STATUS IS NULL) 
+    </mapped-statement>
+      
+   <dynamic-mapped-statement name="Transfer.getAccountListCharges" result-map="getTransferAccountResultList">
+        SELECT ACCT_NUM AS ACT_NUM, 
+       <dynamic>
+            <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="oracle.jdbc.driver.OracleDriver" >
+                   get_cust_name(cu.cust_id) AS CUSTOMER_NAME,
+                </isEqual>
+            </isPropertyAvailable>            
+        </dynamic> 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="DB_DRIVER_NAME">
+                <isEqual prepend="" property="DB_DRIVER_NAME" compareValue="org.postgresql.Driver" >
+                   DECODE(CUST_TYPE,'INDIVIDUAL',CONCAT(FNAME, MNAME,LNAME),COMP_NAME)AS CUSTOMER_NAME,
+                </isEqual>
+            </isPropertyAvailable>            
+        </dynamic> 
+        CA.STREET AS HOUSE_NAME, LB.CATEGORY AS CUST_TYPE_ID,SA.SHARE_ACCT_NO as MemNo, SA.EMP_REFNO_NEW as EmpNo   
+        <!--FROM LOANS_FACILITY_DETAILS LFD, LOANS_BORROWER LB, CUSTOMER CU , CUST_ADDR CA, share_acct SA -->
+        from
+	LOANS_FACILITY_DETAILS LFD
+	join LOANS_BORROWER LB on LB.BORROW_NO = LFD.BORROW_NO
+	join CUSTOMER CU on LB.CUST_ID = CU.CUST_ID
+	join CUST_ADDR CA on CA.CUST_ID = CU.CUST_ID and CA.ADDR_TYPE = CU.COMM_ADDR_TYPE
+	left join share_acct SA on cu.membership_no = sa.share_acct_no
+        <!--WHERE LB.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        SA.CUST_ID = LB.CUST_ID AND-->
+        where LFD.PROD_ID = #PROD_ID# AND 
+        (LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') OR LFD.ACCT_STATUS IS NULL) AND 
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 ='AUTHORIZED' AND
+        LFD.ACCT_STATUS !='CLOSED'  AND LFD.STATUS!='DELETED' <!-- AND
+            LFD.ACCT_NUM NOT IN (SELECT ACT_NUM FROM LOANS_ACCT_CHARGE_DETAILS WHERE PROD_ID = #PROD_ID#)-->
+        AND LFD.BRANCH_ID=#SELECTED_BRANCH#
+         <dynamic> <!-- This dynamic statement given by Rajesh. -->
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerType">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CustomerType$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY ACCT_NUM
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>    
+        
+    </dynamic-mapped-statement>        
+       
+        <!-- ============================Outward Clearing======================================== -->
+        <!--<result-map name="getAccountHeadID4PISDResultTL" class="java.util.HashMap">
+            <property name="accHeadID" column="ACCT_HEAD"/>
+            <property name="accHeadDesc" column="AC_HD_DESC"/>
+            <property name="baseCurr" column="BASE_CURRENCY"/>
+            <property name="currDesc" column="LOOKUP_DESC"/>
+        </result-map>        
+        <mapped-statement name="getAccountHeadID4PISDTL" result-map="getAccountHeadID4PISDResultTL" >        
+                SELECT LOANS_PRODUCT.ACCT_HEAD,AC_HD_DESC,BASE_CURRENCY, LOOKUP_DESC FROM LOANS_PRODUCT,LOOKUP_MASTER,AC_HD 
+                WHERE PROD_ID = #value# AND LOOKUP_REF_ID = BASE_CURRENCY AND LOOKUP_ID='FOREX.CURRENCY'
+                AND LOANS_PRODUCT.ACCT_HEAD=AC_HD.AC_HD_ID
+        </mapped-statement> -->             
+        
+    <result-map name="getAccountHeadID4PISDResultTL" class="java.util.HashMap">
+        <property name="accHeadID" column="ACCT_HEAD"/>
+        <property name="accHeadDesc" column="AC_HD_DESC"/>
+    </result-map>        
+    <mapped-statement name="getAccountHeadID4PISDTL" result-map="getAccountHeadID4PISDResultTL" >        
+        SELECT LOANS_PRODUCT.ACCT_HEAD, AC_HD_DESC FROM LOANS_PRODUCT, AC_HD 
+        WHERE PROD_ID = #value# AND LOANS_PRODUCT.ACCT_HEAD=AC_HD.AC_HD_ID
+        AND LOANS_PRODUCT.BEHAVES_LIKE NOT IN ('OD', 'CC')
+    </mapped-statement>
+        
+        <!--result-map name="getAccountDetailsPISDResultTL" class="java.util.HashMap">
+            <property name="fName" column="FNAME"/>
+            <property name="mName" column="MNAME"/>
+            <property name="lName" column="LNAME"/>
+            <property name="openingDt" column="CREATE_DT"/>
+            <property name="category" column="ACT_CAT_ID"/>
+            <property name="optMode" column="OPT_MODE_ID"/>
+            <property name="groupCode" column="GROUP_CODE_ID"/>
+            <property name="remarks" column="REMARKS"/>
+            <property name="CLEAR_BALANCE" column="CLEAR_BALANCE"/>  
+            <property name="EFFECTIVE_BALANCE" column="TOTAL_BALANCE"/>   
+            <property name="AVAILABLE_BALANCE" column="AVAILABLE_BALANCE"/>   
+            <property name="UNCLEAR_BALANCE" column="UNCLEAR_BALANCE"/>
+            <property name="SHADOW_DEBIT" column="SHADOW_DEBIT"/>
+            <property name="SHADOW_CREDIT" column="SHADOW_CREDIT"/>       
+        </result-map-->        
+        <!--> This query 'll fetch the details of given account no<-->
+        <!--mapped-statement name="getAccountDetailsPISDTL" result-map="getAccountDetailsPISDResultTL" >        
+            SELECT FNAME, MNAME, LNAME,LFD.CREATE_DT AS CREATE_DT,
+            CATEGORY AS ACT_CAT_ID, OPENING_MODE AS OPT_MODE_ID, CONSTITUTION AS GROUP_CODE_ID,LFD.REMARKS AS REMARKS, 
+            CLEAR_BALANCE, AVAILABLE_BALANCE, SHADOW_DEBIT, SHADOW_CREDIT,
+            UNCLEAR_BALANCE,TOTAL_BALANCE
+            FROM LOANS_FACILITY_DETAILS LFD,CUSTOMER,LOANS_BORROWER LB  
+            WHERE 
+               (LFD.ACCT_NUM = #value#)
+                AND (LB.BORROW_NO = LFD.BORROW_NO AND LB.CUST_ID = CUSTOMER.CUST_ID)
+        </mapped-statement-->
+    <mapped-statement name="getDisbursementAmtDetailsTL" result-class="java.util.HashMap" >
+        SELECT NVL(COUNT(ACT_NUM),0)AS NO_DISBURSEMENT,NVL(SUM(DISBURSEMENT_AMT),0) AS AMOUNT FROM 
+        LOANS_DISBURSEMENT WHERE 
+        ACT_NUM =#ACCOUNTNO# AND (STATUS IN('CREATED','MODIFIED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getDisbursementDetailsTL" result-class="java.util.HashMap" >        
+        SELECT NVL(COUNT(ACT_NUM),0) AS NO_DISBURSEMENT FROM LOANS_DISBURSEMENT 
+        WHERE ACT_NUM = #ACCOUNTNO# AND (STATUS IN ('CREATED', 'MODIFIED')) 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' AND AUTHORIZE_STATUS IS NOT NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getDisbursementDetailsKeyTL" result-class="java.util.HashMap" >        
+        SELECT DECODE(MAX(DISBURSEMENT_ID), NULL, 0, MAX(DISBURSEMENT_ID))::NUMERIC AS  MAX_DISBURSEMENT_ID 
+        FROM LOANS_DISBURSEMENT 
+        WHERE ACT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="getLoansRepaymentScheduleCount" result-class="java.util.HashMap" >        
+        SELECT COUNT(ACCT_NUM) "NO_SCHEDULE" 
+        FROM LOANS_REPAY_SCHEDULE 
+        WHERE ACCT_NUM = #ACCOUNTNO#  
+        AND (STATUS IN ('CREATED', 'MODIFIED')) 
+        AND (REPAY_ACTIVE = 'Y')
+    </mapped-statement>
+        
+    <mapped-statement name="insertLoansDisbursementDetails" result-class="java.util.HashMap" >        
+        INSERT INTO LOANS_DISBURSEMENT 
+        (ACT_NUM, DISBURSEMENT_ID, DISBURSEMENT_AMT, DISBURSEMENT_DT, REPAYMENT_SCHEDULE_NO, STATUS, STATUS_BY, STATUS_DT, TRANS_ID
+        ) VALUES (
+        #ACCOUNTNO#::VARCHAR, #DISBURSEMENT_ID#::NUMERIC, #DISBURSEMENT_AMT#::NUMERIC, #DISBURSEMENT_DT#::TIMESTAMP, #repaymentScheduleNo#::NUMERIC, #STATUS#::VARCHAR, #STATUS_BY#::VARCHAR, #STATUS_DT#::TIMESTAMP, #TRANS_ID#::VARCHAR)
+    </mapped-statement>
+        
+    <mapped-statement name="insertLoansDisbursementDetailsCumLoan" result-class="java.util.HashMap"> 
+        INSERT INTO LOAN_TRANS_DETAILS(ACT_NUM,PROD_ID,TRANS_TYPE,BRANCH_ID,TRN_CODE,PRINCIPLE,PBAL,INTEREST,IBAL,
+        PENAL,PIBAL,EXPENSE,EBAL,UPTO_DT_INT,TRANS_DT,TRANS_ID,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,TRANS_SLNO,NPA_INTEREST,NPA_INT_BAL,
+        NPA_PENAL,NPA_PENAL_BAL,EXCESS_AMT,POSTAGE_CHARGE,POSTAGE_CHARGE_BAL,ARBITARY_CHARGE,ARBITARY_CHARGE_BAL,LEGAL_CHARGE,
+        INSURANCE_CHARGE,INSURANCE_CHARGE_BAL,LEGAL_CHARGE_BAL,EXE_DEGREE,EXE_DEGREE_BAL,MISC_CHARGES,MISC_CHARGES_BAL,PARTICULARS,TRANS_MODE,ADVERTISE_CHARGE,ADVERTISE_CHARGE_BAL,NOTICE_CHARGES,OVER_DUE_INT)VALUES
+        (#ACCOUNTNO#::VARCHAR,#PROD_ID#::VARCHAR,#TRANSTYPE#::VARCHAR,#BRANCH_CODE#::VARCHAR,
+        #TRN_CODE#::VARCHAR,#PRINCIPAL#::NUMERIC,#PBAL#::NUMERIC,
+        #INTEREST#::NUMERIC,#IBAL#::NUMERIC,#PENAL#::NUMERIC,#PIBAL#::NUMERIC,#EXPENSE#::NUMERIC,#EBAL#::NUMERIC,#UPTO_DT_INT#::VARCHAR,
+        #TODAY_DT#::TIMESTAMP,#TRANS_ID#::VARCHAR,#AUTHORIZE_STATUS#::VARCHAR,#AUTHORIZE_BY#::VARCHAR,(SELECT SYS_DATE() FROM DUAL),#TRANS_SLNO#::NUMERIC,
+        #NPA_INTEREST#::NUMERIC,#NPA_INT_BAL#::NUMERIC,#NPA_PENAL#::NUMERIC,#NPA_PENAL_BAL#::NUMERIC,#EXCESS_AMT#::NUMERIC,
+        #POSTAGE_CHARGE#::NUMERIC,#POSTAGE_CHARGE_BAL#::NUMERIC,#ARBITARY_CHARGE#::NUMERIC,#ARBITARY_CHARGE_BAL#::NUMERIC,
+        #LEGAL_CHARGE#::NUMERIC,#INSURANCE_CHARGE#::NUMERIC,#INSURANCE_CHARGE_BAL#::NUMERIC,#LEGAL_CHARGE_BAL#::NUMERIC,#EXE_DEGREE#::NUMERIC,
+        #EXE_DEGREE_BAL#::NUMERIC,#MISC_CHARGES#::NUMERIC,#MISC_CHARGES_BAL#::NUMERIC,#PARTICULARS#::VARCHAR,#TRANS_MODE#::VARCHAR,cast(#ADVERTISE_CHARGES# as numeric),cast(#ADVERTISE_CHARGES_BAL# as numeric),#NOTICE_CHARGES#::NUMERIC,#OVER_DUE_INT#::NUMERIC)
+    </mapped-statement>  
+        
+    <mapped-statement name="insertLoansDisbursementDetailsCumLoanLTD" result-class="java.util.HashMap"> 
+        INSERT INTO LTD_LOAN_TRANS_DETAILS(ACT_NUM,PROD_ID,TRANS_TYPE,BRANCH_ID,TRN_CODE,PRINCIPLE,PBAL,INTEREST,IBAL,
+        PENAL,PIBAL,EXPENSE,EBAL,TRANS_DT,TRANS_ID,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,TRANS_SLNO,DAY_END_BALANCE)VALUES
+        (#ACT_NUM#::VARCHAR,#PROD_ID#::VARCHAR,#TRANS_TYPE#::VARCHAR,#BRANCH_ID#::VARCHAR,
+        #TRN_CODE#::VARCHAR,#PRINCIPAL#::NUMERIC,#PBAL#::NUMERIC,
+        #INTEREST#::NUMERIC,#IBAL#::NUMERIC,#PENAL#::NUMERIC,#PIBAL#::NUMERIC,#EXPENSE#::NUMERIC,#EBAL#::NUMERIC,
+        #TRANS_DT#::TIMESTAMP,#TRANS_ID#::VARCHAR,#AUTHORIZE_STATUS#::VARCHAR,#AUTHORIZE_BY#::VARCHAR,(SELECT SYS_DATE() FROM DUAL),#TRANS_SLNO#::NUMERIC,#DAY_END_BALANCE#::NUMERIC)
+    </mapped-statement>  
+              
+    <mapped-statement name="updateLoansDisbursementDetails" result-class="java.util.HashMap" >        
+        UPDATE LOANS_DISBURSEMENT SET 
+        DISBURSEMENT_AMT = NVL(DISBURSEMENT_AMT, 0) - #DISBURSEMENT_AMT#,
+        DISBURSEMENT_DT = #DISBURSEMENT_DT#,
+        STATUS = #STATUS#
+                <!--STATUS_BY = #STATUS_BY#,-->
+                <!--STATUS_DT = #STATUS_DT#-->
+            WHERE TRANS_ID = #TRANS_ID#
+            AND ACT_NUM = #ACCOUNTNO# AND
+            STATUS_DT = #STATUS_DT#
+        </mapped-statement>
+        <mapped-statement name="updateDepositSubInfo" result-class="java.util.HashMap" >
+        update DEPOSIT_SUB_ACINFO set TOTAL_INT_CREDIT=TOTAL_INT_CREDIT-#AMOUNT#,
+        TOTAL_INT_DRAWN=TOTAL_INT_DRAWN-#AMOUNT#,
+        LAST_INT_APPL_DT=#LAST_INT_APPL_DT#,
+        NEXT_INT_APPL_DT=#NEXT_INT_APPL_DT#,
+        LAST_TRANS_DT=#LAST_INT_APPL_DT#
+        where DEPOSIT_NO=substr(#DEPOSIT_NO#,1,13)
+        </mapped-statement>
+        <mapped-statement name="deleteLoansDisbursementDetails" result-class="java.util.HashMap" >        
+            UPDATE LOANS_DISBURSEMENT SET 
+                STATUS = #STATUS#
+                <!--STATUS_BY = #STATUS_BY#,-->
+                <!--STATUS_DT = #STATUS_DT#-->
+        WHERE TRANS_ID = #TRANS_ID#
+        AND ACT_NUM = #ACCOUNTNO# AND
+        STATUS_DT = #STATUS_DT#
+    </mapped-statement>
+        
+    <mapped-statement name="updateLoanBalancePrincipalDetails" result-class="java.util.HashMap" >        
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        LOAN_BALANCE_PRINCIPAL = NVL(LOAN_BALANCE_PRINCIPAL, 0) + cast(#AMOUNT# as numeric), 
+        LAST_REPAY_DT = #LAST_REPAY_DT#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updateBillsBalancePrincipalDetails" result-class="java.util.HashMap" >        
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        LOAN_BALANCE_PRINCIPAL = NVL(LOAN_BALANCE_PRINCIPAL, 0) + #AMOUNT#, 
+        LAST_REPAY_DT = #LAST_REPAY_DT#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="updateLastRepayDateDetails" result-class="java.util.HashMap" >        
+        UPDATE LOANS_FACILITY_DETAILS SET 
+        LAST_REPAY_DT = #LAST_REPAY_DT# 
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeLoansDisbursementDetails" result-class="java.util.HashMap" >        
+        UPDATE LOANS_DISBURSEMENT SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS#,
+        AUTHORIZE_BY = #AUTHORIZE_BY#,
+        AUTHORIZE_DT = #TODAY_DT:DATE# 
+        WHERE TRANS_ID = #TRANS_ID#
+        AND ACT_NUM = #ACCOUNTNO# AND
+        STATUS_DT = #TODAY_DT#<!--#STATUS_DT#-->
+    </mapped-statement>
+    <mapped-statement name="authorizeLoansDisbursementCumLoanDetails" result-class="java.util.HashMap" >        
+        UPDATE LOAN_TRANS_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS#,
+        AUTHORIZE_BY = #AUTHORIZE_BY#,
+        AUTHORIZE_DT = #TODAY_DT:DATE# 
+        WHERE TRANS_ID = #TRANS_ID#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeLoansActClosingCumLoanDetails" result-class="java.util.HashMap" >        
+        UPDATE LOAN_TRANS_DETAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS#,
+        AUTHORIZE_BY = #AUTHORIZE_BY#,
+        AUTHORIZE_DT = #TODAY_DT:DATE# 
+        WHERE TRANS_DT = #TRANS_DT#
+    </mapped-statement>
+        
+    <mapped-statement name="getDocumentStatusTL" result-class="java.util.HashMap" >        
+        SELECT DOCUMENT_COMPLETE 
+        FROM LOANS_CLASSIFY_DETAILS 
+        WHERE (DOCUMENT_COMPLETE NOT IN ('Y') OR DOCUMENT_COMPLETE IS NULL) AND 
+        ACCT_NUM = #ACCOUNTNO# AND (STATUS IN ('CREATED', 'MODIFIED')) 
+    </mapped-statement>
+        
+    <mapped-statement name="getLoanOverDueAmountTL" result-class="java.util.HashMap" >        
+        SELECT SUM(PRINCIPAL_AMT) OVERDUE_AMOUNT 
+        FROM LOANS_INSTALLMENT  
+        WHERE ACCT_NUM = #ACCOUNTNO# AND (STATUS IN ('CREATED', 'MODIFIED')) 
+        AND INSTALLMENT_PAID = 'N'
+    </mapped-statement>
+        
+    <mapped-statement name="getLOANS_INSTALLMENT_PaidPrincipalAmtTL" result-class="java.util.HashMap" >        
+        SELECT SUM(PRINCIPAL_AMT) PAID_PRIN_AMOUNT 
+        FROM LOANS_INSTALLMENT  
+        WHERE ACCT_NUM = #ACCOUNTNO# AND (STATUS IN ('CREATED', 'MODIFIED')) 
+        AND INSTALLMENT_PAID = 'Y'
+    </mapped-statement>
+        
+    <mapped-statement name="getLoansRepaymentAmtTL" result-class="java.util.HashMap" >        
+        SELECT SUM(PRINCIPAL_AMT) REPAID_AMOUNT 
+        FROM LOANS_REPAYMENT  
+        WHERE ACCT_NUM = #ACCOUNTNO# AND (STATUS IN ('CREATED', 'MODIFIED')) 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getOAbalenceForCharges" result-class="java.util.HashMap" >   
+        SELECT CLEAR_BALANCE,PROD_ID FROM ACT_MASTER WHERE ACT_NUM=#ACT_NUM#
+    </mapped-statement>
+         
+    <mapped-statement name="getLoanAccClosingChargeInfo" result-class="java.util.HashMap" >  
+        SELECT get_cust_name(cust.cust_id) as "CUSTOMER NAME",
+        LFD.AVAILABLE_BALANCE, LFD.PROD_ID, LFD.ACCT_NUM,LFD.CLEAR_BALANCE,LPI.AS_CUSTOMER_COMES,CA.STREET AS HOUSE_NAME
+        FROM  LOANS_FACILITY_DETAILS LFD,LOANS_PROD_INTREC LPI,
+        LOANS_BORROWER LB, CUSTOMER CUST , CUST_ADDR CA WHERE   CUST.CUST_ID=LB.CUST_ID AND LB.BORROW_NO = LFD.BORROW_NO AND LPI.PROD_ID=LFD.PROD_ID  
+        AND LFD.ACCT_NUM=#ACT_NUM# AND BRANCH_ID=#BRANCH_CODE# AND CA.CUST_ID = CUST.CUST_ID
+
+    </mapped-statement>
+          
+    <mapped-statement name="getLoanAccClosingChargeInfoInt" result-class="java.util.HashMap" >  
+        SELECT get_cust_name(cust.cust_id) as "CUSTOMER NAME",AC.INT_PAYABLE,AC.CHRG_DETAILS,AC.INSURANCE_CHARGE,
+        AC.PAYABLE_BAL,UNUSED_CHK,ACT_CLOSING_CHRG,CA.STREET AS HOUSE_NAME,
+        LFD.AVAILABLE_BALANCE, LFD.PROD_ID, LFD.ACCT_NUM,LFD.CLEAR_BALANCE,LFD.LOAN_BALANCE_PRINCIPAL,AC.AD_CREDIT_INT_AMT,AC.SUBSIDY_AMT,LFD.SUBSIDY_ADJUST_ACHD,AC.REBATE_AMT,AC.PRINCIPAL_WAIVE_AMT
+        FROM  LOANS_FACILITY_DETAILS LFD, ACT_CLOSING AC,
+        LOANS_BORROWER LB, CUSTOMER CUST ,CUST_ADDR CA  WHERE   CUST.CUST_ID=LB.CUST_ID AND LB.BORROW_NO = LFD.BORROW_NO 
+        AND AC.ACT_NUM=LFD.ACCT_NUM    AND LFD.ACCT_NUM=#ACT_NUM# AND BRANCH_ID=#BRANCH_CODE# AND
+        CA.CUST_ID = CUST.CUST_ID AND
+        AC.STATUS_DT IN (SELECT MAX(STATUS_DT) FROM ACT_CLOSING WHERE ACT_NUM = #ACT_NUM#)
+    </mapped-statement>
+          
+    <mapped-statement name="getNoOfDaysinLoan" result-class="java.util.HashMap" > 
+        SELECT   LFD.*, LSD.*   FROM  LOANS_SANCTION_DETAILS LSD, LOANS_FACILITY_DETAILS LFD WHERE 
+        LSD.BORROW_NO = LFD.BORROW_NO  AND LSD.SANCTION_NO=LFD.SANCTION_NO AND LFD.ACCT_NUM=#ACT_NUM# AND BRANCH_ID=#BRANCH_CODE#
+        AND ACCT_STATUS !='CLOSED'
+    </mapped-statement>
+       
+    <mapped-statement name="getDisburseAMt" result-class="java.util.HashMap" > 
+        SELECT SUM(L.PRINCIPLE) AS PRINCIPAL FROM LOAN_TRANS_DETAILS l where L.ACT_NUM=#ACT_NUM# AND L.BRANCH_ID=#BRANCH_CODE# AND L.AUTHORIZE_STATUS='AUTHORIZED' 
+        AND L.TRANS_TYPE='DEBIT' AND L.TRN_CODE='DP'
+   </mapped-statement>
+           
+    <mapped-statement name="getLastIntCalDate" result-class="java.util.HashMap" > 
+        SELECT   LFD.PROD_ID,LAST_INT_CALC_DT,TOTAL_BALANCE ,INSTALL_TYPE,ACCT_OPEN_DT ,LSD.LIMIT ,LFD.ACCT_NUM,LRS.EMI_IN_SIMPLEINTREST
+        FROM  LOANS_FACILITY_DETAILS LFD,
+        LOANS_SANCTION_DETAILS LSD,
+        LOANS_REPAY_SCHEDULE LRS WHERE  
+        LFD.ACCT_NUM=#WHERE# AND LFD.ACCT_NUM=LRS.ACCT_NUM AND 
+        LSD.SANCTION_NO=LFD.SANCTION_NO AND 
+        LSD.SL_NO=LFD.SL_NO AND 
+        LSD.BORROW_NO=LFD.BORROW_NO AND
+        LRS.STATUS !='DELETED' AND 
+        LRS.REPAY_ACTIVE ='Y'
+    </mapped-statement>
+            
+    <mapped-statement name="getLastIntCalDateAD" result-class="java.util.HashMap" > 
+        SELECT   PROD_ID,LAST_INT_CALC_DT,TOTAL_BALANCE ,ACCT_OPEN_DT,ACCT_NUM
+        FROM  LOANS_FACILITY_DETAILS 
+        WHERE   ACCT_NUM=#WHERE# 
+    </mapped-statement>
+            
+    <dynamic-mapped-statement name="getLoanBehaves" result-class="java.util.HashMap">
+        SELECT BEHAVES_LIKE ,AUTHORIZE_REMARK
+        FROM LOANS_PRODUCT LP
+        WHERE LP.AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="PROD_ID">
+                    LP.PROD_ID =#PROD_ID#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="PROD_DESC">
+                    LP.PROD_DESC =#PROD_DESC#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        AND
+        (LP.STATUS != 'DELETED' OR LP.STATUS IS NULL)                  
+    </dynamic-mapped-statement>
+            
+            
+    <mapped-statement name="updateLoanDisbursementCharges" result-class="java.util.HashMap">
+        UPDATE  LOANS_DISBURSEMENT SET DISBURSEMENT_AMT=(NVL(DISBURSEMENT_AMT,0)-(#AMOUNT#))
+        WHERE ACT_NUM = #ACCOUNTNO# AND (STATUS IN ('CREATED', 'MODIFIED')) 
+        AND AUTHORIZE_STATUS IS  NULL
+    </mapped-statement>
+            
+    <mapped-statement name="updateLoansFacilityDetailsTemp" result-class="java.util.HashMap">
+        UPDATE  LOANS_FACILITY_DETAILS SET TEMP_LAST_INT_CALC_DT =#LASTINTCALCDT:DATE#
+        WHERE ACCT_NUM = #ACCOUNTNO#
+    </mapped-statement>
+    
+    <mapped-statement name="insertintoloanTransDetails" result-class="java.util.HashMap">
+        insert into loan_trans_details (ACT_NUM,BRANCH_ID,TRANS_DT,TRANS_TYPE,TRN_CODE,INTEREST,IBAL,PENAL,PIBAL,TRANS_ID,EFFECTIVE_DATE,PRINCIPLE,PBAL,PROD_ID)
+        VALUES(#ACCOUNTNO#,#BRANCH_CODE#,#TODAY_DT#,#TRANSTYPE#,#TRN_CODE#,
+        #INTEREST#,#IBAL#,#PENAL#,#PIBAL#,#TRANS_ID#,#EFFECTIVE_DT#,#PRINCIPLE#,#PBAL#,#PROD_ID#)
+    </mapped-statement>
+            
+    <mapped-statement name="insertintoloanTransAuthDetails" result-class="java.util.HashMap">
+        insert into loan_trans_details (ACT_NUM,BRANCH_ID,TRANS_DT,TRANS_TYPE,TRN_CODE,INTEREST,IBAL,PENAL,PIBAL,TRANS_ID,EFFECTIVE_DATE,PRINCIPLE,PBAL,PROD_ID,
+        AUTHORIZE_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,EBAL,EXPENSE,TRANS_SLNO,NPA_INTEREST,NPA_INT_BAL,
+        NPA_PENAL,NPA_PENAL_BAL,EXCESS_AMT ,TRANS_MODE,PARTICULARS)
+        VALUES(#ACCOUNTNO#::VARCHAR,#BRANCH_CODE#::VARCHAR,#TODAY_DT#::TIMESTAMP,#TRANSTYPE#::VARCHAR,#TRN_CODE#::VARCHAR,
+        cast(#INTEREST# as numeric),cast(#IBAL# as numeric),cast(#PENAL# as numeric),cast(#PIBAL# as numeric),#TRANS_ID#::VARCHAR,#EFFECTIVE_DT#::TIMESTAMP,
+        #PRINCIPLE#::NUMERIC,#PBAL#::NUMERIC,#PROD_ID#::VARCHAR,(SELECT SYS_DATE() FROM DUAL),#AUTHORIZE_STATUS#::VARCHAR,#AUTHORIZE_BY#::VARCHAR,
+        #EBAL#::NUMERIC,#EXPENSE#::NUMERIC,#TRANS_SLNO#::NUMERIC,
+        #NPA_INTEREST#::NUMERIC,#NPA_INT_BAL#::NUMERIC,#NPA_PENAL#::NUMERIC,#NPA_PENAL_BAL#::NUMERIC,#EXCESS_AMT#::NUMERIC,#TRANS_MODE#::VARCHAR,#PARTICULARS#::VARCHAR)<!--testing -->
+    </mapped-statement>
+         
+    <mapped-statement name="insertintoloanTransAuthDetailsLTD" result-class="java.util.HashMap">
+        insert into LTD_LOAN_TRANS_DETAILS (ACT_NUM,BRANCH_ID,TRANS_DT,TRANS_TYPE,TRN_CODE,INTEREST,IBAL,PENAL,PIBAL,TRANS_ID,EFFECTIVE_DATE,PRINCIPLE,PBAL,PROD_ID,
+        AUTHORIZE_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,EBAL,EXPENSE,TRANS_SLNO,DAY_END_BALANCE,TRANS_MODE)
+        VALUES(#ACCOUNTNO#::VARCHAR,#BRANCH_CODE#::VARCHAR,#TRANS_DT#::TIMESTAMP,#TRANSTYPE#::VARCHAR,#TRN_CODE#::VARCHAR,
+        #INTEREST#::VARCHAR,#IBAL#::VARCHAR,#PENAL#::VARCHAR,#PIBAL#::VARCHAR,#TRANS_ID#::VARCHAR,#EFFECTIVE_DT#::TIMESTAMP,
+        #PRINCIPLE#::NUMERIC,#PBAL#::NUMERIC,#PROD_ID#::VARCHAR,(SELECT SYS_DATE() FROM DUAL),#AUTHORIZE_STATUS#::VARCHAR,#AUTHORIZE_BY#::VARCHAR,
+        #EBAL#::NUMERIC,#EXPENSE#::NUMERIC,#TRANS_SLNO#::NUMERIC,#DAY_END_BALANCE#::NUMERIC,#TRANS_MODE#::VARCHAR)<!--testing -->
+    </mapped-statement>
+         
+    <mapped-statement name="getIntAmtForGLUpdate" result-class="java.util.HashMap">
+        SELECT PRINCIPLE AS PRINCIPAL_AMOUNT,INTEREST AS INTEREST_AMOUNT,PENAL AS PENUL_INTEREST_AMOUNT ,NPA_INTEREST,NPA_PENAL FROM loan_trans_details WHERE 
+        TRANS_ID=#TRANS_ID# AND ACT_NUM=#ACCOUNTNO# AND
+        (TRN_CODE='C*' OR TRN_CODE='OLG')
+    </mapped-statement>
+            
+    <mapped-statement name="getIntAmtForGLUpdateAD" result-class="java.util.HashMap">
+        SELECT PBAL AS PRINCIPAL_AMOUNT,INTEREST AS INTEREST_AMOUNT,PENAL AS PENUL_INTEREST_AMOUNT,NPA_INTEREST,NPA_PENAL  FROM ADV_TRANS_DETAILS WHERE TRANS_ID=#TRANS_ID# AND ACT_NUM=#ACCOUNTNO# AND
+        (TRN_CODE='C*' OR TRN_CODE='OLG')
+    </mapped-statement>
+            
+    <mapped-statement name="dayEndBalanceForIntCalcADNew" result-class="java.util.LinkedHashMap">
+                <!--SELECT *  from  ADVANCES_DAYEND_BALANCE WHERE ACT_NUM=#ACT_NUM# and
+                DAY_END_DT BETWEEN #START_DATE# and #CURR_DATE# ORDER BY DAY_END_DT-->
+     <!--   SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.AMT, B.AMT AS NEXT_AMT FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM ADVANCES_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT,
+        AMT
+        from ADVANCES_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM ADVANCES_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT -->
+        
+        SELECT PROD_ID, ACT_NUM, #START_DATE:DATE# AS DAY_END_DT,
+        (SELECT MIN (K.DAY_END_DT)
+        FROM ADVANCES_DAYEND_BALANCE K
+        WHERE K.ACT_NUM = A.ACT_NUM
+        AND K.DAY_END_DT &gt; #START_DATE:DATE#
+        AND K.DAY_END_DT &lt;= #CURR_DATE:DATE#) AS NEXT_DT,
+        (Select nvl(amt,0) from advances_dayend_balance k  where K.ACT_NUM = #ACT_NUM# and   K.DAY_END_DT in(SELECT MAX (c.day_end_dt)
+        FROM advances_dayend_balance c
+        WHERE c.act_num = K.ACT_NUM AND c.day_end_dt  &lt;=  #START_DATE:DATE#)) as AMT,   
+        (   
+        select nvl(amt,0) from ADVANCES_DAYEND_BALANCE g where G.ACT_NUM = #ACT_NUM# and G.DAY_END_DT in
+        (SELECT MIN (K.DAY_END_DT)
+        FROM ADVANCES_DAYEND_BALANCE K
+        WHERE K.ACT_NUM = #ACT_NUM#
+        AND K.DAY_END_DT &gt; #START_DATE:DATE#
+        AND K.DAY_END_DT &lt;= #CURR_DATE:DATE#)       
+        ) as next_amt
+        FROM ADVANCES_DAYEND_BALANCE A
+        WHERE A.ACT_NUM = #ACT_NUM#
+        AND A.DAY_END_DT IN (
+        SELECT MAX (C.DAY_END_DT)
+        FROM ADVANCES_DAYEND_BALANCE C
+        WHERE C.ACT_NUM = A.ACT_NUM
+        AND C.DAY_END_DT &lt;= #START_DATE:DATE#)
+        Union
+        SELECT   a.prod_id, a.act_num, a.day_end_dt, a.next_dt, a.amt,
+        b.amt AS next_amt
+        FROM (
+        SELECT prod_id, act_num, day_end_dt,
+        NVL ((SELECT MIN (day_end_dt)
+        FROM advances_dayend_balance b
+        WHERE b.day_end_dt &gt; a.day_end_dt AND act_num = #ACT_NUM#),
+        day_end_dt
+        ) AS next_dt,
+        amt
+        FROM advances_dayend_balance a 
+        WHERE act_num = #ACT_NUM# AND day_end_dt BETWEEN #START_DATE:DATE# AND #CURR_DATE:DATE#) a,
+        (SELECT *
+        FROM advances_dayend_balance) b   
+        WHERE a.prod_id = b.prod_id
+        AND a.act_num = b.act_num
+        AND b.day_end_dt = a.next_dt
+    </mapped-statement>
+  <mapped-statement name="dayEndBalanceForIntCalcAD" result-class="java.util.LinkedHashMap">
+        SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.AMT, B.AMT AS NEXT_AMT FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM ADVANCES_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT,
+        AMT
+        from ADVANCES_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM ADVANCES_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT  
+    </mapped-statement>
+    <mapped-statement name="dayEndBalanceForIntCalcTL" result-class="java.util.LinkedHashMap">
+                <!--SELECT *  from  ADVANCES_DAYEND_BALANCE WHERE ACT_NUM=#ACT_NUM# and
+
+                DAY_END_DT BETWEEN #START_DATE# and #CURR_DATE# ORDER BY DAY_END_DT-->
+        SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.AMT, B.AMT AS NEXT_AMT FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM LOANS_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT, AMT
+        from LOANS_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM LOANS_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND
+                 <!--#CURR_DATE:DATE# &gt;= A.NEXT_DT AND--> B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT
+    </mapped-statement>
+            
+    <mapped-statement name="dayEndBalanceForSubsidyIntCalcTL" result-class="java.util.LinkedHashMap">
+                <!--SELECT *  from  ADVANCES_DAYEND_BALANCE WHERE ACT_NUM=#ACT_NUM# and
+
+                DAY_END_DT BETWEEN #START_DATE# and #CURR_DATE# ORDER BY DAY_END_DT-->
+        SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.AMT+NVL(A.AVAILABLE_SUBSIDY,0) as "AMT", B.AMT+NVL(B.AVAILABLE_SUBSIDY,0) AS "NEXT_AMT" FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM LOANS_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT, AMT,AVAILABLE_SUBSIDY
+        from LOANS_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM LOANS_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND
+                 <!--#CURR_DATE:DATE# &gt;= A.NEXT_DT AND--> B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT
+    </mapped-statement>            
+            
+    <mapped-statement name="dayEndBalanceForIntCalcFlat_TL" result-class="java.util.LinkedHashMap">
+        SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.FLAT_RATE_PRINCIPAL AS AMT, B.FLAT_RATE_PRINCIPAL AS NEXT_AMT FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM LOANS_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT,
+        FLAT_RATE_PRINCIPAL
+        from LOANS_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM LOANS_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT
+    </mapped-statement>
+    <mapped-statement name="dayEndBalanceForIntCalc_simple_TL" result-class="java.util.LinkedHashMap">
+        SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.PRINCIPAL AS AMT, B.PRINCIPAL AS NEXT_AMT FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM LOANS_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT,
+        PRINCIPAL
+        from LOANS_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM LOANS_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT
+    </mapped-statement>
+            
+    <mapped-statement name="dayEndBalanceForSubsidyIntCalc_simple_TL" result-class="java.util.LinkedHashMap">
+        SELECT A.PROD_ID, A.ACT_NUM, A.DAY_END_DT, A.NEXT_DT, A.PRINCIPAL-NVL(A.AVAILABLE_SUBSIDY,0) AS "AMT", B.PRINCIPAL-NVL(B.AVAILABLE_SUBSIDY,0) AS "NEXT_AMT" FROM
+        (SELECT PROD_ID, ACT_NUM, DAY_END_DT, 
+        NVL((SELECT MIN(DAY_END_DT) FROM LOANS_DAYEND_BALANCE B WHERE B.DAY_END_DT &gt; A.DAY_END_DT
+        AND ACT_NUM=#ACT_NUM#),DAY_END_DT) AS NEXT_DT,
+        PRINCIPAL,AVAILABLE_SUBSIDY
+        from LOANS_DAYEND_BALANCE A WHERE ACT_NUM=#ACT_NUM# and
+        DAY_END_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE#) A,
+        (SELECT * FROM LOANS_DAYEND_BALANCE) B
+        WHERE A.PROD_ID=B.PROD_ID AND A.ACT_NUM=B.ACT_NUM AND B.DAY_END_DT=A.NEXT_DT ORDER BY DAY_END_DT
+    </mapped-statement>
+            
+    <mapped-statement name="transDetailsForCumulative_TL" result-class="java.util.LinkedHashMap">
+        SELECT A.ACT_NUM, A.TRANS_DT, A.NEXT_DT, A.PBAL AS AMT, B.PBAL AS NEXT_AMT FROM
+        (SELECT PROD_ID, ACT_NUM, TRANS_DT, 
+        NVL((SELECT MIN(TRANS_DT) FROM LOAN_TRANS_DETAILS B WHERE B.TRANS_DT > A.TRANS_DT
+        AND ACT_NUM=#ACT_NUM#),TRANS_DT) AS NEXT_DT, PBAL
+        from LOAN_TRANS_DETAILS A WHERE ACT_NUM=#ACT_NUM# and
+        TRANS_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE# AND TRANS_SLNO = (SELECT MAX(TRANS_SLNO) FROM LOAN_TRANS_DETAILS
+        WHERE ACT_NUM=A.ACT_NUM AND TRANS_DT=A.TRANS_DT GROUP BY ACT_NUM, TRANS_DT) ORDER BY TRANS_DT) A,
+        (SELECT * FROM LOAN_TRANS_DETAILS LTD WHERE TRANS_SLNO = (SELECT MAX(TRANS_SLNO) FROM LOAN_TRANS_DETAILS
+        WHERE ACT_NUM=LTD.ACT_NUM AND TRANS_DT=LTD.TRANS_DT AND UPTO_DT_INT ='Y' GROUP BY ACT_NUM, TRANS_DT)) B
+        WHERE A.ACT_NUM=B.ACT_NUM AND B.TRANS_DT=A.NEXT_DT ORDER BY TRANS_DT
+    </mapped-statement>
+        
+        <!--dynamic-mapped-statement name="transDetailsForCumulative_TL" result-class="java.util.LinkedHashMap">
+                SELECT A.ACT_NUM, A.TRANS_DT, A.NEXT_DT, A.PBAL AS AMT, B.PBAL AS NEXT_AMT FROM
+                (SELECT PROD_ID, ACT_NUM, TRANS_DT, 
+                NVL((SELECT MIN(TRANS_DT) FROM LOAN_TRANS_DETAILS B WHERE B.TRANS_DT > A.TRANS_DT
+                AND ACT_NUM=#ACT_NUM#),TRANS_DT) AS NEXT_DT, PBAL
+                from LOAN_TRANS_DETAILS A WHERE ACT_NUM=#ACT_NUM# and
+                TRANS_DT BETWEEN #START_DATE:DATE# and #CURR_DATE:DATE# AND TRANS_SLNO = (SELECT MAX(TRANS_SLNO) FROM LOAN_TRANS_DETAILS
+                WHERE ACT_NUM=A.ACT_NUM AND TRANS_DT=A.TRANS_DT GROUP BY ACT_NUM, TRANS_DT) ORDER BY TRANS_DT) A,
+                (SELECT * FROM LOAN_TRANS_DETAILS LTD WHERE TRANS_SLNO = (SELECT MAX(TRANS_SLNO) FROM LOAN_TRANS_DETAILS
+                WHERE ACT_NUM=LTD.ACT_NUM AND TRANS_DT=LTD.TRANS_DT 
+                <dynamic>
+                    <isParameterPresent>
+                        <isNotNull prepend="AND" property="DEPOSIT_PREMATURE_CLOSER">
+                            UPTO_DT_INT ='Y'
+                         </isNotNull>
+                    </isParameterPresent>
+                </dynamic>
+                GROUP BY ACT_NUM, TRANS_DT)) B
+                WHERE A.ACT_NUM=B.ACT_NUM AND B.TRANS_DT=A.NEXT_DT ORDER BY TRANS_DT
+        </dynamic-mapped-statement-->
+        
+    <mapped-statement name="updateInterestAmtTL" inline-parameters="true">
+        UPDATE LOANS_FACILITY_DETAILS SET EXCESS_AMT=#EXCESS_AMT#::NUMERIC WHERE ACCT_NUM=#LIEN_AC_NO#::VARCHAR
+    </mapped-statement>
+        
+    <mapped-statement name="updateinterestYes" inline-parameters="true">
+        UPDATE LOAN_TRANS_DETAILS SET UPTO_DT_INT ='Y' WHERE 
+        TRANS_SLNO=(SELECT MAX(TRANS_SLNO) FROM LOAN_TRANS_DETAILS WHERE ACT_NUM=#ACCOUNTNO#)
+        AND ACT_NUM=#ACCOUNTNO#
+    </mapped-statement>
+        
+    <mapped-statement name="getBranchTL" result-class="java.lang.String">
+        SELECT BRANCH_ID FROM LOANS_FACILITY_DETAILS WHERE ACCT_NUM = #value#
+                
+    </mapped-statement>
+
+    <mapped-statement name="getBehavesLikeForLoanAcc_No" result-class="java.util.HashMap" > 
+	    SELECT behaves_like FROM loans_product lp,LOANS_FACILITY_DETAILS LFD
+	    WHERE lp.authorize_status = 'AUTHORIZED' AND LFD.PROD_ID=LP.PROD_ID and 
+		LFD.ACCT_NUM=#WHERE# AND (lp.status != 'DELETED' OR lp.status IS NULL)  
+    </mapped-statement>   
+
+    <result-map name="getTransferClosedAccountResultList" class="java.util.LinkedHashMap">
+        <property name="AccountNo" column="ACT_NUM"/>
+        <property name="CustomerName" column="CUSTOMER_NAME"/>
+        <property name="HouseName" column="HOUSE_NAME"/>
+        <property name="CustomerType" column="CUST_TYPE_ID"/>
+    </result-map> 
+    
+    <dynamic-mapped-statement name="Transfer.getClosedAccountListCharges" result-map="getTransferClosedAccountResultList">
+        SELECT ACCT_NUM AS ACT_NUM, get_cust_name(cu.cust_id) AS 
+        CUSTOMER_NAME,CA.STREET AS HOUSE_NAME, LB.CATEGORY AS CUST_TYPE_ID
+        FROM LOANS_FACILITY_DETAILS LFD, LOANS_BORROWER LB, CUSTOMER CU , CUST_ADDR CA
+        WHERE LB.CUST_ID = CU.CUST_ID AND CA.CUST_ID = CU.CUST_ID AND CA.ADDR_TYPE= CU.COMM_ADDR_TYPE AND 
+        LB.BORROW_NO = LFD.BORROW_NO AND 
+        LFD.PROD_ID = #PROD_ID# AND LFD.ACCT_STATUS !='CLOSED' AND
+        <!--(LFD.ACCT_STATUS IN ('NEW','TRANSFER_IN', 'DECEASED', 'OPERATIONAL') OR LFD.ACCT_STATUS IS NULL) AND -->
+        LFD.STATUS NOT IN ('DELETED') AND 
+        LFD.AUTHORIZE_STATUS_1 ='AUTHORIZED' 
+       <!-- LFD.ACCT_STATUS ='CLOSED' comment by abi --> AND LFD.STATUS!='DELETED' <!-- AND
+            LFD.ACCT_NUM NOT IN (SELECT ACT_NUM FROM LOANS_ACCT_CHARGE_DETAILS WHERE PROD_ID = #PROD_ID#)-->
+        AND LFD.BRANCH_ID=#SELECTED_BRANCH#
+        <dynamic> <!-- This dynamic statement given by Rajesh. -->
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerName">
+                    UPPER(get_cust_name(CU.CUST_ID)) LIKE UPPER('%$CustomerName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AccountNo">
+                    UPPER(LFD.ACCT_NUM) LIKE UPPER('%$AccountNo$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="HouseName">
+                    UPPER(CA.STREET) LIKE UPPER('%$HouseName$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="CustomerType">
+                    UPPER(LB.CATEGORY) LIKE UPPER('%$CustomerType$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY ACCT_NUM
+              <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="" property="FILTERED_LIST" compareValue="FILTERED_LIST_org.postgresql.Driver" >
+                    LIMIT 100
+                </isEqual>
+            </isPropertyAvailable>
+        </dynamic>   
+    </dynamic-mapped-statement>   
+    <mapped-statement name="dayEndBalanceForIntCalc_simple_Due_TL" result-class="java.util.LinkedHashMap">
+        SELECT   a.prod_id, a.acct_num, A.LAST_INT_CALC_DT +1 as day_end_dt,  A.LAST_INT_CALC_DT +1 as next_dt, A.LOAN_BALANCE_PRINCIPAL AS amt,
+         A.LOAN_BALANCE_PRINCIPAL  AS next_amt
+         from LOANS_FACILITY_DETAILS a
+         where a.ACCT_NUM=#ACT_NUM#
+    </mapped-statement>
+</sql-map>

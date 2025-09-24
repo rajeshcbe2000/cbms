@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingProductTOMap">
+    
+    
+    <mapped-statement name="insertTradingProductTO" inline-parameters="true">
+        INSERT INTO TRADING_PRODUCT (PRODUCT_ID, PRODUCT_NAME, PRODUCT_DES, GROUP_ID,  SUB_GROUP_ID, TAX_MODE ,
+        TAX_PERCENTAGE,UNITTYPE,REORDER_LEVEL,CREATED_DT,STATUS,STATUS_BY , STATUS_DT,NEW_PRODUCT)
+        VALUES(
+        #productID:VARCHAR#, #productName:VARCHAR#,#productDesc:VARCHAR#,#groupName:VARCHAR#,#subGroupName:VARCHAR#,
+        #tax:VARCHAR#,#taxPer:NUMERIC#,#unitType:VARCHAR#,#reOrderLevel:NUMERIC#,#date:DATE#,#status:VARCHAR#, #statusBy:VARCHAR#, 
+        (SELECT SYS_DATE() FROM DUAL),#newProd:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingProductTO" inline-parameters="true">
+        UPDATE TRADING_PRODUCT SET 		
+        PRODUCT_ID = #productID:VARCHAR#,
+        PRODUCT_NAME = #productName:VARCHAR#,
+        PRODUCT_DES   = #productDesc:VARCHAR#,
+        GROUP_ID = #groupName:VARCHAR#,
+        SUB_GROUP_ID = #subGroupName:VARCHAR#,
+        TAX_MODE = #tax:VARCHAR#,
+        TAX_PERCENTAGE = #taxPer:NUMERIC#,
+        UNITTYPE = #unitType:VARCHAR#,
+        REORDER_LEVEL = #reOrderLevel:NUMERIC#,
+        CREATED_DT = #date:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE PRODUCT_ID = #productID:VARCHAR# 
+    </mapped-statement>
+    
+    <result-map name="getTradingProductTOResult" class="com.see.truetransact.transferobject.trading.tradingproduct.TradingProductTO">
+        <property name="productID" column="PRODUCT_ID"/>
+        <property name="productName" column="PRODUCT_NAME"/>
+        <property name="productDesc" column="PRODUCT_DES"/>
+        <property name="groupName" column="GROUP_ID"/>
+        <property name="subGroupName" column="SUB_GROUP_ID"/>
+        <property name="tax" column="TAX_MODE"/>
+        <property name="taxPer" column="TAX_PERCENTAGE"/>
+        <property name="unitType" column="UNITTYPE"/>
+        <property name="reOrderLevel" column="REORDER_LEVEL"/>
+        <property name="newProd" column="NEW_PRODUCT"/>
+        <property name="date" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <mapped-statement name="getTradingGroupName" result-class="java.util.HashMap">
+        SELECT GROUP_ID AS KEY,GROUP_NAME AS VALUE FROM TRADING_GROUP_MASTER WHERE STATUS !='DELETED' AND
+        (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingItemAcHd" result-class="java.util.HashMap">
+        SELECT ACCOUNTHEAD_ID AS KEY,ACCOUNTHEAD_DESC  AS VALUE
+        FROM TRADING_AC_HD WHERE ACCOUNTHEAD_TYPE='Item A/c' AND STATUS !='DELETED' AND
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+    
+    <result-map name="getSubGroup-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="KEY" />
+        <property name="lookUpDesc" column="VALUE" />
+    </result-map>
+    
+    <mapped-statement name="getTradingSubGroupName" result-map="getSubGroup-result">
+        SELECT SUB_GROUP_ID AS KEY, SUB_GROUP_NAME AS VALUE FROM TRADING_SUB_GROUP TSG, TRADING_GROUP_MASTER TGM
+        WHERE TGM.GROUP_ID = TSG.GROUP_ID AND TSG.STATUS != 'DELETED' AND
+        TGM.STATUS != 'DELETED' AND (TGM.AUTHORIZED_STATUS IS NULL OR TGM.AUTHORIZED_STATUS = 'AUTHORIZED')
+        AND GROUP_NAME = #GROUP_NAME# AND TSG.ACTIVE != 'N'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingProductEdit" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,PRODUCT_NAME,GROUP_ID,SUB_GROUP_ID,AUTHORIZE_STATUS,CREATED_DT FROM TRADING_PRODUCT WHERE STATUS != 'DELETED'AND
+        (AUTHORIZE_STATUS IS NULL  OR AUTHORIZE_STATUS ='AUTHORIZED') 
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_NAME">
+                    UPPER(PRODUCT_NAME) LIKE UPPER('%$PRODUCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUB_GROUP_ID">
+                    UPPER(SUB_GROUP_ID) LIKE UPPER('%$SUB_GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_ID">
+                    UPPER(PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(CREATED_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY PRODUCT_ID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingProductDelete" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,PRODUCT_NAME,GROUP_ID,SUB_GROUP_ID,AUTHORIZE_STATUS,CREATED_DT FROM TRADING_PRODUCT WHERE STATUS != 'DELETED'AND
+        AUTHORIZE_STATUS IS NULL AND AUTHORIZED_DT IS NULL
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_NAME">
+                    UPPER(PRODUCT_NAME) LIKE UPPER('%$PRODUCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_ID">
+                    UPPER(PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY PRODUCT_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectTradingProductTO" result-map="getTradingProductTOResult" >
+        SELECT * FROM TRADING_PRODUCT WHERE PRODUCT_ID=#PRODUCT_ID# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingProductForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,PRODUCT_NAME,GROUP_ID,SUB_GROUP_ID,CREATED_DT,AUTHORIZE_STATUS FROM TRADING_PRODUCT WHERE STATUS != 'DELETED' AND 
+        AUTHORIZE_STATUS IS NULL AND STATUS_BY!= #USER_ID# 
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" > 
+                AUTHORIZED_DT IS NULL
+            </isEqual>
+        </dynamic>
+        ORDER BY  PRODUCT_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeTradingProduct" result-class="java.util.HashMap">
+        UPDATE TRADING_PRODUCT SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND PRODUCT_ID=#PRODUCT_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingProductTO" inline-parameters="true">
+        UPDATE TRADING_PRODUCT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE PRODUCT_ID=#productID:VARCHAR# 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingProductView" result-class="java.util.LinkedHashMap">
+        SELECT PRODUCT_ID,PRODUCT_NAME,GROUP_ID FROM TRADING_PRODUCT WHERE STATUS != 'DELETED' 
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_NAME">
+                    UPPER(PRODUCT_NAME) LIKE UPPER('%$PRODUCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="GROUP_ID">
+                    UPPER(GROUP_ID) LIKE UPPER('%$GROUP_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_ID">
+                    UPPER(PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY PRODUCT_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getCheckingProductName" result-class="java.util.LinkedHashMap">
+        SELECT * FROM TRADING_PRODUCT WHERE PRODUCT_NAME = #PRODUCT_NAME# AND UNITTYPE = #UNITTYPE# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+        
+</sql-map>

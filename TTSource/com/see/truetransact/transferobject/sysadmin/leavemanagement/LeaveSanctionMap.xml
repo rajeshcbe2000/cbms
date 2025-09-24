@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LeaveSanctionTOMap">
+
+	<!-- Use LeaveSanctionTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLeaveAppl" inline-parameters="true">
+        INSERT INTO LEAVE_APPLICATION
+        (LEAVE_APPL_ID,PROCESS_TYPE,EMP_ID,APPL_DT,LEAVE_REQ_FROM,LEAVE_REQ_TO,NO_OF_DAYS,
+        LEAVE_PURPOSE,SANCTION_REF_NO, SANCTION_DT,STATUS,AUTHORIZED_BY,AUTHORIZED_DT,
+        AUTHORIZED_STATUS,STATUS_BY,STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE,OLD_SANCTION_REF_NO,
+        WITH_LTC,TYPE_OF_BLOCK,WITH_LEAVE_ENCASHMENT,ENCASHMENT_DAYS,ENCASHMENT_LEAVE_TYPE,
+        SANCTION_STATUS,LEAVE_CANCEL,REMARKS,SAN_AUTHORITY  
+        ) VALUES (
+        #leaveApplID:VARCHAR#,#processType:VARCHAR#,#empID:VARCHAR#,#appl_dt:DATE#,#req_from:DATE#,#req_to:DATE#,
+        #noOfdays:NUMERIC#, #leavePurpose:VARCHAR#, #sanNo:VARCHAR#,#sanDate:DATE#,#status:VARCHAR#,
+        #authorizedBy:VARCHAR#,#authorizedDt:DATE#,#authorizedStatus:VARCHAR#,#statusBy:VARCHAR#,
+        #statusDt:DATE#,#createdBy:VARCHAR#, #createdDt:DATE#,#branch:VARCHAR#,#oldSanNo:VARCHAR#,
+        #withLtc:VARCHAR#,#blockType:VARCHAR#,#withLeaveEncashment:VARCHAR#,#leaveEncashmentDays:VARCHAR#,
+        #cboEncashmentData:VARCHAR#,#sanStatus:VARCHAR#,#leaveCancel:VARCHAR#,#remarks:VARCHAR#,#sanAuthority:VARCHAR#) 
+    </mapped-statement>
+    <mapped-statement name="insertLeaveApplTable" inline-parameters="true">
+        INSERT INTO LEAVE_APPLICATION_SPLIT
+        (LEAVE_APPL_ID,LEAVE_TYPE,NO_OF_DAYS,STATUS,AUTHORIZED_BY,AUTHORIZED_DT,
+        AUTHORIZED_STATUS,STATUS_BY,STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE 
+        ) VALUES (
+        #leaveApplID:VARCHAR#,#tabLeaveType:VARCHAR#,#appTblStatus:VARCHAR#,
+        #authorizedBy:VARCHAR#,#authorizedDt:DATE#,#authorizedStatus:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#createdBy:VARCHAR#,
+        #createdDt:DATE#,#branch:VARCHAR#) 
+    </mapped-statement>
+
+	<!-- Use LeaveSanctionTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLeaveAppl" inline-parameters="true">
+        UPDATE LEAVE_APPLICATION SET 
+        PROCESS_TYPE = #processType:VARCHAR#,
+        EMP_ID = #empID:VARCHAR#,
+        APPL_DT=#appl_dt:DATE#,
+        LEAVE_REQ_FROM = #req_from:DATE#,
+        LEAVE_REQ_TO = #req_to:DATE#,
+        NO_OF_DAYS = #noOfdays:NUMERIC#,
+        LEAVE_PURPOSE =#leavePurpose:VARCHAR#,
+        SANCTION_DT =#sanDate:DATE#,
+        STATUS =#status:VARCHAR#,
+        AUTHORIZED_BY =#authorizedBy:VARCHAR#,
+        AUTHORIZED_DT =#authorizedDt:DATE#,
+        AUTHORIZED_STATUS =#authorizedStatus:VARCHAR#,
+        STATUS_BY =#statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:DATE#,
+        WITH_LTC = #withLtc:VARCHAR#,
+        TYPE_OF_BLOCK =#blockType:VARCHAR#,
+        WITH_LEAVE_ENCASHMENT =#withLeaveEncashment:VARCHAR#,
+        ENCASHMENT_DAYS =#leaveEncashmentDays:VARCHAR#,
+        ENCASHMENT_LEAVE_TYPE =#cboEncashmentData:VARCHAR#,
+        LEAVE_CANCEL =#leaveCancel:VARCHAR#,
+        REMARKS= #remarks:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use OtherBankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLeaveAppl" inline-parameters="true">
+        UPDATE LEAVE_APPLICATION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR# AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+    <mapped-statement name="deleteLeaveApplMainDelete" inline-parameters="true">
+        UPDATE LEAVE_APPLICATION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteLeaveApplTableValues" inline-parameters="true">
+        UPDATE LEAVE_APPLICATION_SPLIT SET 
+        STATUS = #appTblStatus:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR# AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+    <mapped-statement name="deleteLeaveApplMain" inline-parameters="true">
+        UPDATE LEAVE_APPLICATION_SPLIT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="insertLeaveSan" inline-parameters="true">
+        INSERT INTO LEAVE_SANCTION
+        (LEAVE_APPL_ID,PROCESS_TYPE,EMP_ID,APPL_DT,LEAVE_REQ_FROM,LEAVE_REQ_TO,NO_OF_DAYS,
+        LEAVE_PURPOSE,SANCTION_REF_NO, SANCTION_DT,STATUS,AUTHORIZED_BY,AUTHORIZED_DT,
+        AUTHORIZED_STATUS,STATUS_BY,STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE,OLD_SANCTION_REF_NO,
+        WITH_LTC,TYPE_OF_BLOCK,WITH_LEAVE_ENCASHMENT,ENCASHMENT_DAYS,ENCASHMENT_LEAVE_TYPE,
+        LEAVE_CANCEL,REMARKS,SAN_AUTHORITY 
+        ) VALUES (
+        #leaveApplID:VARCHAR#,#processType:VARCHAR#,#empID:VARCHAR#,#appl_dt:DATE#,#req_from:DATE#,#req_to:DATE#,
+        #noOfdays:NUMERIC#, #leavePurpose:VARCHAR#, #sanNo:VARCHAR#,#sanDate:DATE#,#status:VARCHAR#,
+        #authorizedBy:VARCHAR#,#authorizedDt:DATE#,#authorizedStatus:VARCHAR#,#statusBy:VARCHAR#,
+        #statusDt:DATE#,#createdBy:VARCHAR#, #createdDt:DATE#,#branch:VARCHAR#,#oldSanNo:VARCHAR#,
+        #withLtc:VARCHAR#,#blockType:VARCHAR#,#withLeaveEncashment:VARCHAR#,#leaveEncashmentDays:VARCHAR#,
+        #cboEncashmentData:VARCHAR#,#leaveCancel:VARCHAR#,#remarks:VARCHAR#,#sanAuthority:VARCHAR#) 
+    </mapped-statement>
+        
+    <mapped-statement name="updateLeaveSan" inline-parameters="true">
+        UPDATE LEAVE_SANCTION SET 
+        PROCESS_TYPE = #processType:VARCHAR#,
+        EMP_ID = #empID:VARCHAR#,
+        APPL_DT=#appl_dt:DATE#,
+        LEAVE_REQ_FROM = #req_from:DATE#,
+        LEAVE_REQ_TO = #req_to:DATE#,
+        NO_OF_DAYS = #noOfdays:NUMERIC#,
+        LEAVE_PURPOSE =#leavePurpose:VARCHAR#,
+        SANCTION_DT =#sanDate:DATE#,
+        STATUS =#status:VARCHAR#,
+        AUTHORIZED_BY =#authorizedBy:VARCHAR#,
+        AUTHORIZED_DT =#authorizedDt:DATE#,
+        AUTHORIZED_STATUS =#authorizedStatus:VARCHAR#,
+        STATUS_BY =#statusBy:VARCHAR#,
+        STATUS_DT =#statusDt:DATE#,
+        WITH_LTC = #withLtc:VARCHAR#,
+        TYPE_OF_BLOCK =#blockType:VARCHAR#,
+        WITH_LEAVE_ENCASHMENT =#withLeaveEncashment:VARCHAR#,
+        ENCASHMENT_DAYS =#leaveEncashmentDays:VARCHAR#,
+        ENCASHMENT_LEAVE_TYPE =#cboEncashmentData:VARCHAR#,
+        LEAVE_CANCEL =#leaveCancel:VARCHAR#,
+        REMARKS=#remarks:VARCHAR#,
+        SAN_AUTHORITY =#sanAuthority:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteLeaveSan" inline-parameters="true">
+        UPDATE LEAVE_SANCTION SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteLeaveSanTableValues" inline-parameters="true">
+        UPDATE LEAVE_SANCTION_SPLIT SET 
+        STATUS = #sanTblStatus:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteLeaveSanMain" inline-parameters="true">
+        UPDATE LEAVE_SANCTION_SPLIT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getSelectLeaveApplTO" result-map="getLeaveSanctionTOResult" >
+        SELECT * FROM LEAVE_APPLICATION WHERE STATUS!='DELETED' AND LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLeaveSanTO" result-map="getLeaveSanctionTOResult" >
+        SELECT * FROM LEAVE_SANCTION WHERE STATUS!='DELETED' AND LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR# 
+    </mapped-statement>
+                
+    <mapped-statement name="getSelectLeaveApplTable" result-map="getLeaveTOResult" >
+        SELECT * FROM LEAVE_APPLICATION_SPLIT WHERE STATUS!='DELETED'
+        AND LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getSelectLeaveSanTable" result-map="getSanLeaveTOResult" >
+        SELECT * FROM LEAVE_SANCTION_SPLIT WHERE STATUS!='DELETED'
+        AND LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR# 
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to OtherBankTO object (JavaBean) properties -->
+    <result-map name="getLeaveSanctionTOResult" class="com.see.truetransact.transferobject.sysadmin.leavemanagement.LeaveSanctionTO">
+        <property name="leaveApplID" column="LEAVE_APPL_ID"/>
+        <property name="processType" column="PROCESS_TYPE"/>
+        <property name="empID" column="EMP_ID"/>
+        <property name="appl_dt" column="APPL_DT"/>
+        <property name="req_from" column="LEAVE_REQ_FROM"/>
+        <property name="req_to" column="LEAVE_REQ_TO"/>
+        <property name="noOfdays" column="NO_OF_DAYS"/>
+        <property name="leavePurpose" column="LEAVE_PURPOSE"/>
+        <property name="sanNo" column="SANCTION_REF_NO"/>
+        <property name="sanDate" column="SANCTION_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="branch" column="BRANCH_CODE"/>
+        <property name="oldSanNo" column="OLD_SANCTION_REF_NO"/>
+        <property name="withLtc" column="WITH_LTC"/>
+        <property name="blockType" column="TYPE_OF_BLOCK"/>
+        <property name="withLeaveEncashment" column="WITH_LEAVE_ENCASHMENT"/>
+        <property name="leaveEncashmentDays" column="ENCASHMENT_DAYS"/>
+        <property name="cboEncashmentData" column="ENCASHMENT_LEAVE_TYPE"/>
+        <property name="sanStatus" column="SANCTION_STATUS"/>
+        <property name="leaveCancel" column="LEAVE_CANCEL"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="sanAuthority" column="SAN_AUTHORITY"/>
+                
+    </result-map>
+        
+    <result-map name="getLeaveTOResult" class="com.see.truetransact.transferobject.sysadmin.leavemanagement.LeaveSanctionTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="leaveApplID" column="LEAVE_APPL_ID"/>
+        <property name="tableNoOfdays" column="NO_OF_DAYS"/>
+        <property name="tabLeaveType" column="LEAVE_TYPE"/>
+        <property name="appTblStatus" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="applStatusBy" column="STATUS_BY"/>
+        <property name="applStatusDt" column="STATUS_DT"/>
+        <property name="applCreatedBy" column="CREATED_BY"/>
+        <property name="applCreatedDt" column="CREATED_DT"/>
+        <property name="branch" column="BRANCH_CODE"/>
+        <property name="tblReqFrom" column="LEAVE_REQ_FROM"/>
+        <property name="tblReqTo" column="LEAVE_REQ_TO"/>
+        <property name="paymentType" column="PAYMENT_TYPE"/>
+                
+    </result-map>
+        
+    <result-map name="getSanLeaveTOResult" class="com.see.truetransact.transferobject.sysadmin.leavemanagement.LeaveSanctionTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="leaveApplID" column="LEAVE_APPL_ID"/>
+        <property name="tableNoOfdays" column="NO_OF_DAYS"/>
+        <property name="tabLeaveType" column="LEAVE_TYPE"/>
+        <property name="sanTblStatus" column="STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="sanStatusBy" column="STATUS_BY"/>
+        <property name="sanStatusDt" column="STATUS_DT"/>
+        <property name="sanCreatedBy" column="CREATED_BY"/>
+        <property name="sanCreatedDt" column="CREATED_DT"/>
+        <property name="branch" column="BRANCH_CODE"/>
+        <property name="tblReqFrom" column="LEAVE_REQ_FROM"/>
+        <property name="tblReqTo" column="LEAVE_REQ_TO"/>
+        <property name="paymentType" column="PAYMENT_TYPE"/>
+    </result-map>
+    <mapped-statement name="getSelectApplLeave" result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_APPL_ID,SANCTION_REF_NO,EMP_ID,PROCESS_TYPE FROM LEAVE_APPLICATION
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+                <!--AND  LEAVE_APPL_ID NOT IN(SELECT LEAVE_APPL_ID FROM LEAVE_SANCTION)-->
+    </mapped-statement>
+    <mapped-statement name="getSelectSanLeave" result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_APPL_ID,APPL_DT AS LEAVE_APPL_DT,EMP_ID,PROCESS_TYPE FROM LEAVE_APPLICATION
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        AND LEAVE_APPL_ID NOT IN( SELECT LEAVE_APPL_ID FROM LEAVE_SANCTION)
+        ORDER BY LEAVE_APPL_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectSanLeaveEdit" result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_APPL_ID,APPL_DT AS LEAVE_APPL_DT,SANCTION_REF_NO,EMP_ID,PROCESS_TYPE FROM LEAVE_SANCTION
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+        ORDER BY LEAVE_APPL_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getLeaveApplAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_APPL_ID,PROCESS_TYPE,EMP_ID,SANCTION_REF_NO FROM LEAVE_APPLICATION WHERE STATUS!='DELETED'
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+        
+    <mapped-statement name="getLeaveSanAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_APPL_ID,PROCESS_TYPE,EMP_ID,SANCTION_REF_NO FROM LEAVE_SANCTION WHERE STATUS!='DELETED'
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement> 
+    <mapped-statement name="getLeaveSanDeleteList" result-class="java.util.LinkedHashMap">
+        SELECT LEAVE_APPL_ID,PROCESS_TYPE,EMP_ID,SANCTION_REF_NO FROM LEAVE_APPLICATION WHERE STATUS!='DELETED'
+        AND (SANCTION_STATUS!='REJECTED' OR SANCTION_STATUS IS NULL) AND AUTHORIZED_STATUS IS NULL
+        AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getDataForEnq" result-class="java.util.LinkedHashMap">
+        SELECT LA.LEAVE_APPL_ID,LA.PROCESS_TYPE,LA.EMP_ID,LS.SANCTION_REF_NO,LS.SANCTION_STATUS,LA.AUTHORIZED_STATUS
+        FROM LEAVE_APPLICATION LA, lEAVE_SANCTION LS WHERE LA.STATUS!='DELETED' AND LA.BRANCH_CODE=#BRANCH_CODE#
+        AND LA.LEAVE_APPL_ID=LS.LEAVE_APPL_ID(+) ORDER BY LA.LEAVE_APPL_ID
+    </mapped-statement>
+        
+    <mapped-statement name="insertApplTableValues" inline-parameters="true">
+        INSERT INTO LEAVE_APPLICATION_SPLIT
+        (LEAVE_APPL_ID,NO_OF_DAYS,
+        LEAVE_TYPE,STATUS,AUTHORIZED_BY,AUTHORIZED_DT,
+        AUTHORIZED_STATUS,STATUS_BY,STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE,SL_NO, 
+        LEAVE_REQ_FROM,LEAVE_REQ_TO,PAYMENT_TYPE
+        ) VALUES (
+        #leaveApplID:VARCHAR#, #tableNoOfdays:NUMERIC#,#tabLeaveType:VARCHAR#,#appTblStatus:VARCHAR#,
+        #authorizedBy:VARCHAR#,#authorizedDt:DATE#,#authorizedStatus:VARCHAR#,#applStatusBy:VARCHAR#,
+        #applStatusDt:DATE#,#applCreatedBy:VARCHAR#,
+        #applCreatedDt:DATE#,#branch:VARCHAR#,#slNo:NUMERIC#,#tblReqFrom:DATE#,#tblReqTo:DATE#,#paymentType:VARCHAR#) 
+    </mapped-statement>
+        
+    <mapped-statement name="updateApplTableValues" inline-parameters="true">
+        UPDATE LEAVE_APPLICATION_SPLIT SET 
+        NO_OF_DAYS = #tableNoOfdays:NUMERIC#,
+        LEAVE_TYPE = #tabLeaveType:VARCHAR#,
+        STATUS =#appTblStatus:VARCHAR#,
+        AUTHORIZED_BY =#authorizedBy:VARCHAR#,
+        AUTHORIZED_DT =#authorizedDt:DATE#,
+        AUTHORIZED_STATUS =#authorizedStatus:VARCHAR#,
+        STATUS_BY =#applStatusBy:VARCHAR#,
+        STATUS_DT =#applStatusDt:DATE#,
+        BRANCH_CODE =#branch:VARCHAR#,
+        LEAVE_REQ_FROM =#tblReqFrom:DATE#,
+        LEAVE_REQ_TO =#tblReqTo:DATE#,
+        PAYMENT_TYPE =#paymentType:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+        AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+    <mapped-statement name="insertSanTableValues" inline-parameters="true">
+        INSERT INTO LEAVE_SANCTION_SPLIT
+        (LEAVE_APPL_ID,NO_OF_DAYS,
+        LEAVE_TYPE,STATUS,AUTHORIZED_BY,AUTHORIZED_DT,
+        AUTHORIZED_STATUS,STATUS_BY,STATUS_DT,CREATED_BY,CREATED_DT,BRANCH_CODE,SL_NO, 
+        LEAVE_REQ_FROM,LEAVE_REQ_TO,PAYMENT_TYPE
+        ) VALUES (
+        #leaveApplID:VARCHAR#, #tableNoOfdays:NUMERIC#,#tabLeaveType:VARCHAR#,#sanTblStatus:VARCHAR#,
+        #authorizedBy:VARCHAR#,#authorizedDt:DATE#,#authorizedStatus:VARCHAR#,#sanStatusBy:VARCHAR#,
+        #sanStatusDt:DATE#,#sanCreatedBy:VARCHAR#,
+        #sanCreatedDt:DATE#,#branch:VARCHAR#,#slNo:NUMERIC#,#tblReqFrom:DATE#,#tblReqTo:DATE#,#paymentType:VARCHAR#) 
+    </mapped-statement>
+        
+    <mapped-statement name="updateSanTableValues" inline-parameters="true">
+        UPDATE LEAVE_SANCTION_SPLIT SET 
+        NO_OF_DAYS = #tableNoOfdays:NUMERIC#,
+        LEAVE_TYPE = #tabLeaveType:VARCHAR#,
+        STATUS =#sanTblStatus:VARCHAR#,
+        AUTHORIZED_BY =#authorizedBy:VARCHAR#,
+        AUTHORIZED_DT =#authorizedDt:DATE#,
+        AUTHORIZED_STATUS =#authorizedStatus:VARCHAR#,
+        STATUS_BY =#sanStatusBy:VARCHAR#,
+        STATUS_DT =#sanStatusDt:DATE#,
+        BRANCH_CODE =#branch:VARCHAR#,
+        LEAVE_REQ_FROM =#tblReqFrom:DATE#,
+        LEAVE_REQ_TO =#tblReqTo:DATE#,
+        PAYMENT_TYPE =#paymentType:VARCHAR#
+        WHERE LEAVE_APPL_ID = #leaveApplID:VARCHAR#
+        AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+    <mapped-statement name="countAppl" result-class = "java.lang.Integer">
+        SELECT COUNT(LEAVE_APPL_ID) AS "COUNT" FROM LEAVE_APPLICATION_SPLIT WHERE SL_NO = #slNo:NUMERIC# AND LEAVE_APPL_ID=#leaveApplID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="countInsertSan" result-class = "java.lang.Integer">
+        SELECT COUNT(LEAVE_APPL_ID) AS "COUNT" FROM LEAVE_SANCTION WHERE LEAVE_APPL_ID=#leaveApplID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="countSan" result-class = "java.lang.Integer">
+        SELECT COUNT(LEAVE_APPL_ID) AS "COUNT" FROM LEAVE_SANCTION_SPLIT WHERE SL_NO = #slNo:NUMERIC# AND LEAVE_APPL_ID=#leaveApplID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeLeaveAppl" result-class="java.util.HashMap">
+        UPDATE LEAVE_APPLICATION SET AUTHORIZED_STATUS=#STATUS:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT# ,AUTHORIZED_BY=#AUTH_BY:VARCHAR# WHERE LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR#
+    </mapped-statement> 
+        
+    <mapped-statement name="authorizeSanAppl" result-class="java.util.HashMap">
+        UPDATE LEAVE_SANCTION SET AUTHORIZED_STATUS=#STATUS:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT# ,AUTHORIZED_BY=#AUTH_BY:VARCHAR# WHERE LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR#
+    </mapped-statement> 
+        
+    <mapped-statement name="authorizeLeaveApplTab" result-class="java.util.HashMap">
+        UPDATE LEAVE_APPLICATION_SPLIT SET AUTHORIZED_STATUS=#STATUS:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT# ,AUTHORIZED_BY=#AUTH_BY:VARCHAR# WHERE LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeLeaveSanTab" result-class="java.util.HashMap">
+        UPDATE LEAVE_SANCTION_SPLIT SET AUTHORIZED_STATUS=#STATUS:VARCHAR#,
+        AUTHORIZED_DT=#AUTH_DT# ,AUTHORIZED_BY=#AUTH_BY:VARCHAR# WHERE LEAVE_APPL_ID=#LEAVE_APPL_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="setEmpDetails" result-class="java.util.LinkedHashMap">
+		<!--SELECT EMPLOYEEID AS EMPLOYEE_CODE,FIRST_NAME AS FNAME FROM EMPLOYEE_MASTER WHERE STATUS!='DELETED'
+                AND AUTHORIZE_STATUS='AUTHORIZED' -->
+        SELECT EMPLOYEEID AS EMPLOYEE_CODE,SYS_EMPID,FIRST_NAME || ' ' || LAST_NAME AS EMP_NAME FROM EMPLOYEE_MASTER WHERE STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED' ORDER BY SYS_EMPID 
+    </mapped-statement>
+        
+    <mapped-statement name="insertEmpLeave" inline-parameters="true">
+        INSERT INTO EMP_LEAVE
+        (EMP_ID,LEAVE_TYPE,NO_OF_DAYS,LAST_CREDIT_DATE,BRANCH_CODE,NEXT_CREDIT_DATE,LEAVES_CREDITED_PRORATE 
+        ) VALUES (
+        #EMP_ID:VARCHAR#,#LEAVE_TYPE:VARCHAR#,#NO_OF_DAYS_ADDITION:NUMERIC#,#LAST_CREDITED_DATE:DATE#,#BRANCH_CODE:VARCHAR#,#NEXT_CREDIT_DATE:DATE#,#LEAVES_CREDITED_PRORATE:NUMBER#
+        ) 
+    </mapped-statement>
+    <mapped-statement name="insertEmpLeaveWhileAuth" inline-parameters="true">
+        INSERT INTO EMP_LEAVE
+        (EMP_ID,LEAVE_TYPE,NO_OF_DAYS,BRANCH_CODE 
+        ) VALUES (
+        #empID:VARCHAR#,#tabLeaveType:VARCHAR#,#tableNoOfdays:NUMERIC#,#branch:VARCHAR#
+        ) 
+    </mapped-statement>
+    <mapped-statement name="insertEmpLeaveTranfer" inline-parameters="true">
+        INSERT INTO EMP_LEAVE_TRANSACTION
+        (EMP_ID,LEAVE_TYPE,NO_OF_DAYS,TRANS_TYPE,BRANCH_CODE,TRANS_DATE,SANCTION_REF_NO 
+        ) VALUES (
+        #EMP_ID:VARCHAR#,#LEAVE_TYPE:VARCHAR#,#NO_OF_DAYS_ADDITION:NUMERIC#,#TRANS_TYPE:VARCHAR#,#BRANCH_CODE:VARCHAR#,#TRANS_DATE:DATE#,#SANCTION_NO:VARCHAR#
+        ) 
+    </mapped-statement>
+    <mapped-statement name="countEmpID" result-class = "java.lang.Integer">
+        SELECT COUNT(EMP_ID) AS "COUNT" FROM EMP_LEAVE WHERE EMP_ID=#EMP_ID:VARCHAR#
+        AND LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateEmpLeave" inline-parameters="true">
+        UPDATE EMP_LEAVE SET
+        NO_OF_DAYS =#NO_OF_DAYS_ADDITION:NUMBER#,
+        LAST_CREDIT_DATE=#LAST_CREDITED_DATE:DATE#,
+        NEXT_CREDIT_DATE=#NEXT_CREDIT_DATE:DATE#,
+        LEAVES_CREDITED_PRORATE = #LEAVES_CREDITED_PRORATE:NUMBER#
+        WHERE EMP_ID=#EMP_ID# AND LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAllEmp" result-class="java.util.HashMap">
+		<!--SELECT EMPLOYEE_CODE FROM BANK_EMPLOYEE WHERE STATUS!='DELETED'
+                AND AUTHORIZE_STATUS_1='AUTHORIZED' AND BRANCH_CODE=#BRANCH_CODE#-->
+        SELECT EMPLOYEEID AS EMPLOYEE_CODE FROM EMPLOYEE_MASTER WHERE STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getRemainingLeaves" result-class = "java.lang.Integer">
+        SELECT NO_OF_DAYS FROM EMP_LEAVE WHERE EMP_ID=#EMP_ID:VARCHAR# AND LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="get-getLeaveType-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LEAVE_TYPE" />
+        <property name="lookUpDesc" column="LEAVE_TYPE" />
+    </result-map> 
+        
+    <mapped-statement name="getLeaveType" result-map="get-getLeaveType-result"> 
+        SELECT LEAVE_TYPE FROM LEAVE_MANAGEMENT  WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS ='AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="rejectSan" result-class="java.util.HashMap">
+        UPDATE LEAVE_SANCTION SET SANCTION_STATUS=#SANCTION_STATUS:VARCHAR# WHERE LEAVE_APPL_ID=#LEAVE_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="rejectAppl" result-class="java.util.HashMap">
+        UPDATE LEAVE_APPLICATION SET SANCTION_STATUS=#SANCTION_STATUS:VARCHAR# WHERE LEAVE_APPL_ID=#LEAVE_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateEmpLeaveAfterAuth" result-class="java.util.HashMap">
+        UPDATE EMP_LEAVE SET NO_OF_DAYS=(NO_OF_DAYS-#tableNoOfdays:NUMERIC#) WHERE LEAVE_TYPE=#tabLeaveType:VARCHAR#
+        AND EMP_ID =#empID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="updateEmpLeavePartialModLoss" result-class="java.util.HashMap">
+        UPDATE EMP_LEAVE SET NO_OF_DAYS=(NO_OF_DAYS-#NO_OF_DAYS:NUMBER#) WHERE LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+        AND EMP_ID =#EMP_ID#
+    </mapped-statement>
+        
+    <mapped-statement name="updateEmpLeaveAfterAuthModification" result-class="java.util.HashMap">
+        UPDATE EMP_LEAVE SET NO_OF_DAYS=(NO_OF_DAYS+#tableNoOfdays:NUMERIC#) WHERE LEAVE_TYPE=#tabLeaveType:VARCHAR#
+        AND EMP_ID =#empID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateEmpLeaveForPartialModification" result-class="java.util.HashMap">
+        UPDATE EMP_LEAVE SET NO_OF_DAYS=(NO_OF_DAYS+#NO_OF_DAYS:NUMBER#) WHERE LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+        AND EMP_ID =#EMP_ID#
+    </mapped-statement>
+        
+    <mapped-statement name="insertEmpLeaveTranferWhileAuth" inline-parameters="true">
+        INSERT INTO EMP_LEAVE_TRANSACTION
+        (EMP_ID,LEAVE_TYPE,NO_OF_DAYS,TRANS_TYPE,BRANCH_CODE,TRANS_DATE,LEAVE_REQ_FROM,LEAVE_REQ_TO,SANCTION_REF_NO 
+        ) VALUES (
+        #empID:VARCHAR#,#tabLeaveType:VARCHAR#,#tableNoOfdays:NUMERIC#,#transType:VARCHAR#,#branch:VARCHAR#,#statusDt:DATE#,
+        #tblReqFrom:DATE#,#tblReqTo:DATE#,#sanNo:VARCHAR#
+        ) 
+    </mapped-statement>
+        
+    <mapped-statement name="EmpLeaveEnq" result-class="java.util.HashMap">
+        SELECT NO_OF_DAYS,LAST_CREDIT_DATE,NEXT_CREDIT_DATE FROM EMP_LEAVE WHERE LEAVE_TYPE=#LEAVE_TYPE:VARCHAR# AND EMP_ID=#EMP_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="countLossOfPay" result-class = "java.lang.Integer">
+        SELECT COUNT(EMP_ID) AS "COUNT" FROM EMP_LEAVE WHERE EMP_ID=#empID:VARCHAR#
+        AND LEAVE_TYPE=#tabLeaveType:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="leaveEncashment" result-class="java.util.HashMap">
+        UPDATE EMP_LEAVE SET NO_OF_DAYS=(NO_OF_DAYS-#NO_OF_DAYS_ADDITION:NUMBER#) WHERE EMP_ID=#EMP_ID:VARCHAR# AND LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="AddLeaveEncashment" result-class="java.util.HashMap">
+        UPDATE EMP_LEAVE SET NO_OF_DAYS=(NO_OF_DAYS+#NO_OF_DAYS_ADDITION:NUMBER#) WHERE EMP_ID=#EMP_ID:VARCHAR# AND LEAVE_TYPE=#LEAVE_TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getPaymentType" result-class="java.util.HashMap">
+        SELECT PAYMENT_TYPE FROM LEAVE_MANAGEMENT WHERE LEAVE_TYPE=#LEAVE_TYPE:VARCHAR# AND AUTHORIZED_STATUS='AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getLastCreditedDate" result-class="java.util.HashMap">
+        SELECT EMP_ID,LAST_CREDIT_DATE,DATE_OF_JOIN,NEXT_CREDIT_DATE,nvl(LEAVES_CREDITED_PRORATE,0) AS LEAVES_CREDITED_PRORATE
+        FROM EMP_LEAVE,EMPLOYEE_MASTER WHERE EMP_ID=#EMP_ID:VARCHAR# AND LEAVE_TYPE=#LEAVE_TYPE:VARCHAR# AND EMPLOYEEID=EMP_ID
+    </mapped-statement>
+    <mapped-statement name="getLossOfPayForLeave" result-class="java.util.HashMap">
+        SELECT SUM(NO_OF_DAYS) TOTAL_LOP FROM EARNING_DETAILS ED,EMPLOYEE_MASTER EM WHERE EM.EMPLOYEEID = #EMP_ID:VARCHAR# AND
+        EM.SYS_EMPID = ED.EMP_ID AND ALLOWANCE_TYPE = 'LOP' AND EM.STATUS != 'DELETED' AND
+        ED.FROM_DATE BETWEEN #PREV_DT:DATE# AND #CURRENT_DT:DATE#
+    </mapped-statement>
+    <mapped-statement name="getJoinAndRetAge" result-class="java.util.HashMap">
+                  <!--SELECT DATE_OF_JOIN,DATE_OF_RETIREMENT FROM EMPLOYEE_MASTER WHERE EMPLOYEEID=#EMP_ID#
+                  AND STATUS!='DELETED' -->
+        SELECT DATE_OF_JOIN,DATE_OF_RETIREMENT,EPD.CONFIRMATION_DATE 
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD WHERE EMPLOYEEID=#EMP_ID:VARCHAR#
+        AND EM.STATUS!='DELETED'
+        AND EM.SYS_EMPID = EPD.SYS_ID
+    </mapped-statement>
+    <mapped-statement name="getCountOfMaternityLeave" result-class="java.util.HashMap">
+        SELECT DATE_OF_JOIN,DATE_OF_RETIREMENT,EPD.CONFIRMATION_DATE 
+        FROM EMPLOYEE_MASTER EM,EMPLOYEE_PRESENT_DETAILS EPD WHERE EMPLOYEEID=#EMP_ID:VARCHAR#
+        AND EM.STATUS!='DELETED'
+        AND EM.SYS_EMPID = EPD.SYS_ID
+    </mapped-statement>
+    <mapped-statement name="getLeaveDates" result-class="java.util.HashMap">
+        SELECT LEAVE_REQ_FROM,LEAVE_REQ_TO FROM LEAVE_APPLICATION WHERE STATUS!='DELETED'
+        AND (SANCTION_STATUS NOT IN('REJECTED') OR SANCTION_STATUS IS NULL)
+        AND (AUTHORIZED_STATUS NOT IN('REJECTED') OR AUTHORIZED_STATUS IS NULL)
+        AND EMP_ID=#EMP_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="checkForValidRefNo" result-class="java.util.HashMap">
+        SELECT LS.SANCTION_REF_NO AS SANCTION_REF_NO,LA.LEAVE_REQ_FROM AS LEAVE_REQ_FROM,LA.LEAVE_REQ_TO AS LEAVE_REQ_TO,
+        LA.LEAVE_APPL_ID AS LEAVE_APPL_ID, LA.WITH_LEAVE_ENCASHMENT AS WITH_LEAVE_ENCASHMENT,LA.ENCASHMENT_DAYS AS ENCASHMENT_DAYS,
+        LA.ENCASHMENT_LEAVE_TYPE AS ENCASHMENT_LEAVE_TYPE  FROM LEAVE_SANCTION LS, LEAVE_APPLICATION LA WHERE LS.STATUS!='DELETED'
+        AND LS.AUTHORIZED_STATUS IN('AUTHORIZED') AND LA.LEAVE_APPL_ID=LS.LEAVE_APPL_ID AND LS.BRANCH_CODE=#BRANCH_CODE:VARCHAR# 
+        AND LS.SANCTION_REF_NO=#OLD_REF_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getPreviousNumberOfDays" result-class="java.util.HashMap">
+        SELECT LSS.NO_OF_DAYS,LSS.LEAVE_TYPE FROM LEAVE_SANCTION_SPLIT LSS,LEAVE_SANCTION LS
+        WHERE LS.SANCTION_REF_NO=#OLD_SANCTION_NO:VARCHAR# AND LSS.STATUS!='DELETED' AND LSS.LEAVE_APPL_ID = LS.LEAVE_APPL_ID
+    </mapped-statement>
+    <mapped-statement name="getPreviousNumberOfDaysForEncashMent" result-class="java.util.HashMap">
+        SELECT ENCASHMENT_DAYS AS NO_OF_DAYS,ENCASHMENT_LEAVE_TYPE AS LEAVE_TYPE FROM LEAVE_SANCTION LS
+        WHERE LS.SANCTION_REF_NO=#OLD_SANCTION_NO:VARCHAR# AND LS.STATUS!='DELETED'  
+    </mapped-statement>
+        
+    <mapped-statement name="countSanctionNumber" result-class = "java.lang.Integer">
+        SELECT COUNT(SANCTION_REF_NO) AS "COUNT" FROM LEAVE_SANCTION WHERE SANCTION_REF_NO=#SANCTION_REF_NO:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

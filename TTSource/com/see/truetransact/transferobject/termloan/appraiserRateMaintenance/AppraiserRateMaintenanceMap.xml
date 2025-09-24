@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AppraiserRateMaintenanceMap">
+    <mapped-statement name = "insertAppraiserCommision" inline-parameters="true">
+        INSERT INTO APPRAISER_COMMISION_DETAILS (GROUP_ID,FROM_DATE,TO_DATE,FROM_AMT,TO_AMT,AMOUNT,PERCENTAGE,SERVICE_TAX,CREATED_BY,CREATED_DT,STATUS,
+        AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT)
+        VALUES(#groupId:VARCHAR#,#fromDate:DATE#,#toDate:DATE#,#fromAmt:VARCHAR#,#toAmt:VARCHAR#,#amount:VARCHAR#,#percentage:VARCHAR#,#serviceTax:VARCHAR#,
+        #createdBy:VARCHAR#,#createdDt:DATE#,#status:VARCHAR#,#authorizeStatus:VARCHAR#,#authorizeBy:VARCHAR#,#authorizeDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name = "updateAppraiserCommision" inline-parameters="true">
+        UPDATE APPRAISER_COMMISION_DETAILS SET
+        FROM_DATE = #fromDate:DATE#,
+        TO_DATE = #toDate:DATE#,
+        FROM_AMT = #fromAmt:VARCHAR#,
+        TO_AMT = #toAmt:VARCHAR#,
+        AMOUNT = #amount:VARCHAR#,
+        PERCENTAGE = #percentage:VARCHAR#,
+        SERVICE_TAX = #serviceTax:VARCHAR#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        STATUS = #status:VARCHAR#
+        WHERE GROUP_ID = #groupId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "deleteAppraiserCommision" inline-parameters="true">
+        UPDATE APPRAISER_COMMISION_DETAILS SET STATUS = #status:VARCHAR# WHERE GROUP_ID = #groupId:VARCHAR# AND
+        FROM_AMT = #fromAmt:VARCHAR# AND TO_AMT = #toAmt:VARCHAR#
+    </mapped-statement>
+    
+    <result-map name="getAppraiserCommisionTOResult" class="com.see.truetransact.transferobject.termloan.appraiserRateMaintenance.AppraiserRateMaintenanceTO">
+        <property name="groupId" column="GROUP_ID"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="fromAmt" column="FROM_AMT"/>
+        <property name="toAmt" column="TO_AMT"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="percentage" column="PERCENTAGE"/>
+        <property name="serviceTax" column="SERVICE_TAX"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    
+    <mapped-statement name = "getSelectAppraiserCommisionTO" result-map = "getAppraiserCommisionTOResult">
+        SELECT * FROM APPRAISER_COMMISION_DETAILS WHERE STATUS !='DELETED'AND AUTHORIZE_STATUS IS NULL AND GROUP_ID = #value:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

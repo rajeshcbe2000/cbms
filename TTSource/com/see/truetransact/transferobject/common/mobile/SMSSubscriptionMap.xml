@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SMSSubscriptionMapMap">
+
+	<!-- Use SMSSubscriptionMap object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSMSSubscriptionMap" inline-parameters="true">
+        INSERT INTO SMS_SUBSCRIPTION
+        (PROD_TYPE, PROD_ID, ACT_NUM, MOBILE_NO, SUBSCRIPTION_DT, CREATED_DT, CREATED_BY, STATUS, STATUS_DT, STATUS_BY, AUTHORIZE_STATUS, AUTHORIZED_BY, CUST_ID
+        ) VALUES (
+        #prodType:VARCHAR#, #prodId:VARCHAR#, #actNum:VARCHAR#, cast(#mobileNo# as numeric), #subscriptionDt:DATE#, (SELECT SYS_DATE() FROM DUAL), #createdBy:VARCHAR#, #status:VARCHAR#, #statusDt:DATE#, #statusBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizedBy:VARCHAR#, #custId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use SMSSubscriptionMap object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateSMSSubscriptionMap" inline-parameters="true">
+        UPDATE SMS_SUBSCRIPTION SET 
+        MOBILE_NO = #mobileNo#,
+        SUBSCRIPTION_DT = #subscriptionDt:DATE#,
+        CREATED_DT = (SELECT SYS_DATE() FROM DUAL),
+        CREATED_BY = #createdBy:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        AUTHORIZE_STATUS = null
+        WHERE 
+        PROD_TYPE = #prodType:VARCHAR# AND
+        PROD_ID = #prodId:VARCHAR# AND
+        ACT_NUM = #actNum:VARCHAR# AND 
+        MOBILE_NO IS NOT NULL AND 
+        SUBSCRIPTION_DT IS NOT NULL 
+    </mapped-statement>
+    
+    <mapped-statement name="updateSMSSubscriptionMapMdsApplication" inline-parameters="true">
+        UPDATE SMS_SUBSCRIPTION SET 
+        MOBILE_NO = #mobileNo:VARCHAR#,
+        SUBSCRIPTION_DT = #subscriptionDt:DATE#,
+        CREATED_DT = #createdDt:DATE#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE 
+        PROD_TYPE = #prodType:VARCHAR# AND
+        PROD_ID = #prodId:VARCHAR# AND
+        ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use SMSSubscriptionMap object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteSMSSubscriptionMap" inline-parameters="true">
+        UPDATE SMS_SUBSCRIPTION SET 
+        STATUS = 'DELETED', 
+        STATUS_BY = #USER_ID:VARCHAR#, 
+        STATUS_DT =  #STATUS_DT:DATE#,
+        AUTHORIZE_STATUS = 'REJECTED'
+        WHERE 
+        PROD_TYPE=#PROD_TYPE:VARCHAR# AND 
+        PROD_ID=#PROD_ID:VARCHAR# AND 
+        ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SMSSubscriptionMap object (JavaBean) properties -->
+    <result-map name="getSMSSubscriptionMapResult" class="com.see.truetransact.transferobject.common.mobile.SMSSubscriptionTO">
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="mobileNo" column="MOBILE_NO"/>
+        <property name="subscriptionDt" column="SUBSCRIPTION_DT"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectSMSSubscriptionMap" result-map="getSMSSubscriptionMapResult" >
+        <!--SELECT * FROM SMS_SUBSCRIPTION 
+        WHERE PROD_TYPE=#PROD_TYPE:VARCHAR# AND PROD_ID=#PROD_ID# AND ACT_NUM=#ACT_NUM:VARCHAR# AND STATUS !='DELETED'-->
+      <!--  SELECT prod_type, prod_id, act_num, mobile_no, subscription_dt, created_dt,
+        created_by, status, status_dt, status_by, authorize_status,
+        authorized_by, authorized_dt
+        FROM sms_subscription
+        WHERE prod_type = #PROD_TYPE:VARCHAR#
+        AND prod_id = #PROD_ID:VARCHAR#
+        AND act_num = #ACT_NUM:VARCHAR#
+        AND status != 'DELETED' AND ROWID IN (SELECT MAX(ROWID)
+        FROM SMS_SUBSCRIPTION GROUP BY  ACT_NUM,prod_id,prod_type)   -->
+      SELECT prod_type, prod_id, act_num, mobile_no, subscription_dt, created_dt,
+        created_by, status, status_dt, status_by, authorize_status,
+        authorized_by, authorized_dt
+        FROM 
+      ( SELECT prod_type, prod_id, act_num, mobile_no, subscription_dt, created_dt,
+        created_by, status, status_dt, status_by, authorize_status,
+        authorized_by, authorized_dt
+        FROM sms_subscription
+        WHERE prod_type = #PROD_TYPE:VARCHAR#
+        AND prod_id = #PROD_ID:VARCHAR#
+        AND act_num = #ACT_NUM:VARCHAR#
+        AND status NOT IN( 'DELETED') ORDER BY status_dt DESC LIMIT 1)SM
+        UNION
+        SELECT ap.prod_type, ac.prod_id,SUBSTR(ac.act_num,0,13) AS act_num,  cp.phone_number  AS mobile_no,
+               status_dt AS subscription_dt, status_dt AS created_dt,
+               status_by AS created_by, status, status_dt, status_by,
+               'AUTHORIZED' AS authorize_status, NULL AS authorized_by,
+               status_dt AS authorized_dt
+          FROM all_customer_balance ac, cust_phone cp, all_products ap
+         WHERE SUBSTR(ac.act_num,1,13) = #ACT_NUM:VARCHAR#
+           AND cp.cust_id = ac.cust_id
+           AND ap.prod_id = ac.prod_id
+           AND cp.phone_type_id = 'MOBILE'
+           AND ac.prod_id = #PROD_ID:VARCHAR#
+           AND ap.prod_type = #PROD_TYPE:VARCHAR#
+		   AND cp.status not in ('DELETED')
+    </mapped-statement>
+	<!-- Use SMSSubscriptionMap object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="authorizeSMSSubscriptionMap" inline-parameters="true">
+        UPDATE SMS_SUBSCRIPTION SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE 
+        PROD_TYPE=#PROD_TYPE:VARCHAR# AND 
+        PROD_ID=#PROD_ID:VARCHAR# AND 
+        ACT_NUM=#ACCOUNTNO:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="insertSmsAcknolegmentTo" inline-parameters="true">
+<!--        INSERT INTO SMS_ACKNOWLEDGMENT(MESSAGE , ACKNOWLEDGMENT ,PHONE_NO, SEND_DATE,SMS_ID,ACT_NUM,SMS_MODULE,CREATED_DT) 
+        VALUES (#message:VARCHAR#, #acknoldgment:VARCHAR#, #phoneNo:NUMERIC#,#sendDt:DATE#,#smsID:VARCHAR#,#actNum:VARCHAR#,#smsModule:VARCHAR#,(SELECT SYS_DATE() FROM DUAL))-->
+<!--        MERGE INTO SMS_ACKNOWLEDGMENT SMSA USING (SELECT * FROM SMS_SUBSCRIPTION SMSS WHERE SMSS.ACT_NUM = #actNum:VARCHAR# ) H ON (
+        SMSA.ACT_NUM = #actNum:VARCHAR# AND SMSA.SMS_ID = #smsID:VARCHAR#
+        ) WHEN MATCHED THEN
+        UPDATE SET SMSA.ACKNOWLEDGMENT = #acknoldgment:VARCHAR#
+        WHEN NOT MATCHED THEN
+        INSERT (MESSAGE, ACKNOWLEDGMENT, PHONE_NO, SEND_DATE, SMS_ID, ACT_NUM, SMS_MODULE, CREATED_DT)
+        VALUES (#message:VARCHAR#, #acknoldgment:VARCHAR#, #phoneNo:NUMERIC#, #sendDt:DATE#, #smsID:VARCHAR#, #actNum:VARCHAR#,
+        #smsModule:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))-->
+         call SMS_ACKNLOWLEDGE_UPDATE(#message:VARCHAR#, #acknoldgment:VARCHAR#, #phoneNo:NUMERIC#, cast(#sendDt# as date), #smsID:VARCHAR#, #actNum:VARCHAR#,
+        #smsModule:VARCHAR#,#acknowledgementId:VARCHAR#,#processedCount:NUMERIC#)
+    </mapped-statement>
+    
+    <result-map name="getSMSAcknoledgmentMapResult" class="com.see.truetransact.transferobject.common.mobile.smsAcknoldgmentTO">
+        <property name="message" column="MESSAGE"/>
+        <property name="acknoldgment" column="ACKNOWLEDGMENT"/>
+        <property name="sendDt" column="SEND_DATE"/>
+        <property name="phoneNo" column="PHONE_NO"/>  
+        <property name="smsID" column="SMS_ID"/>   
+        <property name="actNum" column="ACT_NUM"/>  
+        <property name="smsModule" column="SMS_MODULE"/>  
+        <property name="acknowledgementId" column="ACK_ID"/>  
+        <property name="processedCount" column="PROCESSED_COUNT"/>  
+    </result-map>
+    
+    <mapped-statement name="getSelectSMSUndeliverdList" result-map="getSMSAcknoledgmentMapResult" >
+        WITH sms_ack
+        AS (SELECT *
+            FROM SMS_ACKNOWLEDGMENT SA),
+        sms_sub
+        AS (SELECT SM.ACT_NUM, SM.CUST_ID, SM.MOBILE_NO
+            FROM SMS_SUBSCRIPTION sm),
+        cbms_para
+        AS (SELECT CBMS_VALUE
+            FROM CBMS_PARAMETERS
+            WHERE CBMS_KEY = 'SMS_PROCESSING_COUNT')
+        SELECT *
+        FROM sms_ack sma
+        WHERE sma.PROCESSED_COUNT &lt; (SELECT TO_NUMBER(cb.CBMS_VALUE) FROM cbms_para cb)
+        <!--AND sma.send_date = TO_DATE ( (SELECT SYS_DATE() FROM DUAL), 'dd/mm/yy')-->
+        AND sma.send_date = cast(#APPLN_DT:DATE# as DATE)
+        AND sma.ACKNOWLEDGMENT = 'UNDELIVERD'
+    </mapped-statement>
+    
+     <mapped-statement name="updateSmsAcknolegment" inline-parameters="true">
+        UPDATE SMS_ACKNOWLEDGMENT SET ACKNOWLEDGMENT = #ACKNOWLEDGMENT:VARCHAR#, SEND_DATE = #SEND_DT:DATE#, 
+        PROCESSED_COUNT = #PROCESSED_COUNT:NUMERIC# WHERE SMS_ID = #SMS_ID:VARCHAR# AND ACK_ID = #ACK_ID:VARCHAR#
+     </mapped-statement>
+     
+     <mapped-statement name="getMdsTransDetailsForSms" result-class="java.util.LinkedHashMap">
+<!--        SELECT MT.SCHEME_NAME,MT.CHITTAL_NO, ( NVL(mt.penal_amt,0)
+        + NVL(mt.mds_interest,0)
+        + NVL(mt.notice_amt,0)
+        + NVL(mt.arbitration_amt,0)
+        + NVL(mt.net_amt,0)
+        ) AS INSTALLMENT
+        ,MR.NARRATION,TO_DATE(to_char(mt.trans_dt,'dd/mm/yy'),'dd/mm/yy') as trans_dt
+        FROM MDS_TRANS_DETAILS MT,MDS_RECEIPT_ENTRY mr WHERE MR.CHITTAL_NO= MT.CHITTAL_NO
+        and MR.NET_TRANS_ID  = MT.NET_TRANS_ID
+        and MT.CHITTAL_NO = #CHITTAL_NO:VARCHAR#        
+        AND MT.NET_TRANS_ID = #TRANS_ID:VARCHAR#
+        AND MT.TRANS_DT = #TRANS_DT:DATE#-->
+        SELECT <!--MT.SCHEME_NAME,--> MSD.SCHEME_DESC AS SCHEME_NAME,
+        MT.CHITTAL_NO,
+        <!--(  NVL (mt.penal_amt, 0)-->
+        <!--+ NVL (mt.mds_interest, 0)-->
+        ( NVL (mt.notice_amt, 0)
+        <!--+ NVL (mt.arbitration_amt, 0)-->
+        + NVL (mt.net_amt, 0))
+          AS INSTALLMENT,
+        MR.NARRATION,
+        TO_DATE (TO_CHAR (mt.trans_dt, 'dd/mm/yy'), 'dd/mm/yy') AS trans_dt
+        FROM MDS_TRANS_DETAILS MT, MDS_RECEIPT_ENTRY mr, SMS_PARAMETER SP,MDS_SCHEME_DETAILS MSD
+        WHERE     SP.PROD_ID = MT.SCHEME_NAME
+        AND  MSD.SCHEME_NAME = MT.SCHEME_NAME
+        AND NVL (TXN_ALLOWED, 'N') = 'Y'
+        AND MR.CHITTAL_NO = MT.CHITTAL_NO
+        AND MR.NET_TRANS_ID = MT.NET_TRANS_ID
+		AND MR.STATUS_DT = MT.TRANS_DT
+        AND MT.CHITTAL_NO = #CHITTAL_NO:VARCHAR#
+        AND MT.NET_TRANS_ID = #TRANS_ID:VARCHAR#
+        AND MT.TRANS_DT = #TRANS_DT:DATE#
+     </mapped-statement>
+     
+     <mapped-statement name="getMdsCommensmentForSms" result-class="java.util.LinkedHashMap">
+<!--        SELECT MT.SCHEME_NAME,MT.CHITTAL_NO,NVL(MT.NET_AMT,0) AS INSTALLMENT,MT.NARRATION,TO_DATE(MT.TRANS_DT,'dd/mm/yy') AS TRANS_DT
+        FROM MDS_TRANS_DETAILS MT WHERE 
+         MT.CHITTAL_NO =  #CHITTAL_NO:VARCHAR#       
+        AND MT.NET_TRANS_ID =  #TRANS_ID:VARCHAR#
+        AND MT.TRANS_DT = #TRANS_DT:DATE#-->
+        SELECT MT.SCHEME_NAME,MT.CHITTAL_NO,NVL(MT.NET_AMT,0) AS INSTALLMENT,MT.NARRATION,MT.TRANS_DT AS TRANS_DT,SCHEME_NAME
+        FROM MDS_TRANS_DETAILS MT,SMS_PARAMETER SP WHERE MT.SCHEME_NAME = SP.PROD_ID AND NVL(TXN_ALLOWED,'N') = 'Y' AND 
+        MT.CHITTAL_NO = #CHITTAL_NO:VARCHAR# AND MT.NET_TRANS_ID = #TRANS_ID:VARCHAR# AND MT.TRANS_DT = #TRANS_DT:DATE#
+     </mapped-statement>
+     
+     <mapped-statement name="getRecordExistTodaysDtorNot" result-class="java.util.LinkedHashMap">
+<!--        SELECT * FROM SMS_ACKNOWLEDGMENT WHERE SMS_MODULE IN('RdInstallmentReminder','MaturedDepositRemider','MdsPrizedRemider','MdsReceiptRemider',
+        'MdsInstallmentRemider','LoanInstallmentRemider','MaturedDepositRemider') AND ACT_NUM = #ACT_NUM:VARCHAR# AND SEND_DATE = #SEND_DT:DATE#-->
+        SELECT * FROM SMS_ACKNOWLEDGMENT WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND SMS_ID = #SMS_ID:VARCHAR#
+     </mapped-statement>
+     
+     <mapped-statement name="getServerSystemTime" result-class="java.util.HashMap">
+        SELECT TO_DATE(SYS_DATE()) AS SYSTEM_DATE  FROM DUAL
+    </mapped-statement>
+     
+    <mapped-statement name="getRecordExistorNotinSMSSub" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SMS_SUBSCRIPTION WHERE ACT_NUM = #actNum:VARCHAR# AND PROD_TYPE = #prodType:VARCHAR# AND PROD_ID = #prodId:VARCHAR# 
+        <!--AND SUBSCRIPTION_DT = #subscriptionDt:DATE# AND MOBILE_NO = #mobileNo:VARCHAR#-->
+     </mapped-statement>
+     
+     <mapped-statement name="insertQRMasterMap" inline-parameters="true">
+        INSERT INTO QR_MASTER (QR_ACT_NUM, QR_BANK, QR_DETAILS,TXN_LIMIT,OTP_NUM,STATUS,STATUS_BY,STATUS_DT,CATEGORY) VALUES 
+        (#QR_ACT_NUM:VARCHAR#, #QR_BANK:VARCHAR#, #QR_DETAILS:VARCHAR#,#TXN_LIMIT:NUMERIC#,#OTP_NUM:VARCHAR#,#STATUS:VARCHAR#,
+        #USER_ID:VARCHAR#,(SELECT SYS_DATE() FROM DUAL),#CATEGORY:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateQRMasterMap" result-class="java.util.HashMap">
+        UPDATE QR_MASTER SET
+        QR_FILE = #PHOTOFILE#
+        WHERE QR_ACT_NUM = #QR_ACT_NUM:VARCHAR# AND 
+        QR_BANK = #QR_BANK:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getRecordExistorNotQRMaster" result-class="java.util.LinkedHashMap" >        
+        SELECT QR_ACT_NUM,QR_BANK,QR_DETAILS,OTP_NUM,TXN_LIMIT,CATEGORY FROM QR_MASTER WHERE QR_ACT_NUM = #QR_ACT_NUM:VARCHAR# AND QR_BANK = #QR_BANK:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="updateResetOTPQRMasterMap" result-class="java.util.HashMap">
+        UPDATE QR_MASTER SET OTP_NUM = #OTP_NUM:VARCHAR#,TXN_LIMIT = #TXN_LIMIT:NUMERIC# WHERE QR_ACT_NUM = #QR_ACT_NUM:VARCHAR# AND QR_BANK = #QR_BANK:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getMobileNoinSMSSubscriptionTable" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SMS_SUBSCRIPTION WHERE ACT_NUM = #CUST_ID:VARCHAR# OR CUST_ID = #CUST_ID:VARCHAR#
+     </mapped-statement>
+     
+     <mapped-statement name="getDetailsExistorNotinSMSSub" result-class="java.util.LinkedHashMap">
+        SELECT * FROM SMS_SUBSCRIPTION WHERE ACT_NUM = #ACT_NUM:VARCHAR# AND PROD_TYPE = #PROD_TYPE:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR# 
+        <!--AND SUBSCRIPTION_DT = #subscriptionDt:DATE# AND MOBILE_NO = #mobileNo:VARCHAR#-->
+     </mapped-statement>    
+     
+          
+      <mapped-statement name="insertUPIQRDetailsMap" inline-parameters="true">
+        INSERT INTO UPI_QR_DETAILS (QR_ACT_NUM,QR_ACT_NAME,QR_UPI_ID, QR_BANK,STATUS,STATUS_BY,STATUS_DT) VALUES 
+        (#QR_ACT_NUM:VARCHAR#,#QR_ACT_NAME:VARCHAR#,#UPI_ID:VARCHAR#, #QR_BANK:VARCHAR#, #STATUS:VARCHAR#,
+        #USER_ID:VARCHAR#,(SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+     <mapped-statement name="getUPIRecordExistorNotForAccount" result-class="java.util.LinkedHashMap" >        
+        SELECT QR_ACT_NUM,QR_BANK,QR_UPI_ID FROM UPI_QR_DETAILS WHERE QR_ACT_NUM = #QR_ACT_NUM:VARCHAR# AND QR_BANK = #QR_BANK:VARCHAR#
+    </mapped-statement> 
+     
+     
+</sql-map>

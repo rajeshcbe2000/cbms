@@ -1,0 +1,1910 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CashierApprovalMap">
+    <dynamic-mapped-statement name="getCashReceiptsTransTreeNewCredit" result-class="java.util.LinkedHashMap"> 
+        select Trans_id,Product,NAME,sum(amount) Amount,act_num,Status_by from(
+        SELECT   b.trans_id AS trans_id, 
+        (case 
+        when B.ACT_NUM is null and B.LINK_BATCH_ID is null then
+        (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        WHEN b.trans_id = b.link_batch_id  AND b.act_num IS NULL AND b.trans_mod_type = 'MDS'
+         THEN (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id) 
+         WHEN b.act_num IS NULL AND b.trans_mod_type = 'SH'
+         THEN (SELECT ac.ac_hd_desc
+         FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        when  substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)in (select LP.PROD_ID from loans_product lp) then 
+        ( select LP.PROD_DESC from loans_product lp where LP.PROD_ID=substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3))
+        when  substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)in (select DP.PROD_ID from deposits_product dp) then
+        ( case when B.ACT_NUM is null then
+        (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        else
+        (select dp.PROD_DESC from deposits_product dp where dp.PROD_ID=substr(B.act_num,5,3)) 
+        end)
+        when substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)in (select op.PROD_ID from OP_AC_PRODUCT op) then
+        (select op.PROD_DESC from OP_AC_PRODUCT op where op.PROD_ID=substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)) 
+        else (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        end) as product,
+        get_joint_cust
+        ((CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        )
+        ) AS NAME,
+        (CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        WHEN b.trans_mod_type = 'MDS'   
+          THEN SUBSTR (b.particulars, 1, 23)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        when b.particulars LIKE '%Fd Interest%' then
+        null
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        ) AS act_num,
+        (b.amount) AS amount,
+        b.status_by AS status_by
+        FROM cash_trans b
+        WHERE b.trans_dt = #TRANS_DT:DATE#
+        AND b.trans_type = #TRANS_TYPE:VARCHAR#
+        AND b.INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+        AND  b.payment_status is null 
+        <!--and b.authorize_status is null-->
+        AND ((b.authorize_status IS NULL
+              <!-- AND b.screen_name NOT IN
+              ('Loans/Advances Account Opening') -->
+              AND (b.screen_name != 'Loans/Advances Account Opening' OR b.screen_name IS NULL)
+              )
+              OR(b.authorize_status IS NULL
+                      AND b.trans_id IN (
+                             SELECT c.trans_id
+                               FROM cash_trans c
+                              WHERE c.link_batch_id IN (
+                                       SELECT d.link_batch_id
+                                         FROM cash_trans d
+                                        WHERE d.trans_type = 'DEBIT'
+                                          AND d.authorize_status IN
+                                                               ('AUTHORIZED')
+                                          AND (d.screen_name =
+                                                  'Loans/Advances Account Opening'
+                                              )
+                                          AND d.trans_dt = #TRANS_DT:DATE#))
+                      AND b.screen_name = 'Loans/Advances Account Opening'
+                     )
+                     )
+        )AS RESULT
+        group by trans_id,product,nAME,Status_by,act_num
+        UNION ALL
+        SELECT   ct.trans_id AS trans_id, ac.ac_hd_desc AS product,
+         get_joint_cust
+            ((CASE
+                 WHEN ct.trans_id = ct.link_batch_id
+                    THEN CASE
+                           WHEN ct.particulars LIKE '%_1.0'
+                              THEN SUBSTR (ct.particulars, -17, 13)
+                           ELSE SUBSTR (ct.particulars, 1, 13)
+                        END
+                 ELSE SUBSTR (NVL (ct.link_batch_id, ct.act_num), 1, 13)
+              END
+             )
+            ) AS NAME,
+         ct.amount AS amount, ct.act_num AS act_num,
+         ct.status_by AS status_by
+        FROM cash_trans ct, ac_hd ac
+            WHERE ac.ac_hd_id = ct.ac_hd_id
+            AND ct.trans_mod_type = 'MDS'
+            AND ct.trans_type =#TRANS_TYPE:VARCHAR#
+            AND ct.trans_dt = #TRANS_DT:DATE#
+            AND ct.INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+            AND ct.authorize_status = 'AUTHORIZED'
+            AND ct.payment_status IS NULL
+    UNION ALL
+        SELECT   ct.trans_id AS trans_id, ac.ac_hd_desc AS product, NULL AS NAME,
+            ct.amount AS amount, ct.act_num AS act_num,
+            ct.status_by AS status_by
+         FROM cash_trans ct, ac_hd ac
+        WHERE ac.ac_hd_id = ct.ac_hd_id
+            AND ct.trans_mod_type = 'TR'
+            AND ct.trans_type = #TRANS_TYPE:VARCHAR#
+            AND ct.trans_dt = #TRANS_DT:DATE#
+            AND ct.INITIATED_BRANCH  =#BRANCH_CODE:VARCHAR#
+            AND ct.authorize_status = 'AUTHORIZED'
+            AND ct.payment_status IS NULL
+    UNION ALL
+        SELECT   ct.trans_id AS trans_id, ac.ac_hd_desc AS product, NULL AS NAME,
+            ct.amount AS amount, ct.act_num AS act_num,
+            ct.status_by AS status_by
+          FROM cash_trans ct, ac_hd ac
+        WHERE ac.ac_hd_id = ct.ac_hd_id
+            AND ct.trans_mod_type = 'TL'
+            AND ct.trans_type = #TRANS_TYPE:VARCHAR#
+            AND ct.trans_dt = #TRANS_DT:DATE#
+            AND ct.INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+            AND ct.authorize_status = 'AUTHORIZED'
+            AND ct.payment_status IS NULL
+        ORDER BY trans_id
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getCashReceiptsTransTreeNewDebit" result-class="java.util.LinkedHashMap" > 
+        select Trans_id,Product,NAME,sum(amount) Amount,act_num,Status_by from(
+        SELECT   b.trans_id AS trans_id, 
+        (case 
+        when B.ACT_NUM is null and B.LINK_BATCH_ID is null then
+        (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        when  substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)in (select LP.PROD_ID from loans_product lp) then 
+        ( select LP.PROD_DESC from loans_product lp where LP.PROD_ID=substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3))
+        when  substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)in (select DP.PROD_ID from deposits_product dp) then
+        ( case when B.ACT_NUM is null then
+        (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        else
+        (select dp.PROD_DESC from deposits_product dp where dp.PROD_ID=substr(B.act_num,5,3)) 
+        end)
+        when substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)in (select op.PROD_ID from OP_AC_PRODUCT op) then
+        (select op.PROD_DESC from OP_AC_PRODUCT op where op.PROD_ID=substr(nvl(B.ACT_NUM,B.LINK_BATCH_ID),5,3)) 
+        else (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)
+        end) as product,
+        get_joint_cust
+        ((CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        )
+        ) AS NAME,
+        (CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        when b.particulars LIKE '%Fd Interest%' then
+        null
+        WHEN B.SCREEN_NAME = 'Gold Loan Account Opening'
+        THEN B.ACT_NUM
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        ) AS act_num,
+        (b.amount) AS amount,
+        b.status_by AS status_by
+        FROM cash_trans b
+        WHERE b.trans_dt = #TRANS_DT:DATE#
+        AND b.trans_type = #TRANS_TYPE:VARCHAR#
+        AND b.INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+        AND b.payment_status is  null 
+        and b.authorize_status = #AUTHORIZESTATUS:VARCHAR#
+        and (instrument_no2 != 'Deposit Closure' or instrument_no2 is null)      
+        )as result
+        group by trans_id,product,nAME,Status_by,act_num
+        union all
+        SELECT   max(trans_id), product, NAME, SUM (amount) amount, act_num, status_by
+        FROM (SELECT b.trans_id AS trans_id,
+                 ('Fixed Deposit - Closure'
+                 ) AS product,
+                 get_joint_cust(SUBSTR (b.link_batch_id, 1, 13)) AS NAME,
+                  (SUBSTR (b.link_batch_id, 1, 13)) AS act_num,
+                 (b.amount) AS amount, b.status_by AS status_by
+            FROM cash_trans b
+           WHERE b.trans_dt = #TRANS_DT:DATE#
+             AND b.trans_type =  #TRANS_TYPE:VARCHAR#
+             AND b.INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+             AND b.payment_status IS NULL
+             AND b.authorize_status = #AUTHORIZESTATUS:VARCHAR#
+             AND INSTRUMENT_NO2 ='Deposit Closure')AS result1
+        GROUP BY product, NAME, status_by, act_num
+        ORDER BY trans_id
+    </dynamic-mapped-statement> 
+    
+    <dynamic-mapped-statement name="getCashReceiptsTransTree" result-class="java.util.HashMap" > 
+        Select distinct b.trans_id||'('||(select SUM(a.AMOUNT) from CASH_TRANS a where a.trans_dt =#TRANS_DT:DATE# and a.trans_type = 'CREDIT'
+        and                        a.payment_status is null and a.authorize_status is null   
+        and a.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# and a.TRANS_ID=b.TRANS_ID   )||')'|| nvl(b.ACT_NUM,b.LINK_BATCH_ID) AS trans_id ,b.trans_type  from CASH_TRANS b where b.trans_dt = #TRANS_DT# and b.trans_type = 'CREDIT'
+        <dynamic>
+            <isNotEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                b.payment_status is not null and b.authorize_status is not null and b.authorize_status = #AUTHORIZESTATUS:VARCHAR#
+            </isNotEqual>
+            <isEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                b.payment_status is null and b.authorize_status is null
+            </isEqual>
+        </dynamic>        
+        
+        and b.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# 
+        union
+        Select distinct b.trans_id||'('||(select SUM(a.AMOUNT) from CASH_TRANS a where a.trans_dt =#TRANS_DT:DATE# and a.trans_type = 'DEBIT'
+        and   b.authorize_status = 'AUTHORIZED' and a.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# and a.TRANS_ID=b.TRANS_ID   )||')'||  
+        CASE WHEN B.SCREEN_NAME like 'CU%'
+        THEN
+        ''
+        ELSE
+        nvl(b.ACT_NUM,b.LINK_BATCH_ID)
+        END
+        AS trans_id ,b.trans_type  from CASH_TRANS b where b.trans_dt = #TRANS_DT:DATE# and b.trans_type = 'DEBIT'
+        and b.authorize_status = 'AUTHORIZED'
+        <dynamic>
+            <isNotEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                b.authorize_status is not null and b.authorize_status = #AUTHORIZESTATUS:VARCHAR#
+            </isNotEqual>
+            <isEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                b.payment_status is null
+            </isEqual>
+        </dynamic>        
+        and b.INITIATED_BRANCH =#BRANCH_CODE:VARCHAR#
+        order by trans_type ,trans_id 
+    </dynamic-mapped-statement> 
+    <dynamic-mapped-statement name="getCashReceiptsTransTree1" result-class="java.util.HashMap" > 
+        Select distinct trans_id from CASH_TRANS  where trans_dt =#TRANS_DT:DATE# and trans_type = 'CREDIT'
+        and                        payment_status is null and authorize_status is null   
+        and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# 
+        <dynamic>
+            <isNotEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                payment_status is not null and authorize_status is not null and authorize_status = #AUTHORIZESTATUS:VARCHAR#
+            </isNotEqual>
+            <isEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                payment_status is null and authorize_status is null
+            </isEqual>
+        </dynamic>        
+        
+        order by trans_id
+    </dynamic-mapped-statement> 
+    <dynamic-mapped-statement name="getCashPaymentsTransTree" result-class="java.util.HashMap" > 
+        Select distinct b.trans_id||'('||(select SUM(a.AMOUNT) from CASH_TRANS a where a.trans_dt =#TRANS_DT:DATE# and a.trans_type = 'DEBIT'
+        and   b.authorize_status = 'AUTHORIZED' and a.branch_id=#BRANCH_CODE:VARCHAR# and a.TRANS_ID=b.TRANS_ID   )||')'||  
+        CASE WHEN B.SCREEN_NAME like 'CU%'
+        THEN
+        ''
+        ELSE
+        nvl(b.ACT_NUM,b.LINK_BATCH_ID)
+        END
+        AS trans_id   from CASH_TRANS b where b.trans_dt = #TRANS_DT:DATE# and b.trans_type = 'DEBIT'
+        and b.authorize_status = 'AUTHORIZED'
+        <dynamic>
+            <isNotEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                b.authorize_status is not null and b.authorize_status = #AUTHORIZESTATUS:VARCHAR#
+            </isNotEqual>
+            <isEqual prepend="and" property="AUTHORIZESTATUS" compareValue="PENDING" >
+                b.payment_status is null
+            </isEqual>
+        </dynamic>        
+        and b.branch_id=#BRANCH_CODE:VARCHAR#
+        order by trans_id
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="getCashTransData" result-class="java.util.HashMap" > 
+        Select * from CASH_TRANS where trans_id=#TRANS_ID:VARCHAR# and trans_dt = #TRANS_DT:DATE# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR#
+        order by trans_id
+    </mapped-statement> 
+    
+    <mapped-statement name="getUniqueIdData" result-class="java.util.HashMap" > 
+        Select AUTHORIZE_REMARKS,TOKEN_NO AS SCREEN_NAME from CASH_TRANS where trans_id=#TRANS_ID:VARCHAR# and trans_dt = #TRANS_DT:DATE# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR#
+        order by trans_id
+    </mapped-statement> 
+    <mapped-statement name="getShadowBalance" result-class="java.util.HashMap" > 
+        Select SUM(AMOUNT) AS AMOUNT from CASH_TRANS where trans_dt = #TRANS_DT:DATE# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# and trans_type='CREDIT' AND AUTHORIZE_STATUS IS  NULL
+        AND PAYMENT_STATUS ='AUTHORIZED' AND STATUS !='DELETED'
+    </mapped-statement> 
+    <mapped-statement name="getTransIdUnique" result-class="java.util.HashMap" > 
+        Select TRANS_ID from CASH_TRANS where (AUTHORIZE_REMARKS=#AUTHORIZE_REMARKS:VARCHAR# OR SCREEN_NAME=#AUTHORIZE_REMARKS:VARCHAR#)        
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getReprintData" result-class="java.util.LinkedHashMap" >		
+        SELECT   trans_id, product, NAME, SUM (amount) amount, act_num, trans_type,MODULE,SINGLE_TRANS_ID
+        FROM (SELECT b.trans_id AS trans_id,SINGLE_TRANS_ID,
+        (CASE
+        WHEN b.act_num IS NULL AND b.link_batch_id IS NULL
+        THEN (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+         WHEN b.ACT_NUM IS NULL AND b.TRANS_MOD_TYPE ='LK'
+         THEN  (SELECT LP.PROD_DESC FROM LOCKER_PRODUCT lp
+         WHERE lp.prod_id =b.PROD_ID) WHEN b.trans_id = b.link_batch_id  AND b.act_num IS NULL AND b.trans_mod_type = 'MDS'
+         THEN (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id) 
+         WHEN b.act_num IS NULL AND b.trans_mod_type = 'SH'
+         THEN (SELECT ac.ac_hd_desc
+         FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id)  
+         WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT lp.prod_id
+        FROM loans_product lp)
+        THEN (SELECT lp.prod_desc
+        FROM loans_product lp
+        WHERE lp.prod_id =
+        SUBSTR (NVL (b.act_num,
+        b.link_batch_id
+        ),
+        5,
+        3
+        ))
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT dp.prod_id
+        FROM deposits_product dp)
+        THEN (CASE
+        WHEN b.act_num IS NULL
+        THEN (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        ELSE (SELECT dp.prod_desc
+        FROM deposits_product dp
+        WHERE dp.prod_id =
+        SUBSTR (b.act_num, 5, 3))
+        END
+        )
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT op.prod_id
+        FROM op_ac_product op)
+        THEN (SELECT op.prod_desc
+        FROM op_ac_product op
+        WHERE op.prod_id =
+        SUBSTR (NVL (b.act_num,
+        b.link_batch_id
+        ),
+        5,
+        3
+        ))
+        ELSE (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        END
+        ) AS product,
+        get_joint_cust
+        ((CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        )
+        ) AS NAME,
+        (CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        WHEN b.particulars LIKE '%Fd Interest%'
+        THEN B.GL_TRANS_ACT_NUM
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        ) AS act_num,
+        (b.amount) AS amount, b.status_by AS status_by,
+        b.trans_type AS trans_type, b.single_trans_id AS s_id,
+                 (CASE
+                     WHEN B.TRANS_ID = B.LINK_BATCH_ID THEN 
+                         CASE
+                            WHEN B.AUTHORIZE_REMARKS = 'SERVICE TAX' THEN 'OTHERS'
+                            ELSE 'MDS'
+                            END
+                        ELSE 'OTHERS'
+                  END
+                 ) AS MODULE
+        FROM cash_trans b
+        WHERE b.trans_dt = #From_Date:DATE#
+        AND B.INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">        
+                        b.trans_id LIKE #TRANS_ID:varchar#        
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_TYPE">        
+                        b.trans_type = #TRANS_TYPE:varchar#        
+                </isNotNull>
+            </isParameterPresent> 
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "INTEREST_APPLICATION">        
+                        b.PARTICULARS LIKE '%Fd Interest%'       
+                </isNotNull>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BOTH">        
+                      (b.authorize_status = 'AUTHORIZED' OR b.authorize_status IS NULL)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "UNAUTHORIZED">        
+                      b.authorize_status IS NULL
+                </isNotNull>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AUTHORIZED">        
+                      b.authorize_status = 'AUTHORIZED'
+                </isNotNull>
+            </isParameterPresent>           
+        </dynamic>       
+         )a WHERE trans_id IS NOT NULL
+         <dynamic>  
+                 <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NAME">        
+                      UPPER(NAME) LIKE UPPER(#ACT_NAME:varchar#) 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">        
+                     act_num LIKE #ACT_NUM:varchar#     
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="batch_id">
+                    UPPER(batch_id) LIKE UPPER('%$batch_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="product">
+                    UPPER(product) LIKE UPPER('%$product$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="act_num">
+                    UPPER(act_num) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="trans_type">
+                    UPPER(trans_type) LIKE UPPER('%$trans_type$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="module">
+                    UPPER(module) LIKE UPPER('%$module$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="single_trans_id">
+                    UPPER(single_trans_id) LIKE UPPER('%$single_trans_id$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>  
+        GROUP BY trans_id, product, NAME, status_by, act_num, trans_type,MODULE,SINGLE_TRANS_ID
+        ORDER BY trans_id
+    </dynamic-mapped-statement> 
+    
+<!--    <dynamic-mapped-statement name="getReprintTransData" result-class="java.util.LinkedHashMap" >
+        SELECT   batch_id, product, NAME, SUM (amount) amount, act_num, trans_type,
+        module, single_trans_id
+        FROM (SELECT b.batch_id AS batch_id, single_trans_id,
+        (CASE
+        WHEN b.act_num IS NULL AND b.link_batch_id IS NULL
+        THEN (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        WHEN b.ACT_NUM IS NULL AND b.TRANS_MOD_TYPE ='LK'
+        THEN 
+        (SELECT LP.PROD_DESC
+        FROM LOCKER_PRODUCT lp
+        WHERE lp.prod_id =b.PROD_ID)
+        WHEN b.trans_id = b.link_batch_id  AND b.act_num IS NULL AND b.trans_mod_type = 'MDS'
+        THEN (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = b.ac_hd_id) 
+        WHEN b.act_num IS NULL AND b.trans_mod_type = 'SH'
+        THEN (SELECT ac.ac_hd_desc FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT lp.prod_id
+        FROM loans_product lp)
+        THEN (SELECT lp.prod_desc
+        FROM loans_product lp
+        WHERE lp.prod_id =
+        SUBSTR (NVL (b.act_num,
+        b.link_batch_id
+        ),
+        5,
+        3
+        ))
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT dp.prod_id
+        FROM deposits_product dp)
+        THEN (CASE
+        WHEN b.act_num IS NULL
+        THEN (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        ELSE (SELECT dp.prod_desc
+        FROM deposits_product dp
+        WHERE dp.prod_id =
+        SUBSTR (b.act_num, 5, 3))
+        END
+        )
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT op.prod_id
+        FROM op_ac_product op)
+        THEN (SELECT op.prod_desc
+        FROM op_ac_product op
+        WHERE op.prod_id =
+        SUBSTR (NVL (b.act_num,
+        b.link_batch_id
+        ),
+        5,
+        3
+        ))
+        ELSE (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        END
+        ) AS product,
+        get_joint_cust
+        ((CASE
+        WHEN b.batch_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        )
+        ) AS NAME,
+        (CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        WHEN b.particulars LIKE '%Fd Interest%'
+        THEN B.GL_TRANS_ACT_NUM
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        ) AS act_num,
+        (b.amount) AS amount, b.status_by AS status_by,
+        b.trans_type AS trans_type, b.single_trans_id AS s_id,
+        (CASE
+        WHEN B.TRANS_ID = B.LINK_BATCH_ID THEN 
+        CASE
+        WHEN B.AUTHORIZE_REMARKS = 'SERVICE TAX' THEN 'OTHERS'
+        ELSE 'MDS'
+        END
+        ELSE 'OTHERS'
+        END
+        ) AS MODULE
+        FROM transfer_trans b
+        WHERE b.trans_dt =#From_Date:DATE#
+        AND b.initiated_branch = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">        
+                        b.batch_id LIKE #TRANS_ID:varchar#        
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "INTEREST_APPLICATION">        
+                        b.PARTICULARS LIKE '%Fd Interest%'       
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BOTH">        
+                      (b.authorize_status = 'AUTHORIZED' OR b.authorize_status IS NULL)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "UNAUTHORIZED">        
+                      b.authorize_status IS NULL
+                </isNotNull>
+            </isParameterPresent>
+           <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AUTHORIZED">        
+                      b.authorize_status = 'AUTHORIZED'
+                </isNotNull>
+            </isParameterPresent>           
+        </dynamic>       
+         ) WHERE batch_id IS NOT NULL
+         <dynamic>  
+                 <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NAME">        
+                      UPPER(NAME) LIKE UPPER(#ACT_NAME:varchar#) 
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">        
+                     act_num LIKE #ACT_NUM:varchar#     
+                </isNotNull>
+            </isParameterPresent>
+              <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="batch_id">
+                    UPPER(batch_id) LIKE UPPER('%$batch_id$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="product">
+                    UPPER(product) LIKE UPPER('%$product$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="act_num">
+                    UPPER(act_num) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="trans_type">
+                    UPPER(trans_type) LIKE UPPER('%$trans_type$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="module">
+                    UPPER(module) LIKE UPPER('%$module$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="single_trans_id">
+                    UPPER(single_trans_id) LIKE UPPER('%$single_trans_id$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>                         
+            GROUP BY batch_id,product,NAME,status_by,act_num,trans_type,module, single_trans_id
+          ORDER BY batch_id
+     </dynamic-mapped-statement>-->
+
+    <dynamic-mapped-statement name="getReprintTransData" result-class="java.util.LinkedHashMap" >
+        SELECT   batch_id, product,
+        NAME,
+        SUM (amount) amount,
+        act_num,
+        trans_type,
+        module,
+        single_trans_id,
+        agent_name 
+        FROM (SELECT b.batch_id AS batch_id, single_trans_id,
+        (CASE
+        WHEN b.act_num IS NULL AND b.link_batch_id IS NULL
+        THEN (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        WHEN b.ACT_NUM IS NULL AND b.TRANS_MOD_TYPE ='LK'
+        THEN
+        (SELECT LP.PROD_DESC
+        FROM LOCKER_PRODUCT lp
+        WHERE lp.prod_id =b.PROD_ID)
+        <!--WHEN b.trans_id = b.link_batch_id  AND b.act_num IS NULL AND -->
+        WHEN b.batch_id = b.link_batch_id  AND b.act_num IS NULL AND
+        b.trans_mod_type = 'MDS'
+        THEN (SELECT ac.ac_hd_desc FROM ac_hd ac WHERE ac.ac_hd_id = 
+        b.ac_hd_id)
+        WHEN b.act_num IS NULL AND b.trans_mod_type = 'SH'
+        THEN (SELECT ac.ac_hd_desc FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT lp.prod_id
+        FROM loans_product lp)
+        THEN (SELECT lp.prod_desc
+        FROM loans_product lp
+        WHERE lp.prod_id =
+        SUBSTR (NVL (b.act_num,
+        b.link_batch_id
+        ),
+        5,
+        3
+        ))
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT dp.prod_id
+        FROM deposits_product dp)
+        THEN (CASE
+        WHEN b.act_num IS NULL
+        THEN (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        ELSE (SELECT dp.prod_desc
+        FROM deposits_product dp
+        WHERE dp.prod_id =
+        SUBSTR (b.act_num, 5, 3))
+        END
+        )
+        WHEN SUBSTR (NVL (b.act_num, b.link_batch_id), 5, 3) IN (
+        SELECT op.prod_id
+        FROM op_ac_product op)
+        THEN (SELECT op.prod_desc
+        FROM op_ac_product op
+        WHERE op.prod_id =
+        SUBSTR (NVL (b.act_num,
+        b.link_batch_id
+        ),
+        5,
+        3
+        ))
+        ELSE (SELECT ac.ac_hd_desc
+        FROM ac_hd ac
+        WHERE ac.ac_hd_id = b.ac_hd_id)
+        END
+        ) AS product,
+        get_joint_cust
+        ((CASE
+        WHEN b.batch_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        )
+        ) AS NAME,
+        PKGREPORTS.GetcustFullName((select gl_trans_act_num from 
+        transfer_trans tt where TT.PROD_TYPE = 'GL' and TT.TRANS_MOD_TYPE = 'TD' 
+        and TT.TRANS_TYPE = 'CREDIT' and trans_dt = #From_Date:DATE# and
+        tt.trans_type = b.trans_type and TT.TRANS_ID=B.TRANS_ID and tt.batch_id = b.batch_id),1) 
+        as agent_name,
+        (CASE
+        WHEN b.trans_id = b.link_batch_id
+        THEN CASE
+        WHEN b.particulars LIKE '%_1.0'
+        THEN SUBSTR (b.particulars, -17, 13)
+        ELSE SUBSTR (b.particulars, 1, 13)
+        END
+        WHEN b.particulars LIKE '%Fd Interest%'
+        THEN B.GL_TRANS_ACT_NUM
+        ELSE SUBSTR (NVL (b.link_batch_id, b.act_num), 1, 13)
+        END
+        ) AS act_num,
+        (b.amount) AS amount, b.status_by AS status_by,
+        b.trans_type AS trans_type, b.single_trans_id AS s_id,
+        (CASE
+        WHEN B.TRANS_ID = B.LINK_BATCH_ID THEN
+        CASE
+        WHEN B.AUTHORIZE_REMARKS = 'SERVICE TAX' THEN 'OTHERS'
+        ELSE 'MDS'
+        END
+        ELSE 'OTHERS'
+        END
+        ) AS MODULE
+        FROM transfer_trans b
+        WHERE b.trans_dt =#From_Date:DATE#
+        AND b.initiated_branch = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "TRANS_ID">
+                    b.batch_id LIKE #TRANS_ID:varchar#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "INTEREST_APPLICATION">
+                    b.PARTICULARS LIKE '%Fd Interest%'
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BOTH">
+                    (b.authorize_status = 'AUTHORIZED' OR 
+                    b.authorize_status IS NULL)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "UNAUTHORIZED">
+                    b.authorize_status IS NULL
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AUTHORIZED">
+                    b.authorize_status = 'AUTHORIZED'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        )a WHERE batch_id IS NOT NULL
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NAME">
+                    UPPER(NAME) LIKE UPPER(#ACT_NAME:varchar#)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "ACT_NUM">
+                    act_num LIKE #ACT_NUM:varchar#
+                </isNotNull>
+            </isParameterPresent>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" 
+                         compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="batch_id">
+                    UPPER(batch_id) LIKE UPPER('%$batch_id$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="product">
+                    UPPER(product) LIKE UPPER('%$product$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="act_num">
+                    UPPER(act_num) LIKE UPPER('%$act_num$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="trans_type">
+                    UPPER(trans_type) LIKE UPPER('%$trans_type$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="module">
+                    UPPER(module) LIKE UPPER('%$module$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="single_trans_id">
+                    UPPER(single_trans_id) LIKE 
+                    UPPER('%$single_trans_id$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY 
+        batch_id,product,NAME,status_by,act_num,trans_type,module, 
+        single_trans_id,agent_name
+        ORDER BY batch_id
+    </dynamic-mapped-statement>
+     
+    <mapped-statement name="getCurrBalance" result-class="java.util.HashMap" > 
+      select opn_BAL AS CURAMOUNT FROM GL_ABSTRACT where AC_HD_ID=(SELECT CASH_AC_HD FROM PARAMETERS ) 
+      AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+      and dt=(select curr_appl_dt from day_end where branch_code=#BRANCH_CODE:VARCHAR#)
+    
+    </mapped-statement>
+    
+    <mapped-statement name="getCashLinkBatchId" result-class="java.util.HashMap" > 
+        Select LINK_BATCH_ID from CASH_TRANS where trans_id=#TRANS_ID:VARCHAR# and trans_dt = #TRANS_DT:DATE# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR#
+        order by trans_id
+    </mapped-statement>
+    <mapped-statement name="getCashTransSumAmount" result-class="java.util.HashMap" > 
+        select sum(AMOUNT) AS AMOUNT,TRANS_TYPE from cash_trans where trans_id=#TRANS_ID:VARCHAR# 
+        and trans_dt = #TRANS_DT:DATE# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# GROUP BY TRANS_TYPE
+    </mapped-statement> 
+    
+    <mapped-statement name="getSchemeNameOA" result-class="java.util.HashMap" > 
+        select PROD_DESC from OP_AC_PRODUCT where PROD_ID=#PRODUCT_ID:VARCHAR# 
+    </mapped-statement> 
+    <dynamic-mapped-statement name="getShareNum" result-class="java.util.HashMap" > 
+        select SHARE_ACCT_NO,RESOLUTION_NO,CUST_ID  from SHARE_ACCT where SHARE_TYPE=#PROD_ID:VARCHAR# 
+          <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHARE_ACCT_NO">
+                    UPPER(SHARE_ACCT_NO) LIKE UPPER('%$SHARE_ACCT_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="RESOLUTION_NO">
+                    UPPER(RESOLUTION_NO) LIKE UPPER('%$RESOLUTION_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getCashierAuth" result-class="java.util.HashMap" > 
+        select CASHIER_AUTH_ALLOWED  from PARAMETERS 
+    </mapped-statement> 
+    <mapped-statement name="getCashScreename" result-class="java.util.HashMap" > 
+        SELECT ct.screen_name, ct.trans_type, ct.single_trans_id
+        FROM cash_trans ct
+        WHERE (ct.trans_id = #TRANS_ID:VARCHAR# OR ct.link_batch_id = #LINK_BATCH_ID:VARCHAR#)
+        AND ct.trans_dt = #TRANS_DT:DATE#
+        AND ct.authorize_status IS NULL
+    </mapped-statement> 
+    
+    <mapped-statement name="getCashSingleTransId" result-class="java.util.HashMap" > 
+    select ct.SINGLE_TRANS_ID,ct.TOKEN_NO AS SCREEN_NAME from CASH_TRANS ct where CT.TRANS_ID =#TRANS_ID:VARCHAR#  and CT.TRANS_DT = #TRANS_DT:VARCHAR# AND
+    INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND STATUS!='DELETED' 
+    </mapped-statement>
+    
+    <mapped-statement name="getCashSingleTransLists" result-class="java.util.HashMap" > 
+        select ct.LINK_BATCH_ID,ct.TRANS_ID from CASH_TRANS ct where CT.SINGLE_TRANS_ID =#SINGLE_TRANS_ID:VARCHAR#  
+        and CT.TRANS_DT = #TRANS_DT:VARCHAR# and CT.AUTHORIZE_STATUS is null AND INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR# AND STATUS!='DELETED' 
+    </mapped-statement>
+    
+    <mapped-statement name="getDistinctTransaction" result-class="java.util.HashMap" > 
+        select COUNT(DISTINCT TRANS_TYPE) as COUNT  from CASH_TRANS WHERE LINK_BATCH_ID = #LINK_BATCH_ID:VARCHAR#
+        
+    </mapped-statement> 
+    
+    <mapped-statement name="getInvNum" result-class="java.util.HashMap" > 
+        select INVESTMENT_PROD_ID,IINVESTMENT_PROD_DESC  from INVESTMENT_CONF_DETAILS   
+        WHERE  STATUS NOT IN ('DELETED')  AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS  NULL)  
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getSelectInvReportView" result-class="java.util.HashMap" > 
+        select INVESTMENT_ID,INVESTMENT_REF_NO,INVESTMENT_PROD_DESC  from INVESTMENT_MASTER  
+        WHERE  INVESTMENT_PROD_DESC =#INV_DEC:VARCHAR# 
+        <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INVESTMENT_ID">
+                    UPPER(INVESTMENT_ID) LIKE UPPER('%$INVESTMENT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="INVESTMENT_REF_NO">
+                    UPPER(INVESTMENT_REF_NO) LIKE UPPER('%$INVESTMENT_REF_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="INVESTMENT_PROD_DESC">
+                    UPPER(INVESTMENT_PROD_DESC) LIKE UPPER('%$INVESTMENT_PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getAllTransactionViewInterest" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_ID, DECODE(ACT_NUM,NULL,LINK_BATCH_ID,ACT_NUM) AS ACT_NUM, AC_HD_ID, AMOUNT, 
+        PROD_TYPE, CT.AUTHORIZE_STATUS, AUTHORIZE_REMARKS,TRANS_DT,
+        TRANS_DT,DSA.DEPOSIT_AMT,DSA.RATE_OF_INT AS ROI,DSA.INTPAY_FREQ AS FREQ, DSA.TOTAL_INT_DRAWN AS PAID FROM CASH_TRANS CT,DEPOSIT_SUB_ACINFO DSA WHERE 
+        TRANS_DT =#TODAY_DT:DATE# AND CT.LINK_BATCH_ID = DSA.DEPOSIT_NO || '_1' AND CT.STATUS !='DELETED' AND 
+        INITIATED_BRANCH =#INITIATED_BRANCH:VARCHAR# AND CT.AUTHORIZE_STATUS IS NULL AND TRANS_TYPE='DEBIT'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SINGLE_TRANS_ID">
+                    SINGLE_TRANS_ID = #SINGLE_TRANS_ID:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend="AND" property="TRANS_ID">
+                    TRANS_ID = #TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getAllTransactionViewInterestCashier" result-class="java.util.LinkedHashMap">
+        SELECT TRANS_ID, DECODE(ACT_NUM,NULL,LINK_BATCH_ID,ACT_NUM) AS ACT_NUM, AC_HD_ID, AMOUNT, 
+        PROD_TYPE, AUTHORIZE_STATUS, AUTHORIZE_REMARKS,TRANS_DT  FROM CASH_TRANS  WHERE TRANS_ID =#TRANS_ID:VARCHAR# AND 
+        TRANS_DT =#TODAY_DT:DATE# AND STATUS !='DELETED'  AND INITIATED_BRANCH =#INITIATED_BRANCH:VARCHAR# AND  AUTHORIZE_STATUS IS NOT NULL 
+        AND TRANS_TYPE='DEBIT'
+    </mapped-statement>
+    
+    <mapped-statement name="getSchemeNameGL" result-class="java.util.HashMap" > 
+        select AC_HD_DESC AS PROD_DESC from AC_HD where AC_HD_ID=#PRODUCT_ID:VARCHAR# 
+    </mapped-statement> 
+
+    <mapped-statement name="getBehavesL" result-class="java.util.HashMap" > 
+        select BEHAVES_LIKE  from DEPOSITS_PRODUCT where PROD_ID=#PROD_ID:VARCHAR# 
+    </mapped-statement>
+    <mapped-statement name="getBehavesLoan" result-class="java.util.HashMap" > 
+        select BEHAVES_LIKE,AUTHORIZE_REMARK  from LOANS_PRODUCT where PROD_ID=#PROD_ID:VARCHAR# 
+    </mapped-statement>
+  
+
+    <mapped-statement name="getSchemeNameTD" result-class="java.util.HashMap" > 
+        select PROD_DESC from DEPOSITS_PRODUCT where PROD_ID=#PRODUCT_ID:VARCHAR# 
+    </mapped-statement> 
+    
+    <mapped-statement name="getSchemeNameTL" result-class="java.util.HashMap" > 
+        select PROD_DESC from LOANS_PRODUCT where PROD_ID=#PRODUCT_ID:VARCHAR# 
+    </mapped-statement> 
+   
+    <mapped-statement name="getSchemeNameAD" result-class="java.util.HashMap" > 
+        select PROD_DESC from LOANS_PRODUCT where PROD_ID=#PRODUCT_ID:VARCHAR# 
+    </mapped-statement> 
+
+    <mapped-statement name="getSchemeNameSA" result-class="java.util.HashMap" > 
+        select PROD_DESC from SUSPENSE_PRODUCT where PROD_ID=#PRODUCT_ID:VARCHAR# 
+    </mapped-statement> 
+     
+    <mapped-statement name="getCashierAuthAllowed" result-class="java.util.HashMap" > 
+        select CASHIER_AUTH_ALLOWED from PARAMETERS  
+    </mapped-statement> 
+     
+    <mapped-statement name="getCustomerN" result-class="java.util.HashMap" > 
+        <!--select c.FNAME AS NAME from ACT_MASTER am, customer c where am.CUST_ID=c.CUST_ID and am.ACT_NUM=#ACT_NUM# -->
+        SELECT FNAME||' '||NVL(MNAME,'')||' '||NVL(LNAME,'') AS NAME FROM all_customer_cashier WHERE ACT_NUM=#ACT_NUM:VARCHAR#
+    </mapped-statement> 
+
+    <mapped-statement name="getOpAmount" result-class="java.util.HashMap" > 
+        select CUR_BAL AS OPAMOUNT FROM GL where AC_HD_ID=(SELECT CASH_AC_HD FROM PARAMETERS )  AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    </mapped-statement> 
+    
+  <!--  <mapped-statement name="getOpBalAmount" result-class="java.util.HashMap" > 
+        select CUR_BAL AS OPAMOUNT FROM GL where AC_HD_ID=(SELECT CASH_AC_HD FROM PARAMETERS ) AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# 
+        AND LAST_TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>  -->
+    
+    <mapped-statement name="getOpBalAmount" result-class="java.util.HashMap" > 
+    select OPN_BAL AS CURAMOUNT FROM GL_ABSTRACT where AC_HD_ID=(SELECT CASH_AC_HD FROM PARAMETERS ) AND BRANCH_CODE=#BRANCH_CODE:VARCHAR#
+    and dt=(select curr_appl_dt from day_end where branch_code=#BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+    
+   <dynamic-mapped-statement name="getSumPayRecAmount" result-class="java.util.HashMap" > 
+        select sum(AMOUNT) AS AMOUNT,TRANS_TYPE from cash_trans where  
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="" property="BRANCH_CODE">
+                   INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+                <isNotNull prepend="" property="INITIATED_BRANCH">
+                   INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         
+        and trans_dt = #TRANS_DT:DATE# 
+          <dynamic>
+            <isEqual prepend="AND" property="CASHIER_APPROVAL_STATUS" compareValue="Y" >
+               PAYMENT_STATUS='AUTHORIZED'
+            </isEqual>
+          </dynamic>
+          AND AUTHORIZE_STATUS='AUTHORIZED' and STATUS !='DELETED'  group by TRANS_TYPE
+   </dynamic-mapped-statement>   
+    <mapped-statement name="getSumPayRecAmountNew" result-class="java.util.HashMap" > 
+        select sum(AMOUNT) AS AMOUNT ,TRANS_TYPE from cash_trans where trans_id=#TRANS_ID:VARCHAR# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# and STATUS !='DELETED'
+        and trans_dt = #TRANS_DT:DATE#  group by TRANS_TYPE
+    </mapped-statement> 
+    <mapped-statement name="getSumPayRecAmountUnion" result-class="java.util.HashMap" > 
+        select sum(AMOUNT) AS REC_AMOUNT from cash_trans where trans_id=#TRANS_ID:VARCHAR# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# 
+        and trans_dt = #TRANS_DT:DATE# and TRANS_TYPE='CREDIT' and STATUS !='DELETED'
+        UNION
+        select sum(AMOUNT) AS PAY_AMOUNT from cash_trans where trans_id=#TRANS_ID:VARCHAR# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# 
+        and trans_dt = #TRANS_DT:DATE# and TRANS_TYPE='DEBIT' and STATUS !='DELETED'
+    </mapped-statement> 
+    <mapped-statement name="getTransIdFromScheme" result-class="java.util.HashMap" > 
+        select PROD_TYPE from cash_trans where trans_id =#TRANS_ID:VARCHAR# AND TRANS_DT=#TRANS_DT:DATE# and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# 
+        and trans_dt = #TRANS_DT:DATE# 
+    </mapped-statement> 
+    <mapped-statement name="getCashReceiptsCount" result-class="java.util.HashMap" > 
+        Select count(distinct trans_id) AS COUNT from CASH_TRANS where trans_dt = #TRANS_DT:DATE# and trans_type = 'CREDIT'
+        and payment_status is null and (authorize_status is null or authorize_status = #AUTHORIZESTATUS:VARCHAR#)
+        and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR# order by trans_id
+    </mapped-statement> 
+    
+    <mapped-statement name="getCashPaymentsCount" result-class="java.util.HashMap" > 
+        Select distinct count(distinct trans_id) AS COUNT from CASH_TRANS where trans_dt = #TRANS_DT:DATE# and trans_type = 'DEBIT'
+        and payment_status is  null and (authorize_status =#AUTHORIZESTATUS:VARCHAR# or authorize_status is not null and 
+        authorize_status  IN('AUTHORIZED','EXCEPTION')) and INITIATED_BRANCH =#BRANCH_CODE:VARCHAR#       order by trans_id
+        
+    </mapped-statement> 
+    <mapped-statement name="getCashUnapprovedBal" result-class="java.util.HashMap" > 
+        SELECT   (SELECT nvl(opn_bal,0) AS curamount
+        FROM gl_abstract
+        WHERE dt =#TRANS_DT:DATE#
+        AND branch_code =#BRANCH_CODE:VARCHAR#
+        AND ac_hd_id IN (SELECT cash_ac_hd
+        FROM PARAMETERS))
+        + (SELECT nvl(SUM (DECODE (trans_type, 'CREDIT', amount, 0)),0)
+        - nvl(SUM (DECODE (trans_type, 'DEBIT', amount, 0)),0) as bal
+        FROM cash_trans
+        WHERE trans_dt =#TRANS_DT:DATE#
+        AND status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        AND initiated_branch =#BRANCH_CODE:VARCHAR#) AS balance
+        FROM DUAL
+        
+    </mapped-statement> 
+      <mapped-statement name="getCashapprovedBal" result-class="java.util.HashMap" > 
+        SELECT   (SELECT nvl(opn_bal,0) AS curamount
+        FROM gl_abstract
+        WHERE dt =#TRANS_DT:DATE#
+        AND branch_code =#BRANCH_CODE:VARCHAR#
+        AND ac_hd_id IN (SELECT cash_ac_hd
+        FROM PARAMETERS))
+        + (SELECT nvl(SUM (DECODE (trans_type, 'CREDIT', amount, 0)),0)
+        - nvl(SUM (DECODE (trans_type, 'DEBIT', amount, 0)),0) as bal
+        FROM cash_trans
+        WHERE trans_dt =#TRANS_DT:DATE#
+        AND status != 'DELETED'
+        AND authorize_status = 'AUTHORIZED'
+        and payment_status='AUTHORIZED'
+        AND initiated_branch =#BRANCH_CODE:VARCHAR#) AS balance
+        FROM DUAL
+        
+    </mapped-statement> 
+    <mapped-statement name="getIsDenominationAllowed" result-class="java.util.HashMap" > 
+        Select DENOMINATION_ALLOWED from PARAMETERS  
+    
+    </mapped-statement> 
+    <mapped-statement name="approveCashier" result-class="java.util.HashMap">
+        UPDATE CASH_TRANS  SET 
+        payment_status = 'AUTHORIZED', PAYMENT_BY = #USER_ID:VARCHAR#
+        WHERE  TRANS_ID = #TRANS_ID:VARCHAR#
+        AND trans_dt = #TRANS_DT:DATE#
+        and initiated_branch = #BRANCH_CODE:VARCHAR#
+        and (instrument_no2 != 'Deposit Closure' or instrument_no2 is null)
+    </mapped-statement>
+    
+    <mapped-statement name="getDepositClosureTransaciton" result-class="java.util.HashMap">
+        SELECT TRANS_ID,LINK_BATCH_ID,AUTHORIZE_STATUS_2
+        FROM CASH_TRANS  WHERE TRANS_DT=#TRANS_DT:DATE# AND TRANS_ID=#TRANS_ID:VARCHAR#
+        AND INSTRUMENT_NO2='Deposit Closure'
+        and INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+        and payment_status is null
+    </mapped-statement>
+    
+    <mapped-statement name="DepositClosureCashierApprove" result-class="java.util.HashMap">
+        update CASH_TRANS  set payment_status = 'AUTHORIZED', PAYMENT_BY = #USER_ID:VARCHAR# WHERE TRANS_DT=#TRANS_DT:DATE#
+        AND INSTRUMENT_NO2='Deposit Closure' and LINK_BATCH_ID=#LINK_BATCH_ID:VARCHAR#
+        and AUTHORIZE_STATUS = 'AUTHORIZED'
+        and INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+    </mapped-statement> 
+    
+     <mapped-statement name="DepositClosureRecievCashierApprove" result-class="java.util.HashMap">
+        update CASH_TRANS  set payment_status = 'AUTHORIZED', PAYMENT_BY = #USER_ID:VARCHAR# 
+        WHERE  TRANS_ID = #TRANS_ID:VARCHAR#
+        and TRANS_DT=#TRANS_DT:DATE#
+        AND INSTRUMENT_NO2='Deposit Closure' 
+        AND INITIATED_BRANCH  = #BRANCH_CODE:VARCHAR#
+        and AUTHORIZE_STATUS is null
+    </mapped-statement> 
+
+    <mapped-statement name="rejectCashier" result-class="java.util.HashMap">
+        UPDATE CASH_TRANS  SET 
+        payment_status = 'REJECTED', PAYMENT_BY = #USER_ID:VARCHAR#
+        WHERE  TRANS_ID = #TRANS_ID:VARCHAR#
+        AND trans_dt = #TRANS_DT:DATE#
+        and INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="insertDenominationDetails" result-class="java.util.HashMap">
+        INSERT INTO  FOREX_DENOMINATION_TRANS 
+        (TRANS_ID, CURRENCY, TRANS_TYPE, DENOMINATION_VALUE, DENOMINATION_COUNT, STATUS, DENOMINATION_TYPE, TRANS_DT, BRANCH_ID,DENOM_TYPE) 
+        VALUES 
+        (#TRANS_ID:VARCHAR#, #CURRENCY:VARCHAR#, #TRANS_TYPE:VARCHAR#, #DENOMINATION_VALUE:NUMBER#, #DENOMINATION_COUNT:NUMBER#, #STATUS:VARCHAR#, #DENOMINATION_TYPE#, #TRANS_DT:DATE#, #BRANCH_CODE:VARCHAR#,#DENOM_TYPE:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="getDuplicateData" result-class="java.util.HashMap">
+        select * from DENOMINATION_CONFIG dc where DC.TRANS_DT=#TRANS_DT:DATE# and DC.BRANCH_ID=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getDenomValueFrmTable" result-class="java.util.HashMap">
+        select denomination_value as D_VAL,denomination_count as D_COUNT,denomination_type as D_TYPE,DENOM_TYPE from DENOMINATION_CONFIG where trans_dt = #TRANS_DT:DATE#
+    </mapped-statement>
+     <mapped-statement name="getBranchcodeValueForDenomination" result-class="java.util.HashMap">
+      select branch_code from BRANCH_MASTER
+    </mapped-statement>
+    <mapped-statement name="deletedDat" result-class="java.util.HashMap">
+        DELETE  FROM DENOMINATION_CONFIG DC where DC.TRANS_DT=#TRANS_DT:DATE# and DC.BRANCH_ID=#BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="insertDenominationConfigDetails" result-class="java.util.HashMap">
+        INSERT INTO  DENOMINATION_CONFIG
+        (TRANS_ID, CURRENCY, TRANS_TYPE, DENOMINATION_VALUE, DENOMINATION_COUNT, STATUS, DENOMINATION_TYPE, TRANS_DT, BRANCH_ID,DENOM_TYPE) 
+        VALUES 
+        (#TRANS_ID:VARCHAR#, #CURRENCY:VARCHAR#, #TRANS_TYPE:VARCHAR#, CAST(#DENOMINATION_VALUE# AS NUMERIC), CAST(#DENOMINATION_COUNT# AS NUMERIC), #STATUS:VARCHAR#, #DENOMINATION_TYPE:VARCHAR#, #TRANS_DT:DATE#, #BRANCH_CODE:VARCHAR#,#DENOM_TYPE:VARCHAR#)
+    </mapped-statement>
+    <mapped-statement name="insertDenominationSubDetails" result-class="java.util.HashMap">
+        INSERT INTO  DENOMINATION_SUB_TRANS 
+        (DENO_TRANS_ID, TRANS_ID, TRANS_DATE) 
+        VALUES 
+        (#DENO_TRANS_ID:VARCHAR#, #TRANS_ID:VARCHAR#, #TRANS_DT:DATE#)
+    </mapped-statement>
+    <mapped-statement name = "getSelectNonAuthRecordForReceipt1" result-class = "java.util.LinkedHashMap">
+        SELECT SCHEME_NAME,CHITTAL_NO,SUB_NO,MEMBER_NAME,CHIT_START_DT,NET_TRANS_ID,NET_AMT FROM
+        MDS_RECEIPT_ENTRY MDSA WHERE MDSA.NET_TRANS_ID=#TRANS_ID:VARCHAR#
+        AND MDSA.INITIATED_BRANCH= #SELECTED_BRANCH_ID:VARCHAR#
+          
+    </mapped-statement>
+    <mapped-statement name="getPrizedMoneyPaymentAuthorize1" result-class="java.util.LinkedHashMap">
+        SELECT SCHEME_NAME,CHITTAL_NO,SUB_NO,TRANS_ID,CASH_ID,STATUS_BY FROM MDS_MONEY_PAYMENT_DETAILS WHERE STATUS!='DELETED' AND
+        AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND TRANS_ID=#TRANS_ID:VARCHAR#  ORDER BY CHITTAL_NO 
+    </mapped-statement> 
+    <dynamic-mapped-statement name="viewAllShareAcctAuthorizeTOList1" result-class="java.util.LinkedHashMap" >        
+ 
+        SELECT distinct AT.TRANS_ID,SA.SHARE_APPL_NO AS "SHARE APPLICATION NO",  
+        SA.SHARE_ACCT_NO AS "SHARE ACCOUNT NO",  SAC.SHARE_ACCT_DET_NO AS "Share Detail No", 
+        SA.ACCT_STATUS AS "Account Status",            SAC.NO_OF_SHARES AS "No.of shares", SA.SHARE_TYPE AS "Share Type" 
+        FROM SHARE_ACCT SA , SHARE_ACCT_DETAILS SAC,ALL_TRANS AT         
+        WHERE  at.trans_id=#TRANS_ID:VARCHAR# AND ((SA.STATUS != 'DELETED' OR SA.STATUS IS NULL) AND (SAC.STATUS != 'DELETED' OR SAC.STATUS IS NULL))  AND 
+        (SAC.SHARE_APPL_NO = SA.SHARE_APPL_NO OR SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO)                          
+        AND AT.INITIATED_BRANCH = #SELECTED_BRANCH_ID:VARCHAR# AND SA.STATUS_BY != #USER_ID:VARCHAR# AND         (AT.LINK_BATCH_ID=SA.SHARE_ACCT_NO ||'_'|| SAC.SHARE_ACCT_DET_NO OR 
+        AT.LINK_BATCH_ID=SA.SHARE_APPL_NO           ||'_'|| SAC.SHARE_ACCT_DET_NO)   AND AT.TRANS_DT=#TRANS_DT#         
+        AND (AT.AUTHORIZE_STATUS IS NULL OR AT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED',          'REJECTED', 'EXCEPTION'))
+        AND                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM                  WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+        AND                    ((SA.AUTHORIZE IS NULL OR                   SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+        AND                  (SAC.AUTHORIZE IS NULL OR                   SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))
+        ORDER BY SA.SHARE_APPL_NO 
+    </dynamic-mapped-statement>   
+ 
+    <dynamic-mapped-statement name="getSelectCashTransactionAuthorizeTOList1" result-class="java.util.LinkedHashMap" >
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(CU.CUST_ID)  AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.TRANS_DT, CT.INITIATED_BRANCH, CT.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS,
+                  
+        CT.BRANCH_ID, CT.INIT_CHANN_TYPE,CT.INP_AMOUNT,CT.INP_CURR,CT.INSTRUMENT_NO1,CT.INSTRUMENT_NO2,
+        CT.INST_DT,CT.INST_TYPE,CT.PARTICULARS,CT.PROD_ID,CT.TOKEN_NO, 
+        CT.INIT_TRANS_ID,CT.PROD_TYPE    
+                  
+        FROM CASH_TRANS CT, ACT_MASTER AM, CUSTOMER CU 
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET
+            </isEqual>
+        </dynamic>
+        WHERE CT.TRANS_ID=#TRANS_ID:VARCHAR# AND CT.ACT_NUM = AM.ACT_NUM AND AM.CUST_ID = CU.CUST_ID 
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND 
+        CT.STATUS !='DELETED'
+        AND CT.LINK_BATCH_ID IS NULL 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                       <!-- CT.AUTHORIZE_STATUS = 'EXCEPTION' AND -->
+                CT.TRANS_ID=ET.TRANS_ID AND CT.AUTHORIZE_STATUS IN ('AUTHORIZED') AND
+                ET.EXCEPTION_DT IS NULL AND ET.EXCEPTION_BY IS NULL  AND
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED'<!--'EXCEPTION'-->)) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+        AND CT.INIT_TRANS_ID != #USER_ID:VARCHAR#
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+                  <!-- ========================= FOR SUSPENSE ACCOUNT =================================== -->
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        SAM.SUSPENSE_NAME  AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.TRANS_DT, CT.INITIATED_BRANCH, CT.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS,
+                  
+        CT.BRANCH_ID, CT.INIT_CHANN_TYPE,CT.INP_AMOUNT,CT.INP_CURR,CT.INSTRUMENT_NO1,CT.INSTRUMENT_NO2,
+        CT.INST_DT,CT.INST_TYPE,CT.PARTICULARS,CT.PROD_ID,CT.TOKEN_NO, 
+        CT.INIT_TRANS_ID,CT.PROD_TYPE    
+                  
+        FROM CASH_TRANS CT, SUSPENSE_ACCOUNT_MASTER SAM, CUSTOMER CU 
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET
+            </isEqual>
+        </dynamic>
+        WHERE CT.TRANS_ID=#TRANS_ID# AND CT.ACT_NUM = SAM.SUSPENSE_ACCT_NUM AND SAM.SUSPENSE_CUSTOMER_ID = CU.CUST_ID(+) 
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND 
+        CT.STATUS !='DELETED'
+        AND CT.LINK_BATCH_ID IS NULL 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CT.TRANS_ID=ET.TRANS_ID AND CT.AUTHORIZE_STATUS IN ('AUTHORIZED') AND
+                ET.EXCEPTION_DT IS NULL AND ET.EXCEPTION_BY IS NULL  AND
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED')) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+        AND CT.INIT_TRANS_ID != #USER_ID#  
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(cu.cust_id) AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.TRANS_DT, CT.INITIATED_BRANCH, CT.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS,
+        CT.BRANCH_ID,CT.INIT_CHANN_TYPE,CT.INP_AMOUNT,CT.INP_CURR,CT.INSTRUMENT_NO1,CT.INSTRUMENT_NO2,
+        CT.INST_DT,CT.INST_TYPE,CT.PARTICULARS,CT.PROD_ID,CT.TOKEN_NO, 
+        CT.INIT_TRANS_ID,CT.PROD_TYPE              
+        FROM CASH_TRANS CT, DEPOSIT_ACINFO DP, CUSTOMER CU,DEPOSIT_SUB_ACINFO DS
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET
+            </isEqual>
+        </dynamic>
+        WHERE CT.TRANS_ID=#TRANS_ID:VARCHAR# AND CT.ACT_NUM = DS.DEPOSIT_NO || '_' || DS.DEPOSIT_SUB_NO AND
+        (CT.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL) AND                                            
+        NOT EXISTS (SELECT DPS.PROD_ID FROM DEPOSITS_PRODUCT DPS,DEPOSITS_PROD_RENEWAL DPR WHERE BEHAVES_LIKE = 'DAILY' AND DP.PROD_ID=DPS.PROD_ID AND DPS.PROD_ID=DPR.PROD_ID
+        AND (DPR.PARTIAL_WITHDRAWAL_ALLOWED = 'N' OR  DPR.PARTIAL_WITHDRAWAL_ALLOWED IS NULL)) AND
+        DP.DEPOSIT_NO = DS.DEPOSIT_NO 
+        AND DP.CUST_ID = CU.CUST_ID AND
+        CT.STATUS !='DELETED'
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CT.TRANS_ID=ET.TRANS_ID AND CT.AUTHORIZE_STATUS IN ('AUTHORIZED') AND
+                ET.EXCEPTION_DT IS NULL AND ET.EXCEPTION_BY IS NULL  AND
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED')) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+        AND CT.INIT_TRANS_ID != #USER_ID#
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", 
+        DECODE(CT.ACT_NUM, NULL, CT.LINK_BATCH_ID, CT.ACT_NUM) as "Account No",
+        AC.AC_HD_DESC AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.TRANS_DT, CT.INITIATED_BRANCH, CT.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS,
+        CT.BRANCH_ID, CT.INIT_CHANN_TYPE,CT.INP_AMOUNT,CT.INP_CURR,CT.INSTRUMENT_NO1,CT.INSTRUMENT_NO2,
+        CT.INST_DT,CT.INST_TYPE,CT.PARTICULARS,CT.PROD_ID,CT.TOKEN_NO, 
+        CT.INIT_TRANS_ID,CT.PROD_TYPE                  
+                  
+        FROM CASH_TRANS CT, GL G, AC_HD AC 
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET
+            </isEqual>
+        </dynamic>
+        WHERE CT.TRANS_ID=#TRANS_ID:VARCHAR# AND CT.ACT_NUM IS NULL AND 
+        CT.AC_HD_ID = G.AC_HD_ID AND 
+        G.AC_HD_ID = AC.AC_HD_ID AND 
+        CT.AC_HD_ID = AC.AC_HD_ID AND
+        CT.STATUS !='DELETED' AND
+        (CT.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)                                         
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CT.TRANS_ID=ET.TRANS_ID AND CT.AUTHORIZE_STATUS IN ('AUTHORIZED') AND
+                ET.EXCEPTION_DT IS NULL AND ET.EXCEPTION_BY IS NULL  AND
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED' <!--'EXCEPTION'-->)) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+        AND CT.INIT_TRANS_ID != #USER_ID:VARCHAR#
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        UNION
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(cu.cust_id) AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.TRANS_DT, CT.INITIATED_BRANCH, CT.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS,
+                  
+        CT.BRANCH_ID, CT.INIT_CHANN_TYPE,CT.INP_AMOUNT,CT.INP_CURR,CT.INSTRUMENT_NO1,CT.INSTRUMENT_NO2,
+        CT.INST_DT,CT.INST_TYPE,CT.PARTICULARS,CT.PROD_ID,CT.TOKEN_NO, 
+        CT.INIT_TRANS_ID,CT.PROD_TYPE    
+                  
+        FROM CASH_TRANS CT, LOANS_FACILITY_DETAILS AM, CUSTOMER CU, LOANS_BORROWER LB
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET
+            </isEqual>
+        </dynamic>
+        WHERE CT.TRANS_ID=#TRANS_ID:VARCHAR# AND CT.ACT_NUM = AM.ACCT_NUM AND LB.CUST_ID = CU.CUST_ID 
+        AND LB.BORROW_NO = AM.BORROW_NO 
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND
+        CT.STATUS !='DELETED'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT  DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND  UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CT.TRANS_ID=ET.TRANS_ID AND CT.AUTHORIZE_STATUS IN ('AUTHORIZED') AND
+                ET.EXCEPTION_DT IS NULL AND ET.EXCEPTION_BY IS NULL  AND
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED' <!--'EXCEPTION'-->)) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+        AND CT.INIT_TRANS_ID != #USER_ID:VARCHAR#
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+                  
+        UNION
+                  
+        SELECT CT.TRANS_ID as "TRANS_ID", CT.AC_HD_ID as "ACCT_HD_ID", CT.ACT_NUM as "Account No",
+        get_cust_name(cu.cust_id) AS "Customer", CT.Amount,
+        CT.TRANS_TYPE, CT.TRANS_DT, CT.INITIATED_BRANCH, CT.STATUS, CT.INIT_TRANS_ID as "Created By", CT.AUTHORIZE_STATUS,
+                  
+        CT.BRANCH_ID, CT.INIT_CHANN_TYPE,CT.INP_AMOUNT,CT.INP_CURR,CT.INSTRUMENT_NO1,CT.INSTRUMENT_NO2,
+        CT.INST_DT,CT.INST_TYPE,CT.PARTICULARS,CT.PROD_ID,CT.TOKEN_NO, 
+        CT.INIT_TRANS_ID,CT.PROD_TYPE    
+                  
+        FROM CASH_TRANS CT, AGRI_LOANS_FACILITY_DETAILS AM, CUSTOMER CU, AGRI_LOANS_BORROWER LB
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET
+            </isEqual>
+        </dynamic>
+        WHERE CT.TRANS_ID=#TRANS_ID:VARCHAR# AND CT.ACT_NUM = AM.ACCT_NUM AND LB.CUST_ID = CU.CUST_ID 
+        AND LB.BORROW_NO = AM.BORROW_NO 
+        AND CT.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND
+        CT.STATUS !='DELETED'
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT  DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND  UM.USER_ID = CT.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                CT.TRANS_ID=ET.TRANS_ID AND CT.AUTHORIZE_STATUS IN ('AUTHORIZED') AND
+                ET.EXCEPTION_DT IS NULL AND ET.EXCEPTION_BY IS NULL  AND
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (CT.AUTHORIZE_STATUS IS NULL OR
+                CT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED' <!--'EXCEPTION'-->)) AND
+            </isNotEqual>
+        </dynamic>
+        (
+        (CT.TRANS_TYPE='CREDIT' AND CT.AMOUNT &lt;= (SELECT  CASH_CREDIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID)) OR
+        (CT.TRANS_TYPE='DEBIT' AND CT.AMOUNT &lt;= (SELECT  CASH_DEBIT
+        FROM LEVEL_MASTER LM, ROLE_MASTER RM, USER_MASTER UM
+        WHERE LM.LEVEL_ID = RM.LEVEL_ID AND UM.USER_ID = #USER_ID:VARCHAR#
+        AND UM.USER_ROLE = RM.ROLE_ID AND UM.USER_GROUP = RM.GROUP_ID))
+        )
+        AND CT.INIT_TRANS_ID != #USER_ID:VARCHAR#
+        AND (CT.AUTHORIZE_STATUS_2 != 'ENTERED_AMOUNT' OR CT.AUTHORIZE_STATUS_2 IS NULL)
+        ORDER BY 1
+    </dynamic-mapped-statement> 
+     
+    <dynamic-mapped-statement name="getUnAuthorizeMasterTransferTO1" result-class="java.util.LinkedHashMap">
+        SELECT
+        P.BATCH_ID,
+        P.INIT_TRANS_ID as CREATED_BY,
+        A.INST_CR,
+        A.AMOUNT_CR,
+        B.INST_DR,
+        B.AMOUNT_DR,
+        P.TRANS_DT,
+        P.INITIATED_BRANCH
+        FROM
+        (
+        SELECT TT1.BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        FROM TRANSFER_TRANS TT1
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET1
+            </isEqual>
+        </dynamic>
+                
+        where INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT1.STATUS_BY != #USER_ID# AND TRANS_ID=#TRANS_ID:VARCHAR# AND 
+                <!--AND LINK_BATCH_ID IS NULL -->
+        (TT1.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT1.AUTHORIZE_STATUS_2 IS NULL)
+        AND (cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT1.STATUS_BY)OR (TT1.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT1.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET1.BATCH_ID=TT1.BATCH_ID AND 
+                ET1.EXCEPTION_DT IS NULL AND ET1.EXCEPTION_BY IS NULL 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT1.AUTHORIZE_STATUS IS NULL OR 
+                TT1.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED','EXCEPTION','DAILY'))
+            </isNotEqual>
+        </dynamic>
+        GROUP BY TT1.BATCH_ID,INIT_TRANS_ID,TRANS_DT,INITIATED_BRANCH
+        ) P,
+        (
+        SELECT TT2.BATCH_ID, COUNT(*) INST_CR, SUM(AMOUNT) AMOUNT_CR
+        FROM TRANSFER_TRANS TT2
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET2
+            </isEqual>
+        </dynamic>
+        WHERE TRANS_TYPE = 'CREDIT' and  TT2.STATUS NOT IN ('DELETED')  AND            
+        INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT2.STATUS_BY != #USER_ID:VARCHAR# AND
+                <!--AND LINK_BATCH_ID IS NULL -->
+        (TT2.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT2.AUTHORIZE_STATUS_2 IS NULL)
+        AND (cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT2.STATUS_BY) OR (TT2.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT2.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET2.BATCH_ID=TT2.BATCH_ID AND 
+                ET2.EXCEPTION_DT IS NULL AND ET2.EXCEPTION_BY IS NULL
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT2.AUTHORIZE_STATUS IS NULL OR 
+                TT2.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED','EXCEPTION','DAILY'))
+            </isNotEqual>
+        </dynamic>
+        GROUP BY TT2.BATCH_ID
+        ) A,
+        (
+        SELECT TT3.BATCH_ID, COUNT(*) INST_DR, SUM(AMOUNT) AMOUNT_DR
+        FROM TRANSFER_TRANS TT3
+        <dynamic>
+            <isEqual prepend="," property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                EXCEPTION_TRANS ET3
+            </isEqual>
+        </dynamic>
+        WHERE TRANS_TYPE = 'DEBIT' and TT3.STATUS NOT IN ('DELETED')  AND               
+        INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND TT3.STATUS_BY != #USER_ID:VARCHAR# AND
+                <!--AND LINK_BATCH_ID IS NULL --> 
+        (TT3.AUTHORIZE_STATUS_2 !='ENTERED_AMOUNT' OR TT3.AUTHORIZE_STATUS_2 IS NULL)
+        AND (cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TT3.STATUS_BY) OR (TT3.STATUS_BY = 'SITTSYSTEM'))
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TT3.AUTHORIZE_STATUS = 'AUTHORIZED' <!--'EXCEPTION'--> AND ET3.BATCH_ID=TT3.BATCH_ID AND 
+                ET3.EXCEPTION_DT IS NULL AND ET3.EXCEPTION_BY IS NULL
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (TT3.AUTHORIZE_STATUS IS NULL OR 
+                TT3.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED','EXCEPTION','DAILY'))
+            </isNotEqual>
+        </dynamic>
+        GROUP BY TT3.BATCH_ID
+        ) B
+        WHERE P.BATCH_ID = A.BATCH_ID(+) and P.BATCH_ID = B.BATCH_ID(+)
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectLoanAccountCloseAuthorizeTOList1" result-class="java.util.LinkedHashMap" >
+        SELECT ACT_CLOSING.ACT_NUM AS ACCOUNTNO,  
+        CUSTOMER.CUST_ID, CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) CUSTOMER_NAME, LOANS_FACILITY_DETAILS.PROD_ID AS "PRODUCT ID",
+        CREATE_DT, ACT_CLOSING.STATUS AS CLOSE_STATUS FROM ACT_CLOSING, LOANS_FACILITY_DETAILS, CUSTOMER ,LOANS_BORROWER,
+        TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.LINK_BATCH_ID=LOANS_FACILITY_DETAILS.ACCT_NUM AND TRANSFER_TRANS.PROD_ID=LOANS_FACILITY_DETAILS.PROD_ID AND TRANSFER_TRANS.TRANS_ID=#TRANS_ID:VARCHAR# AND 
+        CUSTOMER.CUST_ID  =LOANS_BORROWER.CUST_ID  AND LOANS_BORROWER.BORROW_NO=LOANS_FACILITY_DETAILS .BORROW_NO AND LOANS_FACILITY_DETAILS.ACCT_NUM = ACT_CLOSING.ACT_NUM 
+        AND LOANS_FACILITY_DETAILS.BRANCH_ID = #BRANCH_CODE:VARCHAR# AND ACT_CLOSING.STATUS_BY != #USER_ID#  
+        AND (ACT_CLOSING.REMARKS IS NULL OR ACT_CLOSING.REMARKS !='DEPOSIT_TRANSACTION')    
+        AND  cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)    
+        FROM USER_MASTER UM, ROLE_MASTER RM    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ACT_CLOSING.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ACT_CLOSING.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (ACT_CLOSING.AUTHORIZE_STATUS IS NULL OR 
+                ACT_CLOSING.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+                AND (ACT_CLOSING.STATUS IS NULL OR ACT_CLOSING.STATUS!='DELETED') 
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectTermLoanAuthorizeTOListForLTD1" result-class="java.util.LinkedHashMap" >
+        SELECT FD.PROD_ID, <!--(SELECT  DEPOSIT_NO from deposit_lien where LIEN_AC_NO=FD.ACCT_NUM  group by DEPOSIT_NO) as DEPOSIT_NO
+            ,--> FD.BORROW_NO, FD.ACCT_NUM, FD.SANCTION_NO, get_cust_name(CUST.CUST_ID) AS "CUSTOMER NAME",
+        FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1, FD.AUTHORIZE_BY_2, FD.AUTHORIZE_STATUS_2 ,CUST.CUST_ID AS "CUSTOMER ID",CUST.MEMBERSHIP_NO AS MEMBERSHIP_NO
+        FROM LOANS_BORROWER LB, LOANS_FACILITY_DETAILS "FD", CUSTOMER CUST ,TRANSFER_TRANS <!--, DEPOSIT_LIEN "DL"-->
+        WHERE TRANSFER_TRANS.LINK_BATCH_ID=LOANS_FACILITY_DETAILS.ACCT_NUM AND TRANSFER_TRANS.PROD_ID=LOANS_FACILITY_DETAILS.PROD_ID 
+        AND TRANSFER_TRANS_TRANS_ID=#TRANS_ID:VARCHAR# AND 
+        LB.CUST_ID = CUST.CUST_ID AND LB.BORROW_NO = FD.BORROW_NO AND
+            <!--DL.LIEN_AC_NO=FD.ACCT_NUM AND 
+            DL.AUTHORIZE_STATUS IS NULL--> 
+        FD.AUTHORIZE_STATUS_1 IS NULL AND FD.ACCT_STATUS!='CLOSED' 
+           <!--AND DL.STATUS IN('CREATED','MODIFIED')-->
+        AND FD.STATUS NOT IN ('DELETED') AND 
+        FD.BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        (FD.STATUS_BY != #STATUS_BY:VARCHAR# AND 
+        (FD.AUTHORIZE_BY_1 IS NULL OR FD.AUTHORIZE_BY_1 != #STATUS_BY#)) AND 
+            <!--(FD.AUTHORIZE_BY_2 IS NULL  OR FD.AUTHORIZE_BY_2 != #STATUS_BY#)))
+            AND -->cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FD.STATUS_BY AND BRANCH_CODE=#BRANCH_ID:VARCHAR#)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (FD.AUTHORIZE_STATUS_1 = 'EXCEPTION' <!--OR FD.AUTHORIZE_STATUS_2 = 'EXCEPTION' -->) 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((FD.AUTHORIZE_STATUS_1 IS NULL OR 
+                FD.AUTHORIZE_STATUS_1 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+                    <!--     OR 
+                         (FD.AUTHORIZE_STATUS_2 IS NULL OR 
+                         FD.AUTHORIZE_STATUS_2 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))-->)
+            </isNotEqual>
+        </dynamic>
+        AND EXISTS  
+        (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS LFD WHERE  EXISTS 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS' AND LFD.PROD_ID=PROD_ID)AND LB.BORROW_NO=BORROW_NO)
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectTermLoanAuthorizeTOList1" result-class="java.util.LinkedHashMap" >
+        SELECT FD.ACCT_NUM,FD.RENEWAL_ACCT_NO as RENEWED_LOAN_NO,FD.PROD_ID,  FD.BORROW_NO,  FD.SANCTION_NO, get_cust_name(CUST.CUST_ID) AS Name
+            <!--,FD.AUTHORIZE_BY_1, FD.AUTHORIZE_STATUS_1, FD.AUTHORIZE_BY_2, FD.AUTHORIZE_STATUS_2 -->
+        FROM LOANS_BORROWER LB, LOANS_FACILITY_DETAILS "FD", CUSTOMER CUST ,ALL_TRANS 
+        WHERE LB.CUST_ID = CUST.CUST_ID AND LB.BORROW_NO = FD.BORROW_NO
+        AND ALL_TRANS.LINK_BATCH_ID=FD.ACCT_NUM AND ALL_TRANS.PROD_ID=FD.PROD_ID  AND
+        ALL_TRANS.TRANS_ID=#TRANS_ID:VARCHAR#  
+        AND FD.STATUS NOT IN ('DELETED') AND 
+        FD.BRANCH_ID = #BRANCH_ID:VARCHAR# AND 
+        (DECODE((SELECT BEHAVES_LIKE FROM LOANS_PRODUCT WHERE STATUS IN ('CREATED', 'MODIFIED') AND PROD_ID = FD.PROD_ID), 
+        'OD', 1, 
+        (DECODE((SELECT BEHAVES_LIKE FROM LOANS_PRODUCT WHERE STATUS IN ('CREATED', 'MODIFIED') AND PROD_ID = FD.PROD_ID), 
+        'CC', 1,(SELECT COUNT(ACCT_NUM) FROM LOANS_REPAY_SCHEDULE WHERE ACCT_NUM = FD.ACCT_NUM AND STATUS IN ('CREATED', 'MODIFIED'))))) > 0) 
+        AND (FD.STATUS_BY != #STATUS_BY:VARCHAR# AND 
+        (FD.AUTHORIZE_BY_1 IS NULL OR FD.AUTHORIZE_BY_1 != #STATUS_BY:VARCHAR#)) AND 
+            <!--(FD.AUTHORIZE_BY_2 IS NULL  OR FD.AUTHORIZE_BY_2 != #STATUS_BY#)))
+            AND -->cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = FD.STATUS_BY AND BRANCH_CODE=#BRANCH_ID:VARCHAR#)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="GOLD_LOAN">
+                    FD.ACCT_STATUS !='RENEWAL'
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (FD.AUTHORIZE_STATUS_1 = 'EXCEPTION') <!--OR FD.AUTHORIZE_STATUS_2 = 'EXCEPTION' --> 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (FD.AUTHORIZE_STATUS_1 IS NULL OR 
+                FD.AUTHORIZE_STATUS_1 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+                    <!--     OR 
+                         (FD.AUTHORIZE_STATUS_2 IS NULL OR 
+                         FD.AUTHORIZE_STATUS_2 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))-->
+            </isNotEqual>
+        </dynamic>           
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="AUTHORIZE_REMARK">
+                    NOT EXISTS (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE PROD_ID IN          
+                    (SELECT PROD_ID FROM LOANS_PRODUCT WHERE AUTHORIZE_REMARK $AUTHORIZE_REMARK$)         
+                    AND LB.BORROW_NO = LOANS_FACILITY_DETAILS.BORROW_NO)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>   
+                
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PROD_ID">
+                    FD.PROD_ID = #PROD_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+                  
+        AND  NOT EXISTS  <!-- The following 3 lines added to exclude the LTD loans -->
+        (SELECT BORROW_NO FROM LOANS_FACILITY_DETAILS WHERE PROD_ID IN 
+        (SELECT PROD_ID FROM LOANS_PRODUCT WHERE BEHAVES_LIKE = 'LOANS_AGAINST_DEPOSITS')AND BORROW_NO=LB.BORROW_NO)
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getDepositAccountCloseAuthorizeTOList1" result-class="java.util.LinkedHashMap" >
+        SELECT DA.DEPOSIT_NO AS DEPOSIT_ACT_NUM, DSA.DEPOSIT_SUB_NO AS DEPOSIT_SUB_NO,  C.CUST_ID,
+        CONCAT(CONCAT(CONCAT(CONCAT(FNAME, ' '), MNAME), ' '), LNAME) AS CUSTOMER_NAME,
+        DEPOSIT_DT, DA.PROD_ID FROM DEPOSIT_ACINFO DA, DEPOSIT_SUB_ACINFO DSA,CUSTOMER C,TRANSFER_TRANS 
+        WHERE TRANSFER_TRANS.LINK_BATCH_ID=DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO AND DA.PROD_ID=TRANSFER_TRANS.PROD_ID AND 
+        TRANSFER_TRANS.TRANS_ID=#TRANS_ID:VARCHAR# AND 
+        DA.DEPOSIT_NO = DSA.DEPOSIT_NO AND DA.CUST_ID = C.CUST_ID
+        AND DSA.CLOSE_BY != #USER_ID:VARCHAR# <!--AND DSA.PAYMENT_TYPE IS NOT NULL -->
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = DSA.CLOSE_BY)
+        AND DA.BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                DSA.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (DA.AUTHORIZE_STATUS IS NULL OR 
+                DSA.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND (DSA.ACCT_STATUS = 'CLOSED' OR DSA.ACCT_STATUS = 'MATURED')
+        ORDER BY DA.DEPOSIT_NO
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="viewAllDepAccAuthorizeTOList1" result-class="java.util.LinkedHashMap" >        
+<!--    SELECT DEPOSIT_NO AS "Deposit No.", DEPOSIT_SUB_NO AS "Deposit Sub No.", INSTALL_TYPE AS "Installment Type"
+        FROM DEPOSIT_SUB_ACINFO
+        WHERE (STATUS != 'DELETED') AND (AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR AUTHORIZE_STATUS IS NULL) ORDER BY DEPOSIT_NO -->
+<!--        SELECT DEPOSIT_NO AS "DEPOSIT NO", OPENING_MODE as "Opening Mode",PROD_ID as "Product Id",CUST_TYPE as "Customer Type" , STATUS_BY as "Status By"
+        FROM DEPOSIT_ACINFO                
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL) 
+        AND DEPOSIT_STATUS = 'NEW' 
+        AND STATUS_BY != #USER_ID# AND BRANCH_ID = #SELECTED_BRANCH_ID#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = DEPOSIT_ACINFO.STATUS_BY) -->
+        
+        SELECT DA.DEPOSIT_NO AS "DEPOSIT NO",SUBSTR(get_cust_name(C.CUST_ID),1,15) as "Customer Name",
+        DEPOSIT_AMT "Deposit Amt", DEPOSIT_DT "Deposit Date",OPENING_MODE as "Opening Mode",PROD_ID as "Product Id",DA.STATUS_BY as "Status By"       
+        FROM DEPOSIT_ACINFO DA,DEPOSIT_SUB_ACINFO DSA,CUSTOMER C ,TRANSFER_TRANS 
+        WHERE TRANSFER_TRANS.LINK_BATCH_ID=DSA.DEPOSIT_NO||'_'||DSA.DEPOSIT_SUB_NO AND DA.PROD_ID=TRANSFER_TRANS.PROD_ID
+        AND TRANSFER_TRANS.TRANS_ID=#TRANS_ID:VARCHAR# AND 
+        (DSA.STATUS != 'DELETED' OR DSA.STATUS IS NULL)
+        AND DA.DEPOSIT_NO = DSA.DEPOSIT_NO  AND ACCT_STATUS = 'NEW' AND C.CUST_ID = DA.CUST_ID AND 
+        DA.STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #SELECTED_BRANCH_ID:VARCHAR# AND 
+        cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+        HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = DA.STATUS_BY)        
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                DSA.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (DSA.AUTHORIZE_STATUS IS NULL OR 
+                DSA.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="OPENING_MODE">
+                    OPENING_MODE = #OPENING_MODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY DSA.DEPOSIT_NO
+    </dynamic-mapped-statement> 
+    <dynamic-mapped-statement name="getSelectAccountCloseAuthorizeTOList1" result-class="java.util.LinkedHashMap" >
+        SELECT ACT_MASTER.ACT_NUM AS ACCOUNTNO, PROD_ID, CUSTOMER.CUST_ID,
+        get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,
+        CREATE_DT, ACT_CLOSING.STATUS AS CLOSE_STATUS FROM ACT_CLOSING, ACT_MASTER, CUSTOMER,TRANSFER_TRANS 
+        WHERE   TRANSFER_TRANS.LINK_BATCH_ID=ACT_CLOSING.ACT_NUM AND ACT_MASTER.PROD_ID=TRANSFER_TRANS.PROD_ID AND
+        TRANSFER_TRANS.TRANS_ID=#TRANS_ID:VARCHAR# AND 
+        ACT_MASTER.CUST_ID = CUSTOMER.CUST_ID 
+        AND ACT_CLOSING.ACT_NUM = ACT_MASTER.ACT_NUM AND ACT_MASTER.BRANCH_CODE = #BRANCH_CODE:VARCHAR# AND ACT_CLOSING.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ACT_CLOSING.STATUS_BY)
+        AND ACT_CLOSING.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ACT_CLOSING.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (ACT_CLOSING.AUTHORIZE_STATUS IS NULL OR 
+                ACT_CLOSING.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectAccountMasterAuthorizeTOList1" result-class="java.util.LinkedHashMap" >
+        SELECT ACT_MASTER.ACT_NUM AS ACCOUNTNO, ACT_MASTER.PROD_ID, ACT_MASTER.CUST_ID,get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,
+        CREATE_DT,(SELECT LOOKUP_DESC FROM LOOKUP_MASTER 
+        WHERE (LOOKUP_ID = 'CORPORATE.CUSTOMER_TYPE' OR LOOKUP_ID = 'CUSTOMER.TYPE') AND LOOKUP_REF_ID = CUSTOMER.CUST_TYPE) 
+        AS "Customer Type"
+        FROM ACT_MASTER,CUSTOMER ,TRANSFER_TRANS
+        WHERE ACT_MASTER.CUST_ID=CUSTOMER.CUST_ID
+        AND TRANSFER_TRANS.LINK_BATCH_ID=ACT_MASTER.ACT_NUM AND ACT_MASTER.PROD_ID=TRANSFER_TRANS.PROD_ID 
+        AND TRANSFER_TRANS.TRANS_ID=#TRANS_ID:VARCHAR# 
+        AND ACT_MASTER.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR# AND ACT_MASTER.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = ACT_MASTER.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ACT_MASTER.AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (ACT_MASTER.AUTHORIZATION_STATUS IS NULL OR 
+                ACT_MASTER.AUTHORIZATION_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY ACT_NUM
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getAllUnauthorizedAchdForDayEnd" result-class = "java.util.HashMap">
+        select ac_hd_id,ac_hd_desc from ac_hd where (authorize_status not in('AUTHORIZED','REJECTED') or authorize_status is null) and status!='DELETED'
+          
+    </mapped-statement>
+    <mapped-statement name = "getDenomination" result-class = "java.util.HashMap">
+        SELECT NVL(DENOM_TYPE,CURRENCY_TYPE) CUR_TYPE,NVL(DENOMINATION_TYPE,CURRENCY_AMOUNT) CUR
+        ,(OPEN_AMOUNT-NVL(COUNTS,0)) AS COUNTS,((OPEN_AMOUNT-NVL(COUNTS,0))*CURRENCY_AMOUNT) AS AMOUNT
+        FROM
+        (SELECT * FROM DENOMINATION_CURRENCY DC)BA
+        LEFT JOIN
+        (SELECT  FDT.DENOM_TYPE,FDT.DENOMINATION_TYPE,SUM( CASE
+        WHEN FDT.TRANS_TYPE='CREDIT' THEN FDT.DENOMINATION_COUNT
+        ELSE FDT.DENOMINATION_COUNT * -1
+        END
+        ) AS COUNTS,(FDT.DENOMINATION_TYPE * SUM( CASE
+        WHEN FDT.TRANS_TYPE='CREDIT' THEN FDT.DENOMINATION_COUNT
+        ELSE FDT.DENOMINATION_COUNT * -1
+        END
+        ))AS AMOUNT,
+        FDT.TRANS_DT
+        FROM FOREX_DENOMINATION_TRANS FDT WHERE FDT.TRANS_DT = #TRANS_DT:DATE# AND FDT.BRANCH_ID=#BRANCH:VARCHAR#
+        GROUP BY FDT.DENOMINATION_TYPE, FDT.DENOM_TYPE, FDT.TRANS_DT
+        )AB
+        ON(AB.DENOMINATION_TYPE=BA.CURRENCY_AMOUNT AND AB.DENOM_TYPE=BA.CURRENCY_TYPE)
+        ORDER BY ORDERS ASC,TO_NUMBER(CUR) DESC
+    </mapped-statement>
+    <mapped-statement name = "getCashTransDataMap" result-class = "java.util.HashMap">
+        SELECT CT.TRANS_ID,SUM(CT.AMOUNT) AS AMOUNT,CT.TRANS_TYPE AS TRANS_TYPE
+        FROM CASH_TRANS CT WHERE CT.TRANS_DT=#TRANS_DT:DATE# AND CT.TRANS_ID=#TRANS_ID:VARCHAR# 
+        AND CT.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# 
+        AND (instrument_no2 != 'Deposit Closure' or instrument_no2 is null)
+        GROUP BY CT.TRANS_ID,CT.TRANS_TYPE
+    </mapped-statement>
+    
+    <mapped-statement name = "getCashTransDepositClosure" result-class = "java.util.HashMap">
+        SELECT <!--max(CT.TRANS_ID),-->SUM(CT.AMOUNT) AS AMOUNT,CT.TRANS_TYPE AS TRANS_TYPE
+        FROM CASH_TRANS CT 
+        WHERE CT.TRANS_DT=#TRANS_DT:DATE# 
+        AND CT.LINK_BATCH_ID=#LINK_BATCH_ID:VARCHAR# 
+        AND CT.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# 
+        AND INSTRUMENT_NO2 = 'Deposit Closure'
+        <!--AND TRANS_ID=#TRANS_ID:VARCHAR#-->
+        AND CT.PAYMENT_STATUS IS NULL   
+        AND CT.AUTHORIZE_STATUS = 'AUTHORIZED'  
+        GROUP BY CT.TRANS_TYPE
+    </mapped-statement>
+    
+    <mapped-statement name = "getCashTransDepositClosureRecive" result-class = "java.util.HashMap">
+         SELECT CT.TRANS_ID,SUM(CT.AMOUNT) AS AMOUNT,CT.TRANS_TYPE AS TRANS_TYPE
+        FROM CASH_TRANS CT 
+        WHERE CT.TRANS_DT=#TRANS_DT:DATE# 
+        AND CT.TRANS_ID=#TRANS_ID:VARCHAR#
+        AND CT.INITIATED_BRANCH=#BRANCH_CODE:VARCHAR# 
+        AND instrument_no2 = 'Deposit Closure'
+        and AUTHORIZE_STATUS_2 is null
+        AND TRANS_ID=#TRANS_ID:VARCHAR#
+        GROUP BY CT.TRANS_ID,CT.TRANS_TYPE
+    </mapped-statement>
+    
+    <mapped-statement name = "getCashierRejectedTransaction" result-class = "java.util.HashMap">
+        SELECT *  FROM ALL_TRANS AT WHERE AT.PAYMENT_STATUS = 'REJECTED'   AND AT.TRANS_ID = #TRANS_ID:VARCHAR# AND AT.TRANS_DT = #TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name = "getQueryReportNames" result-class = "java.util.HashMap">
+        SELECT REPORT_NAME AS "KEY",REPORT_NAME AS "VALUE" FROM QUERY_REPORT_MASTER 
+    </mapped-statement>
+    
+    <mapped-statement name = "getReportQuery" result-class = "java.util.HashMap">
+        SELECT QP.report_name, report_query  FROM query_report_master qp  WHERE QP.report_name =#REPORT_NAME:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "getReportQueryParameters" result-class = "java.util.HashMap">
+         SELECT QRP.PARAMETER_NAME,QRP.PARAMETER_VALUE
+         FROM query_report_parameters QRP
+         WHERE  QRP.report_name = #REPORT_NAME:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "checkAllMultipleDepositCashEntriesApproved" result-class = "java.util.HashMap">
+        select count(*) AS CNT from all_trans a
+        where a.trans_dt = #TRANS_DT:DATE#
+        and A.GL_TRANS_ACT_NUM = #GL_TRANS_ACT_NUM:VARCHAR#
+        AND a.payment_status is null
+        and A.TRANS_MODE = 'CASH'    
+    </mapped-statement>
+    
+     <mapped-statement name="getDenominationData" result-class="java.util.HashMap">
+        select Curr_Type,Denomination,Denom_DESC from DENOMINATION_MAST ORDER BY CURR_TYPE,DENOMINATION
+    </mapped-statement> 
+    
+    
+</sql-map>

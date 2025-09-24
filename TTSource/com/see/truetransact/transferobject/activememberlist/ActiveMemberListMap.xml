@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ActiveMemberListMap">
+    <mapped-statement name="getsharetype" result-class="java.util.HashMap">
+        SELECT DISTINCT SHARE_TYPE FROM SHARE_ACCT WHERE STATUS != 'DELETED' AND AUTHORIZE = 'AUTHORIZED'	
+    </mapped-statement>
+    
+    <mapped-statement name="insertActiveMemberListTO" inline-parameters="true">
+        INSERT INTO ACTIVE_MEMBER_LIST (SHARE_ACC_NUM,CUSTOMER_NAME,AVAIALBLE_BALANCE,STATUS,STATUS_BY,
+        CREATED_DATE,CREATED_BY,STATUS_DT,RECORD_COUNT,BRANCH_CODE,SL_NO,FROM_DT,MEETING_DT) VALUES 
+        (#shareAcctNum:VARCHAR#, #memberName:VARCHAR#, #availableBalance:NUMBER#, #status:VARCHAR#,
+        #statusBy:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #recordCount:NUMERIC#,
+        #branchcode:VARCHAR#,#slNo:NUMBER#,#fromDate:DATE#,#meetingDate:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name="getShareAvailbaleBalanceList" result-class="java.util.HashMap">
+    <!--    SELECT SHARE_ACCT.BRANCH_CODE,
+        SHARE_ACCT.SHARE_ACCT_NO,
+        C.FNAME AS ACNAME,SHARE_ACCT.OUTSTANDING_AMOUNT
+        FROM SHARE_ACCT
+        JOIN CUSTOMER C ON SHARE_ACCT.CUST_ID = C.CUST_ID
+        WHERE SHARE_ACCT.STATUS != 'DELETED' AND SHARE_ACCT.AUTHORIZE = 'AUTHORIZED' AND
+        SHARE_ACCT.BRANCH_CODE = NVL(#BRANCH_CODE:VARCHAR#,SHARE_ACCT.BRANCH_CODE) AND 
+        SHARE_ACCT.SHARE_TYPE = NVL(#SHARE_TYPE:VARCHAR#,SHARE_ACCT.SHARE_TYPE) AND
+        (SHARE_ACCT.CREATED_DT &lt;= #MEETING_DATE:DATE# OR 
+        SHARE_ACCT.CREATED_DT IS NULL) AND
+        SHARE_ACCT.SHARE_ACCT_NO IS NOT NULL
+        AND (NVL(SHARE_ACCT.OUTSTANDING_AMOUNT,0)  +  
+        NVL((SELECT SUM(CASE WHEN SA.SHARE_NO_FROM = 'ADD' THEN 1 ELSE -1 END * NVL(SA.SHARE_VALUE,0)) 
+        FROM SHARE_ACCT_DETAILS SA WHERE SA.AUTHORIZE = 'AUTHORIZED' AND SA.STATUS != 'DELETED' AND 
+        SA.SHARE_ACCT_NO = SHARE_ACCT.SHARE_ACCT_NO AND SA.STATUS_DT &lt;= #MEETING_DATE:DATE# AND 
+        SA.STATUS_DT &gt; NVL(SHARE_ACCT.OPENING_DATE,SA.STATUS_DT - 1)  ),0)) &gt;0
+        ORDER BY BRANCH_CODE,LENGTH(SHARE_ACCT_NO),SHARE_ACCT_NO -->
+        SELECT  DISTINCT share_acct.branch_code, share_acct.share_acct_no, c.fname AS acname,
+        share_acct.outstanding_amount,DECODE(ACT.SHARE_ACCT_NO,NULL,'Y','N') AS STATUS      
+        FROM share_acct JOIN customer c ON share_acct.cust_id = c.cust_id
+        LEFT JOIN ACTIVE_MEMBERS ACT ON ACT.SHARE_ACCT_NO= SHARE_ACCT.share_acct_no
+        WHERE share_acct.status != 'DELETED'
+        AND share_acct.authorize = 'AUTHORIZED'
+        AND share_acct.branch_code = NVL (#BRANCH_CODE:VARCHAR#, share_acct.branch_code)
+        AND share_acct.share_type = NVL (#SHARE_TYPE:VARCHAR#, share_acct.share_type)
+        AND ((share_acct.created_dt &gt;=  #FROM_DATE:DATE# AND share_acct.created_dt &lt;  #MEETING_DATE:DATE# )OR share_acct.created_dt IS NULL)
+        AND share_acct.share_acct_no IS NOT NULL 
+        AND (  NVL (share_acct.outstanding_amount, 0)
+        + NVL ((SELECT SUM (  CASE
+        WHEN sa.share_no_from = 'ADD'
+        THEN 1
+        ELSE -1
+        END
+        * NVL (sa.share_value, 0)
+        )
+        FROM share_acct_details sa
+        WHERE sa.authorize = 'AUTHORIZED'
+        AND sa.status != 'DELETED'
+        AND sa.share_acct_no = share_acct.share_acct_no
+        AND sa.status_dt &lt;=#MEETING_DATE:DATE#
+        AND sa.status_dt &gt;
+        NVL (share_acct.opening_date, sa.status_dt - 1)),
+        0
+        )
+        ) > 0
+        ORDER BY STATUS DESC,branch_code, LENGTH (share_acct_no), share_acct_no
+    </mapped-statement>    
+    
+    <mapped-statement name="getSelectMaxRecordCount" result-class="java.util.LinkedHashMap" >
+        <!--SELECT NVL(MAX(RECORD_COUNT),0) AS MAX_COUNT FROM ACTIVE_MEMBER_LIST WHERE STATUS != 'DELETED' 
+        GROUP BY RECORD_COUNT,CREATED_DATE,CREATED_BY -->
+        SELECT  COUNT(DISTINCT RECORD_COUNT) + COUNT(DISTINCT CASE WHEN RECORD_COUNT IS NULL THEN 1 END) AS MAX_COUNT FROM ACTIVE_MEMBER_LIST 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectRecordCountDetails" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(RECORD_COUNT) RECORD_COUNT,from_dt, meeting_dt FROM ACTIVE_MEMBER_LIST WHERE STATUS != 'DELETED' 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="RECORD_COUNT">
+                    UPPER(COUNT(RECORD_COUNT)) LIKE UPPER('%$RECORD_COUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        GROUP BY from_dt, meeting_dt ORDER BY RECORD_COUNT
+    </dynamic-mapped-statement>
+        
+    <result-map name="getShareAccountTOResult" class="com.see.truetransact.transferobject.activememberlist.ActiveMemberListTo">
+        <property name="shareAcctNum" column="SHARE_ACC_NUM"/>
+        <property name="memberName" column="CUSTOMER_NAME"/>
+        <property name="availableBalance" column="AVAIALBLE_BALANCE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdDt" column="CREATED_DATE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="recordCount" column="RECORD_COUNT"/>
+        <property name="branchcode" column="BRANCH_CODE"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectShareAccountTO" result-class="java.util.HashMap" >
+        <!-- SELECT CUSTOMER_NAME,AVAIALBLE_BALANCE,SHARE_ACC_NUM,BRANCH_CODE FROM ACTIVE_MEMBER_LIST WHERE STATUS != 'DELETED' -->
+        SELECT am.CUSTOMER_NAME,am.AVAIALBLE_BALANCE,am.SHARE_ACC_NUM,am.BRANCH_CODE FROM ACTIVE_MEMBER_LIST am 
+        WHERE am.STATUS != 'DELETED'
+        AND AM.FROM_DT = #FROM_DT:DATE# AND AM.MEETING_DT = #MEETING_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="updateShareAccountTO" inline-parameters="true">
+        UPDATE ACTIVE_MEMBER_LIST SET 
+        CUSTOMER_NAME = #memberName:VARCHAR#,
+        AVAIALBLE_BALANCE = #availableBalance:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE BRANCH_CODE = #branchcode:VARCHAR# AND 
+        SHARE_ACC_NUM = #shareAcctNum:VARCHAR# AND 
+        FROM_DT = #fromDate:DATE# AND
+        MEETING_DT = #meetingDate:DATE#        
+    </mapped-statement>
+    
+    
+    <mapped-statement name="getActiveMemberList" result-class="java.util.HashMap">    
+        SELECT  DISTINCT share_acct.branch_code, share_acct.share_acct_no, c.fname AS acname,
+        share_acct.outstanding_amount,'N' AS STATUS      
+        FROM share_acct JOIN customer c ON share_acct.cust_id = c.cust_id        
+        WHERE share_acct.status != 'DELETED'
+        AND share_acct.authorize = 'AUTHORIZED'
+        AND share_acct.acct_status != 'CLOSED'
+        AND share_acct.branch_code = NVL (#BRANCH_CODE:VARCHAR#, share_acct.branch_code)
+        AND share_acct.share_type = NVL (#SHARE_TYPE:VARCHAR#, share_acct.share_type)        
+        AND share_acct.share_acct_no IS NOT NULL 
+        AND (  NVL (share_acct.outstanding_amount, 0)
+        + NVL ((SELECT SUM (  CASE
+        WHEN sa.share_no_from = 'ADD'
+        THEN 1
+        ELSE -1
+        END
+        * NVL (sa.share_value, 0)
+        )
+        FROM share_acct_details sa
+        WHERE sa.authorize = 'AUTHORIZED'
+        AND sa.status != 'DELETED'
+        AND sa.share_acct_no = share_acct.share_acct_no        
+        AND sa.status_dt &gt;
+        NVL (share_acct.opening_date, sa.status_dt - 1)),
+        0
+        )
+        ) > 0
+        ORDER BY branch_code, LENGTH (share_acct_no), share_acct_no
+    </mapped-statement>   
+    
+    <mapped-statement name="getExistingActiveMemberDetails" result-class="java.util.HashMap">    
+    select AM.SHARE_ACC_NUM from ACTIVE_MEMBER_LIST am 
+    where AM.FROM_DT = #FROM_DATE:DATE# AND AM.MEETING_DT = #MEETING_DATE:DATE#
+    AND AM.STATUS NOT IN ('DELETED')    
+    </mapped-statement>  
+    
+    <mapped-statement name="checkMemberActive" result-class="java.util.HashMap">    
+    select * from ACTIVE_MEMBER_LIST am where AM.SHARE_ACC_NUM = #SHARE_ACC_NUM:VARCHAR# AND AM.FROM_DT = #FROM_DATE:DATE#
+    AND AM.MEETING_DT = #MEETING_DATE:DATE# AND AM.STATUS NOT IN ('DELETED')  
+    </mapped-statement> 
+    
+  
+</sql-map>

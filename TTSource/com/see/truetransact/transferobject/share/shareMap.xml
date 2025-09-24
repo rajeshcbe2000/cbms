@@ -1,0 +1,2260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ShareAccInfoTOMap">
+      
+      <!-- View all Share account info Queries  -->
+    <dynamic-mapped-statement name="viewAllShareAcct" result-class="java.util.LinkedHashMap" >
+        SELECT SHARE_ACCT_NO AS "SHARE ACCOUNT NO", ACCT_STATUS AS "ACCOUNT STATUS", 
+          <!--( nvl((SELECT SUM(NO_OF_SHARES) 
+            FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SHR.SHARE_ACCT_NO AND 
+            SHARE_ACCT_DETAILS.STATUS NOT IN ('DELETED') and SHARE_NO_FROM='ADD' and SHARE_ACCT_DETAILS.AUTHORIZE!='REJECTED'),0) -  nvl((SELECT SUM(NO_OF_SHARES) 
+            FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SHR.SHARE_ACCT_NO AND 
+            SHARE_ACCT_DETAILS.STATUS NOT IN ('DELETED') and  SHARE_NO_FROM!='ADD' and SHARE_ACCT_DETAILS.AUTHORIZE!='REJECTED') ,0)
+             )AS "No. of shares",--> CUST.CUST_ID, get_cust_name(cust.cust_id) as "CUSTOMER", 
+        SHARE_TYPE AS "SHARE TYPE",(SELECT MAX(SHARE_ACCT_DET_NO)  FROM SHARE_ACCT_DETAILS  WHERE SHARE_ACCT_NO=SHR.SHARE_ACCT_NO) AS "SHARE DETAIL NO"
+        FROM SHARE_ACCT SHR, CUSTOMER CUST WHERE
+        SHR.CUST_ID = CUST.CUST_ID AND
+        SHR.BRANCH_CODE = #SELECTED_BRANCH_ID:VARCHAR# AND 
+        SHR.STATUS not in ('DELETED', 'REJECTED') 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="SHARE ACCOUNT NO">
+                    UPPER(SHARE_ACCT_NO) LIKE UPPER('%$SHARE ACCOUNT NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUSTOMER">
+                    UPPER(get_cust_name(cust.cust_id)) LIKE UPPER('%$CUSTOMER$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"   property="CUST_ID">
+                    UPPER(CUST.CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AUTHORIZESTATUS">
+                    SHR.AUTHORIZE IS NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_ACCT_NO">
+                    SHR.SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    CUST.CUST_ID=#CUST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY SHARE_ACCT_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="updateShareAcctTable" inline-parameters="true">
+        UPDATE SHARE_ACCT SET AUTHORIZE=#AUTHORIZE_STATUS:VARCHAR#, AUTHORIZE_BY=#AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT=#AUTHORIZE_DT:DATE# WHERE SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+     <mapped-statement name="getDRFProdIdForSelectedItem" result-class="java.util.HashMap" >
+       select distinct DT.DRF_PROD_ID,DT.RECIEPT_OR_PAYMENT from DRF_TRANSACTION DT,SHARE_ACCT SA
+       where SA.SHARE_ACCT_NO=DT.MEMBER_NO and DT.MEMBER_NO=#SHARE_NO:VARCHAR#
+    </mapped-statement>
+    
+      <mapped-statement name="getDRFTransIdForSelectedItem" result-class="java.util.HashMap" >
+      select DRF_TRANS_ID from DRF_TRANSACTION where MEMBER_NO=#SHARE_NO:VARCHAR#
+    </mapped-statement> 
+    <mapped-statement name="getShareBranchCode" result-class="java.util.LinkedHashMap">
+        SELECT BRANCH_CODE FROM SHARE_ACCT WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getHeadOffice" result-class="java.util.LinkedHashMap">
+        SELECT HEAD_OFFICE FROM PARAMETERS
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getShareAuthBatchTxTransferTOs" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT
+        TRANSFER_TRANS.TRANS_ID AS transId,
+        TRANSFER_TRANS.BATCH_ID AS batchId,
+        PROD_ID AS prodId,
+        TRANSFER_TRANS.AC_HD_ID AS acHdId,
+        TRANSFER_TRANS.ACT_NUM AS actNum,
+        TRANSFER_TRANS.INP_AMOUNT AS inpAmount,
+        TRANSFER_TRANS.INP_CURR AS inpCurr,
+        TRANSFER_TRANS.AMOUNT AS amount,
+        TRANSFER_TRANS.TRANS_DT AS transDt,
+        TRANSFER_TRANS.TRANS_TYPE AS transType,
+        TRANSFER_TRANS.INST_TYPE AS instType,
+        TRANSFER_TRANS.INSTRUMENT_NO1 AS instrumentNo1,
+        TRANSFER_TRANS.INSTRUMENT_NO2 AS instrumentNo2,
+        TRANSFER_TRANS.INST_DT AS instDt,            
+        TRANSFER_TRANS.INIT_TRANS_ID AS initTransId,
+        TRANSFER_TRANS.INIT_CHANN_TYPE AS initChannType,
+        TRANSFER_TRANS.PARTICULARS AS particulars,
+        TRANSFER_TRANS.NARRATION AS narration,
+        TRANSFER_TRANS.AUTHORIZE_BY AS authorizeBy,
+        TRANSFER_TRANS.AUTHORIZE_DT AS authorizeDt,
+        TRANSFER_TRANS.AUTHORIZE_STATUS AS authorizeStatus,
+        TRANSFER_TRANS.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TRANSFER_TRANS.BRANCH_ID AS branchId,
+        TRANSFER_TRANS.STATUS_BY AS statusBy,
+        TRANSFER_TRANS.STATUS_DT AS statusDt,
+        TRANSFER_TRANS.STATUS AS status,           
+        TRANSFER_TRANS.PROD_TYPE AS prodType,
+        TRANSFER_TRANS.LINK_BATCH_ID AS linkBatchId,
+        TRANSFER_TRANS.INITIATED_BRANCH AS initiatedBranch    
+        FROM TRANSFER_TRANS
+        WHERE TRANSFER_TRANS.LINK_BATCH_ID IN (#LINK_BATCH_ID:VARCHAR#,#SHARE_ACCT_NO:VARCHAR#) and STATUS!='DELETED' 
+        AND (AUTHORIZE_STATUS not in ('AUTHORIZED','REJECTED') or AUTHORIZE_STATUS is null)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                    INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BATCH_ID">        
+                    TRANSFER_TRANS.BATCH_ID = #BATCH_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAllShareApplNo" result-class="java.util.LinkedHashMap" >
+        SELECT SHARE_APPL_NO AS "SHARE APPLICATION NO", ACCT_STATUS AS "ACCOUNT STATUS", 
+          <!--( nvl((SELECT SUM(NO_OF_SHARES) 
+            FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SHR.SHARE_ACCT_NO AND 
+            SHARE_ACCT_DETAILS.STATUS NOT IN ('DELETED') and SHARE_NO_FROM='ADD' and SHARE_ACCT_DETAILS.AUTHORIZE!='REJECTED'),0) -  nvl((SELECT SUM(NO_OF_SHARES) 
+            FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SHR.SHARE_ACCT_NO AND 
+            SHARE_ACCT_DETAILS.STATUS NOT IN ('DELETED') and  SHARE_NO_FROM!='ADD' and SHARE_ACCT_DETAILS.AUTHORIZE!='REJECTED') ,0)
+             )AS "No. of shares",--> CUST.CUST_ID, get_cust_name(cust.cust_id) as "CUSTOMER", 
+        SHARE_TYPE AS "SHARE TYPE"
+        FROM SHARE_ACCT SHR, CUSTOMER CUST WHERE
+        ( SHR.CUST_ID = CUST.CUST_ID) AND
+        ( SHR.BRANCH_CODE = #SELECTED_BRANCH_ID:VARCHAR# )AND 
+        ( SHR.STATUS not in ('DELETED', 'REJECTED') )
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AUTHORIZESTATUS">
+                    ( SHARE_ACCT.AUTHORIZE IS NULL OR SHARE_ACCT.AUTHORIZE != 'REJECTED')
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_APPL_NO">
+                    SHR.SHARE_APPL_NO=#SHARE_APPL_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CUST_ID">
+                    CUST.CUST_ID=#CUST_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY SHARE_APPL_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getShareProdDetails" result-class="java.util.HashMap" >
+        SELECT * FROM SHARE_CONF_DETAILS 
+        WHERE (STATUS NOT IN ('DELETED') OR STATUS IS NULL) 
+        AND (AUTHORIZE_STATUS = 'AUTHORIZED' OR AUTHORIZE_STATUS IS NULL) 
+        AND SHARE_TYPE  = #SHARE_TYPE:VARCHAR#
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getShareAcctDetails" result-class="java.util.LinkedHashMap" >
+        SELECT *  FROM SHARE_ACCT_DETAILS SHAD, SHARE_ACCT SA  
+        WHERE (SHAD.STATUS NOT IN ('DELETED'))  AND (SA.STATUS NOT IN ('DELETED'))  
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_ACCT_NO">
+                    SHAD.SHARE_ACCT_NO NOT IN (#SHARE_ACCT_NO:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        AND  SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND SHAD.SHARE_ACCT_NO = SA.SHARE_ACCT_NO ORDER BY SHAD.SHARE_ACCT_NO, SHAD.SHARE_ACCT_DET_NO   
+    </dynamic-mapped-statement>
+    
+        
+    <mapped-statement name="getNoOfShares" result-class="java.util.LinkedHashMap" >
+        SELECT SUM(NO_OF_SHARES) SUM  FROM SHARE_ACCT_DETAILS SHAD, SHARE_ACCT SA  
+        WHERE (SHAD.STATUS NOT IN ('DELETED'))  AND (SA.STATUS NOT IN ('DELETED'))          
+        and  SHAD.SHARE_ACCT_NO NOT IN (#SHARE_ACCT_NO:VARCHAR#) 
+        AND  SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND SHAD.SHARE_ACCT_NO = SA.SHARE_ACCT_NO 
+         
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getSelShreAppNo" result-class="java.util.LinkedHashMap" >
+        Select SHARE_APPL_NO,CUST_ID,SHARE_AMOUNT from SHARE_ACCT where 
+        SHARE_ACCT_NO is null AND (AUTHORIZE != 'REJECTED' OR AUTHORIZE is null)
+        <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHARE_APPL_NO">
+                    UPPER(SHARE_APPL_NO) LIKE UPPER('%$SHARE_APPL_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUST_ID">
+                    UPPER(CUST_ID) LIKE UPPER('%$CUST_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SHARE_AMOUNT">
+                    UPPER(SHARE_AMOUNT) LIKE UPPER('%$SHARE_AMOUNT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    
+    <mapped-statement name="getUpdateCustomer" result-class="java.util.HashMap" >
+        UPDATE CUSTOMER SET MEMBERSHIP_NO= #MEMBERSHIP_NO:VARCHAR#, MEMBERSHIP_CLASS = #MEMBERSHIP_CLASS:VARCHAR# WHERE CUST_ID= #CUST_ID:VARCHAR#   
+    </mapped-statement>
+    
+    <mapped-statement name="updateRemitIssue" result-class="java.util.HashMap" >
+        UPDATE REMIT_ISSUE_TRANS SET BATCH_ID = #SHARE ACCOUNT NO:VARCHAR# WHERE BATCH_ID = #SHARE APPLICATION NO:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    
+    
+	<!-- Use ShareAccInfoTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShareAccInfoTO" inline-parameters="true">
+        INSERT INTO SHARE_ACCT
+        (SHARE_ACCT_NO, CONSTITUTION, CUST_ID, RESOLUTION_NO, PROPERTY_DETAILS, RELATIVE_MEMBERS, CONNECTED_GROUP, DIRECTOR_RELATIVE, ID_ISSUE_DT, NOT_ELIGIBLE_LOAN, NOT_ELIGIBLE_DT, APPL_FEE, MEM_FEE, SHARE_FEE, SHARE_AMOUNT, WELFARE_FUND_PAID, ACCT_STATUS, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE, AUTHORIZE_BY, AUTHORIZE_DT, CREATED_DT, CREATED_BY, COMM_ADDR_TYPE, SHARE_TYPE, REMARKS, BRANCH_CODE,
+        DIVIDEND_CREDIT_AC,DIVIDEND_CREDIT_PRODUCT,DIVIDEND_CREDIT_PRODUCT_ID,DIVIDEND_PAY_MODE, ID_CARD_NO,SHARE_APPL_NO,IMBP,EMP_REFNO_NEW,EMP_REFNO_OLD,DUPLICATE_ID,ID_RESOLUTION_NO,IDCARD_ISSUE_DT,RESOLUTION_DT,DRF_APPLICABLE,DRF_STATUS,DRF_PRODUCT,INITIATED_BRANCH
+        ) VALUES (
+        #shareAcctNo:VARCHAR#, #constitution:VARCHAR#, #custId:VARCHAR#, #resolutionNo:VARCHAR#, #propertyDetails:VARCHAR#, #relativeMembers:VARCHAR#, #connectedGroup:VARCHAR#, #directorRelative:VARCHAR#, #idIssueDt:DATE#, #notEligibleLoan:VARCHAR#, #notEligibleDt:DATE#, #applFee:NUMERIC#, #memFee:NUMERIC#, #shareFee:NUMERIC#, #shareAmount:NUMERIC#, #welfareFundPaid:VARCHAR#, #acctStatus:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorize:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #createdDt:DATE#, #createdBy:VARCHAR#, #commAddrType:VARCHAR#, #shareType:VARCHAR#, #remarks:VARCHAR#, #branchCode:VARCHAR#,
+        #txtDivAcNo:VARCHAR#,#cboDivProdType:VARCHAR#,#cboDivProdId:VARCHAR# , #cboDivPayMode:VARCHAR#, #idCardNo# , #txtApplicationNo:VARCHAR# ,#imbp:NUMERIC# ,  #empRefNoNew:VARCHAR#,#empRefNoOld:VARCHAR# ,#chkDuplicateIDCardYN:VARCHAR# ,#txtIDResolutionNo:VARCHAR#, #tdtIDIssuedDt:DATE#, #tdtIDResolutionDt:DATE#,#chkDrfApplicableYN:VARCHAR#,#drfStatus:VARCHAR# ,#cboDrfProdId:VARCHAR#,#initiatedBranch:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ShareAccInfoTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateShareAccInfoTO" inline-parameters="true">
+        UPDATE SHARE_ACCT SET 
+        SHARE_ACCT_NO = #shareAcctNo:VARCHAR#,
+        COMM_ADDR_TYPE = #commAddrType:VARCHAR#, 
+        REMARKS = #remarks:VARCHAR#,
+        SHARE_TYPE = #shareType:VARCHAR#,
+        CONSTITUTION = #constitution:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        RESOLUTION_NO = #resolutionNo:VARCHAR#,
+        PROPERTY_DETAILS = #propertyDetails:VARCHAR#,
+        RELATIVE_MEMBERS = #relativeMembers:VARCHAR#,
+        CONNECTED_GROUP = #connectedGroup:VARCHAR#,
+        DIRECTOR_RELATIVE = #directorRelative:VARCHAR#,
+        ID_ISSUE_DT = #idIssueDt:DATE#,
+        NOT_ELIGIBLE_LOAN = #notEligibleLoan:VARCHAR#,
+        NOT_ELIGIBLE_DT = #notEligibleDt:DATE#,
+        APPL_FEE = #applFee:NUMERIC#,
+        MEM_FEE = #memFee:NUMERIC#,
+        SHARE_FEE = #shareFee:NUMERIC#,
+        SHARE_AMOUNT = #shareAmount:NUMERIC#,
+        WELFARE_FUND_PAID = #welfareFundPaid:VARCHAR#,
+        ACCT_STATUS = #acctStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE = #authorize:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+		<!--CREATED_DT = #createdDt:DATE#,-->
+        CREATED_BY = #createdBy:VARCHAR#,
+        DIVIDEND_CREDIT_AC=#txtDivAcNo:VARCHAR#,
+        DIVIDEND_CREDIT_PRODUCT=#cboDivProdType:VARCHAR#,
+        DIVIDEND_CREDIT_PRODUCT_ID=#cboDivProdId:VARCHAR# ,
+        DIVIDEND_PAY_MODE=#cboDivPayMode:VARCHAR#,
+        ID_CARD_NO=#idCardNo:VARCHAR# ,
+        IMBP=#imbp:NUMERIC#,
+        EMP_REFNO_NEW=#empRefNoNew:VARCHAR#,
+        EMP_REFNO_OLD=#empRefNoOld:VARCHAR#,
+        DUPLICATE_ID=#chkDuplicateIDCardYN:VARCHAR#,
+        ID_RESOLUTION_NO = #txtIDResolutionNo:VARCHAR#,
+        IDCARD_ISSUE_DT = #tdtIDIssuedDt:DATE#,
+        RESOLUTION_DT = #tdtIDResolutionDt:DATE#,
+        DRF_APPLICABLE = #chkDrfApplicableYN:VARCHAR#,
+        <!--DRF_STATUS = #drfStatus:VARCHAR#,-->
+        DRF_PRODUCT = #cboDrfProdId:VARCHAR#,
+        INITIATED_BRANCH = #initiatedBranch:VARCHAR#,
+        CLOSE_DT = #closeDt:DATE#
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="updateShareAppInfoTO" inline-parameters="true">
+        UPDATE SHARE_ACCT SET 
+        SHARE_APPL_NO = #txtApplicationNo:VARCHAR#,
+        COMM_ADDR_TYPE = #commAddrType:VARCHAR#, 
+        REMARKS = #remarks:VARCHAR#,
+        SHARE_TYPE = #shareType:VARCHAR#,
+        CONSTITUTION = #constitution:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        RESOLUTION_NO = #resolutionNo:VARCHAR#,
+        PROPERTY_DETAILS = #propertyDetails:VARCHAR#,
+        RELATIVE_MEMBERS = #relativeMembers:VARCHAR#,
+        CONNECTED_GROUP = #connectedGroup:VARCHAR#,
+        DIRECTOR_RELATIVE = #directorRelative:VARCHAR#,
+        ID_ISSUE_DT = #idIssueDt:DATE#,
+        NOT_ELIGIBLE_LOAN = #notEligibleLoan:VARCHAR#,
+        NOT_ELIGIBLE_DT = #notEligibleDt:DATE#,
+        APPL_FEE = #applFee:NUMERIC#,
+        MEM_FEE = #memFee:NUMERIC#,
+        SHARE_FEE = #shareFee:NUMERIC#,
+        SHARE_AMOUNT = #shareAmount:NUMERIC#,
+        WELFARE_FUND_PAID = #welfareFundPaid:VARCHAR#,
+        ACCT_STATUS = #acctStatus:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE = #authorize:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+		<!--CREATED_DT = #createdDt:DATE#,-->
+        CREATED_BY = #createdBy:VARCHAR#,
+        DIVIDEND_CREDIT_AC=#txtDivAcNo:VARCHAR#,
+        DIVIDEND_CREDIT_PRODUCT=#cboDivProdType:VARCHAR#,
+        DIVIDEND_CREDIT_PRODUCT_ID=#cboDivProdId:VARCHAR# ,
+        DIVIDEND_PAY_MODE=#cboDivPayMode:VARCHAR#,
+        ID_CARD_NO=#idCardNo:VARCHAR#,
+        IMBP=#imbp:NUMERIC#,
+        EMP_REFNO_NEW=#empRefNoNew:VARCHAR#,
+        EMP_REFNO_OLD=#empRefNoOld:VARCHAR#,
+        DUPLICATE_ID=#chkDuplicateIDCardYN:VARCHAR#,
+        ID_RESOLUTION_NO = #txtIDResolutionNo:VARCHAR#,
+        IDCARD_ISSUE_DT = #tdtIDIssuedDt:DATE#,
+        RESOLUTION_DT = #tdtIDResolutionDt:DATE#,
+        DRF_APPLICABLE = #chkDrfApplicableYN:VARCHAR#,
+        DRF_STATUS = #drfStatus:VARCHAR#,
+        DRF_PRODUCT = #cboDrfProdId:VARCHAR#
+        WHERE SHARE_APPL_NO = #txtApplicationNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use ShareAccInfoTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteShareAccInfoTO" inline-parameters="true">
+        UPDATE SHARE_ACCT SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE# 
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareAccInfoTO object (JavaBean) properties -->
+    <result-map name="getShareAccInfoTOResult" class="com.see.truetransact.transferobject.share.ShareAccInfoTO">
+        <property name="shareAcctNo" column="SHARE_ACCT_NO"/>
+        <property name="commAddrType" column="COMM_ADDR_TYPE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="shareType" column="SHARE_TYPE"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="constitution" column="CONSTITUTION"/>
+        <property name="resolutionNo" column="RESOLUTION_NO"/>
+        <property name="propertyDetails" column="PROPERTY_DETAILS"/>
+        <property name="relativeMembers" column="RELATIVE_MEMBERS"/>
+        <property name="connectedGroup" column="CONNECTED_GROUP"/>
+        <property name="directorRelative" column="DIRECTOR_RELATIVE"/>
+        <property name="idIssueDt" column="ID_ISSUE_DT"/>
+        <property name="notEligibleLoan" column="NOT_ELIGIBLE_LOAN"/>
+        <property name="notEligibleDt" column="NOT_ELIGIBLE_DT"/>
+        <property name="applFee" column="APPL_FEE"/>
+        <property name="memFee" column="MEM_FEE"/>
+        <property name="shareFee" column="SHARE_FEE"/>
+        <property name="shareAmount" column="SHARE_AMOUNT"/>
+        <property name="welfareFundPaid" column="WELFARE_FUND_PAID"/>
+        <property name="acctStatus" column="ACCT_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorize" column="AUTHORIZE"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="txtDivAcNo" column="DIVIDEND_CREDIT_AC"/>
+        <property name="cboDivProdType" column="DIVIDEND_CREDIT_PRODUCT"/>
+        <property name="cboDivProdId" column="DIVIDEND_CREDIT_PRODUCT_ID"/>
+        <property name="cboDivPayMode" column="DIVIDEND_PAY_MODE"/>
+        <property name="lblBalanceAmt" column="OUTSTANDING_AMOUNT"/>
+        <property name="lblDivAmt" column="DIVIDEND_AMOUNT"/>
+        <property name="idCardNo" column="ID_CARD_NO"/>
+        <property name="chkDuplicateIDCardYN" column="DUPLICATE_ID"/>
+        <property name="chkDrfApplicableYN" column="DRF_APPLICABLE"/>
+        <property name="drfStatus" column="DRF_STATUS"/>
+        <property name="cboDrfProdId" column="DRF_PRODUCT"/>
+        <property name="txtIDResolutionNo" column="ID_RESOLUTION_NO"/>
+        <property name="tdtIDIssuedDt" column="IDCARD_ISSUE_DT"/>
+        <property name="tdtIDResolutionDt" column="RESOLUTION_DT"/>
+        <property name="imbp" column="IMBP"/>
+        <property name="empRefNoNew" column="EMP_REFNO_NEW"/>
+        <property name="empRefNoOld" column="EMP_REFNO_OLD"/>
+                
+    </result-map>
+        
+    <mapped-statement name="getShareAccInfoTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SHARE_ACCT WHERE (AUTHORIZE IS NULL OR AUTHORIZE!='REJECTED') AND
+        SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getShareApplInfoTOResult" class="com.see.truetransact.transferobject.share.ShareAccInfoTO">
+        <property name="txtApplicationNo" column="SHARE_APPL_NO"/>
+        <property name="commAddrType" column="COMM_ADDR_TYPE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="shareType" column="SHARE_TYPE"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="constitution" column="CONSTITUTION"/>
+        <property name="resolutionNo" column="RESOLUTION_NO"/>
+        <property name="propertyDetails" column="PROPERTY_DETAILS"/>
+        <property name="relativeMembers" column="RELATIVE_MEMBERS"/>
+        <property name="connectedGroup" column="CONNECTED_GROUP"/>
+        <property name="directorRelative" column="DIRECTOR_RELATIVE"/>
+        <property name="idIssueDt" column="ID_ISSUE_DT"/>
+        <property name="notEligibleLoan" column="NOT_ELIGIBLE_LOAN"/>
+        <property name="notEligibleDt" column="NOT_ELIGIBLE_DT"/>
+        <property name="applFee" column="APPL_FEE"/>
+        <property name="memFee" column="MEM_FEE"/>
+        <property name="shareFee" column="SHARE_FEE"/>
+        <property name="shareAmount" column="SHARE_AMOUNT"/>
+        <property name="welfareFundPaid" column="WELFARE_FUND_PAID"/>
+        <property name="acctStatus" column="ACCT_STATUS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorize" column="AUTHORIZE"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="txtDivAcNo" column="DIVIDEND_CREDIT_AC"/>
+        <property name="cboDivProdType" column="DIVIDEND_CREDIT_PRODUCT"/>
+        <property name="cboDivProdId" column="DIVIDEND_CREDIT_PRODUCT_ID"/>
+        <property name="cboDivPayMode" column="DIVIDEND_PAY_MODE"/>
+        <property name="lblBalanceAmt" column="OUTSTANDING_AMOUNT"/>
+        <property name="lblDivAmt" column="DIVIDEND_AMOUNT"/>
+        <property name="idCardNo" column="ID_CARD_NO"/>
+        <property name="imbp" column="IMBP"/>
+        <property name="empRefNoNew" column="EMP_REFNO_NEW"/>
+        <property name="empRefNoOld" column="EMP_REFNO_OLD"/>
+                
+    </result-map>
+    <mapped-statement name="getExistingShare" result-class="java.util.LinkedHashMap" >
+        select sum(DECODE(SHARE_NO_FROM,'ADD',NO_OF_SHARES))-NVL(sum(DECODE(SHARE_NO_FROM,'WITHDRAWAL',NO_OF_SHARES)),0) AS NO_OF_SHARES FROM SHARE_ACCT_DETAILS
+        where SHARE_ACCT_NO =#SHARE ACCOUNT NO:VARCHAR#  and STATUS !='DELETED' AND AUTHORIZE='AUTHORIZED'
+    </mapped-statement>
+        
+    <mapped-statement name="getShareApplInfoTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SHARE_ACCT 
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR#
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getShareAccLoanDetail" result-class="java.util.LinkedHashMap" >
+        SELECT CASE C.CUST_TYPE  WHEN 'INDIVIDUAL' THEN  COMP_NAME  WHEN get_cust_name(c.cust_id) THEN  COMP_NAME END
+        AS CUSTNAME,LP.PROD_DESC as prodesc,SA.CUST_ID,SA.SHARE_ACCT_NO,LSD.LIMIT AS LIMIT_AMT, LFD.LOAN_BALANCE_PRINCIPAL,LFD.ACCT_OPEN_DT,LFD.ACCT_NUM
+        ,LFD.ACCT_STATUS AS LOAN_STATUS
+        FROM SHARE_ACCT SA,LOANS_FACILITY_DETAILS LFD,
+		loans_product lp,
+        LOANS_BORROWER LB,CUSTOMER C, LOANS_SANCTION_DETAILS LSD 
+        WHERE LB.CUST_ID=SA.CUST_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="CUST_ID">
+                    SA.CUST_ID=#CUST_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent> 
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="SHARE ACCOUNT NO">
+                    SA.SHARE_ACCT_NO=#SHARE ACCOUNT NO:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent> 
+        </dynamic>
+        AND LB.CUST_ID=SA.CUST_ID AND C.CUST_ID=SA.CUST_ID 
+        AND LB.BORROW_NO=LFD.BORROW_NO
+        AND LFD.PROD_ID=LP.PROD_ID
+        AND LSD.BORROW_NO=LFD.BORROW_NO AND 
+        LSD.SANCTION_NO=LFD.SANCTION_NO AND LFD.STATUS !='DELETED'
+        AND LSD.SL_NO=LFD.SL_NO 
+    </dynamic-mapped-statement>
+        
+        
+        
+        
+    <dynamic-mapped-statement name="getShareAppLoanDetail" result-class="java.util.LinkedHashMap" >
+        SELECT get_cust_name(c.cust_id)
+        AS CUSTNAME,SA.CUST_ID,SA.SHARE_APPL_NO,LIMIT AS LIMIT_AMT,LFD.TOTAL_BALANCE ,LFD.ACCT_OPEN_DT,LFD.ACCT_NUM
+        ,LFD.ACCT_STATUS AS LOAN_STATUS
+        FROM SHARE_ACCT SA,LOANS_FACILITY_DETAILS LFD,
+        LOANS_BORROWER LB,CUSTOMER C, LOANS_SANCTION_DETAILS LSD 
+        WHERE LB.CUST_ID=SA.CUST_ID
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="CUST_ID">
+                    SA.CUST_ID=#CUST_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent> 
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="SHARE APPLICATION NO">
+                    SA.SHARE_APPL_NO=#SHARE APPLICATION NO:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent> 
+        </dynamic>
+        AND LB.CUST_ID=SA.CUST_ID AND C.CUST_ID=SA.CUST_ID 
+        AND LB.BORROW_NO=LFD.BORROW_NO
+        AND LSD.BORROW_NO=LFD.BORROW_NO AND 
+        LSD.SANCTION_NO=LFD.SANCTION_NO AND LFD.STATUS !='DELETED'
+        AND LSD.SL_NO=LFD.SL_NO 
+    </dynamic-mapped-statement>
+        
+        
+    <mapped-statement name="getFeeData" result-class="java.util.HashMap" >
+        SELECT * FROM SHARE_CONF_DETAILS 
+        WHERE SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getClosedStatus" result-class="java.util.HashMap" >
+        select STATUS from share_acct where share_acct_no = #ACC_NO:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="getUpdateClosedStatus" result-class="java.util.HashMap" >
+        UPDATE CUSTOMER SET membership_class = NULL , MEMBERSHIP_NO = NULL WHERE cust_id = #CUST_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getShareProductRatification" result-class="java.util.HashMap" >
+        SELECT RATIFICATION_REQUIRED FROM SHARE_CONF_DETAILS 
+        WHERE SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND STATUS != 'DELETED' 
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+
+
+        <!--============================Share Account Details======================== -->
+        <!-- Use ShareAcctDetailsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShareAcctDetailsTO" inline-parameters="true">
+        INSERT INTO SHARE_ACCT_DETAILS
+        (SHARE_ACCT_NO, NO_OF_SHARES, SHARE_CERT_ISSUE_DT, STATUS, STATUS_BY, STATUS_DT, AUTHORIZE, AUTHORIZE_BY, AUTHORIZE_DT, SHARE_ACCT_DET_NO, SHARE_NO_FROM, SHARE_NO_TO, SHARE_STATUS, RESOLUTION_NO,SHARE_VALUE
+        ,SHARE_FEE ,SHARE_APPL_FEE ,SHARE_MEM_FEE,SHARE_APPL_NO,LOAN_ACCT_NUMBER,FROMSL_NO,TOSL_NO
+        ) VALUES (
+        #shareAcctNo:VARCHAR#, #noOfShares:NUMERIC#, #shareCertIssueDt:DATE#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorize:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#, #shareAcctDetNo:VARCHAR#, #shareNoFrom:VARCHAR#, #shareNoTo:VARCHAR#, #shareStatus:VARCHAR#, #resolutionNo:VARCHAR#, #txtShareValue:NUMERIC#
+        , #txtTotShareFee:NUMERIC#, #txtShareApplFee:NUMERIC#, #txtShareMemFee:NUMERIC# , #txtApplicationNo:VARCHAR# , #loanAcctNumber:VARCHAR#,#txtFromSL_No:NUMERIC#,#txtToSL_No:NUMERIC#)
+    </mapped-statement>   
+
+	<!-- Use ShareAcctDetailsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateShareAcctDetailsTO" inline-parameters="true">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        SHARE_ACCT_NO = #shareAcctNo:VARCHAR#,
+        NO_OF_SHARES = #noOfShares:NUMERIC#,
+        SHARE_NO_FROM = #shareNoFrom:NUMERIC#,
+        SHARE_NO_TO = #shareNoTo:NUMERIC#,
+        SHARE_CERT_ISSUE_DT = #shareCertIssueDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE = #authorize:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        RESOLUTION_NO = #resolutionNo:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        SHARE_VALUE =#txtShareValue:NUMERIC#,
+        SHARE_FEE =#txtTotShareFee:NUMERIC#,
+        SHARE_APPL_FEE =#txtShareApplFee:NUMERIC#,
+        SHARE_MEM_FEE =#txtShareMemFee:NUMERIC#,
+        FROMSL_NO=#txtFromSL_No:NUMERIC#,
+        TOSL_NO=#txtToSL_No:NUMERIC#
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR#
+        AND SHARE_ACCT_DET_NO = #shareAcctDetNo:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE IS NULL
+    </mapped-statement>
+         
+    <mapped-statement name="updateShareAppDetailsTO" inline-parameters="true">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        SHARE_APPL_NO = #txtApplicationNo:VARCHAR#,
+        NO_OF_SHARES = #noOfShares:NUMERIC#,
+        SHARE_NO_FROM = #shareNoFrom:NUMERIC#,
+        SHARE_NO_TO = #shareNoTo:NUMERIC#,
+        SHARE_CERT_ISSUE_DT = #shareCertIssueDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE = #authorize:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        RESOLUTION_NO = #resolutionNo:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        SHARE_VALUE =#txtShareValue:NUMERIC#,
+        SHARE_FEE =#txtTotShareFee:NUMERIC#,
+        SHARE_APPL_FEE =#txtShareApplFee:NUMERIC#,
+        SHARE_MEM_FEE =#txtShareMemFee:NUMERIC#,
+        FROMSL_NO=#txtFromSL_No:NUMERIC#,
+        TOSL_NO=#txtToSL_No:NUMERIC#
+        WHERE SHARE_APPL_NO = #txtApplicationNo:VARCHAR#
+        AND SHARE_ACCT_DET_NO = #shareAcctDetNo:VARCHAR# AND STATUS !='DELETED' AND AUTHORIZE IS NULL
+    </mapped-statement>
+
+	<!-- Use ShareAcctDetailsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteShareAcctDetailsTO" inline-parameters="true">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE = #authorize:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR# 
+        AND SHARE_ACCT_DET_NO = #shareAcctDetNo:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="rejectedCustomer" inline-parameters="true">
+        UPDATE CUSTOMER SET 
+        MEMBERSHIP_NO = NULL
+        WHERE MEMBERSHIP_NO = #value:VARCHAR#
+                
+    </mapped-statement>
+ 
+        <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareAcctDetailsTO object (JavaBean) properties -->
+    <result-map name="getShareAcctDetailsTOResult" class="com.see.truetransact.transferobject.share.ShareAcctDetailsTO">
+        <property name="shareAcctNo" column="SHARE_ACCT_NO"/>
+        <property name="txtApplicationNo" column="SHARE_APPL_NO"/>
+        <property name="noOfShares" column="NO_OF_SHARES"/>
+        <property name="shareCertIssueDt" column="SHARE_CERT_ISSUE_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorize" column="AUTHORIZE"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="shareAcctDetNo" column="SHARE_ACCT_DET_NO"/>
+        <property name="shareNoFrom" column="SHARE_NO_FROM"/>
+        <property name="shareNoTo" column="SHARE_NO_TO"/>
+        <property name="shareStatus" column="SHARE_STATUS"/>
+        <property name="resolutionNo" column="RESOLUTION_NO"/>
+        <property name="txtShareValue" column="SHARE_VALUE"/>
+        <property name="txtTotShareFee" column="SHARE_FEE"/>
+        <property name="txtShareApplFee" column="SHARE_APPL_FEE"/>
+        <property name="txtShareMemFee" column="SHARE_MEM_FEE"/>
+        <property name="txtFromSL_No" column="FROMSL_NO"/>
+       <property name="txtToSL_No" column="TOSL_NO"/>
+    </result-map>
+    
+        
+    <mapped-statement name="getShareAcctDetailsTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SHARE_ACCT_DETAILS 
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR# AND STATUS!='DELETED'
+              <!--and (authorize IS NULL or authorize !='REJECTED')-->
+        ORDER BY TO_NUMBER(SHARE_ACCT_DET_NO)
+    </mapped-statement>
+        
+    <mapped-statement name="getShareApplDetailsTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SHARE_ACCT_DETAILS 
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR# AND STATUS!='DELETED'
+              <!--and (authorize IS NULL or authorize !='REJECTED')-->
+        ORDER BY SHARE_APPL_NO
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAcctDetCount" result-class="java.util.HashMap" >
+        SELECT  COUNT(*) COUNT FROM SHARE_ACCT_DETAILS 
+        WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAccDetails" result-class="java.util.HashMap" >
+        SELECT  NO_OF_SHARES,SHARE_VALUE,SHARE_FEE,SHARE_APPL_FEE,SHARE_MEM_FEE FROM SHARE_ACCT_DETAILS
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR# AND STATUS!='DELETED' AND (AUTHORIZE IS NULL OR(AUTHORIZE!='AUTHORIZED' AND AUTHORIZE!='REJECTED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAppDetails" result-class="java.util.HashMap" >
+        SELECT  NO_OF_SHARES,SHARE_VALUE,SHARE_FEE,SHARE_APPL_FEE,SHARE_MEM_FEE FROM SHARE_ACCT_DETAILS
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR# AND STATUS!='DELETED' AND (AUTHORIZE IS NULL OR(AUTHORIZE!='AUTHORIZED' AND AUTHORIZE!='REJECTED'))
+    </mapped-statement>
+        
+         
+        
+    <mapped-statement name="getUpdateTransDetailsForApp" result-class="java.util.HashMap" >
+        UPDATE TRANSFER_TRANS SET STATUS= 'DELETED' WHERE LINK_BATCH_ID = #value:VARCHAR# AND (AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS !='AUTHORIZED' AND AUTHORIZE_STATUS !='REJECTED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getUpdateShareAcctDet" result-class="java.util.HashMap" >
+        UPDATE SHARE_ACCT_DETAILS  SET STATUS= 'DELETED' WHERE SHARE_ACCT_NO = #value:VARCHAR# AND (AUTHORIZE IS NULL OR (AUTHORIZE !='AUTHORIZED' AND AUTHORIZE !='REJECTED'))
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getUpdateCashDetailsForApp" result-class="java.util.HashMap" >
+        UPDATE CASH_TRANS SET STATUS = 'DELETED' WHERE LINK_BATCH_ID = #value:VARCHAR#  AND (AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS !='AUTHORIZED' AND AUTHORIZE_STATUS !='REJECTED'))
+    </mapped-statement>
+    <mapped-statement name="getUpdateRemitDetailsForApp" result-class="java.util.HashMap" >
+        UPDATE REMIT_ISSUE_TRANS SET STATUS = 'DELETED' WHERE TRANS_ID = #value:VARCHAR# AND STATUS = 'CREATED'
+    </mapped-statement>
+        
+    <mapped-statement name="getUpdateTransDetailsForAcc" result-class="java.util.HashMap" >
+        UPDATE TRANSFER_TRANS SET STATUS= 'DELETED' WHERE LINK_BATCH_ID = #value:VARCHAR# AND (AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS !='AUTHORIZED' AND AUTHORIZE_STATUS !='REJECTED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getUpdateCashDetailsForAcc" result-class="java.util.HashMap" >
+        UPDATE CASH_TRANS SET STATUS= 'DELETED' WHERE LINK_BATCH_ID = #value:VARCHAR# AND (AUTHORIZE_STATUS IS NULL OR (AUTHORIZE_STATUS !='AUTHORIZED' AND AUTHORIZE_STATUS !='REJECTED'))
+    </mapped-statement>
+        
+    <mapped-statement name="getUpdateRemitDetailsForAcc" result-class="java.util.HashMap" >
+        UPDATE REMIT_ISSUE_TRANS SET STATUS= 'DELETED' WHERE TRANS_ID = #value:VARCHAR#  AND STATUS !='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAppDet" result-class="java.util.HashMap" >
+        SELECT NO_OF_SHARES,SHARE_ACCT_DET_NO ,SHARE_NO_FROM, SHARE_VALUE,SHARE_FEE,SHARE_APPL_FEE,SHARE_MEM_FEE FROM SHARE_ACCT_DETAILS WHERE SHARE_APPL_NO = #value# AND  (AUTHORIZE IS NULL OR(AUTHORIZE !='AUTHORIZED' AND AUTHORIZE !='REJECTED')) 
+        AND STATUS !='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getShareAccDet" result-class="java.util.HashMap" >
+        SELECT NO_OF_SHARES,SHARE_ACCT_DET_NO ,SHARE_NO_FROM ,SHARE_VALUE,SHARE_FEE,SHARE_APPL_FEE,SHARE_MEM_FEE FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_NO = #value# AND  (AUTHORIZE IS NULL OR(AUTHORIZE !='AUTHORIZED' AND AUTHORIZE !='REJECTED'))
+        AND STATUS !='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="updateResolutionShareStatus" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        SHARE_STATUS = #STATUS:VARCHAR#,
+        RESOLUTION_NO = #RESOLUTION_NO:VARCHAR#,
+        SHARE_CERT_ISSUE_DT = #SHARE_CERT_ISSUE_DT:DATE#,
+        SHARE_NO_TO =#SHARE_NO_TO:VARCHAR#,
+        SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#,
+        STATUS_DT=#CURR_DT:DATE#,
+        AUTHORIZE_DT=#CURR_DT:DATE#
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR#
+        AND SHARE_ACCT_DET_NO = #SHARE ACCOUNT DETAIL NO:VARCHAR# 
+    </mapped-statement>
+          
+        
+        
+<!-- Use ShareJointTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertShareJointTO" inline-parameters="true">
+        INSERT INTO SHARE_JOINT
+        (SHARE_ACCT_NO, CUST_ID, STATUS
+        ) VALUES (
+        #shareAcctNo:VARCHAR#, #custId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ShareJointTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateShareJointTO" inline-parameters="true">
+        UPDATE SHARE_JOINT SET 
+        SHARE_ACCT_NO = #shareAcctNo:VARCHAR#,
+        CUST_ID = #custId:VARCHAR#,
+        STATUS = #status:VARCHAR#
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR# 
+        AND CUST_ID = #custId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use ShareJointTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteShareJointTO" inline-parameters="true">
+        UPDATE SHARE_JOINT SET 
+        STATUS = #status:VARCHAR#
+        WHERE SHARE_ACCT_NO = #shareAcctNo:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="upDateNoOfShareAndAmount" inline-parameters="true">
+        UPDATE  SHARE_ACCT SET OUTSTANDING_AMOUNT=nvl(OUTSTANDING_AMOUNT,0)+#OUTSTANDING_AMOUNT:NUMBER# 
+        ,AVILABLE_NO_SHARES=nvl(AVILABLE_NO_SHARES,0)+#AVILABLE_NO_SHARES:NUMBER#
+        WHERE SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="upDateNoOfShareAndAmountforApp" inline-parameters="true">
+        UPDATE  SHARE_ACCT SET OUTSTANDING_AMOUNT=nvl(OUTSTANDING_AMOUNT,0)+#OUTSTANDING_AMOUNT:NUMBER# 
+        ,AVILABLE_NO_SHARES=nvl(AVILABLE_NO_SHARES,0)+#AVILABLE_NO_SHARES:NUMBER#
+        WHERE SHARE_APPL_NO = #SHARE_APPL_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="upDateDividendDateAndAmount" inline-parameters="true">
+        UPDATE   SHARE_ACCT  SET DIVIDEND_AMOUNT= nvl(DIVIDEND_AMOUNT,0)+ #DIVIDEND_AMOUNT:NUMBER# ,UPTO_DIVIDEND_APPLDT=#UPTO_DIVIDEND_APPLDT:DATE#
+        WHERE SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="upDateDividendDateAndAmountpaid" inline-parameters="true">
+        UPDATE   SHARE_ACCT  SET DIVIDEND_AMOUNT= nvl(DIVIDEND_AMOUNT,0)+ #DIVIDEND_AMOUNT:NUMBER# ,UPTO_DIVIDEND_PAID_DATE=#UPTO_DIVIDEND_PAID_DATE:DATE#
+        WHERE SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareJointTO object (JavaBean) properties -->
+    <result-map name="getShareJointTOResult" class="com.see.truetransact.transferobject.share.ShareJointTO">
+        <property name="shareAcctNo" column="SHARE_ACCT_NO"/>
+        <property name="custId" column="CUST_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    <mapped-statement name="getShareJointTO" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM SHARE_JOINT 
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getCountShareJointTO" result-class="java.util.HashMap" >
+        SELECT COUNT(*) COUNT FROM SHARE_JOINT 
+        WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+        
+<!-- =================================================================================== -->        
+<!-- Authorization Queries (begin) -->
+
+    <mapped-statement name="getShareAccInfoData" result-map="getShareAccInfoTOResult" >
+        SELECT * FROM SHARE_ACCT 
+        WHERE SHARE_ACCT_NO = #value:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getShareAccBranchData" result-class="java.util.HashMap">
+        SELECT  BRANCH_CODE as  BRANCH_ID FROM SHARE_ACCT 
+        WHERE 
+        
+        
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="" property="ACT_NUM">
+                    SHARE_ACCT_NO = #ACT_NUM:VARCHAR# AND (AUTHORIZE IS NULL OR AUTHORIZE!='REJECTED') 
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isParameterPresent>
+                <isNotEmpty prepend="" property="CUST_ID">
+                    CUST_ID=#CUST_ID:VARCHAR# AND (AUTHORIZE IS NULL OR AUTHORIZE!='REJECTED') 
+                </isNotEmpty>
+            </isParameterPresent> 
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getShareAccInfoDataForLoan"  result-class="java.util.LinkedHashMap" >
+    
+        SELECT get_cust_name(c.cust_id) AS CUSTNAME,
+        SA.CUST_ID,SA.SHARE_ACCT_NO,NOT_ELIGIBLE_LOAN,NOT_ELIGIBLE_DT,SA.SHARE_FEE,
+        SHARE_AMOUNT,SHARE_TYPE,NO_OF_SHARES FROM SHARE_ACCT SA,SHARE_ACCT_DETAILS SAD ,CUSTOMER C
+        WHERE SA.CUST_ID =#CUST_ID# AND C.CUST_ID= #CUST_ID:VARCHAR#
+        AND (SA.STATUS IN ('CREATED', 'MODIFIED')) 
+        AND (SA.AUTHORIZE = 'AUTHORIZED') 
+        AND (SAD.SHARE_ACCT_NO = SA.SHARE_ACCT_NO) 
+        AND (SAD.STATUS IN ('CREATED', 'MODIFIED')) 
+        AND (SAD.AUTHORIZE = 'AUTHORIZED') 
+	 
+    </mapped-statement>
+    
+    <mapped-statement name="getShareSuspenseAcHd" result-class="java.util.LinkedHashMap" >
+        SELECT SHARE_SUSPENSE_ACHD, SHARE_ACHD, SHARE_FEE_ACHD, 
+        MEMBERSHIP_FEE_ACHD, APPLICATION_FEE_ACHD,INCOME_ACCOUNT_HEAD,GOVT_SUBSIDY_ACHD
+        FROM  SHARE_CONF_DETAILS 
+        WHERE SHARE_TYPE = #value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getShareSuspenseAcHdForDebitShare" result-class="java.util.LinkedHashMap" >
+        SELECT share_achd as debit_share_achd
+        FROM share_conf_details sc,SHARE_ACCT sa
+        WHERE SA.SHARE_TYPE = sc.SHARE_TYPE
+        and SA.SHARE_ACCT_NO = #value:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getLatestShareAcctDetNo" result-class="java.util.LinkedHashMap">
+        SELECT MAX(CAST(SHARE_ACCT_DET_NO AS numeric)) AS SHARE_ACCT_DET_NO FROM SHARE_ACCT_DETAILS SAD WHERE SAD.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+        AND SAD.AUTHORIZE ='AUTHORIZED' AND SAD.STATUS IN ('MODIFIED','CREATED')
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAllShareAcctAuthorizeTOList" result-class="java.util.LinkedHashMap" >        
+        SELECT distinct SA.SHARE_APPL_NO AS "Share Application No",  SA.SHARE_ACCT_NO AS "Share Account No",  SAC.SHARE_ACCT_DET_NO AS "Share Detail No", 
+        SA.ACCT_STATUS AS "Account Status", <!-- (SELECT SUM(NO_OF_SHARES) FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SA.SHARE_ACCT_NO AND SHARE_ACCT_DETAILS.STATUS NOT IN ('DELETED')) AS "No.of shares" -->
+        SAC.NO_OF_SHARES AS "No.of shares", SA.SHARE_TYPE AS "Share Type"
+        FROM SHARE_ACCT SA , SHARE_ACCT_DETAILS SAC,ALL_TRANS AT 
+        WHERE  ((SA.STATUS != 'DELETED' OR SA.STATUS IS NULL) AND (SAC.STATUS != 'DELETED' OR SAC.STATUS IS NULL))  AND 
+        (SAC.SHARE_APPL_NO = SA.SHARE_APPL_NO OR SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO) 
+        <!-- AND SA.BRANCH_CODE = #SELECTED_BRANCH_ID#  AND SA.STATUS_BY != #USER_ID# -->
+        
+        AND AT.INITIATED_BRANCH = #SELECTED_BRANCH_ID:VARCHAR# AND SA.STATUS_BY != #USER_ID:VARCHAR# AND
+        (AT.LINK_BATCH_ID=SA.SHARE_ACCT_NO ||'_'|| SAC.SHARE_ACCT_DET_NO OR  AT.LINK_BATCH_ID=SA.SHARE_APPL_NO 
+        ||'_'|| SAC.SHARE_ACCT_DET_NO)   AND AT.TRANS_DT=#TRANS_DT:DATE# 
+        AND (AT.AUTHORIZE_STATUS IS NULL OR AT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 
+        'REJECTED', 'EXCEPTION'))
+        
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))
+            </isNotEqual>
+            
+        </dynamic>
+        ORDER BY SA.SHARE_APPL_NO
+    </dynamic-mapped-statement> 
+   
+    <dynamic-mapped-statement name="viewAllShareAcctAuthorizeTOList11" result-class="java.util.LinkedHashMap" >  
+    SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END AS TRANS_ID, sa.share_appl_no AS "Share Application No",
+                sa.share_acct_no AS "Share Account No",
+                sac.share_acct_det_no AS "Share Detail No",
+                sa.acct_status AS "Account Status",
+                sac.no_of_shares AS "No.of shares",
+                sa.share_type AS "Share Type" 
+           FROM share_acct sa, share_acct_details sac, all_trans AT
+          WHERE (    (sa.status != 'DELETED' OR sa.status IS NULL)
+                 AND (sac.status != 'DELETED' OR sac.status IS NULL)
+                )
+            AND (   sac.share_appl_no = sa.share_appl_no
+                 OR sac.share_acct_no = sa.share_acct_no
+                )
+            AND AT.initiated_branch =#SELECTED_BRANCH_ID:VARCHAR#
+            AND sa.status_by != #USER_ID:VARCHAR#
+            AND (   AT.link_batch_id =
+                              sa.share_acct_no || '_' || sac.share_acct_det_no
+                 OR AT.link_batch_id =
+                              sa.share_appl_no || '_' || sac.share_acct_det_no
+                 OR AT.LINK_BATCH_ID = 
+                              SAC.LOAN_ACCT_NUMBER             
+                )
+            AND AT.trans_dt = #TRANS_DT:DATE#
+            AND (   AT.authorize_status IS NULL
+                 OR AT.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                )
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))
+            </isNotEqual> 
+        </dynamic>  
+    UNION
+    SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END AS TRANS_ID,sa.share_appl_no AS "Share Application No",
+        sa.share_acct_no AS "Share Account No", '1' AS "Share Detail No",
+        sa.acct_status AS "Account Status", 0 AS "No.of shares",
+        sa.share_type AS "Share Type" 
+    FROM share_acct sa, share_acct_details sac, all_trans AT
+    WHERE 
+    AT.initiated_branch = #SELECTED_BRANCH_ID:VARCHAR#
+            AND sa.status_by != #USER_ID:VARCHAR#
+            AND (   AT.link_batch_id =
+                              sa.share_acct_no || '_' || sac.share_acct_det_no
+                 OR AT.link_batch_id =
+                              sa.share_appl_no || '_' || sac.share_acct_det_no
+                 <!--OR AT.LINK_BATCH_ID = 
+                              SAC.LOAN_ACCT_NUMBER-->             
+                )
+            AND AT.trans_dt = #TRANS_DT:DATE#  
+            AND SAC.STATUS_DT = #TRANS_DT:DATE#
+            AND (   AT.authorize_status IS NULL
+                 OR AT.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                ) 
+    AND  (sa.status != 'DELETED' OR sa.status IS NULL)
+    AND sa.branch_code = #SELECTED_BRANCH_ID:VARCHAR#
+    AND sa.status_by != #USER_ID:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY) 
+                </isNotEmpty>
+            </isParameterPresent>   
+        </dynamic> 
+    AND (   sa.authorize IS NULL
+        OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+       )       
+    and sa.share_appl_no NOT IN (
+          SELECT DISTINCT sa.share_appl_no
+                     FROM share_acct sa, share_acct_details sac, all_trans AT
+                    WHERE (    (sa.status != 'DELETED' OR sa.status IS NULL)
+                           AND (sac.status != 'DELETED' OR sac.status IS NULL
+                               )
+                          )
+                      AND (   sac.share_appl_no = sa.share_appl_no
+                           OR sac.share_acct_no = sa.share_acct_no
+                          )
+                      AND AT.initiated_branch = #SELECTED_BRANCH_ID:VARCHAR#
+                      AND sa.status_by !=#USER_ID:VARCHAR#
+                      AND (   AT.link_batch_id =
+                                    sa.share_acct_no
+                                 || '_'
+                                 || sac.share_acct_det_no
+                           OR AT.link_batch_id =
+                                    sa.share_appl_no
+                                 || '_'
+                                 || sac.share_acct_det_no
+                           OR AT.LINK_BATCH_ID = 
+                                SAC.LOAN_ACCT_NUMBER      
+                          )
+                      AND AT.trans_dt = #TRANS_DT:DATE#
+                      AND (   AT.authorize_status IS NULL
+                           OR AT.authorize_status NOT IN
+                                      ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+                          )
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))))
+            </isNotEqual>
+            
+        </dynamic>
+    
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAllShareAcctCashierAuthorizeTOList" result-class="java.util.LinkedHashMap" >        
+        SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END AS TRANS_ID, sa.share_appl_no AS "Share Application No",
+        sa.share_acct_no AS "Share Account No",
+        sac.share_acct_det_no AS "Share Detail No",
+        sa.acct_status AS "Account Status",
+        sac.no_of_shares AS "No.of shares",
+        sa.share_type AS "Share Type"
+        FROM share_acct sa, share_acct_details sac, all_trans AT
+        WHERE  ((SA.STATUS != 'DELETED' OR SA.STATUS IS NULL) AND (SAC.STATUS != 'DELETED' OR SAC.STATUS IS NULL))  AND 
+        (SAC.SHARE_APPL_NO = SA.SHARE_APPL_NO OR SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO) 
+        AND AT.INITIATED_BRANCH = #SELECTED_BRANCH_ID:VARCHAR# AND SA.STATUS_BY != #USER_ID:VARCHAR# AND
+        (AT.LINK_BATCH_ID=SA.SHARE_ACCT_NO ||'_'|| SAC.SHARE_ACCT_DET_NO OR  AT.LINK_BATCH_ID=SA.SHARE_APPL_NO 
+        ||'_'|| SAC.SHARE_ACCT_DET_NO OR AT.LINK_BATCH_ID = SAC.LOAN_ACCT_NUMBER)AND AT.TRANS_DT=#TRANS_DT:DATE#  
+        AND CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED' ELSE AT.PAYMENT_STATUS END IS NOT NULL AND AT.TRANS_TYPE='CREDIT'
+        AND (AT.AUTHORIZE_STATUS IS NULL OR AT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 
+        'REJECTED', 'EXCEPTION'))
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))
+            </isNotEqual>
+            
+        </dynamic>
+        UNION 
+        SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END AS TRANS_ID, sa.share_appl_no AS "Share Application No",
+        sa.share_acct_no AS "Share Account No",
+        sac.share_acct_det_no AS "Share Detail No",
+        sa.acct_status AS "Account Status",
+        sac.no_of_shares AS "No.of shares",
+        sa.share_type AS "Share Type"
+        FROM share_acct sa, share_acct_details sac, all_trans AT
+        WHERE  ((SA.STATUS != 'DELETED' OR SA.STATUS IS NULL) AND (SAC.STATUS != 'DELETED' OR SAC.STATUS IS NULL))  AND 
+        (SAC.SHARE_APPL_NO = SA.SHARE_APPL_NO OR SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO) 
+        AND AT.INITIATED_BRANCH = #SELECTED_BRANCH_ID:VARCHAR# AND SA.STATUS_BY != #USER_ID:VARCHAR# AND
+        (AT.LINK_BATCH_ID=SA.SHARE_ACCT_NO ||'_'|| SAC.SHARE_ACCT_DET_NO OR  AT.LINK_BATCH_ID=SA.SHARE_APPL_NO 
+        ||'_'|| SAC.SHARE_ACCT_DET_NO <!--OR AT.LINK_BATCH_ID = SAC.LOAN_ACCT_NUMBER-->)AND AT.TRANS_DT=#TRANS_DT:DATE#  
+        AND CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN NULL ELSE AT.PAYMENT_STATUS END IS  NULL AND AT.TRANS_TYPE='DEBIT'
+        AND (AT.AUTHORIZE_STATUS IS NULL OR AT.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 
+        'REJECTED', 'EXCEPTION'))
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))
+            </isNotEqual>
+             
+        </dynamic>
+        union
+        SELECT DISTINCT CASE
+            WHEN AT.TRANS_MODE = 'TRANSFER'
+               THEN AT.BATCH_ID
+            ELSE AT.TRANS_ID END AS TRANS_ID,sa.share_appl_no AS "Share Application No",
+        sa.share_acct_no AS "Share Account No", '1' AS "Share Detail No",
+        sa.acct_status AS "Account Status", 0 AS "No.of shares",
+        sa.share_type AS "Share Type" 
+        FROM share_acct sa , all_trans at 
+        WHERE  (SA.STATUS != 'DELETED' OR SA.STATUS IS NULL)
+        and SA.SHARE_ACCT_NO = Replace(at.link_batch_id,SUBSTR(at.link_batch_id,INSTR(link_batch_id,'_'),13),null)
+        AND SA.BRANCH_CODE =#SELECTED_BRANCH_ID:VARCHAR#  AND SA.STATUS_BY != #USER_ID# AND AT.TRANS_DT=#TRANS_DT:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY) 
+                </isNotEmpty>
+            </isParameterPresent>   
+        </dynamic>      
+        and 
+        (SA.AUTHORIZE IS NULL OR SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))   
+        AND AT.INITIATED_BRANCH = #SELECTED_BRANCH_ID:VARCHAR#
+        AND SA.SHARE_APPL_NO NOT IN (
+        SELECT distinct SA.SHARE_APPL_NO       
+        FROM SHARE_ACCT SA , SHARE_ACCT_DETAILS SAC,ALL_TRANS AT          WHERE  ((SA.STATUS != 'DELETED' OR SA.STATUS IS NULL)
+        AND (SAC.STATUS != 'DELETED' OR SAC.STATUS IS NULL))  AND   
+        (SAC.SHARE_APPL_NO = SA.SHARE_APPL_NO OR SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO)       
+        AND AT.INITIATED_BRANCH = #SELECTED_BRANCH_ID:VARCHAR# AND SA.STATUS_BY != #USER_ID:VARCHAR# AND   
+        (AT.LINK_BATCH_ID=SA.SHARE_ACCT_NO ||'_'|| SAC.SHARE_ACCT_DET_NO OR  AT.LINK_BATCH_ID=SA.SHARE_APPL_NO     
+        ||'_'|| SAC.SHARE_ACCT_DET_NO <!--OR AT.LINK_BATCH_ID = SAC.LOAN_ACCT_NUMBER-->)   AND AT.TRANS_DT=#TRANS_DT:DATE#         
+        AND (AT.AUTHORIZE_STATUS IS NULL OR AT.AUTHORIZE_STATUS NOT IN 
+        (    'AUTHORIZED',      'REJECTED', 'EXCEPTION')) 
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))))
+            </isNotEqual>
+            
+        </dynamic>
+         
+    </dynamic-mapped-statement> 
+   
+    <dynamic-mapped-statement name="viewAllShareApplAuthorizeTOList" result-class="java.util.LinkedHashMap" >        
+        SELECT SA.SHARE_APPL_NO AS "Share Application No",  SA.SHARE_ACCT_NO As "Share Account No" , SAC.SHARE_ACCT_DET_NO AS "Share Detail No", 
+        SA.ACCT_STATUS AS "Account Status", <!-- (SELECT SUM(NO_OF_SHARES) FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SA.SHARE_ACCT_NO AND SHARE_ACCT_DETAILS.STATUS NOT IN ('DELETED')) AS "No.of shares" -->
+        SAC.NO_OF_SHARES AS "No.of shares", SA.SHARE_TYPE AS "Share Type"
+        FROM SHARE_ACCT SA , SHARE_ACCT_DETAILS SAC 
+        WHERE  (SA.STATUS != 'DELETED' OR SA.STATUS IS NULL) AND (SAC.STATUS != 'DELETED' OR SAC.STATUS IS NULL)  AND 
+        SAC.SHARE_APPL_NO = SA.SHARE_APPL_NO AND
+        SAC.SHARE_ACCT_NO = SA.SHARE_ACCT_NO
+        AND SA.BRANCH_CODE = #SELECTED_BRANCH_ID# AND SA.STATUS_BY != #USER_ID:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotEmpty prepend="AND" property="HIERARCHY_ID">
+                    cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                    FROM USER_MASTER UM, ROLE_MASTER RM 
+                    WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY)
+                </isNotEmpty>
+            </isParameterPresent> 
+        
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                SA.AUTHORIZE = 'EXCEPTION' AND SAC.AUTHORIZE = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                ((SA.AUTHORIZE IS NULL OR 
+                SA.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) AND
+                (SAC.AUTHORIZE IS NULL OR 
+                SAC.AUTHORIZE NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))
+            </isNotEqual>
+            <isEqual prepend="AND" property="CASHIER_AUTH_ALLOWED" compareValue="Y" >
+                AT.PAYMENT_STATUS IS NOT NULL
+            </isEqual>
+        </dynamic>
+        ORDER BY SA.SHARE_APPL_NO
+    </dynamic-mapped-statement> 
+   
+    <mapped-statement name="viewAllShareAcctAuthorizeTOListWithoutShareDetails" result-class="java.util.LinkedHashMap" >
+        SELECT distinct sa.share_acct_no AS "Share Account No",
+        sa.share_appl_no AS "Share Application No", '1' AS "Share Detail No",
+        sa.acct_status AS "Account Status", 0 AS "No.of shares",
+        sa.share_type AS "Share Type"
+        FROM share_acct sa,share_acct_details sad
+        WHERE (sa.status != 'DELETED' OR sa.status IS NULL)
+        AND sa.status_by != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+        (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+        'Y', hierarchy_id,
+        hierarchy_id + 1
+        )
+        FROM user_master um, role_master rm
+        WHERE rm.role_id = um.user_role
+        AND um.user_id = sa.status_by)
+        AND (   sa.authorize IS NULL
+        OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+        ) 
+        AND sa.initiated_branch = #SELECTED_BRANCH_ID:VARCHAR#
+        AND SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO 
+        and SA.SHARE_ACCT_NO not in (select SAD.SHARE_ACCT_NO from SHARE_ACCT_DETAILS sad where SAD.SHARE_ACCT_NO = SA.SHARE_ACCT_NO and SAD.AUTHORIZE is null)
+    
+        
+        <!--SELECT sa.share_acct_no AS "Share Account No",
+        sa.share_appl_no AS "Share Application No",
+        sad.share_acct_det_no AS "Share Detail No",
+        sa.acct_status AS "Account Status", sad.no_of_shares AS "No.of shares",
+        sa.share_type AS "Share Type"
+        FROM share_acct sa JOIN share_acct_details sad
+        ON sa.share_acct_no = sad.share_acct_no
+        WHERE (sa.status != 'DELETED' OR sa.status IS NULL)
+        AND (sad.status != 'DELETED' OR sad.status IS NULL)
+        AND sa.status_by != #USER_ID:VARCHAR#
+        AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+          (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = sa.status_by)
+        AND (   sa.authorize IS NULL
+            OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+            )
+        AND (   sad.authorize IS NULL
+            OR sad.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+            )
+        AND
+        SA.INITIATED_BRANCH=#SELECTED_BRANCH_ID:VARCHAR#
+        UNION
+        SELECT sa.share_acct_no AS "Share Account No",
+        sa.share_appl_no AS "Share Application No",
+        '1' AS "Share Detail No",
+        sa.acct_status AS "Account Status", 0 AS "No.of shares",
+        sa.share_type AS "Share Type"
+        FROM share_acct sa  
+        WHERE  (sa.status != 'DELETED' OR sa.status IS NULL)
+        AND sa.status_by != #USER_ID:VARCHAR#
+        AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+          (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                     WHERE rm.role_id = um.user_role
+                       AND um.user_id = sa.status_by)
+        AND (   sa.authorize IS NULL
+            OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+            )
+       AND
+       SA.INITIATED_BRANCH=#SELECTED_BRANCH_ID:VARCHAR#-->
+       
+     <!--SELECT sa.share_acct_no AS "Share Account No",
+        sa.share_appl_no AS "Share Application No", sad.share_acct_det_no AS "Share Detail No",
+        sa.acct_status AS "Account Status", sad.no_of_shares AS "No.of shares",
+        sa.share_type AS "Share Type"
+        FROM share_acct sa
+        JOIN share_acct_details sad on sa.share_acct_no=sad.share_acct_no 
+        WHERE (sa.status != 'DELETED' OR sa.status IS NULL)
+        AND (sad.status != 'DELETED' OR sad.status IS NULL)
+        AND sa.branch_code = #SELECTED_BRANCH_ID:VARCHAR#
+        AND sa.status_by != #USER_ID:VARCHAR#
+        AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+        (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                  'Y', hierarchy_id,
+                                  hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                      WHERE rm.role_id = um.user_role
+                      AND um.user_id = sa.status_by)
+        AND (   sa.authorize IS NULL
+        OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+        ) AND
+        (   sad.authorize IS NULL
+        OR sad.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+       )
+       UNION 
+       SELECT sa.share_acct_no AS "Share Account No",
+       sa.share_appl_no AS "Share Application No", sad.share_acct_det_no AS "Share Detail No",
+       sa.acct_status AS "Account Status", sad.no_of_shares AS "No.of shares",
+       sa.share_type AS "Share Type"
+        FROM share_acct sa
+        JOIN share_acct_details sad on sa.share_acct_no=sad.share_acct_no 
+        AND (sad.status != 'DELETED' OR sad.status IS NULL)
+        AND (sa.status != 'DELETED' OR sa.status IS NULL)
+        WHERE sa.branch_code = #SELECTED_BRANCH_ID:VARCHAR#
+        AND sad.status_by != #USER_ID:VARCHAR#
+        AND cast(cast(#HIERARCHY_ID# as numeric) as numeric) &gt;=
+        (SELECT DISTINCT DECODE (NVL (same_hierarchy_allowed, 'N'),
+                                   'Y', hierarchy_id,
+                                   hierarchy_id + 1
+                                  )
+                      FROM user_master um, role_master rm
+                      WHERE rm.role_id = um.user_role
+                      AND um.user_id = sa.status_by)
+        AND (sa.authorize IS NULL
+        OR sa.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+        )
+        AND
+       (sad.authorize IS NULL
+        OR sad.authorize NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')
+       )-->
+       
+        <!--
+        SELECT SA.SHARE_ACCT_NO AS "Share Account No", SHARE_ACCT_DET_NO  AS "Share Detail No",  SA.ACCT_STATUS AS "Account Status",  NO_OF_SHARES 
+        AS "No.of shares", SA.SHARE_TYPE AS "Share Type"  FROM SHARE_ACCT SA, SHARE_ACCT_DETAILS SAD WHERE SA.SHARE_ACCT_NO=SAD.SHARE_ACCT_NO AND
+        SAD.AUTHORIZE IS NULL AND SA.STATUS !='DELETED' AND (SA.AUTHORIZE !='REJECTED' OR SA.AUTHORIZE IS NULL) AND EXISTS(
+        SELECT  LINK_BATCH_ID AS SHARE_NO  FROM TRANSFER_TRANS TT WHERE LINK_BATCH_ID =SAD.SHARE_ACCT_NO||'_'||SAD.SHARE_ACCT_DET_NO AND 
+        TT.TRANS_DT=#TRANS_DT# AND TT.STATUS !='DELETED' AND (TT.AUTHORIZE_STATUS IS NULL OR TT.AUTHORIZE_STATUS !='REJECTED') AND TT.INITIATED_BRANCH=#SELECTED_BRANCH_ID#)
+
+        AND SA.STATUS_BY != #USER_ID# AND cast(#HIERARCHY_ID# as numeric)   >= (SELECT DISTINCT DECODE(NVL
+        (SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)  FROM USER_MASTER UM, ROLE_MASTER RM  WHERE 
+        RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY) and  (SA.AUTHORIZE IS NULL OR SA.AUTHORIZE NOT IN 
+        ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+
+        UNION
+
+        SELECT DISTINCT SA.SHARE_ACCT_NO AS "Share Account No",SHARE_ACCT_DET_NO  AS "Share Detail No",  SA.ACCT_STATUS AS "Account Status",  NO_OF_SHARES 
+        AS "No.of shares", SA.SHARE_TYPE AS "Share Type"  FROM SHARE_ACCT SA, SHARE_ACCT_DETAILS SAD WHERE SA.SHARE_ACCT_NO=SAD.SHARE_ACCT_NO AND
+        SAD.AUTHORIZE IS NULL AND SA.STATUS !='DELETED' AND (SA.AUTHORIZE !='REJECTED' OR SA.AUTHORIZE IS NULL) AND EXISTS(
+        SELECT  LINK_BATCH_ID AS SHARE_NO  FROM CASH_TRANS CT WHERE LINK_BATCH_ID =SAD.SHARE_ACCT_NO||'_'||SAD.SHARE_ACCT_DET_NO AND 
+        CT.TRANS_DT=#TRANS_DT# AND CT.STATUS !='DELETED' AND (CT.AUTHORIZE_STATUS IS NULL OR CT.AUTHORIZE_STATUS !='REJECTED') AND CT.INITIATED_BRANCH=#SELECTED_BRANCH_ID#)
+
+        AND SA.STATUS_BY != #USER_ID#  AND cast(#HIERARCHY_ID# as numeric)   >= (SELECT DISTINCT DECODE(NVL
+        (SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)  FROM USER_MASTER UM, ROLE_MASTER RM  WHERE 
+        RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SA.STATUS_BY) and  (SA.AUTHORIZE IS NULL OR SA.AUTHORIZE NOT IN 
+        ('AUTHORIZED', 'REJECTED', 'EXCEPTION')) -->
+        
+    </mapped-statement>
+    
+    <mapped-statement name="deleteAllShareAcct" result-class="java.util.LinkedHashMap" >        
+        SELECT SHR.SHARE_ACCT_NO AS "Share Account No", SHR.SHARE_APPL_NO AS "Share Application No", ACCT_STATUS AS "Account Status",     
+        (SELECT SUM(NO_OF_SHARES) FROM SHARE_ACCT_DETAILS WHERE               
+        (SHARE_ACCT_DETAILS.SHARE_ACCT_NO = SHR.SHARE_ACCT_NO OR SHARE_ACCT_DETAILS.SHARE_APPL_NO=SHR.SHARE_APPL_NO )     
+        AND SHARE_ACCT_DETAILS.STATUS                 
+        NOT IN ('DELETED') )  AS   "No. of shares", CUST.CUST_ID,     
+        get_cust_name(cust.cust_id) as "Customer", SHARE_TYPE AS "Share Type"       
+        FROM SHARE_ACCT SHR, CUSTOMER CUST ,SHARE_ACCT_DETAILS SAC WHERE      SHR.CUST_ID = CUST.CUST_ID AND  SHR.BRANCH_CODE = #SELECTED_BRANCH_ID:VARCHAR#   AND   
+        (SHR.AUTHORIZE IS NULL OR (SHR.AUTHORIZE!='AUTHORIZED' AND SHR.AUTHORIZE!='REJECTED'))      
+        AND (SHR.STATUS IS NULL OR (SHR.STATUS!='DELETED' AND SHR.STATUS!='REJECTED')) 
+        AND (SHR.SHARE_ACCT_NO=SAC.SHARE_ACCT_NO OR SHR.SHARE_APPL_NO=SAC.SHARE_APPL_NO )  
+        AND ((SAC.share_acct_no  IN (SELECT   share_acct_no         
+        FROM share_acct_details 
+        GROUP BY share_acct_no          
+        HAVING COUNT (*) &lt;=  1))  OR (SAC.SHARE_APPL_NO IN (SELECT   SHARE_APPL_NO       
+        FROM share_acct_details                                                            
+        GROUP BY SHARE_APPL_NO      HAVING COUNT (*) &lt;=  1)))      
+        AND (sac.status IS NULL OR ( sac.status != 'DELETED' AND sac.status != 'REJECTED') )AND(SAC.AUTHORIZE IS NULL OR (SAC.AUTHORIZE!= 'AUTHORIZED' AND SAC.AUTHORIZE!='REJECTED'))         
+                                                                      
+     
+    </mapped-statement>  
+   
+    <mapped-statement name="authorizeShareAccInfo"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        AUTHORIZE = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO#  AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeShareAcc"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        AUTHORIZE = 'AUTHORIZED',
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#  AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getBatchTxTransferTOsShareAcct" result-class="com.see.truetransact.transferobject.transaction.transfer.TxTransferTO">
+        SELECT TT.TRANS_ID AS transId,
+        TT.BATCH_ID AS batchId,
+        TT.PROD_ID AS prodId,
+        TT.AC_HD_ID AS acHdId,
+        DECODE(TT.ACT_NUM, NULL, LINK_BATCH_ID, TT.ACT_NUM) AS actNum,
+        TT.INP_AMOUNT AS inpAmount,
+        TT.INP_CURR AS inpCurr,
+        TT.AMOUNT AS amount,
+        TT.TRANS_DT AS transDt,
+        TT.TRANS_TYPE AS transType,
+        TT.INST_TYPE AS instType,
+        TT.INSTRUMENT_NO1 AS instrumentNo1,
+        TT.INSTRUMENT_NO2 AS instrumentNo2,
+        TT.INST_DT AS instDt,            
+        TT.INIT_TRANS_ID AS initTransId,
+        TT.INIT_CHANN_TYPE AS initChannType,
+        TT.PARTICULARS AS particulars,
+        TT.NARRATION AS narration,
+        TT.AUTHORIZE_BY AS authorizeBy,
+        TT.AUTHORIZE_DT AS authorizeDt,
+        TT.AUTHORIZE_STATUS AS authorizeStatus,
+        TT.AUTHORIZE_REMARKS AS authorizeRemarks,
+        TT.BRANCH_ID AS branchId,
+        TT.STATUS_BY AS statusBy,
+        TT.STATUS_DT AS statusDt,
+        TT.LINK_BATCH_ID AS linkBatchId,
+        TT.STATUS AS status,           
+        TT.PROD_TYPE AS prodType,
+        TT.INITIATED_BRANCH AS initiatedBranch    
+        FROM TRANSFER_TRANS TT
+        WHERE TT.BATCH_ID=#BATCH_ID:VARCHAR# AND TT.STATUS!='DELETED' 
+        AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS = 'EXCEPTION') 
+        <!--<dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="NON_MDS_TRANSACTIOIN">
+                TT.SINGLE_TRANS_ID NOT IN (SELECT SINGLE_TRANS_ID FROM MDS_RECEIPT_ENTRY MRE WHERE 
+                MRE.SINGLE_TRANS_ID = TT.SINGLE_TRANS_ID) 
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="WITH_MDS_TRANSACTIOIN">
+                TT.SINGLE_TRANS_ID IN (SELECT SINGLE_TRANS_ID FROM MDS_RECEIPT_ENTRY MRE WHERE 
+                MRE.SINGLE_TRANS_ID = TT.SINGLE_TRANS_ID) 
+            </isPropertyAvailable>
+        </dynamic>-->
+        AND TT.TRANS_DT=#TRANS_DT:DATE# AND TT.INITIATED_BRANCH=#INITIATED_BRANCH:VARCHAR#
+        ORDER BY  TRANS_ID DESC
+    </mapped-statement>          
+    
+    <dynamic-mapped-statement name = "getShareTransferDetails" result-class = "java.util.HashMap">
+        SELECT T.TRANS_ID, T.BATCH_ID,AH.AC_HD_DESC AS AC_HD_ID,T.ACT_NUM,T.INP_AMOUNT,T.
+	    INP_CURR,T.AMOUNT,T.TRANS_DT,T.TRANS_TYPE,T.INST_TYPE,T.
+	    INST_DT,T.INIT_TRANS_ID,T.INIT_CHANN_TYPE,T.PARTICULARS,T.STATUS,T.
+	    INSTRUMENT_NO1,T.INSTRUMENT_NO2,T.PROD_ID,T.AUTHORIZE_STATUS,T.AUTHORIZE_BY,T.
+	    AUTHORIZE_DT,T.AUTHORIZE_REMARKS,T.STATUS_BY,T.BRANCH_ID,T.STATUS_DT,T.
+	    PROD_TYPE,T.LINK_BATCH_ID,T.LINK_BATCH_DT,T.TRANS_MODE,T.INITIATED_BRANCH,T.
+	    LOAN_HIERARCHY,T.AUTHORIZE_STATUS_2,T.NARRATION,T.SHIFT,T.
+	    TRANS_ALL_ID,T.REC_MODE,T.SINGLE_TRANS_ID,T.AUTHORIZE_BY_2,T.GL_TRANS_ACT_NUM,T.TRANS_MOD_TYPE FROM TRANSFER_TRANS T
+	    JOIN AC_HD AH ON AH.AC_HD_ID=T.AC_HD_ID
+	    WHERE T.LINK_BATCH_ID IN (#BATCH_ID:VARCHAR#,#SHARE_ACCT_NO:VARCHAR#) AND T.TRANS_DT=#TRANS_DT:DATE# AND
+	    T.INITIATED_BRANCH=#BRANCH_CODE# AND T.STATUS !='DELETED' AND (T.AUTHORIZE_STATUS_2 ='ENTERED_AMOUNT' OR T.AUTHORIZE_STATUS_2 IS NULL)
+	    AND T.PARTICULARS NOT LIKE '%Pending Interest%'  AND (T.AUTHORIZE_STATUS IS NULL OR T.AUTHORIZE_STATUS!='REJECTED')
+        <dynamic>
+            <isNotParameterPresent>
+                <isNotNull prepend = "AND" property = "AUTHORIZE_STATUS">
+                    (T.AUTHORIZE_STATUS IS NULL OR T.AUTHORIZE_STATUS='AUTHORIZED')
+                </isNotNull>
+            </isNotParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AUTHORIZE_STATUS">
+                    T.AUTHORIZE_STATUS IS NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY T.TRANS_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeShareAccInfoStatus"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        AUTHORIZE = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#,
+        STATUS = 'DELETED'
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#  AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getShareAccountdetails"  result-class="java.util.HashMap">
+        SELECT * FROM SHARE_ACCT_DETAILS WHERE SHARE_APPL_NO =#SHARE APPLICATION NO:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getShareAccountdetailsforAcct"  result-class="java.util.HashMap">
+        SELECT * FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_NO =#SHARE ACCOUNT NO:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeShareAppInfo"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        AUTHORIZE = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO# AND STATUS!= 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeShareApp"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        AUTHORIZE = 'AUTHORIZED',
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO# AND STATUS !='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeShareAppInfoStatus"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET 
+        AUTHORIZE = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#,
+        STATUS = 'DELETED'
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeShareAccDet"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        AUTHORIZE = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+        AND SHARE_ACCT_DET_NO = #SHARE DETAIL NO:VARCHAR# AND STATUS !='DELETED'
+    </mapped-statement>
+    <mapped-statement name="authorizeShareAppDet"  result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        AUTHORIZE = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #CURR_DATE:DATE#
+        WHERE SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR#
+        AND SHARE_ACCT_DET_NO = #SHARE DETAIL NO:VARCHAR# AND STATUS !='DELETED'
+    </mapped-statement>
+    
+<!-- Authorization Queries (End) -->    
+<!-- =================================================================================== -->  
+
+<!-- ==============================SEND TO RESOLUTION QUERIES===================================================== -->
+    <dynamic-mapped-statement name="getSelectShareResolutionTOList" result-class="java.util.LinkedHashMap" >
+        SELECT SA.SHARE_ACCT_NO AS "Share Account No", SHARE_ACCT_DET_NO as "Share Account Detail No", SA.BRANCH_CODE AS "Branch Code",
+        (SELECT get_cust_name(customer.cust_id) FROM CUSTOMER WHERE CUSTOMER.CUST_ID = SA.CUST_ID AND (STATUS NOT IN ('DELETED'))) AS "Customer Name", 
+        NO_OF_SHARES AS "No. of Shares"
+        FROM SHARE_ACCT_DETAILS SACD, SHARE_ACCT SA
+        WHERE (SA.STATUS NOT IN ('DELETED')) AND  (SACD.STATUS NOT IN ('DELETED')) AND (SHARE_STATUS IS NULL OR SHARE_STATUS = 'RES_DEFFERED')
+        AND SA.SHARE_ACCT_NO = SACD.SHARE_ACCT_NO AND SA.BRANCH_CODE = #SELECTED_BRANCH_ID:VARCHAR#
+        ORDER BY SA.SHARE_ACCT_NO, SHARE_ACCT_DET_NO
+    </dynamic-mapped-statement>
+
+
+    <mapped-statement name="sendToResolutionShare" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT_DETAILS SET 
+        SHARE_STATUS = #STATUS#
+        WHERE SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+        AND SHARE_ACCT_DET_NO = #SHARE ACCOUNT DETAIL NO:VARCHAR#
+    </mapped-statement>
+<!-- ==============================END OF SEND TO RESOLUTION QUERIES===================================================== -->
+
+    <mapped-statement name="transferResolvedShare" result-class="java.util.LinkedHashMap"> 
+        SELECT SA.APPL_FEE, SA.MEM_FEE, SA.SHARE_FEE, SA.SHARE_AMOUNT, SAD.NO_OF_SHARES,
+        SA.BRANCH_CODE, SA.SHARE_TYPE   
+        FROM SHARE_ACCT SA, SHARE_ACCT_DETAILS SAD 
+        WHERE SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO 
+        AND SAD.SHARE_STATUS = 'RES_ACCEPT'
+        AND SA.SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+        AND SAD.SHARE_ACCT_DET_NO = #SHARE ACCOUNT DETAIL NO:VARCHAR#    
+    </mapped-statement>
+    
+    <mapped-statement name="transferResolvedShareApp" result-class="java.util.LinkedHashMap"> 
+        SELECT SA.APPL_FEE, SA.MEM_FEE, SA.SHARE_FEE, SA.SHARE_AMOUNT, SAD.NO_OF_SHARES,
+        SA.BRANCH_CODE, SA.SHARE_TYPE   
+        FROM SHARE_ACCT SA, SHARE_ACCT_DETAILS SAD 
+        WHERE SA.SHARE_APPL_NO = SAD.SHARE_APPL_NO 
+        AND SAD.SHARE_STATUS = 'RES_ACCEPT'
+        AND SA.SHARE_APPL_NO = #SHARE APPLICATION NO:VARCHAR#
+        
+    </mapped-statement>
+
+    <mapped-statement name="shareAcctForCustAndConst" result-class="java.util.HashMap"> 
+        SELECT * FROM SHARE_ACCT WHERE CUST_ID = #CUST_ID# AND STATUS NOT IN ('DELETED','CLOSED') and (AUTHORIZE IS NULL OR AUTHORIZE!='REJECTED')
+        AND ACCT_STATUS in ('NEW','PROVISIONAL')
+        <!-- AND CONSTITUTION = #CONSTITUTION# -->
+        <!-- The above line Commented by Rajesh -->
+    </mapped-statement>
+
+    <mapped-statement name="custLiabilityCheck" result-class="java.util.LinkedHashMap"> 
+        SELECT   'DIRECT' AS LIABILITY,
+        get_cust_name(c.cust_id) AS CUSTNAME,
+        SA.CUST_ID, SA.SHARE_ACCT_NO, LFD.PROD_ID AS PROD_ID,
+        LFD.ACCT_NUM AS ACCT_NUM, LSD.LIMIT AS LIMIT_AMT,
+        LFD.LOAN_BALANCE_PRINCIPAL AS TOTAL_BALANCE,
+        TO_CHAR (LFD.ACCT_OPEN_DT, 'dd-mm-yyyy') AS ACCT_OPEN_DT,
+        LFD.BRANCH_ID AS BRANCH_ID,
+        DECODE (LFD.ACCT_STATUS,
+        'NEW', 'Active',
+        LFD.ACCT_STATUS
+        ) AS LOAN_STATUS
+        FROM LOANS_FACILITY_DETAILS LFD,
+        CUSTOMER C,
+        LOANS_BORROWER LB,
+        SHARE_ACCT SA,
+        LOANS_SANCTION_DETAILS LSD
+        WHERE LFD.BORROW_NO = LB.BORROW_NO
+        AND LFD.BORROW_NO = LFD.BORROW_NO
+        AND LB.CUST_ID = C.CUST_ID
+        AND LFD.LOAN_BALANCE_PRINCIPAL > 0
+        AND C.CUST_ID = SA.CUST_ID
+        AND LB.CUST_ID = SA.CUST_ID
+        AND C.CUST_ID = SA.CUST_ID
+        AND LB.BORROW_NO = LFD.BORROW_NO
+        AND LSD.BORROW_NO = LFD.BORROW_NO
+        AND LSD.SANCTION_NO = LFD.SANCTION_NO
+        AND LFD.STATUS != 'DELETED'
+        AND LSD.SL_NO = LFD.SL_NO
+        AND C.CUST_ID = #CUST_ID:VARCHAR#
+        UNION ALL
+        SELECT   'INDIRECT' AS LIABILITY,
+        get_cust_name(c.cust_id) AS CUSTNAME,
+        c.CUST_ID, SA.SHARE_ACCT_NO, LFD.PROD_ID AS PROD_ID,
+        LFD.ACCT_NUM AS ACCT_NUM, LSD.LIMIT AS LIMIT_AMT,
+        LFD.LOAN_BALANCE_PRINCIPAL AS TOTAL_BALANCE,
+        TO_CHAR (LFD.ACCT_OPEN_DT, 'dd-mm-yyyy') AS ACCT_OPEN_DT,
+        LFD.BRANCH_ID AS BRANCH_ID,
+        DECODE (LFD.ACCT_STATUS,
+        'NEW', 'Active',
+        LFD.ACCT_STATUS
+        ) AS LOAN_STATUS
+        FROM 
+        LOANS_GUARANTOR_DETAILS lgd ,
+        loans_facility_details lfd,
+        loans_sanction_details lsd,
+        share_acct sa ,
+        loans_borrower lb
+        ,customer  c
+        where lfd.acct_num=lgd.acct_num
+        and lb.BORROW_NO=lfd.BORROW_NO
+        and lsd.BORROW_NO=lb.BORROW_NO
+        and c.CUST_ID=lb.cust_id
+        and sa.CUST_ID=lgd.cust_id
+        AND lgd.CUST_ID = #CUST_ID:VARCHAR#
+        ORDER BY 1
+    </mapped-statement>
+    
+    <mapped-statement name="shareAcctJointForShareAcctNo" result-class="java.util.HashMap"> 
+        SELECT * FROM SHARE_JOINT WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="shareAcctFeeForShareAcctNo" result-class="java.util.HashMap"> 
+        SELECT SA.APPL_FEE, SA.MEM_FEE, 
+        (SA.SHARE_FEE*SAD.NO_OF_SHARES) AS SHARE_FEE, 
+        (SA.SHARE_AMOUNT*SAD.NO_OF_SHARES) AS SHARE_AMOUNT, 
+        SAD.NO_OF_SHARES, SA.BRANCH_CODE, SA.SHARE_TYPE 
+        FROM SHARE_ACCT SA, SHARE_ACCT_DETAILS SAD 
+        WHERE SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO 
+        AND SAD.SHARE_STATUS = #STATUS:VARCHAR#
+        AND SA.SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+        AND SAD.SHARE_ACCT_DET_NO = #SHARE ACCOUNT DETAIL NO:VARCHAR#
+    </mapped-statement>
+
+    <!-- Check for existance of shares for the particular customer - Rajesh -->
+    <mapped-statement name="getCountForNotAuthShareAcctForCust" result-class="java.lang.Integer"> 
+        SELECT COUNT(*) FROM SHARE_ACCT 
+        WHERE CUST_ID = #CUST_ID:VARCHAR# AND STATUS NOT IN ('DELETED') 
+        AND (AUTHORIZE IS NULL OR AUTHORIZE = '')
+    </mapped-statement>
+    
+    <mapped-statement name="alreadyShareTakenList" result-class="java.lang.Integer"> 
+        select count(*) from SHARE_ACCT_DETAILS  where SHARE_ACCT_NO = #SHARE_NO:VARCHAR#
+        and AUTHORIZE='AUTHORIZED' and STATUS NOT IN ('DELETED') 
+    </mapped-statement>
+
+    <!-- Existance of share nos validation - Rajesh -->
+    <dynamic-mapped-statement name="getCountForExistingShareNos" result-class="java.lang.Integer"> 
+        SELECT COUNT(*) FROM SHARE_ACCT_DETAILS 
+        WHERE TO_NUMBER(#SHARE_NO#) &gt;= TO_NUMBER(SHARE_NO_FROM) AND
+        TO_NUMBER(#SHARE_NO#) &lt;= TO_NUMBER(SHARE_NO_TO)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_NO_FROM">
+                    SHARE_NO_FROM NOT IN (#SHARE_NO_FROM:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_NO_TO">
+                    SHARE_NO_TO NOT IN (#SHARE_NO_TO:VARCHAR#)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getShareExists" result-class="java.util.HashMap"> 
+        
+        select SHARE_ACCT_NO from share_acct where status!='DELETED' AND SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR# 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getAccountNumberNameSH" result-class="java.util.HashMap">
+
+        SELECT get_cust_name(CUSTOMER.CUST_ID) CUSTOMER_NAME,MINOR,
+        CUSTOMER.CUST_ID AS CUST_ID,CUST_TYPE,MEMBERSHIP_NO
+        FROM share_acct, CUSTOMER
+        WHERE share_acct.CUST_ID = CUSTOMER.CUST_ID and SHARE_ACCT_NO = #ACC_NUM:VARCHAR#
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="CLOSECHECK">
+                <!--ACT_MASTER.ACT_STATUS_ID != 'CLOSED'-->
+            </isNotPropertyAvailable>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+         
+    <mapped-statement name="getActDataSH" result-class="java.util.HashMap">
+
+        SELECT CONSTITUTION AS "CONSTITUTION", ID_ISSUE_DT AS CREATE_DT,              
+        AM.BRANCH_CODE,CUSTOMER_STATUS,MINOR,C.CUST_ID AS CUST_ID  ,SHARE_TYPE , AM.REMARKS      
+        FROM      SHARE_ACCT AM, CUSTOMER C   WHERE    AM.CUST_ID=C.CUST_ID   
+        AND SHARE_ACCT_NO=#ACT_NUM:VARCHAR#    
+    </mapped-statement>
+        
+    <mapped-statement name="getBalanceSH" result-class="java.util.HashMap">
+        SELECT nvl(OUTSTANDING_AMOUNT,0) as "AVAILABLE_BALANCE", 
+        nvl(OUTSTANDING_AMOUNT,0) as "CLEAR_BALANCE",
+        nvl(OUTSTANDING_AMOUNT,0) as "TOTAL_BALANCE",
+        nvl(DIVIDEND_AMOUNT,0) as "DIVIDEND_AMOUNT"            
+        FROM SHARE_ACCT
+        WHERE SHARE_ACCT_NO = #ACT_NUM:VARCHAR#
+    </mapped-statement> 
+                  
+    <mapped-statement name="getSanctionAmtValueForLoan" result-class="java.util.LinkedHashMap">
+        SELECT SUM(A.BALANCE) AS BALANCE
+        FROM
+        (
+        SELECT COALESCE(SUM(LSD.LIMIT),0) AS BALANCE
+        FROM LOANS_FACILITY_DETAILS LFD
+        JOIN LOANS_BORROWER B ON B.BORROW_NO = LFD.BORROW_NO
+        JOIN CUSTOMER C ON C.CUST_ID = B.CUST_ID
+        JOIN LOANS_SANCTION_DETAILS LSD ON LSD.BORROW_NO = B.BORROW_NO
+        WHERE LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED' AND LFD.STATUS != 'DELETED' AND C.MEMBERSHIP_NO = #MEM_NO:VARCHAR# AND LFD.ACCT_STATUS != 'CLOSED'
+        UNION ALL
+        SELECT COALESCE(SUM(LSD.LIMIT),0) AS BALANCE
+        FROM LOANS_SECURITY_MEMBER LSM
+        JOIN LOANS_FACILITY_DETAILS F ON F.ACCT_NUM = LSM.ACCT_NUM
+        JOIN LOANS_SANCTION_DETAILS LSD ON LSD.BORROW_NO = F.BORROW_NO
+        WHERE LSM.MEMBER_NO = #MEM_NO:VARCHAR# AND F.ACCT_STATUS != 'CLOSED'
+        ) A
+    </mapped-statement>
+        
+    <mapped-statement name="getBorrowerSuretyShareValue" result-class="java.util.LinkedHashMap">
+        select * from share_prod_loans where loan_type = 'OTHER_LOAN' AND share_type = #SHARETYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAllTransactionsSH" result-class="java.util.LinkedHashMap">            
+        SELECT SHARE_CERT_ISSUE_DT AS TRANS_DT, NULL AS PARTICULARS, NULL AS INST_TYPE, NULL AS 
+        INSTRUMENT_NO, NULL  AS INST_DT, DECODE(SHARE_NO_FROM,'WITHDRAWAL',SHARE_VALUE,0) AS DEBIT, 
+        DECODE(SHARE_NO_FROM,'ADD',SHARE_VALUE,0) AS CREDIT ,
+                  
+        (SELECT SUM(DECODE(SHARE_NO_FROM,'ADD',NVL(SHARE_VALUE,0),0))- SUM(DECODE(SHARE_NO_FROM,'WITHDRAWAL',NVL(SHARE_VALUE,0),0)) AS OPN_BAL 
+        FROM share_acct_details  WHERE SHARE_ACCT_NO=#ACT_NUM# AND SHARE_CERT_ISSUE_DT  &lt;=#FROM_DT:DATE# ) AS BALANCE
+        FROM share_acct_details
+        WHERE SHARE_ACCT_NO=#ACT_NUM# AND SHARE_CERT_ISSUE_DT  BETWEEN #FROM_DT:DATE# AND 
+        #TO_DT:DATE# AND AUTHORIZE in('AUTHORIZED','REALIZED') 
+        AND STATUS!='DELETED'
+                
+    </mapped-statement>
+            
+    <mapped-statement name="getAllDiovidendSH" result-class="java.util.LinkedHashMap">           
+
+        SELECT DIVIDEND_DT AS TRANS_DT, NULL AS PARTICULARS, NULL AS INST_TYPE, NULL AS 
+        INSTRUMENT_NO, NULL  AS INST_DT, DECODE(SHARE_ACCT_DETAIL_NO,'DEBIT',DIVIDEND_AMT,0) AS DEBIT, 
+        DECODE(SHARE_ACCT_DETAIL_NO,'CREDIT',DIVIDEND_AMT,0) AS CREDIT ,                  
+        (SELECT SUM(DECODE(SHARE_ACCT_DETAIL_NO,'CREDIT',DIVIDEND_AMT,0))- SUM(DECODE(SHARE_ACCT_DETAIL_NO,'DEBIT',DIVIDEND_AMT,0)) AS OPN_BAL 
+        FROM SHARE_DIVIDEND  WHERE SHARE_ACCT_NO=#ACT_NUM# AND DIVIDEND_DT   &lt;=#FROM_DT:DATE# ) AS BALANCE
+        FROM SHARE_DIVIDEND  WHERE SHARE_ACCT_NO=#ACT_NUM# AND DIVIDEND_DT   BETWEEN #FROM_DT:DATE# AND 
+        #TO_DT:DATE# AND AUTHORIZE_STATUS in('AUTHORIZED','REALIZED') 
+        AND STATUS!='DELETED'
+        ORDER by DIVIDEND_DT
+                
+    </mapped-statement>
+    <mapped-statement name="getSumOfShareMemFee" result-class="java.util.HashMap">
+        SELECT SUM(SHARE_MEM_FEE) AS TOTAL_MEM_FEE FROM SHARE_ACCT_DETAILS WHERE 
+        SHARE_NO_FROM = 'ADD' AND  SHARE_ACCT_NO = #SHARE_NO:VARCHAR# AND AUTHORIZE = 'AUTHORIZED'
+        AND STATUS != 'DELETED'
+    </mapped-statement> 
+             
+    <mapped-statement name="updateShareAcc" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+        WHERE CUST_ID= #CUST_ID# AND SHARE_ACCT_NO IS NULL
+    </mapped-statement>
+              
+    <mapped-statement name="updateShareDet" result-class="java.util.HashMap">
+        UPDATE SHARE_ACCT SET SHARE_ACCT_NO = #SHARE ACCOUNT NO:VARCHAR#
+        WHERE CUST_ID= #CUST_ID# AND SHARE_ACCT_NO IS NULL
+    </mapped-statement>
+              <!-- Changed the querry below by Nikhil for Share Subsidy -->
+    <mapped-statement name="getMinIntialShares" result-class="java.util.HashMap">
+        SELECT MIN_INTIAL_SHARES,NUM_PATTERN_PREFIX,NUM_PATTERN_SUFFIX,SUBSIDY_FOR_SCST,CUSTOMERS_SHARE,GOVTS_SHARE,MAXIMUM_SHARE
+        FROM SHARE_CONF_DETAILS WHERE SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="getMandatoryDataForSelectItem" result-class="java.util.HashMap">
+       select MANDATORY_DATA,MANDATORY_ADDR_DATA from SHARE_CONF_DETAILS where SHARE_TYPE=#SHARE_TYPE:VARCHAR#
+    </mapped-statement>
+     <mapped-statement name="getMandatoryDataCheckFunction" result-class="java.util.HashMap">
+     SELECT data_Check(#CUST_ID:VARCHAR#,#FIELD:VARCHAR#,'CUST_ID','CUSTOMER') as data FROM DUAL
+    </mapped-statement>
+    <mapped-statement name="getMandatoryDataCheckFunctionCustAddr" result-class="java.util.HashMap">
+     SELECT data_Check(#CUST_ID:VARCHAR#,#FIELD:VARCHAR#,'CUST_ID','CUST_ADDR') as data FROM DUAL
+    </mapped-statement>
+              
+    <mapped-statement name="updateShareProduct" result-class="java.util.HashMap">
+        UPDATE SHARE_CONF_DETAILS SET NUM_PATTERN_PREFIX=#PREFIX# , NUM_PATTERN_SUFFIX=#SUFFIX:VARCHAR# WHERE SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    <mapped-statement name="updateShareDrfStatus" result-class="java.util.HashMap" >
+        UPDATE SHARE_ACCT SET
+        DRF_STATUS = #DRF_STATUS:VARCHAR#
+        WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+    <dynamic-mapped-statement name="getDrfTransactionForShare" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM DRF_TRANSACTION WHERE MEMBER_NO = #SHARE_ACCT_NO:VARCHAR#
+        AND AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="CURR_DT">
+                   STATUS_DATE =#CURR_DT:DATE#
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+                
+    <mapped-statement name="getNoOfSharesForDueAmt" result-class="java.util.HashMap">
+        SELECT A.NO_OF_SHARES-B.NO_OF_SHARES AS NO_OF_SHARES, A.TOTAL_SHARE_AMOUNT-B.TOTAL_SHARE_AMOUNT AS TOTAL_SHARE_AMOUNT FROM
+        (SELECT NVL(SUM(SAD.NO_OF_SHARES),0) AS NO_OF_SHARES,
+        NVL(SUM(SAD.SHARE_VALUE),0) AS TOTAL_SHARE_AMOUNT FROM 
+        SHARE_ACCT_DETAILS SAD,SHARE_ACCT SA
+        WHERE  SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO AND SHARE_NO_FROM='ADD' AND
+        SAD.STATUS !='DELETED' AND SAD.AUTHORIZE = 'AUTHORIZED' AND 
+        SA.CUST_ID=#CUST_ID:VARCHAR#) A,
+        ( SELECT NVL(SUM(SAD.NO_OF_SHARES),0) AS NO_OF_SHARES,
+        NVL(SUM(SAD.SHARE_VALUE),0) AS TOTAL_SHARE_AMOUNT FROM 
+        SHARE_ACCT_DETAILS SAD,SHARE_ACCT SA
+        WHERE  SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO AND SHARE_NO_FROM='WITHDRAWAL' AND
+        SAD.STATUS !='DELETED' AND SAD.AUTHORIZE = 'AUTHORIZED' AND 
+        SA.CUST_ID=#CUST_ID:VARCHAR# ) B
+    </mapped-statement>
+                
+    <mapped-statement name="getNoOfSharesForDiffAmtPaid" result-class="java.util.HashMap">
+        SELECT NVL(SUM(SAD.NO_OF_SHARES),0) AS NO_OF_SHARES,
+        NVL(SUM(SAD.SHARE_VALUE),0) AS TOTAL_SHARE_AMOUNT FROM 
+        SHARE_ACCT_DETAILS SAD,SHARE_ACCT SA
+        WHERE  SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO AND SHARE_NO_FROM='DIFFERENTIAL' AND
+        SAD.STATUS !='DELETED' AND SAD.AUTHORIZE = 'AUTHORIZED' AND 
+        SA.CUST_ID=#CUST_ID:VARCHAR#
+    </mapped-statement>
+                
+    <mapped-statement name="getFaceValue" result-class="java.util.HashMap" >
+        SELECT FACE_VALUE FROM SHARE_CONF_DETAILS WHERE SHARE_TYPE=#SHARE_TYPE:VARCHAR#
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement>
+                
+    <mapped-statement name="getClosedShareAccInfo" result-class="java.util.HashMap" >
+        SELECT *  FROM SHARE_ACCT WHERE SHARE_ACCT_NO=#SHARE ACCOUNT NO:VARCHAR#
+        AND AUTHORIZE='AUTHORIZED' AND STATUS = 'CLOSED'
+    </mapped-statement>
+                
+    <mapped-statement name="getShareDetForReject" result-class="java.util.HashMap" >
+        SELECT COUNT(*) AS "COUNT" FROM SHARE_ACCT_DETAILS WHERE SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR# and STATUS!='DELETED'
+    </mapped-statement>
+                
+                
+    <mapped-statement name="getDRFAccountDts" result-class="java.util.HashMap" >
+        select SPLIT_DRF,DRF_SUSPENSE_HEAD from share_conf_details where SHARE_TYPE=#SHARE_TYPE:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="getCasteForAppNo" result-class="java.util.HashMap" >
+        select C.CASTE as CASTE from customer c join SHARE_ACCT s
+        on S.CUST_ID=C.CUST_ID
+        where S.SHARE_APPL_NO=#SHARE APPLICATION NO:VARCHAR#
+    </mapped-statement>
+	   
+    <mapped-statement name="getMultiShareAllowed" result-class="java.util.HashMap" >
+        select nvl(MULTI_SHARE_ALLOWED,'N') as MULTI_SHARE_ALLOWED  from PARAMETERS
+    </mapped-statement>  
+    <mapped-statement name="getMembershipPriorityofCustomer" result-class="java.util.HashMap" >
+        select C.MEMBERSHIP_NO,p.PRIORITY
+        from 
+        customer c join SHARE_ACCT s on 
+        c.cust_id=S.CUST_ID and C.MEMBERSHIP_NO=S.SHARE_ACCT_NO
+        join SHARE_PRIORITY p
+        on P.SHARE_TYPE=C.MEMBERSHIP_CLASS
+        where s.SHARE_APPL_NO!=#SHARE APPLICATION NO:VARCHAR#
+        and S.CUST_ID in (select CUST_ID from  share_acct  
+        where SHARE_APPL_NO=#SHARE APPLICATION NO:VARCHAR# and AUTHORIZE='AUTHORIZED' and STATUS !='DELETED')
+    </mapped-statement>  
+    <mapped-statement name="getShare_priority" result-class="java.util.HashMap" >
+        select PRIORITY from SHARE_PRIORITY  where SHARE_TYPE=#SHARE TYPE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSharePriorityClosing" result-class="java.util.HashMap" >
+        SELECT SP.PRIORITY ,SA.SHARE_ACCT_NO AS MEMBERSHIP_NO,SA.SHARE_TYPE AS MEMBERSHIP_CLASS,SA.CUST_ID
+        FROM SHARE_ACCT SA,SHARE_PRIORITY SP
+        WHERE SP.SHARE_TYPE = SA.SHARE_TYPE
+        AND SA.CUST_ID = #CUST_ID:VARCHAR# 
+        AND SA.SHARE_ACCT_NO NOT IN(#SHARE_ACT_NO:VARCHAR#)
+        AND SA.ACCT_STATUS not in ('CLOSED')
+        ORDER BY SP.PRIORITY ASC
+    </mapped-statement>    
+        
+    <mapped-statement name="getMembershipPriority" result-class="java.util.HashMap" >
+        select C.MEMBERSHIP_NO,p.PRIORITY
+        from 
+        customer c join SHARE_PRIORITY p
+        on P.SHARE_TYPE=C.MEMBERSHIP_CLASS
+        where C.CUST_ID=#CUST_ID:VARCHAR#      
+    </mapped-statement>
+
+    <mapped-statement name="updateClosedShare" inline-parameters="true">
+        update customer set MEMBERSHIP_NO = null ,MEMBERSHIP_CLASS = null where CUST_ID=#CUST_ID:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="getShareNum1" result-class="java.util.HashMap" >
+        SELECT SHARE_ACCT_NO AS "SHARE ACCOUNT NO", ACCT_STATUS AS "ACCOUNT STATUS",  
+        SHARE_TYPE AS "SHARE TYPE"
+        FROM SHARE_ACCT SHR WHERE
+        shr.share_type = #PROD_ID:VARCHAR# AND
+        SHR.BRANCH_CODE = #SELECTED_BRANCH:VARCHAR# AND 
+        SHR.STATUS not in ('DELETED', 'REJECTED') 
+    </mapped-statement>
+    <mapped-statement name="getOutstandingReq" result-class="java.util.HashMap" > 
+        select IS_OUTSTANDING_REQUIRED from SHARE_CONF_DETAILS where share_type=(select SHARE_TYPE from SHARE_ACCT where SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#  AND CUST_ID=#CUST_ID:VARCHAR#  AND ACCT_STATUS !='CLOSED')
+    </mapped-statement>   
+    
+    <mapped-statement name="getAuthorizeDeductionMapping" result-class="java.util.HashMap">
+        SELECT DEM.EMP_REF_NO, DEM.MAP_PROD_TYPE, DEM.MAP_PROD_ID, DEM.EXEMPTION_MODE, DEM.MAP_ACT_NUM, C.FNAME
+        FROM DEDUCTION_EXEMPTION_MAPPING DEM, CUSTOMER C, SHARE_ACCT SA
+        WHERE DEM.EMP_REF_NO = SA.EMP_REFNO_OLD AND C.CUST_ID = SA.CUST_ID AND DEM.EMP_REF_NO = #EMP_REF_NO:VARCHAR#
+        AND SA.STATUS != 'CLOSED' AND DEM.STATUS != 'DELETED'   
+    </mapped-statement>
+    
+    <mapped-statement name="getAuthorizeSuspenseRefNo" result-class="java.util.HashMap">
+        SELECT DISTINCT(SAM.SUSPENSE_REF_NO) FROM SUSPENSE_ACCOUNT_MASTER SAM, CUSTOMER C, SHARE_ACCT SA
+        WHERE SAM.SUSPENSE_REF_NO = SA.EMP_REFNO_OLD AND C.CUST_ID = SA.CUST_ID AND SAM.SUSPENSE_REF_NO = #EMP_REF_NO:VARCHAR#
+        AND SA.STATUS != 'CLOSED' AND SAM.STATUS != 'DELETED'   
+    </mapped-statement>
+    
+    <mapped-statement name="updateShareAcctEmpRefNo" inline-parameters="true">
+        UPDATE SHARE_ACCT SET 
+        EMP_REFNO_NEW = #EMP_REFNO_NEW:VARCHAR#
+        WHERE EMP_REFNO_OLD = #EMP_REFNO_OLD:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateDedExemptionEmpRefNo" inline-parameters="true">
+        UPDATE DEDUCTION_EXEMPTION_MAPPING SET 
+        EMP_REF_NO = #EMP_REFNO_NEW:VARCHAR# 
+        WHERE EMP_REF_NO = #EMP_REFNO_OLD:VARCHAR# AND STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED'
+    </mapped-statement>
+    
+    <mapped-statement name="updateSuspAccMasterEmpRefNo" inline-parameters="true">
+        UPDATE SUSPENSE_ACCOUNT_MASTER SET 
+        SUSPENSE_REF_NO = #EMP_REFNO_NEW:VARCHAR# 
+        WHERE SUSPENSE_REF_NO = #EMP_REFNO_OLD:VARCHAR# AND STATUS != 'DELETED' AND AUTHORIZE_STATUS != 'REJECTED'
+    </mapped-statement>
+    
+    <mapped-statement name="selectExistingEmpRefNo" result-class="java.util.HashMap">
+        SELECT SA.CUST_ID, SA.EMP_REFNO_NEW, SA.EMP_REFNO_OLD 
+        FROM SHARE_ACCT SA 
+        WHERE (SA.EMP_REFNO_NEW = #EMP_REF_NO:VARCHAR# OR SA.EMP_REFNO_OLD = #EMP_REF_NO:VARCHAR#)
+        AND SA.STATUS != 'DELETED' AND (SA.AUTHORIZE != 'REJECTED' OR SA.AUTHORIZE IS NULL)  
+    </mapped-statement>
+    
+    <mapped-statement name="getSharePensionScheme" result-class="java.util.HashMap">
+        SELECT SHARE_TYPE,PENSION_SCHEME_AGE,PENSION_SCHEME_DURATION,MIN_PENSION FROM SHARE_CONF_DETAILS 
+        WHERE SHARE_TYPE = #SHARE_TYPE:VARCHAR# 
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSharePensionSchemeDetails" result-class="java.util.HashMap">
+        SELECT * FROM (
+        SELECT SA.SHARE_ACCT_NO, C.CUST_ID,GET_CUST_NAME(C.CUST_ID) AS CUST_NAME, C.DOB, SA.CREATED_DT,
+        FLOOR ((MONTHS_BETWEEN (#CURR_DT:DATE#, C.DOB)) / 12) AS AGE,
+        FLOOR ((MONTHS_BETWEEN (#CURR_DT:DATE#, SA.CREATED_DT)) / 12) AS DURATION,SA.OUTSTANDING_AMOUNT,NVL
+                  ((GET_SHARE_PENSION(sa.share_acct_no,#CURR_DT:DATE#,SC.PENSION_START_DT)
+                    * sc.min_pension
+                   ),
+                   sc.min_pension
+                  ) AS min_pension,
+        (SELECT MAX(TRANS_DT) FROM SHARE_PENSON_TRANS WHERE SHARE_ACCT_NO = SA.SHARE_ACCT_NO
+        AND STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED') AS PAID_DATE,
+        SC.PENSION_PROD_TYPE,SC.PENSION_PROD_ID,SC.PENSION_AC_HD,SA.BRANCH_CODE AS BRANCH_ID
+        FROM SHARE_ACCT SA, CUSTOMER C,SHARE_CONF_DETAILS SC
+        WHERE C.CUST_ID = SA.CUST_ID
+        AND C.MEMBERSHIP_NO = SA.SHARE_ACCT_NO 
+        AND SC.SHARE_TYPE = SA.SHARE_TYPE
+        AND SA.STATUS != 'DELETED'
+        AND SA.AUTHORIZE = 'AUTHORIZED'
+        AND SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR#  
+        AND SA.OUTSTANDING_AMOUNT > 0) A
+        WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PENSION_SCHEME_AGE">
+                   AGE &gt;= #PENSION_SCHEME_AGE:NUMERIC#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PENSION_SCHEME_DURATION">
+                   DURATION &gt;= #PENSION_SCHEME_DURATION:NUMERIC#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MIN_PENSION">
+                    MIN_PENSION > 0
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>        
+     </dynamic-mapped-statement>
+    
+     <mapped-statement name="getSharePensionSchemeDetailsAuthorize" result-class="java.util.HashMap">
+        SELECT SP.TRANS_ID,SP.TRANS_DT,SP.SHARE_ACCT_NO,GET_CUST_NAME_FROM_SHARE(SP.SHARE_ACCT_NO) AS CUST_NAME,
+        SP.CUST_AGE,SP.SHARE_RUN_PERIOD,SP.TRANS_AMOUNT,SA.BRANCH_CODE
+        FROM SHARE_PENSON_TRANS SP,SHARE_ACCT SA
+        WHERE  SP.STATUS!='DELETED'
+        AND SA.SHARE_ACCT_NO = SP.SHARE_ACCT_NO
+        AND SP.AUTHORIZED_STATUS IS NULL
+        AND SP.TRANS_DT =#TRANS_DT:DATE#
+        AND SP.TRANS_ID = #TRANS_ID:VARCHAR#
+        AND SP.BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="insertPensionSchemeTO" inline-parameters="true">
+        INSERT INTO SHARE_PENSON_TRANS(SHARE_ACCT_NO,TRANS_AMOUNT,SHARE_RUN_PERIOD,CUST_AGE,TRANS_DT,TRANS_ID,TRANS_TYPE,STATUS,
+        STATUS_BY,STATUS_DT,BRANCH_CODE)
+        VALUES (
+        #shareAcctNo:VARCHAR#, #transAmount:NUMERIC#, #shareRunPeriod:NUMERIC#, #custAge:NUMERIC#,#transDt:DATE#,#transId:VARCHAR#,
+        #transType:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#branchCode:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getPensionSchemeAuthorizeCashUI" result-class="java.util.LinkedHashMap">
+        SELECT SP.TRANS_ID,SP.TRANS_DT,SP.SHARE_ACCT_NO,SP.TRANS_AMOUNT,SP.BRANCH_CODE
+        FROM SHARE_PENSON_TRANS SP,ALL_TRANS AT
+        WHERE SP.SHARE_ACCT_NO = AT.LINK_BATCH_ID
+        AND SP.TRANS_ID = NVL(AT.BATCH_ID,AT.TRANS_ID)
+        AND SP.TRANS_TYPE = AT.TRANS_TYPE
+        AND SP.TRANS_DT = AT.TRANS_DT
+        AND SP.BRANCH_CODE = #INITIATED_BRANCH:VARCHAR#
+        AND SP.TRANS_DT = #TRANS_DT:DATE#
+        AND CASE
+                WHEN AT.trans_mode = 'TRANSFER'
+                    THEN NULL
+                ELSE AT.payment_status
+        END IS NULL
+        AND SP.STATUS!='DELETED'
+        AND SP.AUTHORIZED_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = SP.STATUS_BY)
+        AND SP.STATUS_BY!=#USER_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getPensionSchemeAuthorizeUI" result-class="java.util.LinkedHashMap">
+        SELECT SP.TRANS_ID,SP.TRANS_DT,SP.SHARE_ACCT_NO,SP.TRANS_AMOUNT,SP.BRANCH_CODE
+        FROM SHARE_PENSON_TRANS SP,ALL_TRANS AT
+        WHERE SP.SHARE_ACCT_NO = AT.LINK_BATCH_ID
+        AND SP.TRANS_ID = NVL(AT.BATCH_ID,AT.TRANS_ID)
+        AND SP.TRANS_TYPE = AT.TRANS_TYPE
+        AND SP.TRANS_DT = AT.TRANS_DT
+        AND SP.BRANCH_CODE = #INITIATED_BRANCH:VARCHAR#
+        AND SP.TRANS_DT = #TRANS_DT:DATE#        
+        AND SP.STATUS!='DELETED'
+        AND SP.AUTHORIZED_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = SP.STATUS_BY)
+        AND SP.STATUS_BY!=#USER_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="authorizePensionSchemeTrans" result-class="java.util.HashMap">
+        UPDATE SHARE_PENSON_TRANS SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' 
+        AND TRANS_DT =#TRANS_DT:DATE#
+        AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+        AND AUTHORIZED_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="getSharePendingAuthorization" result-class="java.util.HashMap">
+        SELECT * FROM SHARE_PENSON_TRANS SP WHERE SP.AUTHORIZED_STATUS IS NULL AND SP.STATUS!='DELETED'
+        AND SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectPensionPaidDate" result-class="java.util.HashMap">
+        SELECT * FROM   share_penson_trans SC
+        WHERE SC.status != 'DELETED'
+        AND SC.AUTHORIZED_STATUS = 'AUTHORIZED'
+        AND SC.TRANS_DT BETWEEN LAST_DAY(ADD_MONTHS(#PENSION_START_DT:DATE#,-1))+1 AND LAST_DAY(#PENSION_START_DT:DATE#)
+        AND SC.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+   </mapped-statement>
+               
+   <mapped-statement name="getShareCertificatePrint" result-class="java.util.HashMap">
+        SELECT SHARE_CERTIFICATE_PRINT FROM SHARE_CONF_DETAILS WHERE SHARE_TYPE =#SHARE_TYPE:VARCHAR# AND  STATUS !='DELETED' AND AUTHORIZE_STATUS ='AUTHORIZED'
+   </mapped-statement>
+   
+   <mapped-statement name="getShareAccountDebitDetails" result-class="java.util.HashMap">
+        SELECT SA.SHARE_ACCT_NO,SA.SHARE_AMOUNT,SA.AVILABLE_NO_SHARES,SA.OUTSTANDING_AMOUNT,SC.FACE_VALUE
+        FROM SHARE_ACCT SA,SHARE_ACCT_DETAILS SAD,SHARE_CONF_DETAILS sc
+        WHERE SAD.SHARE_ACCT_NO = SA.SHARE_ACCT_NO
+        AND SC.SHARE_TYPE = SA.SHARE_TYPE
+        AND SA.AUTHORIZE = 'AUTHORIZED'
+        AND SA.STATUS !='DELETED'
+        AND SA.SHARE_ACCT_NO = #value:VARCHAR#
+   </mapped-statement>
+   
+   <mapped-statement name="getAvailableShares" result-class="java.util.HashMap">
+        SELECT *
+        FROM SHARE_ACCT SA
+        WHERE SA.STATUS !='DELETED'
+        AND SA.AUTHORIZE = 'AUTHORIZED'
+        AND SA.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+        AND SA.OUTSTANDING_AMOUNT &lt; #DEBIT_AMOUNT:NUMBER#
+   </mapped-statement>
+   
+   <mapped-statement name="upDateNoOfShareAndAmountDebitShare" inline-parameters="true">
+        UPDATE  SHARE_ACCT SET OUTSTANDING_AMOUNT=nvl(OUTSTANDING_AMOUNT,0) + #OUTSTANDING_AMOUNT:NUMBER# 
+        ,AVILABLE_NO_SHARES=(CASE WHEN OUTSTANDING_AMOUNT = #SHARE_AMOUNT:NUMBER#  THEN 0
+        ELSE AVILABLE_NO_SHARES + (SELECT #SHARE_AMOUNT:NUMBER# /SCC.FACE_VALUE FROM SHARE_CONF_DETAILS SCC,SHARE_ACCT SA WHERE SA.SHARE_TYPE  = SCC.SHARE_TYPE AND SA.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#) END)
+        WHERE SHARE_ACCT_NO=#SHARE_ACCT_NO:VARCHAR#
+    </mapped-statement>
+
+ <dynamic-mapped-statement name="getMaxShareToNo" result-class="java.util.HashMap">
+        SELECT MAX(TOSL_NO)+1 AS MAX_SL_NO
+        FROM SHARE_ACCT_DETAILS SAd,SHARE_ACCT sa
+        WHERE SA.SHARE_ACCT_NO = SAD.SHARE_ACCT_NO
+        and SAd.STATUS != 'DELETED' 
+        and (SAD.AUTHORIZE IS NULL OR SAD.AUTHORIZE != 'REJECTED')
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_TYPE">
+                   SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="SHARE_ACCT_NO">
+                   SA.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+       </dynamic>
+</dynamic-mapped-statement>
+
+<mapped-statement name="checkDrfExistOrNot" result-class="java.util.HashMap">
+    SELECT DRF_APPLICABLE,DRF_STATUS,DRF_PRODUCT FROM SHARE_ACCT WHERE SHARE_ACCT_NO = #SHARE_ACCT_NO# AND STATUS !='DELETED' 
+    AND (AUTHORIZE IS NULL OR AUTHORIZE = 'AUTHORIZED') AND DRF_APPLICABLE = 'Y' AND DRF_STATUS = 'AUTHORIZED'
+</mapped-statement>
+
+<dynamic-mapped-statement name="getAllSharePensionMemberDetailsForTransfer" result-class="java.util.HashMap">
+        SELECT * FROM (
+        SELECT SA.SHARE_ACCT_NO, C.CUST_ID,GET_CUST_NAME(C.CUST_ID) AS CUST_NAME, C.DOB, SA.CREATED_DT,
+        FLOOR ((MONTHS_BETWEEN (#CURR_DT:DATE#, C.DOB)) / 12) AS AGE,
+        FLOOR ((MONTHS_BETWEEN (#CURR_DT:DATE#, SA.CREATED_DT)) / 12) AS DURATION,SA.OUTSTANDING_AMOUNT,NVL
+                  ((GET_SHARE_PENSION(sa.share_acct_no,#CURR_DT:DATE#,SC.PENSION_START_DT)
+                    * sc.min_pension
+                   ),
+                   sc.min_pension
+                  ) AS min_pension,
+        (SELECT MAX(TRANS_DT) FROM SHARE_PENSON_TRANS WHERE SHARE_ACCT_NO = SA.SHARE_ACCT_NO
+        AND STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED') AS PAID_DATE,
+        SC.PENSION_PROD_TYPE,SC.PENSION_PROD_ID,SC.PENSION_AC_HD,SA.BRANCH_CODE AS BRANCH_ID,SA.DIVIDEND_CREDIT_AC,SA.DIVIDEND_CREDIT_PRODUCT,SA.DIVIDEND_CREDIT_PRODUCT_ID
+        FROM SHARE_ACCT SA, CUSTOMER C,SHARE_CONF_DETAILS SC
+        WHERE C.CUST_ID = SA.CUST_ID
+        AND C.MEMBERSHIP_NO = SA.SHARE_ACCT_NO 
+        AND SC.SHARE_TYPE = SA.SHARE_TYPE
+        AND SA.STATUS != 'DELETED'
+        AND SA.AUTHORIZE = 'AUTHORIZED'
+        AND SA.SHARE_TYPE = #SHARE_TYPE:VARCHAR#  
+        AND NVL(SA.OUTSTANDING_AMOUNT,0) > 0
+        AND SA.DIVIDEND_PAY_MODE in ('TRANSFER')
+        AND SA.DIVIDEND_CREDIT_PRODUCT_ID IS NOT NULL
+        AND SA.DIVIDEND_CREDIT_AC IS NOT NULL
+        ) A
+        WHERE 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="" property="PENSION_SCHEME_AGE">
+                   AGE &gt;= #PENSION_SCHEME_AGE:NUMERIC#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="PENSION_SCHEME_DURATION">
+                   DURATION &gt;= #PENSION_SCHEME_DURATION:NUMERIC#
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MIN_PENSION">
+                    MIN_PENSION > 0
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        ORDER BY SHARE_ACCT_NO ASC
+     </dynamic-mapped-statement>
+     
+    <mapped-statement name="getShareAccInfoEligibilityDetailsForLoan"  result-class="java.util.LinkedHashMap" >       
+        SELECT sa.share_acct_no, sa.not_eligible_loan, sa.not_eligible_dt      
+        FROM share_acct sa
+        WHERE SA.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR# 
+        AND (sa.status IN ('CREATED', 'MODIFIED'))
+        AND (sa.authorize = 'AUTHORIZED')
+        AND SA.ACCT_STATUS != 'CLOSED'	 
+    </mapped-statement>
+
+     <mapped-statement name="getDRFReceiptDetails"  result-class="java.util.LinkedHashMap" >  
+         SELECT DRF.MEMBER_NO,DRF.DRF_TRANS_ID, DRF.DRF_PROD_ID,DRF.RECIEPT_OR_PAYMENT FROM DRF_TRANSACTION DRF WHERE DRF.DRF_TRANS_ID = #DRF_TRANS_ID:VARCHAR#
+     </mapped-statement>
+     
+    <mapped-statement name="updateShareDRFDetailsAfterReceipt" inline-parameters="true">        
+        UPDATE SHARE_ACCT SET DRF_APPLICABLE = 'Y', DRF_STATUS = 'AUTHORIZED', DRF_PRODUCT = #DRF_PROD_ID:VARCHAR#
+        WHERE SHARE_ACCT_NO = #MEMBER_NO:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getShareTranDetailsForAuthorization"  result-class="java.util.LinkedHashMap" >  
+       select * from SHARE_ACCT_DETAILS s where S.SHARE_ACCT_NO = #SHARE_ACCT_NO:VARCHAR#
+       and S.STATUS_DT = #APPLN_DT:DATE# and S.AUTHORIZE is null    
+    </mapped-statement>
+
+    <mapped-statement name="getCustometExistingMembershipDetails" result-class="java.util.HashMap" > 
+        select C.MEMBERSHIP_NO,C.MEMBERSHIP_CLASS from customer c where C.CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="getMembershipClassPriority" result-class="java.util.HashMap" > 
+        SELECT GET_SHARE_PRIORITY(#OLD_MEMBERSHIP_CLASS:VARCHAR#) AS OLD_PRIORITY,GET_SHARE_PRIORITY(#MEMBERSHIP_CLASS:VARCHAR#) AS NEW_PRIORITY FROM DUAL
+    </mapped-statement>
+    
+   <mapped-statement name="getShareFeeCalculationType" result-class="java.util.HashMap">        
+        SELECT SHARE_FEE_CONSTANT
+        FROM SHARE_CONF_DETAILS WHERE SHARE_TYPE = #SHARE_TYPE:VARCHAR#  AND STATUS != 'DELETED'
+    </mapped-statement>
+
+
+    <mapped-statement name="getSumOfShareFee" result-class="java.util.HashMap">
+        SELECT SUM(nvl(SHARE_FEE,0)) AS TOTAL_SHARE_FEE FROM SHARE_ACCT_DETAILS WHERE 
+        SHARE_NO_FROM = 'ADD' AND  SHARE_ACCT_NO = #SHARE_NO:VARCHAR# AND AUTHORIZE = 'AUTHORIZED'
+        AND STATUS != 'DELETED'
+    </mapped-statement> 
+
+
+</sql-map>
+   

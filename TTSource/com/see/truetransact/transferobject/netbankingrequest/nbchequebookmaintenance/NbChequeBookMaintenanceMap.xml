@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="NbChequeBookMaintenanceMap">
+    
+    <result-map name="getDataFromDatabaseResult" class="com.see.truetransact.transferobject.netbankingrequest.nbchequebookmaintenance.NbChequeBookMaintenanceTO">
+        <property name="custId" column="CUST_ID"/>
+        <property name="actNum" column="ACT_NUM"/>
+        <property name="cbRequest" column="CHEQUE_BOOK_REQUEST"/>
+        <property name="noOfCbLeave" column="NO_OF_CHEQUE_LEAVES"/>
+        <property name="usageType" column="USAGE_TYPE"/>
+        <property name="status" column="STATUS"/>
+        
+    </result-map>
+    
+    <dynamic-mapped-statement name="getDataToUpdateChequeBook" result-map="getDataFromDatabaseResult" >
+        SELECT NRM.CUST_ID,NRM.ACT_NUM,NRM.CHEQUE_BOOK_REQUEST,NRM.NO_OF_CHEQUE_LEAVES,NRM.USAGE_TYPE,
+        NRM.STATUS FROM NB_REQUEST_MAINTENANCE NRM,CUSTOMER CU,CUST_ADDR CA 
+        WHERE NRM.CUST_ID=CU.CUST_ID AND CU.CUST_ID=CA.CUST_ID AND NRM.AUTHORIZE_STATUS IS NULL AND NRM.REQUESTED_SCREEN = #REQUESTED_SCREEN:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="NEW_MODE">                   
+                    NRM.STATUS IS NULL AND NRM.NB_TRANS_ID IS NULL
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+         
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="EDIT_MODE">                   
+                    NRM.NB_TRANS_ID = #NB_TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="DELETE_MODE">                   
+                    NRM.NB_TRANS_ID = #NB_TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="AUTHORIZE_MODE">                   
+                    NRM.NB_TRANS_ID = #NB_TRANS_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        
+    </dynamic-mapped-statement>
+      
+    <dynamic-mapped-statement name="getSelectCbMaintenanceList" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT NB_TRANS_ID, STATUS, STATUS_BY, STATUS_DT, REQUESTED_SCREEN 
+        FROM NB_REQUEST_MAINTENANCE NRM WHERE STATUS != 'DELETED' AND NRM.AUTHORIZE_STATUS IS NULL AND REQUESTED_SCREEN = #REQUESTED_SCREEN:VARCHAR# 
+          <dynamic> 
+            <isPropertyAvailable prepend = "AND" property="AUTHORIZE_MODE">
+                NRM.STATUS_BY != #USER_ID:VARCHAR#
+                AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+                FROM USER_MASTER UM, ROLE_MASTER RM 
+                WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = NRM.STATUS_BY)
+            </isPropertyAvailable>
+          </dynamic>  
+    </dynamic-mapped-statement>  
+      
+    <mapped-statement name="insertChequeBookDetailsTO" inline-parameters="true">
+        UPDATE NB_REQUEST_MAINTENANCE SET
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#,
+        NB_TRANS_ID = #nbTransId:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement> 
+    
+    <mapped-statement name="selUpdateChequeBookDetailsTO" inline-parameters="true">
+        UPDATE NB_REQUEST_MAINTENANCE SET
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deselUpdateChequeBookDetailsTO" inline-parameters="true">
+        UPDATE NB_REQUEST_MAINTENANCE SET
+        STATUS = null,
+        STATUS_DT = null,
+        STATUS_BY = null,
+        NB_TRANS_ID = null 
+        WHERE CUST_ID = #custId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement> 
+      
+    <mapped-statement name="DeleteChequeBookDetailsTO" inline-parameters="true">
+        UPDATE NB_REQUEST_MAINTENANCE SET
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>  
+    
+    <mapped-statement name="AuthorizeChequeBookDetailsTO" inline-parameters="true">
+        UPDATE NB_REQUEST_MAINTENANCE SET
+        AUTHORIZE_STATUS = #status:VARCHAR#,
+        AUTHORIZE_DATE = (SELECT SYS_DATE() FROM DUAL),
+        AUTHORIZE_BY = #authBy:VARCHAR#
+        WHERE CUST_ID = #custId:VARCHAR# AND ACT_NUM = #actNum:VARCHAR#
+    </mapped-statement>
+      
+</sql-map>

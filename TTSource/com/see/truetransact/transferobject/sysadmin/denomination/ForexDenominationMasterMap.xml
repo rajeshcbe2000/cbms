@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ForexDenominationMasterTOMap">
+
+	<!-- Use ForexDenominationMasterTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertForexDenominationMasterTO" inline-parameters="true">
+        INSERT INTO FOREX_DENOMINATION_MASTER
+        (CURRENCY, DENOMINATION_NAME, DENOMINATION_VALUE, CREATED_BY, CREATED_DT, AUTHORIZED_BY, AUTHORIZED_DT, STATUS, DENOMINATION_COUNT, DENOMINATION_TYPE, STATUS_BY, STATUS_DT, AUTHORIZE_STATUS
+        ) VALUES (
+        #currency:VARCHAR#, #denominationName:VARCHAR#, #denominationValue:NUMERIC#, #createdBy:VARCHAR#, #createdDt:DATE#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #status:VARCHAR#, #denominationCount:NUMERIC#, #denominationType:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizeStatus:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ForexDenominationMasterTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateForexDenominationMasterTO" inline-parameters="true">
+        UPDATE FOREX_DENOMINATION_MASTER SET 
+        CURRENCY = #currency:VARCHAR#,
+        DENOMINATION_NAME = #denominationName:VARCHAR#,
+        DENOMINATION_VALUE = #denominationValue:NUMERIC#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        STATUS = #status:VARCHAR#,
+        DENOMINATION_COUNT = #denominationCount:NUMERIC#,
+        DENOMINATION_TYPE = #denominationType:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#
+        WHERE CURRENCY = #currency:VARCHAR# AND DENOMINATION_NAME = #denominationName:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use ForexDenominationMasterTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteForexDenominationMasterTO" inline-parameters="true">
+        UPDATE FOREX_DENOMINATION_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE CURRENCY = #currency:VARCHAR# AND DENOMINATION_NAME = #denominationName:VARCHAR# AND
+        DENOMINATION_VALUE = #denominationValue:NUMERIC# AND DENOMINATION_TYPE = #denominationType:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ForexDenominationMasterTO object (JavaBean) properties -->
+    <result-map name="getForexDenominationMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.denomination.ForexDenominationMasterTO">
+        <property name="currency" column="CURRENCY"/>
+        <property name="denominationName" column="DENOMINATION_NAME"/>
+        <property name="denominationValue" column="DENOMINATION_VALUE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="denominationCount" column="DENOMINATION_COUNT"/>
+        <property name="denominationType" column="DENOMINATION_TYPE"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectForexDenominationMasterTO" result-map="getForexDenominationMasterTOResult" >
+        SELECT * FROM FOREX_DENOMINATION_MASTER 
+        WHERE CURRENCY = #CURRENCY:VARCHAR# AND DENOMINATION_NAME = #NAME:VARCHAR# AND DENOMINATION_VALUE = cast(#VALUE# as numeric) AND DENOMINATION_TYPE = #TYPE:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL )
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL )
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="viewForexDenominationMaster" result-class = "java.util.LinkedHashMap" >
+        SELECT CURRENCY AS "CURRENCY", DENOMINATION_NAME AS "NAME", DENOMINATION_VALUE AS "VALUE", DENOMINATION_TYPE AS "TYPE", AUTHORIZE_STATUS AS "Authorize Status", AUTHORIZED_BY as "Authorized by", AUTHORIZED_DT as "Authorized Date"
+        FROM FOREX_DENOMINATION_MASTER WHERE CURRENCY = 'INR' AND ( STATUS != 'DELETED' OR STATUS IS NULL ) AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL )
+               <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "CURRENCY" >
+                    UPPER(CURRENCY) LIKE UPPER('%$CURRENCY$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "NAME" >
+                    UPPER(DENOMINATION_NAME) LIKE UPPER('%$NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "VALUE" >
+                    UPPER(DENOMINATION_VALUE) LIKE UPPER('%$VALUE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TYPE" >
+                    UPPER(DENOMINATION_TYPE) LIKE UPPER('%$TYPE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Authorize Status" >
+                    UPPER(AUTHORIZE_STATUS) LIKE UPPER('%$Authorize Status$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Authorized by" >
+                    UPPER(AUTHORIZED_BY) LIKE UPPER('%$Authorized by$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "Authorized Date" >
+                    UPPER(AUTHORIZED_DT) LIKE UPPER('%$Authorized Date$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+              <!-- AND STATUS_BY != #USER_ID# -->
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="viewForexDenominationMasterForAuth" result-class = "java.util.LinkedHashMap" >
+        SELECT CURRENCY AS "CURRENCY", DENOMINATION_NAME AS "NAME", DENOMINATION_VALUE AS "VALUE", DENOMINATION_TYPE AS "TYPE", AUTHORIZE_STATUS AS "Authorize Status", AUTHORIZED_BY as "Authorized by", AUTHORIZED_DT as "Authorized Date"
+        FROM FOREX_DENOMINATION_MASTER WHERE CURRENCY = 'INR' AND ( STATUS != 'DELETED' OR STATUS IS NULL ) AND AUTHORIZE_STATUS IS NULL OR
+        (AUTHORIZE_STATUS != 'REJECTED' AND AUTHORIZE_STATUS!='AUTHORIZED' )
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeForexDenomMaster" result-class="java.util.HashMap">
+        UPDATE FOREX_DENOMINATION_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:DATE#
+        WHERE CURRENCY = #CURRENCY:VARCHAR# AND DENOMINATION_NAME = #NAME:VARCHAR# AND
+        DENOMINATION_VALUE = #VALUE:NUMBER# AND DENOMINATION_TYPE = #TYPE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="checkDuplicate" result-class="java.util.LinkedHashMap" >
+        SELECT COUNT(CURRENCY) AS "COUNT" FROM FOREX_DENOMINATION_MASTER WHERE CURRENCY = #CURRENCY:VARCHAR# AND DENOMINATION_NAME = #NAME:VARCHAR# AND
+        DENOMINATION_VALUE = cast(#VALUE# as numeric) AND DENOMINATION_TYPE = #TYPE:VARCHAR# AND ( STATUS != 'DELETED' OR STATUS IS NULL ) 
+        AND (AUTHORIZE_STATUS != 'REJECTED' OR AUTHORIZE_STATUS IS NULL)
+    </mapped-statement>
+
+</sql-map>

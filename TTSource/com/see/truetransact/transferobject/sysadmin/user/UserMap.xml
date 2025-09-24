@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="UserTOMap">
+
+	<!-- Use UserTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertUserTO" inline-parameters="true">
+        INSERT INTO USER_MASTER
+        (USER_ID, PWD, STATUS, EMPLOYEE_ID, EMAIL_ID, EXPIRY_DATE, REMARKS, PIN_LOGIN, SUSPEND_BY_USER, SUSPEND_USER, ACTIVATION_DATE, LAST_LOGIN_DT, BRANCH_CODE, IP_ADDR, LAST_LOGOUT_DT, LOGIN_STATUS, USER_GROUP, USER_ROLE, LAST_PWD_CHANGE, CREATED_BY, CREATED_DT, STATUS_BY, STATUS_DT, AUTHORIZED_STATUS, AUTHORIZED_BY, AUTHORIZED_DT, SUSPEND_REASON, SUSPEND_FROM_DT, SUSPEND_TO_DT, FOREIGN_GROUP_ID, FOREIGN_BRANCH_GROUP, APPRAISER_ID
+        ) VALUES (
+        #userId:VARCHAR#, #pwd:VARCHAR#, #status:VARCHAR#, #customerId:VARCHAR#, #emailId:VARCHAR#, #expiryDate:DATE#, #remarks:VARCHAR#, #pinLogin:VARCHAR#, #suspendByUser:VARCHAR#, #suspendUser:VARCHAR#, #activationDate:DATE#, #lastLoginDt:DATE#, #branchCode:VARCHAR#, #ipAddr:VARCHAR#, #lastLogoutDt:DATE#, #loginStatus:VARCHAR#, #userGroup:VARCHAR#, #userRole:VARCHAR#, #lastPwdChange:DATE#, #createdBy:VARCHAR#, #createdDt:DATE#, #statusBy:VARCHAR#, #statusDt:DATE#, #authorizedStatus:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#, #suspendReason:VARCHAR#, #suspendFromDt:DATE#, #suspendToDt:DATE#, #foreignGroupId:VARCHAR#, #foreignBranchGroup:VARCHAR# , #appraiserAllowed:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="getSuspendStatus" result-class="java.util.HashMap">
+        SELECT SUSPEND_USER FROM USER_MASTER WHERE USER_ID=#USER_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateUserLoginHistory" inline-parameters="true">
+        UPDATE USER_LOGIN_HISTORY SET LOGIN_STATUS = #LOGIN_STATUS:VARCHAR# WHERE USER_ID = #USER_ID:VARCHAR# AND 
+        DATE_TIME = (SELECT max(DATE_TIME) FROM USER_LOGIN_HISTORY WHERE USER_ID = #USER_ID:VARCHAR#)
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="updateSuspendUser" inline-parameters="true">
+        UPDATE USER_MASTER SET
+        LAST_LOGOUT_DT=#LAST_LOGOUT_DT:VARCHAR#,
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property ="SUSPEND_USER">
+                    SUSPEND_USER = #SUSPEND_USER:VARCHAR#,
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        LOGIN_STATUS = #LOGIN_STATUS:VARCHAR# 
+        where USER_ID = #USER_ID:VARCHAR#
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getLoggedinUser" result-class="java.util.HashMap">
+        SELECT LOGIN_STATUS FROM USER_LOGIN_HISTORY WHERE  DATE_TIME = (SELECT MAX (DATE_TIME)FROM USER_LOGIN_HISTORY WHERE USER_ID = #USER_ID:VARCHAR#)
+                               
+    </mapped-statement>
+    
+	<!-- Use UserTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateUserTO" inline-parameters="true">
+        UPDATE USER_MASTER SET 		
+        PWD = #pwd:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        EMPLOYEE_ID = #customerId:VARCHAR#,
+        EMAIL_ID = #emailId:VARCHAR#,
+        EXPIRY_DATE = #expiryDate:DATE#,
+        REMARKS = #remarks:VARCHAR#,
+        PIN_LOGIN = #pinLogin:VARCHAR#,
+        SUSPEND_BY_USER = #suspendByUser:VARCHAR#,
+        SUSPEND_USER = #suspendUser:VARCHAR#,
+        ACTIVATION_DATE = #activationDate:DATE#,
+        LAST_LOGIN_DT = #lastLoginDt:DATE#,
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        IP_ADDR = #ipAddr:VARCHAR#,
+        LAST_LOGOUT_DT = #lastLogoutDt:DATE#,
+        LOGIN_STATUS = #loginStatus:VARCHAR#,
+        USER_GROUP = #userGroup:VARCHAR#,
+        USER_ROLE = #userRole:VARCHAR#,
+        LAST_PWD_CHANGE = #lastPwdChange:DATE#,
+        CREATED_BY = #createdBy:VARCHAR#,
+        CREATED_DT = #createdDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#,
+        SUSPEND_REASON = #suspendReason:VARCHAR#,
+        SUSPEND_FROM_DT = #suspendFromDt:DATE#,
+        SUSPEND_TO_DT = #suspendToDt:DATE#,
+        FOREIGN_GROUP_ID = #foreignGroupId:VARCHAR#, 
+        FOREIGN_BRANCH_GROUP = #foreignBranchGroup:VARCHAR#,
+        APPRAISER_ID=#appraiserAllowed:VARCHAR#
+        WHERE USER_ID = #userId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use UserTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteUserTO" inline-parameters="true">
+        UPDATE USER_MASTER SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizedDt:DATE#
+        WHERE USER_ID = #userId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to UserTO object (JavaBean) properties -->
+    <result-map name="getUserTOResult" class="com.see.truetransact.transferobject.sysadmin.user.UserTO">
+        <property name="userId" column="USER_ID"/>
+        <property name="pwd" column="PWD"/>
+        <property name="status" column="STATUS"/>
+        <property name="customerId" column="EMPLOYEE_ID"/>
+        <property name="emailId" column="EMAIL_ID"/>
+        <property name="appraiserAllowed" column="APPRAISER_ID"/>
+        <property name="expiryDate" column="EXPIRY_DATE"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="pinLogin" column="PIN_LOGIN"/>
+        <property name="suspendByUser" column="SUSPEND_BY_USER"/>
+        <property name="suspendUser" column="SUSPEND_USER"/>
+        <property name="activationDate" column="ACTIVATION_DATE"/>
+        <property name="lastLoginDt" column="LAST_LOGIN_DT"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="ipAddr" column="IP_ADDR"/>
+        <property name="lastLogoutDt" column="LAST_LOGOUT_DT"/>
+        <property name="loginStatus" column="LOGIN_STATUS"/>
+        <property name="userGroup" column="USER_GROUP"/>
+        <property name="userRole" column="USER_ROLE"/>
+        <property name="lastPwdChange" column="LAST_PWD_CHANGE"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="suspendReason" column="SUSPEND_REASON"/>
+        <property name="suspendFromDt" column="SUSPEND_FROM_DT"/>
+        <property name="suspendToDt" column="SUSPEND_TO_DT"/>
+        <property name="foreignGroupId" column="FOREIGN_GROUP_ID"/>
+        <property name="foreignBranchGroup" column="FOREIGN_BRANCH_GROUP"/>
+    </result-map>
+    <mapped-statement name="User.getSelectUserTO" result-map="getUserTOResult" >
+        SELECT * FROM USER_MASTER 
+        WHERE user_id=#value:VARCHAR# and (status!='DELETED' or status is null)
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectUserTO" result-map="getUserTOResult" >
+        SELECT * FROM USER_MASTER WHERE USER_ID=#USERID:VARCHAR#
+    </mapped-statement>
+
+        <!-- USER MASTER  Queries (End) -->
+<!-- =================================================================================== -->        
+
+<!-- =================================================================================== -->
+<!-- USER TERMINAL  Queries (Begin) -->
+
+<!-- Use UserTerminalTO object (JavaBean) properties as parameters for insert. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertUserTerminalTO" inline-parameters="true">
+        INSERT INTO USER_TERMINAL
+        (USER_ID, TERMINAL_ID, ACCESS_FROM_DT, ACCESS_TO_DT, STATUS
+        ) VALUES (
+        #userId:VARCHAR#, #terminalId:VARCHAR#, #accessFromDt:DATE#, #accessToDt:DATE#, #status:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use UserTerminalTO object (JavaBean) properties as parameters for update. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateUserTerminalTO" inline-parameters="true">
+        UPDATE USER_TERMINAL SET 
+        USER_ID = #userId:VARCHAR#,
+        TERMINAL_ID = #terminalId:VARCHAR#,
+        ACCESS_FROM_DT = #accessFromDt:DATE#,
+        ACCESS_TO_DT = #accessToDt:DATE#,
+        STATUS = #status:VARCHAR#
+        WHERE 
+    </mapped-statement>
+    
+    <mapped-statement name="updateStatusUserTerminalTO" inline-parameters="true">
+        UPDATE USER_TERMINAL SET 
+        status='DELETED'
+        WHERE user_id=#value:VARCHAR#
+    </mapped-statement>
+
+<!-- Use UserTerminalTO object (JavaBean) properties as parameters for delete. 
+     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteUserTerminalTO" inline-parameters="true">
+        DELETE FROM USER_TERMINAL 
+        WHERE user_id=#value:VARCHAR# and status!='DELETED'
+    </mapped-statement>        
+             
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+     be auto-mapped results to UserTerminalTO object (JavaBean) properties -->
+    <result-map name="getUserTerminalTOResult" class="com.see.truetransact.transferobject.sysadmin.user.UserTerminalTO">
+        <property name="userId" column="USER_ID"/>
+        <property name="terminalId" column="TERMINAL_ID"/>
+        <property name="accessFromDt" column="ACCESS_FROM_DT"/>
+        <property name="accessToDt" column="ACCESS_TO_DT"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectUserTerminalTO" result-map="getUserTerminalTOResult" >
+        SELECT * FROM USER_TERMINAL 
+        WHERE user_id=#value:VARCHAR# and (status is null or status!='DELETED')
+    </mapped-statement>	
+    
+    <!-- USER TERMINAL  Queries (End) -->
+<!-- =================================================================================== -->
+    <mapped-statement name="userPasswordChanged" inline-parameters="true">
+        UPDATE USER_MASTER SET
+        PWD = #PASSSWORD:VARCHAR#, 
+        LAST_PWD_CHANGE = #CURR_DATE:DATE#
+        WHERE USER_ID = #USERID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="insertPasswordChanged" inline-parameters="true">
+        INSERT INTO PASSWORD_HISTORY (USER_ID, PWD, PWD_CHANGE_DT, BRANCH_CODE)
+        VALUES(#USERID:VARCHAR#, #PASSSWORD:VARCHAR#, #CURR_DATE:DATE#, #BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="chkPwdHistory" result-class="java.lang.String">
+        SELECT PWD FROM PASSWORD_HISTORY WHERE USER_ID = #USERID:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# ORDER BY PWD_CHANGE_DT DESC
+    </mapped-statement>
+    
+    
+    
+
+    <mapped-statement name="updateUserLoginStatus" inline-parameters="true">
+        UPDATE USER_MASTER 
+        SET LOGIN_STATUS='LOGIN', 
+        LAST_LOGIN_DT = #CURR_DATE:DATE#,
+        IP_ADDR = #IP_ADDR:VARCHAR# 
+        WHERE USER_ID = #USERID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateUserLogoutStatus" inline-parameters="true">
+        UPDATE USER_MASTER 
+        SET LOGIN_STATUS = #STATUS:VARCHAR#, 
+        LAST_LOGOUT_DT = #CURR_DATE:DATE#  
+        WHERE USER_ID = #USERID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectUserList" result-class="java.util.LinkedHashMap" >
+       select usr.employee_id as "Employee Id", emp.fname || ' ' || emp.lname as "Employee Name",usr.user_id as "User Id", usr.email_id as "Email Id" from bank_employee emp, user_master usr where usr.employee_id=emp.employee_code and ( usr.status='CREATED' or usr.status='MODIFIED' or usr.status='AUTHORIZED' )
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getAllUsersList" result-class="java.util.LinkedHashMap" >
+      <!--  SELECT USR.BRANCH_CODE AS "BRANCH_CODE", usr.user_id AS "User id",
+        EMP.EMPLOYEE_NAME AS "NAME",
+        TO_CHAR (usr.last_login_dt, 'mm/dd/yyyy') AS "LAST LOGIN DT",
+        (SELECT login_status
+        FROM user_login_history
+        WHERE date_time = (SELECT MAX (date_time)
+        FROM user_login_history
+        WHERE user_id = #USER_ID:VARCHAR#)) AS "STATUS"
+        FROM EMPLOYEE_MASTER emp, user_master usr,CUSTOMER cu
+        WHERE EMP.EMPLOYEEID = CU.STAFF_ID
+        And CU.CUST_ID=USR.EMPLOYEE_ID
+        AND (usr.status = 'CREATED' OR usr.status = 'MODIFIED')
+        AND usr.login_status = 'LOGIN'
+        AND usr.authorized_status = 'AUTHORIZED'
+        AND usr.branch_code =  #BRANCH_CODE:VARCHAR#-->
+        SELECT usr.branch_code AS "BRANCH_CODE", usr.user_id AS "User id",
+        CU.FNAME AS "NAME",
+        TO_CHAR (usr.last_login_dt, 'mm/dd/yyyy') AS "LAST LOGIN DT",
+        (SELECT login_status
+        FROM user_login_history
+        WHERE date_time = (SELECT MAX (date_time)
+        FROM user_login_history
+        WHERE user_id = #USER_ID:VARCHAR#)) AS "STATUS"
+        FROM  user_master usr, customer cu
+        WHERE USR.EMPLOYEE_ID = CU.CUST_ID
+        AND cu.cust_id = usr.employee_id
+        AND (usr.status = 'CREATED' OR usr.status = 'MODIFIED')
+        AND usr.login_status = 'LOGIN'
+        AND usr.authorized_status = 'AUTHORIZED'
+        AND usr.branch_code = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property ="USER_ID">
+                    USR.USER_ID!=#USER_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getAllTempUsersList" result-class="java.util.LinkedHashMap" >
+        SELECT usr.branch_code AS "BRANCH_CODE", usr.user_id AS "User id",
+        usr.user_id AS "NAME",
+        TO_CHAR (usr.last_login_dt, 'mm/dd/yyyy') AS "LAST LOGIN DT",
+        (SELECT login_status
+        FROM user_login_history
+        WHERE date_time = (SELECT MAX (date_time)
+        FROM user_login_history
+        WHERE user_id = #USER_ID:VARCHAR#)) AS "STATUS"
+        FROM  user_master usr
+        WHERE (usr.status = 'CREATED' OR usr.status = 'MODIFIED')
+        AND usr.login_status = 'LOGIN'
+        AND usr.authorized_status = 'AUTHORIZED'
+        AND usr.branch_code = #BRANCH_CODE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property ="USER_ID">
+                    USR.USER_ID!=#USER_ID:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getEmployeeList" result-class="java.util.LinkedHashMap" >
+        select employee_code as "Employee Id", fname || ' ' || lname as "Employee Name" from bank_employee where (status='CREATED' or status='MODIFIED' or status='AUTHORIZED' )
+    </mapped-statement>
+       
+    <result-map name="getAllUserTOResult" class="java.util.LinkedHashMap">
+        <property name="userId" column="USER_ID"/>                
+        <property name="branchId" column="BRANCH_CODE"/>		
+        <property name="employeeId" column="EMPLOYEE_ID"/>
+        <property name="employeeName" column="EMPLOYEE_NAME"/>		
+    </result-map>
+    
+    <!--<mapped-statement name="getAllSelectUserTO" result-class="java.util.LinkedHashMap" >
+        SELECT USER_MASTER.USER_ID AS "User ID", USER_MASTER.EMPLOYEE_ID AS "Employee ID", 
+        USER_MASTER.BRANCH_CODE AS "Branch Code", 
+        BANK_EMPLOYEE.TITLE||' '||BANK_EMPLOYEE.FNAME ||' ' ||BANK_EMPLOYEE.LNAME 
+        AS "Employee Name" 
+        FROM USER_MASTER, BANK_EMPLOYEE
+        WHERE(USER_MASTER.STATUS!='DELETED' OR USER_MASTER.STATUS IS NULL) AND 
+        USER_MASTER.EMPLOYEE_ID=BANK_EMPLOYEE.EMPLOYEE_CODE
+    </mapped-statement> -->   
+        
+    <result-map name="selectBranchMasterResult" class="java.util.LinkedHashMap">		
+        <property name="branchName" column="BRANCH_NAME"/>		
+    </result-map>
+    
+    <mapped-statement name="selectBranchMaster" result-map="selectBranchMasterResult" >
+        SELECT BRANCH_NAME FROM BRANCH_MASTER 
+        WHERE BRANCH_CODE=#value:VARCHAR# and (status!='DELETED' or status is null)
+    </mapped-statement>
+        
+    <result-map name="getTerminalMasterTOResult" class="com.see.truetransact.transferobject.sysadmin.user.TerminalMasterTO">
+        <property name="terminalName" column="TERMINAL_NAME"/>
+        <property name="ipAddr" column="IP_ADDR"/>
+        <property name="machineName" column="MACHINE_NAME"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="terminalDescription" column="TERMINAL_DESCRIPTION"/>
+        <property name="terminalId" column="TERMINAL_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectTerminalMasterTO" result-map="getTerminalMasterTOResult" >
+        SELECT * FROM TERMINAL_MASTER 
+        WHERE TERMINAL_ID=#value:VARCHAR# and (status!='DELETED' or status is null)
+    </mapped-statement>
+    
+    <result-map name="getAllTerminalMasterTOResult" class="java.util.LinkedHashMap">		
+        <property name="terminalId" column="TERMINAL_ID"/>		
+        <property name="terminalName" column="TERMINAL_NAME"/>		
+    </result-map>
+    
+    <mapped-statement name="getAllTerminalMasterTO" result-map="getAllTerminalMasterTOResult" >
+        SELECT TERMINAL_ID,TERMINAL_NAME FROM TERMINAL_MASTER 
+        WHERE (status!='DELETED' or status is null)
+    </mapped-statement>
+    
+    <mapped-statement name="userValidate" result-class="java.util.HashMap" >
+        SELECT * FROM USER_MASTER 
+        WHERE USER_ID=#USERID:VARCHAR# AND PWD=#PASSSWORD:VARCHAR# AND 
+        STATUS NOT IN ('DELETED') AND 
+        BRANCH_CODE=#BRANCH:VARCHAR# AND 
+        AUTHORIZED_STATUS = 'AUTHORIZED' AND 
+        #CURR_DATE:DATE# BETWEEN ACTIVATION_DATE AND EXPIRY_DATE AND 
+        (SUSPEND_USER IS NULL OR SUSPEND_USER = 'N')
+    </mapped-statement>
+
+    <result-map name="getBankEmployeeTOResult" class="java.util.LinkedHashMap">
+        <property name="employeeCode" column="EMPLOYEE_CODE"/>		
+        <property name="branchCode" column="BRANCH_CODE"/>		
+        <property name="branchName" column="BRANCH_NAME"/>	
+        <property name="employeeName" column="EMPLOYEE_NAME"/>
+        <property name="officialemail" column="OFFICIAL_EMAIL"/>
+        <property name="dol" column="DOL"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectBankEmployeeTO" result-map="getBankEmployeeTOResult" >
+        SELECT BM.BRANCH_CODE, BE.EMPLOYEE_CODE,BM.BRANCH_NAME, BE.TITLE||' '||BE.FNAME ||' ' ||BE.LNAME AS "EMPLOYEE_NAME", BE.OFFICIAL_EMAIL, BE.DOL FROM
+        BANK_EMPLOYEE BE, BRANCH_MASTER BM
+        WHERE BE.branch_code=BM.branch_code AND  
+        (BE.status !='DELETED' or BE.status is null)
+    </mapped-statement>
+    
+    <!-- <mapped-statement name="getUserMasterEmployeeName" result-class="java.util.HashMap" >
+        SELECT BE.TITLE||' '||BE.FNAME ||' ' ||BE.LNAME AS "EMPLOYEE_NAME" FROM
+        BANK_EMPLOYEE BE, BRANCH_MASTER BM WHERE BE .BRANCH_CODE=BM.BRANCH_CODE AND
+        (BE.STATUS !='DELETED' or BE.STATUS IS NULL) AND BE.EMPLOYEE_CODE = #EMPLOYEE_CODE:VARCHAR#
+    </mapped-statement>-->
+        
+    <result-map name="getAllGroupMasterTOResult" class="java.util.LinkedHashMap">
+        <property name="groupId" column="GROUP_ID"/>
+        <property name="groupName" column="GROUP_NAME"/>		
+    </result-map>
+    
+    <mapped-statement name="getAllGroupMasterTO" result-map="getAllGroupMasterTOResult" >
+        SELECT GROUP_ID,GROUP_NAME FROM GROUP_MASTER 
+        where (status is null or status!='DELETED') 
+        and group_id in 
+        (select distinct group_id from Role_Master where 
+        status is null or status!='DELETED')
+    </mapped-statement>        
+        
+    <result-map name="User_getSelectRoleMasterTOResult" class="java.util.LinkedHashMap">
+        <property name="roleId" column="ROLE_ID"/>
+        <property name="roleName" column="ROLE_NAME"/>			
+    </result-map>
+
+    <mapped-statement name="User_getSelectRoleMasterTO" result-map="User_getSelectRoleMasterTOResult" >
+        SELECT ROLE_ID,ROLE_NAME FROM ROLE_MASTER 
+        WHERE group_id=#value:VARCHAR# and (status!='DELETED' or status is null)
+    </mapped-statement>
+
+    <mapped-statement name="loginValidation.getUserIdDetails" result-class="java.util.HashMap" >
+            <!--SELECT * from USER_MASTER
+            WHERE USER_ID = #USERID# AND PWD = #PWD# AND BRANCH_CODE = #BRANCHCODE#
+            AND #USERID# NOT IN (
+            SELECT USER_ID FROM USER_LOGIN_HISTORY WHERE 
+            (LOGIN_STATUS = 'LOGIN' OR LOGIN_STATUS IS NULL) AND
+            DATE_TIME = (SELECT MAX(DATE_TIME) FROM 
+            USER_LOGIN_HISTORY WHERE USER_ID = #USERID#))-->
+        SELECT * from USER_MASTER
+        WHERE USER_ID = #USERID:VARCHAR# AND PWD = #PWD:VARCHAR# AND BRANCH_CODE = #BRANCHCODE#
+        AND  NOT EXISTS (
+        SELECT USER_ID FROM USER_LOGIN_HISTORY WHERE 
+        (LOGIN_STATUS = 'LOGIN' OR LOGIN_STATUS IS NULL) AND
+        DATE_TIME = (SELECT MAX(DATE_TIME) FROM 
+        USER_LOGIN_HISTORY WHERE USER_ID = #USERID:VARCHAR#) AND #USERID:VARCHAR#=USER_ID)
+            
+    </mapped-statement>
+    
+    <mapped-statement name="loginValidation.getUserTerminalDetails" result-class="java.util.HashMap" >
+        SELECT * FROM USER_TERMINAL 
+        WHERE USER_ID = #USERID:VARCHAR#  AND (STATUS NOT IN ('DELETED') OR STATUS IS NULL) AND (#CURR_DATE:DATE# BETWEEN ACCESS_FROM_DT AND ACCESS_TO_DT)
+    </mapped-statement>
+    
+    <mapped-statement name="loginValidation.getCountOfTerminal" result-class="java.util.HashMap" >
+        SELECT COUNT(*) COUNT FROM TERMINAL_MASTER  
+        WHERE TERMINAL_ID = #TERMINAL_ID:VARCHAR# AND IP_ADDR = #IP_ADDR:VARCHAR# AND (STATUS NOT IN ('DELETED') OR STATUS IS NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="loginHistory" inline-parameters="true">
+        INSERT INTO USER_LOGIN_HISTORY 
+        (USER_ID, BRANCH_CODE, DATE_TIME, LOGIN_STATUS)
+        VALUES 
+        (#USERID:VARCHAR#, #BRANCHCODE:VARCHAR#, #DATE_TIME#, #LOGINSTATUS:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="lockUserAccount" inline-parameters="true">
+        UPDATE USER_MASTER SET 
+        SUSPEND_USER = 'Y'
+        WHERE USER_ID = #USER_ID:VARCHAR#
+        AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>    
+<!-- =================================================================================== -->        
+<!--Authorization Queries -->
+    <!-- <mapped-statement name="getUserAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT USER_ID AS "User ID", USER_MASTER.EMPLOYEE_ID AS "Employee ID", USER_MASTER.BRANCH_CODE AS "Branch Code", FNAME ||' ' ||LNAME AS "Employee Name"
+        FROM USER_MASTER, BANK_EMPLOYEE
+        WHERE(USER_MASTER.STATUS!='DELETED' OR USER_MASTER.STATUS IS NULL) AND USER_MASTER.EMPLOYEE_ID=BANK_EMPLOYEE.EMPLOYEE_CODE AND (USER_MASTER.AUTHORIZED_STATUS NOT IN ('AUTHORIZED', 'REJECTED') OR USER_MASTER.AUTHORIZED_STATUS IS NULL)
+    </mapped-statement> -->
+    <mapped-statement name="checkUserIdUniqueness" result-class="java.util.LinkedHashMap">
+        SELECT COUNT(USER_ID) AS "USER_ID_COUNT" FROM USER_MASTER
+        WHERE USER_ID =#USER_ID:VARCHAR# AND (USER_MASTER.STATUS!='DELETED' OR USER_MASTER.STATUS IS NULL)
+    </mapped-statement>
+     
+    <mapped-statement name="authorizeUser" result-class="java.util.HashMap">
+        UPDATE USER_MASTER SET
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #CURR_DATE:DATE#
+        WHERE USER_ID = #USER ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+<!-- =================================================================================== --> 
+    <mapped-statement name="chkInterBranchAllowed" result-class="java.lang.Integer">
+        SELECT COUNT(*) FROM GROUP_SCREENS
+        WHERE GROUP_ID = #FOREIGN_GROUP_ID:VARCHAR# AND 
+        SCREEN_ID = #SCREEN_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="chkTransactionAllowed" result-class="java.lang.String">
+        SELECT END_DAY_STATUS FROM DAY_END
+        WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="UpdateLoginStatus" inline-parameters="true">
+        UPDATE USER_MASTER SET LOGIN_STATUS ='LOGOUT', LAST_LOGOUT_DT=#CURR_DT:DATE# 
+        WHERE BRANCH_CODE = #BRANCHCODE:VARCHAR# AND USER_ID = #USERID:VARCHAR# 
+    </mapped-statement>
+     
+    <mapped-statement name="getServerTime" result-class="java.util.Date">
+        SELECT SYS_DATE() FROM DUAL
+    </mapped-statement>
+     
+    <mapped-statement name="insertAttendance" inline-parameters="true">
+        INSERT INTO ATTENDANCE_LIST 
+        (USER_ID, BRANCH_CODE, DATE_TIME, LOGIN_DATE)
+        VALUES 
+        (#USERID:VARCHAR#, #BRANCHCODE:VARCHAR#, #DATE_TIME:DATE#, #LOGIN_DATE:DATE#)
+    </mapped-statement>
+    <mapped-statement name="getAttendancedetails" result-class = "java.lang.Integer">
+        SELECT COUNT(USER_ID) AS "COUNT" FROM ATTENDANCE_LIST WHERE BRANCH_CODE=#BRANCHCODE:VARCHAR# AND LOGIN_DATE=#LOGIN_DATE:DATE# AND USER_ID=#USERID:VARCHAR#
+    </mapped-statement>
+   
+   
+   <!--added by anjuanand-->
+   <result-map name="getSelectBranchTOResult" class="java.util.LinkedHashMap">
+        <property name="employeeCode" column="CUST_ID"/>		
+        <property name="branchCode" column="BRANCH_CODE"/>		
+        <property name="branchName" column="BRANCH_NAME"/>	
+        <property name="employeeName" column="FNAME"/>
+    </result-map>
+    
+    <mapped-statement name="getSelectBranch" result-map="getSelectBranchTOResult" >
+        SELECT BM.BRANCH_CODE, BM.BRANCH_NAME, C.FNAME, C.CUST_ID FROM
+        CUSTOMER C, BRANCH_MASTER BM
+        WHERE C.BRANCH_CODE=BM.branch_code AND  
+        (C.status !='DELETED' or C.status is null) AND C.CUST_ID = #CUST_ID:VARCHAR# 
+    </mapped-statement>
+    
+    
+     <mapped-statement name="getUserMasterCustName" result-class="java.util.HashMap" >
+        SELECT c.TITLE||' '||c.FNAME ||' ' ||c.LNAME AS "CUST_NAME" FROM
+        CUSTOMER c, BRANCH_MASTER BM WHERE c .BRANCH_CODE=BM.BRANCH_CODE AND
+        (c.STATUS !='DELETED' or c.STATUS IS NULL) AND C.CUST_ID = #CUST_ID:VARCHAR#  
+     </mapped-statement>
+    
+    
+    <mapped-statement name="getAllSelectUserTO" result-class="java.util.LinkedHashMap" >
+        SELECT USER_MASTER.USER_ID AS "User ID", USER_MASTER.EMPLOYEE_ID AS "Employee ID", 
+        USER_MASTER.BRANCH_CODE AS "Branch Code", 
+        customer.TITLE||' '||customer.FNAME ||' ' ||customer.LNAME 
+        AS "Employee Name" 
+        FROM USER_MASTER, customer
+        WHERE(USER_MASTER.STATUS!='DELETED' OR USER_MASTER.STATUS IS NULL) AND 
+        USER_MASTER.EMPLOYEE_ID=CUSTOMER.CUST_ID 
+    </mapped-statement>
+     
+     
+    <mapped-statement name="getUserAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT user_id AS "User ID", user_master.employee_id AS "Employee ID",
+        user_master.branch_code AS "Branch Code",
+        fname || ' ' || lname AS "Employee Name"
+        FROM user_master, customer
+        WHERE (user_master.status != 'DELETED' OR user_master.status IS NULL)
+        AND user_master.employee_id = CUSTOMER.CUST_ID
+        AND (   user_master.authorized_status NOT IN ('AUTHORIZED', 'REJECTED')
+        OR user_master.authorized_status IS NULL
+        )  
+    </mapped-statement>
+    
+     <mapped-statement name="checkUnauthorizedTransByUser" result-class="java.util.HashMap" >
+         select COUNT(*) AS TRNS_RECORDS from ALL_TRANS a
+         where A.TRANS_DT = #TRANS_DT:DATE#
+         and A.STATUS_BY = #STATUS_BY:VARCHAR#
+         and A.AUTHORIZE_STATUS is null
+     </mapped-statement>
+    
+</sql-map>

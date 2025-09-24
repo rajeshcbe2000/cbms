@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmpTrainingTOMap">
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmpTrainingTO" inline-parameters="true">
+        INSERT INTO EMP_TRAINING
+        (EMP_TRAINING_ID, TRAINING_DESTINATION, TRAINING_LOCATION, TEAM, TEAM_SIZE, NO_OF_TRAINEES, TRAINING_FROM,TRAINING_TO,
+        BRANCH_CODE,STATUS,STATUS_DT,STATUS_BY,CREATED_BY,CREATED_DT,AUTHORIZED_STATUS,AUTHORIZED_DT,AUTHORIZED_BY,SUBJECT
+        ) VALUES (
+        #empTrainingID:VARCHAR#,#destination:VARCHAR#, #location:VARCHAR#, #team:VARCHAR#, #teamSize:VARCHAR#,#noOfEmp:VARCHAR#, 
+        #trainingFrom:TIMESTAMP#,#trainingTo:TIMESTAMP#,#branCode:VARCHAR#,#status:VARCHAR#,#statusDt:TIMESTAMP#,
+        #statusBy:VARCHAR#,#createdBy:VARCHAR#,#createdDt:DATE#,#authorizedStatus:VARCHAR#,#authorizeDt:TIMESTAMP#,#authorizeBy:VARCHAR#,#subj:VARCHAR#
+        ) 
+    </mapped-statement>
+        
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateEmpTrainingTO" inline-parameters="true">
+        UPDATE EMP_TRAINING SET 
+        TRAINING_DESTINATION = #destination:VARCHAR#,
+        TRAINING_LOCATION =#location:VARCHAR#,
+        TEAM =#team:VARCHAR#,
+        TEAM_SIZE= #teamSize:VARCHAR#,
+        NO_OF_TRAINEES= #noOfEmp:VARCHAR#,
+        TRAINING_FROM = #trainingFrom:TIMESTAMP#,
+        TRAINING_TO = #trainingTo:TIMESTAMP#,
+        STATUS = #status:VARCHAR#,
+        SUBJECT = #subj:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizedStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDt:TIMESTAMP#
+        WHERE EMP_TRAINING_ID = #empTrainingID:VARCHAR#
+    </mapped-statement>
+        
+      
+
+	<!-- Use EmpTransferTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteEmpTrainingTO" inline-parameters="true">
+        UPDATE EMP_TRAINING SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE EMP_TRAINING_ID = #empTrainingID:VARCHAR#
+    </mapped-statement>
+        
+           <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to EmpTransferTO object (JavaBean) properties -->
+    <result-map name="getEmpTrainingTOResult" class="com.see.truetransact.transferobject.sysadmin.emptraining.EmpTrainingTO">
+        <property name="empTrainingID" column="EMP_TRAINING_ID"/>
+        <property name="destination" column="TRAINING_DESTINATION"/>
+        <property name="location" column="TRAINING_LOCATION"/>
+        <property name="team" column="TEAM"/>
+        <property name="teamSize" column="TEAM_SIZE"/>
+        <property name="trainingFrom" column="TRAINING_FROM"/>
+        <property name="trainingTo" column="TRAINING_TO"/>
+        <property name="noOfEmp" column="NO_OF_TRAINEES"/>
+        <property name="branCode" column="BRANCH_CODE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="subj" column="SUBJECT"/>
+    </result-map>
+        
+    <result-map name="getEmpTrainingEmpDetailsTOResult" class="com.see.truetransact.transferobject.sysadmin.emptraining.EmpTrainingTO">
+        <property name="empTrainingID" column="EMP_TRAINING_ID"/>
+        <property name="empID" column="EMP_ID"/>
+        <property name="empName" column="EMP_NAME"/>
+        <property name="empBran" column="EMP_BRANCH"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="empStatus" column="EMP_STATUS"/>
+        <property name="empStatusDt" column="EMP_STATUS_DT"/>
+        <property name="empStatusBy" column="EMP_STATUS_BY"/>
+        <property name="empCreatedBy" column="EMP_CREATED_BY"/>
+        <property name="empCreatedDt" column="EMP_CREATED_DT"/>
+        <property name="empAuthorizedStatus" column="EMP_AUTHORIZED_STATUS"/>
+        <property name="empAuthorizeDt" column="EMP_AUTHORIZED_DT"/>
+        <property name="empAuthorizeBy" column="EMP_AUTHORIZED_BY"/>
+    </result-map>
+	
+    <mapped-statement name="getSelectEmpTrainingTO" result-map="getEmpTrainingTOResult" >
+        SELECT * FROM EMP_TRAINING 
+        WHERE EMP_TRAINING_ID = #EMP_TRAINING_ID:VARCHAR# AND STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="insertEmpDetailsTO" inline-parameters="true">
+        INSERT INTO EMP_TRAINING_DETAILS
+        (EMP_TRAINING_ID, EMP_ID, EMP_NAME, EMP_BRANCH, SL_NO,EMP_STATUS,EMP_STATUS_DT,EMP_STATUS_BY,EMP_CREATED_BY,EMP_CREATED_DT,
+        EMP_AUTHORIZED_STATUS,EMP_AUTHORIZED_DT,EMP_AUTHORIZED_BY
+        ) VALUES (
+        #empTrainingID:VARCHAR#,#empID:VARCHAR#,#empName:VARCHAR#,#empBran:VARCHAR#,#slNo:NUMERIC#,#empStatus:VARCHAR#,#empStatusDt:TIMESTAMP#,
+        #empStatusBy:VARCHAR#,#empCreatedBy:VARCHAR#,#empCreatedDt:TIMESTAMP#,#empAuthorizedStatus:VARCHAR#,#empAuthorizeDt:TIMESTAMP#,#empAuthorizeBy:VARCHAR#
+        ) 
+    </mapped-statement>
+    <mapped-statement name="updateEmpDetailsTO" inline-parameters="true">
+        UPDATE EMP_TRAINING_DETAILS SET 
+        EMP_ID = #empID:VARCHAR#,
+        EMP_NAME =#empName:VARCHAR#,
+        EMP_BRANCH =#empBran:VARCHAR#,
+        EMP_STATUS = #empStatus:VARCHAR#,
+        EMP_AUTHORIZED_STATUS = #empAuthorizedStatus:VARCHAR#,
+        EMP_AUTHORIZED_BY = #empAuthorizeBy:VARCHAR#,
+        EMP_AUTHORIZED_DT = #empAuthorizeDt:TIMESTAMP#
+        WHERE EMP_TRAINING_ID = #empTrainingID:VARCHAR#
+        AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteEmpDetailsTO" inline-parameters="true">
+        UPDATE EMP_TRAINING_DETAILS SET 
+        EMP_STATUS = #empStatus:VARCHAR#
+        WHERE EMP_TRAINING_ID = #empTrainingID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="countNoOfEmp" result-class = "java.lang.Integer">
+        SELECT COUNT(EMP_TRAINING_ID) AS "COUNT" FROM EMP_TRAINING_DETAILS WHERE SL_NO = #slNo:NUMERIC# 
+        AND EMP_TRAINING_ID=#empTrainingID:VARCHAR# AND EMP_STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectEmpList" result-map="getEmpTrainingEmpDetailsTOResult" >
+        SELECT * FROM EMP_TRAINING_DETAILS 
+        WHERE EMP_TRAINING_ID = #EMP_TRAINING_ID:VARCHAR# AND EMP_STATUS != 'DELETED' 
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeEmpTraining" result-class="java.util.HashMap">
+        UPDATE EMP_TRAINING SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE EMP_TRAINING_ID = #EMP_TRAINING_ID:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="authorizeEmpTrainingDetails" result-class="java.util.HashMap">
+        UPDATE EMP_TRAINING_DETAILS SET 
+        EMP_AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        EMP_AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        EMP_AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE EMP_TRAINING_ID = #EMP_TRAINING_ID:VARCHAR#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getEmpTrainingDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT  EMP_TRAINING_ID,  TRAINING_LOCATION,TRAINING_FROM,TRAINING_TO,AUTHORIZED_STATUS FROM EMP_TRAINING  
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY  EMP_TRAINING_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getEmpTrainingDetailsDelete" result-class="java.util.LinkedHashMap">
+        SELECT  EMP_TRAINING_ID,  TRAINING_LOCATION,TRAINING_FROM,TRAINING_TO,AUTHORIZED_STATUS FROM EMP_TRAINING  
+        WHERE STATUS!='DELETED' AND  AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY  EMP_TRAINING_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getEmpTrainingDetailsView" result-class="java.util.LinkedHashMap">
+        SELECT  EMP_TRAINING_ID,  TRAINING_LOCATION,TRAINING_FROM,TRAINING_TO,AUTHORIZED_STATUS FROM EMP_TRAINING 
+        WHERE STATUS!='DELETED' AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# ORDER BY  EMP_TRAINING_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getEmpTrainingDetailsAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT EMP_TRAINING_ID,TRAINING_LOCATION,TRAINING_FROM,TRAINING_TO FROM EMP_TRAINING
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        ORDER BY  EMP_TRAINING_ID
+    </mapped-statement>
+
+
+</sql-map>

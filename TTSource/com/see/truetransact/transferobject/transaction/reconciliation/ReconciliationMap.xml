@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="ReconciliationMap">
+    <mapped-statement name = "insertReconciliationTO" inline-parameters = "true">
+        INSERT INTO RECONCILIATION_TRANS(
+        TRANS_ID,BATCH_ID,AC_HD_ID,RECONCILE_TRANS_ID,RECONCILE_BATCH_ID,TRANS_AMOUNT,RECONCILE_AMOUNT,BALANCE_AMOUNT,
+        TRANS_DT,TRANS_TYPE,PARTICULARS,STATUS,STATUS_BY,STATUS_DT,AUTHORIZE_STATUS,AUTHORIZE_BY,AUTHORIZE_DT,BRANCH_ID,
+        TRANS_MODE,INITIATED_BRANCH,PRESENT_BATCH_ID,PRESENT_TRANS_ID,PRESENT_AMOUNT,RECONCILE_TRANS_DT
+        ) VALUES(
+        #transId:VARCHAR#,#batchId:VARCHAR#,#acHdId:VARCHAR#,#reconcileTransId:VARCHAR#,#reconcileBatchId:VARCHAR#,
+        #transAmount:NUMERIC#,#reconcileAmount:NUMERIC#,#balanceAmount:NUMERIC#,#transDt:DATE#,#transType:VARCHAR#,
+        #particulars:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDt:DATE#,#branchId:VARCHAR#,#transMode:VARCHAR#,#initiatedBranch:VARCHAR#,
+        #presentBatchId:VARCHAR#,#presentTransId:VARCHAR#,#presnetAmount:NUMERIC#,#recTranDt:DATE#)
+    </mapped-statement>
+    
+    <mapped-statement name = "updateReconciliationTO" inline-parameters = "true">
+        UPDATE RECONCILIATION_TRANS SET 
+        TRANS_AMOUNT = #transAmount:NUMERIC#,
+        BALANCE_AMOUNT = #balanceAmount:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE TRANS_ID = #transId:VARCHAR#
+        AND BATCH_ID = #batchId:VARCHAR#
+        AND INITIATED_BRANCH = #initiatedBranch:VARCHAR# AND
+        TRANS_DT = #transDt:DATE#
+        
+    </mapped-statement>
+    
+    <result-map name ="getReconciliationTOResult" class ="com.see.truetransact.transferobject.transaction.reconciliation.ReconciliationTO">
+        <property name="transId"    column="TRANS_ID"/>          
+        <property name="batchId"    column="BATCH_ID"/>          
+        <property name="acHdId"     column="AC_HD_ID"/>         
+        <property name="reconcileTransId"   column="RECONCILE_TRANS_ID"/>
+        <property name="reconcileBatchId"   column="RECONCILE_BATCH_ID"/>
+        <property name="transAmount"    column="TRANS_AMOUNT"/>      
+        <property name="reconcileAmount"    column="RECONCILE_AMOUNT"/>  
+        <property name="balanceAmount"  column="BALANCE_AMOUNT"/>    
+        <property name="transDt"    column="TRANS_DT"/>          
+        <property name="transType"  column="TRANS_TYPE"/>       
+        <property name="particulars"    column="PARTICULARS"/>       
+        <property name="status" column="STATUS"/>            
+        <property name="statusBy"   column="STATUS_BY"/>         
+        <property name="statusDt"   column="STATUS_DT"/>         
+        <property name="authorizeStatus"    column="AUTHORIZE_STATUS"/>  
+        <property name="authorizeBy"    column="AUTHORIZE_BY"/>      
+        <property name="authorizeDt"    column="AUTHORIZE_DT"/>      
+        <property name="branchId"   column="BRANCH_ID"/>         
+        <property name="transMode"  column="TRANS_MODE"/>        
+        <property name="initiatedBranch"    column="INITIATED_BRANCH"/>  
+        <property name="presentBatchId"    column="PRESENT_BATCH_ID"/>
+        <property name="presentTransId"    column="PRESENT_TRANS_ID"/>
+        <property name="presnetAmount"    column="PRESENT_AMOUNT"/>        
+    </result-map>
+
+    <mapped-statement name = "getSelectReconciliation" result-map = "getReconciliationTOResult">
+        SELECT * FROM RECONCILIATION_TRANS WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#  
+        AND STATUS != 'DELETED' AND AUTHORIZE_STATUS IS NULL ORDER BY TRANS_ID
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name = "getSelectReconciliationTransaction" result-class = "java.util.LinkedHashMap">
+        SELECT BATCH_ID,TRANS_TYPE,TRANS_DT,TRANS_AMOUNT,RECONCILE_AMOUNT,BALANCE_AMOUNT,NVL(PRESENT_AMOUNT,0) AS PRESENT_AMOUNT,
+        TRANS_ID,AC_HD_ID,PRESENT_TRANS_ID FROM RECONCILIATION_TRANS WHERE AUTHORIZE_STATUS = 'AUTHORIZED' AND 
+        (NVL(BALANCE_AMOUNT,0))>0 AND RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL AND 
+        TRANS_TYPE = #TRANS_TYPE:VARCHAR# AND AC_HD_ID = #AC_HEAD_ID:VARCHAR# AND STATUS != 'DELETED' 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull property = "TRANS_FROM_DT">
+                    <isNotNull prepend = "AND" property = "TRANS_TO_DT">
+                        TRANS_DT BETWEEN #TRANS_FROM_DT:DATE# AND #TRANS_TO_DT:DATE#
+                    </isNotNull>
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name = "getSelectEditModeReconciliationTransaction" result-class = "java.util.LinkedHashMap">
+        SELECT TRANS_ID,BATCH_ID,PRESENT_BATCH_ID,PRESENT_TRANS_ID,TRANS_AMOUNT,NVL(RECONCILE_AMOUNT,0) AS RECONCILE_AMOUNT,
+        NVL(BALANCE_AMOUNT,0) AS BALANCE_AMOUNT,NVL(PRESENT_AMOUNT,0) AS PRESENT_AMOUNT,AC_HD_ID,TRANS_TYPE,TRANS_MODE         
+        FROM RECONCILIATION_TRANS WHERE PRESENT_TRANS_ID = #PRESENT_TRANS_ID:VARCHAR# AND PRESENT_AMOUNT > 0 AND
+        PRESENT_TRANS_DT = #PRESENT_TRANS_DT:DATE# and RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL ORDER BY TRANS_ID
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectAllinDeleteMode" result-class = "java.util.HashMap">
+        SELECT PRESENT_BATCH_ID,PRESENT_TRANS_ID,PRESENT_AMOUNT,PRESENT_TRANS_DT FROM RECONCILIATION_TRANS WHERE 
+        PRESENT_TRANS_ID = #PRESENT_TRANS_ID:VARCHAR# AND PRESENT_AMOUNT >0 AND
+        RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL
+        <!--AND PRESENT_TRANS_DT = #PRESENT_TRANS_DT:DATE# -->
+    </mapped-statement>
+    
+<!--    <mapped-statement name = "updateOldReconcileAmt" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET RECONCILE_AMOUNT = #RECONCILE_AMOUNT#, BALANCE_AMOUNT = #BALANCE_AMOUNT#,STATUS = #STATUS#
+        WHERE RECONCILE_BATCH_ID = #RECONCILE_BATCH_ID# AND RECONCILE_TRANS_ID = #RECONCILE_TRANS_ID# AND BRANCH_ID = #BRANCH_ID#
+    </mapped-statement> -->
+    
+    <mapped-statement name = "deleteOldReconcileAmt" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET PRESENT_TRANS_ID = #PRESENT_TRANS:VARCHAR#,PRESENT_BATCH_ID = #PRESENT_BATCH:VARCHAR#,
+        PRESENT_AMOUNT = #PRESENT_AMOUNT:NUMBER# WHERE PRESENT_TRANS_ID = #PRESENT_TRANS_ID:VARCHAR# AND
+        RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL
+        and PRESENT_TRANS_DT = #PRESENT_TRANS_DT:DATE#
+    </mapped-statement>
+    
+<!--    <mapped-statement name = "updateReconcileTransAmt" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET RECONCILE_AMOUNT = RECONCILE_AMOUNT + #RECONCILE_AMOUNT#, BALANCE_AMOUNT = #BALANCE_AMOUNT# WHERE 
+        BATCH_ID = #RECONCILE_BATCH_ID# AND TRANS_ID = #RECONCILE_TRANS_ID# AND BRANCH_ID = #BRANCH_ID# AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement> -->
+        
+    <mapped-statement name = "updateReconcileStatus" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,AUTHORIZE_DT = #AUTHORIZE_DT:DATE#
+        WHERE RECONCILE_TRANS_ID = #RECONCILE_TRANS_ID:VARCHAR# AND RECONCILE_BATCH_ID = #RECONCILE_BATCH_ID:VARCHAR# AND AUTHORIZE_STATUS IS NULL
+        AND RECONCILE_TRANS_DT = #RECONCILE_TRANS_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectAuthorizeListReconcile" result-class = "java.util.HashMap">
+        SELECT TRANS_ID,BATCH_ID,TRANS_TYPE,TRANS_DT,TRANS_AMOUNT,0 AS RECONCILE_AMOUNT,BALANCE_AMOUNT,AC_HD_ID
+        FROM RECONCILIATION_TRANS WHERE AUTHORIZE_STATUS IS NULL AND RECONCILE_TRANS_ID IS NULL AND 
+        RECONCILE_BATCH_ID IS NULL AND BATCH_ID = #BATCH_ID:VARCHAR# AND STATUS != 'DELETED' AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateReconcileAuthorize" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:DATE# WHERE  BATCH_ID = #BATCH_ID:VARCHAR# AND AUTHORIZE_STATUS IS NULL AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name = "updateBalanceAmountTrans" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET RECONCILE_AMOUNT = NVL(RECONCILE_AMOUNT,0) + #RECONCILE_AMOUNT:NUMBER#,BALANCE_AMOUNT = #BALANCE_AMOUNT:NUMBER#,
+        PRESENT_TRANS_ID = #PRESENT_TRANS_ID:VARCHAR#,PRESENT_BATCH_ID = #PRESENT_BATCH_ID:VARCHAR#,
+        PRESENT_AMOUNT = #PRESENT_AMOUNT:NUMBER# WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND TRANS_ID = #TRANS_ID:VARCHAR#
+        AND RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name = "updatePresentTransaction" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET PRESENT_TRANS_ID = #PRESENT_TRANS_ID:VARCHAR#,PRESENT_BATCH_ID = #PRESENT_BATCH_ID:VARCHAR#,
+        PRESENT_AMOUNT = #PRESENT_AMOUNT:NUMBER#,PRESENT_TRANS_DT = #PRESENT_TRANS_DT:DATE# WHERE BATCH_ID = #BATCH_ID:VARCHAR# AND TRANS_ID = #TRANS_ID:VARCHAR# AND
+        RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL AND
+        TRANS_DT = #TRANS_DT:DATE# AND
+        INITIATED_BRANCH = #INITIATED_BRANCH:VARCHAR#  
+
+    </mapped-statement>
+    
+<!--    <mapped-statement name = "updatePresentTransaction" result-class = "java.util.HashMap">
+        UPDATE RECONCILIATION_TRANS SET PRESENT_TRANS_ID = #PRESENT_TRANS_ID#,PRESENT_BATCH_ID = #PRESENT_BATCH_ID#,
+        PRESENT_AMOUNT = #PRESENT_AMOUNT# WHERE BATCH_ID = #BATCH_ID# AND TRANS_ID = #TRANS_ID# AND
+        RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL
+    </mapped-statement> -->
+    
+    <mapped-statement name = "getSelectAlreadyTrans" result-class="java.util.HashMap">
+        SELECT PRESENT_AMOUNT FROM RECONCILIATION_TRANS WHERE PRESENT_AMOUNT > 0 AND
+        RECONCILE_TRANS_ID IS NULL AND RECONCILE_BATCH_ID IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name = "getSelectReconcileYesNO" result-class = "java.util.HashMap">
+        SELECT HO_ACCT,RECONS,RECONS_AC_HD_ID,BALANCETYPE FROM AC_HD_PARAM WHERE AC_HD_ID = #ACCT_HEAD:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="insertOriginatingDetails" result-class="java.util.HashMap" >
+        INSERT INTO ORIGINATING_DTAILS (RESPONDING_BRANCH_ID,BRANCH_NAME,CATEGORY,AMOUNT,PARTICULARS,ADVICE_NUMBER,ADVICE_DATE,
+        TRANS_TYPE,TRANS_ID,BATCH_ID,STATUS,STATUS_DT,STATUS_BY,BRANCH_CODE
+        )VALUES(
+        #RESPONDING_BRANCH_ID:VARCHAR#,#BRANCH_NAME:VARCHAR#,#CATEGORY:VARCHAR#,#AMOUNT:NUMBER#,#PARTICULARS:VARCHAR#,#ADVICE_NUMBER#,#ADVICE_DATE:DATE#,#TRANS_TYPE:VARCHAR#,
+        #TRANS_ID:VARCHAR#,#BATCH_ID:VARCHAR#,#STATUS:VARCHAR#,#STATUS_DT:DATE#,#STATUS_BY:VARCHAR#,#BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateOriginatingDetails" result-class="java.util.HashMap" >
+        UPDATE ORIGINATING_DTAILS SET 
+        AMOUNT = #AMOUNT:NUMBER#,
+        PARTICULARS = #PARTICULARS:VARCHAR#,
+        ADVICE_DATE = #ADVICE_DATE:DATE#,
+        STATUS = #STATUS:VARCHAR#,
+        STATUS_DT = #STATUS_DT:DATE#,
+        STATUS_BY = #STATUS_BY:VARCHAR#
+        WHERE ADVICE_NUMBER = #ADVICE_NUMBER# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="insertRespondingDetails" result-class="java.util.HashMap" >
+        INSERT INTO RESPONDING_DETAILS (ORIGINATING_BRANCH_ID,ORIGINATING_NAME,CATEGORY,AMOUNT,ADVICE_NUMBER,ADVICE_DATE,
+        TRANS_TYPE,TRANS_ID,BATCH_ID,STATUS,STATUS_DT,STATUS_BY,BRANCH_CODE
+        )VALUES(
+        #ORIGINATING_BRANCH_ID:VARCHAR#,#ORIGINATING_NAME:VARCHAR#,#CATEGORY:VARCHAR#,#AMOUNT:NUMERIC#,#ADVICE_NUMBER:VARCHAR#,#ADVICE_DATE:DATE#,
+        #TRANS_TYPE:VARCHAR#,#TRANS_ID:VARCHAR#,#BATCH_ID:VARCHAR#,#STATUS:VARCHAR#,#STATUS_DT:DATE#,#STATUS_BY:VARCHAR#,#BRANCH_CODE:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateRespondingDetails" result-class="java.util.HashMap" >
+        UPDATE RESPONDING_DETAILS SET
+        AMOUNT = #AMOUNT:NUMBER#,
+        ADVICE_DATE = #ADVICE_DATE:DATE#,
+        STATUS = #STATUS:VARCHAR#,
+        STATUS_DT = #STATUS_DT:DATE#,
+        STATUS_BY = #STATUS_BY:VARCHAR#            
+        WHERE ADVICE_NUMBER = #ADVICE_NUMBER# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#                
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectOriginatingDetails" result-class = "java.util.HashMap">
+        SELECT * FROM originating_dtails WHERE TRANS_ID = #TRANS_ID:VARCHAR# AND STATUS!='DELETED'        
+    </mapped-statement>
+        
+    <mapped-statement name="updateOriginatingAuthorizeDetails" result-class="java.util.HashMap" >
+        UPDATE ORIGINATING_DTAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:DATE#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#
+        WHERE ADVICE_NUMBER = #ADVICE_NUMBER# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectOriginatingAuthRecords" result-class="java.util.LinkedHashMap" >
+            <!--SELECT RESPONDING_BRANCH_ID,CATEGORY,ADVICE_NUMBER,TRANS_ID,BATCH_ID FROM ORIGINATING_DTAILS WHERE AUTHORIZE_STATUS = 'AUTHORIZED'        
+            AND RESPONDING_BRANCH_ID = #BRANCH_CODE#-->
+        SELECT * FROM ORIGINATING_DTAILS WHERE AUTHORIZE_STATUS = 'AUTHORIZED'        
+        AND RESPONDING_BRANCH_ID = #BRANCH_CODE:VARCHAR# AND TRANS_TYPE = #TRANS_TYPE:VARCHAR#        
+    </mapped-statement>
+        
+    <mapped-statement name = "getSelectRespondingDetails" result-class = "java.util.HashMap">
+        SELECT * FROM RESPONDING_DETAILS WHERE TRANS_ID = #TRANS_ID:VARCHAR# AND STATUS!='DELETED'
+    </mapped-statement>
+
+    <mapped-statement name="updateRespondingAuthorizeDetails" result-class="java.util.HashMap" >
+        UPDATE RESPONDING_DTAILS SET 
+        AUTHORIZE_STATUS = #AUTHORIZE_STATUS:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZE_DT:DATE#,
+        AUTHORIZE_BY = #AUTHORIZE_BY:VARCHAR#
+        WHERE ADVICE_NUMBER = #ADVICE_NUMBER# AND BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+</sql-map>

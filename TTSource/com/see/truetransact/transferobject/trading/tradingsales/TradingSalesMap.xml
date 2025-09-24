@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingSalesTOMap">
+
+	<!-- Use TDSConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+     <mapped-statement name="insertTradingSalesMasterTO" inline-parameters="true">
+         INSERT INTO TRADING_SALES_MASTER (SALES_NO, SALES_TYPE, SALES_DATE, PLACE, TYPE, EMP_NO,
+         EMP_NAME,BARCODE_NUMBER,PROD_ID,PROD_DESC,ACC_NO,GRAND_TOTAL,INSTALLMENT,INSTALLMENT_NO,
+         INSTALLMENT_AMT,FIRST_INST_AMT,INST_DT,STATUS,STATUS_BY,STATUS_DT,TRANS_CHARGES,DISCOUNT,DISC_AMT)
+         VALUES(
+         #salesNo:VARCHAR#, #salesType:VARCHAR#,#salesDate:Date#,#place:VARCHAR#,#memberType:VARCHAR#,
+         #empNo:VARCHAR#,#empName:VARCHAR#,#barcodeNumber:VARCHAR#,#prodID:VARCHAR#,#prodDesc:VARCHAR#,#acNo:VARCHAR#,#grandTotal:NUMERIC#,#installment:VARCHAR#,#installmentNo:VARCHAR#,#installmentAmt:NUMERIC#,
+         #firstInstAmt:NUMERIC#,#instDt:DATE#,#status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL),#transportationCharges:NUMERIC#,#discount:NUMERIC#,
+         #discAmt:NUMERIC#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertTradingSalesMasterDetailsTO" inline-parameters="true">
+        INSERT INTO TRADING_SALES_MASTER_DETAILS (SALES_NO,PROD_NAME,RATE,UNIT_TYPE,QTY,MRP,
+        TAX,TAXABLE_AMOUNT,CASH,ADJUST,TOTAL,DISCOUNT,TRANS_CHARGES,
+        STATUS,STOCK_ID)
+        VALUES(
+        #salesNo:VARCHAR#, #prodName:VARCHAR#, #rate:NUMERIC#, #unitType:VARCHAR#,
+        #qty:NUMERIC#,#mrp:VARCHAR#,#tax:VARCHAR#,#taxableAmt:VARCHAR#,#cash:NUMERIC#,#adjust:NUMERIC#,
+        #total:NUMERIC#,#transportationCharges:NUMERIC#,#discount:NUMERIC#,
+        #status:VARCHAR#,#stockID:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="insertTradingSalesReturnTO" inline-parameters="true">
+         INSERT INTO TRADING_SALES_RETURN (SALES_RET_NO,SALES_NO, CUSTOMER_ID, SALES_TYPE,SALES_DT, BANK_AC_HEAD,
+         SALES_TOTAL,RET_TOTAL,STATUS,STATUS_BY,STATUS_DT)
+         VALUES(
+         #salesRetNo:VARCHAR#, #salesNo:VARCHAR#,#custID:VARCHAR#,#salesType:VARCHAR#,#salesDate:DATE#,#bankAcHD:VARCHAR#,
+         #sales:VARCHAR#,#salReturn:VARCHAR#,#status:VARCHAR#, #statusBy:VARCHAR#, (SELECT SYS_DATE() FROM DUAL))
+    </mapped-statement>
+    
+    <mapped-statement name="insertTradingSalesRetDetailsTO" inline-parameters="true">
+        INSERT INTO TRADING_SALES_RET_DETAILS (SALES_RET_NO,SL_NO,SALES_NO,PRODUCT_NAME,UNIT_TYPE,RATE,TAX,TAXABLE_AMOUNT,QTY,
+        RETURN_QTY,STOCK_ID,SALES_TOTAL,RETURN_TOTAL,STATUS)
+        VALUES(
+        #salesRetNo:VARCHAR#,#slNo:VARCHAR#,#salesNo:VARCHAR#, #prodName:VARCHAR#, #unitType:VARCHAR#,#rate:NUMERIC#, 
+        #tax:VARCHAR#,#taxAmt:VARCHAR#,#qty:NUMERIC#,#retQty:VARCHAR#,#stockID:VARCHAR#,#salesTot:NUMERIC#,#retTot:NUMERIC#,
+        #status:VARCHAR#)
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingSalesMasterTO" inline-parameters="true">
+        UPDATE TRADING_SALES_MASTER SET 		
+        SALES_TYPE = #salesType:VARCHAR#,
+        SALES_DATE = #salesDate:Date#,
+        PLACE   = #place:VARCHAR#,
+        TYPE = #memberType:VARCHAR#,
+        EMP_NO = #empNo:VARCHAR#,
+        EMP_NAME = #empName:VARCHAR#,
+        BARCODE_NUMBER = #barcodeNumber:VARCHAR#,
+        PROD_ID = #prodID:VARCHAR#,
+        PROD_DESC = #prodDesc:VARCHAR#,
+        ACC_NO = #acNo:VARCHAR#,
+        GRAND_TOTAL = #grandTotal:NUMERIC#,
+        INSTALLMENT = #installment:VARCHAR#,
+        INSTALLMENT_NO = #installmentNo:VARCHAR#,
+        INSTALLMENT_AMT = #installmentAmt:NUMERIC#,
+        FIRST_INST_AMT = #firstInstAmt:NUMERIC#,
+        INST_DT = #instDt:DATE#,
+        TRANS_CHARGES = #transportationCharges:NUMERIC#,
+        DISCOUNT = #discount:NUMERIC#,
+        DISC_AMT = #discAmt:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE SALES_NO = #salesNo:VARCHAR# 
+    </mapped-statement>
+    
+    <result-map name="getTradingSalesMasterTOResult" class="com.see.truetransact.transferobject.trading.tradingsales.TradingSalesMasterTO">
+        <property name="salesNo" column="SALES_NO"/>
+        <property name="salesType" column="SALES_TYPE"/>
+        <property name="salesDate" column="SALES_DATE"/>
+        <property name="place" column="PLACE"/>
+        <property name="memberType" column="TYPE"/>
+        <property name="empNo" column="EMP_NO"/>
+        <property name="empName" column="EMP_NAME"/>
+        <property name="barcodeNumber" column="BARCODE_NUMBER"/>
+        <property name="prodID" column="PROD_ID"/>
+        <property name="prodDesc" column="PROD_DESC"/>
+        <property name="acNo" column="ACC_NO"/>
+        <property name="installment" column="INSTALLMENT"/>
+        <property name="installmentNo" column="INSTALLMENT_NO"/>
+        <property name="installmentAmt" column="INSTALLMENT_AMT"/>
+        <property name="firstInstAmt" column="FIRST_INST_AMT"/>
+        <property name="instDt" column="INST_DT"/>
+        <property name="grandTotal" column="GRAND_TOTAL"/>
+        <property name="discount" column="DISCOUNT"/>
+        <property name="discAmt" column="DISC_AMT"/>
+        <property name="transportationCharges" column="TRANS_CHARGES"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <result-map name="getSalesMasterDetailsTOResult" class="com.see.truetransact.transferobject.trading.tradingsales.TradingSalesTO">
+        <property name="salesNo" column="SALES_NO"/>
+        <property name="prodName" column="PROD_NAME"/>
+        <property name="rate" column="RATE"/>
+        <property name="unitType" column="UNIT_TYPE"/>
+        <property name="qty" column="QTY"/>
+        <property name="mrp" column="MRP"/>
+        <property name="tax" column="TAX"/>
+        <property name="taxableAmt" column="TAXABLE_AMOUNT"/>
+        <property name="cash" column="CASH"/>
+        <property name="adjust" column="ADJUST"/>
+        <property name="total" column="TOTAL"/>
+        <property name="transportationCharges" column="TRANS_CHARGES"/>
+        <property name="discount" column="DISCOUNT"/>
+        <property name="status" column="STATUS"/>
+        <property name="stockID" column="STOCK_ID"/>
+    </result-map>
+    
+    <result-map name="getTradingSalesReturnTOResult" class="com.see.truetransact.transferobject.trading.tradingsales.TradingSalesRetTO">
+        <property name="salesRetNo" column="SALES_RET_NO"/>
+        <property name="salesNo" column="SALES_NO"/>
+        <property name="custID" column="CUSTOMER_ID"/>
+        <property name="salesType" column="SALES_TYPE"/>
+        <property name="salesDate" column="SALES_DT"/>
+        <property name="bankAcHD" column="BANK_AC_HEAD"/>
+        <property name="sales" column="SALES_TOTAL"/>
+        <property name="salReturn" column="RET_TOTAL"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+    
+    <result-map name="getSalesRetDetailsTOResult" class="com.see.truetransact.transferobject.trading.tradingsales.TradingSalesRetDetailsTO">
+        <property name="salesRetNo" column="SALES_RET_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="salesNo" column="SALES_NO"/>
+        <property name="prodName" column="PRODUCT_NAME"/>
+        <property name="unitType" column="UNIT_TYPE"/>
+        <property name="rate" column="RATE"/>
+        <property name="tax" column="TAX"/>
+        <property name="taxAmt" column="TAXABLE_AMOUNT"/>
+        <property name="qty" column="QTY"/>
+        <property name="retQty" column="RETURN_QTY"/>
+        <property name="stockID" column="STOCK_ID"/>
+        <property name="salesTot" column="SALES_TOTAL"/>
+        <property name="retTot" column="RETURN_TOTAL"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+             
+    <mapped-statement name="getSuspenseProdForSale" result-class="java.util.HashMap">
+        SELECT PROD_DESC AS KEY,PROD_ID AS VALUE FROM SUSPENSE_PRODUCT WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingEmpNo" result-class="java.util.LinkedHashMap">
+        SELECT C.CUST_ID,C.FNAME,S.EMP_REFNO_NEW AS CLOCK_NO FROM CUSTOMER C,SHARE_ACCT S WHERE C.CUST_ID = S.CUST_ID AND S.STATUS != 'DELETED' AND
+        C.STATUS != 'DELETED'
+    </mapped-statement>
+    
+   <dynamic-mapped-statement name="getTradingProductName" result-class="java.util.LinkedHashMap">
+        SELECT TP.PRODUCT_NAME, TP.PRODUCT_ID, TP.UNITTYPE,TS.STOCK_QUANT,TS.STOCK_SALES_PRICE,TS.STOCK_MRP,TS.STOCK_ID,TP.TAX_PERCENTAGE AS TAX FROM TRADING_PRODUCT TP,
+        TRADING_STOCK TS WHERE UPPER (PRODUCT_NAME) LIKE UPPER ('%$PRODUCT_NAME$%')AND TS.PRODUCT_ID = TP.PRODUCT_ID AND TP.STATUS != 'DELETED'
+        AND TP.AUTHORIZE_STATUS = 'AUTHORIZED'
+          <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_NAME">
+                    UPPER(TP.PRODUCT_NAME) LIKE UPPER('%$PRODUCT_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="PRODUCT_ID">
+                    UPPER(TP.PRODUCT_ID) LIKE UPPER('%$PRODUCT_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="UNITTYPE">
+                    UPPER(TP.UNITTYPE) LIKE UPPER('%$UNITTYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="STOCK_QUANT">
+                    UPPER(TS.STOCK_QUANT) LIKE UPPER('%$STOCK_QUANT$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="STOCK_SALES_PRICE">
+                    UPPER(TS.STOCK_SALES_PRICE) LIKE UPPER('%$STOCK_SALES_PRICE$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="STOCK_MRP">
+                    UPPER(TS.STOCK_MRP) LIKE UPPER('%$STOCK_MRP$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="STOCK_ID">
+                    UPPER(TS.STOCK_ID) LIKE UPPER('%$STOCK_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="TAX">
+                   UPPER(TP.TAX_PERCENTAGE) LIKE UPPER('%$TAX$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY TP.PRODUCT_NAME   
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingSalesEdit" result-class="java.util.LinkedHashMap">
+        SELECT SALES_NO,EMP_NO,EMP_NAME FROM TRADING_SALES_MASTER WHERE STATUS != 'DELETED'AND AUTHORIZE_STATUS IS NULL
+          <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_NO">
+                    UPPER(SALES_NO) LIKE UPPER('%$SALES_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMP_NAME">
+                    UPPER(EMP_NAME) LIKE UPPER('%$EMP_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SALES_NO
+    </dynamic-mapped-statement>
+    
+     <dynamic-mapped-statement name="getTradingSalesReturnEdit" result-class="java.util.LinkedHashMap">
+        SELECT SALES_RET_NO,SALES_NO,CUSTOMER_ID FROM TRADING_SALES_RETURN WHERE STATUS != 'DELETED'AND AUTHORIZE_STATUS IS NULL 
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_RET_NO">
+                    UPPER(SALES_RET_NO) LIKE UPPER('%$SALES_RET_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_NO">
+                    UPPER(SALES_NO) LIKE UPPER('%$SALES_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_ID">
+                    UPPER(CUSTOMER_ID) LIKE UPPER('%$CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SALES_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectTradingSalesMasterTO" result-map="getTradingSalesMasterTOResult" >
+        SELECT * FROM TRADING_SALES_MASTER WHERE SALES_NO=#SALES_NO# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingSalesMasterDetailsTO" result-map="getSalesMasterDetailsTOResult" >
+        SELECT ROWNUM AS SL_NO,TSMD.* FROM TRADING_SALES_MASTER_DETAILS TSMD WHERE SALES_NO = #SALES_NO# AND STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingSalesForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT SALES_NO,EMP_NO,EMP_NAME,SALES_DATE FROM TRADING_SALES_MASTER WHERE STATUS != 'DELETED' AND 
+        AUTHORIZE_STATUS IS NULL  ORDER BY  SALES_NO
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingSalesRetForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT SALES_RET_NO,SALES_NO,CUSTOMER_ID,STATUS_DT AS SALES_RET_DATE FROM TRADING_SALES_RETURN WHERE STATUS != 'DELETED' AND 
+        AUTHORIZE_STATUS IS NULL  ORDER BY  SALES_RET_NO
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingSales" result-class="java.util.HashMap">
+        UPDATE TRADING_SALES_MASTER SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND SALES_NO =#SALES_NO#  
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeTradingSalesReturn" result-class="java.util.HashMap">
+        UPDATE TRADING_SALES_RETURN SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND SALES_RET_NO = #SALES_RET_NO# 
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getTradingSalesView" result-class="java.util.LinkedHashMap">
+        SELECT SALES_NO,EMP_NO,EMP_NAME FROM TRADING_SALES_MASTER WHERE STATUS != 'DELETED' 
+          <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_RET_NO">
+                    UPPER(SALES_RET_NO) LIKE UPPER('%$SALES_RET_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_NO">
+                    UPPER(SALES_NO) LIKE UPPER('%$SALES_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_ID">
+                    UPPER(CUSTOMER_ID) LIKE UPPER('%$CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SALES_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="deleteSalesTableData" result-class="java.util.HashMap">
+        DELETE  TRADING_SALES_MASTER_DETAILS WHERE SALES_NO=#SALES_NO#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteSalesRetTableData" result-map="getSalesRetDetailsTOResult" >
+      DELETE FROM TRADING_SALES_RET_DETAILS WHERE  SALES_RET_NO = #salesRetNo:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteSalesMasterTO" inline-parameters="true">
+        UPDATE TRADING_SALES_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE SALES_NO = #salesNo:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="deleteSalesMasterDetailsTO" inline-parameters="true">
+        UPDATE TRADING_SALES_MASTER_DETAILS SET 
+        STATUS = #status:VARCHAR#
+        WHERE SALES_NO = #salesNo:VARCHAR# 
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectProductDetails" result-class="java.util.HashMap">
+        SELECT DISTINCT A.STOCK_PID,A.STOCK_QUANT,B.PRODUCT_NAME,A.PRODUCT_FID,B.PRODUCT_DES,A.TRNSCHARGE,
+        A.STOCK_SALES_PRICE,A.STOCK_TYPE,B.PRODUCT_ID,A.STOCK_PURCHASE_PRICE,AMOUNT,c.conv_rate,a.loose_qty,A.STOCK_MRP FROM 
+        product_stock A JOIN  trading_product B ON B.PRODUCT_PID=A.PRODUCT_FID 
+        left outer join product_conversion C ON C.PID=B.PRODUCT_ID and a.stock_type=c.curr_type WHERE B.PRODUCT_ID LIKE #PRODUCT_ID# 
+    </mapped-statement>
+    
+    <mapped-statement name="getStockQuantity" result-class="java.util.HashMap">
+        SELECT STOCK_QUANT FROM TRADING_STOCK WHERE STOCK_ID = #STOCK_ID# AND STATUS !='DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSuspenseAcNoForSale" result-class="java.util.HashMap">
+        SELECT SUSPENSE_ACCT_NUM ,CLEAR_BALANCE FROM SUSPENSE_ACCOUNT_MASTER WHERE SUSPENSE_PROD_ID = #PROD_ID# AND SUSPENSE_CUSTOMER_ID = #CUSTOMER_ID# AND STATUS !='DELETED'
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+           <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CLEAR_BALANCE">
+                    UPPER(CLEAR_BALANCE) LIKE UPPER('%$CLEAR_BALANCE$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUSPENSE_ACCT_NUM">
+                    UPPER(SUSPENSE_ACCT_NUM) LIKE UPPER('%$SUSPENSE_ACCT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectTradingAcHead" result-class="java.util.HashMap">
+        SELECT * FROM TRADING_AC_HD WHERE STATUS != 'DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectTradingSalesForTrans" result-class="java.util.HashMap">
+        SELECT * FROM TRADING_SALES_MASTER WHERE SALES_NO=#SALES_NO# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectTradingSalRetForTrans" result-class="java.util.HashMap">
+        SELECT * FROM TRADING_SALES_RETURN WHERE SALES_RET_NO = #SALES_RET_NO# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getCalcForLedger" result-class="java.util.HashMap">
+        SELECT ACT_NUM,TRANS_DT AS TRANS_DT,
+        PARTICULARS AS PARTICULARS,
+        INST_DT AS INST_DT,
+        DECODE (TRANS_TYPE, 'DEBIT', AMOUNT, 0) AS DEBIT,
+        DECODE (TRANS_TYPE, 'CREDIT', AMOUNT, 0) AS CREDIT,
+        NULL AS BALANCE
+        FROM TRANS_VIEW_FOR_SCREEN
+        WHERE     ACT_NUM = #ACT_NUM#
+        AND TRANS_DT BETWEEN #FROM_DT# AND #TO_DT#
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        ORDER BY STATUS_DT
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSalesNoForReturn" result-class="java.util.LinkedHashMap">
+        SELECT SALES_NO,SALES_TYPE,SALES_DATE,EMP_NO,ACC_NO,STATUS,AUTHORIZE_STATUS FROM 
+        TRADING_SALES_MASTER WHERE EMP_NO = #CUST_ID#
+           <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_TYPE">
+                    UPPER(SALES_TYPE) LIKE UPPER('%$SALES_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_NO">
+                    UPPER(SALES_NO) LIKE UPPER('%$SALES_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SALES_DATE">
+                    UPPER(SALES_DATE) LIKE UPPER('%$SALES_DATE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="EMP_NO">
+                    UPPER(EMP_NO) LIKE UPPER('%$EMP_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACC_NO">
+                    UPPER(ACC_NO) LIKE UPPER('%$ACC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZE_STATUS ">
+                    UPPER(AUTHORIZE_STATUS) LIKE UPPER('%$AUTHORIZE_STATUS $%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SALES_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSalesRetDataDetails" result-class="java.util.LinkedHashMap">
+        SELECT ROWNUM AS SL_NO,PROD_NAME,RATE,UNIT_TYPE,QTY,TAX,TAXABLE_AMOUNT,STOCK_ID,TOTAL FROM TRADING_SALES_MASTER_DETAILS
+        WHERE SALES_NO = #SALES_NO# AND STATUS !='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getCalcSalesRetDays" result-class="java.util.LinkedHashMap">
+        SELECT SALES_RET_BEFORE,PERIOD FROM TRADING_AC_HD WHERE STATUS !='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getCheckingSalesNo" result-class="java.util.HashMap">
+      SELECT * FROM TRADING_SALES_RETURN WHERE SALES_NO = #SALES_NO# AND STATUS != 'DELETED' 
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectTradingSalesReturnTO" result-map="getTradingSalesReturnTOResult" >
+        SELECT * FROM TRADING_SALES_RETURN WHERE SALES_RET_NO = #SALES_RET_NO# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <mapped-statement name="getTradingSalesReturnDetailsTO" result-class="java.util.HashMap" >
+        SELECT * FROM TRADING_SALES_RET_DETAILS WHERE SALES_RET_NO = #SALES_RET_NO# 
+        AND STATUS !='DELETED' ORDER BY SL_NO
+    </mapped-statement>
+    
+    <mapped-statement name="getSalRetQtyForStock" result-class="java.util.HashMap">
+        SELECT NVL(SUM(RETURN_QTY),0) AS RETURN_QTY FROM TRADING_SALES_RET_DETAILS WHERE SALES_NO = #SALES_NO# AND PRODUCT_NAME = #PRODUCT_NAME# AND 
+        UNIT_TYPE = #UNIT_TYPE# AND RATE = #RATE#
+    </mapped-statement>
+                
+</sql-map>

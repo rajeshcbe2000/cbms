@@ -1,0 +1,705 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="DeathReliefMasterMap">
+
+    <!-- Use DeathReliefMaster object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertDeathReliefMaster" inline-parameters="true">
+        INSERT INTO DRF_PRODUCT
+        (PROD_ID, PROD_NAME, DRF_ACHD, DRF_PAYMENT_ACHD,DRF_RECOVERY_ACHD, STATUS, STATUS_DATE, STATUS_BY, 
+        AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE,NOMINEE_REQUIRED,NO_OF_NOMINEE
+        ) VALUES (
+        #prodId:VARCHAR#, #prodName:VARCHAR#, #drfAchd:VARCHAR#, #drfPaymentAchd:VARCHAR#,#recoveryHead:VARCHAR#,
+        #status:VARCHAR#, #statusDate:DATE#, #statusBy:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#, 
+        #authorizeDate:DATE#,#nominee:VARCHAR#,#noOfNominee#)
+    </mapped-statement>
+    <mapped-statement name="insertDeathReliefMasterDetails" inline-parameters="true">
+        INSERT INTO DRF_PROD_DETAILS
+        (SL_NO,DRF_RECOVERY_ENABLED,RECOVERY_AMOUNT,PROD_ID,EFFECTIVE_FROM_DATE,EFFECTIVE_TO_DATE,AMOUNT,PAYMENT, STATUS, STATUS_DATE, STATUS_BY, AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE
+        ) VALUES (
+        #drfSlNo:VARCHAR#,#rdAmountRecovery:VARCHAR#,#recoveryAmount:VARCHAR#,#prodId:VARCHAR#, #tdtDrfFromDt:DATE#,#tdtDrfToDt:DATE#, #txtDrfAmount:VARCHAR#, #txtPaymentAmount:VARCHAR#, #status:VARCHAR#, #statusDate:DATE#, #statusBy:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeDate:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertDrfInterestDetails" inline-parameters="true">
+        INSERT INTO DRF_INTEREST_DETAILS
+        (DRF_PROD_ID,DRF_INTEREST_ID, INTEREST_CALC_FREQUENCY, INTEREST_CALC_CRITERIA,INTEREST_PRODUCT_FREQUENCY,INTEREST_DEBIT_HEAD, LAST_INTEREST_CALC_DATE,STATUS, STATUS_DATE, STATUS_BY, AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE
+        ) VALUES (
+        #prodId:VARCHAR#,#drfInterestID:VARCHAR#,#calculationFrequency:VARCHAR#, #calculationCriteria:VARCHAR#, #productFrequency:VARCHAR#,#debitHead:VARCHAR#,#lastCalculatedDate:DATE#,#status:VARCHAR#, #statusDate:DATE#, #statusBy:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeDate:DATE#)
+    </mapped-statement>
+        
+        
+    <mapped-statement name="insertDrfRates" inline-parameters="true">
+        INSERT INTO DRF_INTEREST_RATES
+        (DRF_PROD_ID,DRF_INTEREST_ID,FROM_DATE,TO_DATE,INTEREST_RATE,STATUS, STATUS_DATE, STATUS_BY, AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE
+        ) VALUES (
+        #prodId:VARCHAR#,#drfInterestID:VARCHAR#,#tdtFromDt:DATE#,#toDt:DATE#,#interestRate:VARCHAR#,#status:VARCHAR#, #statusDate:DATE#, #statusBy:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeDate:DATE#)
+    </mapped-statement>
+        
+        
+        
+    <mapped-statement name="insertDrfTransDetailsTO" inline-parameters="true">
+        INSERT INTO DRF_TRANSACTION
+        (DRF_TRANS_ID,DRF_PROD_ID,MEMBER_NO, RECIEPT_OR_PAYMENT,DUE_AMOUNT,AMOUNT, STATUS, STATUS_DATE, STATUS_BY,
+        AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE,RESOLUTION_NO,RESOLUTION_DATE
+        ) VALUES (
+        #drfTransID:VARCHAR#,#cboDrfTransProdID:VARCHAR#, #txtDrfTransMemberNo:VARCHAR#,
+        #rdoDrfTransaction:VARCHAR#,#chkDueAmtPayment:VARCHAR#, cast(#txtDrfTransAmount# as numeric),#status:VARCHAR#,
+        #statusDate:DATE#, #statusBy:VARCHAR#, #authorizeBy:VARCHAR#,
+        #authorizeStatus:VARCHAR#, #authorizeDate:DATE#,#resolutionNo:VARCHAR#,#resolutionDate:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="insertDrfIndividual" inline-parameters="true">
+        INSERT INTO DRF_INTEREST_INDIVIDUAL_DTS
+        (DRF_INTEREST_ID,DRF_INTEREST_TRANSID,DRF_PROD_ID,MEMBER_NO,BALANCE_AMOUNT,INTEREST,TRANSACTION_DATE, STATUS, STATUS_DATE, STATUS_BY, AUTHORIZE_BY, AUTHORIZE_STATUS, AUTHORIZE_DATE
+        ) VALUES (
+        #drfInterestId:VARCHAR#,#drfInterestTransID:VARCHAR#, #cboDrfProdId:VARCHAR#, #interestMemberNo:VARCHAR#,#interestBalanceAmount:VARCHAR#, #interest:VARCHAR#,#statusDate:Date#,#status:VARCHAR#, #statusDate:DATE#, #statusBy:VARCHAR#, #statusBy:VARCHAR#, 'AUTHORIZED', #statusDate:DATE#)
+    </mapped-statement>
+        
+        
+        
+    <mapped-statement name="insertRecoverTO" inline-parameters="true">
+        INSERT INTO DRF_RECOVER
+        (DRF_TRANSID,DRF_PROD_ID,MEMBER_NO, RECOVERY_AMOUNT
+        ) VALUES (
+        #drfTransID:VARCHAR#,#cboDrfTransProdID:VARCHAR#, #txtDrfTransMemberNo:VARCHAR#, #txtDrfTransAmount:VARCHAR#)
+    </mapped-statement>
+        
+        
+    <!-- Use DeathReliefMaster object (JavaBean) properties as parameters for update. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateDeathReliefMaster" inline-parameters="true">
+        UPDATE DRF_PRODUCT SET 
+        PROD_NAME = #prodName:VARCHAR#,
+        DRF_ACHD = #drfAchd:VARCHAR#,
+        DRF_PAYMENT_ACHD = #drfPaymentAchd:VARCHAR#,
+        DRF_RECOVERY_ACHD= #recoveryHead:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_DATE = #authorizeDate:DATE#,
+        NOMINEE_REQUIRED = #nominee:VARCHAR#,
+        NO_OF_NOMINEE = #noOfNominee:VARCHAR#
+        WHERE STATUS != 'DELETED' AND 
+        PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+        
+        
+        
+        
+    <mapped-statement name="updateDrfInterestDetails" inline-parameters="true">
+        UPDATE DRF_INTEREST_DETAILS SET 
+        INTEREST_CALC_FREQUENCY = #calculationFrequency:VARCHAR#,
+        INTEREST_CALC_CRITERIA = #calculationCriteria:VARCHAR#,
+        INTEREST_PRODUCT_FREQUENCY = #productFrequency:VARCHAR#,
+        INTEREST_DEBIT_HEAD= #debitHead:VARCHAR#,
+        LAST_INTEREST_CALC_DATE=#lastCalculatedDate:DATE#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_DATE = #authorizeDate:DATE#
+        WHERE STATUS != 'DELETED' AND 
+        DRF_PROD_ID = #prodId:VARCHAR# AND
+        DRF_INTEREST_ID=#drfInterestID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="updateDrfMasterDetails" inline-parameters="true">
+        UPDATE DRF_PROD_DETAILS SET 
+        AMOUNT = #txtDrfAmount:VARCHAR#,
+        PAYMENT = #txtPaymentAmount:VARCHAR#,
+        EFFECTIVE_FROM_DATE = #tdtDrfFromDt:DATE#,
+        EFFECTIVE_TO_DATE = #tdtDrfToDt:DATE#,
+        DRF_RECOVERY_ENABLED=#rdAmountRecovery:VARCHAR#,
+        RECOVERY_AMOUNT=#recoveryAmount:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DATE = #statusDate:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_DATE = #authorizeDate:DATE#
+        WHERE STATUS != 'DELETED' AND 
+        PROD_ID = #prodId:VARCHAR# AND
+        SL_NO = #drfSlNo:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use DeathReliefMaster object (JavaBean) properties as parameters for delete. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteDeathReliefDetails" inline-parameters="true">
+        UPDATE DRF_PROD_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDate:DATE#
+        WHERE STATUS != 'DELETED' AND 
+        PROD_ID = #prodId:VARCHAR# AND
+        SL_NO = #drfSlNo:VARCHAR# 
+    </mapped-statement>
+        
+    <mapped-statement name="deleteTab" inline-parameters="true">
+        delete from drf_interest_rates 
+        WHERE STATUS != 'DELETED' AND 
+        DRF_PROD_ID = #prodId:VARCHAR# AND 
+        DRF_INTEREST_ID=#drfInterestID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteTab2" inline-parameters="true">
+        UPDATE drf_interest_rates  SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDate:DATE#
+        WHERE STATUS != 'DELETED' AND 
+        DRF_PROD_ID = #prodId:VARCHAR# 
+               
+    </mapped-statement>
+        
+        
+    <mapped-statement name="deleteDeathReliefMaster" inline-parameters="true">
+        UPDATE DRF_PRODUCT SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDate:DATE#
+        WHERE STATUS != 'DELETED' AND 
+        PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to DeathReliefMaster object (JavaBean) properties -->
+    <result-map name="getDeathReliefMasterResult" class="com.see.truetransact.transferobject.share.DeathReliefMasterTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="prodName" column="PROD_NAME"/>
+        <property name="drfAchd" column="DRF_ACHD"/>
+        <property name="drfPaymentAchd" column="DRF_PAYMENT_ACHD"/>
+        <property name="recoveryHead" column="DRF_RECOVERY_ACHD"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+        <property name="nominee" column="NOMINEE_REQUIRED"/>
+        <property name="noOfNominee" column="NO_OF_NOMINEE"/>
+    </result-map>
+        
+        
+    <result-map name="getDeathReliefMasterResult1" class="com.see.truetransact.transferobject.share.DeathReliefMasterTO">
+        <property name="prodId" column="DRF_PROD_ID"/>
+        <property name="drfInterestID" column="DRF_INTEREST_ID"/>
+        <property name="calculationFrequency" column="INTEREST_CALC_FREQUENCY"/>
+        <property name="calculationCriteria" column="INTEREST_CALC_CRITERIA"/>
+        <property name="productFrequency" column="INTEREST_PRODUCT_FREQUENCY"/>
+        <property name="debitHead" column="INTEREST_DEBIT_HEAD"/>
+        <property name="lastCalculatedDate" column="LAST_INTEREST_CALC_DATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+    </result-map>
+        
+        
+    <result-map name="getDrfProductResult" class="com.see.truetransact.transferobject.share.DeathReliefMasterTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="tdtDrfFromDt" column="EFFECTIVE_FROM_DATE"/>
+        <property name="tdtDrfToDt" column="EFFECTIVE_TO_DATE"/>
+        <property name="txtDrfAmount" column="AMOUNT"/>
+        <property name="txtPaymentAmount" column="PAYMENT"/>
+        <property name="rdAmountRecovery" column="DRF_RECOVERY_ENABLED"/>
+        <property name="recoveryAmount" column="RECOVERY_AMOUNT"/>
+        <property name="drfSlNo" column="SL_NO"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+    </result-map>
+        
+    <result-map name="getDrfProductResult1" class="com.see.truetransact.transferobject.share.DeathReliefMasterTO">
+        <property name="prodId" column="DRF_PROD_ID"/>
+        <property name="drfInterestID" column="DRF_INTEREST_ID"/>
+        <property name="tdtFromDt" column="FROM_DATE"/>
+        <property name="toDt" column="TO_DATE"/>
+        <property name="interestRate" column="INTEREST_RATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDate" column="STATUS_DATE"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeDate" column="AUTHORIZE_DATE"/>
+    </result-map>
+        
+        
+        
+    <mapped-statement name="getSelectDrfMasterTO" result-map="getDeathReliefMasterResult" >
+        SELECT * FROM DRF_PRODUCT 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="getSelectDrfMasterTO1" result-map="getDeathReliefMasterResult1" >
+        SELECT * FROM DRF_INTEREST_DETAILS
+        WHERE DRF_PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+
+    <mapped-statement name="getMemberDrfTransDetails" result-class="java.util.LinkedHashMap">
+        SELECT * FROM DRF_TRANSACTION WHERE MEMBER_NO = #MEMBER_NO:VARCHAR# AND DRF_PROD_ID= #PROD_ID:VARCHAR# AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' 
+    </mapped-statement>
+   <mapped-statement name="getMemberDrfTransDetail" result-class="java.util.LinkedHashMap">
+        SELECT * FROM DRF_TRANSACTION WHERE MEMBER_NO = #MEMBER_NO:VARCHAR#  AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED' 
+    </mapped-statement>
+        
+    <mapped-statement name="getMemberDrfTransDetails1" result-class="java.util.LinkedHashMap">
+        	   
+        SELECT MEMBER_NO FROM (
+
+        SELECT DISTINCT MEMBER_NO AS MEMBER_NO,
+
+        (SELECT NVL(SUM(AMOUNT),0) FROM DRF_TRANSACTION B WHERE B.MEMBER_NO = A.MEMBER_NO AND B.RECIEPT_OR_PAYMENT = 'RECIEPT' AND B.AUTHORIZE_STATUS = 'AUTHORIZED' AND B.drf_prod_id=a.drf_prod_id) AS RECT,
+
+        (SELECT NVL(SUM(AMOUNT),0) FROM DRF_TRANSACTION C WHERE C.MEMBER_NO = A.MEMBER_NO AND C.RECIEPT_OR_PAYMENT = 'PAYMENT' AND C.drf_prod_id=a.drf_prod_id) AS PYMT
+
+        FROM DRF_TRANSACTION A WHERE a.drf_prod_id=#DRF_PROD_ID:VARCHAR#) H WHERE RECT-PYMT &gt; 0
+        
+    </mapped-statement>
+        
+       
+    <mapped-statement name="getrecoverAmount" result-class="java.util.LinkedHashMap">
+        SELECT RECOVERY_AMOUNT FROM DRF_PROD_DETAILS WHERE PROD_ID =#PROD_ID:VARCHAR# 
+    </mapped-statement>
+        
+        
+
+    <mapped-statement name="getDrfProductDetailsForTrans" result-class="java.util.LinkedHashMap">
+        SELECT * FROM DRF_PROD_DETAILS WHERE PROD_ID = #PROD_ID:VARCHAR# 
+        AND ((TO_CHAR(TO_DATE(#CURRENT_DATE:DATE#),'YYYY-MM-DD') BETWEEN TO_CHAR(EFFECTIVE_FROM_DATE,'YYYY-MM-DD') AND TO_CHAR(EFFECTIVE_TO_DATE,'YYYY-MM-DD'))
+        OR (TO_CHAR(EFFECTIVE_FROM_DATE,'YYYY-MM-DD') &lt;= TO_CHAR(TO_DATE(#CURRENT_DATE:DATE#),'YYYY-MM-DD') AND TO_CHAR(EFFECTIVE_TO_DATE,'YYYY-MM-DD') IS NULL))
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectDrfMasterTOList" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT DP.PROD_ID,PROD_NAME,DP.AUTHORIZE_STATUS FROM DRF_PRODUCT DP,DRF_PROD_DETAILS DD
+        WHERE  DP.STATUS NOT IN ('DELETED') AND
+        DP.PROD_ID = DD.PROD_ID
+        AND DD.PROD_ID IN (SELECT PROD_ID FROM DRF_PROD_DETAILS WHERE STATUS NOT IN ('DELETED'))
+        ORDER BY DP.PROD_ID
+                
+    </mapped-statement>
+        
+    <mapped-statement name="getSmall" result-class="java.util.LinkedHashMap">  
+        
+        select  member_no,status_date,
+        nvl((select min(a.amount) from drf_transaction a
+        where  a.member_no=drf_transaction.member_no  and to_char(a.status_date,'MM-yyyy')=to_char(drf_transaction.status_date,'MM-yyyy')
+        ),0)
+        as min_amt
+        from drf_transaction
+        where drf_transaction.status_date=(select b.status_date from drf_transaction b
+        where b.amount=(select min(a.amount) from drf_transaction a
+        where  a.member_no=drf_transaction.member_no  and to_char(a.status_date,'MM-yyyy')=to_char(drf_transaction.status_date,'MM-yyyy')))
+        and member_no=#MEMBER_NO# and drf_prod_id=#PROD_ID:VARCHAR# AND to_date((to_char(status_date,'dd-mm-yy')),'dd-mm-yy') &gt; to_date(to_char(to_date(#L_DATE#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy')
+        
+    </mapped-statement>     
+
+        
+    <result-map name="get-LookUp-resultTL" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="LOOKUP_REF_ID" />
+        <property name="lookUpDesc" column="LOOKUP_DESC" />
+    </result-map>
+        
+    <mapped-statement name="getDrfProductLookUpForShare" result-map="get-LookUp-resultTL">
+        SELECT PROD_ID AS LOOKUP_REF_ID,PROD_NAME AS LOOKUP_DESC FROM DRF_PRODUCT WHERE STATUS NOT IN ('DELETED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+      
+    <mapped-statement name="getDrfProductLookUp" result-map="get-LookUp-resultTL">
+        SELECT PROD_ID AS LOOKUP_REF_ID,PROD_ID AS LOOKUP_DESC FROM DRF_PRODUCT WHERE STATUS NOT IN ('DELETED')
+        AND AUTHORIZE_STATUS = 'AUTHORIZED' 
+    </mapped-statement>
+      
+    <mapped-statement name="getSelectDrfProuctTO" result-map="getDrfProductResult">
+        SELECT * FROM DRF_PROD_DETAILS WHERE PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+        ORDER BY SL_NO
+    </mapped-statement>
+        
+    <mapped-statement name="getDrfInterestRates" result-map="getDrfProductResult1">
+        SELECT * FROM DRF_INTEREST_RATES WHERE DRF_PROD_ID = #PROD_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+               
+    </mapped-statement>
+        
+    <mapped-statement name="getDrfProdectHead" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID,PROD_NAME, DRF_ACHD AS LIABILITY_HEAD,DRF_PAYMENT_ACHD AS EXPENDITURE_HEAD
+        FROM  DRF_PRODUCT 
+        WHERE PROD_ID = #value:VARCHAR#
+    </mapped-statement>
+        
+    <!--<dynamic-mapped-statement name="getSelectDrfProuctTO" result-map="getDrfProductResult">
+        SELECT * FROM DRF_PROD_DETAILS WHERE PROD_ID = #PROD_ID# 
+            <dynamic>
+                <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                   ( STATUS NOT IN ('DELETED')
+                </isNotPropertyAvailable>
+                <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                   ( STATUS IN 'DELETED'
+                </isPropertyAvailable>
+                <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                     STATUS IN 'DELETED'
+                </isPropertyAvailable>
+                 )
+           </dynamic>
+            ORDER BY SL_NO
+    </dynamic-mapped-statement> -->
+        
+    <dynamic-mapped-statement name="getMemberDetailsForDrf" result-class = "java.util.HashMap">
+        SELECT get_cust_name(c.cust_id) AS NAME ,STREET  || '  '  || AREA || CITY AS ADDRESS,MEMBERSHIP_NO AS MEMBER_NO FROM CUSTOMER C,CUST_ADDR  CA WHERE 
+        C.CUST_ID = CA.CUST_ID  AND ADDR_TYPE = COMM_ADDR_TYPE
+        AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND" property="MEMBERSHIP_NO">
+                    MEMBERSHIP_NO= #MEMBERSHIP_NO:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "NAME" >
+                    UPPER(get_cust_name(c.cust_id)) LIKE UPPER('%$NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "ADDRESS" >
+                    UPPER(STREET  || '  '  || AREA || CITY) LIKE UPPER('%$ADDRESS$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "MEMBER_NO" >
+                    UPPER(MEMBERSHIP_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+        ORDER BY MEMBERSHIP_NO
+    </dynamic-mapped-statement>
+            
+    <dynamic-mapped-statement name="getDrfMasterAuthorizeMode" result-class="java.util.HashMap" >
+        SELECT DISTINCT PROD_ID,PROD_NAME,DRF_ACHD,STATUS_BY 
+        FROM DRF_PRODUCT C WHERE cast(#HIERARCHY_ID# as numeric)>= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = C.STATUS_BY) AND C.STATUS!='DELETED'
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                C.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (C.AUTHORIZE_STATUS IS NULL OR 
+                C.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        AND C.STATUS_BY != #USER_ID:VARCHAR# ORDER BY PROD_ID
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="authorizeDrfMaster" result-class="java.util.HashMap">
+        UPDATE DRF_PRODUCT SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE PROD_ID = #PROD_ID:VARCHAR# 
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="authorizeDrfDetails" result-class="java.util.HashMap">
+        UPDATE  DRF_PROD_DETAILS SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE PROD_ID = #PROD_ID:VARCHAR# 
+    </dynamic-mapped-statement>
+     
+    <dynamic-mapped-statement name=" authorizeDrfInterest" result-class="java.util.HashMap">
+        UPDATE  DRF_INTEREST_RATES SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE DRF_PROD_ID = #PROD_ID:VARCHAR# 
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name=" authorizeDrfInterestDetails" result-class="java.util.HashMap">
+        UPDATE  DRF_INTEREST_DETAILS SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DATE = #AUTHORIZEDT:TIMESTAMP#
+        WHERE DRF_PROD_ID = #PROD_ID:VARCHAR# 
+    </dynamic-mapped-statement>
+        
+        
+        
+        
+     <dynamic-mapped-statement name="getDrfTransferAuthMode" result-class="java.util.LinkedHashMap" >
+        SELECT   DISTINCT CASE
+                   WHEN ATR.TRANS_MODE = 'TRANSFER'
+                      THEN ATR.BATCH_ID
+                   ELSE ATR.TRANS_ID
+                END AS TRANS_ID,C.DRF_TRANS_ID, C.DRF_PROD_ID, C.MEMBER_NO, C.AMOUNT,
+         C.RECIEPT_OR_PAYMENT
+        FROM DRF_TRANSACTION C, SHARE_ACCT SA, ALL_TRANS ATR
+        WHERE SA.SHARE_ACCT_NO = C.MEMBER_NO
+        AND C.DRF_TRANS_ID = ATR.LINK_BATCH_ID
+            AND ATR.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND C.AUTHORIZE_STATUS IS NULL
+        AND CASE
+                  WHEN ATR.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED'
+                  WHEN ATR.TRANS_TYPE = 'DEBIT' THEN 'AUTHORIZED'
+                  ELSE ATR.PAYMENT_STATUS
+               END IS NOT NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;=
+            (SELECT DISTINCT DECODE (NVL (SAME_HIERARCHY_ALLOWED, 'N'),
+                                     'Y', HIERARCHY_ID,
+                                     HIERARCHY_ID + 1
+                                    )
+                        FROM USER_MASTER UM, ROLE_MASTER RM
+                       WHERE RM.ROLE_ID = UM.USER_ROLE
+                         AND RM.GROUP_ID = UM.USER_GROUP
+                         AND UM.USER_ID = C.STATUS_BY)
+        AND C.STATUS_BY != #USER_ID:VARCHAR# 
+        AND (SA.DRF_APPLICABLE IS NULL OR SA.DRF_APPLICABLE = 'N' OR 
+       (SA.DRF_APPLICABLE = 'Y' and (select count(*) from DRF_TRANSACTION ss where SS.MEMBER_NO =SA.SHARE_ACCT_NO and SA.AUTHORIZE = 'AUTHORIZED')>1 ) )
+       <!--AND (SA.DRF_APPLICABLE IS NULL OR SA.DRF_APPLICABLE = 'N')-->
+        AND C.STATUS != 'DELETED'
+        AND ATR.TRANS_DT = #TRANS_DT:DATE#
+        AND C.AUTHORIZE_STATUS IS NULL
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DRF_TRANS_ID" >
+                    UPPER(C.DRF_TRANS_ID) LIKE UPPER('%$DRF_TRANS_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DRF_PROD_ID" >
+                    UPPER(C.DRF_PROD_ID) LIKE UPPER('%$DRF_PROD_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "MEMBER_NO" >
+                    UPPER(C.MEMBER_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AMOUNT" >
+                    UPPER(C.AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RECIEPT_OR_PAYMENT" >
+                    UPPER(C.RECIEPT_OR_PAYMENT) LIKE UPPER('%$RECIEPT_OR_PAYMENT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY C.DRF_TRANS_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getDrfTransferAuthModeWithOutCashier" result-class="java.util.LinkedHashMap" >
+        SELECT DISTINCT CASE
+                   WHEN ATR.TRANS_MODE = 'TRANSFER'
+                      THEN ATR.BATCH_ID
+                   ELSE ATR.TRANS_ID
+                END AS TRANS_ID,C.DRF_TRANS_ID, C.DRF_PROD_ID, C.MEMBER_NO, C.AMOUNT, C.RECIEPT_OR_PAYMENT
+        FROM DRF_TRANSACTION C,SHARE_ACCT SA , ALL_TRANS ATR
+        WHERE SA.SHARE_ACCT_NO=C.MEMBER_NO
+        AND C.DRF_TRANS_ID = ATR.LINK_BATCH_ID
+        AND ATR.INITIATED_BRANCH = #BRANCH_CODE:VARCHAR#
+        AND C.AUTHORIZE_STATUS IS NULL
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND  RM.GROUP_ID=UM.USER_GROUP AND UM.USER_ID = C.STATUS_BY)
+        AND C.STATUS_BY!= #USER_ID:VARCHAR# 
+        AND ATR.TRANS_DT = #TRANS_DT:DATE#
+        AND (SA.DRF_APPLICABLE IS NULL OR SA.DRF_APPLICABLE = 'N' OR 
+        (SA.DRF_APPLICABLE = 'Y' and (select count(*) from DRF_TRANSACTION ss where SS.MEMBER_NO =SA.SHARE_ACCT_NO and SA.AUTHORIZE = 'AUTHORIZED')>1 ) )
+       <!-- AND (SA.DRF_APPLICABLE IS NULL OR SA.DRF_APPLICABLE = 'Y')-->
+        AND C.STATUS!='DELETED' AND C.AUTHORIZE_STATUS IS NULL
+        ORDER BY C.DRF_TRANS_ID
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getDrfTransferEditMode" result-class="java.util.LinkedHashMap" >
+        SELECT DRF_TRANS_ID , DRF_PROD_ID,MEMBER_NO,AMOUNT,RECIEPT_OR_PAYMENT,DUE_AMOUNT FROM DRF_TRANSACTION C
+        WHERE AUTHORIZE_STATUS IS NULL and STATUS not in  'DELETED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+           <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DRF_TRANS_ID" >
+                    UPPER(DRF_TRANS_ID) LIKE UPPER('%$DRF_TRANS_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DRF_PROD_ID" >
+                    UPPER(DRF_PROD_ID) LIKE UPPER('%$DRF_PROD_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "MEMBER_NO" >
+                    UPPER(MEMBER_NO) LIKE UPPER('%$MEMBER_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "AMOUNT" >
+                    UPPER(AMOUNT) LIKE UPPER('%$AMOUNT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "RECIEPT_OR_PAYMENT" >
+                    UPPER(RECIEPT_OR_PAYMENT) LIKE UPPER('%$RECIEPT_OR_PAYMENT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DUE_AMOUNT" >
+                    UPPER(DUE_AMOUNT) LIKE UPPER('%$DUE_AMOUNT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY DRF_TRANS_ID
+    </dynamic-mapped-statement>
+    
+    
+    <mapped-statement name="getSelectDrfTransAuthList" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM DRF_TRANSACTION WHERE DRF_TRANS_ID = #DRF_TRANS_ID:VARCHAR#
+    </mapped-statement>
+        
+
+
+    <mapped-statement name="authorizeDrfTransInfo"  result-class="java.util.HashMap">
+        UPDATE DRF_TRANSACTION SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DATE = #CURR_DATE:DATE#
+        WHERE DRF_TRANS_ID = #DRF_TRANS_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteDrfTransInfoTO" inline-parameters="true">
+        UPDATE DRF_TRANSACTION SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DATE = #statusDate:DATE#
+        WHERE STATUS != 'DELETED' AND
+        DRF_TRANS_ID = #drfTransID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getRecieptDetails" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM DRF_TRANSACTION WHERE MEMBER_NO=#MEMBERSHIP_NO:VARCHAR# AND DRF_PROD_ID=#PROD_ID:VARCHAR# AND STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND RECIEPT_OR_PAYMENT='RECIEPT'
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectUnAuthList" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM DRF_TRANSACTION WHERE STATUS!='DELETED'
+        AND AUTHORIZE_STATUS IS NULL AND MEMBER_NO=#MEMBERSHIP_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getPaymentDetails" result-class="java.util.LinkedHashMap" >
+        SELECT * FROM DRF_TRANSACTION WHERE MEMBER_NO=#MEMBERSHIP_NO:VARCHAR# AND DRF_PROD_ID=#PROD_ID:VARCHAR# AND STATUS!='DELETED'
+        AND AUTHORIZE_STATUS='AUTHORIZED' AND RECIEPT_OR_PAYMENT='PAYMENT'
+    </mapped-statement>
+        
+    <mapped-statement name ="getTabDts" result-class="java.util.LinkedHashMap">
+        SELECT MEMBER_NO,CONCAT(CONCAT(FNAME,MNAME),LNAME) as MEMBER_NAME ,DRF_INTEREST_ID,DT.STATUS_DATE,DT.amount
+        FROM drf_interest_details c, DRF_TRANSACTION DT  join customer b on
+        DT.member_no=b.MEMBERSHIP_NO
+        WHERE DT.DRF_PROD_ID = #PROD_ID:VARCHAR#  AND c.drf_prod_id=#PROD_ID:VARCHAR#  AND  to_date((to_char(dt.status_date,'dd-mm-yy')),'dd-mm-yy') &gt; to_date(to_char(to_date(#L_DATE#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy') AND DT.MEMBER_NO NOT IN
+        (
+        SELECT MEMBER_NO
+        FROM
+        (
+        SELECT T.DRF_PROD_ID,T.MEMBER_NO, sum(case when T.RECIEPT_OR_PAYMENT = 'RECIEPT' THEN 1 ELSE -1 END * CAST(T.AMOUNT AS NUMERIC)) AS BALANCE
+        from DRF_TRANSACTION t
+        WHERE T.DRF_PROD_ID = #PROD_ID:VARCHAR# 
+        GROUP BY T.DRF_PROD_ID, T.MEMBER_NO
+        )A WHERE BALANCE &lt; 0
+        )
+    </mapped-statement> 
+       
+    <mapped-statement name="getInterstRate" result-class="java.util.LinkedHashMap">
+        select interest_rate 
+        from drf_interest_rates i
+        where from_date = (select max(di.from_date) 
+        from drf_interest_rates di
+        where  to_date((to_char(di.from_date,'dd-mm-yy')),'dd-mm-yy') &lt;=to_date(to_char(to_date(#DT#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy')   and di.drf_prod_id=#PROD_ID:VARCHAR# and di.drf_interest_id=#I_ID:VARCHAR# and
+        di.AUTHORIZE_STATUS = 'AUTHORIZED' AND di.STATUS != 'DELETED' ) 
+    </mapped-statement> 
+        
+    <mapped-statement name="getMemberGroup" result-class="java.util.LinkedHashMap">
+        SELECT DT.MEMBER_NO,sum(dt.amount)as SUM
+        FROM DRF_TRANSACTION DT
+        WHERE DT.DRF_PROD_ID = #PROD_ID:VARCHAR# AND to_date((to_char(dt.status_date,'dd-mm-yy')),'dd-mm-yy') &gt; to_date(to_char(to_date(#L_DATE#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy')   AND DT.MEMBER_NO NOT IN
+        (
+        SELECT MEMBER_NO
+        FROM
+        (
+        SELECT T.DRF_PROD_ID,T.MEMBER_NO, sum(case when T.RECIEPT_OR_PAYMENT = 'RECIEPT' THEN 1 ELSE -1 END * T.AMOUNT) AS BALANCE
+        from DRF_TRANSACTION t
+        WHERE T.DRF_PROD_ID = #PROD_ID:VARCHAR# AND T.AUTHORIZE_STATUS = 'AUTHORIZED' AND T.STATUS != 'DELETED'
+        GROUP BY T.DRF_PROD_ID, T.MEMBER_NO
+        ) WHERE BALANCE &lt; 0
+        ) AND DT.AUTHORIZE_STATUS = 'AUTHORIZED' AND DT.STATUS != 'DELETED'
+        GROUP BY MEMBER_NO
+        ORDER BY MEMBER_NO
+    </mapped-statement>
+  
+
+    <mapped-statement name="getRateDts" result-class="java.util.LinkedHashMap">
+        select drf_prod_id,drf_interest_id,interest_calc_criteria,interest_calc_frequency,interest_product_frequency,interest_debit_head,last_interest_calc_date 
+        from drf_interest_details where drf_prod_id= #PROD_ID:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'   
+    </mapped-statement>            
+        
+        
+    <mapped-statement name="getDrhead" result-class="java.util.LinkedHashMap">
+        select INTEREST_DEBIT_HEAD from drf_interest_details where drf_prod_id=#PROD_ID:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement> 
+  
+  
+  
+    <mapped-statement name="getCrhead" result-class="java.util.LinkedHashMap">
+        select drf_payment_achd from drf_product where prod_id=#PROD_ID:VARCHAR# AND AUTHORIZE_STATUS = 'AUTHORIZED' AND STATUS != 'DELETED'
+    </mapped-statement> 
+  
+        
+    <mapped-statement name ="getProdctDts" result-class="java.util.LinkedHashMap">
+        SELECT INTEREST_CALC_FREQUENCY,INTEREST_CALC_CRITERIA,INTEREST_PRODUCT_FREQUENCY,LAST_INTEREST_CALC_DATE FROM DRF_INTEREST_DETAILS WHERE DRF_PROD_ID=#PROD_ID# AND STATUS!='DELETED'
+    </mapped-statement>  
+                  
+    <mapped-statement name ="getMarkingDetailsForDRF" result-class="java.util.HashMap">
+        SELECT * FROM DEATH_MARKING WHERE CUST_ID=(SELECT CUST_ID FROM CUSTOMER WHERE MEMBERSHIP_NO=#MEMBER_NO:VARCHAR#
+        AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED') AND STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement>
+
+   
+    <mapped-statement name="getBalance1" result-class="java.util.LinkedHashMap">
+        SELECT DT.MEMBER_NO, sum(case when dt.RECIEPT_OR_PAYMENT = 'RECIEPT' then 1 else -1 end * dt.amount) as SUMM
+        FROM DRF_TRANSACTION DT
+        WHERE DT.DRF_PROD_ID = #PROD_ID:VARCHAR# and dt.MEMBER_NO = #MEMBERNO:VARCHAR# AND to_date((to_char(dt.status_date,'dd-mm-yy')),'dd-mm-yy') &lt; = to_date(to_char(to_date(#L_DATE#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy')  group by dt.member_no
+    </mapped-statement>    
+   
+    <mapped-statement name="getCountt" result-class="java.util.LinkedHashMap">
+        select status_date from drf_transaction where DRF_PROD_ID = #PROD_ID:VARCHAR# and MEMBER_NO = #MEMBERNO:VARCHAR# AND to_date((to_char(status_date,'dd-mm-yy')),'dd-mm-yy') between to_date(to_char(to_date(#FROM#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy') and to_date(to_char(to_date(#TO#,'dd/mm/yyyy'),'dd-MON-yyyy'),'dd-MON-yyyy')
+    </mapped-statement>
+  
+    <mapped-statement name="updateDrfInterestDetail" result-class="java.util.LinkedHashMap">
+        update drf_interest_details set last_interest_calc_date=#statusDate:DATE# where drf_prod_id= #cboDrfProdId:VARCHAR#
+    </mapped-statement>  
+ 
+    <mapped-statement name=" updateShareAcct" result-class="java.util.LinkedHashMap">
+        update share_acct set drf_int_calcupto=#statusDate:DATE# where share_acct_no=#interestMemberNo:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="CheckNomineeReqired" result-class="java.util.HashMap">
+        SELECT NOMINEE_REQUIRED,NO_OF_NOMINEE FROM DRF_PRODUCT WHERE PROD_ID = #PROD_ID# AND STATUS !='DELETED' AND 
+        (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS =  'AUTHORIZED')
+    </mapped-statement>
+   
+
+</sql-map>

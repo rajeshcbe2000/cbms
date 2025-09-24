@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LockerConfigTOMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLockerConfigTO" inline-parameters="true">
+        INSERT INTO locker_config
+        (PROD_ID, FROM_LOC_NO, TO_LOC_NO, TOT_LOCKERS, MASTER_KEY_NO, BRANCH_ID, CREATED_DT, CREATED_BY, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #prodId:VARCHAR#, #fromLocNo#, #toLocNo:VARCHAR#, #totLockers:VARCHAR#, #masterKeyNo:VARCHAR#, #branchId:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLockerConfigTO" inline-parameters="true">
+        UPDATE locker_config SET 
+        PROD_ID = #prodId:VARCHAR#,
+        FROM_LOC_NO = #fromLocNo:VARCHAR#,
+        TO_LOC_NO = #toLocNo:VARCHAR#,
+        TOT_LOCKERS = #totLockers:VARCHAR#,
+        MASTER_KEY_NO = #masterKeyNo:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#
+        WHERE PROD_ID = #prodId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLockerConfigTO" inline-parameters="true">
+        UPDATE locker_config SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE PROD_ID = #prodId:VARCHAR# AND STATUS NOT IN ('DELETED') AND BRANCH_ID =#branchId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getLockerConfigTOResult" class="com.see.truetransact.transferobject.locker.lockerconfig.LockerConfigTO">
+        <property name="prodId" column="PROD_ID"/>
+        <property name="fromLocNo" column="FROM_LOC_NO"/>
+        <property name="toLocNo" column="TO_LOC_NO"/>
+        <property name="totLockers" column="TOT_LOCKERS"/>
+        <property name="masterKeyNo" column="MASTER_KEY_NO"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+    </result-map>
+    <mapped-statement name="getSelectLockerConfigTO" result-map="getLockerConfigTOResult" >
+        SELECT * FROM locker_config 
+        WHERE PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+         
+      
+        <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getLockerConfigAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  PROD_ID, BRANCH_ID,FROM_LOC_NO,TO_LOC_NO FROM locker_config LC 
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = LC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  PROD_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeLockerConfig" result-class="java.util.HashMap">
+        UPDATE locker_config  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>  
+      
+    <dynamic-mapped-statement name="getSelectLockerProdID" result-class="java.util.HashMap" >
+        SELECT PROD_ID,PROD_DESC,STATUS FROM locker_product
+        WHERE STATUS != 'DELETED' AND AUTHORIZE_STATUS = 'AUTHORIZED'
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_DESC">
+                    UPPER(PROD_DESC) LIKE UPPER('%$PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="STATUS">
+                    UPPER(STATUS) LIKE UPPER('%$STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement  name="getSelectLockerConfig" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_ID,FROM_LOC_NO,TO_LOC_NO,TOT_LOCKERS FROM locker_config
+        WHERE STATUS != 'DELETED' AND (AUTHORIZE_STATUS = 'AUTHORIZED' or AUTHORIZE_STATUS is null) AND BRANCH_ID = #BRANCH_ID:VARCHAR#
+      <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PROD_ID">
+                    UPPER(PROD_ID) LIKE UPPER('%$PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="FROM_LOC_NO">
+                    UPPER(FROM_LOC_NO) LIKE UPPER('%$FROM_LOC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TO_LOC_NO">
+                    UPPER(TO_LOC_NO) LIKE UPPER('%$TO_LOC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="TOT_LOCKERS">
+                    UPPER(TOT_LOCKERS) LIKE UPPER('%$TOT_LOCKERS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+   </dynamic-mapped-statement>
+        
+      <!--mapped-statement name="getLockerConfigAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT PROD_ID,FROM_LOC_NO,TO_LOC_NO,TOT_LOCKERS FROM locker_config
+	WHERE STATUS != 'DELETED' AND AUTHORIZED_STATUS IS NULL and BRANCH_ID = #BRANCH_CODE:VARCHAR#
+      </mapped-statement-->
+        
+       <!--mapped-statement name="authorizeLockerConfig" result-class="java.util.HashMap">
+        UPDATE locker_config  SET 
+        AUTHORIZE_STATUS = #STATUS#,
+        AUTHORIZE_BY = #USER_ID#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID = #BRANCH_CODE:VARCHAR#
+      </mapped-statement-->  
+      
+    <mapped-statement name="insertLockerConfigDetailsTO" inline-parameters="true">
+        INSERT INTO locker_config_details
+        (SL_NO, PROD_ID, FROM_LOC_NO, TO_LOC_NO, TOT_LOCKERS, MASTER_KEY_NO, LOCKER_KEY_NO, BRANCH_ID, STATUS, LOCKER_STATUS
+        ) VALUES (
+        #slNo:VARCHAR#, #prodId:VARCHAR#, #fromLocNo:VARCHAR#, #toLocNo:VARCHAR#, #totLockers:VARCHAR#, #masterKeyNo:VARCHAR#, #lockerKeyNo:VARCHAR#, #branchId:VARCHAR#, #status:VARCHAR#, #locStatus:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateLockerConfigDetailsTO" inline-parameters="true">
+        UPDATE locker_config_details SET
+        LOCKER_KEY_NO = #lockerKeyNo:VARCHAR#, MASTER_KEY_NO = #masterKeyNo:VARCHAR#
+        where PROD_ID = #prodId:VARCHAR# and FROM_LOC_NO = #fromLocNo:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getLockerConfigDetailsTOResult" class="com.see.truetransact.transferobject.locker.lockerconfig.LockerConfigDetailsTO">
+        <property name="slNo" column="SL_NO"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="fromLocNo" column="FROM_LOC_NO"/>
+        <property name="toLocNo" column="TO_LOC_NO"/>
+        <property name="totLockers" column="TOT_LOCKERS"/>
+        <property name="masterKeyNo" column="MASTER_KEY_NO"/>
+        <property name="lockerKeyNo" column="LOCKER_KEY_NO"/>
+        <property name="branchId" column="BRANCH_ID"/>
+        <property name="status" column="STATUS"/>
+    </result-map>
+       
+    <mapped-statement name="getSelectLockerConfigDetailsTO" result-map="getLockerConfigDetailsTOResult" >
+        SELECT * FROM locker_config_details WHERE PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        ORDER BY FROM_LOC_NO
+    </mapped-statement>
+        
+    <mapped-statement name="deleteLockerConfigDetailsTO" inline-parameters="true">
+        UPDATE locker_config_details SET 
+        STATUS = #status:VARCHAR# WHERE PROD_ID = #prodId:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectLockerDetails" result-class="java.util.HashMap">
+        SELECT SL_NO, FROM_LOC_NO,MASTER_KEY_NO,LOCKER_KEY_NO,LOCKER_STATUS as STATUS,TO_LOC_NO,TOT_LOCKERS FROM locker_config_details WHERE PROD_ID = #PROD_ID:VARCHAR# AND BRANCH_ID = #BRANCH_ID:VARCHAR# 
+        ORDER BY FROM_LOC_NO
+    </mapped-statement>
+        
+    <mapped-statement name="chkValidLocNum" result-class="java.util.HashMap">
+        SELECT FROM_LOC_NO FROM locker_config_details WHERE #FROM_LOC_NO#
+        IN(SELECT FROM_LOC_NO FROM locker_config_details WHERE PROD_ID = #PROD_ID:VARCHAR# 
+        AND BRANCH_ID = #BRANCH_ID:VARCHAR# AND STATUS != 'DELETED') AND PROD_ID = #PROD_ID:VARCHAR# AND 
+        BRANCH_ID = #BRANCH_ID:VARCHAR# AND STATUS != 'DELETED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectLockerLedger" result-class="java.util.LinkedHashMap" >    
+        SELECT LM.ACT_NUM as ACCT_NUM, lm.LOCKER_STATUS_ID ,C.FNAME AS NAME,LM.LOCKER_NUM,LM.DEPOSIT_LINK_NO AS SEC_DEP_NO FROM LOCKER_MASTER LM
+        JOIN CUSTOMER C ON LM.CUST_ID = C.CUST_ID
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+                <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="ACCT_NUM">
+                    UPPER(LM.ACT_NUM) LIKE UPPER('%$ACCT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_STATUS_ID">
+                    UPPER(lm.LOCKER_STATUS_ID) LIKE UPPER('%$LOCKER_STATUS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="NAME">
+                    UPPER(C.FNAME) LIKE UPPER('%$NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="LOCKER_NUM">
+                    UPPER(LM.LOCKER_NUM) LIKE UPPER('%$LOCKER_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="SEC_DEP_NO">
+                    UPPER(LM.DEPOSIT_LINK_NO) LIKE UPPER('%$SEC_DEP_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            ORDER BY LM.ACT_NUM   
+        </dynamic>
+    </dynamic-mapped-statement>
+</sql-map>

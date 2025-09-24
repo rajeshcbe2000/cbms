@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AccountMaintenanceMap">
+    <dynamic-mapped-statement name="getSelectAcctHeadCallTOList" result-class="java.util.LinkedHashMap">
+        SELECT MJR_AC_HD_TYPE AS "A/C Type", AC_HD_ID AS "A/C HEAD", AC_HD_CODE AS "A/C HEAD Code", AC_HD_DESC AS "A/C HEAD DESCRIPTION" FROM AC_HD A, MJR_AC_HD M
+        WHERE (A.MJR_AC_HD_ID=M.MJR_AC_HD_ID) AND (A.STATUS NOT IN ('DELETED'))  
+        AND (A.AC_HD_ID IN (SELECT AC_HD_ID FROM AC_HD_PARAM WHERE (STATUS NOT IN ('DELETED')) 
+        AND (AUTHORIZE_STATUS NOT IN ('REJECTED') OR AUTHORIZE_STATUS IS NULL)))
+        
+        <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C Type">
+                    UPPER(MJR_AC_HD_TYPE) LIKE UPPER('%$A/C Type$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$A/C Head$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD Code">
+                    UPPER(AC_HD_CODE) LIKE UPPER('%$A/C Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD DESCRIPTION">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$A/C Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+            ORDER BY A.AC_HD_CODE
+</dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectAcctHead" result-class="java.util.LinkedHashMap" >
+      SELECT AC_HD_DESC AS "A/C HEAD DESCRIPTION",AC_HD_ID AS "A/C HEAD" FROM AC_HD   WHERE STATUS !='DELETED' AND (AUTHORIZE_STATUS NOT IN ('REJECTED') OR AUTHORIZE_STATUS ='AUTHORIZED')
+    </mapped-statement>
+    <dynamic-mapped-statement name="getSelectAcctHeadCallTOInsertList" result-class="java.util.LinkedHashMap">
+		<!--SELECT MJR_AC_HD_TYPE AS "A/C Type", AC_HD_ID AS "A/C HEAD", A.AC_HD_CODE AS "A/C HEAD Code", AC_HD_DESC AS "A/C HEAD DESCRIPTION"  FROM AC_HD A, MJR_AC_HD M
+                WHERE A.MJR_AC_HD_ID=M.MJR_AC_HD_ID AND (A.STATUS  NOT IN ('DELETED'))
+                AND (A.AC_HD_ID NOT IN (SELECT AC_HD_ID FROM AC_HD_PARAM )) ORDER BY A.AC_HD_CODE -->
+        SELECT MJR_AC_HD_TYPE AS "A/C Type", AC_HD_ID AS "A/C HEAD", A.AC_HD_CODE AS "A/C HEAD Code", AC_HD_DESC AS "A/C HEAD DESCRIPTION"  FROM AC_HD A, MJR_AC_HD M
+        WHERE A.MJR_AC_HD_ID=M.MJR_AC_HD_ID AND (A.STATUS  NOT IN ('DELETED'))
+        AND ( NOT EXISTS(SELECT AC_HD_ID FROM AC_HD_PARAM WHERE A.AC_HD_ID= AC_HD_ID)) 
+                    <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C Type">
+                    UPPER(MJR_AC_HD_TYPE) LIKE UPPER('%$A/C Type$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$A/C Head$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD Code">
+                    UPPER(A.AC_HD_CODE) LIKE UPPER('%$A/C Head Code$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD DESCRIPTION">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$A/C Head Description$%')
+                </isNotNull>
+            </isParameterPresent>
+   </dynamic>
+   ORDER BY A.AC_HD_CODE
+   </dynamic-mapped-statement>
+        
+	<!-- Use AccountMaintenanceTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAccountMaintenanceTO" inline-parameters="true">
+        INSERT INTO AC_HD_PARAM
+        (AC_HD_ID, FLOAT_ACT, CONTRA_ACT, CR_CLR, CR_TRANS, CR_CASH, DR_CLR, DR_TRANS, DR_CASH, RECONS, F_TRANS_DT, L_TRANS_DT, TRANSPOST, POSTMODE, BALANCETYPE, GLBALANCE, AC_OPEN_DT, AC_CLOSE_DT, STATUS, AUTHORIZE_STATUS, AUTHORIZE_BY, AUTHORIZE_DT, STATUS_BY, STATUS_DT, NEGATIVE_ALLOWED, 
+        HO_ACCT, RECONS_AC_HD_ID, DAY_END_ZERO_CHECK,ALLOW_CUSTOMER_ACNUM,SERVICE_TAX_APPLICABLE,SERVICE_TAX_ID 
+        ) VALUES (
+        #acHdId:VARCHAR#, #floatAct:VARCHAR#, #contraAct:VARCHAR#, #crClr:VARCHAR#, #crTrans:VARCHAR#, #crCash:VARCHAR#, #drClr:VARCHAR#, #drTrans:VARCHAR#, #drCash:VARCHAR#, #recons:VARCHAR#, #fTransDt:DATE#, #lTransDt:DATE#, #transpost:VARCHAR#, #postmode:VARCHAR#, #balancetype:VARCHAR#, #glbalance:NUMERIC#,
+        #acOpenDt:TIMESTAMP#, #acCloseDt:TIMESTAMP#, #status:VARCHAR#, #authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:TIMESTAMP#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#, #negativeAllowed:VARCHAR#, #hoAcct:VARCHAR#, #reconsAcHdId:VARCHAR#, #dayEndZeroCheck:VARCHAR#,#chkCustomerAllow:VARCHAR#,#cbServiceTax:VARCHAR#,#serviceTaxId:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use AccountMaintenanceTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+       
+    <mapped-statement name="updateAccountMaintenanceTO" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET 
+<!--		AC_HD_ID = #acHdId:VARCHAR#, -->
+        FLOAT_ACT = #floatAct:VARCHAR#,
+        CONTRA_ACT = #contraAct:VARCHAR#,
+        CR_CLR = #crClr:VARCHAR#,
+        CR_TRANS = #crTrans:VARCHAR#,
+        CR_CASH = #crCash:VARCHAR#,
+        DR_CLR = #drClr:VARCHAR#,
+        DR_TRANS = #drTrans:VARCHAR#,
+        DR_CASH = #drCash:VARCHAR#,
+        RECONS = #recons:VARCHAR#,
+        F_TRANS_DT = #fTransDt:DATE#,
+        L_TRANS_DT = #lTransDt:DATE#,
+        TRANSPOST = #transpost:VARCHAR#,
+        POSTMODE = #postmode:VARCHAR#,
+        BALANCETYPE = #balancetype:VARCHAR#,
+        GLBALANCE = #glbalance:NUMERIC#,
+<!--		AC_OPEN_DT = #acOpenDt:DATE#,
+		AC_CLOSE_DT = #acCloseDt:DATE#, 
+		AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+		AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+		AUTHORIZE_DT = #authorizeDt:DATE#,-->
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#,
+        NEGATIVE_ALLOWED = #negativeAllowed:VARCHAR#,
+        HO_ACCT = #hoAcct:VARCHAR#,
+        RECONS_AC_HD_ID = #reconsAcHdId:VARCHAR#,
+        DAY_END_ZERO_CHECK = #dayEndZeroCheck:VARCHAR#,
+        ALLOW_CUSTOMER_ACNUM=#chkCustomerAllow:VARCHAR#,
+        SERVICE_TAX_APPLICABLE =#cbServiceTax:VARCHAR#,AUTHORIZE_STATUS = null,
+        SERVICE_TAX_ID = #serviceTaxId:VARCHAR#
+        WHERE AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>
+        
+
+	<!-- Use AccountMaintenanceTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAccountMaintenanceTO" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE AC_HD_ID = #acHdId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to AccountMaintenanceTO object (JavaBean) properties -->
+    <result-map name="getAccountMaintenanceTOResult" class="com.see.truetransact.transferobject.generalledger.AccountMaintenanceTO">
+        <property name="acHdId" column="AC_HD_ID"/>
+        <property name="floatAct" column="FLOAT_ACT"/>
+        <property name="contraAct" column="CONTRA_ACT"/>
+        <property name="crClr" column="CR_CLR"/>
+        <property name="crTrans" column="CR_TRANS"/>
+        <property name="crCash" column="CR_CASH"/>
+        <property name="drClr" column="DR_CLR"/>
+        <property name="drTrans" column="DR_TRANS"/>
+        <property name="drCash" column="DR_CASH"/>
+        <property name="recons" column="RECONS"/>
+        <property name="fTransDt" column="F_TRANS_DT"/>
+        <property name="lTransDt" column="L_TRANS_DT"/>
+        <property name="transpost" column="TRANSPOST"/>
+        <property name="postmode" column="POSTMODE"/>
+        <property name="balancetype" column="BALANCETYPE"/>
+        <property name="glbalance" column="GLBALANCE"/>
+        <property name="acOpenDt" column="AC_OPEN_DT"/>
+        <property name="acCloseDt" column="AC_CLOSE_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="negativeAllowed" column="NEGATIVE_ALLOWED"/>
+        <property name="hoAcct" column="HO_ACCT"/>
+        <property name="reconsAcHdId" column="RECONS_AC_HD_ID"/>
+        <property name="dayEndZeroCheck" column="DAY_END_ZERO_CHECK"/>
+        <property name="chkCustomerAllow" column="ALLOW_CUSTOMER_ACNUM"/>
+        <property name="cbServiceTax" column="SERVICE_TAX_APPLICABLE"/>
+        <property name="serviceTaxId" column="SERVICE_TAX_ID"/>
+    </result-map>
+    <mapped-statement name="getSelectAccountMaintenanceTO" result-map="getAccountMaintenanceTOResult" >
+        SELECT * FROM AC_HD_PARAM 
+        WHERE AC_HD_ID = #AC_HD_ID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getAccountHeadInfo" result-class="java.util.LinkedHashMap" >
+        SELECT LM.LOOKUP_DESC,MD.MJR_AC_HD_ID,MD.MJR_AC_HD_DESC,SD.SUB_AC_HD_ID,
+        SD.SUB_AC_HD_DESC,AD.AC_HD_CODE,AD.AC_HD_ID,AD.AC_HD_DESC
+        FROM AC_HD AD,MJR_AC_HD MD,SUB_AC_HD SD, LOOKUP_MASTER LM
+        WHERE AD.MJR_AC_HD_ID = MD.MJR_AC_HD_ID
+        AND MD.MJR_AC_HD_ID = SD.MJR_AC_HD_ID
+        AND AD.SUB_AC_HD_ID = SD.SUB_AC_HD_ID
+        AND MD.MJR_AC_HD_TYPE = LM.LOOKUP_REF_ID
+        AND AD.AC_HD_ID = #CALLINGCODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="accMaintenance.updateContraHdAlone" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET CONTRA_ACT = #acHdId:VARCHAR# WHERE AC_HD_ID = #contraAct:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="accMaintenance.getCountContraAcHd" result-class= "java.lang.Integer" >
+        SELECT COUNT (*) AS COUNT FROM AC_HD_PARAM WHERE AC_HD_ID = #contraAct:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="accMaintenance.resetContraAcHd" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET CONTRA_ACT = null where CONTRA_ACT = #acHdId:VARCHAR# OR CONTRA_ACT = #contraAct:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="accMaintenance.insertContraHdAlone" inline-parameters="true">
+        INSERT INTO AC_HD_PARAM
+        (AC_HD_ID, CONTRA_ACT, STATUS
+        ) VALUES (
+        #contraAct:VARCHAR#, #acHdId:VARCHAR#, #status:VARCHAR#)
+    </mapped-statement>
+        
+    <mapped-statement name="accMaintenance.getAcType_param" result-class="java.util.HashMap" >	
+              <!--  SELECT MJR_AC_HD_TYPE
+		FROM AC_HD A, MJR_AC_HD M
+  		WHERE A.MJR_AC_HD_ID=M.MJR_AC_HD_ID
+                    AND A.AC_HD_ID = #AC_HD_ID#
+                    AND (A.STATUS  NOT IN ('DELETED'))
+                    AND (A.AC_HD_ID NOT IN (SELECT AC_HD_ID FROM AC_HD_PARAM )) -->
+        SELECT MJR_AC_HD_TYPE
+        FROM AC_HD A, MJR_AC_HD M
+        WHERE A.MJR_AC_HD_ID=M.MJR_AC_HD_ID
+        AND A.AC_HD_ID = #AC_HD_ID:VARCHAR#
+        AND (A.STATUS  NOT IN ('DELETED'))
+        AND (NOT EXISTS (SELECT AC_HD_ID FROM AC_HD_PARAM WHERE A.AC_HD_ID=AC_HD_ID))
+    </mapped-statement>         
+        
+    <mapped-statement name="accMaintenance.getAcType" result-class="java.util.HashMap" >	
+        SELECT MJR_AC_HD_TYPE
+        FROM AC_HD A, MJR_AC_HD M
+        WHERE A.MJR_AC_HD_ID=M.MJR_AC_HD_ID
+        AND A.AC_HD_ID = #AC_HD_ID:VARCHAR#
+        AND (A.STATUS  NOT IN ('DELETED'))
+    </mapped-statement> 
+     <dynamic-mapped-statement name="getSelectReconcillationAcctHeads" result-class="java.util.LinkedHashMap">
+        SELECT AP.AC_HD_ID AS "A/C HEAD", A.AC_HD_DESC AS "Description" 
+        FROM AC_HD A, AC_HD_PARAM AP 
+        WHERE A.AC_HD_ID = AP.AC_HD_ID AND 
+        AP.STATUS NOT IN ('DELETED') AND 
+        AP.AUTHORIZE_STATUS IN ('AUTHORIZED') AND 
+        AP.RECONS = 'Y'
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="A/C HEAD">
+                    UPPER(AP.AC_HD_ID) LIKE UPPER('%$A/C Head$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="Description">
+                    UPPER(A.AC_HD_DESC) LIKE UPPER('%$Description$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+   </dynamic-mapped-statement>
+<!-- ==============================AUTHORIZATION===================================================== -->
+    <dynamic-mapped-statement name="getSelectAccMaintainAuthorizeTOList" result-class="java.util.LinkedHashMap" >
+        SELECT  MJR_AC_HD_TYPE AS "A/C Type", A.AC_HD_ID AS "A/C HEAD", 
+        A.AC_HD_CODE AS "A/C HEAD Code", 
+        AC_HD_DESC AS "A/C HEAD DESCRIPTION" 
+        FROM AC_HD A, MJR_AC_HD M, AC_HD_PARAM AHP
+        WHERE (A.MJR_AC_HD_ID=M.MJR_AC_HD_ID) 
+        AND (A.STATUS  NOT IN ('DELETED'))
+        AND (A.AC_HD_ID = AHP.AC_HD_ID)
+        AND AHP.STATUS  NOT IN ('DELETED') 
+        AND AHP.STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = AHP.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AHP.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AHP.AUTHORIZE_STATUS IS NULL OR 
+                AHP.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY MJR_AC_HD_TYPE, A.AC_HD_CODE
+    </dynamic-mapped-statement>
+
+	<!-- Use authorizeAccMaintain object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="authorizeAccMaintain" inline-parameters="true">
+        UPDATE AC_HD_PARAM SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE AC_HD_ID = #A/C HEAD:VARCHAR#
+    </mapped-statement>
+        
+        
+<!-- =================================================================================== -->        
+
+    <mapped-statement name="accMaintenance.getAcHead" result-class="java.util.HashMap" >	
+        SELECT AC_HD_CODE FROM AC_HD WHERE AC_HD_ID = #ACCT_HD:VARCHAR#
+    </mapped-statement>   
+
+    <mapped-statement name="accMaintenance.getAcHeadParam" result-class="java.util.HashMap" >	
+                <!--SELECT AC_HD_STATUS_ID FROM AC_HD_PARAM WHERE AC_HD_ID = #ACCT_HD#-->
+        SELECT STATUS FROM AC_HD_PARAM WHERE AC_HD_ID = #ACCT_HD:VARCHAR#
+    </mapped-statement>   
+
+    <mapped-statement name="getSelectAllGSTSettings" result-class="java.util.LinkedHashMap" >
+      SELECT ST.SERVICETAX_GEN_ID AS SERVICE_TAX,ST.KRISHI_KALYAN_CESS AS SGST,ST.KRISHI_HEAD_ID AS SGST_HEAD,
+      ST.SWACHH_CESS AS CGST,ST.SWACHH_HEAD_ID AS CGST_HEAD, ST.BRANCH_ID as BRANCH_ID
+      FROM SERVICE_TAX_SETTINGS ST 
+      WHERE ST.BRANCH_ID = #BRANCH_ID:VARCHAR#
+    </mapped-statement>
+
+        
+</sql-map>

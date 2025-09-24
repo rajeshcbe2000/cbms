@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="LodgementChequeTOMap">
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLodgementChequeTO" inline-parameters="true">
+        INSERT INTO BILLS_LODGEMENT_CHEQUE
+        (LODGEMENT_ID, DRAWEE_BANK_NAME, DRAWEE_BRANCH_NAME, INSTRUMENT_NO, INSTRUMENT_DT, INSTRUMENT_AMOUNT, MICR, PAYEE_NAME, REMARKS, STATUS, STATUS_BY, STATUS_DT,INSTR_PREFIX
+        ) VALUES (
+        #lodgementId:VARCHAR#, #draweeBankName:VARCHAR#, #draweeBranchName:VARCHAR#, #instrumentNo:VARCHAR#, #instrumentDt:DATE#, #instrumentAmount:NUMERIC#, #micr:VARCHAR#, #payeeName:VARCHAR#, #remarks:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#,#instrPrefix:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementChequeTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_CHEQUE SET 
+        LODGEMENT_ID = #lodgementId:VARCHAR#,
+        DRAWEE_BANK_NAME = #draweeBankName:VARCHAR#,
+        DRAWEE_BRANCH_NAME = #draweeBranchName:VARCHAR#,
+        INSTRUMENT_NO = #instrumentNo:VARCHAR#,
+        INSTRUMENT_DT = #instrumentDt:DATE#,
+        INSTRUMENT_AMOUNT = #instrumentAmount:NUMERIC#,
+        MICR = #micr:VARCHAR#,
+        PAYEE_NAME = #payeeName:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        INSTR_PREFIX=#instrPrefix:VARCHAR#
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementChequeTO" inline-parameters="true">
+        UPDATE BILLS_LODGEMENT_CHEQUE SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE LODGEMENT_ID = #lodgementId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LodgementInstructionsTO object (JavaBean) properties -->
+    <result-map name="getLodgementChequeTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementChequeTO">
+        <property name="lodgementId" column="LODGEMENT_ID"/>
+        <property name="draweeBankName" column="DRAWEE_BANK_NAME"/>
+        <property name="draweeBranchName" column="DRAWEE_BRANCH_NAME"/>
+        <property name="instrumentNo" column="INSTRUMENT_NO"/>
+        <property name="instrumentDt" column="INSTRUMENT_DT"/>
+        <property name="instrumentAmount" column="INSTRUMENT_AMOUNT"/>
+        <property name="micr" column="MICR"/>
+        <property name="payeeName" column="PAYEE_NAME"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="instrPrefix" column="INSTR_PREFIX"/>
+    </result-map>
+    <mapped-statement name="getSelectLodgementChequeTO" result-map="getLodgementChequeTOResult" >
+        SELECT * FROM BILLS_LODGEMENT_CHEQUE 
+        WHERE LODGEMENT_ID = #value# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+        
+        
+        <!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLodgementRemitTO" inline-parameters="true">
+        INSERT INTO BILLS_REMIT_DETAILS
+        (REMIT_PROD_ID, REMIT_CITY, REMIT_DRAWEE_BANK, REMIT_DRAWEE_BRANCH_CODE, REMIT_FAVOURING, 
+        REMIT_STATUS, REMIT_INST_NO1, REMIT_INST_NO2, LODGE_ID, REMIT_AMT, REMIT_INST_DT, BILLS_ACTIVITY, REMIT_FAVOUR_IN
+        ) VALUES (
+        #remitProdId:VARCHAR#, #remitCity:VARCHAR#, #remitDraweeBank:VARCHAR#, #remitDraweeBranchCode:VARCHAR#, cast(#remitFavouring# as numeric), #remitStatus:VARCHAR#, #remitInst1:VARCHAR#, #remitInst2:VARCHAR#, #lodgeID:VARCHAR#, #remitInstAmt:NUMERIC#, #remitInstDt:DATE#, #billActivity:VARCHAR#, #remitFavouringIn:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementRemitTO" inline-parameters="true">
+        UPDATE BILLS_REMIT_DETAILS SET 
+        REMIT_PROD_ID = #remitProdId:VARCHAR#,
+        REMIT_CITY = #remitCity:VARCHAR#,
+        REMIT_DRAWEE_BANK = #remitDraweeBank:VARCHAR#,
+        REMIT_DRAWEE_BRANCH_CODE = #remitDraweeBranchCode:VARCHAR#,
+        REMIT_FAVOURING = #remitFavouring:VARCHAR#,
+        REMIT_STATUS = #remitStatus:VARCHAR#,
+        REMIT_INST_NO1 = #remitInst1:VARCHAR#,
+        REMIT_INST_NO2 = #remitInst2:VARCHAR#,
+        LODGE_ID = #lodgeID:VARCHAR#,
+        REMIT_AMT = #remitInstAmt:NUMERIC#,
+        REMIT_INST_DT = #remitInstDt:DATE#,
+        BILLS_ACTIVITY = #billActivity:VARCHAR#,
+        REMIT_FAVOUR_IN = #remitFavouringIn:VARCHAR#
+        WHERE LODGE_ID = #lodgeID:VARCHAR# AND REMIT_STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementRemitTO" inline-parameters="true">
+        UPDATE BILLS_REMIT_DETAILS SET 
+        REMIT_STATUS = #status:VARCHAR#
+        WHERE LODGE_ID = #lodgeID:VARCHAR# AND REMIT_STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="deleteLodgementRemit" inline-parameters="true">
+        UPDATE BILLS_REMIT_DETAILS SET 
+        REMIT_STATUS = 'DELETED'
+        WHERE LODGE_ID = #LODGEMENT_ID:VARCHAR# AND REMIT_STATUS NOT IN ('DELETED')
+        AND BILLS_ACTIVITY = #BILL_STATUS:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LodgementInstructionsTO object (JavaBean) properties -->
+    <result-map name="getLodgementRemitTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementRemitTO">
+        <property name="remitProdId" column="REMIT_PROD_ID"/>
+        <property name="remitCity" column="REMIT_CITY"/>
+        <property name="remitDraweeBank" column="REMIT_DRAWEE_BANK"/>
+        <property name="remitDraweeBranchCode" column="REMIT_DRAWEE_BRANCH_CODE"/>
+        <property name="remitFavouring" column="REMIT_FAVOURING"/>
+        <property name="remitStatus" column="REMIT_STATUS"/>
+        <property name="remitInst1" column="REMIT_INST_NO1"/>
+        <property name="remitInst2" column="REMIT_INST_NO2"/>
+        <property name="lodgeID" column="LODGE_ID"/>
+        <property name="remitInstAmt" column="REMIT_AMT"/>
+        <property name="remitInstDt" column="REMIT_INST_DT"/>
+        <property name="billActivity" column="BILLS_ACTIVITY"/>
+        <property name="remitFavouringIn" column="REMIT_FAVOUR_IN"/>
+    </result-map>
+    <mapped-statement name="getSelectLodgementRemitTO" result-map="getLodgementRemitTOResult" >
+		<!--SELECT * FROM BILLS_REMIT_DETAILS 
+		WHERE LODGE_ID = #value# AND REMIT_STATUS NOT IN ('DELETED')
+                AND BILLS_ACTIVITY = #value#-->
+        SELECT * FROM BILLS_REMIT_DETAILS 
+        WHERE LODGE_ID = #LODGEMENT_ID:VARCHAR# AND REMIT_STATUS NOT IN ('DELETED')
+        AND BILLS_ACTIVITY = #BILL_STATUS:VARCHAR#
+    </mapped-statement>
+
+          <!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertLodgementBillRatesTO" inline-parameters="true">
+        INSERT INTO BILLS_RATES
+        (LODGE_ID, DELAYED_RATE_CHQ, NO_INT_DAYS, DISCOUNT_RATE_BD, OVERDUE_RATE_BD, 
+        INTEREST_RATE_CBP, AT_PAR_LIMIT, OVERDUE_RATE_CBP, TRANS_PERIOD, POSTAGE_RATE, STATUS, INT_FOR_ICC
+        ) VALUES (
+        #lodgeID:NUMERIC#, #rateForDelay:NUMERIC#, #noOfIntDays:NUMERIC#, #discountRateBd:NUMERIC#, #overdueRateBd:NUMERIC#, #interestRateCbp:NUMERIC#, #atParLimit:NUMERIC#, #overdueRateCbp:NUMERIC#, #transPeriod:NUMERIC#, #postageRate:NUMERIC#, #status:VARCHAR#, #intIcc:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateLodgementBillRatesTO" inline-parameters="true">
+        UPDATE BILLS_RATES SET 
+        LODGE_ID = #lodgeID:NUMERIC#,
+        DELAYED_RATE_CHQ = #rateForDelay:NUMERIC#,
+        NO_INT_DAYS = #noOfIntDays:NUMERIC#,
+        DISCOUNT_RATE_BD = #discountRateBd:NUMERIC#,
+        OVERDUE_RATE_BD = #overdueRateBd:NUMERIC#,
+        INTEREST_RATE_CBP = #interestRateCbp:NUMERIC#,
+        AT_PAR_LIMIT = #atParLimit:NUMERIC#,
+        OVERDUE_RATE_CBP = #overdueRateCbp:NUMERIC#,
+        TRANS_PERIOD = #transPeriod:NUMERIC#,
+        POSTAGE_RATE = #postageRate:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        INT_FOR_ICC = #intIcc:VARCHAR#
+        WHERE LODGE_ID = #lodgeID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use LodgementInstructionsTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteLodgementBillRatesTO" inline-parameters="true">
+        UPDATE BILLS_RATES SET 
+        STATUS = #status:VARCHAR#
+        WHERE LODGE_ID = #lodgeID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to LodgementInstructionsTO object (JavaBean) properties -->
+    <result-map name="getLodgementBillRatesTOResult" class="com.see.truetransact.transferobject.bills.lodgement.LodgementBillRatesTO">
+        <property name="lodgeID" column="LODGE_ID"/>
+        <property name="rateForDelay " column="DELAYED_RATE_CHQ"/>
+        <property name="noOfIntDays" column="NO_INT_DAYS"/>
+        <property name="discountRateBd" column="DISCOUNT_RATE_BD"/>
+        <property name="overdueRateBd" column="OVERDUE_RATE_BD"/>
+        <property name="interestRateCbp" column="INTEREST_RATE_CBP"/>
+        <property name="atParLimit" column="AT_PAR_LIMIT"/>
+        <property name="overdueRateCbp" column="OVERDUE_RATE_CBP"/>
+        <property name="transPeriod" column="TRANS_PERIOD "/>
+        <property name="postageRate" column="POSTAGE_RATE"/>
+        <property name="status" column="STATUS"/>
+        <property name="intIcc" column="INT_FOR_ICC"/>
+    </result-map>
+    <mapped-statement name="getSelectLodgementBillRatesTO" result-map="getLodgementBillRatesTOResult" >
+        SELECT * FROM BILLS_RATES 
+        WHERE LODGE_ID = #LODGEMENT_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+</sql-map>

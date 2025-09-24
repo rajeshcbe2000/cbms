@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="NeftRtgsMap">
+    
+    <mapped-statement name="insertRtgsNeftAcknowledgementTO" inline-parameters="true">
+        INSERT INTO RTGS_NEFT_ACKNOWLEDGEMENT
+        (ACCT_NUM,ACCT_STATUS ,ACK_DATE, AMOUNT ,INIT_BRANCH_ID,HOME_IFS_CODE,OTHER_BANK_IFS_CODE,REMARKS,STATUS,UTR_NUMBER,
+        PROD_ID,SENDER_ACT_NO,SENDER_NAME,BENEFICIARY_NAME,BATCH_ID,INWARD_FAIL_ACK_UTR,FILE_NAME,CLIENT_CODE,CR_ACCT_NUM,BENEFICIARY_BANK
+        ) 
+        VALUES 
+        (
+        #acctNum:VARCHAR#, #acctStatus:VARCHAR#, #ackDate:DATE#,#amount:NUMBER#,#initBranchId:VARCHAR#,#homeIfsCode:DATE#,
+        #otherBrankIfsCode:VARCHAR#,#remarks:NUMBER#,#status:VARCHAR#,#inwardUTR:VARCHAR#,#prodid:VARCHAR#,#otherBankAcctNum:VARCHAR#,
+        #otherBankCustName:VARCHAR#,#beneficiaryName:VARCHAR#,#batch_id:VARCHAR#,#inwardFAilAckUTR:VARCHAR#,#fileName:VARCHAR#,
+        #client_Code:VARCHAR#, #cr_Acct_Num:VARCHAR#, #beneficiary_Bank:VARCHAR#
+        )
+    </mapped-statement> 
+    
+    <mapped-statement name="insertRtgsNeftAcknowledgementAxisBankTO" inline-parameters="true">
+        INSERT INTO RTGS_NEFT_ACKNOWLEDGEMENT
+        (ACCT_NUM,ACCT_STATUS ,ACK_DATE, AMOUNT ,INIT_BRANCH_ID,HOME_IFS_CODE,OTHER_BANK_IFS_CODE,REMARKS,STATUS,UTR_NUMBER,
+        PROD_ID,SENDER_ACT_NO,SENDER_NAME,BENEFICIARY_NAME,BATCH_ID,INWARD_FAIL_ACK_UTR,FILE_NAME,CLIENT_CODE,CR_ACCT_NUM,
+        BENEFICIARY_BANK,VALUE_DATE,CORPORATE_CODE
+        ) 
+        VALUES 
+        (
+        #acctNum:VARCHAR#, #acctStatus:VARCHAR#, #ackDate:DATE#,#amount:NUMBER#,#initBranchId:VARCHAR#,#homeIfsCode:DATE#,
+        #otherBrankIfsCode:VARCHAR#,#remarks:NUMBER#,#status:VARCHAR#,#inwardUTR:VARCHAR#,#prodid:VARCHAR#,#otherBankAcctNum:VARCHAR#,
+        #otherBankCustName:VARCHAR#,#beneficiaryName:VARCHAR#,#batch_id:VARCHAR#,#inwardFAilAckUTR:VARCHAR#,#fileName:VARCHAR#,
+        #client_Code:VARCHAR#, #cr_Acct_Num:VARCHAR#, #beneficiary_Bank:VARCHAR#, #valueDate:DATE#, #corporateCode:VARCHAR#
+        )
+    </mapped-statement> 
+    
+    <mapped-statement name="getAcctHeadforAcct" result-class="java.util.HashMap">
+        SELECT * FROM ALL_PRODUCTS WHERE PROD_ID =#PROD_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="checkUTRNumberExists" result-class="java.util.HashMap">
+        SELECT * FROM RTGS_NEFT_ACKNOWLEDGEMENT WHERE UTR_NUMBER IN($UTR_NUMBER$) <!--AND ACK_DATE=#CURR_DATE#  -->
+    </mapped-statement>
+    
+    <mapped-statement name="insertRTGSAckFileName" result-class="java.util.HashMap">
+        INSERT INTO RTGS_OUTWARD_ACK (FILE_NAME, APPL_DT, STATUS_DT, FILE_RECEIVED_COUNT) VALUES 
+        (#FILE_NAME:VARCHAR#, #APPL_DT:DATE#, (SELECT SYS_DATE() FROM DUAL), #COUNT:NUMBER#)
+    </mapped-statement>
+    
+    <mapped-statement name="getCheckFileExistOutwardAck" result-class="java.util.HashMap">
+        SELECT * FROM RTGS_OUTWARD_ACK WHERE FILE_NAME = #FILE_NAME:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="updateRTGSAckFileReceivedCount" result-class="java.util.HashMap">
+        UPDATE RTGS_OUTWARD_ACK SET FILE_RECEIVED_COUNT=NVL(FILE_RECEIVED_COUNT,1)+1 WHERE FILE_NAME = #FILE_NAME:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTransferTransRTGSNEFTDetails" result-class="java.util.HashMap">
+       SELECT AC.AC_HD_DESC AS AC_HD_ID,TT.BATCH_ID,TT.TRANS_ID,TT.ACT_NUM,TT.TRANS_TYPE,TT.AMOUNT,TT.PARTICULARS,
+       TT.PROD_ID,TT.PROD_TYPE,TT.SINGLE_TRANS_ID FROM TRANSFER_TRANS TT,AC_HD  AC WHERE LINK_BATCH_ID=#BATCH_ID# AND 
+       TRANS_DT=#TRANS_DT# AND INITIATED_BRANCH=#BRANCH_CODE# AND TT.STATUS!='DELETED' AND 
+       (AUTHORIZE_STATUS_2 ='ENTERED_AMOUNT' OR AUTHORIZE_STATUS_2 IS NULL)  AND (TT.AUTHORIZE_STATUS IS NULL OR TT.AUTHORIZE_STATUS!='REJECTED') AND 
+       TT.AC_HD_ID=AC.AC_HD_ID    
+       ORDER BY TRANS_ID
+    </dynamic-mapped-statement>
+    
+</sql-map>

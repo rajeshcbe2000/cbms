@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="SMSParameterMap">
+
+	<!-- Use SMSParameter object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertSMSParameter" inline-parameters="true">
+        INSERT INTO SMS_PARAMETER
+        (PROD_TYPE, PROD_ID, DR_CASH, CR_CASH, DR_TRANSFER, CR_TRANSFER, 
+        DR_CLEARING, CR_CLEARING, DR_CASH_AMT, CR_CASH_AMT, DR_TRANSFER_AMT, 
+        CR_TRANSFER_AMT, DR_CLEARING_AMT, CR_CLEARING_AMT, REMARKS, 
+        CREATED_DT, CREATED_BY, STATUS, STATUS_DT, STATUS_BY, 
+        AUTHORIZE_STATUS, AUTHORIZED_BY, AUTHORIZED_DT,REMINDER,TXN_ALLOWED
+        ) VALUES (
+        #prodType:VARCHAR#, #prodId:VARCHAR#, #drCash:VARCHAR#, #crCash:VARCHAR#, #drTransfer:VARCHAR#, 
+        #crTransfer:VARCHAR#, #drClearing:VARCHAR#, #crClearing:VARCHAR#, #drCashAmt:NUMERIC#, #crCashAmt:NUMERIC#, #drTransferAmt:NUMERIC#, 
+        #crTransferAmt:NUMERIC#, #drClearingAmt:NUMERIC#, #crClearingAmt:NUMERIC#, #remarks:VARCHAR#, 
+        #createdDt:DATE#, #createdBy:VARCHAR#, #status:VARCHAR#, (SELECT SYS_DATE() FROM DUAL), #statusBy:VARCHAR#, 
+        #authorizeStatus:VARCHAR#, #authorizedBy:VARCHAR#, #authorizedDt:DATE#,#reminder:VARCHAR#,#txnAllowed:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use SMSParameter object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateSMSParameter" inline-parameters="true">
+        UPDATE SMS_PARAMETER SET 
+        DR_CASH = #drCash:VARCHAR#,
+        CR_CASH = #crCash:VARCHAR#,
+        DR_TRANSFER = #drTransfer:VARCHAR#,
+        CR_TRANSFER = #crTransfer:VARCHAR#,
+        DR_CLEARING = #drClearing:VARCHAR#,
+        CR_CLEARING = #crClearing:VARCHAR#,
+        DR_CASH_AMT = #drCashAmt:NUMERIC#,
+        CR_CASH_AMT = #crCashAmt:NUMERIC#,
+        DR_TRANSFER_AMT = #drTransferAmt:NUMERIC#,
+        CR_TRANSFER_AMT = #crTransferAmt:NUMERIC#,
+        DR_CLEARING_AMT = #drClearingAmt:NUMERIC#,
+        CR_CLEARING_AMT = #crClearingAmt:NUMERIC#,
+        REMARKS = #remarks:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL),
+        STATUS_BY = #statusBy:VARCHAR#,
+        REMINDER = #reminder:VARCHAR#,
+        TXN_ALLOWED = #txnAllowed:VARCHAR#,
+        AUTHORIZE_STATUS = null
+        WHERE PROD_TYPE = #prodType:VARCHAR# AND PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use SMSParameter object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteSMSParameter" inline-parameters="true">
+        UPDATE SMS_PARAMETER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL) 
+        WHERE PROD_TYPE = #prodType:VARCHAR# AND PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteSMSParameterWithMDSType" inline-parameters="true">
+        DELETE FROM SMS_PARAMETER 
+        WHERE PROD_TYPE = #prodType:VARCHAR# AND PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use SMSParameter object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="authorizeSMSParameter" inline-parameters="true">
+        UPDATE SMS_PARAMETER SET 
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#, 
+        AUTHORIZED_BY = #authorizedBy:VARCHAR#, 
+        AUTHORIZED_DT = #authorizedDt:DATE# 
+        WHERE PROD_TYPE = #prodType:VARCHAR# AND PROD_ID=#prodId:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to SMSParameter object (JavaBean) properties -->
+    <result-map name="getSMSParameterResult" class="com.see.truetransact.transferobject.sms.SMSParameterTO">
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="drCash" column="DR_CASH"/>
+        <property name="crCash" column="CR_CASH"/>
+        <property name="drTransfer" column="DR_TRANSFER"/>
+        <property name="crTransfer" column="CR_TRANSFER"/>
+        <property name="drClearing" column="DR_CLEARING"/>
+        <property name="crClearing" column="CR_CLEARING"/>
+        <property name="drCashAmt" column="DR_CASH_AMT"/>
+        <property name="crCashAmt" column="CR_CASH_AMT"/>
+        <property name="drTransferAmt" column="DR_TRANSFER_AMT"/>
+        <property name="crTransferAmt" column="CR_TRANSFER_AMT"/>
+        <property name="drClearingAmt" column="DR_CLEARING_AMT"/>
+        <property name="crClearingAmt" column="CR_CLEARING_AMT"/>
+        <property name="remarks" column="REMARKS"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+        <property name="reminder" column="REMINDER"/>
+        <property name="txnAllowed" column="TXN_ALLOWED"/>
+    </result-map>
+        
+    <mapped-statement name="getSelectSMSParameter" result-map="getSMSParameterResult" >
+        SELECT * FROM SMS_PARAMETER 
+        WHERE PROD_TYPE = #PROD_TYPE:VARCHAR# AND PROD_ID=#PROD_ID:VARCHAR# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR
+        AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+        
+    <mapped-statement name="getExistanceOfSMSProdId" result-class="java.lang.Integer" >
+        SELECT COUNT(*) as CNT FROM SMS_PARAMETER 
+        WHERE PROD_TYPE = #PRODUCT_TYPE:VARCHAR# AND PROD_ID=#PRODUCT_ID:VARCHAR# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR
+        AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+
+    <dynamic-mapped-statement name="getSelectSMSParameterTO" result-class="java.util.LinkedHashMap" >
+        SELECT PROD_TYPE, PROD_ID, DR_CASH, CR_CASH, DR_TRANSFER, CR_TRANSFER, DR_CLEARING, CR_CLEARING FROM SMS_PARAMETER 
+        <dynamic> <!-- This dynamic statement given by Rajesh. This statement passes the AUTHORIZE_STATUS if we passed -->
+            <isParameterPresent>
+                <isNotNull prepend="WHERE" property="AUTHORIZE_STATUS"> 
+                    AUTHORIZE_STATUS IS NULL
+                </isNotNull> 
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getSelectSMSParameterForAlerts" result-map="getSMSParameterResult" >
+        SELECT * FROM SMS_PARAMETER 
+        WHERE PROD_TYPE = #PROD_TYPE:VARCHAR# AND PROD_ID=#PROD_ID:VARCHAR# AND
+        STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NOT NULL AND
+        AUTHORIZE_STATUS = 'AUTHORIZED')
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectGroupSMSParameter" result-class="java.util.HashMap" >
+        SELECT LOOKUP_REF_ID FROM LOOKUP_MASTER WHERE LOOKUP_ID= 'CUSTOMER.CUSTOMERGROUP' AND STATUS !='DELETED'
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectGroupMobileParameter" result-class="java.util.HashMap" >
+        SELECT PHONE_NUMBER FROM CUSTOMER C ,CUST_PHONE  CP WHERE  C.CUST_ID=CP.CUST_ID AND C.AUTHORIZE_STATUS='AUTHORIZED' AND C.STATUS !='DELETED' AND 
+        PHONE_NUMBER IS NOT NULL  AND  CP.STATUS !='DELETED'   
+            
+        <dynamic>
+            <isNotEmpty prepend=" AND C.CUSTOMERGROUP  IN ( " property="CUST_GROUP">
+                $CUST_GROUP$ )
+            </isNotEmpty>
+        </dynamic>
+            
+           
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectShareTypeListofAccts" result-class = "java.util.HashMap" >
+        SELECT SHARE_ACCT_NO,SS.MOBILE_NO MOBILE_NO, PKGREPORTS.GETCUSTFULLNAME(SA.CUST_ID, 1) CUST_NAME FROM 
+        SHARE_ACCT SA,SMS_SUBSCRIPTION SS WHERE SA.SHARE_ACCT_NO = SS.ACT_NUM AND SHARE_TYPE = #SHARE_TYPE:VARCHAR# AND 
+        ACCT_STATUS != 'CLOSED' AND SA.STATUS != 'DELETED' AND SA.AUTHORIZE = 'AUTHORIZED' AND SS.STATUS != 'DELETED' AND 
+        SS.AUTHORIZE_STATUS = 'AUTHORIZED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectOATypeListofAccts" result-class = "java.util.HashMap" >
+        SELECT ACT.ACT_NUM as SHARE_ACCT_NO, ss.mobile_no mobile_no,
+        pkgreports.getcustfullname (act.cust_id, 1) cust_name
+        FROM ACT_MASTER act, sms_subscription ss
+        WHERE ACT.ACT_NUM = ss.act_num   
+        AND ACT.ACT_STATUS_ID != 'CLOSED'
+        AND act.status != 'DELETED'
+        AND ACT.AUTHORIZATION_STATUS = 'AUTHORIZED'
+        AND ss.status != 'DELETED'        
+        AND ss.authorize_status = 'AUTHORIZED'
+        AND ACT.PROD_ID = #SHARE_TYPE:VARCHAR#
+         <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="SELECTED_BRANCH">
+                    ACT.BRANCH_CODE = #SELECTED_BRANCH:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        order by share_acct_no
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectMDSTypeListofAccts" result-class = "java.util.HashMap" >
+        SELECT ma.chittal_no AS share_acct_no, ss.mobile_no mobile_no,
+        pkgreports.getcustfullname (ma.cust_id, 1) cust_name
+        FROM mds_application ma,MDS_SCHEME_DETAILS msd ,sms_subscription ss
+        WHERE ma.chittal_no = ss.act_num
+        and MSD.SCHEME_NAME = MA.SCHEME_NAME
+        AND ma.status != 'DELETED'
+        AND ma.authorize_status = 'AUTHORIZED'
+        AND ss.status != 'DELETED'
+        AND ss.prod_type = 'MDS'
+        AND ss.authorize_status = 'AUTHORIZED'
+        AND ma.scheme_name = #SHARE_TYPE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="SELECTED_BRANCH">
+                    msd.branch_code = #SELECTED_BRANCH:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>    
+        order by share_acct_no
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectTDTypeListofAccts" result-class = "java.util.HashMap" >
+        SELECT DA.DEPOSIT_NO as SHARE_ACCT_NO, ss.mobile_no mobile_no,
+        pkgreports.getcustfullname (da.cust_id, 1) cust_name
+        FROM DEPOSIT_ACINFO da, sms_subscription ss, DEPOSIT_SUB_ACINFO dsa
+        where DA.DEPOSIT_NO = DSA.DEPOSIT_NO 
+        and DA.DEPOSIT_NO = SS.ACT_NUM
+        and DSA.ACCT_STATUS != 'CLOSED'
+        and DA.STATUS != 'DELETED'
+        and DA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        and DSA.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND SS.STATUS != 'DELETED'
+        AND ss.authorize_status = 'AUTHORIZED'
+        AND DA.PROD_ID = #SHARE_TYPE:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="SELECTED_BRANCH">
+                      DA.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>       
+        order by share_acct_no
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectTLTypeListofAccts" result-class = "java.util.HashMap" >        
+        SELECT LFD.ACCT_NUM as SHARE_ACCT_NO, ss.mobile_no mobile_no,
+        pkgreports.getcustfullname (LB.CUST_ID, 1) cust_name
+        FROM LOANS_FACILITY_DETAILS lfd, LOANS_BORROWER LB, sms_subscription ss
+        where LFD.ACCT_NUM = SS.ACT_NUM
+        AND LFD.BORROW_NO = LB.BORROW_NO
+        and LFD.STATUS != 'DELETED'
+        and LFD.ACCT_STATUS != 'CLOSED'
+        AND LFD.AUTHORIZE_STATUS_1 = 'AUTHORIZED'
+        AND SS.STATUS != 'DELETED'
+        AND ss.authorize_status = 'AUTHORIZED'
+        AND LFD.PROD_ID = #SHARE_TYPE:VARCHAR#        
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend="AND"  property="SELECTED_BRANCH">
+                     LFD.BRANCH_ID = #SELECTED_BRANCH:VARCHAR#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>     
+        order by share_acct_no
+    </dynamic-mapped-statement>
+    
+</sql-map>

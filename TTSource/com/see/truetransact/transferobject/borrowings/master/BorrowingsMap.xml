@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BorrowingsMap">
+
+	<!-- Use TokenConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <dynamic-mapped-statement name="Borrowings.getSelectAcctHeadTOList" result-class="java.util.LinkedHashMap" >
+        SELECT AC_HD_CODE, AC_HD_DESC, AC_HD_ID FROM AC_HD 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+        <dynamic>
+         <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AC_HD_CODE">
+                    UPPER(AC_HD_CODE) LIKE UPPER('%$AC_HD_CODE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="AC_HD_DESC">
+                    UPPER(AC_HD_DESC) LIKE UPPER('%$AC_HD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="AC_HD_ID">
+                    UPPER(AC_HD_ID) LIKE UPPER('%$AC_HD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="Borrowings.getSelectBorrowingsList" result-class="java.util.LinkedHashMap" >
+        SELECT BORROWING_NO, BORRWING_REFNO, DESCRIPTION FROM BORROWING_MASTER 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL )
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectBorrowingsDeleteList" result-class="java.util.LinkedHashMap" >
+        SELECT BORROWING_NO, BORRWING_REFNO, DESCRIPTION FROM BORROWING_MASTER 
+        WHERE STATUS!='DELETED' AND (AUTHORIZE_STATUS IS NULL OR AUTHORIZE_STATUS='AUTHORIZED')  AND
+        BORRWING_REFNO NOT IN(SELECT BORRWING_REFNO FROM BORROWING_DISBURSAL WHERE STATUS!='DELETED' AND 
+        AUTHORIZE_STATUS='AUTHORIZED') AND 
+        BORRWING_REFNO NOT IN(SELECT BORRWING_REFNO FROM BORROWING_REP_INT_CLS WHERE STATUS!='DELETED' AND 
+        AUTHORIZE_STATUS='AUTHORIZED') ORDER BY BORROWING_NO
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="insertBorrowingTO" inline-parameters="true">
+        INSERT INTO BORROWING_MASTER
+        (BORROWING_NO, AGENCY_CODE, BORRWING_REFNO, TYPE,DESCRIPTION,SANCTION_DATE,SANCTION_AMT, 
+        AMOUNT_BORRWED, RATE_INTEREST, NO_OF_INSTALLMENTS, PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,
+        SANCTION_EXP_DATE,SECURITY_DET,PRINCIPAL_GRP_HEAD,INT_GRP_HEAD,PENAL_GRP_HEAD,
+        CHARGES_GRP_HEAD,AUTHORIZE_STATUS,AUTHORIZED_BY,AUTHORIZED_DT,STATUS,MULTI_DISBURSAL,PENAL_INTEREST_RATE
+        ,RENEWAL_REQUIRED,AVAL_BALANCE,CLEAR_BALANCE,SANCTION_NO,GOVERMENT_LOAN,CREATED_BY
+        ) VALUES 
+        (#borrowingNo:VARCHAR#, #agencyCode:VARCHAR#, #borrowingrefNo:VARCHAR#, #type:VARCHAR#, 
+        #description:VARCHAR#,#sanctionDate:DATE#,#sanctionAmt:NUMBER#, #amount:NUMBER#,
+        #rateofInt:NUMBER#, #noofInstallments:NUMBER#, #prinRepFrq:VARCHAR#, #intRepFrq:VARCHAR#,
+        #morotorium:VARCHAR#,#sanctionExpDate:DATE#,#secDetails:VARCHAR#,#prinGrpHead:VARCHAR#,
+        #intGrpHead:VARCHAR#,#penGrpHead:VARCHAR#,#chargeGrpHead:VARCHAR#,#authorizeStatus:VARCHAR#,
+        #authorizeBy:VARCHAR#,#authorizeDte:DATE#,#status:VARCHAR#,#multiDis:VARCHAR#,
+        #penalIntRate:VARCHAR#,#renReq:VARCHAR#,#availBalance:NUMBER#,#amount:NUMBER#,#sanOrderNo:VARCHAR#,#govtLoan:VARCHAR#,#createdBy:VARCHAR#)
+    </mapped-statement> 
+    <mapped-statement name="updateBorrowingTO" inline-parameters="true">
+        UPDATE BORROWING_MASTER SET 
+        BORROWING_NO = #borrowingNo:VARCHAR#,
+        AGENCY_CODE = #agencyCode:VARCHAR#,
+        BORRWING_REFNO = #borrowingrefNo:VARCHAR#,
+        TYPE = #type:VARCHAR#,
+        DESCRIPTION = #description:VARCHAR#,
+        SANCTION_DATE =#sanctionDate:DATE#,
+        SANCTION_AMT = #sanctionAmt:NUMBER#,
+        AMOUNT_BORRWED = #amount:NUMBER#,
+        RATE_INTEREST = #rateofInt:NUMBER#,
+        NO_OF_INSTALLMENTS = #noofInstallments:NUMBER#,
+        PRINC_REP_FRQ = #prinRepFrq:VARCHAR#,
+        INT_REP_FRQ = #intRepFrq:VARCHAR#,
+        MOROTORIUM = #morotorium:VARCHAR#,
+        SANCTION_EXP_DATE = #sanctionExpDate:DATE#,
+        SECURITY_DET = #secDetails:VARCHAR#,
+        PRINCIPAL_GRP_HEAD = #prinGrpHead:VARCHAR#,
+        INT_GRP_HEAD = #intGrpHead:VARCHAR#,
+        PENAL_GRP_HEAD = #penGrpHead:VARCHAR#,
+        CHARGES_GRP_HEAD = #chargeGrpHead:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZED_DT = #authorizeDte:DATE#,
+        STATUS = #status:VARCHAR#,
+        PENAL_INTEREST_RATE=#penalIntRate:VARCHAR#,
+        MULTI_DISBURSAL=#multiDis:VARCHAR#,
+        RENEWAL_REQUIRED=#renReq:VARCHAR#,
+        AVAL_BALANCE=#sanctionAmt:NUMBER#,
+        SANCTION_NO=#sanOrderNo:VARCHAR#,
+        GOVERMENT_LOAN=#govtLoan:VARCHAR#
+        WHERE BORROWING_NO = #borrowingNo:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	
+    <mapped-statement name="deleteBorrowingTO" inline-parameters="true">
+        UPDATE BORROWING_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#
+        WHERE BORROWING_NO = #borrowingNo:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <mapped-statement name="updateExpDate" inline-parameters="true">
+        UPDATE BORROWING_MASTER SET 
+        SANCTION_EXP_DATE = #SANCTION_EXP_DATE:DATE# 
+        WHERE BORROWING_NO = #BORROWING_NO:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement> 
+        
+        
+                <!-- ============================Authorization Queries=========================================================== -->  
+
+    <dynamic-mapped-statement name="getBorrowingAuthorizeList" result-class="java.util.LinkedHashMap">
+    SELECT   borrowing_no, borrwing_refno, description
+    FROM borrowing_master tc
+    WHERE status != 'DELETED' AND UPPER (created_by) != UPPER (#USER_ID:VARCHAR#)
+    AND TC.AUTHORIZE_STATUS IS NULL AND TC.STATUS != 'DELETED'
+
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+           <!-- <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                 AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual> -->
+        </dynamic>
+        ORDER BY  BORROWING_NO
+    </dynamic-mapped-statement>
+        
+    <dynamic-mapped-statement name="getBorrowingCashierAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT  TC.BORROWING_NO,TC.BORRWING_REFNO,TC.DESCRIPTION FROM BORROWING_MASTER TC,ALL_TRANS AT 
+        WHERE AT.link_batch_id= TC.BORROWING_NO  AND AT.TRANS_DT=#TRANS_DT# AND  CASE WHEN AT.TRANS_MODE = 'TRANSFER' THEN 'AUTHORIZED' ELSE AT.PAYMENT_STATUS END IS NOT NULL  AND ((TC.STATUS!='DELETED' AND TC.AUTHORIZE_STATUS IS NULL)
+        OR (TC.STATUS='DELETED' AND TC.AUTHORIZE_STATUS IS NULL AND TC.AUTHORIZED_DT IS NOT NULL)) 
+         <!-- AND
+        #HIERARCHY_ID#::numeric &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, 
+            HIERARCHY_ID + 1) FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY) -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                TC.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+           <!-- <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                 AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual> -->
+        </dynamic>
+        ORDER BY  TC.BORROWING_NO
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeBorrowing" result-class="java.util.HashMap">
+        UPDATE BORROWING_MASTER  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  BORROWING_NO = #BORROWING_NO:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="authorizeBorrowingMasterDisbursal" result-class="java.util.HashMap">
+        UPDATE BORROWING_DISBURSAL  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  BORROWING_NO = #BORROWING_NO:VARCHAR#
+    </mapped-statement>
+         
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TokenConfigTO object (JavaBean) properties -->
+    <result-map name="getBorrowingTOResult" class="com.see.truetransact.transferobject.borrowings.master.BorrowingsTO">
+        <property name="borrowingNo" column="BORROWING_NO"/>
+        <property name="agencyCode" column="AGENCY_CODE"/>
+        <property name="borrowingrefNo" column="BORRWING_REFNO"/>
+        <property name="type" column="TYPE"/>
+        <property name="description" column="DESCRIPTION"/>
+        <property name="sanctionDate" column="SANCTION_DATE"/>
+        <property name="sanctionAmt" column="SANCTION_AMT"/>
+        <property name="amount" column="AMOUNT_BORRWED"/>
+        <property name="rateofInt" column="RATE_INTEREST"/>
+        <property name="noofInstallments" column="NO_OF_INSTALLMENTS"/>
+        <property name="prinRepFrq" column="PRINC_REP_FRQ"/>
+        <property name="intRepFrq" column="INT_REP_FRQ"/>
+        <property name="morotorium" column="MOROTORIUM"/>
+        <property name="sanctionExpDate" column="SANCTION_EXP_DATE"/>
+        <property name="secDetails" column="SECURITY_DET"/>
+        <property name="prinGrpHead" column="PRINCIPAL_GRP_HEAD"/>
+        <property name="intGrpHead" column="INT_GRP_HEAD"/>
+        <property name="penGrpHead" column="PENAL_GRP_HEAD"/>
+        <property name="chargeGrpHead" column="CHARGES_GRP_HEAD"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+         <property name="createdBy" column="CREATED_BY"/>
+        <property name="authorizeDte" column="AUTHORIZED_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="multiDis" column="MULTI_DISBURSAL"/>
+        <property name="penalIntRate" column="PENAL_INTEREST_RATE"/>
+        <property name="renReq" column="RENEWAL_REQUIRED"/>
+        <property name="amtBorrowed" column="AMOUNT_BORRWED"/>
+        <property name="sanOrderNo" column="SANCTION_NO"/>
+        <property name="govtLoan" column="GOVERMENT_LOAN"/>
+    </result-map>
+              
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="Borrowings.getSelectBorrowings" result-map="getBorrowingTOResult" >
+        SELECT * FROM BORROWING_MASTER 
+        WHERE STATUS NOT IN ('DELETED') AND BORROWING_NO = #BORROWING_NO:VARCHAR#
+		<!--SELECT BORROWING_NO, AGENCY_CODE, BORRWING_REFNO, TYPE, DESCRIPTION,
+                SANCTION_DATE,SANCTION_AMT,AMOUNT_BORRWED,RATE_INTEREST,NO_OF_INSTALLMENTS,
+                PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,SANCTION_EXP_DATE,SECURITY_DET,PRINCIPAL_GRP_HEAD,
+                INT_GRP_HEAD,PENAL_GRP_HEAD,CHARGES_GRP_HEAD FROM BORROWING_MASTER 
+		WHERE STATUS NOT IN ('DELETED')  and AUTHORIZE_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO#-->
+    </mapped-statement>
+        
+        <!-- This statement is used to view the available rows in the TOKEN_CONFIG whn the user clicks edit,delete button -->
+    <mapped-statement name="Borrowings.getAcHeads" result-class="java.util.HashMap">
+        SELECT PRINCIPAL_GRP_HEAD,
+        INT_GRP_HEAD,PENAL_GRP_HEAD,CHARGES_GRP_HEAD FROM BORROWING_MASTER 
+        WHERE STATUS NOT IN ('DELETED') and AUTHORIZE_STATUS IS NOT NULL AND (BORROWING_NO = #BORROWING_NO:VARCHAR# OR BORRWING_REFNO = #BORROWING_NO:VARCHAR#)
+		<!--SELECT BORROWING_NO, AGENCY_CODE, BORRWING_REFNO, TYPE, DESCRIPTION,
+                SANCTION_DATE,SANCTION_AMT,AMOUNT_BORRWED,RATE_INTEREST,NO_OF_INSTALLMENTS,
+                PRINC_REP_FRQ,INT_REP_FRQ,MOROTORIUM,SANCTION_EXP_DATE,SECURITY_DET,PRINCIPAL_GRP_HEAD,
+                INT_GRP_HEAD,PENAL_GRP_HEAD,CHARGES_GRP_HEAD FROM BORROWING_MASTER 
+		WHERE STATUS NOT IN ('DELETED')  and AUTHORIZE_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO#-->
+    </mapped-statement>
+        
+    <mapped-statement name="getRenBorowingData" result-class="java.util.HashMap" > 
+        SELECT BORROWING_NO, SANCTION_EXP_DATE FROM BORROWING_MASTER 
+        WHERE ( STATUS != 'DELETED' OR STATUS IS NULL ) AND RENEWAL_REQUIRED='YES'
+    </mapped-statement> 
+        
+    <mapped-statement name="getBatchIdInvForBorrow" result-class="java.util.HashMap" > 
+        select batch_id from transfer_trans where link_batch_id=#BORROW:VARCHAR#
+    </mapped-statement>
+       
+    <mapped-statement name="getBorrowingList" result-class="java.util.HashMap">
+        SELECT * FROM BORROWING_MASTER WHERE BORRWING_REFNO = #BORRWING_REFNO:VARCHAR# and STATUS!='DELETED' AND AUTHORIZE_STATUS='AUTHORIZED'
+    </mapped-statement> 
+   
+   <!--cheque details-->
+    <mapped-statement name="insertBorrowingsChequeTO" inline-parameters="true">
+        INSERT INTO BORROWING_CHEQUE_MASTER
+        (BORROWING_NO, SL_NO, ISSUE_DT, FROM_NO, TO_NO, NO_OF_CHEQUES, STATUS, STATUS_BY, STATUS_DT
+        ) VALUES (
+        #borrowingNo:VARCHAR#, #slNo:VARCHAR#, #issueDt:DATE#, #fromNo:VARCHAR#, #toNo:VARCHAR#, #noOfCheques:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#)
+    </mapped-statement>
+        
+    <mapped-statement name="updateBorrowingsChequeTO" inline-parameters="true">
+        UPDATE BORROWING_CHEQUE_MASTER SET 
+        ISSUE_DT = #issueDt:DATE#,
+        FROM_NO = #fromNo:VARCHAR#,
+        TO_NO = #toNo:VARCHAR#,
+        NO_OF_CHEQUES = #noOfCheques:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#
+        WHERE BORROWING_NO = #borrowingNo:VARCHAR# AND SL_NO = #slNo:VARCHAR#
+    </mapped-statement>
+        
+    <result-map name="getBorrowingsChequeTOResult" class="com.see.truetransact.transferobject.borrowings.master.BorrowingsChequeTO">
+        <property name="borrowingNo" column="BORROWING_NO"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="issueDt" column="ISSUE_DT"/>
+        <property name="fromNo" column="FROM_NO"/>
+        <property name="toNo" column="TO_NO"/>
+        <property name="noOfCheques" column="NO_OF_CHEQUES"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizedStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizedBy" column="AUTHORIZED_BY"/>
+        <property name="authorizedDt" column="AUTHORIZED_DT"/>
+    </result-map>
+         
+    <mapped-statement name="getSelectBorrowingsChequeTO" result-map="getBorrowingsChequeTOResult" >
+        SELECT * FROM BORROWING_CHEQUE_MASTER WHERE STATUS!='DELETED' AND (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS !='REJECTED') 
+        AND BORROWING_NO=#BORROWING_NO# ORDER BY SL_NO
+    </mapped-statement>
+         
+    <mapped-statement name="deleteBorrowingChequeMasterStatus" inline-parameters="true">
+        UPDATE BORROWING_CHEQUE_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE BORROWING_NO = #borrowingNo:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeBorrowingChequeBookDetails" result-class="java.util.HashMap">
+        UPDATE BORROWING_CHEQUE_MASTER SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTHORIZED_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTHORIZED_DT:TIMESTAMP#
+        WHERE STATUS != 'DELETED' AND AUTHORIZED_STATUS IS NULL AND BORROWING_NO = #BORROWING_NO:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteBorrowingCheckMasterTO" inline-parameters="true">                
+        UPDATE BORROWING_CHEQUE_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:DATE#
+        WHERE BORROWING_NO = #borrowingNo:VARCHAR# AND SL_NO = #slNo:VARCHAR# 
+    </mapped-statement>
+        
+        
+        
+</sql-map>

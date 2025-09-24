@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="CustomerHistoryMap">
+
+	<!-- Use CustomerHistoryTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertCustomerHistoryTO" inline-parameters="true">
+        INSERT INTO CUST_HISTORY
+        (CUST_ID, RELATIONSHIP, PRODUCT_TYPE, PROD_ID, ACCT_NO, FROM_DT, TO_DT, STATUS
+        ) VALUES (
+        #custId:VARCHAR#, #relationship:VARCHAR#, #productType:VARCHAR#, #prodId:VARCHAR#, #acctNo:VARCHAR#, #fromDt:DATE#, #toDt:DATE#, #status:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateCustomerHistoryTO" inline-parameters="true">
+        UPDATE CUST_HISTORY
+        SET STATUS = #status:VARCHAR# 
+        WHERE CUST_ID = #custId:VARCHAR# AND 
+        RELATIONSHIP = #relationship:VARCHAR# AND
+        PRODUCT_TYPE = #productType:VARCHAR# AND
+        ACCT_NO = #acctNo:VARCHAR#
+    </mapped-statement>
+
+    <mapped-statement name="updateCustomerBasedOnHistoryTO" inline-parameters="true">
+        UPDATE CUSTOMER
+        SET CUST_TYPE_ID = #CUST_TYPE:VARCHAR# 
+        WHERE CUST_ID = #CUST_ID:VARCHAR# AND 
+        (CUST_TYPE_ID NOT IN ('STAFF', 'CUSTOMER', 'MEMBER') OR 
+        CUST_TYPE_ID IS NULL)
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerHistoryToDate" inline-parameters="true">
+        update CUST_HISTORY 
+        set TO_DT = #TO_DT:DATE#
+        where ACCT_NO = #ACCT_NO:VARCHAR#      
+        AND CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+     <mapped-statement name="getCustHistoryRelationShipStatus" result-class="java.util.HashMap" >
+         SELECT C.RELATIONSHIP FROM CUST_HISTORY C WHERE
+         C.CUST_ID = #CUST_ID:VARCHAR# AND C.ACCT_NO = #ACCT_NO:VARCHAR#
+         AND C.TO_DT IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="updateCustomerHistoryCustRelationship" inline-parameters="true">
+        update CUST_HISTORY 
+        set RELATIONSHIP = #RELATIONSHIP:VARCHAR#
+        where ACCT_NO = #ACCT_NO:VARCHAR#      
+        AND CUST_ID = #CUST_ID:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

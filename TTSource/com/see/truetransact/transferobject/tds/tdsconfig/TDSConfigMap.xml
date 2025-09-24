@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TDSConfigTOMap">
+
+	<!-- Use TDSConfigTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertTDSConfigTO" inline-parameters="true">
+        INSERT INTO TDS_CONFIG
+        (TDS_ID, FIN_START_DT, FIN_END_DT, TDS_SCOPE, CUT_OF_AMT, TDS_PERCENTAGE, STATUS, INCLUDE_CUTOF, STATUS_BY, STATUS_DT,TDS_CR_AC_HD_ID,CUST_TYPE,PAN_PERCENTAGE
+        ) VALUES (
+        #tdsId:VARCHAR#, #finStartDt:DATE#, #finEndDt:DATE#, #tdsScope:VARCHAR#, #cutOfAmt:NUMERIC#, #tdsPercentage:NUMERIC#, #status:VARCHAR#, #includeCutof:VARCHAR#, #statusBy:VARCHAR#, #statusDt:DATE#,#tdsCrAchdId:VARCHAR#, #custType:VARCHAR#,#withOutPANPercentage:NUMERIC#)
+    </mapped-statement>
+
+	<!-- Use TDSConfigTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateTDSConfigTO" inline-parameters="true">
+        UPDATE TDS_CONFIG SET 
+        TDS_ID = #tdsId:VARCHAR#,
+        FIN_START_DT = #finStartDt:DATE#,
+        FIN_END_DT = #finEndDt:DATE#,
+        TDS_SCOPE = #tdsScope:VARCHAR#,
+        CUT_OF_AMT = #cutOfAmt:NUMERIC#,
+        TDS_PERCENTAGE = #tdsPercentage:NUMERIC#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        INCLUDE_CUTOF =  #includeCutof:VARCHAR#,
+        STATUS_DT = #statusDt:VARCHAR#,
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = #authorizeDt:DATE#,
+        CUST_TYPE = #custType:VARCHAR#,
+        TDS_CR_AC_HD_ID=#tdsCrAchdId:VARCHAR#,
+        PAN_PERCENTAGE = #withOutPANPercentage:NUMERIC#
+        WHERE TDS_ID = #tdsId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use TDSConfigTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteTDSConfigTO" inline-parameters="true">
+        UPDATE TDS_CONFIG SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE TDS_ID = #tdsId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to TDSConfigTO object (JavaBean) properties -->
+    <result-map name="getTDSConfigTOResult" class="com.see.truetransact.transferobject.tds.tdsconfig.TDSConfigTO">
+        <property name="tdsId" column="TDS_ID"/>
+        <property name="finStartDt" column="FIN_START_DT"/>
+        <property name="finEndDt" column="FIN_END_DT"/>
+        <property name="tdsScope" column="TDS_SCOPE"/>
+        <property name="cutOfAmt" column="CUT_OF_AMT"/>
+        <property name="tdsPercentage" column="TDS_PERCENTAGE"/>
+        <property name="includeCutof" column="INCLUDE_CUTOF"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="custType" column="CUST_TYPE"/>
+        <property name="tdsCrAchdId" column="TDS_CR_AC_HD_ID"/>
+        <property name="withOutPANPercentage" column="PAN_PERCENTAGE"/>
+    </result-map>
+    <mapped-statement name="getSelectTDSConfigTO" result-map="getTDSConfigTOResult" >
+        SELECT * FROM TDS_CONFIG 
+        WHERE TDS_ID = #value:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <dynamic-mapped-statement name="getSelectTDSConfig" result-class="java.util.LinkedHashMap" >
+        SELECT TDS_ID, TDS_SCOPE, FIN_START_DT, FIN_END_DT, CUT_OF_AMT FROM TDS_CONFIG 
+        WHERE STATUS NOT IN ('DELETED')
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+          <isParameterPresent>
+                <isNotNull prepend="AND"      property="TDS_ID">
+                    UPPER(TDS_ID) LIKE UPPER('%$TDS_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="TDS_SCOPE">
+                    UPPER(TDS_SCOPE) LIKE UPPER('%$TDS_SCOPE$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="FIN_START_DT">
+                    UPPER(FIN_START_DT) LIKE UPPER('%$FIN_START_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="FIN_END_DT">
+                    UPPER(FIN_END_DT) LIKE UPPER('%$FIN_END_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="FIN_END_DT">
+                    UPPER(CUT_OF_AMT) LIKE UPPER('%$CUT_OF_AMT$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    <mapped-statement name="getSelectTDSDates" result-class="java.util.LinkedHashMap" >
+        SELECT to_char(FIN_START_DT, 'DD/MM/YYYY') AS FIN_START_DT, to_char(FIN_END_DT, 'DD/MM/YYYY') AS FIN_END_DT 
+        FROM TDS_CONFIG  WHERE STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+          <!-- ============================Authorization Queries=========================================================== -->  
+    <dynamic-mapped-statement name="getTDSConfigAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT TDS_ID, TDS_SCOPE, FIN_START_DT, FIN_END_DT, CUT_OF_AMT FROM TDS_CONFIG TC
+        WHERE ( STATUS = 'CREATED' OR STATUS = 'UPDATED' OR STATUS = 'MODIFIED' )
+        AND STATUS_BY != #USER_ID:VARCHAR#
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = TC.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY  TDS_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeTDSConfig" result-class="java.util.HashMap">
+        UPDATE TDS_CONFIG  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#,
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE  TDS_ID = #TDS_ID:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>  
+        
+        
+</sql-map>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeRelativeWorkingMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmployeeRelativeWorkingTO" inline-parameters="true">
+        INSERT INTO EMPLOYEE_RELATIVE_WORKING
+        (SYS_ID, STAFF_ID,RELEATIONSHIP,STATUS,STATUS_BY,STATUS_DT,RELEATIVE_SYS_ID,FIRST_NAME,MIDDLE_NAME,LAST_NAME,DESIGNATION,BRANCH_ID,TITLE
+        ) VALUES (
+        #sysId:VARCHAR#, #staffId:VARCHAR#, #relativerelationShip:VARCHAR#, #status:VARCHAR#, #statusBy:VARCHAR#, #statusDt:TIMESTAMP#
+        ,#relativeSysId:VARCHAR#, #relativeFirstName:VARCHAR#, #relativeMiddleName:VARCHAR#, #relativeLastName:VARCHAR#, #relativeDisgnantion:VARCHAR#
+        ,#relativeWorkingBranch:VARCHAR#,#relativeTittle:VARCHAR#
+        )
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateEmployeeRelativeWorkingTO" inline-parameters="true">
+        UPDATE EMPLOYEE_RELATIVE_WORKING SET 
+        RELEATIONSHIP=#relativerelationShip:VARCHAR#,
+        DESIGNATION=#relativeDisgnantion:VARCHAR#,
+        BRANCH_ID=#relativeWorkingBranch:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE  SYS_ID = #sysId:VARCHAR# AND STAFF_ID = #staffId:VARCHAR# AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="deleteEmployeeRelativeWorkingTO" inline-parameters="true">
+        UPDATE EMPLOYEE_RELATIVE_WORKING SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SYS_ID = #sysId# AND RELEATIVE_SYS_ID = #relativeSysId:VARCHAR#
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getEmployeeRelativeWorkingTOResult" class="com.see.truetransact.transferobject.employee.EmployeeRelativeWorkingTO">
+        <property name="sysId" column="SYS_ID"/>
+        <property name="staffId" column="STAFF_ID"/>
+        <property name="relativerelationShip" column="RELEATIONSHIP"/>		
+        <property name="status" column="STATUS" />
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="relativeSysId" column="RELEATIVE_SYS_ID"/>
+        <property name="relativeTittle" column="TITLE"/>
+        <property name="relativeFirstName" column="FIRST_NAME"/>
+        <property name="relativeMiddleName" column="MIDDLE_NAME"/>
+        <property name="relativeLastName" column="LAST_NAME"/> 
+        <property name="relativeWorkingBranch" column="BRANCH_ID"/> 
+        <property name="relativeDisgnantion" column="DESIGNATION"/> 
+                
+                
+    </result-map>
+    <dynamic-mapped-statement name="getSelectEmployeeRelativeWorkingTO" result-map="getEmployeeRelativeWorkingTOResult" >
+        SELECT * FROM EMPLOYEE_RELATIVE_WORKING WHERE SYS_ID=#SYS_EMPID:VARCHAR#  
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                (STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+        ORDER BY STAFF_ID 
+    </dynamic-mapped-statement>
+        
+        <!--
+        
+	<dynamic-mapped-statement name="getSelectEmployeeRelativeWorkingTO" result-map="getEmployeeRelativeWorkingTOResult" >
+                SELECT SYS_ID, STAFF_ID,RELEATIONSHIP,STATUS,STATUS_BY,STATUS_DT,RELEATIVE_SYS_ID
+                ,TITLE,FIRST_NAME,MIDDLE_NAME,LAST_NAME,BRANCH_ID,DESIGNATION
+                FROM EMPLOYEE_RELATIVE_WORKING 
+                WHERE   SYS_ID = #sysId#  
+    <dynamic>
+                    <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                        (STATUS NOT IN ('DELETED')
+                    </isNotPropertyAvailable>
+                    <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                       (STATUS 
+                       IN 'DELETED'
+                    </isPropertyAvailable>
+                    <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                        STATUS IN 'DELETED'
+                    </isPropertyAvailable>
+                   )
+        </dynamic>
+                 ORDER BY STAFF_ID 
+        </dynamic-mapped-statement>
+
+
+  <mapped-statement name="getSelectEmployeeRelativeWorkingTO" result-map="getEmployeeRelativeWorkingTOResult" >
+		SELECT * FROM EMPLOYEE_RELATIVE_WORKING
+                WHERE  SYS_ID=#SYS_EMPID#  
+	</mapped-statement>
+        
+       
+        <mapped-statement name="getSelectEmployeeRelativeWorkingTO" result-map="getEmployeeRelativeWorkingTOResult">
+		SELECT * FROM EMPLOYEE_RELATIVE_WORKING
+                WHERE  SYS_ID=#SYS_EMPID#
+	</mapped-statement>    
+         --> 
+        
+</sql-map>        

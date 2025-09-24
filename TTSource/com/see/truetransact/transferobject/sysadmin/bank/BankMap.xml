@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+
+<!--
+    Document   : BankMap.xml
+    Created on : February 5, 2004, 5:59 PM
+    Author     : Hemant
+    Description:
+        Purpose of the document follows.
+-->
+
+<sql-map name="BankMap">
+
+	<!-- Use BankTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertBankTO" inline-parameters="true">
+        INSERT INTO BANK
+        (BANK_CODE, BANK_NAME, WEB_SITE_ADDR, WEB_SITE_IP, SUPPORT_EMAIL, DATA_CENTER_IP, DAY_END_PROCESS_TIME, EXCH_RATE_CONV, TRANS_POSTING_METHOD, CASH_LIMIT, TELLER_TRANS_ALLOWED, BRANCH_TRANS_ALLOWED, CREATED_DT, CREATED_BY, LAST_MODIFIED_DT, LAST_MODIFIED_BY, BASE_CURRENCY, OPENING_DT, AUTHORIZE_STATUS_1, AUTHORIZE_STATUS_2, AUTHORIZE_BY_1, AUTHORIZE_BY_2, AUTHORIZE_DT_1, AUTHORIZE_DT_2
+        ) VALUES (
+        #bankCode:VARCHAR#, #bankName:VARCHAR#, #webSiteAddr:VARCHAR#, #webSiteIp:VARCHAR#, #supportEmail:VARCHAR#, #dataCenterIp:VARCHAR#, #dayEndProcessTime:VARCHAR#, #exchRateConv:VARCHAR#, #transPostingMethod:VARCHAR#, #cashLimit:NUMERIC#, #tellerTransAllowed:VARCHAR#, #branchTransAllowed:VARCHAR#, #createdDt:TIMESTAMP#, #createdBy:VARCHAR#, #lastModifiedDt:TIMESTAMP#, #lastModifiedBy:VARCHAR#, #baseCurrency:VARCHAR#, #openingDt:DATE#, #authorizeStatus1:VARCHAR#, #authorizeStatus2:VARCHAR#, #authorizeBy1:VARCHAR#, #authorizeBy2:VARCHAR#, #authorizeDt1:TIMESTAMP#, #authorizeDt2:TIMESTAMP#)
+    </mapped-statement>
+
+	<!-- Use BankTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateBankTO" inline-parameters="true">
+        UPDATE BANK SET 
+        BANK_CODE = #bankCode:VARCHAR#,
+        BANK_NAME = #bankName:VARCHAR#,
+        WEB_SITE_ADDR = #webSiteAddr:VARCHAR#,
+        WEB_SITE_IP = #webSiteIp:VARCHAR#,
+        SUPPORT_EMAIL = #supportEmail:VARCHAR#,
+        DATA_CENTER_IP = #dataCenterIp:VARCHAR#,
+        DAY_END_PROCESS_TIME = #dayEndProcessTime:VARCHAR#,
+        EXCH_RATE_CONV = #exchRateConv:VARCHAR#,
+        TRANS_POSTING_METHOD = #transPostingMethod:VARCHAR#,
+        CASH_LIMIT = #cashLimit:NUMERIC#,
+        TELLER_TRANS_ALLOWED = #tellerTransAllowed:VARCHAR#,
+        BRANCH_TRANS_ALLOWED = #branchTransAllowed:VARCHAR#,
+        LAST_MODIFIED_DT = #lastModifiedDt:TIMESTAMP#,
+        LAST_MODIFIED_BY = #lastModifiedBy:VARCHAR#,
+        BASE_CURRENCY = #baseCurrency:VARCHAR#,
+        OPENING_DT = #openingDt:TIMESTAMP#,
+        AUTHORIZE_STATUS_1 = #authorizeStatus1:VARCHAR#,
+        AUTHORIZE_STATUS_2 = #authorizeStatus2:VARCHAR#,
+        AUTHORIZE_BY_1 = #authorizeBy1:VARCHAR#,
+        AUTHORIZE_BY_2 = #authorizeBy2:VARCHAR#,
+        AUTHORIZE_DT_1 = #authorizeDt1:TIMESTAMP#,
+        AUTHORIZE_DT_2 = #authorizeDt2:TIMESTAMP#
+        WHERE BANK_CODE = #bankCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use BankTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteBankTO" inline-parameters="true">
+        UPDATE BANK SET 
+        LAST_MODIFIED_DT = #lastModifiedDt:TIMESTAMP#,
+        LAST_MODIFIED_BY = #lastModifiedBy:VARCHAR# 
+        WHERE BANK_CODE = #bankCode:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to BankTO object (JavaBean) properties -->
+    <result-map name="getBankTOResult" class="com.see.truetransact.transferobject.sysadmin.bank.BankTO">
+        <property name="bankCode" column="BANK_CODE"/>
+        <property name="bankName" column="BANK_NAME"/>
+        <property name="webSiteAddr" column="WEB_SITE_ADDR"/>
+        <property name="webSiteIp" column="WEB_SITE_IP"/>
+        <property name="supportEmail" column="SUPPORT_EMAIL"/>
+        <property name="dataCenterIp" column="DATA_CENTER_IP"/>
+        <property name="dayEndProcessTime" column="DAY_END_PROCESS_TIME"/>
+        <property name="exchRateConv" column="EXCH_RATE_CONV"/>
+        <property name="transPostingMethod" column="TRANS_POSTING_METHOD"/>
+        <property name="cashLimit" column="CASH_LIMIT"/>
+        <property name="tellerTransAllowed" column="TELLER_TRANS_ALLOWED"/>
+        <property name="branchTransAllowed" column="BRANCH_TRANS_ALLOWED"/>
+        <property name="createdDt" column="CREATED_DT"/>
+        <property name="createdBy" column="CREATED_BY"/>
+        <property name="lastModifiedDt" column="LAST_MODIFIED_DT"/>
+        <property name="lastModifiedBy" column="LAST_MODIFIED_BY"/>
+        <property name="baseCurrency" column="BASE_CURRENCY"/>
+        <property name="openingDt" column="OPENING_DT"/>
+        <property name="authorizeStatus1" column="AUTHORIZE_STATUS_1"/>
+        <property name="authorizeStatus2" column="AUTHORIZE_STATUS_2"/>
+        <property name="authorizeBy1" column="AUTHORIZE_BY_1"/>
+        <property name="authorizeBy2" column="AUTHORIZE_BY_2"/>
+        <property name="authorizeDt1" column="AUTHORIZE_DT_1"/>
+        <property name="authorizeDt2" column="AUTHORIZE_DT_2"/>
+    </result-map>
+    <mapped-statement name="getSelectBankTO" result-map="getBankTOResult" >
+        SELECT * FROM BANK 
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getSelectBankAuthorizeTOList" result-class="java.util.HashMap" >
+        SELECT BANK_CODE, WEB_SITE_ADDR, WEB_SITE_ADDR, SUPPORT_EMAIL, 
+        AUTHORIZE_BY_1, AUTHORIZE_STATUS_1, AUTHORIZE_DT_1,  
+        AUTHORIZE_BY_2, AUTHORIZE_STATUS_2, AUTHORIZE_DT_2  
+        FROM BANK WHERE 
+        (CREATED_BY != #STATUS_BY:VARCHAR# AND LAST_MODIFIED_BY != #STATUS_BY:VARCHAR# AND 
+        ((AUTHORIZE_BY_1 IS NULL OR AUTHORIZE_BY_1 != #STATUS_BY:VARCHAR#)  
+               <!-- (AUTHORIZE_BY_2 IS NULL  OR AUTHORIZE_BY_2 != #STATUS_BY#)))-->
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = BANK.LAST_MODIFIED_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS_1 = 'EXCEPTION') <!--OR AUTHORIZE_STATUS_2 = 'EXCEPTION')--> 
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS_1 IS NULL OR 
+                AUTHORIZE_STATUS_1 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+                         <!--OR 
+                         (AUTHORIZE_STATUS_2 IS NULL OR 
+                         AUTHORIZE_STATUS_2 NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION')))-->
+            </isNotEqual>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="authorizeBankDetails" inline-parameters="true" >
+        UPDATE BANK SET 
+        AUTHORIZE_STATUS_1 = DECODE (AUTHORIZE_STATUS_1, NULL, DECODE(AUTHORIZE_STATUS_2, NULL, #STATUS:VARCHAR#), AUTHORIZE_STATUS_1),
+                <!--AUTHORIZE_STATUS_2 = DECODE (AUTHORIZE_STATUS_2, NULL, DECODE(AUTHORIZE_STATUS_1, NULL, NULL, #STATUS#), AUTHORIZE_STATUS_2),-->
+        AUTHORIZE_BY_1 = DECODE (AUTHORIZE_BY_1, NULL, DECODE(AUTHORIZE_BY_2, NULL, #USER_ID:VARCHAR#), AUTHORIZE_BY_1),
+                <!--AUTHORIZE_BY_2 = DECODE (AUTHORIZE_BY_2, NULL, DECODE(AUTHORIZE_BY_1, NULL, NULL, #USER_ID#), AUTHORIZE_BY_2),-->
+        AUTHORIZE_DT_1 = DECODE (AUTHORIZE_DT_1, NULL, DECODE(AUTHORIZE_DT_2, NULL, #AUTHORIZEDT:TIMESTAMP#), AUTHORIZE_DT_1),
+        AUTHORIZE_DT_2 = DECODE (AUTHORIZE_DT_2, NULL, DECODE(AUTHORIZE_DT_1, NULL, NULL, #AUTHORIZEDT:TIMESTAMP#), AUTHORIZE_DT_2)
+    </mapped-statement>
+        
+    <mapped-statement name="getBankCount" result-class="java.util.HashMap" >
+        SELECT count(*) COUNT FROM BANK
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectBankTOList" result-class = "java.util.HashMap" >
+        SELECT BANK_CODE, BANK_NAME FROM BANK 
+    </mapped-statement>
+        
+    <mapped-statement name="getApplDate" result-class = "java.util.Date" >
+        SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getApplDateHashMap" result-class = "java.util.HashMap" >
+        SELECT CURR_APPL_DT FROM DAY_END WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getOtherBranchApplDateHashMap" result-class = "java.util.HashMap" >
+        SELECT CURR_APPL_DT,END_DAY_STATUS FROM DAY_END WHERE BRANCH_CODE = #BRANCH_CODE:VARCHAR#
+    </mapped-statement>
+
+	<mapped-statement name="getBranchIFSCodeDetails" result-class = "java.util.HashMap" >
+            SELECT IFSC_CODE FROM BRANCH_MASTER WHERE BRANCH_CODE = #BRANCH_CODE#
+    </mapped-statement>
+        
+        <mapped-statement name="getBranchDetailsForRTGS" result-class="java.util.HashMap">
+            <!--SELECT BRANCH_CODE,BRANCH_NAME FROM OTHER_BANK_BRANCH WHERE  BANK_CODE=#BANK_CODE:VARCHAR# AND BRANCH_IFSCODE=#IFSC_CODE:VARCHAR#-->
+            SELECT BANK_CODE,BRANCH_NAME, MICR_CODE AS BRANCH_CODE FROM IFSC_BANK_BRANCH WHERE 
+            STATUS!='DELETED' AND AUTHORIZED_STATUS = 'AUTHORIZED' AND IFSC_CODE=#IFSC_CODE:VARCHAR#  AND BANK_CODE=cast(#BANK_CODE# as numeric)
+        </mapped-statement>
+        <!--mapped-statement name="updateApplDate" result-class = "java.util.HashMap" >
+		UPDATE DAY_END SET CURR_APPL_DT = #APPL_DT#, END_DAY_STATUS = NULL 
+                WHERE END_DAY_STATUS IS NOT NULL
+	</mapped-statement-->
+
+	<mapped-statement name="getBankCodeDetails" result-class = "java.util.HashMap" >
+    	SELECT BANK_CODE FROM BRANCH_MASTER WHERE ROWNUM = 1
+    </mapped-statement>
+
+</sql-map>

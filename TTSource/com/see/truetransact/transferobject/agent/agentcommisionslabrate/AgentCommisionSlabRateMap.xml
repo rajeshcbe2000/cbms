@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="AgentCommisionSlabRateMap">
+
+	<!-- Use AgentTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertAgentCommisionSlabRateTO" inline-parameters="true">
+        INSERT INTO AGENT_PROD_MAPPING (PROD_TYPE,PROD_ID,COL_AC_HD_ID,COMM_PER_BANK,COMM_PER_AC_HOLDR,
+        COMM_COL_AC_HD_ID,TDS_AC_HD,ACCT_INTRO_COMMISION_HEAD,ACCT_INTRO_COMMISION,TDS,FROM_DATE,TO_DATE,
+        FROM_AMT,TO_AMT,STATUS,STATUS_DT,STATUS_BY,SLAB_ID,SL_NO) VALUES (
+        #prodType:VARCHAR#,#prodId:VARCHAR#,#colAchdId:VARCHAR#,#commperBank:NUMBER#,#commperAcHoldr:NUMBER#,
+        #commcolAchdId:VARCHAR#,#tdsacHd:VARCHAR#,#acctIntroCommisionHead:VARCHAR#,#acctIntroCommision:NUMBER#,
+        #tdsAmt:NUMBER#,#fromDate:DATE#,#toDate:DATE#,#fromAmt:NUMBER#,#toAmt:NUMBER#,#status:VARCHAR#,#statusDt:DATE#,
+        #statusBy:VARCHAR#,#slabId:VARCHAR#,#slNo:VARCHAR#)
+    </mapped-statement>
+
+<!-- Use AgentTO object (JavaBean) properties as parameters for update. Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateAgentCommisionSlabRateTO" inline-parameters="true">
+        UPDATE AGENT_PROD_MAPPING SET 
+        COMM_PER_BANK = #commperBank:NUMBER#,
+        COMM_PER_AC_HOLDR = #commperAcHoldr:NUMBER#,
+        COMM_COL_AC_HD_ID = #commcolAchdId:NUMBER#,
+        ACCT_INTRO_COMMISION_HEAD = #acctIntroCommisionHead:VARCHAR#,
+        ACCT_INTRO_COMMISION = #acctIntroCommision:NUMBER#,
+        TDS = #tdsAmt:NUMBER#,
+        FROM_DATE = #fromDate:DATE#,
+        TO_DATE = #toDate:DATE#,
+        FROM_AMT = #fromAmt:NUMBER#,
+        TO_AMT = #toAmt:NUMBER#,
+        STATUS = #status:VARCHAR#,
+        STATUS_DT = #statusDt:DATE#,
+        STATUS_BY = #statusBy:VARCHAR#        
+        WHERE SLAB_ID = #slabId:VARCHAR# AND
+        PROD_TYPE = #prodType:VARCHAR# AND
+        PROD_ID = #prodId:VARCHAR# AND
+        SL_NO = #slNo:VARCHAR#
+    </mapped-statement>
+
+	<!-- Use AgentTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="deleteAgentCommisionSlabRateTO" inline-parameters="true">
+        UPDATE AGENT_PROD_MAPPING SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SLAB_ID = #slabId:VARCHAR# AND
+        PROD_TYPE = #prodType:VARCHAR# AND
+        PROD_ID = #prodId:VARCHAR# AND
+        SL_NO = #slNo:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="updateAgentCommisionSlabRateTOAuthorize" inline-parameters="true">
+        UPDATE AGENT_PROD_MAPPING SET 
+        AUTHORIZE_STATUS = #authorizeStatus:VARCHAR#, 
+        AUTHORIZE_BY = #authorizeBy:VARCHAR#,
+        AUTHORIZE_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE SLAB_ID = #slabId:VARCHAR# AND
+        PROD_TYPE = #prodType:VARCHAR# AND
+        PROD_ID = #prodId:VARCHAR# AND
+        SL_NO = #slNo:VARCHAR# AND
+        AUTHORIZE_STATUS IS NULL
+    </mapped-statement>
+    
+    <mapped-statement name="updateAgentCommisionSlabRatePreviousTODate" inline-parameters="true">
+        UPDATE AGENT_PROD_MAPPING SET 
+        TO_DATE = #toDate:VARCHAR#-1
+        WHERE SLAB_ID = #slabId:VARCHAR# AND
+        PROD_TYPE = #prodType:VARCHAR# AND
+        PROD_ID = #prodId:VARCHAR# AND TO_DATE IS NULL AND AUTHORIZE_STATUS IS NOT NULL
+    </mapped-statement>
+
+<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to AgentTO object (JavaBean) properties -->
+    <result-map name="getAgentCommisionSlabRateTOResult" class="com.see.truetransact.transferobject.agent.agentcommisionslabrate.AgentCommisionSlabRateTO">
+        <property name="prodType" column="PROD_TYPE"/>
+        <property name="prodId" column="PROD_ID"/>
+        <property name="agentMachineId" column="AGENT_MACHINE_ID"/>
+        <property name="colAchdId" column="COL_AC_HD_ID"/>
+        <property name="agentId" column="AGENT_ID"/>
+        <property name="commperBank" column="COMM_PER_BANK"/>
+        <property name="commperAcHoldr" column="COMM_PER_AC_HOLDR"/>
+        <property name="commcolAchdId" column="COMM_COL_AC_HD_ID"/>
+        <property name="prodExpcode" column="PROD_EXP_CODE"/>
+        <property name="tdsacHd" column="TDS_AC_HD"/>
+        <property name="acctIntroCommisionHead" column="ACCT_INTRO_COMMISION_HEAD"/>
+        <property name="acctIntroCommision" column="ACCT_INTRO_COMMISION"/>
+        <property name="tdsAmt" column="TDS"/>
+        <property name="fromDate" column="FROM_DATE"/>
+        <property name="toDate" column="TO_DATE"/>
+        <property name="fromAmt" column="FROM_AMT"/>
+        <property name="toAmt" column="TO_AMT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="slabId" column="SLAB_ID"/>
+    </result-map>
+    
+    <mapped-statement name="getAgentCommisionSlabRateTO" result-map="getAgentCommisionSlabRateTOResult" >
+        SELECT * FROM AGENT_PROD_MAPPING WHERE PROD_TYPE = #PROD_TYPE:VARCHAR# AND PROD_ID = #PROD_ID:VARCHAR# AND
+        STATUS != 'DELETED' ORDER BY FROM_DATE,SL_NO
+    </mapped-statement>
+    
+    <mapped-statement name="viewAgentCommisionData" result-class = "java.util.HashMap" >
+        SELECT DISTINCT PROD_TYPE,PROD_ID,SLAB_ID FROM AGENT_PROD_MAPPING 
+    </mapped-statement>
+    
+    <mapped-statement name="getselectAchdDescription" result-class = "java.util.HashMap" >
+        SELECT PKGGENREPORTS.GETHDNAME(#AC_HD_ID:VARCHAR#) AC_HD_DESC FROM DUAL
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="viewAgentAuthorizeCommisionData" result-class = "java.util.HashMap" >
+        SELECT DISTINCT PROD_TYPE,PROD_ID,SLAB_ID FROM AGENT_PROD_MAPPING APM WHERE APM.STATUS_BY != #USER_ID:VARCHAR#
+        AND AUTHORIZE_STATUS IS NULL AND STATUS != 'DELETED' AND 
+        #HIERARCHY_ID:VARCHAR# >= (SELECT DISTINCT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = APM.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                APM.AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (APM.AUTHORIZE_STATUS IS NULL OR APM.AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>      
+        ORDER BY APM.PROD_TYPE,APM.SLAB_ID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectProdTypeExistorNot" result-class = "java.util.HashMap" >
+        SELECT COUNT(PROD_TYPE)+1 MAX_COUNT,SLAB_ID FROM AGENT_PROD_MAPPING WHERE PROD_TYPE = #PROD_TYPE:VARCHAR# AND
+        PROD_ID = #PROD_ID:VARCHAR# GROUP BY PROD_TYPE,PROD_ID,SLAB_ID HAVING COUNT(*)>0
+    </mapped-statement>
+    
+</sql-map>

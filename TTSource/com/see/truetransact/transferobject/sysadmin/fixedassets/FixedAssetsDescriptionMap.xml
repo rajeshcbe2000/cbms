@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="FixedAssetDescriptionTOMap">
+
+
+    <result-map name="getFixedAssetDescDetailsTOResult" class="com.see.truetransact.transferobject.sysadmin.fixedassets.FixedAssetsDescriptionTO">
+        <property name="assetDescID" column="FA_DESC_ID"/>
+        <property name="assetType" column="ASSET_TYPE"/>
+        <property name="assetSubType" column="ASSET_SUB_TYPE"/>
+        <property name="branCode" column="ASSET_BRANCH"/>
+        <property name="slNo" column="SL_NO"/>
+        <property name="assetStatus" column="ASSET_STATUS"/>
+        <property name="assetStatusDt" column="ASSET_STATUS_DT"/>
+        <property name="assetStatusBy" column="ASSET_STATUS_BY"/>
+        <property name="assetCreatedBy" column="ASSET_CREATED_BY"/>
+        <property name="assetCreatedDt" column="ASSET_CREATED_DT"/>
+        <property name="assetAuthorizedStatus" column="ASSET_AUTHORIZED_STATUS"/>
+        <property name="assetAuthorizeDt" column="ASSET_AUTHORIZED_DT"/>
+        <property name="assetAuthorizeBy" column="ASSET_AUTHORIZED_BY"/>
+    </result-map>
+        
+    <mapped-statement name="insertFixedAssetDescDetailsTO" inline-parameters="true">
+        INSERT INTO FIXED_ASSET_DESCRIPTION
+        (FA_DESC_ID, ASSET_TYPE, ASSET_SUB_TYPE, ASSET_BRANCH, SL_NO,ASSET_STATUS,ASSET_STATUS_DT,ASSET_STATUS_BY,
+        ASSET_CREATED_BY,ASSET_CREATED_DT,
+        ASSET_AUTHORIZED_STATUS,ASSET_AUTHORIZED_DT,ASSET_AUTHORIZED_BY
+        ) VALUES (
+        #assetDescID:VARCHAR#,#assetType:VARCHAR#,#assetSubType:VARCHAR#,#branCode:VARCHAR#,#slNo:NUMERIC#,#assetStatus:VARCHAR#,#assetStatusDt:TIMESTAMP#,
+        #assetStatusBy:VARCHAR#,#assetCreatedBy:VARCHAR#,#assetCreatedDt:TIMESTAMP#,#assetAuthorizedStatus:VARCHAR#,#assetAuthorizeDt:TIMESTAMP#,#assetAuthorizeBy:VARCHAR#
+        ) 
+    </mapped-statement>
+        
+    <mapped-statement name="updateFixedAssetDescTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_DESCRIPTION SET 
+        ASSET_TYPE = #assetType:VARCHAR#,
+        ASSET_SUB_TYPE =#assetSubType:VARCHAR#,
+        ASSET_STATUS = #assetStatus:VARCHAR#,
+        ASSET_CREATED_BY = #assetCreatedBy:VARCHAR#,
+        ASSET_CREATED_DT = #assetCreatedDt:TIMESTAMP#,
+        ASSET_AUTHORIZED_STATUS = #assetAuthorizedStatus:VARCHAR#,
+        ASSET_AUTHORIZED_BY = #assetAuthorizeBy:VARCHAR#,
+        ASSET_AUTHORIZED_DT = #assetAuthorizeDt:TIMESTAMP#
+        WHERE FA_DESC_ID = #assetDescID:VARCHAR#
+        AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteFixedAssetDescTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_DESCRIPTION SET 
+        ASSET_STATUS = #assetStatus:VARCHAR#,
+        ASSET_STATUS_BY = #assetStatusBy:VARCHAR#,
+        ASSET_STATUS_DT = #assetStatusDt:TIMESTAMP#
+        WHERE FA_DESC_ID = #assetDescID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="deleteFixedAssetDescTableValuesTO" inline-parameters="true">
+        UPDATE FIXED_ASSET_DESCRIPTION SET 
+        ASSET_STATUS = #assetStatus:VARCHAR#
+        WHERE FA_DESC_ID = #assetDescID:VARCHAR#
+        AND SL_NO=#slNo:NUMERIC#
+    </mapped-statement>
+        
+        
+    <mapped-statement name="getSelectFixedAssetDesc" result-map="getFixedAssetDescDetailsTOResult" >
+        SELECT * FROM FIXED_ASSET_DESCRIPTION 
+        WHERE FA_DESC_ID = #FA_DESC_ID:VARCHAR# AND ASSET_STATUS != 'DELETED'
+        ORDER BY SL_NO
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectFixedAssetDescAuthorize" result-map="getFixedAssetDescDetailsTOResult" >
+        SELECT * FROM FIXED_ASSET_DESCRIPTION 
+        WHERE FA_DESC_ID = #FA_DESC_ID:VARCHAR# AND ASSET_STATUS != 'DELETED'  AND ASSET_AUTHORIZED_STATUS is NULL ORDER BY SL_NO
+    </mapped-statement>
+        
+        
+    <mapped-statement name="authorizeFixedAssetDescDetails" result-class="java.util.HashMap">
+        UPDATE FIXED_ASSET_DESCRIPTION SET 
+        ASSET_AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        ASSET_AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        ASSET_AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE FA_DESC_ID = #FA_DESC_ID:VARCHAR#
+        AND SL_NO=#SL_NO#
+    </mapped-statement>
+    <mapped-statement name="getFixedAssetsDescDetailsEdit" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT FA_DESC_ID,ASSET_TYPE FROM FIXED_ASSET_DESCRIPTION
+        WHERE ASSET_STATUS!='DELETED' AND ASSET_BRANCH=#BRANCH_CODE:VARCHAR# ORDER BY  FA_DESC_ID
+    </mapped-statement>
+
+    <mapped-statement name="getFixedAssetsDescDetailsView" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT FA_DESC_ID,ASSET_TYPE FROM FIXED_ASSET_DESCRIPTION
+        WHERE ASSET_STATUS!='DELETED' AND ASSET_BRANCH=#BRANCH_CODE:VARCHAR# ORDER BY  FA_DESC_ID
+    </mapped-statement>
+        
+    <mapped-statement name="countNoOfAssets" result-class = "java.lang.Integer">
+        SELECT COUNT(FA_DESC_ID) AS "COUNT" FROM FIXED_ASSET_DESCRIPTION WHERE SL_NO = #slNo:NUMERIC# 
+        AND FA_DESC_ID=#assetDescID:VARCHAR# AND ASSET_STATUS!='DELETED'
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsDescDetailsAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT FA_DESC_ID,ASSET_TYPE FROM FIXED_ASSET_DESCRIPTION WHERE ASSET_AUTHORIZED_STATUS is NULL 
+        AND ASSET_STATUS!='DELETED' AND ASSET_BRANCH=#BRANCH_CODE:VARCHAR# AND ASSET_STATUS_BY!=#USER_ID:VARCHAR# ORDER BY  FA_DESC_ID
+    </mapped-statement>
+        
+    <mapped-statement name="getFixedAssetsDescDetailsDelete" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT FA_DESC_ID,ASSET_TYPE FROM FIXED_ASSET_DESCRIPTION WHERE ASSET_AUTHORIZED_STATUS is NULL
+        AND ASSET_STATUS!='DELETED' AND ASSET_BRANCH=#BRANCH_CODE:VARCHAR# ORDER BY  FA_DESC_ID
+    </mapped-statement>
+        
+    <mapped-statement name="countAssetsExists" result-class = "java.lang.Integer">
+        SELECT COUNT(*) AS CNT FROM FIXED_ASSET_DESCRIPTION WHERE ASSET_TYPE=#ASSET_TYPE:VARCHAR# AND ASSET_STATUS!='DELETED'
+    </mapped-statement>
+        
+    <result-map name="get-getFixedAssetsProd-result" class="com.see.truetransact.transferobject.common.lookup.LookUpTO">
+        <property name="lookUpRefID" column="ASSET_TYPE" />
+        <property name="lookUpDesc" column="ASSET_TYPE" />
+    </result-map> 
+        
+    <mapped-statement name="getFixedAssetsProd" result-map="get-getFixedAssetsProd-result"> 
+        SELECT ASSET_TYPE FROM FIXED_ASSETS_PRODUCT WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IN ('AUTHORIZED') ORDER BY ASSET_TYPE
+    </mapped-statement>
+        
+</sql-map>

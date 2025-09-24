@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeTrainingMap">
+
+    <mapped-statement name="insertEmployeeTrainingTO" inline-parameters="true">
+        INSERT INTO EMP_TRAINING
+        (TRAINING_ID, TRAINING_DEST, TRAINING_LOCATION, TRAINING_CONDUCTING_TEAM, TRAINING_SUBJECT, TRAINING_DATE_FROM,TRAINING_DATE_TO, TEAM_SIZE, 
+        NO_OF_TRAINEES, REMARKS
+        ) VALUES (
+        #empTrainingID:VARCHAR#, #destination:VARCHAR#, #location:VARCHAR#, #team:VARCHAR#, #subj:VARCHAR#,
+        #trainingFrom:DATE#, #trainingTo:DATE#, cast(#teamSize# as numeric), cast(#noOfEmp# as numeric), #remarks:VARCHAR#
+        ) 
+    </mapped-statement>
+    
+    <mapped-statement name="updateEmployeeTrainingTO" inline-parameters="true">
+        UPDATE EMP_TRAINING SET 
+        TRAINING_DEST = #destination:VARCHAR#,
+        TRAINING_LOCATION =#location:VARCHAR#,
+        TRAINING_CONDUCTING_TEAM =#team:VARCHAR#,
+        TEAM_SIZE = cast(#teamSize# as numeric),
+        NO_OF_TRAINEES = cast(#noOfEmp# as numeric),
+        TRAINING_DATE_FROM = #trainingFrom:TIMESTAMP#,
+        TRAINING_DATE_TO = #trainingTo:TIMESTAMP#,
+        TRAINING_SUBJECT = #subj:VARCHAR#,
+        REMARKS = #remarks:VARCHAR#
+        WHERE TRAINING_ID = #empTrainingID:VARCHAR#
+    </mapped-statement>
+      
+    <mapped-statement name="deleteEmployeeTrainingTO" inline-parameters="true">
+        DELETE FROM EMP_TRAINING WHERE TRAINING_ID=#empTrainingID:VARCHAR#
+    </mapped-statement>
+             
+    <mapped-statement name="deleteEmployeeTrainingDetailsTO" inline-parameters="true">
+        DELETE FROM EMP_TRAINING_DETAILS WHERE EMP_TRAINING_ID=#empTrainingID:VARCHAR#
+    </mapped-statement>
+      
+    <result-map name="getEmpTrainingTOResult" class="com.see.truetransact.transferobject.payroll.employeeTraining.EmployeeTrainingTO">
+        <property name="empTrainingID" column="TRAINING_ID"/>
+        <property name="destination" column="TRAINING_DEST"/>
+        <property name="location" column="TRAINING_LOCATION"/>
+        <property name="team" column="TRAINING_CONDUCTING_TEAM"/>
+        <property name="teamSize" column="TEAM_SIZE"/>
+        <property name="trainingFrom" column="TRAINING_DATE_FROM"/>
+        <property name="trainingTo" column="TRAINING_DATE_TO"/>
+        <property name="noOfEmp" column="NO_OF_TRAINEES"/>
+        <property name="branCode" column="EMP_BRANCH"/>
+        <property name="subj" column="TRAINING_SUBJECT"/>
+        <property name="remarks" column="REMARKS"/>
+    </result-map>
+        
+    <result-map name="getEmpTrainingEmpDetailsTOResult" class="com.see.truetransact.transferobject.payroll.employeeTraining.EmployeeTrainingTO">
+        <property name="empTrainingID" column="EMP_TRAINING_ID"/>
+        <property name="empID" column="EMP_ID"/>
+        <property name="empName" column="EMP_NAME"/>
+        <property name="empBran" column="EMP_BRANCH"/>
+        <property name="slNo" column="SL_NO"/>
+    </result-map>
+	
+    <mapped-statement name="getSelectEmployeeTrainingTO" result-map="getEmpTrainingTOResult" >
+        SELECT * FROM EMP_TRAINING E JOIN EMP_TRAINING_DETAILS ET
+        ON E.TRAINING_ID = #TRAINING_ID:VARCHAR# AND E.TRAINING_ID=ET.EMP_TRAINING_ID
+    </mapped-statement>
+        
+    <mapped-statement name="insertEmployeeDetailsTO" inline-parameters="true">             
+        INSERT INTO EMP_TRAINING_DETAILS
+        (EMP_TRAINING_ID, EMP_ID, EMP_NAME, EMP_BRANCH, SL_NO
+        ) VALUES (
+        #empTrainingID:VARCHAR#,#empID:VARCHAR#,#empName:VARCHAR#,#empBran:VARCHAR#,cast(#slNo# as numeric)
+        ) 
+    </mapped-statement>
+    
+    <mapped-statement name="updateEmployeeDetailsTO" inline-parameters="true">
+        UPDATE EMP_TRAINING_DETAILS SET 
+        EMP_ID = #empID:VARCHAR#,
+        EMP_NAME =#empName:VARCHAR#,
+        EMP_BRANCH =#empBran:VARCHAR#
+        WHERE EMP_TRAINING_ID = #empTrainingID:VARCHAR#
+        AND SL_NO=cast(#slNo# as numeric)
+    </mapped-statement>
+        
+    <mapped-statement name="deleteEmployeeDetailsTO" inline-parameters="true">
+        DELETE FROM EMP_TRAINING_DETAILS 
+        WHERE EMP_TRAINING_ID = #empTrainingID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="countNoOfEmployee" result-class = "java.lang.Integer">
+        SELECT COUNT(EMP_TRAINING_ID) AS "COUNT" FROM EMP_TRAINING_DETAILS WHERE SL_NO = #slNo:NUMERIC# 
+        AND EMP_TRAINING_ID=#empTrainingID:VARCHAR#
+    </mapped-statement>
+        
+    <mapped-statement name="getSelectEmployeeList" result-map="getEmpTrainingEmpDetailsTOResult" >
+        SELECT * FROM EMP_TRAINING_DETAILS 
+        WHERE EMP_TRAINING_ID = #TRAINING_ID:VARCHAR# ORDER BY SL_NO
+    </mapped-statement>
+        
+    <mapped-statement name="authorizeEmpTraining" result-class="java.util.HashMap">
+        UPDATE EMP_TRAINING SET 
+        AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE EMP_TRAINING_ID = #TRAINING_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="authorizeEmpTrainingDetails" result-class="java.util.HashMap">
+        UPDATE EMP_TRAINING_DETAILS SET 
+        EMP_AUTHORIZED_STATUS = #STATUS:VARCHAR#,
+        EMP_AUTHORIZED_BY = #AUTH_BY:VARCHAR#,
+        EMP_AUTHORIZED_DT = #AUTH_DT:TIMESTAMP#
+        WHERE EMP_TRAINING_ID = #TRAINING_ID:VARCHAR#
+    </mapped-statement>
+        
+        
+   <dynamic-mapped-statement name="getEmployeeTrainingDetails" result-class="java.util.LinkedHashMap">
+        SELECT DISTINCT E.TRAINING_ID, E.TRAINING_DEST, E.TEAM_SIZE, E.NO_OF_TRAINEES FROM EMP_TRAINING E 
+        JOIN EMP_TRAINING_DETAILS ET ON E.TRAINING_ID=ET.EMP_TRAINING_ID 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAINING_ID" >
+                    UPPER(E.TRAINING_ID) LIKE UPPER('%$TRAINING_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAINING_DEST" >
+                    UPPER(E.TRAINING_DEST) LIKE UPPER('%$TRAINING_DEST$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TEAM_SIZE" >
+                    UPPER(E.TEAM_SIZE) LIKE UPPER('%$TEAM_SIZE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "NO_OF_TRAINEES" >
+                    UPPER(E.NO_OF_TRAINEES) LIKE UPPER('%$NO_OF_TRAINEES$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY E.TRAINING_ID
+    </dynamic-mapped-statement>
+        
+    <mapped-statement name="getEmpTrainingDetails_Delete" result-class="java.util.LinkedHashMap">
+        SELECT TRAINING_ID,  TRAINING_LOCATION,TRAINING_DATE_FROM,TRAINING_DATE_TO FROM EMP_TRAINING  
+        ORDER BY TRAINING_ID
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getEmployeeTrainingDetails_View" result-class="java.util.LinkedHashMap">
+        SELECT TRAINING_ID,  TRAINING_LOCATION,TRAINING_DATE_FROM,TRAINING_DATE_TO FROM EMP_TRAINING 
+        ORDER BY TRAINING_ID
+         <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAINING_ID" >
+                    UPPER(TRAINING_ID) LIKE UPPER('%$TRAINING_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAINING_LOCATION" >
+                    UPPER(TRAINING_LOCATION) LIKE UPPER('%$TRAINING_LOCATION$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAINING_DATE_FROM" >
+                    UPPER(TRAINING_DATE_FROM) LIKE UPPER('%$TRAINING_DATE_FROM$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "TRAINING_DATE_TO" >
+                    UPPER(TRAINING_DATE_TO) LIKE UPPER('%$TRAINING_DATE_TO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getEmpTrainingDetailsAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT EMP_TRAINING_ID,TRAINING_LOCATION,TRAINING_FROM,TRAINING_TO FROM EMP_TRAINING
+        WHERE STATUS!='DELETED' AND AUTHORIZED_STATUS IS NULL AND BRANCH_CODE=#BRANCH_CODE:VARCHAR# AND STATUS_BY != #USER_ID:VARCHAR#
+        ORDER BY  EMP_TRAINING_ID
+    </mapped-statement>
+        
+    <dynamic-mapped-statement name="getEmployeeDetailsForTraining" result-class="java.util.LinkedHashMap">
+        SELECT EM.EMPLOYEEID,EM.EMPLOYEE_NAME,
+        EP.DESIGNATION,EP.INCREAMENT_COUNT,EP.LAST_INCREAMENT_DATE,EP.NEXT_INCREAMENT_DATE,EP.SCALE_ID,
+        MAX(SD.VERSION_NO) AS VERSION_NO,EP.PRESENT_BASIC
+        FROM  EMPLOYEE_PRESENT_DETAILS EP,EMPLOYEE_MASTER EM,SCALE_MASTER SD 
+        WHERE EP.EMPLOYEEID=EM.EMPLOYEEID
+        AND EP.SCALE_ID=SD.SCALE_ID 
+        <dynamic>
+            <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EMPLOYEEID" >
+                    UPPER(EM.EMPLOYEEID) LIKE UPPER('%$EMPLOYEEID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "EMPLOYEE_NAME" >
+                    UPPER(EM.EMPLOYEE_NAME) LIKE UPPER('%$EMPLOYEE_NAME$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "DESIGNATION" >
+                    UPPER(EP.DESIGNATION) LIKE UPPER('%$DESIGNATION$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INCREAMENT_COUNT" >
+                    UPPER(EP.INCREAMENT_COUNT) LIKE UPPER('%$INCREAMENT_COUNT$%')
+                </isNotEmpty>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "LAST_INCREAMENT_DATE" >
+                    UPPER(EP.LAST_INCREAMENT_DATE) LIKE UPPER('%$LAST_INCREAMENT_DATE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "NEXT_INCREAMENT_DATE" >
+                    UPPER(EP.NEXT_INCREAMENT_DATE) LIKE UPPER('%$NEXT_INCREAMENT_DATE$%')
+                </isNotEmpty>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "SCALE_ID" >
+                    UPPER(EP.SCALE_ID) LIKE UPPER('%$SCALE_ID$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "VERSION_NO" >
+                    UPPER(SD.VERSION_NO) LIKE UPPER('%$VERSION_NO$%')
+                </isNotEmpty>
+            </isParameterPresent>
+               <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "PRESENT_BASIC" >
+                    UPPER(EP.PRESENT_BASIC) LIKE UPPER('%$PRESENT_BASIC$%')
+                </isNotEmpty>
+            </isParameterPresent>
+            </dynamic>
+        GROUP BY  EM.EMPLOYEE_NAME,EM.EMPLOYEEID,EP.DESIGNATION,EP.SCALE_ID,EM.SORT_ORDER,EP.PRESENT_BASIC,
+        EP.INCREAMENT_COUNT,ep.last_increament_date,ep.next_increament_date 
+        ORDER BY  EM.SORT_ORDER, EM.EMPLOYEEID
+    </dynamic-mapped-statement>
+
+    <mapped-statement name="getEmpBranchCode" result-class="java.util.LinkedHashMap">
+        SELECT EM.EMPLOYEEID, EM.BRANCH_CODE FROM EMPLOYEE_MASTER EM WHERE EM.EMPLOYEEID IN (SELECT ET.EMP_ID FROM EMP_TRAINING_DETAILS ET 
+        WHERE ET.EMP_TRAINING_ID=#TRAININGID:VARCHAR#)
+    </mapped-statement>
+
+    <mapped-statement name="updateEmpBranch" inline-parameters="true">
+        UPDATE EMP_TRAINING_DETAILS SET 
+        EMP_BRANCH =#EMP_BRANCH:VARCHAR#
+        WHERE EMP_TRAINING_ID = #EMP_TRAININGID:VARCHAR#
+        AND  EMP_ID = #EMPID:VARCHAR#
+    </mapped-statement>
+    
+</sql-map>

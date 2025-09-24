@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="BalanceUpdateMap">
+    
+    <result-map name="getBalanceUpdateTOResult" class="com.see.truetransact.transferobject.supporting.balanceupdate.BalanceUpdateTO">
+        <property name="frmdate" column="FROM_DT"/>
+        <property name="todate" column="TO_DT"/>
+        <property name="finalacttype" column="FINAL_ACCOUNT_TYPE"/>
+        <property name="amount" column="AMOUNT"/>
+        <property name="accountHeadId" column="ACCOUNT_HEAD_ID"/>
+        <property name="acctHeadDesc" column="ACCOUNT_HEAD_DESC"/>
+        <property name="actualAmount" column="ACTUAL_AMOUNT"/>
+        <property name="branchcode" column="BRANCH_CODE"/>
+        <property name="authorize" column="AUTHORIZED_BY"/>
+<!--        <property name="authorizeStatus" column="AUTHORIZATION_STATUS"/>-->
+        <property name="authorizedDt" column="STATUS_DT"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="balanceType" column="BALANCE_TYPE"/>
+        <property name="balSheetId" column="BAL_SHEET_ID"/>
+    </result-map>  
+    
+   <!-- <mapped-statement name="getSelectBalanceFinalData" result-map="getBalanceUpdateTOResult" >
+         SELECT * FROM BALANCESHEET_BALANCEFINAL WHERE FROM_DT =#frmdate:DATE# AND TO_DT =#todate:DATE#
+        AND ACCOUNT_HEAD_ID = #accountHeadId:VARCHAR#
+        AND FINAL_ACCOUNT_TYPE = #finalacttype:VARCHAR#    
+    </mapped-statement>-->
+    
+    <dynamic-mapped-statement name="getSelectBalanceFinalData" result-map="getBalanceUpdateTOResult" >
+        SELECT * FROM BALANCESHEET_BALANCEFINAL WHERE FROM_DT =#frmdate:DATE# AND TO_DT =#todate:DATE#
+        AND ACCOUNT_HEAD_ID = #accountHeadId:VARCHAR#
+        AND FINAL_ACCOUNT_TYPE = #finalacttype:VARCHAR#   
+          <dynamic>
+            <isParameterPresent>
+                <isNotEqual prepend = "AND" property="branchcode" compareValue="" >
+                   BRANCH_CODE =#branchcode:varchar#
+                </isNotEqual>
+                <!-- <isNull prepend = "AND" property = "branchcode">        
+                   BRANCH_CODE IS NULL
+                </isNull>-->
+                  <isEqual prepend = "AND" property="branchcode" compareValue="" >
+                      BRANCH_CODE IS NULL
+                  </isEqual>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSelectBalanceManualFinalData" result-map="getBalanceUpdateTOResult" >
+        SELECT * FROM BALANCESHEET_BALANCEFINAL WHERE FROM_DT =#frmdate:DATE# AND TO_DT =#todate:DATE#
+        AND ACCOUNT_HEAD_ID is null
+        AND FINAL_ACCOUNT_TYPE = #finalacttype:VARCHAR#  
+        and ENTRY_MODE = 'MANUAL'
+        AND ACCOUNT_HEAD_DESC = #acctHeadDesc:VARCHAR#
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectNetBalanceFinalData" result-map="getBalanceUpdateTOResult" >
+         SELECT * FROM BALANCESHEET_BALANCEFINAL WHERE FROM_DT =#frmdate:DATE# AND TO_DT =#todate:DATE#
+        AND ACCOUNT_HEAD_ID is null
+        AND ACCOUNT_HEAD_DESC = #acctHeadDesc:VARCHAR#
+        AND FINAL_ACCOUNT_TYPE = #finalacttype:VARCHAR#    
+        <dynamic>
+            <isParameterPresent>
+                <isNotEqual prepend = "AND" property="branchcode" compareValue="" >
+                   BRANCH_CODE =#branchcode:varchar#
+                </isNotEqual>
+                <!-- <isNull prepend = "AND" property = "branchcode">        
+                   BRANCH_CODE IS NULL
+                </isNull>-->
+                  <isEqual prepend = "AND" property="branchcode" compareValue="" >
+                      BRANCH_CODE IS NULL
+                  </isEqual>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="updateBalanceFinalUpdateTO" result-class="java.util.HashMap">
+        UPDATE BALANCESHEET_BALANCEFINAL SET AMOUNT = #amount:NUMERIC# ,BAL_SHEET_ID=#balSheetId:VARCHAR#,
+        AUTHORIZATION_STATUS = null WHERE 
+        FROM_DT =#frmdate:DATE# 
+        AND TO_DT =#todate:DATE#
+        AND FINAL_ACCOUNT_TYPE = #finalacttype:VARCHAR#          
+        AND ACCOUNT_HEAD_ID = #accountHeadId:VARCHAR#
+    </dynamic-mapped-statement>  
+    
+    <dynamic-mapped-statement name="updateNetBalanceFinalUpdateTO" result-class="java.util.HashMap">
+        UPDATE BALANCESHEET_BALANCEFINAL SET AMOUNT = #amount:NUMERIC# ,BAL_SHEET_ID=#balSheetId:VARCHAR#,
+        AUTHORIZATION_STATUS = null WHERE 
+        FROM_DT =#frmdate:DATE# 
+        AND TO_DT =#todate:DATE#
+        AND FINAL_ACCOUNT_TYPE = #finalacttype:VARCHAR#          
+        AND ACCOUNT_HEAD_ID is null
+        AND ACCOUNT_HEAD_DESC = #acctHeadDesc:VARCHAR#
+    </dynamic-mapped-statement> 
+    
+    <mapped-statement name="getSelectBalanceSheetTO" result-class="java.util.HashMap" >
+        SELECT FROM_DT,TO_DT,FINAL_ACCOUNT_TYPE,AMOUNT,ACCOUNT_HEAD_ID,ACCOUNT_HEAD_DESC,
+        ACTUAL_AMOUNT,BRANCH_CODE,AUTHORIZED_BY,AUTHORIZATION_STATUS,
+        STATUS,STATUS_DT,STATUS_BY,BALANCE_TYPE,BAL_SHEET_ID,AUTHORIZE_DT,MAH.SUB_ACCOUNT_TYPE FROM BALANCESHEET_BALANCEUPDATE BB
+        JOIN AC_HD AH ON AH.AC_HD_ID=BB.ACCOUNT_HEAD_ID
+        JOIN MJR_AC_HD MAH ON MAH.MJR_AC_HD_ID=AH.MJR_AC_HD_ID
+        WHERE BAL_SHEET_ID=#BAL_SHEET_ID:VARCHAR#
+    </mapped-statement>
+    
+    <mapped-statement name="getSelectBalanceFinalSheetTO" result-class="java.util.HashMap" >
+        SELECT * FROM BALANCESHEET_BALANCEFINAL
+        WHERE BAL_SHEET_ID=#BAL_SHEET_ID:VARCHAR# AND (ACCOUNT_HEAD_ID IS NOT NULL OR ENTRY_MODE='MANUAL')
+    </mapped-statement>
+    <mapped-statement name="insertBalanceUpdateTO" inline-parameters="true">
+      INSERT INTO BALANCESHEET_BALANCEUPDATE
+        (FROM_DT,TO_DT,FINAL_ACCOUNT_TYPE,AMOUNT,ACCOUNT_HEAD_ID,
+         ACCOUNT_HEAD_DESC,ACTUAL_AMOUNT,BRANCH_CODE,
+          AUTHORIZED_BY,AUTHORIZATION_STATUS,STATUS,STATUS_DT,STATUS_BY,BALANCE_TYPE,BAL_SHEET_ID
+        ) VALUES (#frmdate:DATE#, #todate:DATE#, #finalacttype:VARCHAR#, #amount:NUMERIC#,
+         #accountHeadId:VARCHAR#, #acctHeadDesc:VARCHAR#, #actualAmount:NUMERIC#,
+          #branchcode:VARCHAR#, #authorizedBy:VARCHAR#,
+           #authorize:VARCHAR#, #status:VARCHAR#, #statusDt:DATE#,
+            #statusBy:VARCHAR#,#balanceType:VARCHAR#,#balSheetId:VARCHAR#)
+             
+    </mapped-statement>  
+    <mapped-statement name="insertBalanceFinalUpdateTO" inline-parameters="true">
+      INSERT INTO BALANCESHEET_BALANCEFINAL
+        (FROM_DT,TO_DT,FINAL_ACCOUNT_TYPE,AMOUNT,ACCOUNT_HEAD_ID,
+         ACCOUNT_HEAD_DESC,ACTUAL_AMOUNT,BRANCH_CODE,
+         AUTHORIZED_BY,AUTHORIZATION_STATUS,STATUS,STATUS_DT,STATUS_BY,BALANCE_TYPE,BAL_SHEET_ID,ENTRY_MODE
+        ) VALUES (#frmdate:DATE#, #todate:DATE#, #finalacttype:VARCHAR#, cast(#amount# as numeric),
+         #accountHeadId:VARCHAR#, #acctHeadDesc:VARCHAR#, cast(#actualAmount# as numeric),
+          #branchcode:VARCHAR#, #authorizedBy:VARCHAR#,
+           #authorize:VARCHAR#, #status:VARCHAR#, #statusDt:DATE#,
+            #statusBy:VARCHAR#,#balanceType:VARCHAR#,#balSheetId:VARCHAR#,#entryMode:VARCHAR#)
+             
+    </mapped-statement>  
+
+    <dynamic-mapped-statement name="getSelectBalanceUpdateTOList" result-class="java.util.LinkedHashMap" >
+        SELECT BAL_SHEET_ID, FINAL_ACCOUNT_TYPE , case when balance_type='CREDIT' then sum(nvl(amount,0)) Else 0 End CREDIT_TOTAL,
+        case when balance_type='DEBIT' then sum(nvl(amount,0)) Else 0 End DEBIT_TOTAL
+        FROM BALANCESHEET_BALANCEUPDATE
+        WHERE STATUS != 'DELETED' 
+        AND STATUS_BY != #USER_ID:VARCHAR#
+         <!--AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZATION_STATUS IS NULL OR 
+                AUTHORIZATION_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        group by bal_sheet_id, final_account_type,balance_type
+        ORDER BY bal_sheet_id              
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getSelectBalanceFinalTOList" result-class="java.util.LinkedHashMap" >
+        SELECT   bal_sheet_id, final_account_type,
+        case when balance_type='CREDIT' then sum(nvl(amount,0)) Else 0 End credit_total,
+        case when balance_type='DEBIT' then sum(nvl(amount,0)) Else 0 End debit_total
+        FROM BALANCESHEET_BALANCEFINAL
+        WHERE STATUS != 'DELETED' 
+        AND STATUS_BY != #USER_ID:VARCHAR#
+         <!--AND BRANCH_CODE = #BRANCH_CODE:VARCHAR# -->
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZATION_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZATION_STATUS IS NULL OR 
+                AUTHORIZATION_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        group by bal_sheet_id, final_account_type,balance_type
+        ORDER BY bal_sheet_id            
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authBalanceSheet" result-class="java.util.HashMap">
+        UPDATE BALANCESHEET_BALANCEUPDATE SET 
+        AUTHORIZATION_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE BAL_SHEET_ID = #BAL_SHEET_ID:VARCHAR# 
+    </mapped-statement>    
+   
+    <mapped-statement name="authBalanceFinalSheet" result-class="java.util.HashMap">
+        UPDATE BALANCESHEET_BALANCEFINAL SET 
+        AUTHORIZATION_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZED_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE BAL_SHEET_ID = #BAL_SHEET_ID:VARCHAR# 
+    </mapped-statement>   
+    <dynamic-mapped-statement name="deleteBalanceSheet" result-class="java.util.HashMap">
+        UPDATE BALANCESHEET_BALANCEUPDATE SET STATUS='DELETED' WHERE 
+        FINAL_ACCOUNT_TYPE = #FINAL_ACC_TYPE:VARCHAR#  AND TO_DT=#DATE:DATE#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE =#BRANCH_CODE:varchar#
+                </isNotNull>
+                 <isNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE IS NULL
+                </isNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>  
+    <dynamic-mapped-statement name="deleteFinalBalanceSheet" result-class="java.util.HashMap">
+        UPDATE  BALANCESHEET_BALANCEFINAL SET STATUS='DELETED' 
+        WHERE FINAL_ACCOUNT_TYPE = #FINAL_ACC_TYPE:VARCHAR#  AND TO_DT=#DATE:DATE#
+          <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE =#BRANCH_CODE:varchar#
+                </isNotNull>
+                 <isNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE IS NULL
+                </isNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>  
+    <dynamic-mapped-statement name="getCountForBalanceSheet" result-class="java.util.HashMap">
+       select count(BAL_SHEET_ID) AS COUNT from BALANCESHEET_BALANCEUPDATE where 
+       TO_DT=#DATE:DATE# AND FINAL_ACCOUNT_TYPE=#FINAL_ACC_TYPE:VARCHAR# AND ACCOUNT_HEAD_ID=#AC_HEAD:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE =#BRANCH_CODE:VARCHAR#
+                </isNotNull>
+                 <isNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE IS NULL
+                </isNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>   
+    <dynamic-mapped-statement name="getCountForBalanceFinalSheet" result-class="java.util.HashMap">
+       select count(BAL_SHEET_ID) AS COUNT from BALANCESHEET_BALANCEFINAL where 
+       TO_DT=#DATE:DATE# AND FINAL_ACCOUNT_TYPE=#FINAL_ACC_TYPE:VARCHAR# AND ACCOUNT_HEAD_ID=#AC_HEAD:VARCHAR#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE =#BRANCH_CODE:VARCHAR#
+                </isNotNull>
+                   <isNull prepend = "AND" property = "BRANCH_CODE">        
+                   BRANCH_CODE IS NULL
+                </isNull>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>     
+    
+        
+    
+    <dynamic-mapped-statement name="getBalanceUpdateData" result-class="java.util.HashMap" >
+       SELECT AC.AC_HD_ID,AC.AC_HD_DESC,nvl(sum(GL.CLOSE_BAL),0) *  CASE WHEN GL.BALANCE_TYPE = 'CREDIT' THEN
+       1 
+       WHEN  GL.BALANCE_TYPE = 'DEBIT' THEN
+       -1 END AS Balance,GL.BALANCE_TYPE AS TYPE FROM MJR_AC_HD MJR
+       JOIN AC_HD AC ON AC.MJR_AC_HD_ID = MJR.MJR_AC_HD_ID
+       JOIN GL_ABSTRACT GL ON GL.AC_HD_ID = AC.AC_HD_ID
+       WHERE GL.DT =#DT:DATE# 
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                   GL.BRANCH_CODE =#BRANCH_CODE:varchar#
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic> 
+        AND MJR.FINAL_ACCOUNT_TYPE =#FINAL_ACCOUNT_TYPE:varchar#  AND MJR.SUB_ACCOUNT_TYPE =#FINAL_SUBACCOUNT_TYPE:varchar#
+       group by  AC.AC_HD_ID,AC.AC_HD_DESC,GL.BALANCE_TYPE
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getBalanceUpdatePayable" result-class="java.util.HashMap" >
+    
+SELECT   int_pyble_head as AC_HD_ID, MAX (ac_hd_desc) AS PROD_DESC, SUM (intpayable) AS INTPAYABLE
+    FROM (SELECT   int_pyble_head, MAX (s.ac_hd_desc) AS ac_hd_desc,
+                   SUM (int_payable) AS intpayable
+              FROM (WITH os AS
+                         (SELECT a.branch_id, a.prod_id, a.deposit_no,
+                                 a.created_dt AS dep_date,
+                                 TO_DATE (TO_CHAR (s.close_dt, 'dd/MM/yyyy'),
+                                          'dd/MM/yyyy'
+                                         ) AS closed_dt,
+                                 p.int_pay AS ac_hd_id,
+                                    s.deposit_no
+                                 || '_'
+                                 || s.deposit_sub_no AS link_id,
+                                 p.behaves_like AS behavior,
+                                 s.deposit_dt AS wef, ac.ac_hd_desc,
+                                 p.int_pyble AS int_pyble_head
+                            FROM deposit_acinfo a JOIN deposit_sub_acinfo s
+                                 ON s.deposit_no = a.deposit_no
+                                 JOIN fixed_deposit_product p
+                                 ON p.prod_id = a.prod_id
+                                 JOIN ac_hd ac ON ac.ac_hd_id = p.int_pyble
+                                 JOIN mjr_ac_hd mj
+                                 ON mj.mjr_ac_hd_id = ac.mjr_ac_hd_id
+                           WHERE 
+                          
+                          
+                             p.prod_desc = NVL ('', p.prod_desc)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                                       a.branch_id = NVL (#BRANCH_CODE:varchar#, a.branch_id)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                             AND a.created_dt &lt;= #DT:DATE#
+                             AND (   s.close_dt IS NULL
+                                  OR (CASE
+                                         WHEN s.total_balance &gt; 0
+                                            THEN ADD_MONTHS
+                                                   (  get_last_finenddate
+                                                                (#DT:DATE#)
+                                                    + 1,
+                                                    1
+                                                   )
+                                         ELSE TO_DATE (TO_CHAR (s.close_dt,
+                                                                'dd/MM/yyyy'
+                                                               ),
+                                                       'dd/MM/yyyy'
+                                                      )
+                                      END &gt;=
+                                           get_last_finenddate (#DT:DATE#)
+                                         + 1
+                                     )
+                                 )
+                             AND (   s.authorize_status = 'AUTHORIZED'
+                                  OR s.authorize_status IS NULL
+                                 )
+                             AND s.status != 'DELETED')
+                    SELECT os.int_pyble_head, os.ac_hd_desc, 0 AS int_payable
+                      FROM deposit_dayend_balance db JOIN os
+                           ON os.deposit_no = db.act_num
+                     WHERE db.day_end_dt =
+                              (SELECT MAX (dd.day_end_dt)
+                                 FROM deposit_dayend_balance dd
+                                WHERE dd.act_num = os.deposit_no
+                                  AND dd.day_end_dt &lt;
+                                           get_last_finenddate (#DT:DATE#)
+                                         + 1)
+                    UNION ALL
+                    SELECT   os.int_pyble_head,
+                             MAX (os.ac_hd_desc) AS ac_hd_desc,
+                             0 AS int_payable
+                        FROM all_trans t JOIN os
+                             ON os.link_id = NVL (t.act_num, t.link_batch_id)
+                           AND t.ac_hd_id = os.ac_hd_id
+                       WHERE 
+                          t.trans_dt
+                                BETWEEN get_last_finenddate (#DT:DATE#)
+                                        + 1
+                                    AND #DT#
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                                     t.branch_id = NVL (#BRANCH_CODE:varchar#, t.branch_id)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+                         AND t.authorize_status = 'AUTHORIZED'
+                         AND t.status != 'DELETED'
+                    GROUP BY os.branch_id, os.ac_hd_id, os.int_pyble_head
+                    UNION ALL
+                    SELECT   os.int_pyble_head,
+                             MAX (os.ac_hd_desc) AS ac_hd_desc,
+                             get_fd_interestpayable
+                                               (os.deposit_no,
+                                                #DT:DATE#
+                                               ) AS int_payable
+                        FROM os
+                    GROUP BY os.branch_id,
+                             os.deposit_no,
+                             os.ac_hd_id,
+                             os.int_pyble_head) s
+          GROUP BY int_pyble_head
+          UNION ALL
+          SELECT   cdp.int_pyble, ac.ac_hd_desc,
+                   SUM
+                      (get_ccumulative_dep_intpayable (s.deposit_no,
+                                                       #DT:DATE#
+                                                      )
+                      ) AS int_payable
+              FROM deposit_sub_acinfo s JOIN deposit_acinfo a
+                   ON a.deposit_no = s.deposit_no
+                   JOIN cumulative_deposit_priduct cdp ON cdp.prod_id =
+                                                                     a.prod_id
+                   JOIN ac_hd ac ON ac.ac_hd_id = cdp.int_pyble
+                   JOIN mjr_ac_hd mj ON mj.mjr_ac_hd_id = ac.mjr_ac_hd_id
+             WHERE 
+                cdp.prod_desc = NVL ('', cdp.prod_desc)
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                                     a.branch_id = NVL (#BRANCH_CODE:varchar#, a.branch_id)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+               AND (   s.close_dt IS NULL
+                    OR CASE
+                          WHEN s.total_balance &gt; 0
+                             THEN ADD_MONTHS (#DT:DATE#, 1)
+                          ELSE TO_DATE (TO_CHAR (s.close_dt, 'dd/MM/yyyy'),
+                                        'dd/MM/yyyy'
+                                       )
+                       END &gt; #DT#
+                   )
+          GROUP BY cdp.int_pyble, ac.ac_hd_desc) t
+GROUP BY t.int_pyble_head    
+ 
+    </dynamic-mapped-statement>   
+     <dynamic-mapped-statement name="getBalancePOReceivable" result-class="java.util.HashMap" >
+        SELECT DISTINCT B.INT_RCVD_HD AS INT_RCBL_HD,D.AC_HD_DESC,(NVL(A.INTRCBL,0) + NVL(B.INTRCVD,0)) - NVL(C.PREV_RCVBL,0) AS BALANCE FROM 
+        LOAD_FIN_INT_RCBL(#BRANCH_CODE:VARCHAR#,#DT:DATE#,'INTEREST RECEIVED') A,
+        LOAD_FIN_INT_RCVD(#BRANCH_CODE:VARCHAR#,#DT:DATE#,'INTEREST RECEIVED') B, 
+        LOAD_FIN_PREV_INT_RCVBL(#BRANCH_CODE:VARCHAR#,#DT:DATE#,'INTEREST RECEIVED') C,
+        AC_HD D
+        WHERE A.PROD_ID=B.PROD_ID AND B.INT_RCVD_HD=D.AC_HD_ID AND A.INT_RCBL_HD=C.INT_RCVBL_HD 
+        AND B.PROD_ID=C.PROD_ID AND (NVL(A.INTRCBL,0) + NVL(B.INTRCVD,0)) - NVL(C.PREV_RCVBL,0)>0
+     </dynamic-mapped-statement> 
+      <dynamic-mapped-statement name="getBalancePOPayable" result-class="java.util.HashMap" >
+    SELECT distinct B.INT_PAID_HD AS INT_PYBL_HD,D.AC_HD_DESC,(NVL(A.INTPAYABLE,0) + NVL(B.INTPAID,0)) - NVL(C.PREV_INTPBL,0) AS BALANCE FROM 
+    LOAD_FIN_INT_PYBL(#BRANCH_CODE:VARCHAR#,#DT:DATE#,'INTEREST PAID') A,
+    LOAD_FIN_INT_PAID(#BRANCH_CODE:VARCHAR#,#DT:DATE#,'INTEREST PAID') B, 
+    LOAD_FIN_PREV_INT_PYBL(#BRANCH_CODE:VARCHAR#,#DT:DATE#,'INTEREST PAID') C,
+    AC_HD D
+    WHERE A.PROD_ID=B.PROD_ID AND A.INT_PYBL_HD=C.INT_PAYABLE_HD 
+    AND B.INT_PAID_HD=D.AC_HD_ID AND (NVL(A.INTPAYABLE,0) + NVL(B.INTPAID,0)) - NVL(C.PREV_INTPBL,0) >0
+     </dynamic-mapped-statement>  
+    <dynamic-mapped-statement name="getBalanceUpdateReceivable" result-class="java.util.HashMap" >
+            SELECT   int_recble_head as ACID, MAX (descr) as   DESCR, SUM (intreceivable) AS INTRECEIVABLE
+    FROM (SELECT   lpa.ac_int_recble AS int_recble_head, ac_hd_desc AS descr,
+                   NVL
+                      (SUM
+                          (  get_tl_interest (loans_facility_details.acct_num,
+                                              loans_sanction_details.from_dt,
+                                              #DT:DATE#
+                                             )
+                           + get_tl_pen_interest
+                                (loans_facility_details.acct_num,
+                                 loans_sanction_details.from_dt,
+                                 #DT#,
+                                 get_tl_penroi
+                                          (loans_facility_details.prod_id,
+                                           loans_facility_details.acct_num,
+                                           loans_sanction_details.from_dt,
+                                           loans_sanction_details.LIMIT,
+                                           loans_facility_details.int_get_from
+                                          )
+                                )
+                          ),
+                       0
+                      ) AS intreceivable
+              FROM loans_facility_details JOIN loans_sanction_details
+                   ON loans_sanction_details.borrow_no =
+                                              loans_facility_details.borrow_no
+                   JOIN loans_borrower b
+                   ON b.borrow_no = loans_sanction_details.borrow_no
+                   JOIN loans_product lp
+                   ON lp.prod_id = loans_facility_details.prod_id
+                   JOIN loans_prod_achd lpa ON lpa.prod_id = lp.prod_id
+                   JOIN ac_hd ac ON (ac.ac_hd_id = lpa.ac_int_recble)
+                   JOIN mjr_ac_hd mj ON mj.mjr_ac_hd_id = ac.mjr_ac_hd_id
+                   JOIN customer c ON c.cust_id = b.cust_id
+                   JOIN tl_product
+                   ON tl_product.prod_id = loans_facility_details.prod_id
+             WHERE loans_facility_details.authorize_status_1 = 'AUTHORIZED'
+               AND loans_facility_details.status != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                                      loans_facility_details.branch_id =
+                                NVL (#BRANCH_CODE:varchar#, loans_facility_details.branch_id)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+               
+               AND loans_facility_details.acct_status = 'NEW'
+               AND loans_facility_details.clear_balance &lt; 0
+               AND tl_product.prod_desc = NVL ('', tl_product.prod_desc)
+               AND (   loans_sanction_details.from_dt &lt;= #DT:DATE#
+                    OR loans_sanction_details.from_dt &lt;= #DT:DATE#
+                   )
+               AND lp.behaves_like IN
+                                     ('SI_BEARING', 'LOANS_AGAINST_DEPOSITS')
+          GROUP BY ac_hd_id, ac_hd_desc, lpa.ac_int_recble
+          UNION ALL
+          SELECT   lpa.ac_int_recble AS int_recble_head,
+                   ac.ac_hd_desc AS descr,
+                   SUM
+                      (  get_adv_interest_application
+                                             (loans_facility_details.acct_num,
+                                              #DT:DATE#
+                                             )
+                       + get_adv_pen_int_application
+                                             (loans_facility_details.acct_num,
+                                              #DT:DATE#
+                                             )
+                      ) AS intreceivable
+              FROM loans_facility_details JOIN loans_sanction_details
+                   ON loans_sanction_details.borrow_no =
+                                              loans_facility_details.borrow_no
+                   JOIN loans_borrower b
+                   ON b.borrow_no = loans_sanction_details.borrow_no
+                   JOIN loans_product lp
+                   ON lp.prod_id = loans_facility_details.prod_id
+                   JOIN loans_prod_achd lpa ON lpa.prod_id = lp.prod_id
+                   JOIN ac_hd ac ON (ac.ac_hd_id = lpa.ac_int_recble)
+                   JOIN mjr_ac_hd mj ON mj.mjr_ac_hd_id = ac.mjr_ac_hd_id
+                   JOIN customer c ON c.cust_id = b.cust_id
+                   JOIN advance_product
+                   ON advance_product.prod_id = loans_facility_details.prod_id
+             WHERE loans_facility_details.authorize_status_1 = 'AUTHORIZED'
+               AND loans_facility_details.status != 'DELETED'
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "BRANCH_CODE">        
+                                     loans_facility_details.branch_id =
+                                NVL (#BRANCH_CODE:varchar#, loans_facility_details.branch_id)
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+               
+               AND loans_facility_details.acct_status = 'NEW'
+               AND loans_facility_details.clear_balance &lt; 0
+               AND advance_product.prod_desc =
+                                           NVL ('', advance_product.prod_desc)
+               AND (   loans_sanction_details.from_dt &lt;= #DT:DATE#
+                    OR loans_sanction_details.from_dt &lt;= #DT:DATE#
+                   )
+               AND lp.behaves_like IN ('OD')
+          GROUP BY ac_hd_id, ac_hd_desc, lpa.ac_int_recble
+          ORDER BY 1)
+GROUP BY int_recble_head
+
+    </dynamic-mapped-statement>
+    <mapped-statement name="getYearStartDate" result-class="java.util.HashMap" >
+               select get_last_finenddate (#DATE:DATE#) AS DATE_S from dual
+    </mapped-statement>  
+    <dynamic-mapped-statement name="getFinalBalanceSheet" result-class="java.util.HashMap" >  
+          select * from <!--table-->
+          <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "" property = "BRANCH_CODE">        
+                    LOAD_FIN_ACCT(#BRANCH_CODE:varchar#,#DT:DATE#,#FINAL_ACCOUNT_TYPE:VARCHAR#)
+                </isNotNull>
+                  <isNull prepend = "" property = "BRANCH_CODE">        
+                    LOAD_FIN_ACCT(null,#DT:DATE#,#FINAL_ACCOUNT_TYPE:VARCHAR#)
+                </isNull>
+            </isParameterPresent>
+        </dynamic>
+           t where t.CLOSE_BAL>0
+	  ORDER BY MJR_AC_ORDER,AC_HD_ORDER
+    </dynamic-mapped-statement> 
+    <mapped-statement name="getbranchesForBalanceSheet" result-class="java.util.HashMap" >  
+                    SELECT DISTINCT BRANCH_NAME,BRANCH_CODE FROM BRANCH_MASTER 	
+    </mapped-statement> 
+    
+    <dynamic-mapped-statement name="getClosingGLBalance" result-class="java.util.LinkedHashMap" >
+     <!--  SELECT AC.AC_HD_CODE,AC.AC_HD_DESC,GA.OPN_BAL, GA.CLOSE_BAL,
+       CASE
+          WHEN (SELECT DISTINCT AC_HD_ID
+                  FROM GL_OPENING_UPDATE
+                 WHERE AC_HD_ID = AC.AC_HD_CODE AND BRANCH=BRANCH_CODE) IS NULL
+             THEN 'N'
+          ELSE 'Y'
+       END AS UPDATED_HEAD,MJR.MJR_AC_HD_TYPE AS HEAD_TYPE
+       FROM GL_ABSTRACT GA, AC_HD AC,MJR_AC_HD MJR
+       WHERE AC.AC_HD_CODE = GA.AC_HD_ID
+       AND MJR.MJR_AC_HD_ID = AC.MJR_AC_HD_ID -->
+       <!--AND MJR.MJR_AC_HD_TYPE IN (#ASSETS:varchar#,#LIABILITY:varchar#)-->
+      <!-- AND MJR.MJR_AC_HD_TYPE NOT IN ('EXPENDITURE','INCOME')
+       AND GA.DT = #DT:DATE#
+       AND BRANCH_CODE = #BRANCH_CODE:varchar#
+       AND AC.AUTHORIZE_STATUS = 'AUTHORIZED'
+       AC.STATUS NOT IN ( 'DELETED')
+       AND AC.AC_HD_ID NOT IN (SELECT CASH_AC_HD FROM PARAMETERS)-->
+           SELECT AC.AC_HD_CODE,AC.AC_HD_DESC,
+         (SELECT NVL(GA.OPN_BAL,0) FROM GL_ABSTRACT GA WHERE GA.DT = #DT:DATE# AND GA.AC_HD_ID=AC.AC_HD_CODE AND BRANCH_CODE=#BRANCH_CODE:varchar#) AS  OPN_BAL,
+         (SELECT NVL(GA.CLOSE_BAL,0) FROM GL_ABSTRACT GA WHERE GA.DT = #DT:DATE# AND GA.AC_HD_ID=AC.AC_HD_CODE AND BRANCH_CODE=#BRANCH_CODE:varchar#) AS  CLOSE_BAL, 
+       CASE
+          WHEN (SELECT DISTINCT AC_HD_ID
+                  FROM GL_OPENING_UPDATE
+                 WHERE AC_HD_ID = AC.AC_HD_CODE AND BRANCH=#BRANCH_CODE:varchar#) IS NULL
+             THEN 'N'
+          ELSE 'Y'
+       END AS UPDATED_HEAD,MJR.MJR_AC_HD_TYPE AS HEAD_TYPE
+       FROM  AC_HD AC,MJR_AC_HD MJR
+       WHERE MJR.MJR_AC_HD_ID = AC.MJR_AC_HD_ID 
+       <!--AND MJR.MJR_AC_HD_TYPE IN (#ASSETS:varchar#,#LIABILITY:varchar#)-->
+       AND MJR.MJR_AC_HD_TYPE NOT IN ('EXPENDITURE','INCOME')
+       AND AC.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND AC.STATUS NOT IN ( 'DELETED')
+       AND AC.AC_HD_ID NOT IN (SELECT CASH_AC_HD FROM PARAMETERS)
+       <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "AC_HD">        
+                        AC.AC_HD_CODE = #AC_HD:varchar#        
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+        <dynamic>
+            <isParameterPresent>
+                <isNotNull prepend = "AND" property = "MJR_AC_HD_TYPE">        
+                        MJR.MJR_AC_HD_TYPE IN (#MJR_AC_HD_TYPE:varchar#,#MJR_AC_HD_TYPE:varchar#)    
+                </isNotNull>
+            </isParameterPresent>
+        </dynamic>
+       <!--and GA.AC_HD_ID = '1001001001'-->
+       ORDER BY AC_HD_CODE
+    </dynamic-mapped-statement> 
+ 
+    
+    <mapped-statement name="getGLAcHd" result-class="java.util.LinkedHashMap" >
+        SELECT AC.AC_HD_CODE,AC.AC_HD_DESC
+        FROM gl GA, AC_HD AC
+        WHERE AC.AC_HD_ID = GA.AC_HD_ID
+        AND AC.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND AC.STATUS = 'CREATED'
+        AND BRANCH_CODE = #BRANCH_CODE:varchar#
+        AND AC.AC_HD_ID NOT IN (SELECT CASH_AC_HD FROM PARAMETERS)
+        ORDER BY AC_HD_CODE
+        <!--SELECT AC.AC_HD_CODE,AC.AC_HD_DESC
+        FROM GL_ABSTRACT GA, AC_HD AC,MJR_AC_HD MJR
+        WHERE AC.AC_HD_CODE = GA.AC_HD_ID
+        AND MJR.MJR_AC_HD_ID = AC.MJR_AC_HD_ID 
+        AND MJR.MJR_AC_HD_TYPE IN ('ASSETS','LIABILITY')
+        AND BRANCH_CODE = #BRANCH_CODE:varchar#
+        AND AC.AUTHORIZE_STATUS = 'AUTHORIZED'
+        AND AC.STATUS = 'CREATED'
+        AND AC.AC_HD_ID NOT IN (SELECT CASH_AC_HD FROM PARAMETERS)
+        ORDER BY AC_HD_CODE-->
+   </mapped-statement>     
+        
+    <mapped-statement name="validateDayend" result-class="java.util.LinkedHashMap" >
+        SELECT  * FROM DAY_END WHERE CURR_APPL_DT = #DAY_END_DT:DATE# AND BRANCH_CODE = #BRANCH_CODE:varchar#
+    </mapped-statement> 
+    
+     <!--<mapped-statement name="updateGLCLosingBalance" result-class="java.util.HashMap" > 
+         { call UPDATE_GL_CLOSING_BAL(#AC_HD:varchar#,#OPEN_DT:DATE#,#BALANCE#,#BRANCH_CODE:varchar#)}
+    </mapped-statement> -->
+    
+    <mapped-statement name="updateGLCLosingBalance" result-class="java.util.HashMap" > 
+          call GLUPDATE(#OPEN_DT:DATE#,#BRANCH_CODE:varchar#,#AC_HD:varchar#)
+    </mapped-statement> 
+    
+    <mapped-statement name="insertUpdatedAccountHeads" inline-parameters="true">
+        INSERT INTO GL_OPENING_UPDATE
+        (AC_HD_ID,CLOS_BAL,NEW_CLOS_BAL,STATUS,FROM_DT,BRANCH,CREATED_BY,OPENING 
+        ) VALUES (#acHd:varchar#,cast(#closBal# as numeric),cast(#newBal# as numeric),#status:varchar#,#frmDt:DATE#,#branch:varchar#,#userId:varchar#,cast(#openBal# as numeric))
+       
+    </mapped-statement>   
+    
+    <mapped-statement name="updateGLCLosingBalanceOnly" result-class="java.util.HashMap" > 
+        update GL_ABSTRACT set CLOSE_BAL =#NEW_CLOS_BAL:NUMERIC#,BALANCE_TYPE = #BALANCE_TYPE:varchar# where BRANCH_CODE = #BRANCH_CODE:varchar# 
+        and AC_HD_ID  = #AC_HD:varchar# and DT = #OPEN_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="updateGLCLosingBalanceAsZero" result-class="java.util.HashMap" > 
+        update GL_ABSTRACT set CLOSE_BAL =#NEW_CLOS_BAL:NUMERIC# where BRANCH_CODE = #BRANCH_CODE:varchar# 
+        and AC_HD_ID  = #AC_HD:varchar# and DT = #OPEN_DT:DATE#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteGLOpeningUpdate" result-class="java.util.HashMap" > 
+        DELETE FROM GL_OPENING_UPDATE WHERE AC_HD_ID = #AC_HD:varchar# AND BRANCH = #BRANCH_CODE:varchar#  AND STATUS = 'CREATED' AND FROM_DT = #OPEN_DT:DATE#
+    </mapped-statement>
+    
+</sql-map>

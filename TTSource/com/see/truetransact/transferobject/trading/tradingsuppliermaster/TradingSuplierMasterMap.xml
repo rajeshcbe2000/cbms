@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="TradingSuplierMasterMap">
+
+    <!-- Use TradingTO object (JavaBean) properties as parameters for insert. 
+    Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+	
+        
+    <mapped-statement name="insertTradingSupplierMasterTO" inline-parameters="true">
+        INSERT INTO TRADING_SUPPLIER_MASTER 
+        (SUPPLIERID,BRANCH_CODE,CUSTOMER_ID,SUNDRY_CREDITORS_AC_NO,PURCHASE_AC_NO,TINNO ,CST,KGST,CREATED_DT,PHONE,ACTIVE,
+        STATUS,STATUS_BY , STATUS_DT
+        )VALUES(
+        #supplierID:VARCHAR#,#branchCode:VARCHAR#,#customerID:VARCHAR#,#txtSundryCreditors:VARCHAR#,#txtPurchase:VARCHAR#,#txtTinNo:VARCHAR#,#txtCSTNO:VARCHAR#,
+        #txtKGSTNO:VARCHAR#,#tdtDate:DATE#,#txtPhone:VARCHAR#,#active:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,(SELECT SYS_DATE() FROM DUAL)
+        )
+    </mapped-statement>
+    
+    <mapped-statement name="updateTradingSupplierMasterTO" inline-parameters="true">
+        UPDATE TRADING_SUPPLIER_MASTER SET 		
+        SUPPLIERID = #supplierID:VARCHAR#,
+        BRANCH_CODE = #branchCode:VARCHAR#,
+        CUSTOMER_ID   = #customerID:VARCHAR#,
+        SUNDRY_CREDITORS_AC_NO = #txtSundryCreditors:VARCHAR#,
+        PURCHASE_AC_NO = #txtPurchase:VARCHAR#,
+        TINNO = #txtTinNo:VARCHAR#,
+        CST = #txtCSTNO:VARCHAR#,
+        KGST = #txtKGSTNO:VARCHAR#,
+        CREATED_DT = #tdtDate:DATE#,
+        PHONE = #txtPhone:VARCHAR#,
+        ACTIVE = #active:VARCHAR#,
+        STATUS = #status:VARCHAR#,
+        AUTHORIZED_STATUS = #authorizeStatus:VARCHAR#,
+        AUTHORIZED_BY = #authorizeBy:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE SUPPLIERID = #supplierID:VARCHAR# 
+    </mapped-statement>
+
+    <mapped-statement  name="Trading.getSelectAcctHead" result-class="java.util.LinkedHashMap">
+        SELECT AH.AC_HD_ID AS "A/C HEAD", AC_HD_DESC AS "A/C HEAD DESCRIPTION", 
+        CR_CASH,DR_CASH,AHP.RECONS AS "RECONCILLIATION", AHP.BALANCETYPE AS "BALANCETYPE"
+        FROM AC_HD_PARAM AHP, AC_HD AH
+        WHERE AH.AC_HD_ID=AHP.AC_HD_ID AND (AHP.STATUS  NOT IN  ('DELETED')) and 
+        AH.AC_HD_ID in (select ac_hd_id from ac_hd_param where cr_cash='Y' or dr_cash='Y') AND
+        AHP.TRANSPOST IN ('MANUAL', 'BOTH') AND 
+        AH.AC_HD_ID IN (SELECT BG.AC_HD_ID FROM BRANCH_GL BG, BRANCH_MASTER BM 
+        WHERE BG.GROUP_ID = BM.GL_GROUP_ID AND BG.STATUS!='DELETED' AND BM.BRANCH_CODE = #BRANCH_CODE#)
+    </mapped-statement>
+  
+    <!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+    be auto-mapped results to TradingTO object (JavaBean) properties -->
+	
+	
+    <mapped-statement name="getTradingSupplierMaster" result-class="java.util.HashMap" >
+        SELECT * from TRADING_SUPPLIER_MASTER
+        WHERE TRANS_ID = #SUPPLIER_PID# 
+    </mapped-statement>
+    
+    <mapped-statement  name="getSundryCreditorsAcNo" result-class="java.util.LinkedHashMap">
+        SELECT SAM.SUSPENSE_PROD_DESC,SAM.SUSPENSE_ACCT_NUM,SAM.SUSPENSE_CUSTOMER_ID,SAM.SUSPENSE_NAME FROM SUSPENSE_ACCOUNT_MASTER SAM,
+        recovery_parameters rp,suspense_product sp,customer c  WHERE RP.SUNDRY_CREDITORS_AC_HEAD = SP.AC_HD_ID AND SAM.SUSPENSE_PROD_ID = SP.PROD_ID 
+        AND  C.CUST_ID = SAM.SUSPENSE_CUSTOMER_ID AND SAM.SUSPENSE_CUSTOMER_ID = #CUST_ID#
+    </mapped-statement>
+    
+   <dynamic-mapped-statement  name="getPurchaseSuspenseAcNo" result-class="java.util.LinkedHashMap">
+        SELECT SAM.SUSPENSE_PROD_DESC,SAM.SUSPENSE_ACCT_NUM,SAM.SUSPENSE_CUSTOMER_ID,SAM.SUSPENSE_NAME FROM SUSPENSE_ACCOUNT_MASTER SAM,
+        recovery_parameters rp,suspense_product sp,customer c  WHERE RP.PURCHASE_AC_HEAD = SP.AC_HD_ID AND SAM.SUSPENSE_PROD_ID = SP.PROD_ID 
+        AND  C.CUST_ID = SAM.SUSPENSE_CUSTOMER_ID AND SAM.SUSPENSE_CUSTOMER_ID = #CUST_ID#
+         <dynamic>
+                <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUSPENSE_PROD_DESC">
+                    UPPER(SAM.SUSPENSE_PROD_DESC) LIKE UPPER('%$SUSPENSE_PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUSPENSE_ACCT_NUM">
+                    UPPER(SAM.SUSPENSE_ACCT_NUM) LIKE UPPER('%$SUSPENSE_ACCT_NUM$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUSPENSE_CUSTOMER_ID">
+                    UPPER(SAM.SUSPENSE_CUSTOMER_ID) LIKE UPPER('%$SUSPENSE_CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+                <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUSPENSE_NAME">
+                    UPPER(SAM.SUSPENSE_NAME) LIKE UPPER('%$SUSPENSE_NAME$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingSupplierMasterEdit" result-class="java.util.LinkedHashMap">
+        SELECT SUPPLIERID,CUSTOMER_ID,SUNDRY_CREDITORS_AC_NO,PURCHASE_AC_NO,CREATED_DT,AUTHORIZED_STATUS FROM Trading_supplier_master WHERE STATUS != 'DELETED'AND 
+        (AUTHORIZED_STATUS IS NULL OR AUTHORIZED_STATUS = 'AUTHORIZED') 
+         <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUPPLIERID">
+                    UPPER(SUPPLIERID) LIKE UPPER('%$SUPPLIERID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_ID">
+                    UPPER(CUSTOMER_ID) LIKE UPPER('%$CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUNDRY_CREDITORS_AC_NO">
+                    UPPER(SUNDRY_CREDITORS_AC_NO) LIKE UPPER('%$SUNDRY_CREDITORS_AC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_AC_NO">
+                    UPPER(PURCHASE_AC_NO) LIKE UPPER('%$PURCHASE_AC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(CREATED_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SUPPLIERID
+    </dynamic-mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingSupplierMasterDelete" result-class="java.util.LinkedHashMap">
+        SELECT SUPPLIERID,CUSTOMER_ID,SUNDRY_CREDITORS_AC_NO,PURCHASE_AC_NO,CREATED_DT,AUTHORIZED_STATUS FROM Trading_supplier_master WHERE STATUS != 'DELETED'AND 
+        AUTHORIZED_STATUS IS NULL AND AUTHORIZED_DT IS NULL
+          <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUPPLIERID">
+                    UPPER(SUPPLIERID) LIKE UPPER('%$SUPPLIERID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_ID">
+                    UPPER(CUSTOMER_ID) LIKE UPPER('%$CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUNDRY_CREDITORS_AC_NO">
+                    UPPER(SUNDRY_CREDITORS_AC_NO) LIKE UPPER('%$SUNDRY_CREDITORS_AC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_AC_NO">
+                    UPPER(PURCHASE_AC_NO) LIKE UPPER('%$PURCHASE_AC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="CREATED_DT">
+                    UPPER(CREATED_DT) LIKE UPPER('%$CREATED_DT$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="AUTHORIZED_STATUS">
+                    UPPER(AUTHORIZED_STATUS) LIKE UPPER('%$AUTHORIZED_STATUS$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY SUPPLIERID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getTradingSupplierMasterTO" result-map="getTradingSupplierMasterTOResult" >
+        SELECT * FROM TRADING_SUPPLIER_MASTER WHERE SUPPLIERID=#SUPPLIERID# AND STATUS!='DELETED'
+    </mapped-statement>
+    
+    <dynamic-mapped-statement name="getTradingSupplierForAuthorize" result-class="java.util.LinkedHashMap">
+        SELECT SUPPLIERID,CUSTOMER_ID,SUNDRY_CREDITORS_AC_NO,PURCHASE_AC_NO,CREATED_DT,AUTHORIZED_STATUS  FROM TRADING_SUPPLIER_MASTER WHERE STATUS != 'DELETED' AND 
+        AUTHORIZED_STATUS IS NULL AND STATUS_BY!= #USER_ID# 
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="REJECTED" > 
+                AUTHORIZED_DT IS NULL
+            </isEqual>
+        </dynamic>
+        ORDER BY  SUPPLIERID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="authorizeTradingSupplier" result-class="java.util.HashMap">
+        UPDATE TRADING_SUPPLIER_MASTER SET 
+        AUTHORIZED_STATUS = #STATUS#,
+        AUTHORIZED_BY = #AUTHORIZED_BY#,
+        AUTHORIZED_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE STATUS != 'DELETED' AND SUPPLIERID=#SUPPLIER_ID#
+    </mapped-statement>
+    
+    <mapped-statement name="deleteTradingSupplierTO" inline-parameters="true">
+        UPDATE TRADING_SUPPLIER_MASTER SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = (SELECT SYS_DATE() FROM DUAL)
+        WHERE SUPPLIERID = #supplierID:VARCHAR#
+    </mapped-statement>
+    
+     <dynamic-mapped-statement name="getTradingSupplierView" result-class="java.util.LinkedHashMap">
+        SELECT SUPPLIERID,CUSTOMER_ID,SUNDRY_CREDITORS_AC_NO,PURCHASE_AC_NO FROM TRADING_SUPPLIER_MASTER 
+        WHERE STATUS != 'DELETED'
+         <dynamic>
+        <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUPPLIERID">
+                    UPPER(SUPPLIERID) LIKE UPPER('%$SUPPLIERID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="CUSTOMER_ID">
+                    UPPER(CUSTOMER_ID) LIKE UPPER('%$CUSTOMER_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="SUNDRY_CREDITORS_AC_NO">
+                    UPPER(SUNDRY_CREDITORS_AC_NO) LIKE UPPER('%$SUNDRY_CREDITORS_AC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="PURCHASE_AC_NO">
+                    UPPER(PURCHASE_AC_NO) LIKE UPPER('%$PURCHASE_AC_NO$%')
+                </isNotNull>
+            </isParameterPresent>
+            </dynamic>
+        ORDER BY  SUPPLIERID
+    </dynamic-mapped-statement>
+    
+    <mapped-statement name="getSundryAcName" result-class="java.util.HashMap" >
+        SELECT SUSPENSE_CUSTOMER_ID AS CUSTOMER_ID,SUSPENSE_NAME,AVAILABLE_BALANCE FROM SUSPENSE_ACCOUNT_MASTER WHERE SUSPENSE_ACCT_NUM = #SUSPENSE_ACCT_NUM# AND STATUS !='DELETED' 
+        AND AUTHORIZE_STATUS !='REJECTED'
+    </mapped-statement>
+    
+    <mapped-statement name="getExistCustList" result-class="java.util.HashMap" >
+        SELECT * FROM TRADING_SUPPLIER_MASTER WHERE CUSTOMER_ID = #CUST_ID# AND STATUS !='DELETED'
+    </mapped-statement>
+    
+    <result-map name="getTradingSupplierMasterTOResult" class="com.see.truetransact.transferobject.trading.tradingsuppliermaster.TradingSuplierMasterTO">
+        <property name="supplierID" column="SUPPLIERID"/>
+        <property name="branchCode" column="BRANCH_CODE"/>
+        <property name="customerID" column="CUSTOMER_ID"/>
+        <property name="txtSundryCreditors" column="SUNDRY_CREDITORS_AC_NO"/>
+        <property name="txtPurchase" column="PURCHASE_AC_NO"/>
+        <property name="txtTinNo" column="TINNO"/>
+        <property name="txtCSTNO" column="CST"/>
+        <property name="txtKGSTNO" column="KGST"/>
+        <property name="tdtDate" column="CREATED_DT"/>
+        <property name="txtPhone" column="PHONE"/>
+        <property name="active" column="ACTIVE"/>
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZED_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZED_BY"/>
+        <property name="authorizeDt" column="AUTHORIZED_DT"/>
+    </result-map>
+   
+   
+</sql-map>

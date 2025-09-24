@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="InvestmentsProductTOMap">
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertInvestmentProductTO" inline-parameters="true">
+        INSERT INTO  INVESTMENT_CONF_DETAILS
+        (INVESTMENT_TYPE,INVESTMENT_PROD_ID,IINVESTMENT_PROD_DESC,IINVESTMENT_AC_HD,INTEREST_RECIVED_AC_HD,INTEREST_PAID_AC_HD,PREMIUM_PAID_AC_HD,
+        PREMIUM_DEPR_AC_HD,BROKER_COMM_AC_HD,DIVIDENT_RECIVED_AC_HD,ST_AC_HD ,DIVIDENT_PAID_AC_HD,STATUS ,STATUS_BY,STATUS_DT,AUTHORIZE_STATUS, 
+        AUTHORIZE_BY, AUTHORIZE_DT, PREMIUM_RECEIVED_AC_HD,CHARGE_PAID_AC_HD,INTEREST_RECEIVABLE_AC_HD, TDS_AC_HD,RENEW_WITHOUT_TRANSACTION)
+        VALUES(#cboInvestmentBehaves:VARCHAR#,#txtProductID:VARCHAR#,#txtDesc:VARCHAR#,#txtInvestmentAcHead:VARCHAR#,#txtIntReceivedAcHead:VARCHAR#, 
+        #txtIntPaidAcHead:VARCHAR#,#txtPremiumPaidAcHead:VARCHAR#,#txtPremiumDepreciationAcHead:VARCHAR#,#txtBrokerCommissionAcHead:VARCHAR#, 
+        #txtDividentReceivedAcHead:VARCHAR#,#txtServiceTaxAcHead:VARCHAR#,#txtDividentPaidAcHead:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,
+        #statusDt:DATE#,#authorizeStatus:VARCHAR#, #authorizeBy:VARCHAR#, #authorizeDt:DATE#,
+        #txtPremiumReceivedAcHead:VARCHAR#,#txtChargeAcHead:VARCHAR#,#txtInterestReceivableAcHead:VARCHAR#, #txtTDSAcHead:VARCHAR#,#renewalWithoutTransaction:VARCHAR#)
+    </mapped-statement>
+
+	<!-- Use ShareProductLoanTO object (JavaBean) properties as parameters for update. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="updateInvestmentProductTO" inline-parameters="true">
+		
+        UPDATE INVESTMENT_CONF_DETAILS SET
+        INVESTMENT_TYPE=#cboInvestmentBehaves:VARCHAR#,
+        INVESTMENT_PROD_ID=#txtProductID:VARCHAR#,
+        IINVESTMENT_PROD_DESC=#txtDesc:VARCHAR#,
+        IINVESTMENT_AC_HD=#txtInvestmentAcHead:VARCHAR#,
+        INTEREST_RECIVED_AC_HD=#txtIntReceivedAcHead:VARCHAR#,
+        INTEREST_PAID_AC_HD=#txtIntPaidAcHead:VARCHAR#,
+        PREMIUM_PAID_AC_HD =#txtPremiumPaidAcHead:VARCHAR#,
+        PREMIUM_DEPR_AC_HD=#txtPremiumDepreciationAcHead:VARCHAR#,
+        BROKER_COMM_AC_HD=#txtBrokerCommissionAcHead:VARCHAR#,
+        DIVIDENT_RECIVED_AC_HD=#txtDividentReceivedAcHead:VARCHAR#,
+        CHARGE_PAID_AC_HD = #txtChargeAcHead:VARCHAR#,
+        INTEREST_RECEIVABLE_AC_HD = #txtInterestReceivableAcHead:VARCHAR#,
+        ST_AC_HD=#txtServiceTaxAcHead:VARCHAR#,
+        DIVIDENT_PAID_AC_HD=#txtDividentPaidAcHead:VARCHAR#,
+        PREMIUM_RECEIVED_AC_HD=#txtPremiumReceivedAcHead:VARCHAR#,
+        STATUS=#status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#,
+        STATUS_DT=#statusDt:DATE#,
+        AUTHORIZE_STATUS=#authorizeStatus:VARCHAR#,
+        AUTHORIZE_BY=#authorizeBy:VARCHAR#,
+        AUTHORIZE_DT=#authorizeDt:DATE#,
+        TDS_AC_HD = #txtTDSAcHead:VARCHAR#,
+        RENEW_WITHOUT_TRANSACTION = #renewalWithoutTransaction:VARCHAR#
+        WHERE  INVESTMENT_PROD_ID=#txtProductID:VARCHAR# AND status!='DELETED'
+        AND (AUTHORIZE_STATUS!='REJECTED'  OR AUTHORIZE_STATUS IS NULL)
+            
+            
+
+    </mapped-statement>
+
+	
+	
+     	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to ShareProductLoanTO object (JavaBean) properties -->
+    <result-map name="getInvestmentProductTOResult" class="com.see.truetransact.transferobject.product.investments.InvestmentsProductTO">
+        <property name="cboInvestmentBehaves" column="INVESTMENT_TYPE"/>
+        <property name="txtProductID" column="INVESTMENT_PROD_ID"/>
+        <property name="renewalWithoutTransaction" column="RENEW_WITHOUT_TRANSACTION"/>
+        <property name="txtDesc" column="IINVESTMENT_PROD_DESC"/>
+        <property name="txtInvestmentAcHead" column="IINVESTMENT_AC_HD"/>
+        <property name="txtIntReceivedAcHead" column="INTEREST_RECIVED_AC_HD"/>
+        <property name="txtIntPaidAcHead" column="INTEREST_PAID_AC_HD"/>
+        <property name="txtPremiumPaidAcHead" column="PREMIUM_PAID_AC_HD"/>
+        <property name="txtPremiumDepreciationAcHead" column="PREMIUM_DEPR_AC_HD"/>
+        <property name="txtBrokerCommissionAcHead" column="BROKER_COMM_AC_HD"/>
+        <property name="txtDividentReceivedAcHead" column="DIVIDENT_RECIVED_AC_HD"/>
+        <property name="txtChargeAcHead" column="CHARGE_PAID_AC_HD"/>
+        <property name="txtInterestReceivableAcHead" column="INTEREST_RECEIVABLE_AC_HD"/>
+        <property name="txtServiceTaxAcHead" column="ST_AC_HD"/>
+        <property name="txtDividentPaidAcHead" column="DIVIDENT_PAID_AC_HD"/>   
+        <property name="txtPremiumReceivedAcHead" column="PREMIUM_RECEIVED_AC_HD"/>             
+        <property name="status" column="STATUS"/>
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+        <property name="authorizeStatus" column="AUTHORIZE_STATUS"/>
+        <property name="authorizeBy" column="AUTHORIZE_BY"/>
+        <property name="authorizeDt" column="AUTHORIZE_DT"/>
+        <property name="txtTDSAcHead" column="TDS_AC_HD"/>  
+    </result-map>
+	
+    <dynamic-mapped-statement name="getSelectInvestmentProduct" result-class="java.util.LinkedHashMap" >
+        SELECT  INVESTMENT_TYPE,INVESTMENT_PROD_ID,IINVESTMENT_PROD_DESC,STATUS from INVESTMENT_CONF_DETAILS
+        WHERE  STATUS NOT IN ('DELETED')  AND (AUTHORIZE_STATUS!='REJECTED' OR AUTHORIZE_STATUS IS  NULL) 
+        
+         <dynamic>
+             <isPropertyAvailable prepend = "" property="FILTERED_LIST">
+               <isEqual prepend="AND" property="FILTERED_LIST" compareValue="FILTERED_LIST_oracle.jdbc.driver.OracleDriver" >
+                    ROWNUM &lt;= 100
+                </isEqual>
+            </isPropertyAvailable>
+            <isParameterPresent>
+                <isNotNull prepend="AND"      property="INVESTMENT_PROD_ID">
+                    UPPER(INVESTMENT_PROD_ID) LIKE UPPER('%$INVESTMENT_PROD_ID$%')
+                </isNotNull>
+            </isParameterPresent>
+              <isParameterPresent>
+                <isNotNull prepend="AND"      property="INVESTMENT_TYPE">
+                    UPPER(INVESTMENT_TYPE) LIKE UPPER('%$INVESTMENT_TYPE$%')
+                </isNotNull>
+            </isParameterPresent>
+             <isParameterPresent>
+                <isNotNull prepend="AND"      property="IINVESTMENT_PROD_DESC">
+                    UPPER(IINVESTMENT_PROD_DESC) LIKE UPPER('%$IINVESTMENT_PROD_DESC$%')
+                </isNotNull>
+            </isParameterPresent>
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_TYPE" >
+                    INVESTMENT_TYPE=#INVESTMENT_TYPE:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+    <dynamic-mapped-statement name="getSelectinvestmentAccountHead" result-class="java.util.LinkedHashMap" >
+        select * from INVESTMENT_CONF_DETAILS WHERE AUTHORIZE_STATUS='AUTHORIZED' AND STATUS!='DELETED'
+        <dynamic>    
+            <isParameterPresent>
+                <isNotEmpty prepend= "AND" property = "INVESTMENT_PROD_ID" >
+                    INVESTMENT_PROD_ID=#INVESTMENT_PROD_ID:VARCHAR#
+                </isNotEmpty>
+            </isParameterPresent>
+        </dynamic>
+    </dynamic-mapped-statement>
+        
+        
+    <mapped-statement name="getSelectInvestmentProductTO" result-map="getInvestmentProductTOResult" >
+        SELECT * FROM INVESTMENT_CONF_DETAILS
+        WHERE  INVESTMENT_PROD_ID=#value:VARCHAR#
+    </mapped-statement>
+    <mapped-statement name="deleteInvestmentProductTO" inline-parameters="true">
+        UPDATE INVESTMENT_CONF_DETAILS SET 
+        STATUS = #status:VARCHAR#, 
+        STATUS_BY = #statusBy:VARCHAR#, 
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE INVESTMENT_PROD_ID = #txtProductID:VARCHAR#  AND STATUS NOT IN ('DELETED')
+    </mapped-statement>
+    <dynamic-mapped-statement name="getInvestmentProductAuthorizeList" result-class="java.util.LinkedHashMap">
+        SELECT INVESTMENT_TYPE ,INVESTMENT_PROD_ID, IINVESTMENT_PROD_DESC,STATUS_BY FROM INVESTMENT_CONF_DETAILS SCD
+        WHERE  (STATUS != 'DELETED' OR STATUS IS NULL)
+        AND STATUS_BY != #USER_ID# 
+        AND cast(#HIERARCHY_ID# as numeric) &gt;= (SELECT DECODE(NVL(SAME_HIERARCHY_ALLOWED,'N'), 'Y', HIERARCHY_ID, HIERARCHY_ID + 1)
+        FROM USER_MASTER UM, ROLE_MASTER RM 
+        WHERE RM.ROLE_ID = UM.USER_ROLE AND UM.USER_ID = SCD.STATUS_BY)
+        <dynamic>
+            <isEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                AUTHORIZE_STATUS = 'EXCEPTION'
+            </isEqual>
+            <isNotEqual prepend="AND" property="AUTHORIZESTATUS" compareValue="EXCEPTION" >
+                (AUTHORIZE_STATUS IS NULL OR 
+                AUTHORIZE_STATUS NOT IN ('AUTHORIZED', 'REJECTED', 'EXCEPTION'))
+            </isNotEqual>
+        </dynamic>
+        ORDER BY INVESTMENT_PROD_ID
+    </dynamic-mapped-statement>
+    <mapped-statement name="authorizeInvestmentProduct" result-class="java.util.HashMap">
+        UPDATE INVESTMENT_CONF_DETAILS  SET 
+        AUTHORIZE_STATUS = #STATUS:VARCHAR#,
+        AUTHORIZE_BY = #USER_ID:VARCHAR#, 
+        AUTHORIZE_DT = #AUTHORIZEDT:TIMESTAMP#
+        WHERE INVESTMENT_PROD_ID = #INVESTMENT_PROD_ID:VARCHAR#  AND (STATUS != 'DELETED' OR (STATUS IN('CREATED', 'MODIFIED')))
+    </mapped-statement>
+
+</sql-map>

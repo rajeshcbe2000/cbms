@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-map PUBLIC "-//iBATIS.com//DTD SQL Map 1.0//EN" "http://www.ibatis.com/dtd/sql-map.dtd">
+<sql-map name="EmployeeLoanDetailsMap">
+
+<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for insert. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. -->
+    <mapped-statement name="insertEmployeeLoanDetailsTO" inline-parameters="true">
+        INSERT INTO employee_loan_details
+        (SYS_ID,PROD_ID,BRANCH_ID,SANCTION_NO,SANCTION_DATE,ACT_NUM,SANCTION_AMT,ROI,NUMBER_OF_INSTALLMENTS,
+        INSTALLMENT_AMOUNT,REPAYMENT_START_DATE,REPAYMENT_END_DATE,LOAN_PRE_CLOSE,LOAN_PRE_CLOSE_DATE,
+        REMARKS,STATUS,STATUS_BY,STATUS_DT
+
+        ) VALUES (
+        #sysId:VARCHAR#,#cboEmployeeLoanType:VARCHAR#,#cboLoanAvailedBranch:VARCHAR#,#txtLoanSanctionRefNo:VARCHAR#,#tdtLoanSanctionDate:DATE#,#txtLoanNo:VARCHAR#,#txtLoanAmount:NUMERIC#,#txtLoanRateofInterest:NUMERIC#,#txtLoanNoOfInstallments:NUMERIC#,
+        #txtLoanInstallmentAmount:NUMERIC#,#tdtLoanRepaymentStartDate:DATE#,#tdtLoanRepaymentEndDate:DATE#,#rdoLoanPreCloserYesNo:VARCHAR#,#tdtLoanCloserDate:DATE#,
+        #txtLoanRemarks:VARCHAR#,#status:VARCHAR#,#statusBy:VARCHAR#,#statusDt:DATE#
+        )
+    </mapped-statement>
+
+	<!-- Use CustomerPhoneTO object (JavaBean) properties as parameters for delete. 
+	     Each of the parameters in the #hash# symbols is a JavaBeans property. --> 
+    <mapped-statement name="updateEmployeeLoanDetailsTO" inline-parameters="true">
+        UPDATE employee_loan_details SET 
+        PROD_ID=#cboEmployeeLoanType:VARCHAR#,
+        BRANCH_ID=#cboLoanAvailedBranch:VARCHAR#,
+        SANCTION_NO=#txtLoanSanctionRefNo:VARCHAR#,
+        SANCTION_DATE=#tdtLoanSanctionDate:VARCHAR#,
+        ACT_NUM=#txtLoanNo:VARCHAR#,
+        SANCTION_AMT=#txtLoanAmount:NUMERIC#,
+        ROI=#txtLoanRateofInterest:NUMERIC#,
+        NUMBER_OF_INSTALLMENTS=#txtLoanNoOfInstallments:NUMERIC#,
+        INSTALLMENT_AMOUNT=#txtLoanInstallmentAmount:NUMERIC#,
+        REPAYMENT_START_DATE=#tdtLoanRepaymentStartDate:DATE#,
+        REPAYMENT_END_DATE=#tdtLoanRepaymentEndDate:DATE#,
+        LOAN_PRE_CLOSE=#rdoLoanPreCloserYesNo:VARCHAR#,
+        LOAN_PRE_CLOSE_DATE=#tdtLoanCloserDate:DATE#,
+        REMARKS=#txtLoanRemarks:VARCHAR#,
+        STATUS=#status:VARCHAR#,
+        STATUS_BY=#statusBy:VARCHAR#,
+        STATUS_DT=#statusDt:DATE#
+        WHERE  SYS_ID = #sysId:VARCHAR# AND  STATUS NOT IN ('DELETED')
+    </mapped-statement>
+
+    <mapped-statement name="deleteEmployeeLoanDetailsTO" inline-parameters="true">
+        UPDATE employee_loan_details SET 
+        STATUS = #status:VARCHAR#,
+        STATUS_BY = #statusBy:VARCHAR#,
+        STATUS_DT = #statusDt:TIMESTAMP#
+        WHERE SYS_ID = #sysId:VARCHAR# 
+    </mapped-statement>
+        
+	<!-- Use primitive wrapper type (e.g. Integer) as parameter and allow results to 
+	     be auto-mapped results to CustomerPhoneTO object (JavaBean) properties -->
+    <result-map name="getEmployeeLoanDetailsTOResult" class="com.see.truetransact.transferobject.employee.EmployeeTermLoanTO">
+        
+
+        <property name="sysId" column="SYS_ID"/>		
+        <property name="cboEmployeeLoanType" column="PROD_ID"/>	                
+        <property name="cboLoanAvailedBranch" column="BRANCH_ID"/>
+        <property name="txtLoanSanctionRefNo" column="SANCTION_NO"/>
+        <property name="tdtLoanSanctionDate" column="SANCTION_DATE"/>
+        <property name="txtLoanNo" column="ACT_NUM"/>
+        <property name="txtLoanAmount" column="SANCTION_AMT"/> 
+        <property name="txtLoanRateofInterest" column="ROI"/> 
+        <property name="txtLoanNoOfInstallments" column="NUMBER_OF_INSTALLMENTS"/> 
+        <property name="txtLoanInstallmentAmount" column="INSTALLMENT_AMOUNT"/> 
+        <property name="tdtLoanRepaymentStartDate" column="REPAYMENT_START_DATE"/> 
+        <property name="tdtLoanRepaymentEndDate" column="REPAYMENT_END_DATE"/> 
+        <property name="rdoLoanPreCloserYesNo" column="LOAN_PRE_CLOSE"/> 
+        <property name="tdtLoanCloserDate" column="LOAN_PRE_CLOSE_DATE"/> 
+        <property name="txtLoanRemarks" column="REMARKS"/>                 
+        <property name="status" column="STATUS" />
+        <property name="statusBy" column="STATUS_BY"/>
+        <property name="statusDt" column="STATUS_DT"/>
+                
+                
+                
+    </result-map>
+    <dynamic-mapped-statement name="getSelectEmployeeLoanDetailsTO" result-map="getEmployeeLoanDetailsTOResult" >
+                <!-- SELECT *
+                FROM employee_loan_details erw 
+                WHERE    SYS_ID=#SYS_EMPID# -->
+        SELECT SYS_EMPID as SYS_ID, LFD.PROD_ID AS PROD_ID, LFD.BRANCH_ID AS BRANCH_ID,
+        LSD.SANCTION_NO AS SANCTION_NO, LFD.ACCT_OPEN_DT AS SANCTION_DATE,
+        LFD.ACCT_NUM AS ACT_NUM, LSD.LIMIT AS SANCTION_AMT,
+        DECODE (INT_GET_FROM,
+        'PROD', (SELECT DRGTR.ROI
+        FROM DEPOSIT_ROI_GROUP DRG,
+        DEPOSIT_ROI_GROUP_CAT DRGC,
+        DEPOSIT_ROI_GROUP_PROD DRGP,
+        DEPOSIT_ROI_GROUP_TYPE_RATE DRGTR
+        WHERE DRG.ROI_GROUP_ID = DRGC.ROI_GROUP_ID
+        AND DRG.ROI_GROUP_ID = DRGP.ROI_GROUP_ID
+        AND DRG.ROI_GROUP_ID = DRGTR.ROI_GROUP_ID
+        AND DRG.PRODUCT_TYPE IN ('TL', 'AD')
+        AND DRGP.PROD_ID = LFD.PROD_ID
+        AND DRGC.CATEGORY_ID = LB.CATEGORY
+        AND LSD.LIMIT BETWEEN FROM_AMOUNT AND TO_AMOUNT
+        AND (   (LSD.FROM_DT BETWEEN ROI_DATE AND ROI_END_DATE
+        )
+        OR (    ROI_DATE  &lt;= LSD.TO_DT
+        AND ROI_END_DATE IS NULL
+        )
+        )),
+        (SELECT INTEREST
+        FROM LOANS_INT_MAINTENANCE
+        WHERE ACCT_NUM = LFD.ACCT_NUM AND STATUS != 'DELETED')
+        ) AS ROI,
+        NO_INSTALL AS NUMBER_OF_INSTALLMENTS, 0 AS INSTALLMENT_AMOUNT,
+        LRS.FIRST_INSTALL_DT AS REPAYMENT_START_DATE,
+        LAST_INSTALL_DT AS REPAYMENT_END_DATE,
+        CASE
+        WHEN LFD.ACCT_CLOSE_DT IS NOT NULL
+        AND LFD.ACCT_CLOSE_DT  &lt; LAST_INSTALL_DT
+        THEN 'Y'
+        ELSE 'N'
+        END AS LOAN_PRE_CLOSE,
+        CASE
+        WHEN LFD.ACCT_CLOSE_DT IS NOT NULL
+        AND LFD.ACCT_CLOSE_DT  &lt;  LAST_INSTALL_DT
+        THEN LFD.ACCT_CLOSE_DT
+        ELSE NULL
+        END AS LOAN_PRE_CLOSE_DATE, '' AS REMARKS,
+        '' AS STATUS,'' AS STATUS_BY ,NULL AS STATUS_DT
+        FROM LOANS_FACILITY_DETAILS LFD,
+        LOANS_SANCTION_DETAILS LSD,
+        CUSTOMER C,
+        LOANS_BORROWER LB,
+        LOANS_PRODUCT LP,
+        LOANS_REPAY_SCHEDULE LRS,
+        EMPLOYEE_MASTER EM
+        WHERE LFD.BORROW_NO = LSD.BORROW_NO
+        AND LFD.SANCTION_NO = LSD.SANCTION_NO
+        AND LFD.SL_NO = LSD.SL_NO
+        AND LB.BORROW_NO = LFD.BORROW_NO
+        AND LB.CUST_ID = C.CUST_ID
+        AND LB.BORROW_NO = LSD.BORROW_NO
+        AND LRS.ACCT_NUM = LFD.ACCT_NUM
+        AND LP.PROD_ID = LFD.PROD_ID
+        AND LSD.STATUS != 'DELETED'
+        AND LRS.STATUS != 'DELETED'
+        AND LFD.LOAN_BALANCE_PRINCIPAL != 0
+        AND EM.EMPLOYEEID = C.STAFF_ID
+        AND EM.SYS_EMPID = #SYS_EMPID:VARCHAR# 
+                    
+                    
+                    
+        <dynamic>
+            <isNotPropertyAvailable prepend = "AND" property="DELETECHECK">
+                (EM.STATUS NOT IN ('DELETED')
+            </isNotPropertyAvailable>
+            <isPropertyAvailable prepend = "AND" property="DELETECHECK">
+                ( EM.STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            <isPropertyAvailable prepend = "OR" property="AUTHORIZECHECK">
+                EM.STATUS IN 'DELETED'
+            </isPropertyAvailable>
+            )
+        </dynamic>
+                 
+    </dynamic-mapped-statement>
+</sql-map>        
